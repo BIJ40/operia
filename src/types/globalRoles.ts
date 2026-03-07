@@ -42,15 +42,15 @@ export const GLOBAL_ROLE_DESCRIPTIONS: Record<GlobalRole, string> = {
   superadmin: 'Accès total à toutes les fonctionnalités',
 };
 
-// Couleurs pour badges
+// Couleurs pour badges — utilise des tokens sémantiques via classes utilitaires
 export const GLOBAL_ROLE_COLORS: Record<GlobalRole, string> = {
-  base_user: 'bg-gray-100 text-gray-800',
-  franchisee_user: 'bg-blue-100 text-blue-800',
-  franchisee_admin: 'bg-indigo-100 text-indigo-800',
-  franchisor_user: 'bg-purple-100 text-purple-800',
-  franchisor_admin: 'bg-pink-100 text-pink-800',
-  platform_admin: 'bg-orange-100 text-orange-800',
-  superadmin: 'bg-red-100 text-red-800',
+  base_user: 'bg-muted text-muted-foreground',
+  franchisee_user: 'bg-primary/10 text-primary',
+  franchisee_admin: 'bg-primary/20 text-primary',
+  franchisor_user: 'bg-accent/20 text-accent-foreground',
+  franchisor_admin: 'bg-accent/30 text-accent-foreground',
+  platform_admin: 'bg-destructive/10 text-destructive',
+  superadmin: 'bg-destructive/20 text-destructive',
 };
 
 /**
@@ -88,24 +88,7 @@ export function getAllRolesSorted(): GlobalRole[] {
 }
 
 /**
- * Obtient les rôles assignables par un utilisateur donné
- * Délègue au système de gestion de permissions centralisé (roleMatrix.ts)
- * pour garantir la cohérence des règles d'assignation.
- * 
- * Note: Cette fonction importe dynamiquement depuis roleMatrix pour éviter
- * les dépendances circulaires et garantir que roleMatrix.ts reste la source de vérité.
+ * Obtient les rôles assignables par un utilisateur donné.
+ * @deprecated Utiliser getUserManagementCapabilities() depuis permissionsEngine.ts
+ * Exemple: getUserManagementCapabilities(role).canCreateRoles
  */
-export function getAssignableRoles(assignerRole: GlobalRole | null): GlobalRole[] {
-  if (!assignerRole) return [];
-  
-  // Déléguer à roleMatrix.ts qui est la source de vérité pour les permissions
-  // Import dynamique pour éviter les dépendances circulaires
-  try {
-    const { getUserManagementCapabilities } = require('@/config/roleMatrix');
-    const capabilities = getUserManagementCapabilities(assignerRole);
-    return capabilities.canCreateRoles;
-  } catch (error) {
-    console.error('Erreur lors de la récupération des rôles assignables:', error);
-    return [];
-  }
-}

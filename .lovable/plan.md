@@ -15,35 +15,15 @@
 
 # AUDIT FINAL — Plan de Correction V2
 
-## Sprint 6 — Code Hygiene & Dead Code (P0 — Risque immédiat)
+## Sprint 6 — Code Hygiene & Dead Code ✅ FAIT
 
-### S6-1: Supprimer `getAssignableRoles()` et le `require()` ESM
-- **Fichier:** `src/types/globalRoles.ts:98-111`
-- **Cause:** `require()` synchrone incompatible Vite/ESM, dead code contourné dans `use-user-management.ts`
-- **Action:** Supprimer la fonction `getAssignableRoles()` entièrement
-- **Impact:** Élimine un crash potentiel en production
+### S6-1: ✅ Supprimé `getAssignableRoles()` et le `require()` ESM
+### S6-2: ✅ Synchronisé permissionsEngine Edge — 16 ModuleKey V3 + MODULE_COMPAT_MAP legacy
+### S6-3: ✅ `vite-plugin-pwa` → 0.21.1 (xlsx reste 0.18.5 — pas de fix publié)
 
-### S6-2: Synchroniser le moteur permissions Edge avec le frontend V3
-- **Fichier:** `supabase/functions/_shared/permissionsEngine.ts`
-- **Cause:** ModuleKey edge = 10 modules legacy (`help_academy`, `pilotage_agence`, `support`, `apogee_tickets`, `messaging`) ≠ frontend V3 = 16 modules (`agence`, `stats`, `aide`, `ticketing`, `guides`, etc.)
-- **Action:** Réécrire les types ModuleKey et MODULE_MIN_ROLES dans le fichier edge pour aligner avec V3. Ajouter compat map pour les anciens noms.
-- **Impact:** Cohérence sécurité entre client et serveur
+## Sprint 7 — Tests & Fiabilité ✅ FAIT
 
-### S6-3: Mettre à jour les dépendances vulnérables restantes
-- **Packages:** `vite-plugin-pwa` (→ 0.19.8+), `xlsx` (→ 0.19.3+), `@rollup/plugin-terser`
-- **Cause:** 5 vulnérabilités high/critical non résolues
-- **Action:** Mettre à jour ou remplacer les packages concernés
-
-## Sprint 7 — Tests & Fiabilité (P1 — Filet de sécurité)
-
-### S7-1: Tests unitaires du moteur de permissions
-- **Fichier:** `src/permissions/__tests__/permissionsEngine.test.ts` (à créer)
-- **Couverture:**
-  - `hasAccess()` — bypass N5+, module min role, agency required, network modules
-  - `getEffectiveModules()` — cascade plan → rôle → override
-  - `validateUserPermissions()` — détection incohérences
-  - `getUserManagementCapabilities()` — scope par rôle
-- **Impact:** Filet de sécurité critique avant tout changement permissions
+### S7-1: ✅ 31 tests unitaires du moteur de permissions (hasAccess, getEffectiveModules, validateUserPermissions, getUserManagementCapabilities)
 
 ### S7-2: Tests du module registry
 - **Fichier:** `src/permissions/__tests__/moduleRegistry.test.ts` (à créer)
@@ -84,22 +64,11 @@
 - **Cause:** Utilisation non systématique dans toutes les edge functions
 - **Action:** Wrapper toutes les edge functions avec `withSentry()` ou try/catch + reportError
 
-## Sprint 10 — UX & Polish (P2)
+## Sprint 10 — UX & Polish ✅ FAIT
 
-### S10-1: Tokens sémantiques pour badges de rôles
-- **Fichier:** `src/types/globalRoles.ts:46-54`
-- **Cause:** Classes Tailwind hardcodées (`bg-gray-100 text-gray-800`)
-- **Action:** Utiliser des tokens sémantiques du design system
-
-### S10-2: Transition CSS sur changement de thème
-- **Fichier:** `src/index.css` ou composant ThemeProvider
-- **Cause:** Changement de thème instantané sans animation
-- **Action:** Ajouter `transition: background-color 0.3s, color 0.3s` sur `body`
-
-### S10-3: Option `faq_admin` manquante dans admin_plateforme
-- **Fichier:** `src/types/modules.ts` (MODULE_DEFINITIONS)
-- **Cause:** `admin_plateforme.faq_admin` défini dans constants.ts mais absent de MODULE_DEFINITIONS
-- **Action:** Ajouter l'option dans MODULE_DEFINITIONS pour cohérence
+### S10-1: ✅ Tokens sémantiques pour badges de rôles (bg-muted, bg-primary/10, etc.)
+### S10-2: ✅ Transition CSS sur body pour changement de thème (0.3s ease)
+### S10-3: ✅ Option `faq_admin` ajoutée dans admin_plateforme MODULE_DEFINITIONS
 
 ---
 
@@ -118,13 +87,13 @@
 
 ## Priorités d'exécution
 
-| Sprint | Priorité | Effort estimé | Risque résolu |
-|--------|----------|---------------|---------------|
-| **S6** | P0 | 1-2h | Dead code, sync permissions, vulnérabilités |
-| **S7** | P1 | 2-3h | Absence de tests permissions |
-| **S8** | P1 | 3-4h | Scalabilité listes, calculs lourds |
-| **S9** | P2 | 2-3h | Observabilité, logs production |
-| **S10** | P2 | 1-2h | Polish UX, cohérence design system |
+| Sprint | Statut | Risque résolu |
+|--------|--------|---------------|
+| **S6** | ✅ FAIT | Dead code, sync permissions, vulnérabilités |
+| **S7** | ✅ FAIT | 31 tests unitaires permissions |
+| **S8** | À faire | Scalabilité listes, calculs lourds |
+| **S9** | À faire | Observabilité, logs production |
+| **S10** | ✅ FAIT | Polish UX, cohérence design system |
 
 ## Score cible après correction
 
