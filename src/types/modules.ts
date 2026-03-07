@@ -330,7 +330,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     description: 'Suivi commercial et prospection',
     icon: 'Target',
     category: 'outils',
-    deployed: false, // Pas encore déployé officiellement
+    uiSubTab: 'prospection',
     defaultForRoles: [],
     minRole: 'franchisee_admin',
     options: [
