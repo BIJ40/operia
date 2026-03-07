@@ -78,7 +78,6 @@ export async function getUserContext(req: Request): Promise<AuthResult | AuthErr
       globalRoleLevel,
       agencyId: profile.agency_id,
       agencySlug: profile.agence,
-      enabledModules: profile.enabled_modules,
       supportLevel: profile.support_level,
     },
     supabase,
