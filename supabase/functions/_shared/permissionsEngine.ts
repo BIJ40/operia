@@ -236,7 +236,6 @@ export function validateUserPermissions(ctx: PermissionContext): PermissionIssue
 export function extractPermissionContext(profile: any): PermissionContext {
   return {
     globalRole: profile?.global_role || null,
-    enabledModules: profile?.enabled_modules || null,
     agencyId: profile?.agency_id || null,
     supportLevel: profile?.support_level || null,
   };

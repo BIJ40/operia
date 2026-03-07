@@ -277,15 +277,7 @@ serve(async (req) => {
         console.log(`[create-user] ${moduleRows.length} modules par défaut insérés`)
       }
 
-      // Également mettre à jour enabled_modules JSONB pour compatibilité descendante
-      const { error: jsonbError } = await supabaseAdmin
-        .from('profiles')
-        .update({ enabled_modules: defaultModules })
-        .eq('id', newUser.user.id)
-
-      if (jsonbError) {
-        console.error('[create-user] Erreur mise à jour enabled_modules JSONB:', jsonbError)
-      }
+      // V2: enabled_modules JSONB supprimé - user_modules est la seule source de vérité
     }
 
     // Envoyer l'email

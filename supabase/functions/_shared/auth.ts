@@ -176,9 +176,10 @@ export function isSupportAgent(context: UserContext): boolean {
 
 /**
  * Vérifie si l'utilisateur est admin RH
+ * Note: Pour une vérification fiable, utiliser has_module_option_v2() SQL
  */
 export function isRHAdmin(context: UserContext): boolean {
-  return hasModuleOption(context, 'rh', 'rh_admin');
+  return context.globalRoleLevel >= GLOBAL_ROLES.platform_admin;
 }
 
 /**

@@ -11,11 +11,9 @@ import { setSentryUser, clearSentryUser } from '@/lib/sentry';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { EnabledModules, ModuleKey, isModuleEnabled as checkModuleEnabled } from '@/types/modules';
 import { 
-  AccessControlContext,
-  hasGlobalRole as hasGlobalRoleFn,
-  hasModule as hasModuleFn,
-  hasModuleOption as hasModuleOptionFn,
-} from '@/types/accessControl';
+  hasAccess as hasAccessFn, 
+  hasMinRole as hasMinRoleFn,
+} from '@/permissions';
 import { getRoleCapabilities } from '@/config/roleMatrix';
 import { hasAccess, hasMinRole, getUserManagementCapabilities, isModuleEnabled, isModuleOptionEnabled } from '@/permissions';
 import { userModulesToEnabledModules } from '@/lib/userModulesUtils';
