@@ -1,8 +1,9 @@
 /**
- * PERMISSIONS ENGINE V2.0 - Constants
+ * PERMISSIONS ENGINE V3.0 - Constants
  * Règles métier figées et documentées
  * 
- * V2.0: Basé sur global_role (N0-N6). Plus de références legacy.
+ * Source de vérité: MODULE_DEFINITIONS dans src/types/modules.ts
+ * Les rôles minimum par module sont maintenant dans MODULE_DEFINITIONS.minRole
  */
 
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
@@ -23,7 +24,7 @@ export const BYPASS_MIN_LEVEL = GLOBAL_ROLES.platform_admin;
 // ============================================================================
 
 /** Modules qui nécessitent que l'utilisateur ait une agence assignée */
-export const AGENCY_REQUIRED_MODULES: ModuleKey[] = ['pilotage_agence', 'rh', 'parc', 'prospection'];
+export const AGENCY_REQUIRED_MODULES: ModuleKey[] = ['agence', 'rh', 'parc', 'prospection'];
 
 // ============================================================================
 // RÈGLE 3: RÔLES AGENCE
@@ -48,34 +49,28 @@ export const NETWORK_MIN_ROLE: GlobalRole = 'franchisor_user';
 
 /** Mapping rôle -> niveau numérique */
 export const ROLE_HIERARCHY: Record<GlobalRole, number> = {
-  base_user: 0,       // N0
-  franchisee_user: 1, // N1
-  franchisee_admin: 2, // N2
-  franchisor_user: 3,  // N3
-  franchisor_admin: 4, // N4
-  platform_admin: 5,   // N5
-  superadmin: 6        // N6
+  base_user: 0,
+  franchisee_user: 1,
+  franchisee_admin: 2,
+  franchisor_user: 3,
+  franchisor_admin: 4,
+  platform_admin: 5,
+  superadmin: 6
 };
 
 // ============================================================================
 // RÈGLE 6: RÔLE MINIMUM PAR MODULE
 // ============================================================================
 
-/** Rôle minimum requis pour activer chaque module */
-// NOTE: carte_rdv et apporteur_portal sont maintenant des sous-options de pilotage_agence
+/**
+ * Rôle minimum requis pour activer chaque module
+ * @deprecated Utiliser MODULE_DEFINITIONS[x].minRole à la place
+ */
 export const MODULE_MIN_ROLES: Partial<Record<ModuleKey, GlobalRole>> = {
-  help_academy: 'base_user',
-  pilotage_agence: 'franchisee_user',
-  reseau_franchiseur: 'franchisor_user',
-  support: 'base_user',
-  admin_plateforme: 'platform_admin',
-  apogee_tickets: 'base_user',
-  rh: 'base_user',
-  parc: 'franchisee_user',
-  unified_search: 'franchisee_user',
-  // New modules
   agence: 'franchisee_admin',
   stats: 'franchisee_admin',
+  rh: 'base_user',
+  parc: 'franchisee_user',
   divers_apporteurs: 'franchisee_admin',
   divers_plannings: 'franchisee_admin',
   divers_reunions: 'franchisee_admin',
@@ -85,6 +80,14 @@ export const MODULE_MIN_ROLES: Partial<Record<ModuleKey, GlobalRole>> = {
   aide: 'base_user',
   prospection: 'franchisee_admin',
   planning_augmente: 'franchisee_admin',
+  reseau_franchiseur: 'franchisor_user',
+  admin_plateforme: 'platform_admin',
+  // Legacy compat (à supprimer quand user_modules sera migré)
+  help_academy: 'base_user',
+  pilotage_agence: 'franchisee_user',
+  support: 'base_user',
+  apogee_tickets: 'base_user',
+  unified_search: 'franchisee_user',
 };
 
 // ============================================================================
@@ -94,43 +97,54 @@ export const MODULE_MIN_ROLES: Partial<Record<ModuleKey, GlobalRole>> = {
 /** 
  * Rôle minimum requis pour chaque option de module
  * Format: "moduleKey.optionKey" -> GlobalRole
- * 
- * Exemple RH:
- * - coffre: N0/N1 (salarié consulte ses documents)
- * - rh_viewer: N2+ (voir équipe sans paie)
- * - rh_admin: N2+ (gestion complète RH/paie)
  */
 export const MODULE_OPTION_MIN_ROLES: Record<string, GlobalRole> = {
-  // RH - Module N2+ uniquement (portail salarié N1 supprimé v0.8.3)
-  'rh.rh_viewer': 'franchisee_admin', // N2 - Dirigeant voit l'équipe
-  'rh.rh_admin': 'franchisee_admin',  // N2 - Dirigeant gère RH complet
+  // RH
+  'rh.rh_viewer': 'franchisee_admin',
+  'rh.rh_admin': 'franchisee_admin',
   
-  // Support - Agent vs utilisateur
-  'support.agent': 'base_user',       // N0 - Peut être agent support externe
+  // Aide (ex-support)
+  'aide.agent': 'base_user',
+  'aide.user': 'base_user',
   
-  // Parc - Options futures
-  'parc.fleet': 'franchisee_user',    // N1 - Consulte le parc
-  'parc.epi': 'franchisee_user',      // N1 - Consulte les EPI
+  // Parc
+  'parc.vehicules': 'franchisee_user',
+  'parc.epi': 'franchisee_user',
+  'parc.equipements': 'franchisee_user',
   
-  // Help Academy - Options par section
-  'help_academy.apogee': 'base_user',
-  'help_academy.apporteurs': 'base_user',
-  'help_academy.helpconfort': 'base_user',
+  // Agence
+  'agence.indicateurs': 'franchisee_admin',
+  'agence.actions_a_mener': 'franchisee_admin',
+  'agence.diffusion': 'franchisee_admin',
   
-  // Pilotage Agence
-  'pilotage_agence.kpis': 'franchisee_user',
-  'pilotage_agence.indicateurs': 'franchisee_user',
-  'pilotage_agence.stats_hub': 'franchisee_user',
-  'pilotage_agence.actions_a_mener': 'franchisee_user',
-  'pilotage_agence.diffusion': 'franchisee_user',
-  'pilotage_agence.exports': 'franchisee_user',
-  'pilotage_agence.veille_apporteurs': 'franchisee_user',
-  // Ex-modules racines intégrés comme sous-options de pilotage
-  'pilotage_agence.carte_rdv': 'franchisee_user',
-  'pilotage_agence.mes_apporteurs': 'franchisee_admin',
-  'pilotage_agence.gestion_apporteurs': 'franchisee_admin',
+  // Stats
+  'stats.stats_hub': 'franchisee_admin',
+  'stats.exports': 'franchisee_admin',
+
+  // Documents
+  'divers_documents.consulter': 'franchisee_admin',
+  'divers_documents.gerer': 'franchisee_admin',
+  'divers_documents.corbeille_vider': 'franchisee_admin',
+  
+  // Apporteurs
+  'divers_apporteurs.consulter': 'franchisee_admin',
+  'divers_apporteurs.gerer': 'franchisee_admin',
+  
+  // Guides
+  'guides.apogee': 'base_user',
+  'guides.apporteurs': 'base_user',
+  'guides.helpconfort': 'base_user',
+  'guides.faq': 'base_user',
+
+  // Ticketing
+  'ticketing.kanban': 'base_user',
+  'ticketing.create': 'base_user',
+  'ticketing.manage': 'base_user',
+  'ticketing.import': 'platform_admin',
   
   // Prospection
+  'prospection.dashboard': 'franchisee_admin',
+  'prospection.comparateur': 'franchisee_admin',
   'prospection.veille': 'franchisee_admin',
   'prospection.prospects': 'franchisee_admin',
   
@@ -141,27 +155,48 @@ export const MODULE_OPTION_MIN_ROLES: Record<string, GlobalRole> = {
   
   // Admin
   'admin_plateforme.users': 'platform_admin',
-  'admin_plateforme.faq': 'platform_admin',
+  'admin_plateforme.agencies': 'platform_admin',
+  'admin_plateforme.permissions': 'platform_admin',
+  'admin_plateforme.faq_admin': 'platform_admin',
+  
+  // Réseau
+  'reseau_franchiseur.dashboard': 'franchisor_user',
+  'reseau_franchiseur.stats': 'franchisor_user',
+  'reseau_franchiseur.agences': 'franchisor_user',
+  'reseau_franchiseur.redevances': 'franchisor_admin',
+  'reseau_franchiseur.comparatifs': 'franchisor_user',
+
+  // === LEGACY COMPAT (à supprimer quand user_modules migré) ===
+  'support.agent': 'base_user',
+  'support.user': 'base_user',
+  'help_academy.apogee': 'base_user',
+  'help_academy.apporteurs': 'base_user',
+  'help_academy.helpconfort': 'base_user',
+  'help_academy.edition': 'platform_admin',
+  'pilotage_agence.kpis': 'franchisee_user',
+  'pilotage_agence.indicateurs': 'franchisee_user',
+  'pilotage_agence.stats_hub': 'franchisee_user',
+  'pilotage_agence.actions_a_mener': 'franchisee_user',
+  'pilotage_agence.diffusion': 'franchisee_user',
+  'pilotage_agence.exports': 'franchisee_user',
+  'pilotage_agence.carte_rdv': 'franchisee_user',
+  'pilotage_agence.mes_apporteurs': 'franchisee_admin',
+  'pilotage_agence.gestion_apporteurs': 'franchisee_admin',
+  'pilotage_agence.veille_apporteurs': 'franchisee_user',
 };
 
 // ============================================================================
 // RÈGLE 7: LABELS POUR L'UI
 // ============================================================================
 
-// NOTE: carte_rdv et apporteur_portal sont maintenant des sous-options de pilotage_agence
+/**
+ * @deprecated Utiliser MODULE_DEFINITIONS[x].label ou MODULE_SHORT_LABELS à la place
+ */
 export const MODULE_LABELS: Partial<Record<ModuleKey, string>> = {
-  help_academy: 'Help! Academy',
-  pilotage_agence: 'Pilotage Agence',
-  reseau_franchiseur: 'Réseau Franchiseur',
-  support: 'Support',
-  admin_plateforme: 'Administration',
-  apogee_tickets: 'Gestion de Projet',
-  rh: 'RH',
-  parc: 'Parc',
-  unified_search: 'Recherche unifiée',
-  // New modules
   agence: 'Mon agence',
   stats: 'Stats',
+  rh: 'RH',
+  parc: 'Parc',
   divers_apporteurs: 'Apporteurs',
   divers_plannings: 'Plannings',
   divers_reunions: 'Réunions',
@@ -171,4 +206,12 @@ export const MODULE_LABELS: Partial<Record<ModuleKey, string>> = {
   aide: 'Aide',
   prospection: 'Commercial',
   planning_augmente: 'Planification Augmentée',
+  reseau_franchiseur: 'Réseau Franchiseur',
+  admin_plateforme: 'Administration',
+  // Legacy compat
+  help_academy: 'Help! Academy',
+  pilotage_agence: 'Pilotage Agence',
+  support: 'Support',
+  apogee_tickets: 'Gestion de Projet',
+  unified_search: 'Recherche unifiée',
 };

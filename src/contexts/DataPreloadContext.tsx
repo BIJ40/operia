@@ -190,8 +190,7 @@ export function DataPreloadProvider({ children }: { children: ReactNode }) {
       return true;
     }
     // Vérifier les modules stats
-    return hasModuleOption('stats', 'stats_hub') || 
-           hasModuleOption('pilotage_agence', 'stats_hub');
+    return hasModuleOption('stats', 'stats_hub');
   }, [globalRole, hasModuleOption]);
   
   // Fonction de mise à jour de progression throttlée
