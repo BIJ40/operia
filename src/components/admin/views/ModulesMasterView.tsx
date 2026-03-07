@@ -469,7 +469,7 @@ export function ModulesMasterView() {
             <div className="text-center">Déployé</div>
             <div className="text-center">Plan min.</div>
             <div className="text-center">Effectif</div>
-            <div className="text-center">Rôle</div>
+            <div className="text-center">Rôle min.</div>
             <div className="text-center">Privil.</div>
           </div>
 
