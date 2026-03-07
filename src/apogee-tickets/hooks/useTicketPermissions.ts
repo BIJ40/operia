@@ -140,30 +140,15 @@ export function useMyTicketRole() {
           }
           return acc;
         }, {});
-        const profileModuleOptions = profileModuleConfig?.options || {};
-        const moduleOptions = { ...profileModuleOptions, ...userModuleOptions };
+        const moduleOptions = { ...userModuleOptions };
 
-        const canViewKanban = moduleOptions.kanban !== false; // Default true if not explicitly false
-        const canCreate = moduleOptions.create !== false; // Default true if not explicitly false
-        const canImport = moduleOptions.import === true; // Default false
-        const canManage = moduleOptions.manage !== false; // Default true if not explicitly false
+        const canViewKanban = moduleOptions.kanban !== false;
+        const canCreate = moduleOptions.create !== false;
+        const canImport = moduleOptions.import === true;
+        const canManage = moduleOptions.manage !== false;
 
-        // Accès effectif: RPC + fallback local (robuste si RPC indisponible ou migration en cours)
+        // Accès effectif: RPC + fallback local
         const hasEffectiveTicketingAccess = hasRpcTicketingAccess || hasLocalTicketingAccess;
-
-        console.log('[MY-TICKET-ROLE] 🧮 Access decision:', {
-          effectiveGlobalRole,
-          isN5Plus,
-          hasRpcTicketingAccess,
-          isModuleEnabledViaUserModules,
-          isModuleEnabledViaProfile,
-          hasLocalTicketingAccess,
-          hasEffectiveTicketingAccess,
-          moduleOptions,
-          canViewKanban,
-          canCreate,
-          canManage,
-        });
 
         // Cas 2: Module non activé et pas admin
         if (!hasEffectiveTicketingAccess && !isN5Plus) {
