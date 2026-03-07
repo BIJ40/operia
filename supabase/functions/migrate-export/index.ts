@@ -299,6 +299,6 @@ Deno.serve(async (req) => {
     }, 400);
 
   } catch (err) {
-    return jsonResponse({ error: String(err) }, 500);
+    return respond({ error: String(err) }, 500);
   }
 });
