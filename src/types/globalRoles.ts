@@ -42,15 +42,15 @@ export const GLOBAL_ROLE_DESCRIPTIONS: Record<GlobalRole, string> = {
   superadmin: 'Accès total à toutes les fonctionnalités',
 };
 
-// Couleurs pour badges
+// Couleurs pour badges — utilise des tokens sémantiques via classes utilitaires
 export const GLOBAL_ROLE_COLORS: Record<GlobalRole, string> = {
-  base_user: 'bg-gray-100 text-gray-800',
-  franchisee_user: 'bg-blue-100 text-blue-800',
-  franchisee_admin: 'bg-indigo-100 text-indigo-800',
-  franchisor_user: 'bg-purple-100 text-purple-800',
-  franchisor_admin: 'bg-pink-100 text-pink-800',
-  platform_admin: 'bg-orange-100 text-orange-800',
-  superadmin: 'bg-red-100 text-red-800',
+  base_user: 'bg-muted text-muted-foreground',
+  franchisee_user: 'bg-primary/10 text-primary',
+  franchisee_admin: 'bg-primary/20 text-primary',
+  franchisor_user: 'bg-accent/20 text-accent-foreground',
+  franchisor_admin: 'bg-accent/30 text-accent-foreground',
+  platform_admin: 'bg-destructive/10 text-destructive',
+  superadmin: 'bg-destructive/20 text-destructive',
 };
 
 /**
