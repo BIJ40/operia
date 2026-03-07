@@ -107,7 +107,7 @@ export const UserProfileSheet = memo(function UserProfileSheet({
       if (!collaborator?.id) return null;
       const { data, error } = await supabase
         .from('employment_contracts')
-        .select('contract_type, start_date, end_date, position, weekly_hours')
+        .select('contract_type, start_date, end_date, job_title, weekly_hours')
         .eq('collaborator_id', collaborator.id)
         .order('start_date', { ascending: false })
         .limit(1)
