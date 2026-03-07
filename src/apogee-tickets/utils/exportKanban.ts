@@ -195,7 +195,8 @@ export function exportToCSV(options: ExportOptions): void {
 
 // ============ EXPORT EXCEL ============
 
-export function exportToExcel(options: ExportOptions): void {
+export async function exportToExcel(options: ExportOptions): Promise<void> {
+  const XLSX = await import('xlsx');
   const { tickets, statuses, modules, priorities, ownerSides } = options;
   
   const workbook = XLSX.utils.book_new();
