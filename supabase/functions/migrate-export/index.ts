@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
 
       const totalRows = tableInfos.reduce((sum, t) => sum + Math.max(t.count, 0), 0);
 
-      return jsonResponse({
+      return respond({
         mode: 'tables',
         tables: tableInfos.sort((a, b) => a.import_position - b.import_position),
         import_order: importOrder,
