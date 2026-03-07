@@ -233,36 +233,6 @@ export type Database = {
           },
         ]
       }
-      agency_module_overrides: {
-        Row: {
-          agency_id: string
-          created_at: string | null
-          forced_enabled: boolean | null
-          id: string
-          module_key: string
-          options_override: Json | null
-          set_by: string | null
-        }
-        Insert: {
-          agency_id: string
-          created_at?: string | null
-          forced_enabled?: boolean | null
-          id?: string
-          module_key: string
-          options_override?: Json | null
-          set_by?: string | null
-        }
-        Update: {
-          agency_id?: string
-          created_at?: string | null
-          forced_enabled?: boolean | null
-          id?: string
-          module_key?: string
-          options_override?: Json | null
-          set_by?: string | null
-        }
-        Relationships: []
-      }
       agency_rh_roles: {
         Row: {
           agency_id: string
