@@ -11,7 +11,8 @@ import { useSearchParams } from 'react-router-dom';
 import { 
   Home, BarChart3, ClipboardList, 
   MoreHorizontal, Ticket, HelpCircle,
-  Loader2, BookOpen, Shield, User, Building2, LogOut, Settings, Eye, FolderOpen, FlaskConical
+  Loader2, BookOpen, Shield, User, Building2, LogOut, Settings, Eye, FolderOpen, FlaskConical,
+  Leaf, Droplets, Moon, Monitor, Palette
 } from 'lucide-react';
 import { 
   DndContext, 
