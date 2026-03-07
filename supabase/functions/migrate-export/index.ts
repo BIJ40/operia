@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
     if (mode === 'export') {
       const table = url.searchParams.get('table');
       if (!table) {
-        return jsonResponse({ error: 'Parametre table requis' }, 400);
+        return respond({ error: 'Parametre table requis' }, 400);
       }
 
       const pageParam = url.searchParams.get('page');
