@@ -1,17 +1,28 @@
 
 
-## Fix: Popover des tags ne se ferme pas au premier clic extérieur
+## Probleme identifie
 
-### Cause racine
+Le `useEffect` dans `AppContent` tente de detecter `type=recovery` dans le hash URL pour rediriger vers `/reset-password`. Mais il y a une **race condition** : le client Supabase traite le token du hash **avant** que le `useEffect` ne s'execute, ce qui :
+1. Etablit une session authentifiee (l'utilisateur est connecte)
+2. Consomme/nettoie le hash de l'URL
+3. Le `useEffect` ne trouve plus `type=recovery` dans le hash
 
-Le wrapper du contenu du popover (ligne 67) a un `onPointerDown={(e) => e.stopPropagation()}` global. Cela empêche parfois Radix de détecter correctement le clic extérieur via son "dismiss layer", nécessitant un second clic.
+Resultat : l'utilisateur se retrouve connecte sur `/` (qui affiche le dashboard ou le login) au lieu d'etre redirige vers le formulaire de nouveau mot de passe.
 
-Le `onClick={(e) => e.stopPropagation()}` (ligne 66) pose le même problème potentiel.
+## Solution
 
-### Solution
+Ecouter l'evenement `PASSWORD_RECOVERY` de Supabase dans `AppContent` et rediriger vers `/reset-password` quand cet evenement se declenche. C'est fiable car Supabase emet cet evenement **apres** avoir traite le token, et la session est deja etablie.
 
-Supprimer les `stopPropagation` globaux sur le wrapper du popoverContent. Les `stopPropagation` individuels sur les boutons de suppression de tags (croix "X") et les boutons de toggle suffisent déjà à empêcher les conflits avec les lignes du tableau parent.
+### Fichier modifie : `src/App.tsx`
 
-### Fichier modifié
-- `src/apogee-tickets/components/TagSelector.tsx` — Retirer `onClick` et `onPointerDown` avec `stopPropagation` du div wrapper du popoverContent (lignes 66-67).
+- Remplacer le `useEffect` qui detecte `type=recovery` dans le hash par un listener `supabase.auth.onAuthStateChange` qui ecoute l'evenement `PASSWORD_RECOVERY`
+- Quand l'evenement est detecte, `navigate('/reset-password', { replace: true })`
+- La page `ResetPassword` n'a plus besoin du hash — elle verifie juste la session existante (deja implemente avec `getSession`)
+
+### Fichier modifie : `src/pages/ResetPassword.tsx`
+
+- Simplifier la detection : au lieu d'attendre uniquement `PASSWORD_RECOVERY`, accepter aussi une session existante directement (deja fait)
+- Aucun changement majeur necessaire
+
+### Aucun autre fichier modifie
 
