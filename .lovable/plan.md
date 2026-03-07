@@ -79,3 +79,10 @@
 - S4-3: `window.__PLANNING_STATES__` debug global supprimé
 - S4-4: RLS `pending_registrations` INSERT (true) = volontaire (formulaire public)
 - S4-5: Leaked password protection → à activer manuellement dans Supabase Auth
+
+## Audit Remédiation — Sprint 5 ✅ FAIT (Qualité code)
+- R5-1: Extraction SortableCategory (210 lignes) → `src/components/guides/apogee/SortableCategory.tsx`
+- R5-2: ApogeeGuide.tsx réduit de 624 → ~355 lignes
+- R5-3: Hooks React corrigés (useMemo avant early return)
+- R5-4: apogeeCategories memoizé avec useMemo
+- R5-5: pg_trgm déjà dans extensions schema (confirmé OK)
