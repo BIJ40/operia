@@ -113,16 +113,13 @@ export function UserEditForm({
   // Synchroniser formData avec user
   useEffect(() => {
     if (user) {
-      const modules = user.enabled_modules as any;
-      const supportLevel = modules?.support?.options?.level || 1;
-      
       setFormData({
         firstName: user.first_name || '',
         lastName: user.last_name || '',
         email: user.email || '',
         agence: user.agence || '',
         roleAgence: user.role_agence || '',
-        supportLevel,
+        supportLevel: user.support_level || 1,
         globalRole: user.global_role || 'base_user',
         apogeeUserId: user.apogee_user_id ?? undefined,
       });
