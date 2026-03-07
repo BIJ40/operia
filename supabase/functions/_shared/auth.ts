@@ -150,24 +150,20 @@ export function hasModule(
 
 /**
  * Vérifie si une option de module est activée
+ * DEPRECATED côté Edge: préférer has_module_option_v2() SQL
  */
 export function hasModuleOption(
   context: UserContext, 
-  moduleKey: string, 
-  optionKey: string
+  _moduleKey: string, 
+  _optionKey: string
 ): boolean {
   // N5+ a accès à tout
   if (context.globalRoleLevel >= GLOBAL_ROLES.platform_admin) {
     return true;
   }
   
-  const module = context.enabledModules?.[moduleKey];
-  if (!module || typeof module !== 'object') return false;
-  
-  const options = (module as any).options;
-  if (!options || typeof options !== 'object') return false;
-  
-  return options[optionKey] === true;
+  // Edge functions should use SQL has_module_option_v2() for accurate checks
+  return false;
 }
 
 /**
