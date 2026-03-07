@@ -1,17 +1,15 @@
 /**
  * Phase 3 - Composant simplifié d'affichage des accès utilisateur
  * Remplace la matrice complexe par une vue épurée
- * Affiche un badge "Protégé" pour les utilisateurs de la whitelist
  */
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Shield, Building2, Zap, Lock } from 'lucide-react';
+import { Shield, Building2, Zap } from 'lucide-react';
 import { GlobalRole } from '@/types/globalRoles';
 import { EnabledModules, MODULE_DEFINITIONS } from '@/types/modules';
 import { getVisibleRoleLabel, getVisibleRoleColor } from '@/lib/visibleRoleLabels';
-import { isHardcodedProtectedUser } from '@/hooks/access-rights/useProtectedAccess';
 
 interface UserAccessSimpleProps {
   userId: string;
@@ -19,7 +17,6 @@ interface UserAccessSimpleProps {
   agencyLabel?: string | null;
   enabledModules: EnabledModules | null;
   planLabel?: string | null;
-  isProtected?: boolean;
 }
 
 /**
@@ -52,29 +49,13 @@ export function UserAccessSimple({
   agencyLabel,
   enabledModules,
   planLabel,
-  isProtected: isProtectedProp,
 }: UserAccessSimpleProps) {
-  // Vérifier si l'utilisateur est dans la whitelist de protection
-  const isProtected = isProtectedProp ?? isHardcodedProtectedUser(userId);
   const activeModuleCount = countActiveModules(enabledModules);
   const activeModuleLabels = getActiveModuleLabels(enabledModules);
 
   return (
     <Card className="border-0 shadow-none">
       <CardContent className="p-4 space-y-4">
-        {/* Badge protégé si applicable */}
-        {isProtected && (
-          <div className="flex items-center gap-2 p-2 rounded-md bg-amber-50 border border-amber-200">
-            <Lock className="h-4 w-4 text-amber-600" />
-            <span className="text-sm font-medium text-amber-700">
-              Accès protégé
-            </span>
-            <Badge variant="outline" className="ml-auto text-amber-600 border-amber-300">
-              Verrouillé
-            </Badge>
-          </div>
-        )}
-
         {/* Ligne 1: Rôle */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
