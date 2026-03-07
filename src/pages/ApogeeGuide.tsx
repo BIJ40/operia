@@ -82,6 +82,12 @@ export default function ApogeeGuide() {
     };
   }, [blocks]);
 
+  if (!isAuthenticated) {
+    return <Navigate to={ROUTES.home} replace />;
+  }
+
+  const effectiveEditMode = isEditMode && canEdit;
+
   const tileClass = "bg-gradient-to-r from-helpconfort-blue/10 via-helpconfort-blue/5 to-transparent border-helpconfort-blue/20 border-l-helpconfort-blue hover:from-helpconfort-blue/15 hover:via-helpconfort-blue/8 hover:border-helpconfort-blue/30 hover:shadow-lg";
 
   const IconComponent = (iconName: string) => {
