@@ -190,20 +190,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('Timeout: chargement profil trop long');
       }, 10000);
 
-      // Requête profil
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('first_name, last_name, agence, agency_id, role_agence, must_change_password, global_role, is_active, is_read_only')
-        .eq('id', userId)
-        .single();
-      
-      // Appeler la RPC qui combine plan agence + overrides utilisateur
-      const { data: effectiveModules, error: modulesError } = await supabase.rpc(
-        'get_user_effective_modules',
-        { p_user_id: userId }
-      );
+      // Requêtes parallèles : profil + modules effectifs
+      const [profileResult, modulesResult] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('first_name, last_name, agence, agency_id, role_agence, must_change_password, global_role, is_active, is_read_only')
+          .eq('id', userId)
+          .single(),
+        supabase.rpc('get_user_effective_modules', { p_user_id: userId }),
+      ]);
       
       clearTimeout(timeoutId);
+
+      const { data: profile, error: profileError } = profileResult;
+      const { data: effectiveModules, error: modulesError } = modulesResult;
       
       if (profileError) {
         logAuth.error('Erreur requête profil:', profileError);
