@@ -138,15 +138,27 @@ export const MODULE_OPTIONS = {
 export type ModuleOptionPath = typeof MODULE_OPTIONS[ModuleKey][keyof typeof MODULE_OPTIONS[ModuleKey]];
 
 // Métadonnées des modules pour l'UI
-export type ModuleCategory = 'agence' | 'rh' | 'outils' | 'guides' | 'ticketing' | 'support' | 'reseau' | 'admin';
+// Les catégories correspondent EXACTEMENT aux onglets de niveau 1 du workspace
+export type ModuleCategory = 
+  | 'stats'       // Onglet "Stats"
+  | 'salaries'    // Onglet "Salariés"
+  | 'outils'      // Onglet "Outils" (Actions, Apporteurs, Administratif, Parc, Performance, Commercial)
+  | 'documents'   // Onglet "Documents" (Médiathèque)
+  | 'guides'      // Onglet "Guides" (Apogée, Apporteurs, HelpConfort, FAQ)
+  | 'ticketing'   // Onglet "Ticketing" (Liste, Kanban, Revue, Historique)
+  | 'aide'        // Onglet "Aide" (Support)
+  | 'reseau'      // Onglet "Franchiseur" (visible N3+)
+  | 'admin';      // Onglet "Admin" (visible N5+)
 
 export interface ModuleDefinition {
   key: ModuleKey;
   label: string;
   description: string;
   icon: string;
-  /** Catégorie UI pour le regroupement (reflète les onglets principaux) */
+  /** Catégorie UI = onglet de niveau 1 du workspace */
   category: ModuleCategory;
+  /** Sous-onglet de niveau 2 dans l'onglet parent (ex: 'parc' dans Outils) */
+  uiSubTab?: string;
   defaultForRoles: GlobalRole[];
   minRole: GlobalRole;
   options: ModuleOptionDefinition[];
