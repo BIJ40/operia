@@ -1,48 +1,36 @@
-# Refonte du système de modules/permissions
 
-## Étape 1 : Source unique consolidée ✅ FAIT
-- `MODULE_DEFINITIONS` dans `src/types/modules.ts` = source unique
-- `category: ModuleCategory` + `deployed?: boolean` par module
-- `DEPLOYED_MODULES` / `PLAN_VISIBLE_MODULES` auto-dérivés
 
-## Étape 2 : Gestion fine des options dans les plans ✅ FAIT
-- `PlansManagerView` : options togglables individuellement via `options_override` JSONB
-- Logique 3 états: hérité | activé | exclu
+# Correction : autoriser les surcharges de plan enfant
 
-## Étape 3 : Cascade Plan → Rôle → Override utilisateur ✅ FAIT
-- RPC `get_user_effective_modules` : Plan agence → User overrides (serveur)
-- `useEffectiveModules` : filtre par `minRole` (client)
-- N5+ bypass complet
+## Problème
 
-## Étape 4 : Nettoyage legacy ✅ FAIT
+La règle actuelle "parent PRO → enfants effectivement PRO minimum" empêche le cas d'usage principal : mettre Stats en PRO mais garder Général en Basique.
 
-### Changements effectués
+## Nouvelle règle
 
-1. **`src/permissions/constants.ts`** :
-   - Réécrit proprement avec modules V3 comme source principale
-   - Legacy entries conservées en section `// Legacy compat` annotée
-   - `@deprecated` sur MODULE_MIN_ROLES et MODULE_LABELS (utiliser MODULE_DEFINITIONS)
+- **`is_deployed`** : cascade stricte. Parent OFF = enfants effectivement OFF. Pas de surcharge possible.
+- **`required_plan`** : PAS de cascade. Chaque noeud porte sa propre valeur. Un enfant STARTER sous un parent PRO reste effectivement STARTER.
 
-2. **`src/contexts/AuthContext.tsx`** :
-   - `isSupport` vérifie maintenant `aide` ET `support` (legacy compat)
-   - Support agent/admin detection cherche `aide` en priorité, `support` en fallback
+Concrètement : `Stats = PRO, Stats > Général = STARTER` → une agence Basique voit Général mais pas les autres onglets Stats.
 
-3. **`src/types/accessControl.ts`** :
-   - `isSupportAgent()` et `isSupportAdmin()` vérifient `aide` + `support`
+## Fichiers impactés
 
-4. **`src/contexts/DataPreloadContext.tsx`** :
-   - Suppression fallback `pilotage_agence.stats_hub` (utilise `stats.stats_hub` uniquement)
+### 1. `src/hooks/access-rights/useModuleRegistry.ts`
+Modifier `buildNode()` : supprimer l'héritage de `required_plan` du parent. La valeur effective du plan = la valeur propre du noeud. Seul `effectiveDeployed` hérite du parent.
 
-5. **`src/hooks/useGlobalFeatureFlags.ts`** :
-   - Simplifié : plus de mapping legacy complexe
-   - Note claire : "outil de dev tracking, pas de permissions"
+### 2. Migration SQL — RPC `get_user_effective_modules`
+Modifier le recursive CTE : retirer la logique `WHEN dt.effective_plan = 'PRO' THEN 'PRO'`. Chaque noeud utilise son propre `required_plan` directement.
 
-6. **`src/hooks/access-rights/useEffectiveModules.ts`** :
-   - `MODULE_COMPAT_MAP` conservé (seul endroit de rétrocompat runtime)
-   - Sera supprimé quand `user_modules` sera migré en base
+### 3. `ModulesMasterView.tsx`
+Adapter l'affichage : la colonne "Effectif" ne diffère de "Plan min." que pour les noeuds dont le parent est non déployé (grisé). Plus de badge "hérité contraint" pour le plan.
 
-### Ce qui reste legacy (volontairement conservé)
-- `MODULES` const dans `types/modules.ts` : clés legacy (help_academy, etc.) pour le type ModuleKey
-- `EnabledModules` interface : propriétés legacy pour rétrocompat
-- `MODULE_COMPAT_MAP` dans `useEffectiveModules` : mapping runtime
-- `sitemapData.ts` : guards legacy (à migrer vers nouveaux module keys)
+## Résultat
+
+| Noeud | Plan min. | Effectif | Déployé |
+|-------|-----------|----------|---------|
+| Stats | PRO | PRO | Oui |
+| └ Général | Basique | **Basique** | Oui |
+| └ Prévisionnel | PRO | PRO | Oui |
+
+Une agence Basique verra Stats > Général uniquement. Les autres onglets Stats restent PRO.
+
