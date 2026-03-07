@@ -1,27 +1,22 @@
 /**
  * BaseQueryService — Standardized Supabase query patterns.
  * 
- * Provides typed, bounded queries with consistent error handling.
+ * Provides bounded queries with consistent error handling.
  * All listing queries enforce a default limit to prevent unbounded fetches.
  * 
  * Usage:
  * ```ts
- * // Use the factory functions for type-safe queries:
  * const items = await queryList('collaborators', {
  *   agencyId, orderBy: 'last_name', limit: 200
  * });
- * const item = await queryById('profiles', userId);
  * ```
  */
 
 import { supabase } from '@/integrations/supabase/client';
 import { logError } from '@/lib/logger';
-import type { Database } from '@/integrations/supabase/types';
 
-// Default maximum rows for listing queries
-const DEFAULT_LIST_LIMIT = 500;
-
-type TableName = keyof Database['public']['Tables'];
+/** Default maximum rows for listing queries */
+export const DEFAULT_LIST_LIMIT = 500;
 
 export interface ListOptions {
   /** Agency ID filter */
@@ -38,10 +33,10 @@ export interface ListOptions {
  * List records from a table with automatic limit enforcement.
  * Always returns a bounded result set.
  */
-export async function queryList<T extends TableName>(
-  table: T,
+export async function queryList(
+  table: string,
   options: ListOptions = {},
-): Promise<Database['public']['Tables'][T]['Row'][]> {
+) {
   const {
     agencyId,
     limit = DEFAULT_LIST_LIMIT,
@@ -49,91 +44,69 @@ export async function queryList<T extends TableName>(
     ascending = true,
   } = options;
 
-  try {
-    let query = supabase
-      .from(table)
-      .select('*')
-      .limit(limit);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let query = (supabase as any).from(table).select('*').limit(limit);
 
-    if (agencyId) {
-      query = query.eq('agency_id' as any, agencyId);
-    }
+  if (agencyId) {
+    query = query.eq('agency_id', agencyId);
+  }
+  if (orderBy) {
+    query = query.order(orderBy, { ascending });
+  }
 
-    if (orderBy) {
-      query = query.order(orderBy as any, { ascending });
-    }
+  const { data, error } = await query;
 
-    const { data, error } = await query;
-
-    if (error) {
-      logError(`[queryList:${table}] failed:`, error);
-      throw error;
-    }
-
-    return (data ?? []) as Database['public']['Tables'][T]['Row'][];
-  } catch (error) {
-    logError(`[queryList:${table}] exception:`, error);
+  if (error) {
+    logError(`[queryList:${table}]`, error);
     throw error;
   }
+
+  return data ?? [];
 }
 
 /**
  * Get a single record by ID.
  */
-export async function queryById<T extends TableName>(
-  table: T,
-  id: string,
-): Promise<Database['public']['Tables'][T]['Row'] | null> {
-  try {
-    const { data, error } = await supabase
-      .from(table)
-      .select('*')
-      .eq('id' as any, id)
-      .maybeSingle();
+export async function queryById(table: string, id: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from(table)
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
 
-    if (error) {
-      logError(`[queryById:${table}] failed:`, error);
-      throw error;
-    }
-
-    return data as Database['public']['Tables'][T]['Row'] | null;
-  } catch (error) {
-    logError(`[queryById:${table}] exception:`, error);
+  if (error) {
+    logError(`[queryById:${table}]`, error);
     throw error;
   }
+
+  return data;
 }
 
 /**
  * Count records matching optional agency filter.
  */
-export async function queryCount<T extends TableName>(
-  table: T,
+export async function queryCount(
+  table: string,
   options: Pick<ListOptions, 'agencyId'> = {},
 ): Promise<number> {
   const { agencyId } = options;
 
-  try {
-    let query = supabase
-      .from(table)
-      .select('*', { count: 'exact', head: true });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let query = (supabase as any)
+    .from(table)
+    .select('*', { count: 'exact', head: true });
 
-    if (agencyId) {
-      query = query.eq('agency_id' as any, agencyId);
-    }
+  if (agencyId) {
+    query = query.eq('agency_id', agencyId);
+  }
 
-    const { count, error } = await query;
+  const { count, error } = await query;
 
-    if (error) {
-      logError(`[queryCount:${table}] failed:`, error);
-      throw error;
-    }
-
-    return count ?? 0;
-  } catch (error) {
-    logError(`[queryCount:${table}] exception:`, error);
+  if (error) {
+    logError(`[queryCount:${table}]`, error);
     throw error;
   }
-}
 
-/** Re-export the default limit for hooks that need it */
-export { DEFAULT_LIST_LIMIT };
+  return count ?? 0;
+}
