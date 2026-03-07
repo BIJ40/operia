@@ -136,7 +136,7 @@ export function useOnboardingState() {
         .eq('id', user.id);
 
       if (error) {
-        console.error('[Onboarding] Dismiss error:', error);
+        logError('[Onboarding] Dismiss error:', error);
         toast.error('Erreur lors de la sauvegarde');
         return { success: false };
       }
