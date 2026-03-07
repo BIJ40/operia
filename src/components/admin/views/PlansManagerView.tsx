@@ -1,21 +1,21 @@
 /**
  * PlansManagerView - Interface de gestion des plans tarifaires
- * Affiche un arbre modules/options × plans avec des toggles
+ * Arbre modules/options × plans (Basique/Pro) avec toggles individuels
  * Cocher un module parent propage aux options enfants
+ * Chaque option peut être overridée individuellement
  */
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { usePlanTiers, useUpdatePlanTierModule } from '@/hooks/access-rights/usePlanTiers';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Crown, Check, X, Info, ChevronDown, ChevronRight } from 'lucide-react';
+import { Crown, Check, X, Info, ChevronDown, ChevronRight, Minus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getPlanColorClass } from '@/config/planTiers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { PLAN_VISIBLE_MODULES, MODULE_DEFINITIONS, DEPLOYED_MODULES, ModuleCategory } from '@/types/modules';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { DEPLOYED_MODULES, ModuleCategory, type ModuleDefinition, type PlanTierModuleKey } from '@/types/modules';
 
 // Legacy keys exclus de la vue plans
 const LEGACY_MODULE_KEYS = ['help_academy', 'pilotage_agence', 'support', 'apogee_tickets', 'unified_search'];
@@ -60,16 +60,70 @@ export function PlansManagerView() {
     }))
     .filter(g => g.modules.length > 0);
 
-  const isModuleEnabled = (tierKey: string, moduleKey: string): boolean => {
+  const getModuleData = (tierKey: string, moduleKey: string) => {
     const tier = planTiers?.find(p => p.key === tierKey);
-    if (!tier) return false;
-    const module = tier.plan_tier_modules?.find(m => m.module_key === moduleKey);
-    return module?.enabled ?? false;
+    if (!tier) return null;
+    return tier.plan_tier_modules?.find(m => m.module_key === moduleKey) || null;
   };
 
-  const handleToggle = (tierKey: string, moduleKey: string, enabled: boolean) => {
-    updateModule.mutate({ tierKey, moduleKey, enabled });
+  const isModuleEnabled = (tierKey: string, moduleKey: string): boolean => {
+    return getModuleData(tierKey, moduleKey)?.enabled ?? false;
   };
+
+  const isOptionEnabled = (tierKey: string, moduleKey: string, optionKey: string): boolean => {
+    const moduleData = getModuleData(tierKey, moduleKey);
+    if (!moduleData?.enabled) return false;
+    // Si options_override a une valeur pour cette option, l'utiliser
+    const override = moduleData.options_override as Record<string, boolean> | null;
+    if (override && optionKey in override) {
+      return override[optionKey];
+    }
+    // Sinon, hériter du module parent (activé = toutes options activées par défaut)
+    return true;
+  };
+
+  const getOptionState = (tierKey: string, moduleKey: string, optionKey: string): 'on' | 'off' | 'inherited' => {
+    const moduleData = getModuleData(tierKey, moduleKey);
+    if (!moduleData?.enabled) return 'off';
+    const override = moduleData.options_override as Record<string, boolean> | null;
+    if (override && optionKey in override) {
+      return override[optionKey] ? 'on' : 'off';
+    }
+    return 'inherited';
+  };
+
+  const handleModuleToggle = useCallback((tierKey: string, moduleKey: string, enabled: boolean) => {
+    // Quand on toggle le module parent, reset les options overrides
+    updateModule.mutate({ tierKey, moduleKey, enabled, optionsOverride: undefined });
+  }, [updateModule]);
+
+  const handleOptionToggle = useCallback((tierKey: string, moduleDef: ModuleDefinition, optionKey: string) => {
+    const moduleData = getModuleData(tierKey, moduleDef.key);
+    if (!moduleData?.enabled) return;
+
+    const currentOverride = (moduleData.options_override as Record<string, boolean> | null) || {};
+    const currentState = getOptionState(tierKey, moduleDef.key, optionKey);
+    
+    let newOverride: Record<string, boolean>;
+    if (currentState === 'inherited' || currentState === 'on') {
+      // Désactiver cette option
+      newOverride = { ...currentOverride, [optionKey]: false };
+    } else {
+      // Réactiver: supprimer l'override pour revenir à inherited
+      newOverride = { ...currentOverride };
+      delete newOverride[optionKey];
+    }
+
+    // Si l'override est vide, le mettre à null
+    const finalOverride = Object.keys(newOverride).length > 0 ? newOverride : undefined;
+
+    updateModule.mutate({ 
+      tierKey, 
+      moduleKey: moduleDef.key, 
+      enabled: true, 
+      optionsOverride: finalOverride 
+    });
+  }, [updateModule, planTiers]);
 
   const toggleModuleExpand = (moduleKey: string) => {
     setExpandedModules(prev => {
@@ -107,7 +161,7 @@ export function PlansManagerView() {
         </div>
         <CardDescription>
           Définissez quels modules et options sont inclus dans chaque plan. 
-          L'arbre reflète exactement les onglets de la plateforme.
+          Cochez le module parent pour propager à toutes les options, ou cliquez sur une option pour l'overrider individuellement.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -184,7 +238,7 @@ export function PlansManagerView() {
                                   <div className="flex items-center gap-2">
                                     <Switch
                                       checked={enabled}
-                                      onCheckedChange={(checked) => handleToggle(tier.key, moduleDef.key, checked)}
+                                      onCheckedChange={(checked) => handleModuleToggle(tier.key, moduleDef.key, checked)}
                                       disabled={updateModule.isPending}
                                     />
                                     {enabled ? (
@@ -196,8 +250,8 @@ export function PlansManagerView() {
                                 </TooltipTrigger>
                                 <TooltipContent>
                                   {enabled 
-                                    ? `${moduleDef.label} est inclus dans ${tier.label}`
-                                    : `${moduleDef.label} n'est pas inclus dans ${tier.label}`
+                                    ? `${moduleDef.label} inclus dans ${tier.label}. ${hasOptions ? 'Déplier pour voir les options.' : ''}`
+                                    : `${moduleDef.label} non inclus dans ${tier.label}`
                                   }
                                 </TooltipContent>
                               </Tooltip>
@@ -206,7 +260,7 @@ export function PlansManagerView() {
                         })}
                       </div>
 
-                      {/* Options rows (escalier) */}
+                      {/* Options rows (escalier) - gestion fine par option */}
                       {hasOptions && isExpanded && (
                         <div className="bg-muted/5">
                           {moduleDef.options.map(option => (
@@ -222,15 +276,49 @@ export function PlansManagerView() {
                               
                               {editablePlans.map((tier) => {
                                 const moduleEnabled = isModuleEnabled(tier.key, moduleDef.key);
-                                // Options héritent du module parent pour l'instant
-                                // (la gestion fine des options par plan viendra à l'étape 2)
+                                const optEnabled = isOptionEnabled(tier.key, moduleDef.key, option.key);
+                                const optState = getOptionState(tier.key, moduleDef.key, option.key);
+
                                 return (
                                   <div 
                                     key={`${tier.key}-${moduleDef.key}-${option.key}`}
                                     className="px-4 py-2 flex items-center justify-center border-l border-border/50"
                                   >
                                     {moduleEnabled ? (
-                                      <Check className="h-3.5 w-3.5 text-primary/60" />
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <button
+                                            onClick={() => handleOptionToggle(tier.key, moduleDef, option.key)}
+                                            disabled={updateModule.isPending}
+                                            className={cn(
+                                              "flex items-center gap-1.5 px-2 py-1 rounded text-xs transition-colors",
+                                              optEnabled 
+                                                ? optState === 'inherited'
+                                                  ? "text-primary/70 hover:bg-primary/10"
+                                                  : "text-primary font-medium hover:bg-primary/10"
+                                                : "text-muted-foreground/50 hover:bg-muted/30"
+                                            )}
+                                          >
+                                            {optEnabled ? (
+                                              <Check className={cn(
+                                                "h-3.5 w-3.5",
+                                                optState === 'inherited' ? "text-primary/60" : "text-primary"
+                                              )} />
+                                            ) : (
+                                              <X className="h-3.5 w-3.5 text-destructive/50" />
+                                            )}
+                                            {optState === 'inherited' && <span className="text-[10px] text-muted-foreground">hérité</span>}
+                                          </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          {optEnabled 
+                                            ? optState === 'inherited' 
+                                              ? `${option.label} hérité du module parent. Cliquez pour exclure.`
+                                              : `${option.label} activé explicitement. Cliquez pour exclure.`
+                                            : `${option.label} exclu. Cliquez pour réactiver (héritage parent).`
+                                          }
+                                        </TooltipContent>
+                                      </Tooltip>
                                     ) : (
                                       <X className="h-3.5 w-3.5 text-muted-foreground/30" />
                                     )}
@@ -250,14 +338,19 @@ export function PlansManagerView() {
         </div>
 
         {/* Legend */}
-        <div className="mt-4 flex items-center gap-6 text-sm text-muted-foreground">
+        <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Check className="h-4 w-4 text-primary" />
             <span>Inclus dans le plan</span>
           </div>
           <div className="flex items-center gap-2">
-            <X className="h-4 w-4 text-muted-foreground/50" />
-            <span>Non inclus</span>
+            <Check className="h-4 w-4 text-primary/60" />
+            <span className="text-[10px] bg-muted/50 px-1 rounded">hérité</span>
+            <span>Hérité du module parent</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <X className="h-4 w-4 text-destructive/50" />
+            <span>Exclu du plan</span>
           </div>
           <div className="flex items-center gap-2 ml-auto">
             <Info className="h-4 w-4" />
