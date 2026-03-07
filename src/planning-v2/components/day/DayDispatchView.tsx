@@ -226,7 +226,7 @@ export function DayDispatchView({
   return (
     <>
       <div className="h-full overflow-auto" ref={scrollRef}>
-        <div className="inline-flex min-w-full">
+        <div className="flex min-w-full">
           {/* ── Time Axis (sticky left) ── */}
           <div
             className="sticky left-0 z-30 bg-card border-r border-border shrink-0"
