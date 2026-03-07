@@ -253,8 +253,8 @@ export function DayDispatchView({
             return (
               <div
                 key={tech.id}
-                className={`shrink-0 border-r border-border ${isUnavailable ? "opacity-50" : ""}`}
-                style={{ minWidth: TECH_COLUMN_MIN_WIDTH, width: TECH_COLUMN_MIN_WIDTH }}
+                className={`border-r border-border ${isUnavailable ? "opacity-50" : ""}`}
+                style={{ minWidth: TECH_COLUMN_MIN_WIDTH, flex: '1 1 0%' }}
               >
                 {/* Sticky header */}
                 <div className="sticky top-0 z-20 bg-card border-b border-border">
