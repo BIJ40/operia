@@ -131,24 +131,20 @@ export function assertAgencyAccess(
 
 /**
  * Vérifie si un module est activé pour l'utilisateur
+ * DEPRECATED côté Edge: préférer has_module_v2() SQL pour les vérifications DB
+ * Gardé pour compatibilité des Edge Functions qui n'ont pas accès à la DB directement
  */
 export function hasModule(
   context: UserContext, 
-  moduleKey: string
+  _moduleKey: string
 ): boolean {
   // N5+ a accès à tout
   if (context.globalRoleLevel >= GLOBAL_ROLES.platform_admin) {
     return true;
   }
   
-  const module = context.enabledModules?.[moduleKey];
-  if (!module) return false;
-  
-  if (typeof module === 'boolean') return module;
-  if (typeof module === 'object' && 'enabled' in module) {
-    return module.enabled === true;
-  }
-  
+  // Edge functions should use SQL has_module_v2() for accurate checks
+  // This function is kept as a role-level-only fallback
   return false;
 }
 
