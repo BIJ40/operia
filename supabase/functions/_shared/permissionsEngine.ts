@@ -34,7 +34,7 @@ export type ModuleKey =
 
 export interface PermissionContext {
   globalRole: GlobalRole | null;
-  enabledModules: Record<string, any> | null;
+  enabledModules?: Record<string, any> | null; // DEPRECATED - kept for signature compat
   agencyId: string | null;
   supportLevel?: number | null;
 }
@@ -236,7 +236,6 @@ export function validateUserPermissions(ctx: PermissionContext): PermissionIssue
 export function extractPermissionContext(profile: any): PermissionContext {
   return {
     globalRole: profile?.global_role || null,
-    enabledModules: profile?.enabled_modules || null,
     agencyId: profile?.agency_id || null,
     supportLevel: profile?.support_level || null,
   };

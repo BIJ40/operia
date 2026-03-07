@@ -18,7 +18,6 @@ export interface UserContext {
   globalRoleLevel: number;
   agencyId: string | null;
   agencySlug: string | null;
-  enabledModules: Record<string, any> | null;
   supportLevel: number | null;
 }
 
@@ -60,7 +59,7 @@ export async function getUserContext(req: Request): Promise<AuthResult | AuthErr
   // Charger le profil avec les champs critiques
   const { data: profile, error: profileErr } = await supabase
     .from('profiles')
-    .select('agence, agency_id, global_role, enabled_modules, support_level')
+    .select('agence, agency_id, global_role, support_level')
     .eq('id', user.id)
     .single();
 
@@ -79,7 +78,6 @@ export async function getUserContext(req: Request): Promise<AuthResult | AuthErr
       globalRoleLevel,
       agencyId: profile.agency_id,
       agencySlug: profile.agence,
-      enabledModules: profile.enabled_modules,
       supportLevel: profile.support_level,
     },
     supabase,
@@ -133,61 +131,55 @@ export function assertAgencyAccess(
 
 /**
  * Vérifie si un module est activé pour l'utilisateur
+ * DEPRECATED côté Edge: préférer has_module_v2() SQL pour les vérifications DB
+ * Gardé pour compatibilité des Edge Functions qui n'ont pas accès à la DB directement
  */
 export function hasModule(
   context: UserContext, 
-  moduleKey: string
+  _moduleKey: string
 ): boolean {
   // N5+ a accès à tout
   if (context.globalRoleLevel >= GLOBAL_ROLES.platform_admin) {
     return true;
   }
   
-  const module = context.enabledModules?.[moduleKey];
-  if (!module) return false;
-  
-  if (typeof module === 'boolean') return module;
-  if (typeof module === 'object' && 'enabled' in module) {
-    return module.enabled === true;
-  }
-  
+  // Edge functions should use SQL has_module_v2() for accurate checks
+  // This function is kept as a role-level-only fallback
   return false;
 }
 
 /**
  * Vérifie si une option de module est activée
+ * DEPRECATED côté Edge: préférer has_module_option_v2() SQL
  */
 export function hasModuleOption(
   context: UserContext, 
-  moduleKey: string, 
-  optionKey: string
+  _moduleKey: string, 
+  _optionKey: string
 ): boolean {
   // N5+ a accès à tout
   if (context.globalRoleLevel >= GLOBAL_ROLES.platform_admin) {
     return true;
   }
   
-  const module = context.enabledModules?.[moduleKey];
-  if (!module || typeof module !== 'object') return false;
-  
-  const options = (module as any).options;
-  if (!options || typeof options !== 'object') return false;
-  
-  return options[optionKey] === true;
+  // Edge functions should use SQL has_module_option_v2() for accurate checks
+  return false;
 }
 
 /**
  * Vérifie si l'utilisateur est un agent support
+ * Note: Pour une vérification fiable, utiliser is_support_agent() SQL
  */
 export function isSupportAgent(context: UserContext): boolean {
-  return hasModuleOption(context, 'support', 'agent');
+  return context.globalRoleLevel >= GLOBAL_ROLES.platform_admin;
 }
 
 /**
  * Vérifie si l'utilisateur est admin RH
+ * Note: Pour une vérification fiable, utiliser has_module_option_v2() SQL
  */
 export function isRHAdmin(context: UserContext): boolean {
-  return hasModuleOption(context, 'rh', 'rh_admin');
+  return context.globalRoleLevel >= GLOBAL_ROLES.platform_admin;
 }
 
 /**

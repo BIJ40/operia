@@ -13,7 +13,7 @@ import { ModuleKey, EnabledModules } from '@/types/modules';
 export interface PermissionContext {
   /** Rôle global de l'utilisateur (N0-N6) */
   globalRole: GlobalRole | null;
-  /** Modules activés explicitement (JSONB de profiles.enabled_modules) */
+  /** Modules activés (source: RPC get_user_effective_modules → user_modules table) */
   enabledModules: EnabledModules | null;
   /** ID de l'agence de l'utilisateur */
   agencyId: string | null;
