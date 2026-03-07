@@ -1,88 +1,139 @@
 # Refonte du système de modules/permissions
 
 ## Étape 1 : Source unique consolidée ✅ FAIT
-- `MODULE_DEFINITIONS` dans `src/types/modules.ts` = source unique
-- `category: ModuleCategory` + `deployed?: boolean` par module
-- `DEPLOYED_MODULES` / `PLAN_VISIBLE_MODULES` auto-dérivés
-
 ## Étape 2 : Gestion fine des options dans les plans ✅ FAIT
-- `PlansManagerView` : options togglables individuellement via `options_override` JSONB
-- Logique 3 états: hérité | activé | exclu
-
 ## Étape 3 : Cascade Plan → Rôle → Override utilisateur ✅ FAIT
-- RPC `get_user_effective_modules` : Plan agence → User overrides (serveur)
-- `useEffectiveModules` : filtre par `minRole` (client)
-- N5+ bypass complet
-
 ## Étape 4 : Nettoyage legacy ✅ FAIT
 
-### Changements effectués
-
-1. **`src/permissions/constants.ts`** :
-   - Réécrit proprement avec modules V3 comme source principale
-   - Legacy entries conservées en section `// Legacy compat` annotée
-   - `@deprecated` sur MODULE_MIN_ROLES et MODULE_LABELS (utiliser MODULE_DEFINITIONS)
-
-2. **`src/contexts/AuthContext.tsx`** :
-   - `isSupport` vérifie maintenant `aide` ET `support` (legacy compat)
-   - Support agent/admin detection cherche `aide` en priorité, `support` en fallback
-
-3. **`src/types/accessControl.ts`** :
-   - `isSupportAgent()` et `isSupportAdmin()` vérifient `aide` + `support`
-
-4. **`src/contexts/DataPreloadContext.tsx`** :
-   - Suppression fallback `pilotage_agence.stats_hub` (utilise `stats.stats_hub` uniquement)
-
-5. **`src/hooks/useGlobalFeatureFlags.ts`** :
-   - Simplifié : plus de mapping legacy complexe
-   - Note claire : "outil de dev tracking, pas de permissions"
-
-6. **`src/hooks/access-rights/useEffectiveModules.ts`** :
-   - `MODULE_COMPAT_MAP` conservé (seul endroit de rétrocompat runtime)
-   - Sera supprimé quand `user_modules` sera migré en base
-
-### Ce qui reste legacy (volontairement conservé)
-- `MODULES` const dans `types/modules.ts` : clés legacy (help_academy, etc.) pour le type ModuleKey
-- `EnabledModules` interface : propriétés legacy pour rétrocompat
-- `MODULE_COMPAT_MAP` dans `useEffectiveModules` : mapping runtime
-- `sitemapData.ts` : guards legacy (à migrer vers nouveaux module keys)
+## Audit Remédiation — Sprint 1 ✅ FAIT (P0)
+## Audit Remédiation — Sprint 2 ✅ FAIT (P1 + P2-4)
+## Audit Remédiation — Sprint 3 ✅ FAIT (Archi + Perf)
+## Audit Remédiation — Sprint 4 ✅ FAIT (Sécurité + Hygiène)
+## Audit Remédiation — Sprint 5 ✅ FAIT (Qualité code)
 
 ---
 
-## Audit Remédiation — Sprint 1 ✅ FAIT (P0)
-- P0-1: Secret migrate-export → `Deno.env.get('MIGRATION_SECRET')`
-- P0-2: XSS HcServicesSection → `createSanitizedHtml()`
-- P0-3: Session OTP 365j → 90j
-- P0-4: CORS `*` create-dev-account → `_shared/cors.ts`
-- P0-5: `useMemo` AuthContext provider value
-- P0-6: `useMemo` accessContext
-- P0-7: Onglet TEST → `import.meta.env.DEV` only
-- P1-1: `Promise.all` loadUserData (profil + modules en parallèle)
+# AUDIT FINAL — Plan de Correction V2
 
-## Audit Remédiation — Sprint 2 ✅ FAIT (P1 + P2-4)
-- P1-2: CRON_SECRET sur compute-apporteur-metrics + media-garbage-collector
-- P1-3: Dynamic import xlsx (−200KB bundle)
-- P1-4: Guides disabled tabs masqués (non plus grisés)
-- P1-5: Table dupliquée sensitive_data_access_log supprimée
-- P1-6: 10 index FK créés (tickets, comments, history, attachments, activity_log, collaborators)
-- P2-4: CORS migrate-export → `_shared/cors.ts` + `withCors`
+## Sprint 6 — Code Hygiene & Dead Code (P0 — Risque immédiat)
 
-## Audit Remédiation — Sprint 3 ✅ FAIT (Archi + Perf)
-- R3: Découpage advanced2.ts (2000+ lignes) → 7 modules domaine
-- P3.15: Dynamic import jsPDF (−300KB bundle) via factory `ComprehensivePDFGenerator.create()`
-- P2.10: Lazy-loaded recharts via `src/components/ui/lazy-recharts.tsx`
-- DB: Colonnes text→date (agency_commercial_profile, prospect_pool)
+### S6-1: Supprimer `getAssignableRoles()` et le `require()` ESM
+- **Fichier:** `src/types/globalRoles.ts:98-111`
+- **Cause:** `require()` synchrone incompatible Vite/ESM, dead code contourné dans `use-user-management.ts`
+- **Action:** Supprimer la fonction `getAssignableRoles()` entièrement
+- **Impact:** Élimine un crash potentiel en production
 
-## Audit Remédiation — Sprint 4 ✅ FAIT (Sécurité + Hygiène)
-- S4-1: Vulnérabilités npm corrigées (fabric→7.2.0, serialize-javascript→7.0.4, tar→7.5.10)
-- S4-2: console.log production nettoyés (usePersonalKpis, PlanningTechniciens, usePlanningData, StatiaBuilder)
-- S4-3: `window.__PLANNING_STATES__` debug global supprimé
-- S4-4: RLS `pending_registrations` INSERT (true) = volontaire (formulaire public)
-- S4-5: Leaked password protection → à activer manuellement dans Supabase Auth
+### S6-2: Synchroniser le moteur permissions Edge avec le frontend V3
+- **Fichier:** `supabase/functions/_shared/permissionsEngine.ts`
+- **Cause:** ModuleKey edge = 10 modules legacy (`help_academy`, `pilotage_agence`, `support`, `apogee_tickets`, `messaging`) ≠ frontend V3 = 16 modules (`agence`, `stats`, `aide`, `ticketing`, `guides`, etc.)
+- **Action:** Réécrire les types ModuleKey et MODULE_MIN_ROLES dans le fichier edge pour aligner avec V3. Ajouter compat map pour les anciens noms.
+- **Impact:** Cohérence sécurité entre client et serveur
 
-## Audit Remédiation — Sprint 5 ✅ FAIT (Qualité code)
-- R5-1: Extraction SortableCategory (210 lignes) → `src/components/guides/apogee/SortableCategory.tsx`
-- R5-2: ApogeeGuide.tsx réduit de 624 → ~355 lignes
-- R5-3: Hooks React corrigés (useMemo avant early return)
-- R5-4: apogeeCategories memoizé avec useMemo
-- R5-5: pg_trgm déjà dans extensions schema (confirmé OK)
+### S6-3: Mettre à jour les dépendances vulnérables restantes
+- **Packages:** `vite-plugin-pwa` (→ 0.19.8+), `xlsx` (→ 0.19.3+), `@rollup/plugin-terser`
+- **Cause:** 5 vulnérabilités high/critical non résolues
+- **Action:** Mettre à jour ou remplacer les packages concernés
+
+## Sprint 7 — Tests & Fiabilité (P1 — Filet de sécurité)
+
+### S7-1: Tests unitaires du moteur de permissions
+- **Fichier:** `src/permissions/__tests__/permissionsEngine.test.ts` (à créer)
+- **Couverture:**
+  - `hasAccess()` — bypass N5+, module min role, agency required, network modules
+  - `getEffectiveModules()` — cascade plan → rôle → override
+  - `validateUserPermissions()` — détection incohérences
+  - `getUserManagementCapabilities()` — scope par rôle
+- **Impact:** Filet de sécurité critique avant tout changement permissions
+
+### S7-2: Tests du module registry
+- **Fichier:** `src/permissions/__tests__/moduleRegistry.test.ts` (à créer)
+- **Couverture:** Validation des définitions, options valides, modules déployés
+
+## Sprint 8 — Performance & Scalabilité (P1)
+
+### S8-1: Pagination cursor-based sur les listes volumineuses
+- **Modules concernés:** Tickets Apogée, Collaborateurs, Activity Log
+- **Cause:** Chargement complet en mémoire → problème dès >500 items
+- **Action:** Implémenter `useInfiniteQuery` avec cursor-based pagination
+
+### S8-2: Memoization `usePersonalKpis`
+- **Fichier:** `src/hooks/usePersonalKpis.ts`
+- **Cause:** Calculs lourds (CA, heures, dossiers) recalculés à chaque render
+- **Action:** Wrapper les calculs intermédiaires dans `useMemo`
+
+### S8-3: Purge automatique tables temporaires
+- **Tables:** `rate_limits`, `ai_search_cache`
+- **Cause:** Accumulation sans nettoyage (cleanup probabiliste 1% insuffisant)
+- **Action:** Créer un cron SQL quotidien de purge
+
+## Sprint 9 — Observabilité & DevOps (P2)
+
+### S9-1: Health check endpoint
+- **Fichier:** `supabase/functions/health-check/index.ts` (à créer)
+- **Action:** Edge function qui vérifie DB connectivity + auth service
+- **Impact:** Monitoring basique de disponibilité
+
+### S9-2: Centraliser `console.error` → logger
+- **Fichier:** 95+ fichiers concernés
+- **Cause:** `console.error()` dans catch blocks expose stack traces en production
+- **Action:** Migration progressive vers `logError()` du logger centralisé (`src/lib/logger.ts`)
+- **Priorité:** Commencer par les fichiers services/hooks critiques
+
+### S9-3: Sentry côté Edge Functions
+- **Fichier:** `supabase/functions/_shared/sentry.ts` (existe déjà)
+- **Cause:** Utilisation non systématique dans toutes les edge functions
+- **Action:** Wrapper toutes les edge functions avec `withSentry()` ou try/catch + reportError
+
+## Sprint 10 — UX & Polish (P2)
+
+### S10-1: Tokens sémantiques pour badges de rôles
+- **Fichier:** `src/types/globalRoles.ts:46-54`
+- **Cause:** Classes Tailwind hardcodées (`bg-gray-100 text-gray-800`)
+- **Action:** Utiliser des tokens sémantiques du design system
+
+### S10-2: Transition CSS sur changement de thème
+- **Fichier:** `src/index.css` ou composant ThemeProvider
+- **Cause:** Changement de thème instantané sans animation
+- **Action:** Ajouter `transition: background-color 0.3s, color 0.3s` sur `body`
+
+### S10-3: Option `faq_admin` manquante dans admin_plateforme
+- **Fichier:** `src/types/modules.ts` (MODULE_DEFINITIONS)
+- **Cause:** `admin_plateforme.faq_admin` défini dans constants.ts mais absent de MODULE_DEFINITIONS
+- **Action:** Ajouter l'option dans MODULE_DEFINITIONS pour cohérence
+
+---
+
+## Actions manuelles (hors code)
+
+### M-1: Activer Leaked Password Protection
+- **Où:** Supabase Dashboard → Auth → Settings → Leaked Password Protection
+- **Impact:** Bloque la création de comptes avec mots de passe compromis
+
+### M-2: Partitionnement tables d'audit (>100 orgs)
+- **Tables:** `activity_log`, `apogee_ticket_history`
+- **Quand:** Quand volume > 1M lignes
+- **Action:** Partitionner par mois avec `pg_partman`
+
+---
+
+## Priorités d'exécution
+
+| Sprint | Priorité | Effort estimé | Risque résolu |
+|--------|----------|---------------|---------------|
+| **S6** | P0 | 1-2h | Dead code, sync permissions, vulnérabilités |
+| **S7** | P1 | 2-3h | Absence de tests permissions |
+| **S8** | P1 | 3-4h | Scalabilité listes, calculs lourds |
+| **S9** | P2 | 2-3h | Observabilité, logs production |
+| **S10** | P2 | 1-2h | Polish UX, cohérence design system |
+
+## Score cible après correction
+
+| Dimension | Actuel | Cible |
+|-----------|--------|-------|
+| Architecture | 7.5 | 8.5 |
+| Sécurité | 8.0 | 9.0 |
+| Performance | 7.5 | 8.5 |
+| Permissions | 8.5 | 9.5 |
+| Scalabilité | 6.5 | 8.0 |
+| DevOps | 7.0 | 8.5 |
+| **Global** | **7.4** | **8.5** |
