@@ -111,14 +111,14 @@ export function isSuperAdmin(ctx: AccessControlContext): boolean {
  * Vérifie si l'utilisateur est agent support
  */
 export function isSupportAgent(ctx: AccessControlContext): boolean {
-  return hasModuleOption(ctx, 'support', 'agent');
+  return hasModuleOption(ctx, 'aide', 'agent') || hasModuleOption(ctx, 'support', 'agent');
 }
 
 /**
  * Vérifie si l'utilisateur est admin support
  */
 export function isSupportAdmin(ctx: AccessControlContext): boolean {
-  return hasModuleOption(ctx, 'support', 'admin');
+  return hasModuleOption(ctx, 'aide', 'admin') || hasModuleOption(ctx, 'support', 'admin');
 }
 
 /**
