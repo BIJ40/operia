@@ -211,21 +211,10 @@ function calculateTechnicienKpisStatia(
     }
   });
 
-  // Debug: compter sans filtre date
-  const allTechInterventions = (interventions || []).filter(isTechInIntervention);
-  console.log('[usePersonalKpis] Interventions:', { 
-    total: (interventions || []).length,
-    sansFiltreDdate: allTechInterventions.length,
-    avecDate: techInterventions.length
-  });
-
-  console.log('[usePersonalKpis] Interventions (avec date):', { 
-    apogeeUserId, 
-    techInterventionsCount: techInterventions.length,
-    totalInterventions: (interventions || []).length,
-    monthStart: monthStart.toISOString(),
-    monthEnd: monthEnd.toISOString()
-  });
+  if (import.meta.env.DEV) {
+    const allTechInterventions = (interventions || []).filter(isTechInIntervention);
+    console.log('[usePersonalKpis] Interventions:', { total: (interventions || []).length, sansFiltre: allTechInterventions.length, avecDate: techInterventions.length });
+  }
 
   // === 3. Dossiers traités = projets FACTURÉS où technicien a intervenu ===
   const techProjectIds = new Set(techInterventions.map((i: any) => i.projectId));
