@@ -22,9 +22,12 @@ Deno.serve(async (req) => {
     // Service role client for admin operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify caller is admin (via cron or manual trigger with service key)
+    // Auth: CRON_SECRET or valid JWT required
     const authHeader = req.headers.get('Authorization');
-    if (authHeader) {
+    const cronSecret = Deno.env.get('CRON_SECRET');
+    if (cronSecret && authHeader === `Bearer ${cronSecret}`) {
+      // CRON call — authorized
+    } else if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.replace('Bearer ', '');
       const { data: { user }, error: authError } = await supabase.auth.getUser(token);
       
