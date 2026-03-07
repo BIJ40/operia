@@ -13,7 +13,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
-import { ModuleKey, MODULE_DEFINITIONS, GLOBAL_ROLES } from '@/types/modules';
+import { ModuleKey, MODULE_DEFINITIONS } from '@/types/modules';
+import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { GlobalRole } from '@/types/globalRoles';
 import { resolveEffectiveModulesFromBackend } from '@/lib/effectiveModulesResolver';
 
