@@ -7,6 +7,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import { logWarn, logDebug } from '@/lib/logger';
 import type { EnabledModules, ModuleKey, ModuleOptionsState } from '@/types/modules';
 
 type RpcRow = {
@@ -61,14 +62,14 @@ export async function resolveEffectiveModulesFromBackend(params: {
     }
 
     if (error) {
-      console.warn(
+      logWarn(
         '[effectiveModulesResolver] RPC get_user_effective_modules failed',
         debugLabel ? { debugLabel } : undefined,
         error
       );
     }
   } catch (e) {
-    console.warn(
+    logWarn(
       '[effectiveModulesResolver] RPC get_user_effective_modules threw',
       debugLabel ? { debugLabel } : undefined,
       e
@@ -83,7 +84,7 @@ export async function resolveEffectiveModulesFromBackend(params: {
       .eq('user_id', userId);
 
     if (userModulesError) {
-      console.warn(
+      logWarn(
         '[effectiveModulesResolver] SELECT user_modules failed',
         debugLabel ? { debugLabel } : undefined,
         userModulesError
@@ -102,7 +103,7 @@ export async function resolveEffectiveModulesFromBackend(params: {
       return { modules: merged, source: 'fallback_user_modules' };
     }
   } catch (e) {
-    console.warn(
+    logWarn(
       '[effectiveModulesResolver] fallback user_modules threw',
       debugLabel ? { debugLabel } : undefined,
       e

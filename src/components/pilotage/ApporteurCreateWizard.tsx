@@ -8,6 +8,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import { logError } from '@/lib/logger';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -151,7 +152,7 @@ export function ApporteurCreateWizard({ open, onOpenChange }: ApporteurCreateWiz
       
       toast.success('Espace apporteur créé avec succès');
     } catch (err: any) {
-      console.error('Create error:', err);
+      logError('Create error:', err);
       toast.error(err.message || 'Erreur lors de la création');
     } finally {
       setIsCreating(false);
@@ -194,7 +195,7 @@ export function ApporteurCreateWizard({ open, onOpenChange }: ApporteurCreateWiz
           name: `${contact.prenom || ''} ${contact.nom || ''}`.trim() || contact.email!,
         });
       } catch (err: any) {
-        console.error(`Failed to create user ${contact.email}:`, err);
+        logError(`Failed to create user ${contact.email}:`, err);
         toast.error(`Erreur pour ${contact.email}: ${err.message}`);
       }
     }

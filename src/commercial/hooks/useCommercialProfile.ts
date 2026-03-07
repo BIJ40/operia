@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { logError } from "@/lib/logger";
 
 export interface CommercialProfile {
   id: string;
@@ -94,7 +95,7 @@ export function useUpsertCommercialProfile() {
       toast.success('Profil commercial enregistré');
     },
     onError: (error) => {
-      console.error('Error saving commercial profile:', error);
+      logError('Error saving commercial profile:', error);
       toast.error('Erreur lors de la sauvegarde');
     },
   });
@@ -119,7 +120,7 @@ export function useGeneratePptx() {
       };
     },
     onError: (error) => {
-      console.error('Error generating PPTX:', error);
+      logError('Error generating PPTX:', error);
       toast.error(error.message || 'Erreur lors de la génération');
     },
   });
@@ -177,7 +178,7 @@ export function useUploadTemplate() {
       toast.success('Template maître mis à jour');
     },
     onError: (error) => {
-      console.error('Error uploading template:', error);
+      logError('Error uploading template:', error);
       toast.error('Erreur lors de l\'upload du template');
     },
   });

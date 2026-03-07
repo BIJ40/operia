@@ -8,6 +8,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { logError } from "@/lib/logger";
 
 export function useApporteurCheck() {
   const { user } = useAuth();
@@ -25,7 +26,7 @@ export function useApporteurCheck() {
         .maybeSingle();
       
       if (error) {
-        console.error('[useApporteurCheck] Error checking apporteur status:', error);
+        logError('[useApporteurCheck] Error checking apporteur status:', error);
         return false;
       }
       

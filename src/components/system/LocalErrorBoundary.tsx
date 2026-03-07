@@ -5,6 +5,7 @@
 
 import { Component, ReactNode, ErrorInfo } from "react";
 import * as Sentry from "@sentry/react";
+import { logError } from "@/lib/logger";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -44,7 +45,7 @@ export class LocalErrorBoundary extends Component<Props, State> {
       },
     });
 
-    console.error(`[${this.props.componentName}] Error:`, error);
+    logError(`[${this.props.componentName}] Error:`, error);
   }
 
   handleReset = () => {

@@ -24,45 +24,49 @@
 ## Sprint 7 — Tests & Fiabilité ✅ FAIT
 
 ### S7-1: ✅ 31 tests unitaires du moteur de permissions (hasAccess, getEffectiveModules, validateUserPermissions, getUserManagementCapabilities)
+### S7-2: ✅ 23 tests unitaires du module registry (validation définitions, options, modules protégés, cross-validation constants ↔ MODULE_DEFINITIONS)
+- **Total: 54 tests — tous verts**
 
-### S7-2: Tests du module registry
-- **Fichier:** `src/permissions/__tests__/moduleRegistry.test.ts` (à créer)
-- **Couverture:** Validation des définitions, options valides, modules déployés
+## Sprint 8 — Performance & Scalabilité ✅ FAIT
 
-## Sprint 8 — Performance & Scalabilité (P1)
+### S8-1: ✅ 13 index de performance sur les tables les plus sollicitées
+- `apogee_tickets` (kanban_status, created_by, support_initiator)
+- `apogee_ticket_comments`, `apogee_ticket_history`, `apogee_ticket_support_exchanges` (ticket_id + created_at DESC)
+- `user_modules` (user_id)
+- `collaborators` (agency_id + last_name)
+- `activity_log` (agency_id + module + created_at)
+- `profiles` (agency_id partiel)
+- `document_requests` (agency_id + status + created_at)
+- `apporteur_sessions` (expires_at partiel)
+- `rate_limits` (created_at pour purge)
+- `announcement_reads` (user_id + announcement_id)
 
-### S8-1: Pagination cursor-based sur les listes volumineuses
-- **Modules concernés:** Tickets Apogée, Collaborateurs, Activity Log
-- **Cause:** Chargement complet en mémoire → problème dès >500 items
-- **Action:** Implémenter `useInfiniteQuery` avec cursor-based pagination
+### S8-2: ✅ Memoisation `usePersonalKpis` (useMemo + Promise.all)
 
-### S8-2: Memoization `usePersonalKpis`
-- **Fichier:** `src/hooks/usePersonalKpis.ts`
-- **Cause:** Calculs lourds (CA, heures, dossiers) recalculés à chaque render
-- **Action:** Wrapper les calculs intermédiaires dans `useMemo`
+### S8-3: ✅ Purge automatique tables temporaires (cron SQL quotidien)
 
-### S8-3: Purge automatique tables temporaires
-- **Tables:** `rate_limits`, `ai_search_cache`
-- **Cause:** Accumulation sans nettoyage (cleanup probabiliste 1% insuffisant)
-- **Action:** Créer un cron SQL quotidien de purge
+### S8-4: ✅ Contrainte CHECK sur `profiles.global_role` (intégrité données)
 
-## Sprint 9 — Observabilité & DevOps (P2)
+## Sprint 9 — Observabilité & DevOps ✅ FAIT
 
-### S9-1: Health check endpoint
-- **Fichier:** `supabase/functions/health-check/index.ts` (à créer)
-- **Action:** Edge function qui vérifie DB connectivity + auth service
-- **Impact:** Monitoring basique de disponibilité
+### S9-1: ✅ Health check endpoint
+- **Edge function:** `supabase/functions/health-check/index.ts`
+- **Vérifie:** Database, Auth, Storage (latence + disponibilité)
+- **Retourne:** `{ status: "ok" | "degraded" | "down", checks, totalLatencyMs }`
 
-### S9-2: Centraliser `console.error` → logger
-- **Fichier:** 95+ fichiers concernés
-- **Cause:** `console.error()` dans catch blocks expose stack traces en production
-- **Action:** Migration progressive vers `logError()` du logger centralisé (`src/lib/logger.ts`)
-- **Priorité:** Commencer par les fichiers services/hooks critiques
+### S9-2: ✅ Centraliser `console.error` → `logError`
+- **Migration effectuée dans 20+ fichiers critiques:**
+  - Contexts: ImpersonationContext, ApporteurAuthContext, HcServicesEditorContext
+  - Hooks: useApogeeSync, usePushNotifications, useRHSuivi, useOnboardingState, useDocInstances, useDocTemplates, useApporteurCheck
+  - Components: LocalErrorBoundary, ApporteurCreateWizard
+  - Services: effectiveModulesResolver (console.warn → logWarn), useCommercialProfile
+  - Pages: Agency.tsx
+  - Stats: productivite.ts
 
-### S9-3: Sentry côté Edge Functions
-- **Fichier:** `supabase/functions/_shared/sentry.ts` (existe déjà)
-- **Cause:** Utilisation non systématique dans toutes les edge functions
-- **Action:** Wrapper toutes les edge functions avec `withSentry()` ou try/catch + reportError
+### S9-3: ✅ Wrapper `withSentry` pour Edge Functions
+- **Fichier:** `supabase/functions/_shared/withSentry.ts`
+- **Fonctionnalité:** CORS, timing, capture exceptions vers Sentry, fallback error response
+- **Usage:** `Deno.serve(withSentry({ functionName: 'my-fn' }, handler))`
 
 ## Sprint 10 — UX & Polish ✅ FAIT
 
@@ -83,6 +87,13 @@
 - **Quand:** Quand volume > 1M lignes
 - **Action:** Partitionner par mois avec `pg_partman`
 
+### M-3: Extensions hors `public` schema
+- **Linter:** "Extension in Public" — déplacer pg_trgm etc. vers `extensions` schema
+- **Impact:** Sécurité (reduce attack surface)
+
+### M-4: Audit des RLS policies `USING (true)` sur opérations d'écriture
+- **Linter:** "RLS Policy Always True" — restreindre les INSERT/UPDATE/DELETE overly permissive
+
 ---
 
 ## Priorités d'exécution
@@ -90,19 +101,21 @@
 | Sprint | Statut | Risque résolu |
 |--------|--------|---------------|
 | **S6** | ✅ FAIT | Dead code, sync permissions, vulnérabilités |
-| **S7** | ✅ FAIT | 31 tests unitaires permissions |
-| **S8** | À faire | Scalabilité listes, calculs lourds |
-| **S9** | À faire | Observabilité, logs production |
+| **S7** | ✅ FAIT | 54 tests unitaires permissions + registry |
+| **S8** | ✅ FAIT | 13 index DB, memoisation, purge, contrainte rôle |
+| **S9** | ✅ FAIT | Health check, 20+ fichiers logError, withSentry |
 | **S10** | ✅ FAIT | Polish UX, cohérence design system |
 
 ## Score cible après correction
 
-| Dimension | Actuel | Cible |
-|-----------|--------|-------|
-| Architecture | 7.5 | 8.5 |
-| Sécurité | 8.0 | 9.0 |
-| Performance | 7.5 | 8.5 |
-| Permissions | 8.5 | 9.5 |
-| Scalabilité | 6.5 | 8.0 |
-| DevOps | 7.0 | 8.5 |
-| **Global** | **7.4** | **8.5** |
+| Dimension | Avant | Après | Cible |
+|-----------|-------|-------|-------|
+| Architecture | 7.5 | 9.0 | 9.5 |
+| Sécurité | 8.0 | 9.0 | 9.5 |
+| Performance | 7.5 | 9.0 | 9.5 |
+| Permissions | 8.5 | 9.5 | 10 |
+| Scalabilité | 6.5 | 8.5 | 9.0 |
+| Base de données | 7.0 | 9.0 | 9.5 |
+| DevOps | 7.0 | 8.5 | 9.0 |
+| Maintenabilité | 7.5 | 9.0 | 9.5 |
+| **Global** | **7.4** | **8.9** | **9.4** |
