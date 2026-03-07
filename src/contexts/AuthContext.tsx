@@ -156,12 +156,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const hasFaqAdminRole = adminOptions.faq_admin === true; // Module admin_plateforme.faq_admin activé
   const canAccessFaqAdmin = hasFaqAdminRole || isAdmin; // faq_admin OU N5+
 
-  // Contexte d'accès V2.0 — PermissionContext de @/permissions
-  const accessContext: PermissionContext = {
+  // Contexte d'accès V2.0 — PermissionContext de @/permissions (mémorisé)
+  const accessContext: PermissionContext = useMemo(() => ({
     globalRole: globalRole ?? 'base_user',
     enabledModules: enabledModules ?? {},
     agencyId,
-  };
+  }), [globalRole, enabledModules, agencyId]);
 
   // ============================================================================
   // Guards V2.0 - À utiliser partout (délègue vers @/permissions/permissionsEngine)
