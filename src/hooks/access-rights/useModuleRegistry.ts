@@ -60,9 +60,8 @@ function buildTree(rows: RegistryRow[]): RegistryNode[] {
   ): RegistryNode {
     // Rule 1: parent OFF → child effectively OFF
     const effectiveDeployed = parentEffectiveDeployed && row.is_deployed;
-    // Rule 2: parent PRO → child effectively PRO minimum
-    const effectivePlan: PlanLevel =
-      parentEffectivePlan === 'PRO' ? 'PRO' : row.required_plan;
+    // Rule 2: each node uses its OWN required_plan (no parent inheritance)
+    const effectivePlan: PlanLevel = row.required_plan;
 
     const rawChildren = childrenMap.get(row.key) ?? [];
     rawChildren.sort((a, b) => a.sort_order - b.sort_order);
