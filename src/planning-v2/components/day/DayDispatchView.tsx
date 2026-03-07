@@ -226,7 +226,7 @@ export function DayDispatchView({
   return (
     <>
       <div className="h-full overflow-auto" ref={scrollRef}>
-        <div className="inline-flex min-w-full">
+        <div className="flex min-w-full">
           {/* ── Time Axis (sticky left) ── */}
           <div
             className="sticky left-0 z-30 bg-card border-r border-border shrink-0"
@@ -253,8 +253,8 @@ export function DayDispatchView({
             return (
               <div
                 key={tech.id}
-                className={`shrink-0 border-r border-border ${isUnavailable ? "opacity-50" : ""}`}
-                style={{ minWidth: TECH_COLUMN_MIN_WIDTH, width: TECH_COLUMN_MIN_WIDTH }}
+                className={`border-r border-border ${isUnavailable ? "opacity-50" : ""}`}
+                style={{ minWidth: TECH_COLUMN_MIN_WIDTH, flex: '1 1 0%' }}
               >
                 {/* Sticky header */}
                 <div className="sticky top-0 z-20 bg-card border-b border-border">
