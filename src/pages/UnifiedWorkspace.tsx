@@ -55,7 +55,12 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
+import { useAppTheme, type AppTheme } from '@/contexts/ThemeContext';
 
 // Providers nécessaires
 import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
