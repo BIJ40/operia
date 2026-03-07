@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
-import { Loader2, LogIn } from 'lucide-react';
+import { Loader2, LogIn, UserPlus } from 'lucide-react';
+import { RegistrationRequestDialog } from '@/components/registration/RegistrationRequestDialog';
 
 const loginSchema = z.object({
   email: z.string()
@@ -25,6 +26,7 @@ export function LoginFormCard() {
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
+  const [registrationOpen, setRegistrationOpen] = useState(false);
   const { toast } = useToast();
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -224,6 +226,17 @@ export function LoginFormCard() {
             )}
           </Button>
         </form>
+        <div className="mt-4 pt-4 border-t border-border/50 text-center">
+          <button
+            type="button"
+            className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1.5"
+            onClick={() => setRegistrationOpen(true)}
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            Pas encore inscrit ?
+          </button>
+        </div>
+        <RegistrationRequestDialog open={registrationOpen} onOpenChange={setRegistrationOpen} />
       </CardContent>
     </Card>
   );
