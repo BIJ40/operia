@@ -190,6 +190,28 @@ serve(async (req) => {
       throw new Error('Utilisateur non créé')
     }
 
+    // Attendre que le trigger handle_new_user ait créé le profil
+    const maxRetries = 10
+    let profileExists = false
+    for (let i = 0; i < maxRetries; i++) {
+      const { data: checkProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .eq('id', newUser.user.id)
+        .maybeSingle()
+      if (checkProfile) {
+        profileExists = true
+        break
+      }
+      console.log(`[create-user] Attente profil... tentative ${i + 1}/${maxRetries}`)
+      await new Promise(resolve => setTimeout(resolve, 300))
+    }
+
+    if (!profileExists) {
+      console.error('[create-user] Profil non créé par le trigger après timeout')
+      throw new Error('Le profil utilisateur n\'a pas été créé. Veuillez réessayer.')
+    }
+
     // Mettre à jour le profil
     const profileUpdate: Record<string, any> = { 
       agence: targetAgency,
