@@ -229,8 +229,10 @@ export function ModulesMasterView() {
 
   const handleTogglePlan = useCallback(
     (node: RegistryNode) => {
-      const newValue: PlanLevel = node.required_plan === 'STARTER' ? 'PRO' : 'STARTER';
-      const descendants = getDescendantKeys(node);
+      // Cycle: STARTER → PRO → NONE → STARTER
+      const cycle: PlanLevel[] = ['STARTER', 'PRO', 'NONE'];
+      const idx = cycle.indexOf(node.required_plan);
+      const newValue: PlanLevel = cycle[(idx + 1) % cycle.length];
 
       // Update this node
       updateNode.mutate({ key: node.key, updates: { required_plan: newValue } });

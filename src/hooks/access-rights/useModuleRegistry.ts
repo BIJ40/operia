@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 // ============================================================================
 
 export type NodeType = 'section' | 'screen' | 'feature';
-export type PlanLevel = 'STARTER' | 'PRO';
+export type PlanLevel = 'STARTER' | 'PRO' | 'NONE';
 
 export interface RegistryRow {
   key: string;
