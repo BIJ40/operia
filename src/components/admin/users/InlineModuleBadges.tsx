@@ -33,12 +33,6 @@ const MODULE_ICONS: Partial<Record<ModuleKey, LucideIcon>> = {
   aide: HelpCircle,
   reseau_franchiseur: Crown,
   admin_plateforme: Crown,
-  // Legacy
-  help_academy: BookOpen,
-  pilotage_agence: BarChart3,
-  support: HelpCircle,
-  apogee_tickets: Kanban,
-  unified_search: BarChart3,
 };
 
 // Couleurs pour les badges actifs
