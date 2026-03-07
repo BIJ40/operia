@@ -217,7 +217,7 @@ Deno.serve(async (req) => {
       while (hasMore) {
         const { data: { users }, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
         if (error) {
-          return jsonResponse({ error: error.message }, 500);
+          return respond({ error: error.message }, 500);
         }
         allUsers.push(...users);
         hasMore = users.length === 1000;
