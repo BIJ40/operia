@@ -638,8 +638,8 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       newModuleState = { enabled: !!moduleState, options: { [optionKey]: enabled } };
     }
     
-    // 🛡️ P0.2 + P1: GESTION SPÉCIALE support.agent
-    if (moduleKey === 'support' && optionKey === 'agent') {
+    // 🛡️ P0.2 + P1: GESTION SPÉCIALE aide.agent
+    if (moduleKey === 'aide' && optionKey === 'agent') {
       if (enabled) {
         // ✅ ACTIVATION agent support → forcer level: 1 (SA1) si absent
         const currentLevel = (newModuleState.options as any).level;

@@ -120,8 +120,8 @@ const CATEGORY_CONFIG: Record<ModuleCategory, {
   },
 };
 
-// Legacy module keys to exclude from the new UI
-const LEGACY_MODULE_KEYS: ModuleKey[] = ['help_academy', 'pilotage_agence', 'support', 'apogee_tickets', 'unified_search'];
+// Internal module keys to exclude from the new UI
+const EXCLUDED_MODULE_KEYS: ModuleKey[] = ['unified_search'];
 
 // ============================================================================
 // COMPONENT
