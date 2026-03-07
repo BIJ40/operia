@@ -1,10 +1,16 @@
 /**
- * PERMISSIONS ENGINE V2.0 - EDGE FUNCTIONS VERSION
- * ⚠️ SYNCHRONISÉ AVEC: src/permissions/permissionsEngine.ts
- * 📅 Dernière sync: 2026-03-07
+ * PERMISSIONS ENGINE V3.0 - EDGE FUNCTIONS VERSION
  * 
- * RÈGLE: Toute modification doit être répliquée dans les deux fichiers
- * Ce fichier est une version adaptée pour Deno (edge functions)
+ * ⚠️ SYNCHRONISED WITH: src/permissions/shared-constants.ts
+ *    (canonical source of truth for role hierarchy + module rules)
+ * ⚠️ SYNCHRONISED WITH: src/permissions/permissionsEngine.ts
+ *    (full frontend engine with getEffectiveModules, explainAccess, etc.)
+ * 
+ * 📅 Last sync: 2026-03-07
+ * 
+ * This file is a Deno-compatible SUBSET. The frontend engine has additional
+ * features (getEffectiveModules, explainAccess, getUserManagementCapabilities)
+ * that are NOT needed in Edge Functions.
  */
 
 // ============================================================================

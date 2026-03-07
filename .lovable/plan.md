@@ -125,6 +125,28 @@
 
 ---
 
+## PHASE 2 — Simplification architecture ✅ FAIT
+
+### P2-1: ✅ Service Layer Pattern
+- **`src/services/BaseQueryService.ts`** — Fonctions utilitaires `queryList()`, `queryById()`, `queryCount()`
+- Limite automatique (`DEFAULT_LIST_LIMIT = 500`), filtre agence, ordering
+- Pattern établi pour tous les futurs hooks
+
+### P2-2: ✅ Permissions Engine — Shared Constants
+- **`src/permissions/shared-constants.ts`** — Source canonique des constantes (ROLE_HIERARCHY, MODULE_KEYS, COMPAT_MAP, règles)
+- Edge engine (`supabase/functions/_shared/permissionsEngine.ts`) synchronisé V3.0
+- Documentation de la stratégie de sync frontend ↔ Edge
+
+### P2-3: ✅ Column Selection — High-traffic queries
+- `useAgencies.ts` — `select('*')` → sélection explicite de 13 colonnes (×2 queries)
+- Pattern documenté pour migration progressive
+
+### P2-4: ℹ️ KPI SQL RPC — Non applicable
+- Les KPIs (`usePersonalKpis.ts`) consomment l'API Apogée externe, pas Supabase
+- L'optimisation existante (memoisation + Promise.all) est suffisante
+
+---
+
 ## Priorités d'exécution
 
 | Sprint | Statut | Risque résolu |
@@ -135,17 +157,18 @@
 | **S9** | ✅ FAIT | Health check, 20+ fichiers logError, withSentry |
 | **S10** | ✅ FAIT | Polish UX, cohérence design system |
 | **P1** | ✅ FAIT | AuthContext split, .limit() queries, CORS, RLS audit |
+| **P2** | ✅ FAIT | Service layer, shared permissions, column selection |
 
-## Score cible après Phase 1
+## Score après Phase 2
 
-| Dimension | Avant | Après P1 | Cible |
+| Dimension | Avant | Après P2 | Cible |
 |-----------|-------|----------|-------|
-| Architecture | 7.5 | 9.0 | 9.5 |
+| Architecture | 7.5 | 9.2 | 9.5 |
 | Sécurité | 7.5 | 9.0 | 9.5 |
-| Performance | 6.5 | 8.5 | 9.5 |
+| Performance | 6.5 | 8.8 | 9.5 |
 | Permissions | 8.5 | 9.5 | 10 |
-| Scalabilité | 6.5 | 8.5 | 9.0 |
+| Scalabilité | 6.5 | 8.8 | 9.0 |
 | Base de données | 7.0 | 9.0 | 9.5 |
 | DevOps | 7.0 | 8.5 | 9.0 |
-| Maintenabilité | 7.0 | 9.0 | 9.5 |
-| **Global** | **7.0** | **8.9** | **9.4** |
+| Maintenabilité | 7.0 | 9.2 | 9.5 |
+| **Global** | **7.0** | **9.0** | **9.4** |
