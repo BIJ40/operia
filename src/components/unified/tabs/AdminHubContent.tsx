@@ -19,7 +19,7 @@ import {
   ContenuView,
   OpsView,
   PlateformeView,
-  PlansManagerView,
+  ModulesMasterView,
 } from '@/components/admin/views';
 import { lazy, Suspense, useCallback, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
