@@ -160,23 +160,6 @@ export const MODULE_OPTION_MIN_ROLES: Record<string, GlobalRole> = {
   'reseau_franchiseur.redevances': 'franchisor_admin',
   'reseau_franchiseur.comparatifs': 'franchisor_user',
 
-  // === LEGACY COMPAT (à supprimer quand user_modules migré) ===
-  'support.agent': 'base_user',
-  'support.user': 'base_user',
-  'help_academy.apogee': 'base_user',
-  'help_academy.apporteurs': 'base_user',
-  'help_academy.helpconfort': 'base_user',
-  'help_academy.edition': 'platform_admin',
-  'pilotage_agence.kpis': 'franchisee_user',
-  'pilotage_agence.indicateurs': 'franchisee_user',
-  'pilotage_agence.stats_hub': 'franchisee_user',
-  'pilotage_agence.actions_a_mener': 'franchisee_user',
-  'pilotage_agence.diffusion': 'franchisee_user',
-  'pilotage_agence.exports': 'franchisee_user',
-  'pilotage_agence.carte_rdv': 'franchisee_user',
-  'pilotage_agence.mes_apporteurs': 'franchisee_admin',
-  'pilotage_agence.gestion_apporteurs': 'franchisee_admin',
-  'pilotage_agence.veille_apporteurs': 'franchisee_user',
 };
 
 // ============================================================================
