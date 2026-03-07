@@ -138,23 +138,26 @@ function RoleBadge({
   const config = getRoleConfig(minRole);
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild disabled={disabled}>
+      <DropdownMenuTrigger disabled={disabled} className="focus:outline-none">
         <Badge
           variant="outline"
           className={cn(
-            'text-[11px] cursor-pointer select-none transition-opacity font-medium px-2 py-0.5',
-            'hover:opacity-80', dimmed && 'opacity-40', config.className
+            'text-[11px] cursor-pointer select-none transition-opacity font-medium px-3 py-1',
+            'hover:opacity-80 hover:ring-2 hover:ring-primary/30', 
+            dimmed && 'opacity-40', 
+            disabled && 'cursor-not-allowed opacity-30',
+            config.className
           )}
         >
           {config.label.split(' · ')[1] ?? config.shortLabel}
         </Badge>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="center" className="min-w-[200px]">
+      <DropdownMenuContent align="center" className="min-w-[220px] z-[100]">
         {ROLE_CONFIGS.map((rc) => (
           <DropdownMenuItem
             key={rc.level}
             onClick={() => onChangeRole(rc.level)}
-            className={cn('text-xs cursor-pointer', rc.level === minRole && 'bg-accent font-semibold')}
+            className={cn('text-xs cursor-pointer py-2', rc.level === minRole && 'bg-accent font-semibold')}
           >
             <Badge variant="outline" className={cn('text-[10px] mr-2 px-1.5 py-0', rc.className)}>
               {rc.shortLabel}

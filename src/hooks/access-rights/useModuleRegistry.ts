@@ -161,8 +161,9 @@ export function useUpdateModuleNode() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, params) => {
       qc.invalidateQueries({ queryKey: QUERY_KEY });
+      toast.success(`Nœud "${params.key}" mis à jour`);
     },
     onError: (err: Error) => {
       toast.error(`Erreur: ${err.message}`);
