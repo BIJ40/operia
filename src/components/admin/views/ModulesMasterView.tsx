@@ -142,7 +142,7 @@ function RoleBadge({
             'hover:opacity-80', dimmed && 'opacity-40', config.className
           )}
         >
-          {config.shortLabel}
+          {config.label.split(' · ')[1] ?? config.shortLabel}
         </Badge>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="center" className="min-w-[200px]">
@@ -288,7 +288,7 @@ function OverridesPopover({
 // Row component
 // ============================================================================
 
-const GRID_COLS = 'grid-cols-[minmax(200px,max-content)_80px_60px_80px_80px_60px_80px]';
+const GRID_COLS = 'grid-cols-[minmax(200px,max-content)_80px_60px_80px_80px_140px_80px]';
 
 interface ModuleRowProps {
   node: RegistryNode;
