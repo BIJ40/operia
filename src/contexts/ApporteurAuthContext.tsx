@@ -4,6 +4,7 @@
  */
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { logError } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { toast } from 'sonner';

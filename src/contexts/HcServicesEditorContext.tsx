@@ -271,7 +271,7 @@ export function HcServicesEditorProvider({ children }: { children: ReactNode }) 
         return updated;
       });
     } catch (error) {
-      console.error('Error reordering blocks:', error);
+      logError('Error reordering blocks:', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de réordonner les blocs',

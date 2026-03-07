@@ -170,7 +170,7 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
       
       return true;
     } catch (error) {
-      console.error('[IMPERSONATION] Erreur:', error);
+      logError('[IMPERSONATION] Erreur:', error);
       toast.error('Une erreur est survenue');
       return false;
     } finally {
