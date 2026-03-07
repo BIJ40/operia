@@ -297,6 +297,8 @@ interface ModuleRowProps {
   onTogglePlan: (node: RegistryNode) => void;
   onChangeRole: (node: RegistryNode, newRole: number) => void;
   isUpdating: boolean;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole, isUpdating }: ModuleRowProps) {
