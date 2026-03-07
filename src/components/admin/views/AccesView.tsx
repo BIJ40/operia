@@ -78,6 +78,12 @@ export function AccesView() {
           </Suspense>
         </TabsContent>
 
+        <TabsContent value="inscriptions" className="mt-0 focus-visible:outline-none">
+          <Suspense fallback={<LoadingFallback />}>
+            <PendingRegistrationsList />
+          </Suspense>
+        </TabsContent>
+
         <TabsContent value="activity" className="mt-0 focus-visible:outline-none">
           <Suspense fallback={<LoadingFallback />}>
             <AdminUserActivity />

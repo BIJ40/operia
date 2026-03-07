@@ -226,6 +226,17 @@ export function LoginFormCard() {
             )}
           </Button>
         </form>
+        <div className="mt-4 pt-4 border-t border-border/50 text-center">
+          <button
+            type="button"
+            className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1.5"
+            onClick={() => setRegistrationOpen(true)}
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            Pas encore inscrit ?
+          </button>
+        </div>
+        <RegistrationRequestDialog open={registrationOpen} onOpenChange={setRegistrationOpen} />
       </CardContent>
     </Card>
   );
