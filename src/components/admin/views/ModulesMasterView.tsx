@@ -468,7 +468,14 @@ export function ModulesMasterView() {
             <div className="text-center">Privil.</div>
           </div>
 
-          {flatNodes.map(node => (
+          {flatNodes
+            .filter(node => {
+              if (node.depth === 0) return true;
+              // Hide if any ancestor root key is collapsed
+              const rootKey = node.key.split('.')[0];
+              return !collapsed.has(rootKey);
+            })
+            .map(node => (
             <ModuleRow
               key={node.key}
               node={node}
@@ -477,6 +484,13 @@ export function ModulesMasterView() {
               onTogglePlan={handleTogglePlan}
               onChangeRole={handleChangeRole}
               isUpdating={updateNode.isPending || propagate.isPending}
+              isCollapsed={node.depth === 0 ? collapsed.has(node.key) : undefined}
+              onToggleCollapse={node.depth === 0 ? () => setCollapsed(prev => {
+                const next = new Set(prev);
+                if (next.has(node.key)) next.delete(node.key);
+                else next.add(node.key);
+                return next;
+              }) : undefined}
             />
           ))}
 
