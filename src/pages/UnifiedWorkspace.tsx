@@ -11,7 +11,8 @@ import { useSearchParams } from 'react-router-dom';
 import { 
   Home, BarChart3, ClipboardList, 
   MoreHorizontal, Ticket, HelpCircle,
-  Loader2, BookOpen, Shield, User, Building2, LogOut, Settings, Eye, FolderOpen, FlaskConical
+  Loader2, BookOpen, Shield, User, Building2, LogOut, Settings, Eye, FolderOpen, FlaskConical,
+  Leaf, Droplets, Moon, Monitor, Palette
 } from 'lucide-react';
 import { 
   DndContext, 
@@ -54,7 +55,12 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
+import { useAppTheme, type AppTheme } from '@/contexts/ThemeContext';
 
 // Providers nécessaires
 import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
@@ -113,6 +119,7 @@ function UnifiedWorkspaceContent() {
   const { isImpersonating, isRealUserImpersonation } = useImpersonation();
   const effectiveAuth = useEffectiveAuth();
   const { hasModule, hasModuleOption } = useEffectiveModules();
+  const { theme, setTheme } = useAppTheme();
   const [searchParams, setSearchParams] = useSearchParams();
   const [tabOrder, setTabOrder] = useSessionState<UnifiedTab[]>('unified_workspace_tab_order', DEFAULT_TAB_ORDER);
   const [loginOpen, setLoginOpen] = useState(false);
@@ -498,6 +505,33 @@ function UnifiedWorkspaceContent() {
                             Changelog
                           </Link>
                         </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuSub>
+                          <DropdownMenuSubTrigger className="flex items-center gap-2 cursor-pointer">
+                            <Palette className="w-4 h-4" />
+                            Apparence
+                          </DropdownMenuSubTrigger>
+                          <DropdownMenuPortal>
+                            <DropdownMenuSubContent className="w-48">
+                              {([
+                                { key: 'default' as AppTheme, label: 'Classique', icon: Monitor },
+                                { key: 'zen-nature' as AppTheme, label: 'Zen Nature', icon: Leaf },
+                                { key: 'zen-blue' as AppTheme, label: 'Zen Bleu', icon: Droplets },
+                                { key: 'sombre' as AppTheme, label: 'Sombre', icon: Moon },
+                              ]).map(opt => (
+                                <DropdownMenuItem
+                                  key={opt.key}
+                                  onClick={() => setTheme(opt.key)}
+                                  className="flex items-center gap-2 cursor-pointer"
+                                >
+                                  <opt.icon className="w-4 h-4" />
+                                  {opt.label}
+                                  {theme === opt.key && <span className="ml-auto w-2 h-2 rounded-full bg-primary" />}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuPortal>
+                        </DropdownMenuSub>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onClick={logout}
