@@ -115,7 +115,7 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
         .single();
       
       if (profileError || !profile) {
-        console.error('[IMPERSONATION] Erreur chargement profil:', profileError);
+        logError('[IMPERSONATION] Erreur chargement profil:', profileError);
         toast.error('Impossible de charger le profil utilisateur');
         return false;
       }
