@@ -161,45 +161,33 @@ export default function SupportSettings() {
         const agent = agents.find(a => a.id === agentId);
         if (!agent) continue;
 
-        // Préparer les mises à jour
-        const updates: any = {};
-        
+        // Update support_level in profiles if changed
         if ('support_level' in changes) {
-          updates.support_level = changes.support_level;
-        }
-
-        if ('isAgent' in changes || 'isAdmin' in changes || 'skills' in changes) {
-          // Récupérer les enabled_modules actuels
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('enabled_modules')
-            .eq('id', agentId)
-            .single();
-
-          const currentModules = (profile?.enabled_modules || {}) as any;
-          const supportOptions = currentModules.support?.options || {};
-
-          updates.enabled_modules = {
-            ...currentModules,
-            support: {
-              ...currentModules.support,
-              enabled: true,
-              options: {
-                ...supportOptions,
-                agent: 'isAgent' in changes ? changes.isAgent : agent.isAgent,
-                admin: 'isAdmin' in changes ? changes.isAdmin : agent.isAdmin,
-                skills: 'skills' in changes ? changes.skills : agent.skills,
-              },
-            },
-          };
-        }
-
-        if (Object.keys(updates).length > 0) {
           const { error } = await supabase
             .from('profiles')
-            .update(updates)
+            .update({ support_level: changes.support_level })
             .eq('id', agentId);
+          if (error) throw error;
+        }
 
+        // Update agent/admin/skills in user_modules
+        if ('isAgent' in changes || 'isAdmin' in changes || 'skills' in changes) {
+          const newOptions = {
+            agent: 'isAgent' in changes ? changes.isAgent : agent.isAgent,
+            admin: 'isAdmin' in changes ? changes.isAdmin : agent.isAdmin,
+            skills: 'skills' in changes ? changes.skills : agent.skills,
+          };
+
+          const { error } = await supabase
+            .from('user_modules')
+            .upsert({
+              user_id: agentId,
+              module_key: 'aide',
+              options: newOptions,
+              enabled_at: new Date().toISOString(),
+            }, {
+              onConflict: 'user_id,module_key',
+            });
           if (error) throw error;
         }
       }
