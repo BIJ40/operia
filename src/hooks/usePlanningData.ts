@@ -125,13 +125,10 @@ export function usePlanningProjects(agencySlug: string | undefined) {
         };
       });
 
-      // DEBUG: log tous les states uniques pour identifier les bons
-      const uniqueStates = [...new Set(enriched.map(p => p.state))].sort();
-      console.log('[PlanningData] States uniques des projets:', uniqueStates);
-      console.log('[PlanningData] Total projets:', enriched.length);
-      
-      // DEBUG TEMPORAIRE: stocker les states dans window pour diagnostic
-      (window as any).__PLANNING_STATES__ = uniqueStates;
+      if (import.meta.env.DEV) {
+        const uniqueStates = [...new Set(enriched.map(p => p.state))].sort();
+        console.log('[PlanningData] States uniques:', uniqueStates, 'Total:', enriched.length);
+      }
 
       const planifiable = enriched.filter(p => {
         const st = (p.state || '').toLowerCase();
