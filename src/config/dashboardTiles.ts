@@ -73,7 +73,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: SCOPE_SLUGS.MES_INDICATEURS,
     color: 'accent',
     group: 'pilotage',
-    requiresModule: 'pilotage_agence',
+    requiresModule: 'agence',
   },
   {
     id: 'ACTIONS_A_MENER',
