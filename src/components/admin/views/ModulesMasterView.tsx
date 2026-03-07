@@ -459,7 +459,7 @@ export function ModulesMasterView() {
           <div className={cn(
             `grid ${GRID_COLS} gap-2 items-center py-2 px-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide`
           )}>
-            <div>Module</div>
+            <div>Nom</div>
             <div className="text-center">Type</div>
             <div className="text-center">Déployé</div>
             <div className="text-center">Plan min.</div>
