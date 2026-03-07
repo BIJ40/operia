@@ -293,7 +293,7 @@ export const UserProfileSheet = memo(function UserProfileSheet({
                     <>
                       <Separator className="my-2" />
                       <InfoRow label="Contrat" value={contract.contract_type} />
-                      {contract.position && <InfoRow label="Poste contrat" value={contract.position} />}
+                      {contract.job_title && <InfoRow label="Poste contrat" value={contract.job_title} />}
                       {contract.weekly_hours && <InfoRow label="Heures/semaine" value={`${contract.weekly_hours}h`} />}
                       <InfoRow label="Début contrat" value={formatDate(contract.start_date)} />
                       {contract.end_date && <InfoRow label="Fin contrat" value={formatDate(contract.end_date)} />}
