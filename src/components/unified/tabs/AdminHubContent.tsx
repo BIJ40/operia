@@ -147,8 +147,13 @@ export default function AdminHubContent() {
                     <TDRUsersPage />
                   </Suspense>
                 </TabsContent>
-                
-                
+
+                <TabsContent value="inscriptions" className="mt-0 focus-visible:outline-none">
+                  <Suspense fallback={<LoadingFallback />}>
+                    <PendingRegistrationsList />
+                  </Suspense>
+                </TabsContent>
+
                 <TabsContent value="apporteurs" className="mt-0 focus-visible:outline-none">
                   <Suspense fallback={<LoadingFallback />}>
                     <ApporteurManagersAdminView />
