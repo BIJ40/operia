@@ -148,7 +148,7 @@ export function logValidationIssues(issues: ValidationIssue[]): void {
 /**
  * Module protégé - ne doit JAMAIS être supprimé ou renommé
  */
-export const PROTECTED_MODULES: ModuleKey[] = ['apogee_tickets'];
+export const PROTECTED_MODULES: ModuleKey[] = ['ticketing'];
 
 /**
  * Vérifie si un module est protégé
