@@ -1,48 +1,96 @@
-# Refonte du système de modules/permissions
 
-## Étape 1 : Source unique consolidée ✅ FAIT
-- `MODULE_DEFINITIONS` dans `src/types/modules.ts` = source unique
-- `category: ModuleCategory` + `deployed?: boolean` par module
-- `DEPLOYED_MODULES` / `PLAN_VISIBLE_MODULES` auto-dérivés
 
-## Étape 2 : Gestion fine des options dans les plans ✅ FAIT
-- `PlansManagerView` : options togglables individuellement via `options_override` JSONB
-- Logique 3 états: hérité | activé | exclu
+## Audit complet : Sources de permissions en conflit
 
-## Étape 3 : Cascade Plan → Rôle → Override utilisateur ✅ FAIT
-- RPC `get_user_effective_modules` : Plan agence → User overrides (serveur)
-- `useEffectiveModules` : filtre par `minRole` (client)
-- N5+ bypass complet
+### Diagnostic
 
-## Étape 4 : Nettoyage legacy ✅ FAIT
+Il y a actuellement **4 systèmes parallèles** qui vérifient les droits, au lieu d'un seul :
 
-### Changements effectués
+```text
+┌──────────────────────────────────────────────────────────────────────────┐
+│  SOURCE 1: RPC get_user_effective_modules (✅ SOURCE DE VÉRITÉ)        │
+│  → Cascade: module_registry + plan_tier_modules + user_modules         │
+│  → Utilisé par AuthContext côté frontend                               │
+│  → C'est l'onglet "Droits" qui écrit dans user_modules                 │
+├──────────────────────────────────────────────────────────────────────────┤
+│  SOURCE 2: profiles.enabled_modules JSONB (❌ LEGACY MORT)             │
+│  → Vidé par migration mais encore lu par :                             │
+│     • 7 fonctions SQL (has_apogee_tickets_access, has_franchiseur_     │
+│       access, has_support_access, is_support_agent,                    │
+│       get_collaborator_sensitive_data, handle_document_request)         │
+│     • ~20 politiques RLS (apogee_tickets, ticket_embeddings,           │
+│       ticket_tags, ticket_history, salary_history,                     │
+│       collaborator_sensitive_data, etc.)                               │
+│     • Edge Function _shared/auth.ts → encore SELECT enabled_modules    │
+│     • Edge Function _shared/permissionsEngine.ts → extractPermission   │
+│     • Edge Function create-user → écrit encore dans le JSONB           │
+├──────────────────────────────────────────────────────────────────────────┤
+│  SOURCE 3: types/accessControl.ts (❌ DOUBLON CODE)                    │
+│  → Fichier de guards qui réimplémente hasModule/hasModuleOption        │
+│  → En doublon avec permissions/permissionsEngine.ts                    │
+│  → Utilisé uniquement dans AuthContext.tsx                             │
+├──────────────────────────────────────────────────────────────────────────┤
+│  SOURCE 4: moduleRegistry.ts fonctions legacy (❌ DEAD CODE)           │
+│  → hasProjectManagementAccess() / hasKanbanAccess()                    │
+│  → Vérifient enabledModules JSONB directement                          │
+│  → Exportées mais jamais appelées                                      │
+└──────────────────────────────────────────────────────────────────────────┘
+```
 
-1. **`src/permissions/constants.ts`** :
-   - Réécrit proprement avec modules V3 comme source principale
-   - Legacy entries conservées en section `// Legacy compat` annotée
-   - `@deprecated` sur MODULE_MIN_ROLES et MODULE_LABELS (utiliser MODULE_DEFINITIONS)
+### Plan de correction — 3 blocs
 
-2. **`src/contexts/AuthContext.tsx`** :
-   - `isSupport` vérifie maintenant `aide` ET `support` (legacy compat)
-   - Support agent/admin detection cherche `aide` en priorité, `support` en fallback
+#### Bloc 1 : SQL — Migrer toutes les fonctions et RLS vers `user_modules`
 
-3. **`src/types/accessControl.ts`** :
-   - `isSupportAgent()` et `isSupportAdmin()` vérifient `aide` + `support`
+**Fonctions SQL à réécrire** (supprimer toute référence à `profiles.enabled_modules`) :
 
-4. **`src/contexts/DataPreloadContext.tsx`** :
-   - Suppression fallback `pilotage_agence.stats_hub` (utilise `stats.stats_hub` uniquement)
+| Fonction | Remplacement |
+|----------|-------------|
+| `has_apogee_tickets_access` | Ne garder que `user_modules` + N5+ bypass (supprimer le check `profiles.enabled_modules`) |
+| `has_franchiseur_access` | Remplacer par `has_module_v2(_user_id, 'reseau_franchiseur') OR global_role >= N3` |
+| `has_support_access` | Remplacer par `has_module_v2(_user_id, 'aide') OR N5+` |
+| `is_support_agent` | Remplacer par `has_module_option_v2(_user_id, 'aide', 'agent')` |
+| `get_collaborator_sensitive_data` | Remplacer le check `enabled_modules->'rh'` par `has_module_option_v2(v_user_id, 'rh', 'rh_admin')` |
+| `handle_document_request` | Idem — remplacer par `has_module_option_v2` |
 
-5. **`src/hooks/useGlobalFeatureFlags.ts`** :
-   - Simplifié : plus de mapping legacy complexe
-   - Note claire : "outil de dev tracking, pas de permissions"
+**Politiques RLS à réécrire** (~20 policies sur 8 tables) :
 
-6. **`src/hooks/access-rights/useEffectiveModules.ts`** :
-   - `MODULE_COMPAT_MAP` conservé (seul endroit de rétrocompat runtime)
-   - Sera supprimé quand `user_modules` sera migré en base
+Toutes les policies qui font `(SELECT (profiles.enabled_modules->...) FROM profiles WHERE id = auth.uid())` seront remplacées par `has_apogee_tickets_access(auth.uid())` (qui elle-même ne vérifiera plus que `user_modules` + N5+) ou par `has_module_option_v2()`.
 
-### Ce qui reste legacy (volontairement conservé)
-- `MODULES` const dans `types/modules.ts` : clés legacy (help_academy, etc.) pour le type ModuleKey
-- `EnabledModules` interface : propriétés legacy pour rétrocompat
-- `MODULE_COMPAT_MAP` dans `useEffectiveModules` : mapping runtime
-- `sitemapData.ts` : guards legacy (à migrer vers nouveaux module keys)
+Tables impactées : `apogee_ticket_attachments`, `apogee_ticket_comments`, `apogee_ticket_tags`, `apogee_ticket_history`, `apogee_impact_tags`, `apogee_ticket_field_permissions`, `apogee_reported_by`, `ticket_embeddings`, `ticket_duplicate_suggestions`, `salary_history`, `collaborator_sensitive_data`.
+
+#### Bloc 2 : Edge Functions — Supprimer `enabled_modules` du contexte
+
+| Fichier | Action |
+|---------|--------|
+| `supabase/functions/_shared/auth.ts` | Supprimer `enabled_modules` du SELECT et du UserContext. Utiliser la RPC `get_user_effective_modules` ou `has_module_v2` SQL |
+| `supabase/functions/_shared/permissionsEngine.ts` | Supprimer `enabledModules` de `extractPermissionContext()`. Mettre à jour `validateUserPermissions()` |
+| `supabase/functions/create-user/index.ts` | Supprimer le bloc qui écrit `enabled_modules` JSONB dans profiles (lignes 280-288) |
+
+#### Bloc 3 : Frontend — Supprimer les doublons de code
+
+| Fichier | Action |
+|---------|--------|
+| `src/types/accessControl.ts` | **Supprimer** — doublon de `permissionsEngine.ts`. Migrer les 5 imports dans `AuthContext.tsx` vers `@/permissions` |
+| `src/permissions/moduleRegistry.ts` | Supprimer `hasProjectManagementAccess()` et `hasKanbanAccess()` (dead code, lisent le JSONB) |
+| `src/permissions/index.ts` | Retirer les exports correspondants |
+| `src/permissions/types.ts` | Mettre à jour le commentaire (ne plus mentionner `profiles.enabled_modules`) |
+
+### Résultat attendu
+
+```text
+Un seul chemin de vérification, partout :
+
+Frontend:  AuthContext → RPC get_user_effective_modules → state
+           → hasModule() / hasModuleOption() via permissions/
+
+SQL/RLS:   has_apogee_tickets_access()  → user_modules + N5+
+           has_module_v2()              → user_modules
+           has_module_option_v2()       → user_modules + options
+           
+Edge Fn:   global_role + has_module_v2() SQL (pas de JSONB)
+
+Écriture:  Onglet Droits → INSERT/UPDATE user_modules → seule source
+```
+
+Aucune référence à `profiles.enabled_modules` ne subsistera dans le code actif.
+
