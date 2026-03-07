@@ -21,7 +21,32 @@ export function LoginFormCard() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [forgotMode, setForgotMode] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
   const { toast } = useToast();
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = forgotEmail.trim();
+    if (!trimmed || !trimmed.includes('@')) {
+      toast({ title: 'Email invalide', description: "Veuillez saisir une adresse email valide.", variant: 'destructive' });
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      setForgotSent(true);
+    } catch (err: any) {
+      toast({ title: 'Erreur', description: err.message || "Impossible d'envoyer l'email.", variant: 'destructive' });
+    } finally {
+      setForgotLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
