@@ -63,7 +63,7 @@ export function usePersonalKpis(options?: UsePersonalKpisOptions) {
       const apogeeUserId = collaborator?.apogee_user_id;
       
       if (!apogeeUserId) {
-        console.log('[usePersonalKpis] Pas d\'apogee_user_id trouvé dans collaborators');
+        if (import.meta.env.DEV) console.log('[usePersonalKpis] Pas d\'apogee_user_id trouvé dans collaborators');
         return { type: 'not_linked' as const };
       }
 
@@ -73,21 +73,22 @@ export function usePersonalKpis(options?: UsePersonalKpisOptions) {
       const isTechnicien = roleAgence.includes('technic') || roleAgence.includes('tech');
       const isAssistante = roleAgence.includes('assist') || roleAgence.includes('secr') || roleAgence.includes('admin');
 
-      console.log('[usePersonalKpis] Profile:', { apogeeUserId, roleAgence, isTechnicien, isAssistante });
-      console.log('[usePersonalKpis] DateRange utilisé:', { 
-        start: dateRange.start.toISOString(), 
-        end: dateRange.end.toISOString() 
-      });
+      if (import.meta.env.DEV) {
+        console.log('[usePersonalKpis] Profile:', { apogeeUserId, roleAgence, isTechnicien, isAssistante });
+        console.log('[usePersonalKpis] DateRange:', { start: dateRange.start.toISOString(), end: dateRange.end.toISOString() });
+      }
 
       // Charger les données via DataService (même source que StatIA)
       const apiData = await DataService.loadAllData(true, false, agence);
       
-      console.log('[usePersonalKpis] Data loaded:', {
-        factures: apiData.factures?.length || 0,
-        interventions: apiData.interventions?.length || 0,
-        projects: apiData.projects?.length || 0,
-        users: apiData.users?.length || 0,
-      });
+      if (import.meta.env.DEV) {
+        console.log('[usePersonalKpis] Data loaded:', {
+          factures: apiData.factures?.length || 0,
+          interventions: apiData.interventions?.length || 0,
+          projects: apiData.projects?.length || 0,
+          users: apiData.users?.length || 0,
+        });
+      }
 
       if (isTechnicien) {
         return {
@@ -131,7 +132,7 @@ function calculateTechnicienKpisStatia(
   const myUser = (users || []).find((u: any) => u.id === apogeeUserId);
   const myTechName = myUser ? `${myUser.firstname || ''} ${myUser.name || ''}`.trim().toUpperCase() : null;
   
-  console.log('[usePersonalKpis] Technicien trouvé:', { apogeeUserId, myUser: myUser?.name, myTechName });
+  if (import.meta.env.DEV) console.log('[usePersonalKpis] Technicien trouvé:', { apogeeUserId, myUser: myUser?.name, myTechName });
 
   // === 1. CA du mois (utilise le moteur StatIA) ===
   const statiaParams: CaParTechnicienParams = {
@@ -151,28 +152,21 @@ function calculateTechnicienKpisStatia(
   });
   const caMonth = myTechData?.value || 0;
   
-  console.log('[usePersonalKpis] Technician CA extraction:', { 
-    apogeeUserId, 
-    myTechName,
-    myTechData,
-    caMonth,
-    allRankingNames: techRanking.map((t: any) => t.label || t.name).slice(0, 5)
-  });
+  if (import.meta.env.DEV) {
+    console.log('[usePersonalKpis] CA extraction:', { apogeeUserId, myTechName, caMonth });
+  }
 
   // Convertir l'ID pour comparaison flexible
   const apogeeUserIdStr = String(apogeeUserId);
   const apogeeUserIdNum = Number(apogeeUserId);
 
   // Debug: examiner la structure des interventions (champs réels de l'API Apogée)
-  const sampleInter = (interventions || [])[0];
-  console.log('[usePersonalKpis] Sample intervention:', {
-    apogeeUserId,
-    // L'API Apogée utilise usersIds (tableau) pas userId
-    usersIds: sampleInter?.usersIds,
-    dataVisites: sampleInter?.data?.visites?.length,
-    type: sampleInter?.type,
-    type2: sampleInter?.type2,
-  });
+  if (import.meta.env.DEV) {
+    const sampleInter = (interventions || [])[0];
+    console.log('[usePersonalKpis] Sample intervention:', {
+      apogeeUserId, usersIds: sampleInter?.usersIds, type: sampleInter?.type,
+    });
+  }
 
   // Helper pour vérifier si technicien est dans l'intervention
   const isTechInIntervention = (inter: any): boolean => {
@@ -217,21 +211,10 @@ function calculateTechnicienKpisStatia(
     }
   });
 
-  // Debug: compter sans filtre date
-  const allTechInterventions = (interventions || []).filter(isTechInIntervention);
-  console.log('[usePersonalKpis] Interventions:', { 
-    total: (interventions || []).length,
-    sansFiltreDdate: allTechInterventions.length,
-    avecDate: techInterventions.length
-  });
-
-  console.log('[usePersonalKpis] Interventions (avec date):', { 
-    apogeeUserId, 
-    techInterventionsCount: techInterventions.length,
-    totalInterventions: (interventions || []).length,
-    monthStart: monthStart.toISOString(),
-    monthEnd: monthEnd.toISOString()
-  });
+  if (import.meta.env.DEV) {
+    const allTechInterventions = (interventions || []).filter(isTechInIntervention);
+    console.log('[usePersonalKpis] Interventions:', { total: (interventions || []).length, sansFiltre: allTechInterventions.length, avecDate: techInterventions.length });
+  }
 
   // === 3. Dossiers traités = projets FACTURÉS où technicien a intervenu ===
   const techProjectIds = new Set(techInterventions.map((i: any) => i.projectId));
@@ -252,12 +235,9 @@ function calculateTechnicienKpisStatia(
   const facturedProjectIds = new Set(monthFactures.map((f: any) => f.projectId));
   const dossiersTraites = [...techProjectIds].filter(pid => facturedProjectIds.has(pid)).length;
   
-  console.log('[usePersonalKpis] Dossiers:', { 
-    techProjectIds: techProjectIds.size, 
-    monthFactures: monthFactures.length,
-    facturedProjectIds: facturedProjectIds.size,
-    dossiersTraites
-  });
+  if (import.meta.env.DEV) {
+    console.log('[usePersonalKpis] Dossiers:', { techProjectIds: techProjectIds.size, dossiersTraites });
+  }
 
   // === 4. Heures travaillées (via créneaux ou durée des visites) ===
   let heuresProductives = 0;
@@ -312,11 +292,9 @@ function calculateTechnicienKpisStatia(
     }
   }
 
-  console.log('[usePersonalKpis] Heures:', { 
-    heuresTotales, 
-    heuresProductives,
-    interventionsCount: techInterventions.length
-  });
+  if (import.meta.env.DEV) {
+    console.log('[usePersonalKpis] Heures:', { heuresTotales, heuresProductives });
+  }
 
   // === 5. Taux de productivité = heures productives / heures totales ===
   const tauxProductivite = heuresTotales > 0 

@@ -125,13 +125,10 @@ export function usePlanningProjects(agencySlug: string | undefined) {
         };
       });
 
-      // DEBUG: log tous les states uniques pour identifier les bons
-      const uniqueStates = [...new Set(enriched.map(p => p.state))].sort();
-      console.log('[PlanningData] States uniques des projets:', uniqueStates);
-      console.log('[PlanningData] Total projets:', enriched.length);
-      
-      // DEBUG TEMPORAIRE: stocker les states dans window pour diagnostic
-      (window as any).__PLANNING_STATES__ = uniqueStates;
+      if (import.meta.env.DEV) {
+        const uniqueStates = [...new Set(enriched.map(p => p.state))].sort();
+        console.log('[PlanningData] States uniques:', uniqueStates, 'Total:', enriched.length);
+      }
 
       const planifiable = enriched.filter(p => {
         const st = (p.state || '').toLowerCase();
@@ -144,10 +141,11 @@ export function usePlanningProjects(agencySlug: string | undefined) {
         return false;
       });
 
-      console.log('[PlanningData] Projets à planifier trouvés:', planifiable.length, 
-        '(exclu', projectsWithPlannedTvx.size, 'projets avec TVX déjà planifié)');
+      if (import.meta.env.DEV) {
+        console.log('[PlanningData] Projets à planifier:', planifiable.length);
+      }
 
-      return { planifiable, all: enriched, _debugStates: uniqueStates };
+      return { planifiable, all: enriched };
     },
     enabled: !!agencySlug,
     staleTime: 5 * 60 * 1000, // 5 min

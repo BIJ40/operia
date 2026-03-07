@@ -226,7 +226,7 @@ export function StatiaBuilder({ agencySlug = 'dax', onSaveQuery }: StatiaBuilder
                 icon={<Layers className="h-4 w-4" />}
                 items={DIMENSIONS}
                 type="dimension"
-                onDragStart={(item) => console.log('Drag dimension:', item)}
+                onDragStart={() => {}}
               />
               
               <Separator />
@@ -239,7 +239,7 @@ export function StatiaBuilder({ agencySlug = 'dax', onSaveQuery }: StatiaBuilder
                   icon={<BarChart3 className="h-4 w-4" />}
                   items={measures}
                   type="measure"
-                  onDragStart={(item) => console.log('Drag measure:', item)}
+                  onDragStart={() => {}}
                 />
               ))}
             </div>

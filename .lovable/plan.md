@@ -66,3 +66,16 @@
 - P1-5: Table dupliquée sensitive_data_access_log supprimée
 - P1-6: 10 index FK créés (tickets, comments, history, attachments, activity_log, collaborators)
 - P2-4: CORS migrate-export → `_shared/cors.ts` + `withCors`
+
+## Audit Remédiation — Sprint 3 ✅ FAIT (Archi + Perf)
+- R3: Découpage advanced2.ts (2000+ lignes) → 7 modules domaine
+- P3.15: Dynamic import jsPDF (−300KB bundle) via factory `ComprehensivePDFGenerator.create()`
+- P2.10: Lazy-loaded recharts via `src/components/ui/lazy-recharts.tsx`
+- DB: Colonnes text→date (agency_commercial_profile, prospect_pool)
+
+## Audit Remédiation — Sprint 4 ✅ FAIT (Sécurité + Hygiène)
+- S4-1: Vulnérabilités npm corrigées (fabric→7.2.0, serialize-javascript→7.0.4, tar→7.5.10)
+- S4-2: console.log production nettoyés (usePersonalKpis, PlanningTechniciens, usePlanningData, StatiaBuilder)
+- S4-3: `window.__PLANNING_STATES__` debug global supprimé
+- S4-4: RLS `pending_registrations` INSERT (true) = volontaire (formulaire public)
+- S4-5: Leaked password protection → à activer manuellement dans Supabase Auth

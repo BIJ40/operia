@@ -223,15 +223,10 @@ function PlanningTechniciensSemaineContent() {
     [creneaux, selectedTechId, currentWeekStart, weekEnd]
   );
   
-  // Debug: log events pour comprendre le calcul des heures
-  console.log('[PlanningTechniciens] events count:', events.length, 'filtered by tech:', selectedTechId);
-  
   const workMinutes = useMemo(
     () => computeWeeklyWorkMinutes(events, currentWeekStart),
     [events, currentWeekStart]
   );
-  
-  console.log('[PlanningTechniciens] workMinutes computed:', workMinutes, 'from', events.filter(e => e.refType === 'visite-interv').length, 'work events');
   
   // Trouver le nom du technicien sélectionné
   const selectedTechLabel = useMemo(() => {
