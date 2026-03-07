@@ -164,8 +164,8 @@ export default function AdminHubContent() {
                   <ReseauView />
                 </TabsContent>
 
-                <TabsContent value="plans" className="mt-0 focus-visible:outline-none">
-                  <PlansManagerView />
+                <TabsContent value="modules" className="mt-0 focus-visible:outline-none">
+                  <ModulesMasterView />
                 </TabsContent>
 
                 <TabsContent value="activity" className="mt-0 focus-visible:outline-none">
