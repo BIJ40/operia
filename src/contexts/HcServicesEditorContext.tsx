@@ -237,7 +237,7 @@ export function HcServicesEditorProvider({ children }: { children: ReactNode }) 
         return updated;
       });
     } catch (error) {
-      console.error('Error deleting block:', error);
+      logError('Error deleting block:', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de supprimer le bloc',
