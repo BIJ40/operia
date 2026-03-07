@@ -26,11 +26,7 @@ export const MODULES = {
   // Modules réservés admin/réseau (non visibles dans les plans)
   reseau_franchiseur: 'reseau_franchiseur',
   admin_plateforme: 'admin_plateforme',
-  // Legacy keys pour rétrocompatibilité (à supprimer progressivement)
-  help_academy: 'help_academy',
-  pilotage_agence: 'pilotage_agence',
-  support: 'support',
-  apogee_tickets: 'apogee_tickets',
+  // Module utilitaire
   unified_search: 'unified_search',
 } as const;
 
