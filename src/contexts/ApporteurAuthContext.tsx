@@ -169,7 +169,7 @@ export function ApporteurAuthProvider({ children }: { children: ReactNode }) {
       setApporteurUser(null);
       toast.success('Déconnexion réussie');
     } catch (error) {
-      console.error('Logout error:', error);
+      logError('Logout error:', error);
       toast.error('Erreur lors de la déconnexion');
     }
   }, []);
