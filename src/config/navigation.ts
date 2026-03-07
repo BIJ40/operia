@@ -178,7 +178,7 @@ export const NAV_GROUPS: NavGroup[] = [
         title: 'Review', 
         url: ROUTES.projects.review, 
         icon: FileText, 
-        scope: 'apogee_tickets', 
+        scope: 'ticketing', 
         description: 'Revue des tickets' 
       },
       { 
