@@ -388,6 +388,7 @@ function UnifiedWorkspaceContent() {
     ticketing: 'orange',
     aide: 'cyan',
     admin: 'neutral',
+    test: 'teal',
   };
   
   return (
