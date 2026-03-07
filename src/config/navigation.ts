@@ -144,7 +144,7 @@ export const NAV_GROUPS: NavGroup[] = [
         title: 'Console Support', 
         url: ROUTES.support.console, 
         icon: Headset, 
-        scope: 'apogee_tickets', 
+        scope: 'ticketing', 
         description: 'Traiter les demandes de support' 
       },
     ],
@@ -157,35 +157,35 @@ export const NAV_GROUPS: NavGroup[] = [
         title: 'Kanban', 
         url: ROUTES.projects.kanban, 
         icon: Kanban, 
-        scope: 'apogee_tickets', 
+        scope: 'ticketing', 
         description: 'Tableau de bord projet' 
       },
       { 
         title: 'Liste', 
         url: ROUTES.projects.list, 
         icon: ListTodo, 
-        scope: 'apogee_tickets', 
+        scope: 'ticketing', 
         description: 'Vue liste des tickets' 
       },
       { 
         title: 'Tickets incomplets', 
         url: ROUTES.projects.incomplete, 
         icon: ListTodo, 
-        scope: 'apogee_tickets', 
+        scope: 'ticketing', 
         description: 'Tickets à compléter' 
       },
       { 
         title: 'Review', 
         url: ROUTES.projects.review, 
         icon: FileText, 
-        scope: 'apogee_tickets', 
+        scope: 'ticketing', 
         description: 'Revue des tickets' 
       },
       { 
         title: 'Permissions', 
         url: ROUTES.projects.permissions, 
         icon: Users, 
-        scope: 'apogee_tickets', 
+        scope: 'ticketing', 
         description: 'Gestion des droits' 
       },
     ],
@@ -233,7 +233,7 @@ export const NAV_GROUPS: NavGroup[] = [
         title: 'Gestion Projet', 
         url: ROUTES.projects.kanban, 
         icon: LifeBuoy, 
-        scope: 'apogee_tickets',
+        scope: 'ticketing',
         description: 'Gérer les tickets projet'
       },
       { 

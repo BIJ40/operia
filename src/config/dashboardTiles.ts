@@ -17,7 +17,7 @@ export interface DashboardTile {
   route: string;
   scopeSlug: string;
   color: 'primary' | 'accent';
-  group: 'help_academy' | 'pilotage' | 'rh' | 'support' | 'projects' | 'franchiseur' | 'admin' | 'communication' | 'technicien';
+  group: 'guides' | 'pilotage' | 'rh' | 'support' | 'projects' | 'franchiseur' | 'admin' | 'communication' | 'technicien';
   requiresAdmin?: boolean;
   requiresFranchisor?: boolean; // N3+ (franchisor_user)
   requiresModule?: ModuleKey; // Requires specific module to be enabled
@@ -29,7 +29,7 @@ export interface DashboardTile {
 }
 
 export const DASHBOARD_TILES: DashboardTile[] = [
-  // Help Academy
+  // Guides (ex-Help Academy)
   {
     id: 'GUIDE_APOGEE',
     title: 'Guide Apogée',
@@ -38,8 +38,8 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     route: ROUTES.academy.apogee,
     scopeSlug: SCOPE_SLUGS.APOGEE,
     color: 'primary',
-    group: 'help_academy',
-    requiresModule: 'help_academy',
+    group: 'guides',
+    requiresModule: 'guides',
   },
   {
     id: 'GUIDE_APPORTEURS',
@@ -49,8 +49,8 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     route: ROUTES.academy.apporteurs,
     scopeSlug: SCOPE_SLUGS.APPORTEURS,
     color: 'primary',
-    group: 'help_academy',
-    requiresModule: 'help_academy',
+    group: 'guides',
+    requiresModule: 'guides',
   },
   {
     id: 'BASE_DOCUMENTAIRE',
@@ -60,8 +60,8 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     route: ROUTES.academy.documents,
     scopeSlug: SCOPE_SLUGS.BASE_DOCUMENTAIRE,
     color: 'primary',
-    group: 'help_academy',
-    requiresModule: 'help_academy',
+    group: 'guides',
+    requiresModule: 'guides',
   },
   // Pilotage Agence
   {
@@ -73,7 +73,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: SCOPE_SLUGS.MES_INDICATEURS,
     color: 'accent',
     group: 'pilotage',
-    requiresModule: 'pilotage_agence',
+    requiresModule: 'agence',
   },
   {
     id: 'ACTIONS_A_MENER',
@@ -84,7 +84,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: SCOPE_SLUGS.ACTIONS_A_MENER,
     color: 'accent',
     group: 'pilotage',
-    requiresModule: 'pilotage_agence',
+    requiresModule: 'agence',
     featureFlagKey: 'pilotage.actions-mener',
   },
   // HIDDEN: Veille Apporteurs - temporairement désactivé (voir /admin/hidden-features)
@@ -108,7 +108,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: SCOPE_SLUGS.DIFFUSION,
     color: 'accent',
     group: 'pilotage',
-    requiresModule: 'pilotage_agence',
+    requiresModule: 'agence',
     featureFlagKey: 'pilotage.diffusion',
     badge: 'En cours',
   },
@@ -162,7 +162,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: SCOPE_SLUGS.APOGEE_TICKETS,
     color: 'accent',
     group: 'projects',
-    requiresModule: 'apogee_tickets',
+    requiresModule: 'ticketing',
   },
   // Espace Technicien
   {
@@ -174,7 +174,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: SCOPE_SLUGS.RH_TECH,
     color: 'accent',
     group: 'technicien',
-    requiresModule: 'pilotage_agence', // P2: Filtre module pour cacher aux N0 sans module
+    requiresModule: 'agence', // P2: Filtre module pour cacher aux N0 sans module
   },
   // Franchiseur
   {
@@ -339,7 +339,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
 ];
 
 export const DASHBOARD_GROUPS = {
-  help_academy: {
+  guides: {
     title: 'Help! Academy',
     icon: GraduationCap,
     colorClass: 'text-primary',

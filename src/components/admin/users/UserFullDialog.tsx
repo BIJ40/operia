@@ -90,9 +90,9 @@ interface UserFullDialogProps {
 }
 
 const SPECIAL_ACCESS_KEYS: { moduleKey: ModuleKey; optionKey?: string; label: string }[] = [
-  { moduleKey: 'apogee_tickets', label: 'Gestion de Projet' },
-  { moduleKey: 'support', optionKey: 'agent', label: 'Agent Support' },
-  { moduleKey: 'help_academy', optionKey: 'edition', label: 'Contributeur FAQ' },
+  { moduleKey: 'ticketing', label: 'Gestion de Projet' },
+  { moduleKey: 'aide', optionKey: 'agent', label: 'Agent Support' },
+  { moduleKey: 'guides', optionKey: 'edition', label: 'Contributeur FAQ' },
 ];
 
 const VISIBLE_SECTIONS: SitemapSection[] = ['core', 'academy', 'pilotage', 'rh', 'support', 'reseau', 'projects', 'admin'];

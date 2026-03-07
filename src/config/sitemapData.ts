@@ -113,7 +113,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'help_academy' },
+      moduleGuard: { moduleKey: 'guides' },
     },
   },
   {
@@ -123,7 +123,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'help_academy' },
+      moduleGuard: { moduleKey: 'guides' },
     },
   },
   {
@@ -133,7 +133,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'help_academy' },
+      moduleGuard: { moduleKey: 'guides' },
     },
     isDynamic: true,
   },
@@ -144,7 +144,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'help_academy' },
+      moduleGuard: { moduleKey: 'guides' },
     },
   },
   {
@@ -154,7 +154,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'help_academy' },
+      moduleGuard: { moduleKey: 'guides' },
     },
     isDynamic: true,
   },
@@ -165,7 +165,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'help_academy' },
+      moduleGuard: { moduleKey: 'guides' },
     },
     isDynamic: true,
   },
@@ -176,7 +176,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'help_academy' },
+      moduleGuard: { moduleKey: 'guides' },
     },
   },
   {
@@ -186,7 +186,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'help_academy' },
+      moduleGuard: { moduleKey: 'guides' },
     },
     isDynamic: true,
   },
@@ -217,7 +217,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'help_academy' },
+      moduleGuard: { moduleKey: 'guides' },
     },
   },
   {
@@ -227,7 +227,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'help_academy' },
+      moduleGuard: { moduleKey: 'guides' },
     },
     isDynamic: true,
   },
@@ -240,7 +240,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'pilotage',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'pilotage_agence' },
+      moduleGuard: { moduleKey: 'agence' },
     },
   },
   {
@@ -251,7 +251,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'pilotage_agence', requiredOption: 'stats_hub' },
+      moduleGuard: { moduleKey: 'stats', requiredOption: 'stats_hub' },
     },
   },
   {
@@ -261,7 +261,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'pilotage',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'pilotage_agence', requiredOption: 'indicateurs' },
+      moduleGuard: { moduleKey: 'agence', requiredOption: 'indicateurs' },
     },
   },
   {
@@ -272,7 +272,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'pilotage_agence', requiredOption: 'veille_apporteurs' },
+      moduleGuard: { moduleKey: 'agence', requiredOption: 'veille_apporteurs' },
     },
   },
   {
@@ -282,7 +282,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'pilotage',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'pilotage_agence', requiredOption: 'actions_a_mener' },
+      moduleGuard: { moduleKey: 'agence', requiredOption: 'actions_a_mener' },
     },
   },
   {
@@ -292,7 +292,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'pilotage',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'pilotage_agence', requiredOption: 'actions_a_mener' },
+      moduleGuard: { moduleKey: 'agence', requiredOption: 'actions_a_mener' },
     },
     isDynamic: true,
   },
@@ -304,7 +304,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'pilotage_agence', requiredOption: 'diffusion' },
+      moduleGuard: { moduleKey: 'agence', requiredOption: 'diffusion' },
     },
   },
   {
@@ -314,7 +314,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'pilotage',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'pilotage_agence' },
+      moduleGuard: { moduleKey: 'agence' },
     },
   },
   {
@@ -324,7 +324,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'pilotage',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'pilotage_agence' },
+      moduleGuard: { moduleKey: 'agence' },
     },
   },
   {
@@ -335,7 +335,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'pilotage_agence', requiredOption: 'mes_apporteurs' },
+      moduleGuard: { moduleKey: 'agence', requiredOption: 'mes_apporteurs' },
     },
   },
   {
@@ -346,7 +346,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'pilotage_agence', requiredOption: 'carte_rdv' },
+      moduleGuard: { moduleKey: 'agence', requiredOption: 'carte_rdv' },
     },
   },
   {
@@ -356,7 +356,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'pilotage',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'pilotage_agence' },
+      moduleGuard: { moduleKey: 'agence' },
     },
   },
   {
@@ -366,7 +366,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'pilotage',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'pilotage_agence' },
+      moduleGuard: { moduleKey: 'agence' },
     },
   },
   // Legacy /hc-agency redirect
@@ -555,7 +555,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'support',
     guards: {
       roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'support' },
+      moduleGuard: { moduleKey: 'aide' },
     },
   },
   {
@@ -565,7 +565,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'support',
     guards: {
       roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'support' },
+      moduleGuard: { moduleKey: 'aide' },
     },
   },
   {
@@ -575,7 +575,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'support',
     guards: {
       roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'support' },
+      moduleGuard: { moduleKey: 'aide' },
     },
   },
   {
@@ -721,7 +721,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'projects',
     guards: {
       roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'apogee_tickets' },
+      moduleGuard: { moduleKey: 'ticketing' },
     },
   },
   {
@@ -731,7 +731,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'projects',
     guards: {
       roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'apogee_tickets' },
+      moduleGuard: { moduleKey: 'ticketing' },
     },
   },
   {
@@ -741,7 +741,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'projects',
     guards: {
       roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'apogee_tickets' },
+      moduleGuard: { moduleKey: 'ticketing' },
     },
   },
   {
@@ -751,7 +751,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'projects',
     guards: {
       roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'apogee_tickets' },
+      moduleGuard: { moduleKey: 'ticketing' },
     },
   },
   {
@@ -761,7 +761,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'projects',
     guards: {
       roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'apogee_tickets' },
+      moduleGuard: { moduleKey: 'ticketing' },
     },
   },
   {
@@ -771,7 +771,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'projects',
     guards: {
       roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'apogee_tickets' },
+      moduleGuard: { moduleKey: 'ticketing' },
     },
   },
   {
@@ -781,7 +781,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'projects',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'apogee_tickets' },
+      moduleGuard: { moduleKey: 'ticketing' },
     },
   },
   // Duplicate scan feature removed v0.8.3
