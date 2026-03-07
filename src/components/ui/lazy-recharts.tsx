@@ -2,29 +2,20 @@
  * Lazy-loaded Recharts components
  * Reduces initial bundle by ~200KB by code-splitting recharts
  * 
- * Usage: import { LazyBarChart, LazyLineChart, ... } from '@/components/ui/lazy-recharts';
- * These are drop-in replacements wrapped in Suspense.
+ * Usage: import { LazyBarChart, ... } from '@/components/ui/lazy-recharts';
  */
 
-import { lazy, Suspense, type ComponentProps } from 'react';
+import { lazy, Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// Lazy-load the entire recharts module once
-const RechartsModule = lazy(() => import('recharts'));
-
-// Fallback component for chart loading
-function ChartFallback({ height = 200 }: { height?: number }) {
-  return <Skeleton className="w-full rounded-md" style={{ height }} />;
+function ChartFallback() {
+  return <Skeleton className="w-full h-[200px] rounded-md" />;
 }
 
-/**
- * HOC that creates a lazy-loaded recharts component
- * The component is loaded on first render, then cached by React.lazy
- */
-function createLazyChart<K extends string>(componentName: K) {
+function createLazyChart(componentName: string) {
   const LazyComponent = lazy(() =>
     import('recharts').then((mod) => ({
-      default: (mod as Record<string, any>)[componentName],
+      default: (mod as any)[componentName],
     }))
   );
 
@@ -39,7 +30,6 @@ function createLazyChart<K extends string>(componentName: K) {
   return WrappedComponent;
 }
 
-// Pre-built lazy components for the most used recharts exports
 export const LazyResponsiveContainer = createLazyChart('ResponsiveContainer');
 export const LazyBarChart = createLazyChart('BarChart');
 export const LazyLineChart = createLazyChart('LineChart');
