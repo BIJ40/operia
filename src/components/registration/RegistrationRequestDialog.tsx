@@ -31,6 +31,7 @@ export function RegistrationRequestDialog({ open, onOpenChange }: RegistrationRe
     email: '',
     phone: '',
     company_name: '',
+    agency_name: '',
     message: '',
   });
   const [loading, setLoading] = useState(false);
