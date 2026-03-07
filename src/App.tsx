@@ -90,9 +90,19 @@ import { useVersionCheck } from "./hooks/useVersionCheck";
 function AppContent() {
   const { user, isAuthLoading } = useAuth();
   const { isBlocked, message, isLoading: isMaintenanceLoading } = useMaintenanceMode();
+  const navigate = useNavigate();
 
   // Auto-check for app updates and force refresh if needed
   useVersionCheck();
+
+  // Detect recovery token in URL hash and redirect to /reset-password
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && hash.includes('type=recovery')) {
+      // Preserve the hash fragment for Supabase to process
+      navigate('/reset-password' + hash, { replace: true });
+    }
+  }, [navigate]);
 
   // Afficher le blocage maintenance si l'utilisateur n'est pas dans la whitelist
   if (!isAuthLoading && !isMaintenanceLoading && user && isBlocked) {
