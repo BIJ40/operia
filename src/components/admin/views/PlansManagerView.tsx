@@ -15,7 +15,7 @@ import { Crown, Check, X, Info, ChevronDown, ChevronRight, Minus } from 'lucide-
 import { cn } from '@/lib/utils';
 import { getPlanColorClass } from '@/config/planTiers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { DEPLOYED_MODULES, ModuleCategory, type ModuleDefinition, type PlanTierModuleKey } from '@/types/modules';
+import { DEPLOYED_MODULES, ModuleCategory, type ModuleDefinition } from '@/types/modules';
 
 // Legacy keys exclus de la vue plans
 const LEGACY_MODULE_KEYS = ['help_academy', 'pilotage_agence', 'support', 'apogee_tickets', 'unified_search'];
