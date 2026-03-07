@@ -163,7 +163,7 @@ export function useAgency(agencyId: string | null) {
       const agencyResult = await safeQuery<AgencyRow>(
         supabase
           .from('apogee_agencies')
-          .select('*')
+          .select('id, label, slug, is_active, contact_email, contact_phone, adresse, ville, code_postal, date_ouverture, date_cloture_bilan, created_at, updated_at')
           .eq('id', agencyId)
           .maybeSingle(),
         'FRANCHISEUR_AGENCY_LOAD'
