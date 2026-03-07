@@ -126,7 +126,7 @@ export function useUpdateDocTemplate() {
     },
     onError: (error) => {
       toast.error("Erreur lors de la mise à jour");
-      console.error(error);
+      logError(error);
     },
   });
 }
