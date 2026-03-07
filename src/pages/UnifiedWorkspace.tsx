@@ -165,7 +165,7 @@ function UnifiedWorkspaceContent() {
     { id: 'ticketing', label: 'Ticketing', icon: Ticket, requiresOption: { module: 'ticketing' } },
     { id: 'aide', label: 'Aide', icon: HelpCircle, requiresOption: { module: 'aide' } },
     { id: 'admin', label: 'Admin', icon: Shield, requiresOption: { module: 'admin_plateforme' } },
-    { id: 'test', label: 'TEST', icon: FlaskConical },
+    ...(import.meta.env.DEV ? [{ id: 'test' as const, label: 'TEST', icon: FlaskConical }] : []),
   ], []);
   
   // Vérifier si un onglet est accessible pour l'utilisateur EFFECTIF (impersonné)

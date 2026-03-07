@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { logAuth } from '@/lib/logger';
@@ -156,12 +156,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const hasFaqAdminRole = adminOptions.faq_admin === true; // Module admin_plateforme.faq_admin activé
   const canAccessFaqAdmin = hasFaqAdminRole || isAdmin; // faq_admin OU N5+
 
-  // Contexte d'accès V2.0 — PermissionContext de @/permissions
-  const accessContext: PermissionContext = {
+  // Contexte d'accès V2.0 — PermissionContext de @/permissions (mémorisé)
+  const accessContext: PermissionContext = useMemo(() => ({
     globalRole: globalRole ?? 'base_user',
     enabledModules: enabledModules ?? {},
     agencyId,
-  };
+  }), [globalRole, enabledModules, agencyId]);
 
   // ============================================================================
   // Guards V2.0 - À utiliser partout (délègue vers @/permissions/permissionsEngine)
@@ -190,20 +190,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('Timeout: chargement profil trop long');
       }, 10000);
 
-      // Requête profil
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('first_name, last_name, agence, agency_id, role_agence, must_change_password, global_role, is_active, is_read_only')
-        .eq('id', userId)
-        .single();
-      
-      // Appeler la RPC qui combine plan agence + overrides utilisateur
-      const { data: effectiveModules, error: modulesError } = await supabase.rpc(
-        'get_user_effective_modules',
-        { p_user_id: userId }
-      );
+      // Requêtes parallèles : profil + modules effectifs
+      const [profileResult, modulesResult] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('first_name, last_name, agence, agency_id, role_agence, must_change_password, global_role, is_active, is_read_only')
+          .eq('id', userId)
+          .single(),
+        supabase.rpc('get_user_effective_modules', { p_user_id: userId }),
+      ]);
       
       clearTimeout(timeoutId);
+
+      const { data: profile, error: profileError } = profileResult;
+      const { data: effectiveModules, error: modulesError } = modulesResult;
       
       if (profileError) {
         logAuth.error('Erreur requête profil:', profileError);
@@ -519,45 +519,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ImpersonationContext. La gestion de l'override se fait donc dans le wrapper
   // AuthProviderWithImpersonation ci-dessous.
   
+  const providerValue = useMemo(() => ({
+    isAuthenticated: !!user,
+    isAuthLoading,
+    user,
+    isLoggingOut,
+    firstName,
+    lastName,
+    agence,
+    agencyId,
+    roleAgence,
+    mustChangePassword,
+    isActive,
+    globalRole,
+    enabledModules,
+    accessContext,
+    hasGlobalRole: hasGlobalRoleGuard,
+    hasModule: hasModuleGuard,
+    hasModuleOption: hasModuleOptionGuard,
+    isAdmin,
+    isSupport,
+    isFranchiseur,
+    canAccessSupportUser,
+    hasSupportAgentRole,
+    isSupportAdmin,
+    canAccessSupportConsoleUI,
+    canManageTickets,
+    hasFaqAdminRole,
+    canAccessFaqAdmin,
+    isReadOnly,
+    login, 
+    logout,
+    hasAccessToScope,
+    suggestedGlobalRole: globalRole ?? 'base_user',
+  }), [
+    user, isAuthLoading, isLoggingOut,
+    firstName, lastName, agence, agencyId, roleAgence,
+    mustChangePassword, isActive, globalRole, enabledModules, accessContext,
+    hasGlobalRoleGuard, hasModuleGuard, hasModuleOptionGuard,
+    isAdmin, isSupport, isFranchiseur,
+    canAccessSupportUser, hasSupportAgentRole, isSupportAdmin,
+    canAccessSupportConsoleUI, canManageTickets,
+    hasFaqAdminRole, canAccessFaqAdmin,
+    isReadOnly, login, logout, hasAccessToScope,
+  ]);
+
   return (
-    <AuthContext.Provider value={{ 
-      isAuthenticated: !!user,
-      isAuthLoading,
-      user,
-      isLoggingOut,
-      firstName,
-      lastName,
-      agence,
-      agencyId,
-      roleAgence,
-      mustChangePassword,
-      isActive,
-      globalRole,
-      enabledModules,
-      accessContext,
-      hasGlobalRole: hasGlobalRoleGuard,
-      hasModule: hasModuleGuard,
-      hasModuleOption: hasModuleOptionGuard,
-      isAdmin,
-      isSupport,
-      isFranchiseur,
-      // Support module flags
-      canAccessSupportUser,
-      hasSupportAgentRole,
-      isSupportAdmin,
-      canAccessSupportConsoleUI,
-      canManageTickets,
-      // FAQ Admin flags
-      hasFaqAdminRole,
-      canAccessFaqAdmin,
-      // Read-only mode
-      isReadOnly,
-      // Auth actions
-      login, 
-      logout,
-      hasAccessToScope,
-      suggestedGlobalRole: globalRole ?? 'base_user',
-    }}>
+    <AuthContext.Provider value={providerValue}>
       {children}
     </AuthContext.Provider>
   );

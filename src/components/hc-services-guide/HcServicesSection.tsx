@@ -4,6 +4,7 @@ import { GripVertical, Edit, Trash2, Plus, Lightbulb, AlertCircle, Info, AlertTr
 import { Button } from '@/components/ui/button';
 import { AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { OperiaBlock } from '@/contexts/HcServicesEditorContext';
+import { createSanitizedHtml } from '@/lib/sanitize';
 
 interface HcServicesSectionProps {
   section: OperiaBlock;
@@ -101,7 +102,7 @@ export function HcServicesSection({
           {TipsIcon && <TipsIcon className="w-5 h-5 mt-0.5 flex-shrink-0" />}
           <div 
             className="prose prose-sm dark:prose-invert max-w-none flex-1"
-            dangerouslySetInnerHTML={{ __html: section.content }}
+            dangerouslySetInnerHTML={createSanitizedHtml(section.content)}
           />
         </div>
       </div>
@@ -172,7 +173,7 @@ export function HcServicesSection({
       <AccordionContent className="px-4 pb-4">
         <div 
           className="prose prose-sm dark:prose-invert max-w-none"
-          dangerouslySetInnerHTML={{ __html: section.content }}
+          dangerouslySetInnerHTML={createSanitizedHtml(section.content)}
         />
       </AccordionContent>
     </AccordionItem>
