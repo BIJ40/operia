@@ -142,7 +142,7 @@ function RoleBadge({
             'hover:opacity-80', dimmed && 'opacity-40', config.className
           )}
         >
-          {config.shortLabel}
+          {config.label.split(' · ')[1] ?? config.shortLabel}
         </Badge>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="center" className="min-w-[200px]">
