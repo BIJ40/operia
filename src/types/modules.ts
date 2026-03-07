@@ -138,7 +138,7 @@ export const MODULE_OPTIONS = {
 export type ModuleOptionPath = typeof MODULE_OPTIONS[ModuleKey][keyof typeof MODULE_OPTIONS[ModuleKey]];
 
 // Métadonnées des modules pour l'UI
-export type ModuleCategory = 'agence' | 'rh' | 'parc' | 'outils' | 'documents' | 'guides' | 'ticketing' | 'support' | 'commercial' | 'reseau' | 'admin';
+export type ModuleCategory = 'agence' | 'rh' | 'outils' | 'guides' | 'ticketing' | 'support' | 'reseau' | 'admin';
 
 export interface ModuleDefinition {
   key: ModuleKey;
