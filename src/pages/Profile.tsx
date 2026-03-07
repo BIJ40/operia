@@ -94,7 +94,7 @@ export default function Profile() {
       setIsLoading(true);
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, first_name, last_name, agence, role_agence, avatar_url, global_role, enabled_modules, phone')
+        .select('id, email, first_name, last_name, agence, role_agence, avatar_url, global_role, phone')
         .eq('id', user.id)
         .maybeSingle();
 
