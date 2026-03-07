@@ -17,7 +17,7 @@ export interface DashboardTile {
   route: string;
   scopeSlug: string;
   color: 'primary' | 'accent';
-  group: 'help_academy' | 'pilotage' | 'rh' | 'support' | 'projects' | 'franchiseur' | 'admin' | 'communication' | 'technicien';
+  group: 'guides' | 'pilotage' | 'rh' | 'support' | 'projects' | 'franchiseur' | 'admin' | 'communication' | 'technicien';
   requiresAdmin?: boolean;
   requiresFranchisor?: boolean; // N3+ (franchisor_user)
   requiresModule?: ModuleKey; // Requires specific module to be enabled
