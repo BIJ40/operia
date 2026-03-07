@@ -243,7 +243,8 @@ function calculateTechnicienKpis(
  * Calcule les KPIs assistante
  */
 function calculateAssistanteKpis(
-  apiData: Record<string, unknown[]>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- External Apogée API data is untyped
+  apiData: any,
   apogeeUserId: number,
   monthStart: Date,
   monthEnd: Date
