@@ -185,7 +185,7 @@ export const NAV_GROUPS: NavGroup[] = [
         title: 'Permissions', 
         url: ROUTES.projects.permissions, 
         icon: Users, 
-        scope: 'apogee_tickets', 
+        scope: 'ticketing', 
         description: 'Gestion des droits' 
       },
     ],
