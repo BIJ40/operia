@@ -316,7 +316,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Commercial',
     description: 'Suivi commercial et prospection',
     icon: 'Target',
-    category: 'commercial',
+    category: 'outils',
     deployed: false, // Pas encore déployé officiellement
     defaultForRoles: [],
     minRole: 'franchisee_admin',
