@@ -2,13 +2,13 @@
 
 **Version analysée** : V0.9.1 — Permissions Unifiées  
 **Audit initial** : 28 Janvier 2026  
-**Dernière MAJ** : 7 Mars 2026
+**Dernière MAJ** : 7 Mars 2026 (post-corrections sécurité)
 
 ---
 
 ## 📊 RÉSUMÉ EXÉCUTIF
 
-| Catégorie | Identifiés | Résolus (V0.9.1) | Restants |
+| Catégorie | Identifiés | Résolus | Restants |
 |-----------|-----------|-------------------|----------|
 | 🔴 **À SUPPRIMER** | 15+ fichiers | ✅ 8 résolus | ~7 restants |
 | 🟠 **À SIMPLIFIER** | 8+ modules | ⏳ Non traité | 8 restants |
