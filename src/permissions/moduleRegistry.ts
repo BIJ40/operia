@@ -205,9 +205,9 @@ export function hasKanbanAccess(
  * Options avec fallback compat (routes qui acceptent option OU module root)
  */
 export const COMPAT_MODE_OPTIONS: Record<string, ModuleKey> = {
-  'pilotage_agence.carte_rdv': 'pilotage_agence',
-  'pilotage_agence.mes_apporteurs': 'pilotage_agence',
-  'pilotage_agence.gestion_apporteurs': 'pilotage_agence',
+  'agence.carte_rdv': 'agence',
+  'agence.mes_apporteurs': 'agence',
+  'agence.gestion_apporteurs': 'agence',
 };
 
 /**

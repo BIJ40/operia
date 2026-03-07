@@ -138,7 +138,7 @@ export const UserModulesTab = memo(function UserModulesTab({
 
   // Get deployed, non-legacy modules grouped by category
   const modulesByCategory = useMemo(() => {
-    const modules = DEPLOYED_MODULES.filter(m => !LEGACY_MODULE_KEYS.includes(m.key));
+    const modules = DEPLOYED_MODULES.filter(m => !EXCLUDED_MODULE_KEYS.includes(m.key));
     
     const grouped: Record<string, ModuleDefinition[]> = {};
     for (const mod of modules) {

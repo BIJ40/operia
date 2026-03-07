@@ -185,10 +185,5 @@ export const MODULE_LABELS: Partial<Record<ModuleKey, string>> = {
   planning_augmente: 'Planification Augmentée',
   reseau_franchiseur: 'Réseau Franchiseur',
   admin_plateforme: 'Administration',
-  // Legacy compat
-  help_academy: 'Help! Academy',
-  pilotage_agence: 'Pilotage Agence',
-  support: 'Support',
-  apogee_tickets: 'Gestion de Projet',
   unified_search: 'Recherche unifiée',
 };
