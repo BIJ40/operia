@@ -54,6 +54,7 @@ const ADMIN_MAIN_TABS: PillTabConfig[] = [
 // Sous-onglets pour Gestion (style Folder) - 4 onglets directs
 const GESTION_SUB_TABS: FolderTabConfig[] = [
   { id: 'users', label: 'Utilisateurs', icon: Users, accent: 'blue' },
+  { id: 'inscriptions', label: 'Inscriptions', icon: UserPlus, accent: 'orange' },
   { id: 'apporteurs', label: 'Apporteurs', icon: UserCheck, accent: 'orange' },
   { id: 'agences', label: 'Agences', icon: Building2, accent: 'purple' },
   { id: 'plans', label: 'Plans', icon: Crown, accent: 'orange' },
