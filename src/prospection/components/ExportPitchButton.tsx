@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import { FileDown, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import jsPDF from 'jspdf';
+// jsPDF loaded dynamically to reduce bundle
 import type { AggregatedKPIs, UniversAggregated } from '../engine/aggregators';
 import type { Insight } from '../engine/insights';
 
@@ -31,6 +31,7 @@ export function ExportPitchButton({ apporteurName, kpis, universData, monthlyTre
   const handleExport = async () => {
     setLoading(true);
     try {
+      const { default: jsPDF } = await import('jspdf');
       const doc = new jsPDF('p', 'mm', 'a4');
       const W = 210;
       const MARGIN = 18;

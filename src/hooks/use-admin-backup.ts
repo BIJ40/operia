@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { logError } from '@/lib/logger';
 import { safeQuery, safeMutation } from '@/lib/safeQuery';
 import { errorToast, successToast } from '@/lib/toastHelpers';
-import jsPDF from 'jspdf';
+// jsPDF loaded dynamically to reduce bundle
 
 interface CategoryBlock {
   id: string;
@@ -396,6 +396,7 @@ export const useAdminBackup = () => {
         return;
       }
 
+      const { default: jsPDF } = await import('jspdf');
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
@@ -739,6 +740,7 @@ export const useAdminBackup = () => {
 
         if (!category) continue;
 
+        const { default: jsPDF } = await import('jspdf');
         const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();

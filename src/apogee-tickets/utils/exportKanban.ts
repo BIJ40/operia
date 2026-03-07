@@ -4,7 +4,7 @@
  */
 
 // xlsx is loaded dynamically to reduce bundle size (~200KB)
-import jsPDF from 'jspdf';
+// jsPDF loaded dynamically to reduce bundle
 import type { ApogeeTicket, ApogeeTicketStatus, ApogeeModule, ApogeePriority, ApogeeOwnerSide } from '../types';
 
 // Liste des colonnes à exporter
@@ -227,9 +227,9 @@ export async function exportToExcel(options: ExportOptions): Promise<void> {
 
 // ============ EXPORT PDF ============
 
-export function exportToPDF(options: ExportOptions): void {
+export async function exportToPDF(options: ExportOptions): Promise<void> {
   const { tickets, statuses, modules, priorities, ownerSides } = options;
-  
+  const { default: jsPDF } = await import('jspdf');
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
