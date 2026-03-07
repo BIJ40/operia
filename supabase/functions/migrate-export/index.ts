@@ -81,7 +81,10 @@ Deno.serve(async (req) => {
   const corsResult = handleCorsPreflightOrReject(req);
   if (corsResult) return corsResult;
 
+  // Wrap all responses with CORS headers
   const respond = (data: unknown, status = 200) => withCors(req, jsonResponse(data, status));
+
+  try {
     const url = new URL(req.url);
     const secret = url.searchParams.get('secret');
 
