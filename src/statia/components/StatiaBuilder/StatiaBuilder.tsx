@@ -226,7 +226,7 @@ export function StatiaBuilder({ agencySlug = 'dax', onSaveQuery }: StatiaBuilder
                 icon={<Layers className="h-4 w-4" />}
                 items={DIMENSIONS}
                 type="dimension"
-                onDragStart={(item) => console.log('Drag dimension:', item)}
+                onDragStart={() => {}}
               />
               
               <Separator />
