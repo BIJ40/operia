@@ -20,7 +20,7 @@ const PendingRegistrationsList = lazy(() => import('@/components/admin/registrat
 
 const SUB_TABS: FolderTabConfig[] = [
   { id: 'users', label: 'Utilisateurs', icon: Users, accent: 'blue' },
-  { id: 'inscriptions', label: 'Inscriptions', icon: UserPlus, accent: 'amber' },
+  { id: 'inscriptions', label: 'Inscriptions', icon: UserPlus, accent: 'orange' },
   { id: 'activity', label: 'Activité', icon: Activity, accent: 'green' },
 ];
 
