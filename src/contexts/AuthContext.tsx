@@ -519,45 +519,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ImpersonationContext. La gestion de l'override se fait donc dans le wrapper
   // AuthProviderWithImpersonation ci-dessous.
   
+  const providerValue = useMemo(() => ({
+    isAuthenticated: !!user,
+    isAuthLoading,
+    user,
+    isLoggingOut,
+    firstName,
+    lastName,
+    agence,
+    agencyId,
+    roleAgence,
+    mustChangePassword,
+    isActive,
+    globalRole,
+    enabledModules,
+    accessContext,
+    hasGlobalRole: hasGlobalRoleGuard,
+    hasModule: hasModuleGuard,
+    hasModuleOption: hasModuleOptionGuard,
+    isAdmin,
+    isSupport,
+    isFranchiseur,
+    canAccessSupportUser,
+    hasSupportAgentRole,
+    isSupportAdmin,
+    canAccessSupportConsoleUI,
+    canManageTickets,
+    hasFaqAdminRole,
+    canAccessFaqAdmin,
+    isReadOnly,
+    login, 
+    logout,
+    hasAccessToScope,
+    suggestedGlobalRole: globalRole ?? 'base_user',
+  }), [
+    user, isAuthLoading, isLoggingOut,
+    firstName, lastName, agence, agencyId, roleAgence,
+    mustChangePassword, isActive, globalRole, enabledModules, accessContext,
+    hasGlobalRoleGuard, hasModuleGuard, hasModuleOptionGuard,
+    isAdmin, isSupport, isFranchiseur,
+    canAccessSupportUser, hasSupportAgentRole, isSupportAdmin,
+    canAccessSupportConsoleUI, canManageTickets,
+    hasFaqAdminRole, canAccessFaqAdmin,
+    isReadOnly, login, logout, hasAccessToScope,
+  ]);
+
   return (
-    <AuthContext.Provider value={{ 
-      isAuthenticated: !!user,
-      isAuthLoading,
-      user,
-      isLoggingOut,
-      firstName,
-      lastName,
-      agence,
-      agencyId,
-      roleAgence,
-      mustChangePassword,
-      isActive,
-      globalRole,
-      enabledModules,
-      accessContext,
-      hasGlobalRole: hasGlobalRoleGuard,
-      hasModule: hasModuleGuard,
-      hasModuleOption: hasModuleOptionGuard,
-      isAdmin,
-      isSupport,
-      isFranchiseur,
-      // Support module flags
-      canAccessSupportUser,
-      hasSupportAgentRole,
-      isSupportAdmin,
-      canAccessSupportConsoleUI,
-      canManageTickets,
-      // FAQ Admin flags
-      hasFaqAdminRole,
-      canAccessFaqAdmin,
-      // Read-only mode
-      isReadOnly,
-      // Auth actions
-      login, 
-      logout,
-      hasAccessToScope,
-      suggestedGlobalRole: globalRole ?? 'base_user',
-    }}>
+    <AuthContext.Provider value={providerValue}>
       {children}
     </AuthContext.Provider>
   );

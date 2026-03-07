@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
 
-const MIGRATION_SECRET = 'apogee-migrate-2026-secret';
+const MIGRATION_SECRET = Deno.env.get('MIGRATION_SECRET') ?? '';
 
 function jsonResponse(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {

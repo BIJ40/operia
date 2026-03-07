@@ -173,7 +173,7 @@ export function HcServicesSection({
       <AccordionContent className="px-4 pb-4">
         <div 
           className="prose prose-sm dark:prose-invert max-w-none"
-          dangerouslySetInnerHTML={{ __html: section.content }}
+          dangerouslySetInnerHTML={createSanitizedHtml(section.content)}
         />
       </AccordionContent>
     </AccordionItem>

@@ -39,7 +39,7 @@ const RATE_LIMIT = {
 };
 
 // Session configuration
-const SESSION_DURATION_DAYS = 365;
+const SESSION_DURATION_DAYS = 90;
 
 Deno.serve(async (req) => {
   // CORS handling
