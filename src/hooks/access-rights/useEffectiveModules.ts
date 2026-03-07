@@ -158,6 +158,7 @@ export function useEffectiveModules(): EffectiveModulesResult & { isLoading: boo
   
   // min_role filtering is now handled server-side in the RPC
   // N5+ bypass is also handled server-side
+  const isAdminBypass = effectiveAuth.realGlobalRole === 'platform_admin' || effectiveAuth.realGlobalRole === 'superadmin';
   const modules = rawModules;
   
   const hasModule = (moduleKey: ModuleKey): boolean => {
