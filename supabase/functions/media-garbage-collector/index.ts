@@ -62,8 +62,12 @@ Deno.serve(async (req) => {
           { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+    } else {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Non authentifié — CRON_SECRET ou JWT requis' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
-
     const body = await req.json().catch(() => ({}));
     const dryRun = body.dry_run !== false; // Default to dry run for safety
     const olderThanDays = body.older_than_days || 30; // Default 30 days retention

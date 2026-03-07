@@ -310,6 +310,32 @@ Deno.serve(async (req) => {
   const corsResult = handleCorsPreflightOrReject(req);
   if (corsResult) return corsResult;
 
+  // Auth: CRON_SECRET or valid JWT required
+  const authHeader = req.headers.get('Authorization');
+  const cronSecret = Deno.env.get('CRON_SECRET');
+  if (cronSecret && authHeader === `Bearer ${cronSecret}`) {
+    // CRON call — authorized
+  } else if (authHeader?.startsWith('Bearer ')) {
+    // Validate JWT via Supabase
+    const supabaseCheck = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: { user }, error: authErr } = await supabaseCheck.auth.getUser();
+    if (authErr || !user) {
+      return withCors(req, new Response(
+        JSON.stringify({ success: false, error: 'Non authentifié' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      ));
+    }
+  } else {
+    return withCors(req, new Response(
+      JSON.stringify({ success: false, error: 'Non authentifié' }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } }
+    ));
+  }
+
   const startTime = Date.now();
 
   try {

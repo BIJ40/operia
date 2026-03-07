@@ -2,7 +2,7 @@
  * Utilitaire de parsing Excel pour les prospects
  * Supporte le format: Siren, Siret, Dénomination, Enseigne, etc.
  */
-import * as XLSX from 'xlsx';
+import type * as XLSXType from 'xlsx';
 
 interface RawProspectRow {
   import_batch_id: string;
