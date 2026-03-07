@@ -111,7 +111,7 @@ export function HcServicesEditorProvider({ children }: { children: ReactNode }) 
       setBlocks(mappedBlocks);
       CacheManager.setItem(CACHE_KEY, mappedBlocks, 5 * 60 * 1000);
     } catch (error) {
-      console.error('Error loading operia blocks:', error);
+      logError('Error loading operia blocks:', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de charger le guide HC Services',
