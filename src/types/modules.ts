@@ -227,6 +227,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     icon: 'Truck',
     category: 'outils',
     uiSubTab: 'parc',
+    defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
       { key: 'vehicules', path: 'parc.vehicules', label: 'Véhicules', description: 'Flotte véhicules', defaultEnabled: true, routes: ['/?tab=parc'] },
