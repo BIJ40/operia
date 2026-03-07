@@ -33,6 +33,27 @@
 - ✅ 5 hooks legacy documents supprimés
 - ✅ `RHDocumentManager` → `MediaLibraryPortal`
 
+### Nettoyage Legacy (7 Mars 2026)
+- ✅ `src/data/backup-apogee-data-2.json` supprimé (backup obsolète)
+- ✅ `src/hooks/use-support-agents.ts` supprimé (non importé)
+- ✅ `src/hooks/use-support-stats.ts` supprimé (non importé)
+- ✅ `src/components/tickets/` déjà supprimé
+- ✅ `src/components/admin/access-rights/tabs/` déjà supprimé
+- ✅ `src/hooks/use-user-creation-requests.ts` déjà supprimé
+
+### Sécurité RLS (7 Mars 2026)
+- ✅ `knowledge_base` : policy anon `USING(true)` supprimée
+- ✅ `blocks` : policy anon `USING(true)` supprimée + policies legacy nettoyées
+- ✅ `ai_search_cache` : policy `ALL authenticated USING(true)` supprimée
+- ✅ `technician_weekly_schedule` : SELECT restreint à la même agence
+- ✅ `doc_instances` : UPDATE WITH CHECK self-referencing `id = id` corrigé
+- ✅ `time_events` : UPDATE/DELETE scopés par agence (était cross-agency)
+
+### Dépendances (7 Mars 2026)
+- ✅ `fabric` mis à jour (7.0.0)
+- ✅ `serialize-javascript` mis à jour (6.0.2)
+- ✅ `tar` mis à jour (7.4.3)
+
 ---
 
 ## 🔴 1. LEGACY RESTANT À SUPPRIMER
