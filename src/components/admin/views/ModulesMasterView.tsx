@@ -70,21 +70,24 @@ function PlanBadge({
   readOnly?: boolean;
   dimmed?: boolean;
 }) {
-  const isStarter = plan === 'STARTER';
+  const config = plan === 'NONE'
+    ? { label: 'Individuel', className: 'bg-destructive/10 text-destructive border-destructive/30' }
+    : plan === 'STARTER'
+    ? { label: 'Basique', className: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30' }
+    : { label: 'Pro', className: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30' };
+
   return (
     <Badge
-      variant={isStarter ? 'secondary' : 'default'}
+      variant="secondary"
       className={cn(
         'text-xs cursor-default select-none transition-opacity',
         !readOnly && 'cursor-pointer hover:opacity-80',
         dimmed && 'opacity-40',
-        isStarter
-          ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30'
-          : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30'
+        config.className
       )}
       onClick={readOnly ? undefined : onClick}
     >
-      {isStarter ? 'Basique' : 'Pro'}
+      {config.label}
     </Badge>
   );
 }
