@@ -209,26 +209,9 @@ export function RealUserImpersonationDialog({ open, onOpenChange }: RealUserImpe
                 </div>
               </div>
 
-              {selectedModules.length > 0 && (
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Package className="h-4 w-4" />
-                    <span>Modules activés :</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {selectedModules.slice(0, 6).map((mod) => (
-                      <Badge key={mod} variant="secondary" className="text-xs">
-                        {mod}
-                      </Badge>
-                    ))}
-                    {selectedModules.length > 6 && (
-                      <Badge variant="outline" className="text-xs">
-                        +{selectedModules.length - 6}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              )}
+              <p className="text-xs text-muted-foreground italic">
+                Les modules seront chargés lors de l'impersonation
+              </p>
             </div>
           )}
         </div>
