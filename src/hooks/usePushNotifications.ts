@@ -92,7 +92,7 @@ export function usePushNotifications() {
     }
 
     if (!VAPID_PUBLIC_KEY) {
-      console.error('[Push] VAPID public key not configured');
+      logError('[Push] VAPID public key not configured');
       toast.error('Configuration push incomplète');
       return false;
     }
