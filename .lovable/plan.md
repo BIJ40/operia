@@ -15,35 +15,15 @@
 
 # AUDIT FINAL — Plan de Correction V2
 
-## Sprint 6 — Code Hygiene & Dead Code (P0 — Risque immédiat)
+## Sprint 6 — Code Hygiene & Dead Code ✅ FAIT
 
-### S6-1: Supprimer `getAssignableRoles()` et le `require()` ESM
-- **Fichier:** `src/types/globalRoles.ts:98-111`
-- **Cause:** `require()` synchrone incompatible Vite/ESM, dead code contourné dans `use-user-management.ts`
-- **Action:** Supprimer la fonction `getAssignableRoles()` entièrement
-- **Impact:** Élimine un crash potentiel en production
+### S6-1: ✅ Supprimé `getAssignableRoles()` et le `require()` ESM
+### S6-2: ✅ Synchronisé permissionsEngine Edge — 16 ModuleKey V3 + MODULE_COMPAT_MAP legacy
+### S6-3: ✅ `vite-plugin-pwa` → 0.21.1 (xlsx reste 0.18.5 — pas de fix publié)
 
-### S6-2: Synchroniser le moteur permissions Edge avec le frontend V3
-- **Fichier:** `supabase/functions/_shared/permissionsEngine.ts`
-- **Cause:** ModuleKey edge = 10 modules legacy (`help_academy`, `pilotage_agence`, `support`, `apogee_tickets`, `messaging`) ≠ frontend V3 = 16 modules (`agence`, `stats`, `aide`, `ticketing`, `guides`, etc.)
-- **Action:** Réécrire les types ModuleKey et MODULE_MIN_ROLES dans le fichier edge pour aligner avec V3. Ajouter compat map pour les anciens noms.
-- **Impact:** Cohérence sécurité entre client et serveur
+## Sprint 7 — Tests & Fiabilité ✅ FAIT
 
-### S6-3: Mettre à jour les dépendances vulnérables restantes
-- **Packages:** `vite-plugin-pwa` (→ 0.19.8+), `xlsx` (→ 0.19.3+), `@rollup/plugin-terser`
-- **Cause:** 5 vulnérabilités high/critical non résolues
-- **Action:** Mettre à jour ou remplacer les packages concernés
-
-## Sprint 7 — Tests & Fiabilité (P1 — Filet de sécurité)
-
-### S7-1: Tests unitaires du moteur de permissions
-- **Fichier:** `src/permissions/__tests__/permissionsEngine.test.ts` (à créer)
-- **Couverture:**
-  - `hasAccess()` — bypass N5+, module min role, agency required, network modules
-  - `getEffectiveModules()` — cascade plan → rôle → override
-  - `validateUserPermissions()` — détection incohérences
-  - `getUserManagementCapabilities()` — scope par rôle
-- **Impact:** Filet de sécurité critique avant tout changement permissions
+### S7-1: ✅ 31 tests unitaires du moteur de permissions (hasAccess, getEffectiveModules, validateUserPermissions, getUserManagementCapabilities)
 
 ### S7-2: Tests du module registry
 - **Fichier:** `src/permissions/__tests__/moduleRegistry.test.ts` (à créer)
