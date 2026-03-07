@@ -402,11 +402,6 @@ export interface EnabledModules {
   planning_augmente?: boolean | ModuleOptionsState;
   reseau_franchiseur?: boolean | ModuleOptionsState;
   admin_plateforme?: boolean | ModuleOptionsState;
-  // Legacy keys pour rétrocompatibilité
-  help_academy?: boolean | ModuleOptionsState;
-  pilotage_agence?: boolean | ModuleOptionsState;
-  support?: boolean | ModuleOptionsState;
-  apogee_tickets?: boolean | ModuleOptionsState;
   unified_search?: boolean | ModuleOptionsState;
 }
 
