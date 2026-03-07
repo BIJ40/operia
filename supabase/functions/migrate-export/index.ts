@@ -162,7 +162,7 @@ Deno.serve(async (req) => {
             .range(page * pageSize, (page + 1) * pageSize - 1);
 
           if (error) {
-            return jsonResponse({ error: error.message, table }, 400);
+            return respond({ error: error.message, table }, 400);
           }
           allRows.push(...(data ?? []));
           hasMore = (data?.length ?? 0) === pageSize;
