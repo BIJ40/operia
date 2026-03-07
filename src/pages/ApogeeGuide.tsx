@@ -61,15 +61,12 @@ export default function ApogeeGuide() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  if (!isAuthenticated) {
-    return <Navigate to={ROUTES.home} replace />;
-  }
-  
-  const effectiveEditMode = isEditMode && canEdit;
-
-  const apogeeCategories = blocks
-    .filter(b => b.type === 'category' && b.slug !== 'faq' && !b.title.toLowerCase().includes('faq') && !b.slug.startsWith('helpconfort-'))
-    .sort((a, b) => a.order - b.order);
+  const apogeeCategories = useMemo(() => 
+    blocks
+      .filter(b => b.type === 'category' && b.slug !== 'faq' && !b.title.toLowerCase().includes('faq') && !b.slug.startsWith('helpconfort-'))
+      .sort((a, b) => a.order - b.order),
+    [blocks]
+  );
 
   const getCategoryBadges = useMemo(() => {
     const sevenDaysAgo = new Date();
