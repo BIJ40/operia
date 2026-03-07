@@ -25,7 +25,7 @@ import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { EnabledModules, ModuleKey, isModuleEnabled, isModuleOptionEnabled } from '@/types/modules';
 import { SITEMAP_ROUTES, SECTION_LABELS, SitemapSection } from '@/config/sitemapData';
 import { getVisibleRoleLabel, getVisibleRoleColor, VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
-import { isHardcodedProtectedUser } from '@/hooks/access-rights/useProtectedAccess';
+
 import { usePlanTiers } from '@/hooks/access-rights';
 import { generateSecurePassword } from '@/lib/passwordUtils';
 import { cn } from '@/lib/utils';
@@ -148,7 +148,6 @@ export function UserFullDialog({
   
   const { data: planTiers } = usePlanTiers();
   
-  const isProtected = isHardcodedProtectedUser(userId);
   const userLevel = globalRole ? GLOBAL_ROLES[globalRole] ?? 0 : 0;
   const isN5Plus = userLevel >= GLOBAL_ROLES.platform_admin;
   
@@ -337,12 +336,6 @@ export function UserFullDialog({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {isProtected && (
-                <Badge variant="outline" className="text-warning border-warning/50 gap-1">
-                  <Lock className="h-3 w-3" />
-                  Protégé
-                </Badge>
-              )}
               {!isActive && (
                 <Badge variant="destructive" className="gap-1">Inactif</Badge>
               )}

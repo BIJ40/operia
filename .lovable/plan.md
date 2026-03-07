@@ -1,91 +1,48 @@
+# Refonte du système de modules/permissions
 
+## Étape 1 : Source unique consolidée ✅ FAIT
+- `MODULE_DEFINITIONS` dans `src/types/modules.ts` = source unique
+- `category: ModuleCategory` + `deployed?: boolean` par module
+- `DEPLOYED_MODULES` / `PLAN_VISIBLE_MODULES` auto-dérivés
 
-## Diagnostic : Pourquoi le ticketing est incohérent
+## Étape 2 : Gestion fine des options dans les plans ✅ FAIT
+- `PlansManagerView` : options togglables individuellement via `options_override` JSONB
+- Logique 3 états: hérité | activé | exclu
 
-### Le problème
+## Étape 3 : Cascade Plan → Rôle → Override utilisateur ✅ FAIT
+- RPC `get_user_effective_modules` : Plan agence → User overrides (serveur)
+- `useEffectiveModules` : filtre par `minRole` (client)
+- N5+ bypass complet
 
-Il existe **3 mécanismes d'accès distincts** pour le ticketing, dont 2 sont invisibles depuis l'onglet "Droits" :
+## Étape 4 : Nettoyage legacy ✅ FAIT
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│  1. module_registry + plan_tier_modules                 │
-│     ticketing → required_plan: NONE, enabled: false     │
-│     ✅ Correct : personne n'y a accès via le plan       │
-├─────────────────────────────────────────────────────────┤
-│  2. user_modules (= onglet "Privilèges")                │
-│     0 entrées pour ticketing                            │
-│     ✅ Correct : aucun override visible                 │
-├─────────────────────────────────────────────────────────┤
-│  3. protected_user_access (INVISIBLE dans Droits)       │  ← LE PROBLÈME
-│     + hardcode dans useProtectedAccess.ts               │
-│     6 utilisateurs whitelistés en dur :                 │
-│     Hugo, Gregory, Philippe, Florian, Eric, Jérôme      │
-│     → AuthContext.tsx force ticketing.enabled = true     │
-└─────────────────────────────────────────────────────────┘
-```
+### Changements effectués
 
-En plus, la fonction SQL `has_apogee_tickets_access()` vérifie encore `profiles.enabled_modules` (legacy JSONB supprimé).
+1. **`src/permissions/constants.ts`** :
+   - Réécrit proprement avec modules V3 comme source principale
+   - Legacy entries conservées en section `// Legacy compat` annotée
+   - `@deprecated` sur MODULE_MIN_ROLES et MODULE_LABELS (utiliser MODULE_DEFINITIONS)
 
-### Ce qui se passe concrètement
+2. **`src/contexts/AuthContext.tsx`** :
+   - `isSupport` vérifie maintenant `aide` ET `support` (legacy compat)
+   - Support agent/admin detection cherche `aide` en priorité, `support` en fallback
 
-1. L'utilisateur se connecte
-2. `AuthContext` appelle la RPC `get_user_effective_modules` → **pas de ticketing** (correct)
-3. Puis `AuthContext` vérifie `protected_user_access` / hardcode → **force ticketing = true** (invisible)
-4. La fiche utilisateur affiche "ticketing ✅" mais l'onglet Privilèges ne montre rien
+3. **`src/types/accessControl.ts`** :
+   - `isSupportAgent()` et `isSupportAdmin()` vérifient `aide` + `support`
 
-### Plan de correction
+4. **`src/contexts/DataPreloadContext.tsx`** :
+   - Suppression fallback `pilotage_agence.stats_hub` (utilise `stats.stats_hub` uniquement)
 
-**Objectif** : Un seul système, tout visible dans "Droits/Privilèges"
+5. **`src/hooks/useGlobalFeatureFlags.ts`** :
+   - Simplifié : plus de mapping legacy complexe
+   - Note claire : "outil de dev tracking, pas de permissions"
 
-#### 1. Migrer les 6 accès protégés vers `user_modules`
+6. **`src/hooks/access-rights/useEffectiveModules.ts`** :
+   - `MODULE_COMPAT_MAP` conservé (seul endroit de rétrocompat runtime)
+   - Sera supprimé quand `user_modules` sera migré en base
 
-Insérer dans `user_modules` les 6 utilisateurs avec `module_key = 'ticketing'` et les options `kanban, create, history`. Cela les rend visibles dans l'onglet Privilèges.
-
-#### 2. Supprimer le système `protected_user_access`
-
-- **`src/hooks/access-rights/useProtectedAccess.ts`** : Supprimer le fichier
-- **`src/contexts/AuthContext.tsx`** : Supprimer le bloc "PHASE 0" (lignes 300-320) qui force le ticketing
-- **`src/components/admin/users/UserFullDialog.tsx`** : Retirer l'import et l'usage de `isHardcodedProtectedUser`
-- **`src/components/admin/users/UserAccessSimple.tsx`** : Idem
-
-#### 3. Corriger la fonction SQL `has_apogee_tickets_access`
-
-Supprimer la vérification legacy `profiles.enabled_modules`, ne garder que :
-- `user_modules` (source de vérité)
-- N5+ bypass
-
-```sql
-CREATE OR REPLACE FUNCTION public.has_apogee_tickets_access(_user_id uuid)
-RETURNS boolean
-LANGUAGE sql STABLE SECURITY DEFINER
-SET search_path TO 'public'
-AS $$
-  SELECT
-    EXISTS (
-      SELECT 1 FROM public.user_modules
-      WHERE user_id = _user_id AND module_key = 'ticketing'
-    )
-    OR public.has_min_global_role(_user_id, 5);
-$$;
-```
-
-#### 4. Nettoyer la table `protected_user_access`
-
-Supprimer les données (ou garder la table vide comme archive). Plus aucun code ne la référencera.
-
-### Résultat attendu
-
-- Un seul chemin d'accès : `get_user_effective_modules` (RPC) qui lit `module_registry` + `plan_tier_modules` + `user_modules`
-- Les 6 utilisateurs apparaissent dans "Privilèges" avec le badge ticketing
-- Plus aucun hardcode ni whitelist cachée
-
-### Fichiers impactés
-
-| Fichier | Action |
-|---------|--------|
-| `src/hooks/access-rights/useProtectedAccess.ts` | Supprimer |
-| `src/contexts/AuthContext.tsx` | Retirer PHASE 0 + import |
-| `src/components/admin/users/UserFullDialog.tsx` | Retirer import protectedUser |
-| `src/components/admin/users/UserAccessSimple.tsx` | Retirer import protectedUser |
-| Migration SQL | INSERT user_modules + UPDATE has_apogee_tickets_access |
-
+### Ce qui reste legacy (volontairement conservé)
+- `MODULES` const dans `types/modules.ts` : clés legacy (help_academy, etc.) pour le type ModuleKey
+- `EnabledModules` interface : propriétés legacy pour rétrocompat
+- `MODULE_COMPAT_MAP` dans `useEffectiveModules` : mapping runtime
+- `sitemapData.ts` : guards legacy (à migrer vers nouveaux module keys)
