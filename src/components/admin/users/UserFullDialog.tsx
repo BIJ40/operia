@@ -25,7 +25,7 @@ import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { EnabledModules, ModuleKey, isModuleEnabled, isModuleOptionEnabled } from '@/types/modules';
 import { SITEMAP_ROUTES, SECTION_LABELS, SitemapSection } from '@/config/sitemapData';
 import { getVisibleRoleLabel, getVisibleRoleColor, VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
-import { isHardcodedProtectedUser } from '@/hooks/access-rights/useProtectedAccess';
+
 import { usePlanTiers } from '@/hooks/access-rights';
 import { generateSecurePassword } from '@/lib/passwordUtils';
 import { cn } from '@/lib/utils';
