@@ -149,7 +149,7 @@ export function useDeleteDocTemplate() {
     },
     onError: (error) => {
       toast.error("Erreur lors de la suppression");
-      console.error(error);
+      logError(error);
     },
   });
 }
