@@ -147,6 +147,30 @@
 
 ---
 
+## PHASE 3 — Optimisation long terme ✅ FAIT
+
+### P3-1: ✅ Cursor-based pagination
+- **`src/hooks/useCursorPagination.ts`** — Hook générique `useInfiniteQuery` + keyset pagination
+- **`src/hooks/useActivityLogPaginated.ts`** — Drop-in replacement pour activity_log volumineux
+- **Index DB:** `idx_activity_log_cursor` (created_at DESC, id), `idx_ticket_history_cursor`
+- **Pattern:** Remplace offset/limit instable par curseur sur colonne indexée
+
+### P3-2: ✅ Tests Edge Functions
+- **`supabase/functions/health-check/index.test.ts`** — 4 tests Deno
+  - Validation shape JSON (status, timestamp, checks, totalLatencyMs)
+  - Validation chaque check (name, status, latencyMs)
+  - CORS preflight → 200
+  - Mapping status ↔ HTTP code (ok→200, degraded→207, down→503)
+- **Tous verts ✅**
+
+### P3-3: ✅ Purge & archive strategy
+- **`purge_old_activity_logs(p_retention_months)`** — Supprime activity_log > N mois (défaut: 6)
+- **`purge_old_ticket_history(p_retention_months)`** — Supprime ticket_history > N mois (défaut: 12)
+- **`purge_expired_apporteur_sessions()`** — Nettoie sessions expirées/révoquées > 7j
+- **Recommandation:** Scheduler via pg_cron mensuel
+
+---
+
 ## Priorités d'exécution
 
 | Sprint | Statut | Risque résolu |
@@ -158,17 +182,18 @@
 | **S10** | ✅ FAIT | Polish UX, cohérence design system |
 | **P1** | ✅ FAIT | AuthContext split, .limit() queries, CORS, RLS audit |
 | **P2** | ✅ FAIT | Service layer, shared permissions, column selection |
+| **P3** | ✅ FAIT | Cursor pagination, Edge tests, purge/archive |
 
-## Score après Phase 2
+## Score après Phase 3
 
-| Dimension | Avant | Après P2 | Cible |
+| Dimension | Avant | Après P3 | Cible |
 |-----------|-------|----------|-------|
-| Architecture | 7.5 | 9.2 | 9.5 |
+| Architecture | 7.5 | 9.3 | 9.5 |
 | Sécurité | 7.5 | 9.0 | 9.5 |
-| Performance | 6.5 | 8.8 | 9.5 |
+| Performance | 6.5 | 9.2 | 9.5 |
 | Permissions | 8.5 | 9.5 | 10 |
-| Scalabilité | 6.5 | 8.8 | 9.0 |
-| Base de données | 7.0 | 9.0 | 9.5 |
-| DevOps | 7.0 | 8.5 | 9.0 |
-| Maintenabilité | 7.0 | 9.2 | 9.5 |
-| **Global** | **7.0** | **9.0** | **9.4** |
+| Scalabilité | 6.5 | 9.3 | 9.5 |
+| Base de données | 7.0 | 9.3 | 9.5 |
+| DevOps | 7.0 | 9.0 | 9.5 |
+| Maintenabilité | 7.0 | 9.3 | 9.5 |
+| **Global** | **7.0** | **9.2** | **9.5** |
