@@ -12,7 +12,8 @@ export function useAgencyList() {
         .from('apogee_agencies')
         .select('*')
         .eq('is_active', true)
-        .order('label');
+        .order('label')
+        .limit(500);
 
       // If animateur, filter by assigned agencies
       if (franchiseurRole === 'animateur' && assignedAgencies.length > 0) {

@@ -161,7 +161,8 @@ export function useAgencyDocumentRequests() {
       const { data: requestsData, error: requestsError } = await supabase
         .from('document_requests')
         .select('*')
-        .order('requested_at', { ascending: false });
+        .order('requested_at', { ascending: false })
+        .limit(500);
 
       if (requestsError) throw requestsError;
       

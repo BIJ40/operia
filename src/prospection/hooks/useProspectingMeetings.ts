@@ -34,7 +34,8 @@ export function useProspectingMeetings({ apporteurId, enabled = true }: UseProsp
       let query = supabase
         .from('prospecting_meetings')
         .select('*')
-        .order('meeting_at', { ascending: false });
+        .order('meeting_at', { ascending: false })
+        .limit(200);
 
       if (apporteurId) {
         query = query.eq('apporteur_id', apporteurId);

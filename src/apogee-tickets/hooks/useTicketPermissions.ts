@@ -224,7 +224,8 @@ export function useTicketUserRoles() {
       const { data: roles, error: rolesError } = await supabase
         .from('apogee_ticket_user_roles')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(500);
       
       if (rolesError) throw rolesError;
       if (!roles || roles.length === 0) return [];
