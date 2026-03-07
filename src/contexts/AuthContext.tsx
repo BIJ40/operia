@@ -259,7 +259,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
         }
 
-        // Règle métier: dans le plan PRO, certaines options de pilotage_agence sont incluses d'office
+        // Règle métier: dans le plan PRO, certaines options de stats/agence sont incluses d'office
         // On considère qu'une agence est en PRO si elle a accès à parc ou reseau_franchiseur
         const parcModule = resolvedModules.parc as any;
         const reseauModule = resolvedModules.reseau_franchiseur as any;
@@ -268,20 +268,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           (reseauModule && typeof reseauModule === 'object' && reseauModule.enabled)
         );
 
-        const pilotageModule = resolvedModules.pilotage_agence as any;
-        if (isProAgency && pilotageModule && typeof pilotageModule === 'object' && pilotageModule.enabled) {
-          const pilotageOptions = (pilotageModule.options && typeof pilotageModule.options === 'object')
-            ? pilotageModule.options as Record<string, boolean>
+        // Appliquer sur le nouveau module 'agence' ET le legacy 'pilotage_agence' (compat)
+        const agenceModule = resolvedModules.agence as any ?? resolvedModules.pilotage_agence as any;
+        if (isProAgency && agenceModule && typeof agenceModule === 'object' && agenceModule.enabled) {
+          const agenceOptions = (agenceModule.options && typeof agenceModule.options === 'object')
+            ? agenceModule.options as Record<string, boolean>
             : {};
 
-          resolvedModules.pilotage_agence = {
+          const enriched = {
             enabled: true,
             options: {
-              ...pilotageOptions,
+              ...agenceOptions,
               // Stats Hub inclus dans le plan PRO (mais pas dans STARTER)
               stats_hub: true,
             },
           } as any;
+
+          // Mettre à jour les deux clés pour la compat
+          resolvedModules.agence = enriched;
+          resolvedModules.pilotage_agence = enriched;
         }
 
         if (import.meta.env.DEV) {
