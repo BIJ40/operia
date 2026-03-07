@@ -235,12 +235,9 @@ function calculateTechnicienKpisStatia(
   const facturedProjectIds = new Set(monthFactures.map((f: any) => f.projectId));
   const dossiersTraites = [...techProjectIds].filter(pid => facturedProjectIds.has(pid)).length;
   
-  console.log('[usePersonalKpis] Dossiers:', { 
-    techProjectIds: techProjectIds.size, 
-    monthFactures: monthFactures.length,
-    facturedProjectIds: facturedProjectIds.size,
-    dossiersTraites
-  });
+  if (import.meta.env.DEV) {
+    console.log('[usePersonalKpis] Dossiers:', { techProjectIds: techProjectIds.size, dossiersTraites });
+  }
 
   // === 4. Heures travaillées (via créneaux ou durée des visites) ===
   let heuresProductives = 0;
