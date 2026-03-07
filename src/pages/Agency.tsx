@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from '@/integrations/supabase/client';
+import { logError } from '@/lib/logger';
 import { WarmCard } from "@/components/ui/warm-card";
 import { WarmPageContainer } from "@/components/ui/warm-page-container";
 import { Building2, MapPin, Phone, Mail, Loader2 } from "lucide-react";
