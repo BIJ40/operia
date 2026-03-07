@@ -82,12 +82,6 @@ export const MODULE_MIN_ROLES: Partial<Record<ModuleKey, GlobalRole>> = {
   planning_augmente: 'franchisee_admin',
   reseau_franchiseur: 'franchisor_user',
   admin_plateforme: 'platform_admin',
-  // Legacy compat (à supprimer quand user_modules sera migré)
-  help_academy: 'base_user',
-  pilotage_agence: 'franchisee_user',
-  support: 'base_user',
-  apogee_tickets: 'base_user',
-  unified_search: 'franchisee_user',
 };
 
 // ============================================================================
@@ -166,23 +160,6 @@ export const MODULE_OPTION_MIN_ROLES: Record<string, GlobalRole> = {
   'reseau_franchiseur.redevances': 'franchisor_admin',
   'reseau_franchiseur.comparatifs': 'franchisor_user',
 
-  // === LEGACY COMPAT (à supprimer quand user_modules migré) ===
-  'support.agent': 'base_user',
-  'support.user': 'base_user',
-  'help_academy.apogee': 'base_user',
-  'help_academy.apporteurs': 'base_user',
-  'help_academy.helpconfort': 'base_user',
-  'help_academy.edition': 'platform_admin',
-  'pilotage_agence.kpis': 'franchisee_user',
-  'pilotage_agence.indicateurs': 'franchisee_user',
-  'pilotage_agence.stats_hub': 'franchisee_user',
-  'pilotage_agence.actions_a_mener': 'franchisee_user',
-  'pilotage_agence.diffusion': 'franchisee_user',
-  'pilotage_agence.exports': 'franchisee_user',
-  'pilotage_agence.carte_rdv': 'franchisee_user',
-  'pilotage_agence.mes_apporteurs': 'franchisee_admin',
-  'pilotage_agence.gestion_apporteurs': 'franchisee_admin',
-  'pilotage_agence.veille_apporteurs': 'franchisee_user',
 };
 
 // ============================================================================
@@ -208,10 +185,5 @@ export const MODULE_LABELS: Partial<Record<ModuleKey, string>> = {
   planning_augmente: 'Planification Augmentée',
   reseau_franchiseur: 'Réseau Franchiseur',
   admin_plateforme: 'Administration',
-  // Legacy compat
-  help_academy: 'Help! Academy',
-  pilotage_agence: 'Pilotage Agence',
-  support: 'Support',
-  apogee_tickets: 'Gestion de Projet',
   unified_search: 'Recherche unifiée',
 };

@@ -111,8 +111,8 @@ function PilotageContent() {
   const isPlatformAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
 
   // Vérifier les permissions pour chaque onglet
-  const hasStatsAccess = isPlatformAdmin || hasModuleOption('pilotage_agence', 'stats_hub');
-  const hasApporteursAccess = isPlatformAdmin || hasModuleOption('pilotage_agence', 'mes_apporteurs');
+  const hasStatsAccess = isPlatformAdmin || hasModuleOption('agence', 'stats_hub');
+  const hasApporteursAccess = isPlatformAdmin || hasModuleOption('agence', 'mes_apporteurs');
 
   return (
     <div className="container mx-auto py-4 px-4 space-y-4">

@@ -33,12 +33,6 @@ const MODULE_ICONS: Partial<Record<ModuleKey, LucideIcon>> = {
   aide: HelpCircle,
   reseau_franchiseur: Crown,
   admin_plateforme: Crown,
-  // Legacy
-  help_academy: BookOpen,
-  pilotage_agence: BarChart3,
-  support: HelpCircle,
-  apogee_tickets: Kanban,
-  unified_search: BarChart3,
 };
 
 // Couleurs pour les badges actifs
@@ -56,12 +50,6 @@ const MODULE_COLORS: Partial<Record<ModuleKey, string>> = {
   aide: 'bg-rose-500 text-white hover:bg-rose-600',
   reseau_franchiseur: 'bg-slate-700 text-white hover:bg-slate-800',
   admin_plateforme: 'bg-slate-800 text-white hover:bg-slate-900',
-  // Legacy
-  help_academy: 'bg-teal-500 text-white hover:bg-teal-600',
-  pilotage_agence: 'bg-blue-500 text-white hover:bg-blue-600',
-  support: 'bg-rose-500 text-white hover:bg-rose-600',
-  apogee_tickets: 'bg-purple-500 text-white hover:bg-purple-600',
-  unified_search: 'bg-emerald-500 text-white hover:bg-emerald-600',
 };
 
 interface InlineModuleBadgesProps {

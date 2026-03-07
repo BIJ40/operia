@@ -26,11 +26,7 @@ export const MODULES = {
   // Modules réservés admin/réseau (non visibles dans les plans)
   reseau_franchiseur: 'reseau_franchiseur',
   admin_plateforme: 'admin_plateforme',
-  // Legacy keys pour rétrocompatibilité (à supprimer progressivement)
-  help_academy: 'help_academy',
-  pilotage_agence: 'pilotage_agence',
-  support: 'support',
-  apogee_tickets: 'apogee_tickets',
+  // Module utilitaire
   unified_search: 'unified_search',
 } as const;
 
@@ -106,28 +102,6 @@ export const MODULE_OPTIONS = {
     users: 'admin_plateforme.users',
     agencies: 'admin_plateforme.agencies',
     permissions: 'admin_plateforme.permissions',
-  },
-  // Legacy modules pour rétrocompatibilité
-  help_academy: {
-    apogee: 'help_academy.apogee',
-    helpconfort: 'help_academy.helpconfort',
-    apporteurs: 'help_academy.apporteurs',
-    edition: 'help_academy.edition',
-  },
-  pilotage_agence: {
-    indicateurs: 'pilotage_agence.indicateurs',
-    stats_hub: 'pilotage_agence.stats_hub',
-    carte_rdv: 'pilotage_agence.carte_rdv',
-  },
-  support: {
-    user: 'support.user',
-    agent: 'support.agent',
-  },
-  apogee_tickets: {
-    kanban: 'apogee_tickets.kanban',
-    create: 'apogee_tickets.create',
-    manage: 'apogee_tickets.manage',
-    import: 'apogee_tickets.import',
   },
   unified_search: {
     stats: 'unified_search.stats',
@@ -404,11 +378,11 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
 export const DEPLOYED_MODULES: ModuleDefinition[] = MODULE_DEFINITIONS.filter(m => m.deployed !== false);
 
 // Modules visibles dans la gestion des plans (auto-dérivé de MODULE_DEFINITIONS)
-// Exclut les modules adminOnly, legacy, et non déployés
-const LEGACY_MODULE_KEYS: ModuleKey[] = ['help_academy', 'pilotage_agence', 'support', 'apogee_tickets', 'unified_search'];
+// Exclut les modules adminOnly et non déployés
+const INTERNAL_ONLY_KEYS: ModuleKey[] = ['unified_search'];
 
 export const PLAN_VISIBLE_MODULES: ModuleKey[] = MODULE_DEFINITIONS
-  .filter(m => !m.adminOnly && !LEGACY_MODULE_KEYS.includes(m.key) && m.deployed !== false)
+  .filter(m => !m.adminOnly && !INTERNAL_ONLY_KEYS.includes(m.key) && m.deployed !== false)
   .map(m => m.key);
 
 
@@ -428,11 +402,6 @@ export interface EnabledModules {
   planning_augmente?: boolean | ModuleOptionsState;
   reseau_franchiseur?: boolean | ModuleOptionsState;
   admin_plateforme?: boolean | ModuleOptionsState;
-  // Legacy keys pour rétrocompatibilité
-  help_academy?: boolean | ModuleOptionsState;
-  pilotage_agence?: boolean | ModuleOptionsState;
-  support?: boolean | ModuleOptionsState;
-  apogee_tickets?: boolean | ModuleOptionsState;
   unified_search?: boolean | ModuleOptionsState;
 }
 
@@ -529,10 +498,5 @@ export const MODULE_SHORT_LABELS: Record<ModuleKey, string> = {
   planning_augmente: 'Planif. IA',
   reseau_franchiseur: 'Réseau',
   admin_plateforme: 'Admin',
-  // Legacy
-  help_academy: 'Academy',
-  pilotage_agence: 'Pilotage',
-  support: 'Support',
-  apogee_tickets: 'Tickets',
   unified_search: 'Recherche',
 };

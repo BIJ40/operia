@@ -130,13 +130,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const globalRoleLevel = globalRole ? GLOBAL_ROLES[globalRole] : 0;
   const isAdmin = globalRoleLevel >= GLOBAL_ROLES.platform_admin; // N5+
   const isFranchiseur = globalRoleLevel >= GLOBAL_ROLES.franchisor_user; // N3+
-  const isSupport = checkModuleEnabled(enabledModules, 'aide') || checkModuleEnabled(enabledModules, 'support');
+  const isSupport = checkModuleEnabled(enabledModules, 'aide');
 
   // ============================================================================
-  // MODULE SUPPORT/AIDE - Logique granulaire
+  // MODULE AIDE - Logique granulaire
   // ============================================================================
-  // Vérifier les deux clés (legacy 'support' + nouveau 'aide')
-  const supportModuleConfig = enabledModules?.aide ?? enabledModules?.support;
+  const supportModuleConfig = enabledModules?.aide;
   const supportOptions: SupportModuleOptions = 
     (typeof supportModuleConfig === 'object' && supportModuleConfig !== null && 'options' in supportModuleConfig)
       ? (supportModuleConfig.options as SupportModuleOptions)
@@ -268,8 +267,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           (reseauModule && typeof reseauModule === 'object' && reseauModule.enabled)
         );
 
-        // Appliquer sur le nouveau module 'agence' ET le legacy 'pilotage_agence' (compat)
-        const agenceModule = resolvedModules.agence as any ?? resolvedModules.pilotage_agence as any;
+        // Appliquer sur le module 'agence'
+        const agenceModule = resolvedModules.agence as any;
         if (isProAgency && agenceModule && typeof agenceModule === 'object' && agenceModule.enabled) {
           const agenceOptions = (agenceModule.options && typeof agenceModule.options === 'object')
             ? agenceModule.options as Record<string, boolean>
@@ -284,9 +283,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             },
           } as any;
 
-          // Mettre à jour les deux clés pour la compat
           resolvedModules.agence = enriched;
-          resolvedModules.pilotage_agence = enriched;
         }
 
         if (import.meta.env.DEV) {
@@ -310,13 +307,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       if (isProjectsProtected) {
-        // Forcer l'accès au module ticketing (et legacy apogee_tickets) avec toutes les options
+        // Forcer l'accès au module ticketing avec toutes les options
         const ticketingAccess = {
           enabled: true,
           options: { kanban: true, create: true, history: true },
         } as any;
         resolvedModules.ticketing = ticketingAccess;
-        resolvedModules.apogee_tickets = ticketingAccess;
         
         if (import.meta.env.DEV) {
           logAuth.info('[AUTH][PROTECTED] User has protected /projects access:', userId);

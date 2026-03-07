@@ -120,8 +120,8 @@ const CATEGORY_CONFIG: Record<ModuleCategory, {
   },
 };
 
-// Legacy module keys to exclude from the new UI
-const LEGACY_MODULE_KEYS: ModuleKey[] = ['help_academy', 'pilotage_agence', 'support', 'apogee_tickets', 'unified_search'];
+// Internal module keys to exclude from the new UI
+const EXCLUDED_MODULE_KEYS: ModuleKey[] = ['unified_search'];
 
 // ============================================================================
 // COMPONENT
@@ -138,7 +138,7 @@ export const UserModulesTab = memo(function UserModulesTab({
 
   // Get deployed, non-legacy modules grouped by category
   const modulesByCategory = useMemo(() => {
-    const modules = DEPLOYED_MODULES.filter(m => !LEGACY_MODULE_KEYS.includes(m.key));
+    const modules = DEPLOYED_MODULES.filter(m => !EXCLUDED_MODULE_KEYS.includes(m.key));
     
     const grouped: Record<string, ModuleDefinition[]> = {};
     for (const mod of modules) {

@@ -1,11 +1,10 @@
 /**
  * Hook pour obtenir les modules effectifs d'un utilisateur
  * 
- * CASCADE COMPLÈTE:
+ * CASCADE:
  * 1. Plan agence (plan_tier_modules) → modules de base
  * 2. User overrides (user_modules) → prennent le dessus
  * 3. Filtre par rôle (module_registry.min_role) → côté SERVEUR (RPC)
- * 4. Projection legacy: clés registre → clés plates (legacyModuleMapping)
  * 
  * IMPERSONATION: Utilise useEffectiveAuth pour respecter l'impersonation
  */
@@ -16,7 +15,6 @@ import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { ModuleKey } from '@/types/modules';
 import { resolveEffectiveModulesFromBackend } from '@/lib/effectiveModulesResolver';
-import { projectToLegacyModules } from '@/config/legacyModuleMapping';
 
 export interface EffectiveModuleRow {
   module_key: string;
@@ -30,62 +28,10 @@ export interface EffectiveModulesResult {
   hasModuleOption: (moduleKey: ModuleKey, optionKey: string) => boolean;
 }
 
-// Mapping de rétrocompatibilité BIDIRECTIONNEL: nouveaux modules ↔ anciens équivalents
-const MODULE_COMPAT_MAP: Record<string, string[]> = {
-  'stats': ['pilotage_agence', 'agence'],
-  'agence': ['pilotage_agence', 'stats'],
-  'rh': ['pilotage_agence', 'agence'],
-  'guides': ['help_academy'],
-  'aide': ['support'],
-  'ticketing': ['apogee_tickets'],
-  'divers_documents': ['agence', 'pilotage_agence'],
-  'prospection': ['agence', 'pilotage_agence'],
-  'pilotage_agence': ['agence', 'stats', 'rh', 'divers_documents', 'prospection'],
-  'help_academy': ['guides'],
-  'support': ['aide'],
-  'apogee_tickets': ['ticketing'],
-};
-
-/**
- * Merge les clés registre brutes avec la projection legacy.
- * Les clés registre (stats.general, outils.parc.vehicules, etc.) sont projetées
- * vers les clés plates legacy (stats, parc, etc.) attendues par le reste du code.
- * Les deux formats coexistent dans le résultat.
- */
-function mergeWithLegacyProjection(
-  rawModules: Record<string, { enabled: boolean; options: Record<string, boolean> }>
-): Record<string, { enabled: boolean; options: Record<string, boolean> }> {
-  const activeKeys = new Set(
-    Object.entries(rawModules)
-      .filter(([, v]) => v.enabled)
-      .map(([k]) => k)
-  );
-
-  const legacyProjected = projectToLegacyModules(activeKeys);
-
-  // Merge: legacy projected values are additive (don't overwrite existing)
-  const merged = { ...rawModules };
-  for (const [legacyKey, legacyValue] of Object.entries(legacyProjected)) {
-    if (merged[legacyKey]) {
-      // Merge options additively
-      merged[legacyKey] = {
-        enabled: merged[legacyKey].enabled || legacyValue.enabled,
-        options: { ...merged[legacyKey].options, ...legacyValue.options },
-      };
-    } else {
-      merged[legacyKey] = legacyValue;
-    }
-  }
-
-  return merged;
-}
-
 export function useEffectiveModules(): EffectiveModulesResult & { isLoading: boolean } {
   const { user } = useAuth();
   const { isRealUserImpersonation, impersonatedUser } = useImpersonation();
   const effectiveAuth = useEffectiveAuth();
-  
-  const effectiveGlobalRole = effectiveAuth.globalRole;
   
   const effectiveUserId = isRealUserImpersonation && impersonatedUser 
     ? impersonatedUser.id 
@@ -110,7 +56,6 @@ export function useEffectiveModules(): EffectiveModulesResult & { isLoading: boo
       const { modules: resolved, source } = await resolveEffectiveModulesFromBackend({
         userId: effectiveUserId,
         agencyId: effectiveAuth.agencyId,
-        profileEnabledModules: null,
         debugLabel: 'useEffectiveModules',
       });
 
@@ -133,21 +78,18 @@ export function useEffectiveModules(): EffectiveModulesResult & { isLoading: boo
         };
       }
 
-      // Project registry keys to legacy keys
-      const withLegacy = mergeWithLegacyProjection(result);
-
       if (import.meta.env.DEV) {
         console.log(
           '[useEffectiveModules] Loaded modules for user:',
           effectiveUserId,
-          Object.keys(withLegacy),
+          Object.keys(result),
           '(source:',
           source,
           ')'
         );
       }
 
-      return withLegacy as Record<ModuleKey, { enabled: boolean; options: Record<string, boolean> }>;
+      return result as Record<ModuleKey, { enabled: boolean; options: Record<string, boolean> }>;
     },
     enabled: !!effectiveUserId,
     staleTime: 1000 * 30,
@@ -156,36 +98,18 @@ export function useEffectiveModules(): EffectiveModulesResult & { isLoading: boo
   
   const rawModules = query.data || {} as Record<ModuleKey, { enabled: boolean; options: Record<string, boolean> }>;
   
-  // min_role filtering is now handled server-side in the RPC
-  // N5+ bypass is also handled server-side
+  // N5+ bypass handled server-side in the RPC
   const isAdminBypass = effectiveAuth.realGlobalRole === 'platform_admin' || effectiveAuth.realGlobalRole === 'superadmin';
   const modules = rawModules;
   
   const hasModule = (moduleKey: ModuleKey): boolean => {
     if (isAdminBypass) return true;
-    if (modules[moduleKey]?.enabled) return true;
-    
-    const compatModules = MODULE_COMPAT_MAP[moduleKey];
-    if (compatModules) {
-      for (const compatKey of compatModules) {
-        if (modules[compatKey as ModuleKey]?.enabled) return true;
-      }
-    }
-    return false;
+    return !!modules[moduleKey]?.enabled;
   };
   
   const hasModuleOption = (moduleKey: ModuleKey, optionKey: string): boolean => {
     if (isAdminBypass) return true;
-    if (modules[moduleKey]?.enabled && modules[moduleKey]?.options?.[optionKey]) return true;
-    
-    const compatModules = MODULE_COMPAT_MAP[moduleKey];
-    if (compatModules) {
-      for (const compatKey of compatModules) {
-        const compatModule = modules[compatKey as ModuleKey];
-        if (compatModule?.enabled && compatModule?.options?.[optionKey]) return true;
-      }
-    }
-    return false;
+    return !!(modules[moduleKey]?.enabled && modules[moduleKey]?.options?.[optionKey]);
   };
   
   return {

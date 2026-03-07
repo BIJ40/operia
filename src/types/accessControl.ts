@@ -18,7 +18,7 @@ export interface AccessControlContext {
  * Modules nécessitant une agence pour être accessibles
  * Ces modules sont liés à la gestion d'une agence spécifique
  */
-const AGENCY_REQUIRED_MODULES: ModuleKey[] = ['pilotage_agence', 'rh', 'parc', 'prospection'];
+const AGENCY_REQUIRED_MODULES: ModuleKey[] = ['agence', 'rh', 'parc', 'prospection'];
 
 /**
  * Vérifie si l'utilisateur a au minimum le rôle spécifié
@@ -90,7 +90,7 @@ export function hasModuleOption(ctx: AccessControlContext, moduleKey: ModuleKey,
  * Vérifie si l'utilisateur peut éditer le contenu
  */
 export function canEdit(ctx: AccessControlContext): boolean {
-  return hasModuleOption(ctx, 'help_academy', 'edition') || hasGlobalRole(ctx, 'platform_admin');
+  return hasModuleOption(ctx, 'guides', 'edition') || hasGlobalRole(ctx, 'platform_admin');
 }
 
 /**
@@ -111,14 +111,14 @@ export function isSuperAdmin(ctx: AccessControlContext): boolean {
  * Vérifie si l'utilisateur est agent support
  */
 export function isSupportAgent(ctx: AccessControlContext): boolean {
-  return hasModuleOption(ctx, 'aide', 'agent') || hasModuleOption(ctx, 'support', 'agent');
+  return hasModuleOption(ctx, 'aide', 'agent');
 }
 
 /**
  * Vérifie si l'utilisateur est admin support
  */
 export function isSupportAdmin(ctx: AccessControlContext): boolean {
-  return hasModuleOption(ctx, 'aide', 'admin') || hasModuleOption(ctx, 'support', 'admin');
+  return hasModuleOption(ctx, 'aide', 'admin');
 }
 
 /**

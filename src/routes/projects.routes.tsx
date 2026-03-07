@@ -29,12 +29,12 @@ export function ProjectsRoutes() {
       <Route path="/projects" element={<Navigate to="/?tab=ticketing" replace />} />
       
       {/* Detail pages keep their routes */}
-      <Route path="/projects/kanban" element={<ProjectsLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsKanban /></ModuleGuard></RoleGuard></ProjectsLayout>} />
-      <Route path="/projects/historique" element={<ProjectsLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsHistory /></ModuleGuard></RoleGuard></ProjectsLayout>} />
-      <Route path="/projects/list" element={<ProjectsLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsList /></ModuleGuard></RoleGuard></ProjectsLayout>} />
-      <Route path="/projects/incomplets" element={<ProjectsLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsIncomplete /></ModuleGuard></RoleGuard></ProjectsLayout>} />
-      <Route path="/projects/review" element={<ProjectsLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsReview /></ModuleGuard></RoleGuard></ProjectsLayout>} />
-      <Route path="/projects/permissions" element={<ProjectsLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="apogee_tickets"><ApogeeTicketsAdmin /></ModuleGuard></RoleGuard></ProjectsLayout>} />
+      <Route path="/projects/kanban" element={<ProjectsLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="ticketing"><ApogeeTicketsKanban /></ModuleGuard></RoleGuard></ProjectsLayout>} />
+      <Route path="/projects/historique" element={<ProjectsLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="ticketing"><ApogeeTicketsHistory /></ModuleGuard></RoleGuard></ProjectsLayout>} />
+      <Route path="/projects/list" element={<ProjectsLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="ticketing"><ApogeeTicketsList /></ModuleGuard></RoleGuard></ProjectsLayout>} />
+      <Route path="/projects/incomplets" element={<ProjectsLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="ticketing"><ApogeeTicketsIncomplete /></ModuleGuard></RoleGuard></ProjectsLayout>} />
+      <Route path="/projects/review" element={<ProjectsLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="ticketing"><ApogeeTicketsReview /></ModuleGuard></RoleGuard></ProjectsLayout>} />
+      <Route path="/projects/permissions" element={<ProjectsLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="ticketing"><ApogeeTicketsAdmin /></ModuleGuard></RoleGuard></ProjectsLayout>} />
     </>
   );
 }

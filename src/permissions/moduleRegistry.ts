@@ -148,7 +148,7 @@ export function logValidationIssues(issues: ValidationIssue[]): void {
 /**
  * Module protégé - ne doit JAMAIS être supprimé ou renommé
  */
-export const PROTECTED_MODULES: ModuleKey[] = ['apogee_tickets'];
+export const PROTECTED_MODULES: ModuleKey[] = ['ticketing'];
 
 /**
  * Vérifie si un module est protégé
@@ -166,12 +166,10 @@ export function hasProjectManagementAccess(
 ): boolean {
   if (!enabledModules) return false;
   
-  const moduleState = enabledModules['apogee_tickets'];
+  const moduleState = enabledModules['ticketing'];
   
-  // Module activé en booléen
   if (typeof moduleState === 'boolean') return moduleState;
   
-  // Module activé en objet
   if (typeof moduleState === 'object' && moduleState !== null) {
     const state = moduleState as { enabled?: boolean };
     return state.enabled === true;
@@ -188,16 +186,14 @@ export function hasKanbanAccess(
 ): boolean {
   if (!hasProjectManagementAccess(enabledModules)) return false;
   
-  const moduleState = enabledModules?.['apogee_tickets'];
+  const moduleState = enabledModules?.['ticketing'];
   
   if (typeof moduleState === 'object' && moduleState !== null) {
     const state = moduleState as { options?: { kanban?: boolean } };
-    // Si options non définies, kanban est activé par défaut
     if (!state.options) return true;
     return state.options.kanban !== false;
   }
   
-  // Si booléen true, toutes les options sont activées
   return typeof moduleState === 'boolean' && moduleState;
 }
 
@@ -209,9 +205,9 @@ export function hasKanbanAccess(
  * Options avec fallback compat (routes qui acceptent option OU module root)
  */
 export const COMPAT_MODE_OPTIONS: Record<string, ModuleKey> = {
-  'pilotage_agence.carte_rdv': 'pilotage_agence',
-  'pilotage_agence.mes_apporteurs': 'pilotage_agence',
-  'pilotage_agence.gestion_apporteurs': 'pilotage_agence',
+  'agence.carte_rdv': 'agence',
+  'agence.mes_apporteurs': 'agence',
+  'agence.gestion_apporteurs': 'agence',
 };
 
 /**

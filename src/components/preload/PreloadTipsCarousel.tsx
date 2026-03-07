@@ -56,16 +56,15 @@ export function PreloadTipsCarousel({
     const contextualTips: string[] = [];
     
     // Ajouter les tips des modules actifs
-    if (hasModuleOption('stats', 'stats_hub') || hasModuleOption('pilotage_agence', 'stats_hub')) {
+    if (hasModuleOption('stats', 'stats_hub') || hasModuleOption('agence', 'stats_hub')) {
       contextualTips.push(...(TIPS_BY_MODULE.stats || []));
-      contextualTips.push(...(TIPS_BY_MODULE.pilotage_agence || []));
     }
     
     if (hasModuleOption('rh', 'collaborateurs')) {
       contextualTips.push(...(TIPS_BY_MODULE.rh || []));
     }
     
-    if (hasModuleOption('help_academy', 'formations')) {
+    if (hasModuleOption('guides', 'formations')) {
       contextualTips.push(...(TIPS_BY_MODULE.academy || []));
     }
     
