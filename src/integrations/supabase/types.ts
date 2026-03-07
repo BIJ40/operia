@@ -5259,6 +5259,44 @@ export type Database = {
         }
         Relationships: []
       }
+      module_registry: {
+        Row: {
+          is_deployed: boolean
+          key: string
+          label: string
+          node_type: string
+          parent_key: string | null
+          required_plan: string
+          sort_order: number
+        }
+        Insert: {
+          is_deployed?: boolean
+          key: string
+          label: string
+          node_type: string
+          parent_key?: string | null
+          required_plan?: string
+          sort_order?: number
+        }
+        Update: {
+          is_deployed?: boolean
+          key?: string
+          label?: string
+          node_type?: string
+          parent_key?: string | null
+          required_plan?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_registry_parent_key_fkey"
+            columns: ["parent_key"]
+            isOneToOne: false
+            referencedRelation: "module_registry"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       monthly_reports: {
         Row: {
           agency_id: string
