@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
-import { Loader2, LogIn } from 'lucide-react';
+import { Loader2, LogIn, UserPlus } from 'lucide-react';
+import { RegistrationRequestDialog } from '@/components/registration/RegistrationRequestDialog';
 
 const loginSchema = z.object({
   email: z.string()
