@@ -8,6 +8,7 @@ export const PLAN_LABELS = {
   FREE: 'Gratuit',
   STARTER: 'Basique',
   PRO: 'Pro',
+  NONE: 'Individuel',
 } as const;
 
 export type PlanKey = keyof typeof PLAN_LABELS;
@@ -16,6 +17,7 @@ export const PLAN_COLORS = {
   FREE: 'bg-muted text-muted-foreground',
   STARTER: 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0',
   PRO: 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0',
+  NONE: 'bg-destructive/10 text-destructive border-destructive/30',
 } as const;
 
 /**
