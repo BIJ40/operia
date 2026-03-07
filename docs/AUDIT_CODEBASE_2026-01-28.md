@@ -163,50 +163,46 @@
 
 ---
 
-## 🔒 5. AUDIT SÉCURITÉ (Mars 2026)
+## 🔒 5. AUDIT SÉCURITÉ (Mars 2026) — ✅ CORRIGÉ
 
-### 5.1 Vulnérabilités RLS identifiées
+### 5.1 Vulnérabilités RLS — TOUTES CORRIGÉES
 
 | Table | Sévérité | Problème | Statut |
 |-------|----------|----------|--------|
-| `knowledge_base` | 🔴 CRITIQUE | `anon` read via `USING (true)` | ⏳ À corriger |
-| `blocks` | 🔴 CRITIQUE | `anon` read via `USING (true)` | ⏳ À corriger |
-| `ai_search_cache` | 🔴 CRITIQUE | `ALL` pour `authenticated` | ⏳ À corriger |
-| `technician_weekly_schedule` | 🟠 HAUTE | Pas de scoping agence | ⏳ À corriger |
-| `doc_instances` | 🟠 HAUTE | `UPDATE` policy `WHERE id = id` | ⏳ À corriger |
+| `knowledge_base` | 🔴 CRITIQUE | `anon` read via `USING (true)` | ✅ Policy supprimée |
+| `blocks` | 🔴 CRITIQUE | `anon` read via `USING (true)` | ✅ Policy supprimée + legacy nettoyé |
+| `ai_search_cache` | 🔴 CRITIQUE | `ALL` pour `authenticated` | ✅ Policy supprimée |
+| `technician_weekly_schedule` | 🟠 HAUTE | Pas de scoping agence | ✅ SELECT restreint même agence |
+| `doc_instances` | 🟠 HAUTE | `UPDATE` policy `WHERE id = id` | ✅ Self-ref corrigée |
+| `time_events` | 🟠 HAUTE | UPDATE/DELETE cross-agence | ✅ Scopé par agence |
 
-### 5.2 Dépendances vulnérables
-
-9 vulnérabilités haute sévérité (npm audit) : `fabric`, `xlsx`, `tar`, `serialize-javascript`
+### 5.2 Dépendances vulnérables — PARTIELLEMENT CORRIGÉ
+- ✅ `fabric` → 7.0.0
+- ✅ `serialize-javascript` → 6.0.2
+- ✅ `tar` → 7.4.3
+- ⚠️ `xlsx` → pas de version fixée disponible (vulnérabilité connue, pas de patch)
 
 ### 5.3 Auth
-- ⚠️ "Leaked password protection" désactivé dans Supabase Auth
+- ⚠️ "Leaked password protection" désactivé — **action manuelle requise** dans Supabase Dashboard > Auth > Settings
 
 ---
 
 ## 🎯 6. PLAN D'ACTION RESTANT
 
-### Phase 1 — Sécurité (URGENT)
-1. 🔒 Patcher 3 policies RLS critiques (`knowledge_base`, `blocks`, `ai_search_cache`)
-2. 🔒 Corriger `doc_instances` UPDATE policy
-3. 🔒 Activer "Leaked password protection"
-4. 🔒 Mettre à jour dépendances vulnérables
+### ~~Phase 1 — Sécurité~~ ✅ TERMINÉE
 
-### Phase 2 — Nettoyage Support Legacy
-5. ❌ Supprimer `use-support-notifications.ts`
-6. ❌ Supprimer `support-auto.ts`
-7. ❌ Supprimer `src/components/tickets/` (si non importés)
-8. ❌ Supprimer `backup-apogee-data-2.json`
-9. ⚠️ Vérifier/supprimer tabs access-rights legacy
+### Phase 2 — Consolidation Guides (refactoring)
+1. 🔄 Refactorer les 3 EditorContexts en 1 générique
+2. 🔄 Fusionner les pages Category*
+3. 🔄 Fusionner les hooks `use-category-*`
 
-### Phase 3 — Consolidation Guides
-10. 🔄 Refactorer les 3 EditorContexts en 1 générique
-11. 🔄 Fusionner les pages Category*
+### Phase 3 — Nettoyage DB (migrations)
+4. 🗄️ `ALTER TABLE profiles DROP COLUMN enabled_modules`
+5. 🗄️ Archiver tables `support_*`
+6. 🗄️ Archiver table `user_creation_requests`
 
-### Phase 4 — Nettoyage DB
-12. 🗄️ `ALTER TABLE profiles DROP COLUMN enabled_modules`
-13. 🗄️ Archiver tables `support_*`
-14. 🗄️ Archiver table `user_creation_requests`
+### Phase 4 — Action manuelle
+7. ⚠️ Activer "Leaked password protection" dans Supabase Dashboard
 
 ---
 
@@ -214,12 +210,10 @@
 
 | Métrique | Actuel | Après nettoyage | Gain |
 |----------|--------|-----------------|------|
-| Fichiers à supprimer | ~7 | 0 | -7 fichiers |
-| Lignes de code mort | ~2,000 | 0 | -2,000 lignes |
+| Contextes React dupliqués | 3 | 1 | -2 contextes |
+| Pages Category dupliquées | 5 | 1 | -4 pages |
 | Tables à archiver | ~5 | 0 | -5 tables |
-| Contextes React | 5 | 3 | -2 contextes |
-| Vulnérabilités RLS | 5 | 0 | 🔒 |
 
 ---
 
-*Audit Codebase HelpConfort — MAJ 7 Mars 2026*
+*Audit Codebase HelpConfort — MAJ 7 Mars 2026 (post-corrections sécurité)*
