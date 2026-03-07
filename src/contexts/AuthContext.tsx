@@ -51,7 +51,7 @@ interface AuthContextType {
   // ============================================================================
   globalRole: GlobalRole | null;
   enabledModules: EnabledModules | null;
-  accessContext: AccessControlContext;
+  accessContext: PermissionContext;
   
   // Guards V2.0 - À UTILISER PARTOUT
   hasGlobalRole: (requiredRole: GlobalRole) => boolean;
