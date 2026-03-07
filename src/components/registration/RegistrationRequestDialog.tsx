@@ -20,6 +20,7 @@ const registrationSchema = z.object({
   email: z.string().trim().email("L'adresse email n'est pas valide").max(255),
   phone: z.string().trim().max(20).optional().or(z.literal('')),
   company_name: z.string().trim().max(200).optional().or(z.literal('')),
+  agency_name: z.string().trim().max(200).optional().or(z.literal('')),
   message: z.string().trim().max(1000).optional().or(z.literal('')),
 });
 
