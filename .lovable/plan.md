@@ -1,48 +1,27 @@
-# Refonte du système de modules/permissions
 
-## Étape 1 : Source unique consolidée ✅ FAIT
-- `MODULE_DEFINITIONS` dans `src/types/modules.ts` = source unique
-- `category: ModuleCategory` + `deployed?: boolean` par module
-- `DEPLOYED_MODULES` / `PLAN_VISIBLE_MODULES` auto-dérivés
 
-## Étape 2 : Gestion fine des options dans les plans ✅ FAIT
-- `PlansManagerView` : options togglables individuellement via `options_override` JSONB
-- Logique 3 états: hérité | activé | exclu
+# Titres modules en majuscule + couleurs par niveau de profondeur
 
-## Étape 3 : Cascade Plan → Rôle → Override utilisateur ✅ FAIT
-- RPC `get_user_effective_modules` : Plan agence → User overrides (serveur)
-- `useEffectiveModules` : filtre par `minRole` (client)
-- N5+ bypass complet
+## Changements dans `ModulesMasterView.tsx`
 
-## Étape 4 : Nettoyage legacy ✅ FAIT
+### 1. Titres modules (depth 0) en MAJUSCULE
+Ligne 329-331 : ajouter `uppercase` à la classe du span pour `depth === 0`, et appliquer `node.label` tel quel (le CSS `uppercase` gère l'affichage).
 
-### Changements effectués
+### 2. Couleurs distinctes par profondeur
+Modifier les styles du nom selon le depth :
+- **depth 0** (Module) : couleur primaire, `font-semibold uppercase` (déjà en place, juste ajouter `uppercase` + couleur)
+- **depth 1** (Section/sous-module) : couleur bleue distincte, ex `text-blue-600 dark:text-blue-400`
+- **depth 2** (Outil) : couleur violette, ex `text-violet-600 dark:text-violet-400`
 
-1. **`src/permissions/constants.ts`** :
-   - Réécrit proprement avec modules V3 comme source principale
-   - Legacy entries conservées en section `// Legacy compat` annotée
-   - `@deprecated` sur MODULE_MIN_ROLES et MODULE_LABELS (utiliser MODULE_DEFINITIONS)
+Concrètement, ligne 329 :
+```tsx
+<span className={cn(
+  'truncate',
+  node.depth === 0 && 'font-semibold text-foreground uppercase tracking-wide',
+  node.depth === 1 && 'font-medium text-blue-600 dark:text-blue-400',
+  node.depth >= 2 && 'text-violet-600 dark:text-violet-400'
+)}>
+```
 
-2. **`src/contexts/AuthContext.tsx`** :
-   - `isSupport` vérifie maintenant `aide` ET `support` (legacy compat)
-   - Support agent/admin detection cherche `aide` en priorité, `support` en fallback
+Optionnel : ajouter un léger `bg` de fond sur les lignes depth 1 pour renforcer la distinction visuelle (ex: `bg-blue-50/30 dark:bg-blue-950/20`).
 
-3. **`src/types/accessControl.ts`** :
-   - `isSupportAgent()` et `isSupportAdmin()` vérifient `aide` + `support`
-
-4. **`src/contexts/DataPreloadContext.tsx`** :
-   - Suppression fallback `pilotage_agence.stats_hub` (utilise `stats.stats_hub` uniquement)
-
-5. **`src/hooks/useGlobalFeatureFlags.ts`** :
-   - Simplifié : plus de mapping legacy complexe
-   - Note claire : "outil de dev tracking, pas de permissions"
-
-6. **`src/hooks/access-rights/useEffectiveModules.ts`** :
-   - `MODULE_COMPAT_MAP` conservé (seul endroit de rétrocompat runtime)
-   - Sera supprimé quand `user_modules` sera migré en base
-
-### Ce qui reste legacy (volontairement conservé)
-- `MODULES` const dans `types/modules.ts` : clés legacy (help_academy, etc.) pour le type ModuleKey
-- `EnabledModules` interface : propriétés legacy pour rétrocompat
-- `MODULE_COMPAT_MAP` dans `useEffectiveModules` : mapping runtime
-- `sitemapData.ts` : guards legacy (à migrer vers nouveaux module keys)
