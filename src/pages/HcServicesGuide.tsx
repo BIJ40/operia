@@ -248,7 +248,7 @@ export default function OperiaGuide() {
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, loading } = useOperiaEditor();
   const { hasGlobalRole, isAuthenticated, hasModuleOption } = useAuth();
   
-  const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('help_academy', 'edition');
+  const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('guides', 'edition') || hasModuleOption('help_academy', 'edition');
   const canDelete = hasGlobalRole('platform_admin');
   const { toast } = useToast();
   const [editingId, setEditingId] = useState<string | null>(null);
