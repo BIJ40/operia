@@ -8,6 +8,7 @@ export const PLAN_LABELS = {
   FREE: 'Gratuit',
   STARTER: 'Basique',
   PRO: 'Pro',
+  NONE: 'Individuel',
 } as const;
 
 export type PlanKey = keyof typeof PLAN_LABELS;
