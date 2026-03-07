@@ -138,16 +138,22 @@ export const MODULE_OPTIONS = {
 export type ModuleOptionPath = typeof MODULE_OPTIONS[ModuleKey][keyof typeof MODULE_OPTIONS[ModuleKey]];
 
 // Métadonnées des modules pour l'UI
+export type ModuleCategory = 'agence' | 'rh' | 'parc' | 'outils' | 'documents' | 'guides' | 'ticketing' | 'support' | 'commercial' | 'reseau' | 'admin';
+
 export interface ModuleDefinition {
   key: ModuleKey;
   label: string;
   description: string;
   icon: string;
+  /** Catégorie UI pour le regroupement (reflète les onglets principaux) */
+  category: ModuleCategory;
   defaultForRoles: GlobalRole[];
   minRole: GlobalRole;
   options: ModuleOptionDefinition[];
   /** Si true, ce module n'apparaît pas dans la gestion des plans */
   adminOnly?: boolean;
+  /** Si false, ce module est en développement et masqué des permissions/plans */
+  deployed?: boolean;
 }
 
 export interface ModuleOptionDefinition {
