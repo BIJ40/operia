@@ -119,7 +119,7 @@ function AppContent() {
       {!isAuthLoading && user && <WelcomeWizardGate />}
       
       {/* Data Preload Popup - Préchargement des données pour utilisateurs avec stats */}
-      <DataPreloadPopup />
+      {/* DataPreloadPopup removed per user request */}
       
       {/* AuthRouter - Redirige automatiquement les apporteurs vers leur espace */}
       <AuthRouter>
