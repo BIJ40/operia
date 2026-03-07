@@ -7,8 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Pencil, UserX, UserCheck, Trash2, AlertCircle, Shield, ChevronDown } from 'lucide-react';
-import { UserPermissionsDialog } from './UserPermissionsDialog';
+import { Pencil, UserX, UserCheck, Trash2, AlertCircle, Eye, ChevronDown } from 'lucide-react';
+import { UserProfileSheet } from './UserProfileSheet';
 
 // Postes disponibles
 const ROLE_AGENCE_LABELS: Record<string, string> = {
@@ -63,7 +63,7 @@ export const UserRowItem = memo(function UserRowItem({
   agencyLabelsMap,
 }: UserRowItemProps) {
   const isDeactivated = user.is_active === false;
-  const [permissionsOpen, setPermissionsOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const getInitials = () => {
     const first = user.first_name?.[0] || '';
@@ -193,14 +193,14 @@ export const UserRowItem = memo(function UserRowItem({
                 <TooltipContent>Modifier les informations</TooltipContent>
               </Tooltip>
 
-              {/* Permissions */}
+              {/* Fiche utilisateur */}
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPermissionsOpen(true)}>
-                    <Shield className="w-4 h-4" />
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setProfileOpen(true)}>
+                    <Eye className="w-4 h-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Permissions & Accès</TooltipContent>
+                <TooltipContent>Fiche utilisateur</TooltipContent>
               </Tooltip>
 
               {/* Désactiver / Réactiver */}
@@ -249,19 +249,14 @@ export const UserRowItem = memo(function UserRowItem({
         </div>
       </div>
 
-      {/* Permissions Dialog */}
-      <UserPermissionsDialog
-        open={permissionsOpen}
-        onOpenChange={setPermissionsOpen}
+      {/* User Profile Sheet */}
+      <UserProfileSheet
+        open={profileOpen}
+        onOpenChange={setProfileOpen}
         user={user}
         effectiveRole={effectiveRole}
         effectiveModules={effectiveModules}
-        canEdit={canEdit}
-        isSaving={isSaving}
-        isModified={isModified}
-        onSaveChanges={onSaveChanges}
-        onModuleToggle={onModuleToggle}
-        onModuleOptionToggle={onModuleOptionToggle}
+        agencyLabel={user.agencyLabel || agencyLabelsMap?.get(user.agence || '')}
       />
     </>
   );
