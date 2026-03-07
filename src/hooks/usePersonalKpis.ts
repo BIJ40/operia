@@ -56,15 +56,16 @@ function matchesUserId(uid: string | number | null | undefined, apogeeUserId: nu
 }
 
 /** Checks if a tech is assigned to an intervention */
-function isTechInIntervention(inter: any, apogeeUserId: number): boolean {
+function isTechInIntervention(inter: Record<string, unknown>, apogeeUserId: number): boolean {
   // 1. usersIds array
-  const usersIds = inter.usersIds || [];
-  if (usersIds.some((uid: any) => matchesUserId(uid, apogeeUserId))) return true;
+  const usersIds = (inter.usersIds || []) as Array<string | number>;
+  if (usersIds.some((uid) => matchesUserId(uid, apogeeUserId))) return true;
 
   // 2. data.visites
-  const visites = inter.data?.visites || [];
-  if (visites.some((v: any) =>
-    (v.usersIds || []).some((uid: any) => matchesUserId(uid, apogeeUserId))
+  const data = inter.data as Record<string, unknown> | undefined;
+  const visites = (data?.visites || []) as Array<Record<string, unknown>>;
+  if (visites.some((v) =>
+    ((v.usersIds || []) as Array<string | number>).some((uid) => matchesUserId(uid, apogeeUserId))
   )) return true;
 
   // 3. userId simple
