@@ -740,6 +740,7 @@ export const useAdminBackup = () => {
 
         if (!category) continue;
 
+        const { default: jsPDF } = await import('jspdf');
         const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
