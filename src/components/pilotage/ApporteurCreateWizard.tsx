@@ -8,6 +8,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import { logError } from '@/lib/logger';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
