@@ -9258,7 +9258,16 @@ export type Database = {
         }[]
       }
       purge_expired_ai_cache: { Args: never; Returns: number }
+      purge_expired_apporteur_sessions: { Args: never; Returns: number }
       purge_expired_rate_limits: { Args: never; Returns: number }
+      purge_old_activity_logs: {
+        Args: { p_retention_months?: number }
+        Returns: number
+      }
+      purge_old_ticket_history: {
+        Args: { p_retention_months?: number }
+        Returns: number
+      }
       request_document: {
         Args: { p_description?: string; p_request_type: string }
         Returns: {
