@@ -240,7 +240,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     description: 'Gestion des apporteurs',
     icon: 'Handshake',
     category: 'outils',
-    defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
+    uiSubTab: 'apporteurs',
     minRole: 'franchisee_admin',
     options: [
       { key: 'consulter', path: 'divers_apporteurs.consulter', label: 'Consulter', description: 'Voir les apporteurs', defaultEnabled: true, routes: ['/?tab=divers'] },
