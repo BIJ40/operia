@@ -87,9 +87,9 @@ function getRoleConfig(level: number): RoleConfig {
 // ============================================================================
 
 const NODE_TYPE_CONFIG: Record<string, { label: string; icon: typeof Layers; className: string }> = {
-  section: { label: 'Section', icon: Layers, className: 'bg-muted text-muted-foreground' },
-  screen: { label: 'Écran', icon: Monitor, className: 'bg-accent/50 text-accent-foreground' },
-  feature: { label: 'Feature', icon: Zap, className: 'bg-primary/10 text-primary' },
+  section: { label: 'Module', icon: Layers, className: 'bg-muted text-muted-foreground' },
+  screen: { label: 'Section', icon: Monitor, className: 'bg-accent/50 text-accent-foreground' },
+  feature: { label: 'Outil', icon: Zap, className: 'bg-primary/10 text-primary' },
 };
 
 function NodeTypeBadge({ nodeType }: { nodeType: string }) {
@@ -459,7 +459,7 @@ export function ModulesMasterView() {
           <div className={cn(
             `grid ${GRID_COLS} gap-2 items-center py-2 px-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide`
           )}>
-            <div>Module</div>
+            <div>Nom</div>
             <div className="text-center">Type</div>
             <div className="text-center">Déployé</div>
             <div className="text-center">Plan min.</div>
