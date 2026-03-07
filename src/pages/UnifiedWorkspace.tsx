@@ -98,7 +98,7 @@ interface TabConfig {
 
 // Ordre par défaut des onglets (hors Accueil qui est toujours premier)
 // Documents après Outils
-const DEFAULT_TAB_ORDER: UnifiedTab[] = ['stats', 'salaries', 'outils', 'documents', 'guides', 'ticketing', 'aide', 'admin'];
+const DEFAULT_TAB_ORDER: UnifiedTab[] = ['stats', 'salaries', 'outils', 'documents', 'guides', 'ticketing', 'aide', 'admin', 'test'];
 
 function LoadingFallback() {
   return (
