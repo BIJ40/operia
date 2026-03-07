@@ -15,6 +15,55 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.9.2",
+    title: "Audit Sécurité & Thèmes Zen",
+    date: "2026-03-07",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // AUDIT SÉCURITÉ — 5 SPRINTS
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'security', description: 'Secret migrate-export migré vers variable d\'environnement serveur (Deno.env)' },
+      { type: 'security', description: 'Correction XSS : sanitization HTML via createSanitizedHtml() sur HcServicesSection' },
+      { type: 'security', description: 'Session OTP réduite de 365 à 90 jours' },
+      { type: 'security', description: 'CORS wildcard (*) supprimé sur create-dev-account et migrate-export → _shared/cors.ts' },
+      { type: 'security', description: 'CRON_SECRET ajouté sur compute-apporteur-metrics et media-garbage-collector' },
+      { type: 'security', description: 'Vulnérabilités npm corrigées (fabric, serialize-javascript, tar)' },
+      { type: 'security', description: 'Console.log production nettoyés (usePersonalKpis, PlanningTechniciens, usePlanningData, StatiaBuilder)' },
+      { type: 'security', description: 'Variable debug globale window.__PLANNING_STATES__ supprimée' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // PERFORMANCE & ARCHITECTURE
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Dynamic import jsPDF (−300KB bundle) via factory async ComprehensivePDFGenerator.create()' },
+      { type: 'improvement', description: 'Dynamic import xlsx (−200KB bundle)' },
+      { type: 'improvement', description: 'Lazy-loading recharts via composants wrapper (code-splitting)' },
+      { type: 'improvement', description: 'Découpage advanced2.ts (2000+ lignes) en 7 modules domaine' },
+      { type: 'improvement', description: 'Extraction SortableCategory (210 lignes) depuis ApogeeGuide.tsx' },
+      { type: 'improvement', description: 'useMemo sur AuthContext provider value et accessContext' },
+      { type: 'improvement', description: 'Promise.all sur loadUserData (profil + modules en parallèle)' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // BASE DE DONNÉES
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: '10 index FK créés (tickets, comments, history, attachments, activity_log, collaborators)' },
+      { type: 'improvement', description: 'Colonnes text→date corrigées (agency_commercial_profile, prospect_pool)' },
+      { type: 'fix', description: 'Table dupliquée sensitive_data_access_log supprimée' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // THÈMES APPARENCE
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: '3 nouveaux thèmes : Zen Nature (beige/vert sauge), Zen Bleu (bleu poudre/glacier), Sombre (gris profond)' },
+      { type: 'feature', description: 'Sélecteur d\'apparence dans Profil > Apparence et dans le menu déroulant Profil' },
+      { type: 'feature', description: 'Persistance du thème choisi en localStorage' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // UX
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Onglets guides désactivés masqués (au lieu de grisés)' },
+      { type: 'fix', description: 'Hooks React corrigés (useMemo avant early return dans ApogeeGuide)' },
+    ],
+  },
+  {
     version: "V0.9.1",
     title: "Permissions Unifiées",
     date: "2026-03-07",
