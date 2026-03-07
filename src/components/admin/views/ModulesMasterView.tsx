@@ -7,7 +7,7 @@
  * - Déployé (switch, valeur propre)
  * - Plan minimum (badge cliquable, valeur propre)
  * - Effectif (badge read-only)
- * - État (hérité/surchargé)
+ * - Rôle min. (badge dropdown cliquable)
  */
 
 import { useState, useCallback } from 'react';
@@ -24,7 +24,6 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,8 +34,39 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { Layers, Monitor, Zap, TreePine, ChevronRight, CornerDownRight } from 'lucide-react';
+
+// ============================================================================
+// Role config for badges (matching the PJ screenshot)
+// ============================================================================
+
+interface RoleConfig {
+  level: number;
+  label: string;
+  shortLabel: string;
+  className: string;
+}
+
+const ROLE_CONFIGS: RoleConfig[] = [
+  { level: 0, label: 'N0 · Partenaire externe', shortLabel: 'N0', className: 'bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600' },
+  { level: 1, label: 'N1 · Utilisateur agence', shortLabel: 'N1', className: 'bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-900/40 dark:text-teal-300 dark:border-teal-700' },
+  { level: 2, label: 'N2 · Dirigeant agence', shortLabel: 'N2', className: 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-700' },
+  { level: 3, label: 'N3 · Animateur réseau', shortLabel: 'N3', className: 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700' },
+  { level: 4, label: 'N4 · Direction réseau', shortLabel: 'N4', className: 'bg-indigo-100 text-indigo-800 border-indigo-300 dark:bg-indigo-900/40 dark:text-indigo-300 dark:border-indigo-700' },
+  { level: 5, label: 'N5 · Support avancé', shortLabel: 'N5', className: 'bg-violet-100 text-violet-800 border-violet-300 dark:bg-violet-900/40 dark:text-violet-300 dark:border-violet-700' },
+  { level: 6, label: 'N6 · Administrateur', shortLabel: 'N6', className: 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/40 dark:text-red-300 dark:border-red-700' },
+];
+
+function getRoleConfig(level: number): RoleConfig {
+  return ROLE_CONFIGS[Math.min(Math.max(level, 0), 6)];
+}
 
 // ============================================================================
 // Sub-components
@@ -92,22 +122,56 @@ function PlanBadge({
   );
 }
 
-function StatusIndicator({ node }: { node: RegistryNode }) {
-  if (!node.effectiveDeployed && node.is_deployed) {
-    return (
-      <span className="text-[10px] text-destructive font-medium">
-        neutralisé
-      </span>
-    );
-  }
-  if (node.isDeployOverridden) {
-    return (
-      <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">
-        hérité
-      </span>
-    );
-  }
-  return null;
+function RoleBadge({
+  minRole,
+  onChangeRole,
+  dimmed = false,
+  disabled = false,
+}: {
+  minRole: number;
+  onChangeRole: (newRole: number) => void;
+  dimmed?: boolean;
+  disabled?: boolean;
+}) {
+  const config = getRoleConfig(minRole);
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild disabled={disabled}>
+        <Badge
+          variant="outline"
+          className={cn(
+            'text-[11px] cursor-pointer select-none transition-opacity font-medium px-2 py-0.5',
+            'hover:opacity-80',
+            dimmed && 'opacity-40',
+            config.className
+          )}
+        >
+          {config.shortLabel}
+        </Badge>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="center" className="min-w-[200px]">
+        {ROLE_CONFIGS.map((rc) => (
+          <DropdownMenuItem
+            key={rc.level}
+            onClick={() => onChangeRole(rc.level)}
+            className={cn(
+              'text-xs cursor-pointer',
+              rc.level === minRole && 'bg-accent font-semibold'
+            )}
+          >
+            <Badge
+              variant="outline"
+              className={cn('text-[10px] mr-2 px-1.5 py-0', rc.className)}
+            >
+              {rc.shortLabel}
+            </Badge>
+            {rc.label.split(' · ')[1]}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
 
 // ============================================================================
@@ -118,25 +182,25 @@ interface ModuleRowProps {
   node: RegistryNode;
   onToggleDeploy: (node: RegistryNode) => void;
   onTogglePlan: (node: RegistryNode) => void;
+  onChangeRole: (node: RegistryNode, newRole: number) => void;
   isUpdating: boolean;
 }
 
-function ModuleRow({ node, onToggleDeploy, onTogglePlan, isUpdating }: ModuleRowProps) {
+function ModuleRow({ node, onToggleDeploy, onTogglePlan, onChangeRole, isUpdating }: ModuleRowProps) {
   const isNeutralized = !node.effectiveDeployed && node.is_deployed;
 
-  // Depth-based colors for tree lines
   const depthColors = [
-    'text-primary',           // depth 0: root sections
-    'text-blue-500',          // depth 1
-    'text-violet-500',        // depth 2
-    'text-emerald-500',       // depth 3+
+    'text-primary',
+    'text-blue-500',
+    'text-violet-500',
+    'text-emerald-500',
   ];
   const branchColor = depthColors[Math.min(node.depth, depthColors.length - 1)];
 
   return (
     <div
       className={cn(
-        'grid grid-cols-[minmax(200px,max-content)_80px_60px_80px_80px] gap-2 items-center py-2 px-3 border-b border-border/50 text-sm',
+        'grid grid-cols-[minmax(200px,1fr)_80px_60px_80px_80px_60px] gap-2 items-center py-2 px-3 border-b border-border/50 text-sm',
         'hover:bg-muted/30 transition-colors',
         !node.effectiveDeployed && 'opacity-50',
         isNeutralized && 'bg-destructive/5',
@@ -192,6 +256,15 @@ function ModuleRow({ node, onToggleDeploy, onTogglePlan, isUpdating }: ModuleRow
         <PlanBadge plan={node.effectivePlan} readOnly dimmed={!node.effectiveDeployed} />
       </div>
 
+      {/* Rôle min. (dropdown) */}
+      <div className="flex justify-center">
+        <RoleBadge
+          minRole={node.min_role}
+          onChangeRole={(newRole) => onChangeRole(node, newRole)}
+          dimmed={!node.effectiveDeployed}
+          disabled={isUpdating}
+        />
+      </div>
     </div>
   );
 }
@@ -203,8 +276,8 @@ function ModuleRow({ node, onToggleDeploy, onTogglePlan, isUpdating }: ModuleRow
 interface PropagateDialogState {
   open: boolean;
   node: RegistryNode | null;
-  field: 'is_deployed' | 'required_plan';
-  newValue: boolean | PlanLevel;
+  field: 'is_deployed' | 'required_plan' | 'min_role';
+  newValue: boolean | PlanLevel | number;
   descendantCount: number;
 }
 
@@ -225,19 +298,9 @@ export function ModulesMasterView() {
     (node: RegistryNode) => {
       const newValue = !node.is_deployed;
       const descendants = getDescendantKeys(node);
-
-      // Update this node
       updateNode.mutate({ key: node.key, updates: { is_deployed: newValue } });
-
-      // If has children, propose propagation
       if (descendants.length > 0) {
-        setDialog({
-          open: true,
-          node,
-          field: 'is_deployed',
-          newValue,
-          descendantCount: descendants.length,
-        });
+        setDialog({ open: true, node, field: 'is_deployed', newValue, descendantCount: descendants.length });
       }
     },
     [updateNode]
@@ -245,24 +308,24 @@ export function ModulesMasterView() {
 
   const handleTogglePlan = useCallback(
     (node: RegistryNode) => {
-      // Cycle: STARTER → PRO → NONE → STARTER
       const cycle: PlanLevel[] = ['STARTER', 'PRO', 'NONE'];
       const idx = cycle.indexOf(node.required_plan);
       const newValue: PlanLevel = cycle[(idx + 1) % cycle.length];
       const descendants = getDescendantKeys(node);
-
-      // Update this node
       updateNode.mutate({ key: node.key, updates: { required_plan: newValue } });
-
-      // If has children, propose propagation
       if (descendants.length > 0) {
-        setDialog({
-          open: true,
-          node,
-          field: 'required_plan',
-          newValue,
-          descendantCount: descendants.length,
-        });
+        setDialog({ open: true, node, field: 'required_plan', newValue, descendantCount: descendants.length });
+      }
+    },
+    [updateNode]
+  );
+
+  const handleChangeRole = useCallback(
+    (node: RegistryNode, newRole: number) => {
+      const descendants = getDescendantKeys(node);
+      updateNode.mutate({ key: node.key, updates: { min_role: newRole } });
+      if (descendants.length > 0) {
+        setDialog({ open: true, node, field: 'min_role', newValue: newRole, descendantCount: descendants.length });
       }
     },
     [updateNode]
@@ -274,10 +337,24 @@ export function ModulesMasterView() {
     const updates =
       dialog.field === 'is_deployed'
         ? { is_deployed: dialog.newValue as boolean }
-        : { required_plan: dialog.newValue as PlanLevel };
+        : dialog.field === 'required_plan'
+        ? { required_plan: dialog.newValue as PlanLevel }
+        : { min_role: dialog.newValue as number };
     propagate.mutate({ keys, updates });
     setDialog(prev => ({ ...prev, open: false }));
   }, [dialog, propagate]);
+
+  const getDialogDescription = () => {
+    if (dialog.field === 'is_deployed') {
+      return `Appliquer "${dialog.newValue ? 'Déployé' : 'Non déployé'}" aux ${dialog.descendantCount} descendants de "${dialog.node?.label}" ?`;
+    }
+    if (dialog.field === 'required_plan') {
+      const planLabel = dialog.newValue === 'STARTER' ? 'Basique' : dialog.newValue === 'PRO' ? 'Pro' : 'Individuel';
+      return `Appliquer le plan "${planLabel}" aux ${dialog.descendantCount} descendants de "${dialog.node?.label}" ?`;
+    }
+    const roleConfig = getRoleConfig(dialog.newValue as number);
+    return `Appliquer le rôle minimum "${roleConfig.label}" aux ${dialog.descendantCount} descendants de "${dialog.node?.label}" ?`;
+  };
 
   if (isLoading) {
     return (
@@ -303,18 +380,18 @@ export function ModulesMasterView() {
             <CardTitle className="text-lg">Registre des Modules</CardTitle>
           </div>
           <CardDescription>
-            Source de vérité unique. Chaque nœud porte son état de déploiement et son plan minimum requis.
-            Les valeurs effectives sont calculées par héritage parent→enfant.
+            Source de vérité unique. Chaque nœud porte son état de déploiement, son plan minimum requis et son rôle minimum.
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {/* Header */}
-          <div className="grid grid-cols-[minmax(200px,max-content)_80px_60px_80px_80px] gap-2 items-center py-2 px-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          <div className="grid grid-cols-[minmax(200px,1fr)_80px_60px_80px_80px_60px] gap-2 items-center py-2 px-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
             <div>Module</div>
             <div className="text-center">Type</div>
             <div className="text-center">Déployé</div>
             <div className="text-center">Plan min.</div>
             <div className="text-center">Effectif</div>
+            <div className="text-center">Rôle</div>
           </div>
 
           {/* Rows */}
@@ -324,6 +401,7 @@ export function ModulesMasterView() {
               node={node}
               onToggleDeploy={handleToggleDeploy}
               onTogglePlan={handleTogglePlan}
+              onChangeRole={handleChangeRole}
               isUpdating={updateNode.isPending || propagate.isPending}
             />
           ))}
@@ -342,9 +420,7 @@ export function ModulesMasterView() {
           <AlertDialogHeader>
             <AlertDialogTitle>Propager aux enfants ?</AlertDialogTitle>
             <AlertDialogDescription>
-              {dialog.field === 'is_deployed'
-                ? `Appliquer "${dialog.newValue ? 'Déployé' : 'Non déployé'}" aux ${dialog.descendantCount} descendants de "${dialog.node?.label}" ?`
-                : `Appliquer le plan "${dialog.newValue === 'STARTER' ? 'Basique' : 'Pro'}" aux ${dialog.descendantCount} descendants de "${dialog.node?.label}" ?`}
+              {getDialogDescription()}
               <br />
               <span className="text-xs text-muted-foreground mt-1 block">
                 Chaque enfant peut ensuite être surchargé individuellement.
