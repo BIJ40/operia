@@ -171,7 +171,7 @@ export const NAV_GROUPS: NavGroup[] = [
         title: 'Tickets incomplets', 
         url: ROUTES.projects.incomplete, 
         icon: ListTodo, 
-        scope: 'apogee_tickets', 
+        scope: 'ticketing', 
         description: 'Tickets à compléter' 
       },
       { 
