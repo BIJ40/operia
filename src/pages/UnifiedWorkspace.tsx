@@ -119,6 +119,7 @@ function UnifiedWorkspaceContent() {
   const { isImpersonating, isRealUserImpersonation } = useImpersonation();
   const effectiveAuth = useEffectiveAuth();
   const { hasModule, hasModuleOption } = useEffectiveModules();
+  const { theme, setTheme } = useAppTheme();
   const [searchParams, setSearchParams] = useSearchParams();
   const [tabOrder, setTabOrder] = useSessionState<UnifiedTab[]>('unified_workspace_tab_order', DEFAULT_TAB_ORDER);
   const [loginOpen, setLoginOpen] = useState(false);
