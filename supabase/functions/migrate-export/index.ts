@@ -288,7 +288,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    return jsonResponse({
+    return respond({
       error: 'Mode invalide',
       modes: {
         tables: 'Liste tables + counts + ordre import FK',
