@@ -25,9 +25,22 @@
    - Options héritent du toggle parent pour l'instant
    - Filtrage des modules non déployés
 
-## Étape 2 : TODO — Gestion fine des options dans les plans
-- Ajouter `plan_tier_module_options` en base pour gérer les options par plan
-- Permettre d'overrider une option spécifique (ex: "Stats Exports" = Pro même si "Stats" = Basique)
+## Étape 2 : Gestion fine des options dans les plans ✅ FAIT
+
+### Changements effectués
+
+1. **`src/components/admin/views/PlansManagerView.tsx`** :
+   - Chaque option peut maintenant être togglée individuellement par plan
+   - Utilise `options_override` JSONB dans `plan_tier_modules` (colonne existante)
+   - Logique 3 états: hérité (du parent) | activé explicitement | exclu
+   - Cocher le module parent propage aux enfants (reset les overrides)
+   - Cliquer sur une option l'exclut individuellement
+   - Re-cliquer supprime l'override (retour à héritage)
+   - Légende claire avec labels "hérité" / "exclu"
+
+2. **`src/hooks/access-rights/usePlanTiers.ts`** :
+   - Le hook `useUpdatePlanTierModule` supporte déjà `optionsOverride`
+   - La table `plan_tier_modules` a déjà la colonne `options_override` JSONB
 
 ## Étape 3 : TODO — Cascade Plan → Rôle → Override utilisateur
 - `useEffectiveModules` doit calculer : Plan agence → filtre rôle → override utilisateur
