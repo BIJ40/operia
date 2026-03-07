@@ -5,15 +5,12 @@ import { useState, useMemo } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { ROUTES } from '@/config/routes';
 import * as Icons from 'lucide-react';
-import { Clock, Sparkles, RefreshCw, Ban } from 'lucide-react';
+import { Clock, RefreshCw, Ban } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Trash2, Search, GripVertical } from 'lucide-react';
-import { IconPicker } from '@/components/IconPicker';
-import { ImageUploader } from '@/components/ImageUploader';
+import { Plus, Search } from 'lucide-react';
 import { Block } from '@/types/block';
 import {
   DndContext,
@@ -28,10 +25,8 @@ import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,222 +37,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-
-// Composant pour les catégories triables
-interface SortableCategoryProps {
-  category: any;
-  editingId: string | null;
-  editTitle: string;
-  editIcon: string;
-  editImageUrl: string | null;
-  editShowTitleOnCard: boolean;
-  editIsEmpty: boolean;
-  isEditMode: boolean;
-  hasInProgress: boolean;
-  hasNew: boolean;
-  isEmpty: boolean;
-  onEditTitleChange: (value: string) => void;
-  onEditIconChange: (value: string) => void;
-  onEditImageUrlChange: (value: string | null) => void;
-  onEditShowTitleOnCardChange: (value: boolean) => void;
-  onEditIsEmptyChange: (value: boolean) => void;
-  onSave: () => void;
-  onCancel: () => void;
-  onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
-  IconComponent: (iconName: string) => any;
-}
-
-const SortableCategory = ({
-  category,
-  editingId,
-  editTitle,
-  editIcon,
-  editImageUrl,
-  editShowTitleOnCard,
-  editIsEmpty,
-  isEditMode,
-  hasInProgress,
-  hasNew,
-  isEmpty,
-  onEditTitleChange,
-  onEditIconChange,
-  onEditImageUrlChange,
-  onEditShowTitleOnCardChange,
-  onEditIsEmptyChange,
-  onSave,
-  onCancel,
-  onEdit,
-  onDelete,
-  IconComponent,
-}: SortableCategoryProps) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: category.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  const Icon = IconComponent(category.icon || 'BookOpen');
-  const isCustomImage = category.icon?.startsWith('http://') || category.icon?.startsWith('https://');
-
-  // Style unifié aux couleurs du site - grisé si vide
-  const tileClass = isEmpty 
-    ? "bg-muted/50 border-muted-foreground/30 border-l-muted-foreground/50 opacity-60"
-    : "bg-gradient-to-r from-helpconfort-blue/10 via-helpconfort-blue/5 to-transparent border-helpconfort-blue/20 border-l-helpconfort-blue hover:from-helpconfort-blue/15 hover:via-helpconfort-blue/8 hover:border-helpconfort-blue/30 hover:shadow-lg";
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 overflow-visible ${tileClass}`}
-    >
-      {/* Badge Vide */}
-      {isEmpty && !isEditMode && (
-        <div className="absolute -top-2 -right-2 z-20">
-          <div className="bg-muted text-muted-foreground text-xs font-semibold px-3 py-1 rounded-xl shadow-md flex items-center gap-1 border border-muted-foreground/30">
-            <Ban className="w-3 h-3" />
-            Vide
-          </div>
-        </div>
-      )}
-      {/* Badge New en écharpe diagonale verte - décalé aux 3/4 */}
-      {hasNew && !isEmpty && !isEditMode && (
-        <div className="absolute -top-2 left-3/4 -translate-x-1/2 w-16 h-16 overflow-hidden z-20 pointer-events-none">
-          <div className="absolute top-3 -left-5 w-20 bg-green-500 text-white text-[10px] font-bold py-0.5 text-center transform -rotate-45 shadow-md">
-            NEW
-          </div>
-        </div>
-      )}
-      {/* Badge En cours - arrondi accentué bleu */}
-      {hasInProgress && !isEmpty && !isEditMode && (
-        <div className="absolute -top-2 -right-2 z-20">
-          <div className="bg-helpconfort-blue text-white text-xs font-semibold px-3 py-1 rounded-xl shadow-md flex items-center gap-1">
-            <Clock className="w-3 h-3" />
-            En cours
-          </div>
-        </div>
-      )}
-      {isEditMode && (
-        <>
-          <div
-            {...attributes}
-            {...listeners}
-            className="absolute -top-2 -left-2 cursor-grab active:cursor-grabbing z-10 bg-background rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <GripVertical className="w-4 h-4 text-muted-foreground hover:text-primary" />
-          </div>
-          {editingId !== category.id && (
-            <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-              <Button
-                onClick={() => onEdit(category.id)}
-                size="icon"
-                variant="outline"
-                className="h-7 w-7 bg-background shadow-md"
-                aria-label="Modifier"
-              >
-                <Icons.Edit className="w-3 h-3" />
-              </Button>
-              <Button
-                onClick={() => onDelete(category.id)}
-                size="icon"
-                variant="destructive"
-                className="h-7 w-7 shadow-md"
-                aria-label="Supprimer"
-              >
-                <Trash2 className="w-3 h-3" />
-              </Button>
-            </div>
-          )}
-        </>
-      )}
-      
-      {editingId === category.id ? (
-        <div className="space-y-3 w-full">
-          <Input
-            value={editTitle}
-            onChange={(e) => onEditTitleChange(e.target.value)}
-            placeholder="Titre de la catégorie"
-            autoFocus
-          />
-          
-          <ImageUploader
-            currentImage={editImageUrl || undefined}
-            onImageChange={onEditImageUrlChange}
-            bucketName="category-images"
-          />
-          
-          <IconPicker
-            value={editIcon}
-            onChange={onEditIconChange}
-          />
-          
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="show-title-on-card"
-              checked={editShowTitleOnCard}
-              onCheckedChange={onEditShowTitleOnCardChange}
-            />
-            <label htmlFor="show-title-on-card" className="text-sm font-medium cursor-pointer">
-              Afficher le titre sur la carte
-            </label>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="mark-empty"
-              checked={editIsEmpty}
-              onCheckedChange={onEditIsEmptyChange}
-            />
-            <label htmlFor="mark-empty" className="text-sm font-medium cursor-pointer text-muted-foreground">
-              Marquer comme vide (grise la catégorie)
-            </label>
-          </div>
-          
-          <div className="flex gap-2">
-            <Button onClick={onSave} size="sm">
-              Enregistrer
-            </Button>
-            <Button onClick={onCancel} size="sm" variant="outline">
-              Annuler
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <Link to={`${ROUTES.academy.apogeeCategory(category.slug)}${isEditMode ? '?edit=true' : ''}`} className="flex items-center gap-3 flex-1 min-w-0">
-          {(isCustomImage && category.icon) || editImageUrl ? (
-            <img 
-              src={editImageUrl || category.icon} 
-              alt={category.title} 
-              className="w-6 h-6 object-contain flex-shrink-0" 
-            />
-          ) : (
-            <Icon className="w-6 h-6 text-primary flex-shrink-0" />
-          )}
-          {(category.showTitleOnCard !== false) && (
-            <span className="text-base font-medium text-foreground truncate">
-              {category.title}
-            </span>
-          )}
-        </Link>
-      )}
-    </div>
-  );
-};
+import { SortableCategory } from '@/components/guides/apogee/SortableCategory';
 
 export default function ApogeeGuide() {
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, loading } = useEditor();
   const { hasGlobalRole, isAuthenticated, hasModuleOption } = useAuth();
   
-  // P0: Utiliser V2 - hasModuleOption au lieu de isAdmin
   const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('guides', 'edition');
   const canDelete = hasGlobalRole('platform_admin');
   const { toast } = useToast();
@@ -272,29 +57,20 @@ export default function ApogeeGuide() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
   if (!isAuthenticated) {
     return <Navigate to={ROUTES.home} replace />;
   }
   
-  // Bloquer l'édition si pas admin
   const effectiveEditMode = isEditMode && canEdit;
 
-  // Filtrer uniquement les catégories Apogée (exclure FAQ et HelpConfort)
   const apogeeCategories = blocks
     .filter(b => b.type === 'category' && b.slug !== 'faq' && !b.title.toLowerCase().includes('faq') && !b.slug.startsWith('helpconfort-'))
     .sort((a, b) => a.order - b.order);
 
-  // Helper function to calculate category badges based on sections
   const getCategoryBadges = useMemo(() => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -302,23 +78,13 @@ export default function ApogeeGuide() {
     return (categoryId: string, category: Block) => {
       const sections = blocks.filter(b => b.parentId === categoryId && b.type === 'section');
       const hasInProgress = sections.some(s => s.isInProgress);
-      const hasNew = sections.some(s => {
-        if (!s.completedAt) return false;
-        return new Date(s.completedAt) > sevenDaysAgo;
-      });
-      const hasUpdate = sections.some(s => {
-        if (!s.contentUpdatedAt) return false;
-        return new Date(s.contentUpdatedAt) > sevenDaysAgo;
-      });
-      // isEmpty: si la catégorie est marquée vide OU si toutes ses sections sont vides
+      const hasNew = sections.some(s => s.completedAt && new Date(s.completedAt) > sevenDaysAgo);
+      const hasUpdate = sections.some(s => s.contentUpdatedAt && new Date(s.contentUpdatedAt) > sevenDaysAgo);
       const isEmpty = category.isEmpty || (sections.length > 0 && sections.every(s => s.isEmpty));
       return { hasInProgress, hasNew, hasUpdate, isEmpty };
     };
   }, [blocks]);
 
-  // Les dates de création/mise à jour ne sont plus nécessaires pour cette page
-
-  // Style unifié aux couleurs du site
   const tileClass = "bg-gradient-to-r from-helpconfort-blue/10 via-helpconfort-blue/5 to-transparent border-helpconfort-blue/20 border-l-helpconfort-blue hover:from-helpconfort-blue/15 hover:via-helpconfort-blue/8 hover:border-helpconfort-blue/30 hover:shadow-lg";
 
   const IconComponent = (iconName: string) => {
@@ -332,11 +98,8 @@ export default function ApogeeGuide() {
       setEditingId(id);
       setEditTitle(category.title);
       setEditIcon(category.icon || 'BookOpen');
-      
-      // Vérifier si l'icône est une URL d'image
       const isImageUrl = category.icon?.startsWith('http://') || category.icon?.startsWith('https://');
       setEditImageUrl(isImageUrl ? category.icon : null);
-      
       setEditShowTitleOnCard(category.showTitleOnCard !== false);
       setEditIsEmpty(category.isEmpty || false);
     }
@@ -356,9 +119,7 @@ export default function ApogeeGuide() {
     }
   };
 
-  const handleCancel = () => {
-    setEditingId(null);
-  };
+  const handleCancel = () => setEditingId(null);
 
   const handleDelete = (id: string) => {
     setCategoryToDelete(id);
@@ -389,13 +150,10 @@ export default function ApogeeGuide() {
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    
     if (over && active.id !== over.id) {
       const oldIndex = apogeeCategories.findIndex(c => c.id === active.id);
       const newIndex = apogeeCategories.findIndex(c => c.id === over.id);
-      
       const reorderedCategories = arrayMove(apogeeCategories, oldIndex, newIndex);
-      
       reorderedCategories.forEach((category, index) => {
         updateBlock(category.id, { order: index });
       });
@@ -411,18 +169,15 @@ export default function ApogeeGuide() {
       })
     : apogeeCategories;
 
-  // Skeleton loader pendant le chargement
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
         <div className="container max-w-6xl mx-auto px-4 py-8">
           <div className="h-6 w-32 bg-muted animate-pulse rounded mb-6" />
-          
           <div className="text-center mb-8">
             <div className="h-10 w-96 bg-muted animate-pulse rounded mx-auto mb-3" />
             <div className="h-6 w-64 bg-muted animate-pulse rounded mx-auto" />
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[...Array(12)].map((_, i) => (
               <div key={i} className="h-12 bg-muted animate-pulse rounded-full" />
@@ -458,17 +213,10 @@ export default function ApogeeGuide() {
         )}
 
         {isEditMode && canEdit ? (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={filteredCategories.map(c => c.id)}
-              strategy={verticalListSortingStrategy}
-            >
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={filteredCategories.map(c => c.id)} strategy={verticalListSortingStrategy}>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-              {filteredCategories.map(category => {
+                {filteredCategories.map(category => {
                   const badges = getCategoryBadges(category.id, category);
                   return (
                     <SortableCategory
@@ -507,14 +255,12 @@ export default function ApogeeGuide() {
               const isCustomImage = category.icon?.startsWith('http://') || category.icon?.startsWith('https://');
               const badges = getCategoryBadges(category.id, category);
               
-              // Catégorie vide - non cliquable, grisée
               if (badges.isEmpty) {
                 return (
                   <div
                     key={category.id}
                     className="group relative border-2 border-l-4 rounded-full px-4 py-2 transition-all duration-300 flex items-center gap-3 overflow-visible bg-muted/50 border-muted-foreground/30 border-l-muted-foreground/50 opacity-60 cursor-default"
                   >
-                    {/* Badge Vide */}
                     <div className="absolute -top-2 -right-2 z-20">
                       <div className="bg-muted text-muted-foreground text-xs font-semibold px-3 py-1 rounded-xl shadow-md flex items-center gap-1 border border-muted-foreground/30">
                         <Ban className="w-3 h-3" />
@@ -522,18 +268,12 @@ export default function ApogeeGuide() {
                       </div>
                     </div>
                     {isCustomImage ? (
-                      <img 
-                        src={category.icon} 
-                        alt={category.title} 
-                        className="w-6 h-6 object-contain flex-shrink-0 opacity-50" 
-                      />
+                      <img src={category.icon} alt={category.title} className="w-6 h-6 object-contain flex-shrink-0 opacity-50" />
                     ) : (
                       <Icon className="w-6 h-6 text-muted-foreground flex-shrink-0" />
                     )}
                     {(category.showTitleOnCard !== false) && (
-                      <span className="text-base font-medium text-muted-foreground truncate">
-                        {category.title}
-                      </span>
+                      <span className="text-base font-medium text-muted-foreground truncate">{category.title}</span>
                     )}
                   </div>
                 );
@@ -545,7 +285,6 @@ export default function ApogeeGuide() {
                   to={ROUTES.academy.apogeeCategory(category.slug)}
                   className={`group relative border-2 border-l-4 rounded-full px-4 py-2 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center gap-3 overflow-visible ${tileClass}`}
                 >
-                  {/* Badge New en écharpe diagonale verte - décalé aux 3/4 */}
                   {badges.hasNew && (
                     <div className="absolute -top-2 left-3/4 -translate-x-1/2 w-16 h-16 overflow-hidden z-20 pointer-events-none">
                       <div className="absolute top-3 -left-5 w-20 bg-green-500 text-white text-[10px] font-bold py-0.5 text-center transform -rotate-45 shadow-md">
@@ -553,7 +292,6 @@ export default function ApogeeGuide() {
                       </div>
                     </div>
                   )}
-                  {/* Badge En cours - arrondi accentué bleu */}
                   {badges.hasInProgress && (
                     <div className="absolute -top-2 -right-2 z-20">
                       <div className="bg-helpconfort-blue text-white text-xs font-semibold px-3 py-1 rounded-xl shadow-md flex items-center gap-1">
@@ -562,7 +300,6 @@ export default function ApogeeGuide() {
                       </div>
                     </div>
                   )}
-                  {/* Badge M.A.J - panneau avec pied - positionné à gauche du En cours */}
                   {badges.hasUpdate && !badges.hasInProgress && (
                     <div className="absolute -top-3 -right-1 z-20 flex flex-col items-center">
                       <div className="bg-primary text-primary-foreground px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 shadow-md border border-primary-foreground/20">
@@ -573,18 +310,12 @@ export default function ApogeeGuide() {
                     </div>
                   )}
                   {isCustomImage ? (
-                    <img 
-                      src={category.icon} 
-                      alt={category.title} 
-                      className="w-6 h-6 object-contain flex-shrink-0" 
-                    />
+                    <img src={category.icon} alt={category.title} className="w-6 h-6 object-contain flex-shrink-0" />
                   ) : (
                     <Icon className="w-6 h-6 text-primary flex-shrink-0" />
                   )}
                   {(category.showTitleOnCard !== false) && (
-                    <span className="text-base font-medium text-foreground truncate">
-                      {category.title}
-                    </span>
+                    <span className="text-base font-medium text-foreground truncate">{category.title}</span>
                   )}
                 </Link>
               );
@@ -600,7 +331,6 @@ export default function ApogeeGuide() {
             </Button>
           </div>
         )}
-
       </div>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
