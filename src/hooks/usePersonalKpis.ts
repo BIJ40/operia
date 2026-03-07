@@ -63,7 +63,7 @@ export function usePersonalKpis(options?: UsePersonalKpisOptions) {
       const apogeeUserId = collaborator?.apogee_user_id;
       
       if (!apogeeUserId) {
-        console.log('[usePersonalKpis] Pas d\'apogee_user_id trouvé dans collaborators');
+        if (import.meta.env.DEV) console.log('[usePersonalKpis] Pas d\'apogee_user_id trouvé dans collaborators');
         return { type: 'not_linked' as const };
       }
 
