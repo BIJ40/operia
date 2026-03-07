@@ -280,7 +280,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      return jsonResponse({
+      return respond({
         mode: 'storage',
         buckets: bucketsWithFiles,
         total_buckets: bucketsWithFiles.length,
