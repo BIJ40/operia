@@ -132,7 +132,7 @@ function calculateTechnicienKpisStatia(
   const myUser = (users || []).find((u: any) => u.id === apogeeUserId);
   const myTechName = myUser ? `${myUser.firstname || ''} ${myUser.name || ''}`.trim().toUpperCase() : null;
   
-  console.log('[usePersonalKpis] Technicien trouvé:', { apogeeUserId, myUser: myUser?.name, myTechName });
+  if (import.meta.env.DEV) console.log('[usePersonalKpis] Technicien trouvé:', { apogeeUserId, myUser: myUser?.name, myTechName });
 
   // === 1. CA du mois (utilise le moteur StatIA) ===
   const statiaParams: CaParTechnicienParams = {
