@@ -292,11 +292,9 @@ function calculateTechnicienKpisStatia(
     }
   }
 
-  console.log('[usePersonalKpis] Heures:', { 
-    heuresTotales, 
-    heuresProductives,
-    interventionsCount: techInterventions.length
-  });
+  if (import.meta.env.DEV) {
+    console.log('[usePersonalKpis] Heures:', { heuresTotales, heuresProductives });
+  }
 
   // === 5. Taux de productivité = heures productives / heures totales ===
   const tauxProductivite = heuresTotales > 0 

@@ -141,8 +141,9 @@ export function usePlanningProjects(agencySlug: string | undefined) {
         return false;
       });
 
-      console.log('[PlanningData] Projets à planifier trouvés:', planifiable.length, 
-        '(exclu', projectsWithPlannedTvx.size, 'projets avec TVX déjà planifié)');
+      if (import.meta.env.DEV) {
+        console.log('[PlanningData] Projets à planifier:', planifiable.length);
+      }
 
       return { planifiable, all: enriched, _debugStates: uniqueStates };
     },
