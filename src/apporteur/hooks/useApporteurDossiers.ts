@@ -5,6 +5,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useApporteurApi } from './useApporteurApi';
+import { useApporteurSession } from '../contexts/ApporteurSessionContext';
 
 export interface DossierRow {
   id: number;
@@ -44,6 +45,7 @@ interface DossiersResponse {
 
 export function useApporteurDossiers() {
   const { post } = useApporteurApi();
+  const { isAuthenticated } = useApporteurSession();
 
   return useQuery({
     queryKey: ['apporteur-dossiers'],
@@ -54,6 +56,7 @@ export function useApporteurDossiers() {
       }
       return result.data || { success: false, error: 'Réponse vide' };
     },
+    enabled: isAuthenticated,
     staleTime: 60 * 1000, // 1 minute
     retry: 1,
   });

@@ -4,6 +4,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useApporteurApi } from './useApporteurApi';
+import { useApporteurSession } from '../contexts/ApporteurSessionContext';
 import type {
   ApporteurStatsV2Request,
   ApporteurStatsV2Response,
@@ -24,6 +25,7 @@ interface UseApporteurKpisOptions {
 
 export function useApporteurKpis({ period, from, to }: UseApporteurKpisOptions) {
   const { post } = useApporteurApi();
+  const { isAuthenticated } = useApporteurSession();
 
   return useQuery({
     queryKey: ['apporteur-kpis', period, from, to],
@@ -35,6 +37,7 @@ export function useApporteurKpis({ period, from, to }: UseApporteurKpisOptions) 
       }
       return result.data || { success: false, error: 'Réponse vide' };
     },
+    enabled: isAuthenticated,
     staleTime: 5 * 60 * 1000,   // 5 min
     gcTime: 15 * 60 * 1000,     // 15 min
     retry: 1,
