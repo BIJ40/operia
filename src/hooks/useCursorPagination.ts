@@ -39,7 +39,7 @@ export interface CursorPaginationOptions<T = unknown> {
   /** Rows per page (default: 50) */
   pageSize?: number;
   /** Apply additional filters to the query */
-  filters?: (query: any) => any;
+  filters?: (query: SupabaseQueryBuilder) => SupabaseQueryBuilder;
   /** Enable/disable the query */
   enabled?: boolean;
   /** Stale time in ms */
