@@ -161,9 +161,9 @@ Deno.serve(async (req) => {
 
     // ============================================
     // MODE: Export une table complete (toutes les pages)
-    // GET ?secret=xxx&mode=export&table=profiles
+    // GET with X-Migration-Secret header, ?mode=export&table=profiles
     // Pour les tres grosses tables, paginer:
-    // GET ?secret=xxx&mode=export&table=profiles&page=0&pageSize=500
+    // ?mode=export&table=profiles&page=0&pageSize=500
     // ============================================
     if (mode === 'export') {
       const table = url.searchParams.get('table');
