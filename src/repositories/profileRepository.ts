@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { logError } from '@/lib/logger';
 import { DEFAULT_LIST_LIMIT } from '@/services/BaseQueryService';
 
-const PROFILE_COLUMNS = 'id, email, first_name, last_name, pseudo, agence, agency_id, global_role, role_agence, apogee_user_id, phone, avatar_url, support_level, created_at, updated_at' as const;
+const PROFILE_COLUMNS = 'id, email, first_name, last_name, agence, agency_id, global_role, role_agence, apogee_user_id, phone, avatar_url, support_level, created_at, updated_at' as const;
 
 export interface ProfileRow {
   id: string;
