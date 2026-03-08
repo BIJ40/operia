@@ -14,7 +14,7 @@ import { FolderOpen, Maximize2, FileText, Image as ImageIcon } from 'lucide-reac
 import { cn } from '@/lib/utils';
 import { useHasMinLevel } from '@/hooks/useHasGlobalRole';
 import { HRDocumentManager } from '@/components/collaborators/documents';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 
 interface Props {
   collaborator: RHCollaborator;
