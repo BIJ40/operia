@@ -33,7 +33,7 @@ export interface CollaboratorRow {
 export async function listCollaborators(agencyId: string, options?: {
   limit?: number;
 }): Promise<CollaboratorRow[]> {
-  const { activeOnly = false, limit = DEFAULT_LIST_LIMIT } = options ?? {};
+  const { limit = DEFAULT_LIST_LIMIT } = options ?? {};
 
   let query = supabase
     .from('collaborators')
