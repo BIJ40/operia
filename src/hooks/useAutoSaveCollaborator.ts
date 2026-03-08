@@ -73,13 +73,14 @@ export function useAutoSaveCompetencies(collaboratorId: string) {
 
   const mutation = useMutation({
     mutationFn: async (updates: Record<string, unknown>) => {
+      const payload = {
+        collaborator_id: collaboratorId,
+        derniere_maj: new Date().toISOString(),
+        ...updates,
+      };
       const { error } = await supabase
         .from('rh_competencies')
-        .upsert({ 
-          collaborator_id: collaboratorId,
-          derniere_maj: new Date().toISOString(),
-          ...updates,
-        } as Record<string, unknown>, { 
+        .upsert(payload, { 
           onConflict: 'collaborator_id' 
         });
       
