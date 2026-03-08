@@ -61,7 +61,9 @@ export default function AdminDatabaseExport() {
     if (!token) throw new Error('Non authentifié');
     const baseUrl = import.meta.env.VITE_SUPABASE_URL;
     const url = `${baseUrl}/functions/v1/export-all-data${params ? '?' + params : ''}`;
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    const res = await monitorEdgeCall('export-all-data', () =>
+      fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+    );
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       const error = new Error(err?.error || `Erreur ${res.status}`) as any;

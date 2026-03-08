@@ -51,6 +51,7 @@ import {
 import { useEmploymentContracts, useSalaryHistory } from '@/hooks/useEmploymentContracts';
 import { useHasMinLevel } from '@/hooks/useHasGlobalRole';
 import { supabase } from '@/integrations/supabase/client';
+import { monitorEdgeCall } from '@/lib/edge-monitor';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
