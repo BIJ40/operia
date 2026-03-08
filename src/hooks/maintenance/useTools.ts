@@ -12,7 +12,7 @@ import type { Tool, ToolsFilters, ToolFormData } from '@/types/maintenance';
 const QUERY_KEY = 'tools';
 
 export function useTools(agencyIdParam?: string, filters?: ToolsFilters) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   const effectiveAgencyId = agencyIdParam || agencyId;
 
   return useQuery({
