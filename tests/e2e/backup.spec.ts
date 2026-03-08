@@ -6,13 +6,10 @@ test.describe('Backup & Export', () => {
     await login(page, TEST_USERS.platform_admin.email, TEST_USERS.platform_admin.password);
   });
 
-  test('can access backup page', async ({ page }) => {
-    test.info().annotations.push({ type: 'smoke', description: 'critical-path' });
-
+  test('can access backup page @smoke', async ({ page }) => {
     await navigateAndSettle(page, ROUTES.adminBackup);
     await expectAuthenticated(page);
 
-    // Verify backup-related content is visible
     const body = await page.textContent('body');
     const bodyLower = body?.toLowerCase() ?? '';
     const hasBackupContent =
@@ -26,7 +23,6 @@ test.describe('Backup & Export', () => {
   test('can trigger export download', async ({ page }) => {
     await navigateAndSettle(page, ROUTES.adminBackup);
 
-    // Find export/download button
     const exportBtn = page.locator(
       'button:has-text("Export"), button:has-text("Télécharger"), button:has-text("Sauvegarder"), button:has-text("Backup"), button:has-text("JSON")'
     ).first();
@@ -45,11 +41,10 @@ test.describe('Backup & Export', () => {
           filename.endsWith('.json') || filename.endsWith('.txt') || filename.endsWith('.csv')
         ).toBeTruthy();
       } else {
-        // Button clicked but no download event — may open a dialog or async process
-        test.info().annotations.push({ type: 'info', description: 'Export clicked but no direct download event captured' });
+        test.info().annotations.push({ type: 'info', description: 'Export clicked but no download event' });
       }
     } else {
-      test.info().annotations.push({ type: 'info', description: 'No export button found on backup page' });
+      test.info().annotations.push({ type: 'info', description: 'No export button found' });
     }
   });
 });

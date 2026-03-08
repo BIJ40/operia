@@ -2,17 +2,13 @@ import { test, expect } from '@playwright/test';
 import { login, TEST_USERS, ROUTES, expectAuthenticated } from './fixtures/test-helpers';
 
 test.describe('Authentication', () => {
-  test('valid login redirects to workspace', async ({ page }) => {
-    test.info().annotations.push({ type: 'smoke', description: 'critical-path' });
-
+  test('valid login redirects to workspace @smoke', async ({ page }) => {
     const user = TEST_USERS.franchisee_admin;
     await login(page, user.email, user.password);
     await expectAuthenticated(page);
   });
 
-  test('invalid login stays on login page', async ({ page }) => {
-    test.info().annotations.push({ type: 'smoke', description: 'critical-path' });
-
+  test('invalid login stays on login page @smoke', async ({ page }) => {
     await page.goto(ROUTES.login);
     await page.locator('input[type="email"]').waitFor({ state: 'visible', timeout: 10_000 });
     await page.locator('input[type="email"]').fill('invalid@test.com');
