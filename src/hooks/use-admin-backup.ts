@@ -348,7 +348,7 @@ export const useAdminBackup = () => {
     config.setLoading(true);
     try {
       const result = await safeQuery<any[]>(
-        supabase.from(config.tableName).select('*').or(`id.eq.${categoryId},parent_id.eq.${categoryId}`).order('order'),
+        supabase.from(config.tableName).select(BLOCK_COLUMNS).or(`id.eq.${categoryId},parent_id.eq.${categoryId}`).order('order'),
         `BACKUP_EXPORT_SINGLE_${scope.toUpperCase()}`
       );
 
