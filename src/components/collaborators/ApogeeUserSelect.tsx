@@ -33,7 +33,8 @@ interface ApogeeUserSelectProps {
 }
 
 export function ApogeeUserSelect({ value, onChange, collaboratorName, label, agencySlug: agencySlugProp }: ApogeeUserSelectProps) {
-  const { user, agence } = useAuth();
+  const { user } = useAuthCore();
+  const { agence } = useProfile();
   const agencySlug = agencySlugProp || agence;
 
   // Charger les utilisateurs Apogée via proxy

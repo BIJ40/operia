@@ -45,7 +45,7 @@ function LoadingFallback() {
 }
 
 export function PlateformeView() {
-  const { hasGlobalRole } = useAuth();
+  const { hasGlobalRole } = usePermissions();
   const isSuperadmin = hasGlobalRole('superadmin');
   const [searchParams, setSearchParams] = useSearchParams();
   const [persistedView, setPersistedView] = usePersistedTab('admin_plateforme_active_view', 'health', PLATFORM_TAB_IDS);

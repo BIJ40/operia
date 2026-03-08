@@ -137,7 +137,8 @@ export default function CategoryActionsAMener() {
   const { slug } = useParams();
   const location = useLocation();
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks } = useEditor();
-  const { isAuthenticated, hasGlobalRole, hasModuleOption } = useAuth();
+  const { isAuthenticated } = useAuthCore();
+  const { hasGlobalRole, hasModuleOption } = usePermissions();
   // P0: Utiliser V2 pour permissions d'édition
   const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('guides', 'edition');
   const { toast } = useToast();

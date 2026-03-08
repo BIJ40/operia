@@ -169,7 +169,8 @@ export function useTechnicianSavDetails(technicianId: string | null, dateRange: 
  */
 export function useValidateSav() {
   const queryClient = useQueryClient();
-  const { agencyId, user, firstName, lastName } = useAuth();
+  const { user } = useAuthCore();
+  const { agencyId, firstName, lastName } = useProfile();
   
   const displayName = [firstName, lastName].filter(Boolean).join(' ') || 'Utilisateur';
   

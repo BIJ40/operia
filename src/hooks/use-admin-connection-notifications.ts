@@ -11,7 +11,7 @@ interface ConnectionLog {
 }
 
 export const useAdminConnectionNotifications = () => {
-  const { hasGlobalRole } = useAuth();
+  const { hasGlobalRole } = usePermissions();
   const { toast } = useToast();
   
   const isPlatformAdmin = hasGlobalRole('platform_admin');

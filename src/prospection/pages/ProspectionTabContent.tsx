@@ -52,7 +52,7 @@ function ApporteursTabInner() {
 }
 
 function ProspectionInner() {
-  const { hasModuleOption } = useAuth();
+  const { hasModuleOption } = usePermissions();
   const { openApporteur } = useApporteurTabs();
 
   // Filtrer les onglets visibles selon les permissions

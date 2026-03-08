@@ -28,7 +28,7 @@ interface MaintenanceModeCardProps {
 
 export function MaintenanceModeCard({ compact = false }: MaintenanceModeCardProps) {
   const { settings, isLoading, updateSettings, isUpdating } = useMaintenanceAdmin();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const [message, setMessage] = useState('');
   const [whitelistedUsers, setWhitelistedUsers] = useState<UserInfo[]>([]);
   const [allUsers, setAllUsers] = useState<UserInfo[]>([]);

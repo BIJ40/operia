@@ -51,8 +51,7 @@ const ADMIN_MODULES: ProjectModule[] = [
 ];
 
 export default function ProjectsIndex() {
-  const { globalRole } = useAuth();
-  const isAdmin = globalRole === 'platform_admin' || globalRole === 'superadmin';
+  const { isAdmin } = usePermissions();
 
   return (
     <div className="container mx-auto py-8 px-4 space-y-8">

@@ -70,7 +70,8 @@ export function AuthenticatedGrid({
   onDragEnd,
 }: AuthenticatedGridProps) {
   const { toast } = useToast();
-  const { hasAccessToScope, agence } = useAuth();
+  const { hasAccessToScope } = usePermissions();
+  const { agence } = useProfile();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {

@@ -26,7 +26,8 @@ interface RHMeeting {
 }
 
 export default function RHMeetingsPage() {
-  const { agencyId, user } = useAuth();
+  const { user } = useAuthCore();
+  const { agencyId } = useProfile();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);

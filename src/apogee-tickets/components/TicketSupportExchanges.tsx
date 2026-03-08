@@ -42,7 +42,7 @@ export function TicketSupportExchanges({
   ticketCreatedFrom,
   className,
 }: TicketSupportExchangesProps) {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [message, setMessage] = useState('');
   const [isSendingEmail, setIsSendingEmail] = useState(false);

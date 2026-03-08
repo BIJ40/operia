@@ -65,7 +65,7 @@ export function CreateTicketDialog({
   isCreating,
   userTicketRole,
 }: CreateTicketDialogProps) {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const [userFirstName, setUserFirstName] = useState<string>('');
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);

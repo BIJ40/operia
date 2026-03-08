@@ -13,7 +13,7 @@ import { Navigate } from 'react-router-dom';
 import { logError } from '@/lib/logger';
 
 export default function AdminHelpConfortBackup() {
-  const { hasGlobalRole } = useAuth();
+  const { hasGlobalRole } = usePermissions();
   const canAccess = hasGlobalRole('platform_admin');
   const { toast } = useToast();
   const [categories, setCategories] = useState<Block[]>([]);

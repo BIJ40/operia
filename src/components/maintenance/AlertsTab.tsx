@@ -38,7 +38,7 @@ import { toast } from 'sonner';
 import { AlertTriangle, Bell, CheckCircle, Clock, Car, HardHat } from 'lucide-react';
 
 export function AlertsTab() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const [filters, setFilters] = useState<MaintenanceAlertsFilters>({
     severity: undefined,
     status: 'open',

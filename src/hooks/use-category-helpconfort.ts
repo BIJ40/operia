@@ -16,7 +16,8 @@ export const useCategoryHelpConfort = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { blocks, reloadBlocks } = useEditor();
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuthCore();
+  const { isAdmin } = usePermissions();
 
   const [editingSection, setEditingSection] = useState<Section | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

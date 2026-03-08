@@ -50,7 +50,7 @@ const SUPPORT_LEVELS = [
 ];
 
 export default function SupportSettings() {
-  const { globalRole } = useAuth();
+  const { globalRole } = usePermissions();
   const [activeTab, setActiveTab] = useState('agents');
   const [agents, setAgents] = useState<SupportAgentConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);

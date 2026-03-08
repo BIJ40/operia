@@ -17,7 +17,8 @@ interface FaqAdminGuardProps {
 }
 
 export function FaqAdminGuard({ children, redirectTo = '/' }: FaqAdminGuardProps) {
-  const { isAuthLoading, isAuthenticated, canAccessFaqAdmin } = useAuth();
+  const { isAuthLoading, isAuthenticated } = useAuthCore();
+  const { canAccessFaqAdmin } = usePermissions();
 
   // Loading state
   if (isAuthLoading) {

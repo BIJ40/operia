@@ -62,7 +62,8 @@ export function isPlanSufficient(
  * }
  */
 export function usePlanAccess(requiredPlan: PlanKey | null | undefined): PlanAccessResult {
-  const { agencyId, globalRole } = useAuth();
+  const { agencyId } = useProfile();
+  const { globalRole } = usePermissions();
   const { data: subscription, isLoading } = useAgencySubscription(agencyId);
   
   // N5+ bypass: accès à tout

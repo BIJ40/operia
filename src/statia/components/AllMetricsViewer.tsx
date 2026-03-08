@@ -116,7 +116,7 @@ interface DeleteDialog {
 
 export function AllMetricsViewer({ mode, fixedAgencySlug }: AllMetricsViewerProps) {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const [selectedAgency, setSelectedAgency] = useState(fixedAgencySlug || 'dax');
   const [period, setPeriod] = useState<PeriodType>('current_month');
   const [showHidden, setShowHidden] = useState(false);

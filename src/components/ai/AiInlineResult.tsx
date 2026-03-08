@@ -37,7 +37,8 @@ export function AiInlineResult({ messages, isLoading, onClose, onContactSupport,
   const [supportMessage, setSupportMessage] = useState('');
   const [isSendingTicket, setIsSendingTicket] = useState(false);
   const navigate = useNavigate();
-  const { user, agence, agencyId } = useAuth();
+  const { user } = useAuthCore();
+  const { agence } = useProfile();
   
   const lastAssistantMessage = messages.filter(m => m.role === 'assistant').slice(-1)[0];
   const conversationHistory = messages.slice(0, -1);
