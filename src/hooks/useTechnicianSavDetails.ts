@@ -133,7 +133,7 @@ export function useTechnicianSavDetails(technicianId: string | null, dateRange: 
           
           if (!techIds.has(technicianId)) continue;
           
-          const projectId = intervention?.projectId;
+          const projectId = intervention?.projectId as string | number | undefined;
           const project = projectId ? projectsById.get(String(projectId)) : undefined;
           const { isSav, source } = detectSavSource(intervention, project);
           
