@@ -128,7 +128,7 @@ export const useAdminBackup = () => {
     setExportingApogee(true);
     try {
       const result = await safeQuery<any[]>(
-        supabase.from('blocks').select('*').order('order'),
+        supabase.from('blocks').select(BLOCK_COLUMNS).order('order'),
         'BACKUP_EXPORT_APOGEE'
       );
 
