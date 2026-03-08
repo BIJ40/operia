@@ -258,7 +258,7 @@ Deno.serve(async (req) => {
 
     // ============================================
     // MODE: Export storage buckets + signed URLs
-    // GET ?secret=xxx&mode=storage
+    // GET with X-Migration-Secret header, ?mode=storage
     // ============================================
     if (mode === 'storage') {
       const { data: buckets, error } = await admin.storage.listBuckets();
