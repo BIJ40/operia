@@ -324,7 +324,7 @@ export const useCategory = () => {
     successToast('Section déplacée');
   };
 
-  const handleDragEnd = async (event: any) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 

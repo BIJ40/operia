@@ -644,16 +644,17 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
     
     // 🛡️ P0.2 + P1: GESTION SPÉCIALE aide.agent
     if (moduleKey === 'aide' && optionKey === 'agent') {
+      const opts = (newModuleState.options ?? {}) as Record<string, unknown>;
       if (enabled) {
         // ✅ ACTIVATION agent support → forcer level: 1 (SA1) si absent
-        const currentLevel = (newModuleState.options as any).level;
-        if (!currentLevel) {
-          (newModuleState.options as any).level = 1;
+        if (!opts.level) {
+          opts.level = 1;
         }
       } else {
         // ✅ DÉSACTIVATION agent support → supprimer level
-        delete (newModuleState.options as any).level;
+        delete opts.level;
       }
+      newModuleState = { ...newModuleState, options: opts as Record<string, boolean> };
     }
     
     setModifiedUsers(prev => ({
