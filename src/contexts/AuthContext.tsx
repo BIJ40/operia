@@ -122,20 +122,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ============================================================================
   const loadUserData = useCallback(async (userId: string) => {
     try {
-      const timeoutId = setTimeout(() => {
-        throw new Error('Timeout: chargement profil trop long');
-      }, 10000);
+      // Promise.race avec un vrai timeout qui résout proprement
+      // (l'ancien setTimeout + throw ne fonctionnait pas — le throw
+      //  partait dans le vide sans annuler la chaîne async)
+      const PROFILE_TIMEOUT_MS = 10000;
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Timeout: chargement profil trop long')), PROFILE_TIMEOUT_MS);
+      });
 
-      const [profileResult, modulesResult] = await Promise.all([
-        supabase
-          .from('profiles')
-          .select('first_name, last_name, agence, agency_id, role_agence, must_change_password, global_role, is_active, is_read_only')
-          .eq('id', userId)
-          .single(),
-        supabase.rpc('get_user_effective_modules', { p_user_id: userId }),
+      const [profileResult, modulesResult] = await Promise.race([
+        Promise.all([
+          supabase
+            .from('profiles')
+            .select('first_name, last_name, agence, agency_id, role_agence, must_change_password, global_role, is_active, is_read_only')
+            .eq('id', userId)
+            .single(),
+          supabase.rpc('get_user_effective_modules', { p_user_id: userId }),
+        ]),
+        timeoutPromise,
       ]);
-      
-      clearTimeout(timeoutId);
 
       const { data: profile, error: profileError } = profileResult;
       const { data: effectiveModules, error: modulesError } = modulesResult;
