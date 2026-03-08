@@ -493,7 +493,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
         throw new Error('Vous ne pouvez pas attribuer ce rôle');
       }
       
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         first_name: data.first_name,
         last_name: data.last_name,
         agence: data.agence,

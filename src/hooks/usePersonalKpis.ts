@@ -10,6 +10,7 @@ import { startOfMonth, endOfMonth, parseISO, isWithinInterval } from 'date-fns';
 import { computeCaParTechnicienCore, CaParTechnicienParams } from '@/statia/engines/caParTechnicienCore';
 import { DataService } from '@/apogee-connect/services/dataService';
 import { logDebug } from '@/lib/logger';
+// ApogeeLoadedData type available in src/types/apogee.ts for future typed migrations
 
 interface TechnicienKpis {
   caMonth: number;
@@ -51,24 +52,25 @@ function isInInterval(dateStr: string | null | undefined, interval: { start: Dat
 }
 
 /** Checks if a user ID matches an apogee user (flexible comparison) */
-function matchesUserId(uid: any, apogeeUserId: number): boolean {
+function matchesUserId(uid: string | number | null | undefined, apogeeUserId: number): boolean {
   return uid === apogeeUserId || uid === String(apogeeUserId) || Number(uid) === apogeeUserId;
 }
 
 /** Checks if a tech is assigned to an intervention */
-function isTechInIntervention(inter: any, apogeeUserId: number): boolean {
+function isTechInIntervention(inter: Record<string, unknown>, apogeeUserId: number): boolean {
   // 1. usersIds array
-  const usersIds = inter.usersIds || [];
-  if (usersIds.some((uid: any) => matchesUserId(uid, apogeeUserId))) return true;
+  const usersIds = (inter.usersIds || []) as Array<string | number>;
+  if (usersIds.some((uid) => matchesUserId(uid, apogeeUserId))) return true;
 
   // 2. data.visites
-  const visites = inter.data?.visites || [];
-  if (visites.some((v: any) =>
-    (v.usersIds || []).some((uid: any) => matchesUserId(uid, apogeeUserId))
+  const data = inter.data as Record<string, unknown> | undefined;
+  const visites = (data?.visites || []) as Array<Record<string, unknown>>;
+  if (visites.some((v) =>
+    ((v.usersIds || []) as Array<string | number>).some((uid) => matchesUserId(uid, apogeeUserId))
   )) return true;
 
   // 3. userId simple
-  const userId = inter.userId || inter.user_id;
+  const userId = (inter.userId || inter.user_id) as string | number | undefined;
   if (matchesUserId(userId, apogeeUserId)) return true;
 
   return false;
@@ -139,6 +141,7 @@ export function usePersonalKpis(options?: UsePersonalKpisOptions) {
  * Calcule les KPIs technicien en utilisant le moteur StatIA
  */
 function calculateTechnicienKpis(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- External Apogée API data is untyped
   apiData: any,
   apogeeUserId: number,
   monthStart: Date,
@@ -148,7 +151,7 @@ function calculateTechnicienKpis(
   const interval = { start: monthStart, end: monthEnd };
 
   // Find tech name for CA matching
-  const myUser = (users || []).find((u: any) => u.id === apogeeUserId);
+  const myUser = (users || []).find((u) => u.id === apogeeUserId);
   const myTechName = myUser ? `${myUser.firstname || ''} ${myUser.name || ''}`.trim().toUpperCase() : null;
 
   // === 1. CA du mois via StatIA ===
@@ -240,6 +243,7 @@ function calculateTechnicienKpis(
  * Calcule les KPIs assistante
  */
 function calculateAssistanteKpis(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- External Apogée API data is untyped
   apiData: any,
   apogeeUserId: number,
   monthStart: Date,

@@ -46,6 +46,7 @@ import { AiUnifiedProvider } from '@/components/ai';
 import { DraggableTab } from '@/components/unified/DraggableTab';
 import { SidebarChat } from '@/components/chat/SidebarChat';
 // REMOVED: SimulationBanner, RoleSimulatorDropdown, RealUserImpersonationDialog - fonctionnalités supprimées
+import { LocalErrorBoundary } from '@/components/system/LocalErrorBoundary';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ACCENT_THEMES, type AccentThemeKey } from '@/lib/accentThemes';
@@ -553,44 +554,60 @@ function UnifiedWorkspaceContent() {
             </div>
             
             {/* Contenu des onglets */}
-            <main id="main-content" className="flex-1 overflow-auto" role="main">
+             <main id="main-content" className="flex-1 overflow-auto" role="main">
               <Suspense fallback={<LoadingFallback />}>
               <TabsContent value="accueil" className="mt-0 h-full">
                   {isN0User ? <DemoAccueilContent /> : <DashboardContent />}
                 </TabsContent>
                 
                 <TabsContent value="stats" className="mt-0">
-                  <StatsHubProvider>
-                    <StatsTabContent />
-                  </StatsHubProvider>
+                  <LocalErrorBoundary componentName="Statistiques">
+                    <StatsHubProvider>
+                      <StatsTabContent />
+                    </StatsHubProvider>
+                  </LocalErrorBoundary>
                 </TabsContent>
                 
                 <TabsContent value="salaries" className="mt-0">
-                  <CollaborateursTabContent />
+                  <LocalErrorBoundary componentName="Collaborateurs">
+                    <CollaborateursTabContent />
+                  </LocalErrorBoundary>
                 </TabsContent>
                 
                 <TabsContent value="outils" className="mt-0">
-                  <DiversTabContent />
+                  <LocalErrorBoundary componentName="Outils">
+                    <DiversTabContent />
+                  </LocalErrorBoundary>
                 </TabsContent>
                 
                 <TabsContent value="documents" className="mt-0">
-                  <DocumentsTabContent />
+                  <LocalErrorBoundary componentName="Documents">
+                    <DocumentsTabContent />
+                  </LocalErrorBoundary>
                 </TabsContent>
                 
                 <TabsContent value="guides" className="mt-0">
-                  <GuidesTabContent />
+                  <LocalErrorBoundary componentName="Guides">
+                    <GuidesTabContent />
+                  </LocalErrorBoundary>
                 </TabsContent>
                 
                 <TabsContent value="ticketing" className="mt-0">
-                  <TicketingTabContent />
+                  <LocalErrorBoundary componentName="Ticketing">
+                    <TicketingTabContent />
+                  </LocalErrorBoundary>
                 </TabsContent>
                 
                 <TabsContent value="aide" className="mt-0">
-                  <SupportTabContent />
+                  <LocalErrorBoundary componentName="Support">
+                    <SupportTabContent />
+                  </LocalErrorBoundary>
                 </TabsContent>
                 
                 <TabsContent value="admin" className="mt-0">
-                  <AdminTabContent />
+                  <LocalErrorBoundary componentName="Administration">
+                    <AdminTabContent />
+                  </LocalErrorBoundary>
                 </TabsContent>
                 
                 <TabsContent value="test" className="mt-0">
