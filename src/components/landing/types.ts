@@ -47,6 +47,6 @@ export const getColorClass = (color?: ColorPreset) => {
   return colors[color || 'blue'] || colors.blue;
 };
 
-export const getIconComponent = (iconName: string, Icons: any) => {
+export const getIconComponent = (iconName: string, Icons: Record<string, React.ComponentType<{ className?: string }>>) => {
   return Icons[iconName] || Icons.BookOpen;
 };
