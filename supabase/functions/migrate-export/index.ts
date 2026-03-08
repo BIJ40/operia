@@ -105,16 +105,10 @@ Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
 
-    // Accept secret from header (preferred) or query param (deprecated, backward compat)
+    // Authentication: X-Migration-Secret header ONLY (query param removed for security)
     const headerSecret = req.headers.get('X-Migration-Secret');
-    const querySecret = url.searchParams.get('secret');
-    const secret = headerSecret || querySecret;
 
-    if (querySecret && !headerSecret) {
-      console.warn('[migrate-export] DEPRECATED: secret via query param. Use X-Migration-Secret header instead.');
-    }
-
-    if (!secret || secret !== MIGRATION_SECRET) {
+    if (!headerSecret || headerSecret !== MIGRATION_SECRET) {
       return respond({ error: 'Secret invalide' }, 403);
     }
 
@@ -132,7 +126,7 @@ Deno.serve(async (req) => {
 
     // ============================================
     // MODE: Liste des tables + count exact + ordre d'import
-    // GET ?secret=xxx&mode=tables
+    // GET with X-Migration-Secret header, ?mode=tables
     // ============================================
     if (mode === 'tables') {
       const tableNames = await listAllTables(admin);
@@ -167,9 +161,9 @@ Deno.serve(async (req) => {
 
     // ============================================
     // MODE: Export une table complete (toutes les pages)
-    // GET ?secret=xxx&mode=export&table=profiles
+    // GET with X-Migration-Secret header, ?mode=export&table=profiles
     // Pour les tres grosses tables, paginer:
-    // GET ?secret=xxx&mode=export&table=profiles&page=0&pageSize=500
+    // ?mode=export&table=profiles&page=0&pageSize=500
     // ============================================
     if (mode === 'export') {
       const table = url.searchParams.get('table');
@@ -239,7 +233,7 @@ Deno.serve(async (req) => {
 
     // ============================================
     // MODE: Export auth.users
-    // GET ?secret=xxx&mode=auth_users
+    // GET with X-Migration-Secret header, ?mode=auth_users
     // ============================================
     if (mode === 'auth_users') {
       const allUsers: any[] = [];
@@ -264,7 +258,7 @@ Deno.serve(async (req) => {
 
     // ============================================
     // MODE: Export storage buckets + signed URLs
-    // GET ?secret=xxx&mode=storage
+    // GET with X-Migration-Secret header, ?mode=storage
     // ============================================
     if (mode === 'storage') {
       const { data: buckets, error } = await admin.storage.listBuckets();

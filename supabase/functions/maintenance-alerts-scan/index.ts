@@ -32,15 +32,14 @@ Deno.serve(async (req) => {
   const corsResult = handleCorsPreflightOrReject(req);
   if (corsResult) return corsResult;
 
-  // Validate webhook secret for non-browser calls
+  // FAIL-CLOSED: webhook secret MUST be provisioned and MUST match
   const webhookSecret = Deno.env.get('MAINTENANCE_WEBHOOK_SECRET');
   const providedSecret = req.headers.get('x-webhook-secret');
-  
-  // If webhook secret is configured, it must match
-  if (webhookSecret && providedSecret !== webhookSecret) {
-    console.error('[maintenance-alerts-scan] Invalid or missing webhook secret');
+
+  if (!webhookSecret || !providedSecret || providedSecret !== webhookSecret) {
+    console.error('[maintenance-alerts-scan] Unauthorized: missing or invalid webhook secret (fail-closed)');
     const response = new Response(
-      JSON.stringify({ error: 'Unauthorized - Invalid webhook secret' }),
+      JSON.stringify({ error: 'Unauthorized' }),
       { status: 401, headers: { 'Content-Type': 'application/json' } }
     );
     return withCors(req, response);
