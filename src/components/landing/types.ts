@@ -47,6 +47,7 @@ export const getColorClass = (color?: ColorPreset) => {
   return colors[color || 'blue'] || colors.blue;
 };
 
-export const getIconComponent = (iconName: string, Icons: Record<string, React.ComponentType<{ className?: string }>>) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- lucide-react exports non-component utilities alongside icons
+export const getIconComponent = (iconName: string, Icons: Record<string, any>) => {
   return Icons[iconName] || Icons.BookOpen;
 };

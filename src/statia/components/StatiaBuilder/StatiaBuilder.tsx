@@ -142,7 +142,7 @@ export function StatiaBuilder({ agencySlug = 'dax', onSaveQuery }: StatiaBuilder
       // Résultat simulé
       const mockResult: BuilderResult = {
         query,
-        computedAt: new Date(),
+        computedAt: new Date().toISOString(),
         values: {},
       };
       
