@@ -26,7 +26,7 @@ export interface UnifiedNotification {
 }
 
 export function useUnifiedNotifications(limit = 50) {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
 
   const query = useQuery({
