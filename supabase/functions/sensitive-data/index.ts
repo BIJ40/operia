@@ -2,6 +2,12 @@
  * SENSITIVE-DATA - Edge Function pour données RGPD sensibles
  * 
  * P0: CORS hardened, contrôles d'accès stricts
+ * P2: Defense-in-depth — agency scope verification, enhanced audit logging
+ * 
+ * NOTE: SERVICE_ROLE_KEY is required here because:
+ * 1. collaborator_sensitive_data has RLS that blocks direct user access by design
+ * 2. The function itself enforces access control programmatically (isSelf / isAdmin / isSameAgency+RH)
+ * 3. Encryption/decryption happens server-side only — data never stored in plaintext
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -118,6 +124,15 @@ serve(async (req) => {
 
     const { action, collaboratorId, data } = await req.json();
 
+    // P2: Validate collaboratorId format (UUID)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!collaboratorId || !uuidRegex.test(collaboratorId)) {
+      return withCors(req, new Response(
+        JSON.stringify({ error: 'Invalid collaboratorId' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      ));
+    }
+
     // Verify user has access to this collaborator's data
     const { data: profile } = await supabaseClient
       .from('profiles')
@@ -162,13 +177,30 @@ serve(async (req) => {
     const isAdmin = ['platform_admin', 'superadmin'].includes(profile.global_role);
     const isDirigeant = ['franchisee_admin', 'franchisor_admin', 'franchisor_user'].includes(profile.global_role);
 
-    const hasAccess = isSelf || isAdmin || (isSameAgency && (hasRhOption || isDirigeant));
-
-    if (!hasAccess) {
-      console.log(`[SENSITIVE-DATA] Access denied for user ${user.id} to collaborator ${collaboratorId}`);
+    // P2: Defense-in-depth — non-admin users MUST be in the same agency
+    if (!isAdmin && !isSameAgency) {
+      console.warn(`[SENSITIVE-DATA] Cross-agency access blocked: user ${user.id} (agency ${profile.agency_id}) → collaborator ${collaboratorId} (agency ${collaborator.agency_id})`);
       return withCors(req, new Response(
         JSON.stringify({ error: 'Access denied to sensitive data' }),
         { status: 403, headers: { 'Content-Type': 'application/json' } }
+      ));
+    }
+
+    const hasAccess = isSelf || isAdmin || (isSameAgency && (hasRhOption || isDirigeant));
+
+    if (!hasAccess) {
+      console.warn(`[SENSITIVE-DATA] Access denied: user ${user.id} (role=${profile.global_role}, sameAgency=${isSameAgency}, rh=${hasRhOption}) → collaborator ${collaboratorId}`);
+      return withCors(req, new Response(
+        JSON.stringify({ error: 'Access denied to sensitive data' }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      ));
+    }
+
+    // P2: Validate action
+    if (action !== 'read' && action !== 'write') {
+      return withCors(req, new Response(
+        JSON.stringify({ error: 'Invalid action' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
       ));
     }
 
@@ -203,7 +235,8 @@ serve(async (req) => {
         })
         .eq('collaborator_id', collaboratorId);
 
-      console.log(`[SENSITIVE-DATA] Read access for collaborator ${collaboratorId} by user ${user.id}`);
+      // P2: Structured audit log
+      console.log(`[SENSITIVE-DATA] READ by=${user.id} role=${profile.global_role} collaborator=${collaboratorId} agency=${profile.agency_id} isSelf=${isSelf}`);
 
       // Decrypt all fields
       const decrypted = {
@@ -263,19 +296,20 @@ serve(async (req) => {
 
       if (error) throw error;
 
-      console.log(`[SENSITIVE-DATA] Write access for collaborator ${collaboratorId} by user ${user.id}`);
+      // P2: Structured audit log
+      console.log(`[SENSITIVE-DATA] WRITE by=${user.id} role=${profile.global_role} collaborator=${collaboratorId} agency=${profile.agency_id} fields=${Object.keys(data).join(',')}`);
 
       return withCors(req, new Response(
         JSON.stringify({ success: true }),
         { headers: { 'Content-Type': 'application/json' } }
       ));
-
-    } else {
-      return withCors(req, new Response(
-        JSON.stringify({ error: 'Invalid action' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      ));
     }
+
+    // Unreachable due to validation above, but defensive
+    return withCors(req, new Response(
+      JSON.stringify({ error: 'Invalid action' }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
+    ));
 
   } catch (error) {
     console.error('[SENSITIVE-DATA] Error:', error);
