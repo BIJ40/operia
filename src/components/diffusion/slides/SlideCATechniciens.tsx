@@ -13,7 +13,7 @@ interface SlideCATechniciensProps {
 }
 
 export const SlideCATechniciens = ({ currentMonthIndex }: SlideCATechniciensProps) => {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   
   const { data: apiData, isLoading } = useQuery({
     queryKey: ['diffusion-ca-techniciens', agence, currentMonthIndex],

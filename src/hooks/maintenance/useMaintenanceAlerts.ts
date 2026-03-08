@@ -12,7 +12,7 @@ import type { MaintenanceAlert, MaintenanceAlertsFilters } from '@/types/mainten
 const QUERY_KEY = 'maintenance-alerts';
 
 export function useMaintenanceAlerts(agencyId?: string, filters?: MaintenanceAlertsFilters) {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const effectiveAgencyId = agencyId || agence;
 
   return useQuery({

@@ -11,7 +11,7 @@ interface SlideSegmentationProps {
 }
 
 export const SlideSegmentation = ({ currentMonthIndex }: SlideSegmentationProps) => {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
 
   const { data } = useQuery({
     queryKey: ['diffusion-segmentation', agence, currentMonthIndex],

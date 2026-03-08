@@ -46,7 +46,7 @@ interface UseRdvMapResult {
 }
 
 export function useRdvMap({ date, techIds, agencySlug }: UseRdvMapOptions): UseRdvMapResult {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
 
   // Déterminer l'agence cible
   const targetAgency = agencySlug || agence;

@@ -11,7 +11,7 @@ interface DiffusionSaviezVousProps {
 }
 
 export const DiffusionSaviezVous = ({ currentMonthIndex, templates }: DiffusionSaviezVousProps) => {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
 
   const { data } = useQuery({
     queryKey: ['diffusion-saviez-vous', agence],

@@ -33,7 +33,7 @@ export interface DiffusionApporteursData {
 }
 
 export function useDiffusionApporteursStatia(currentMonthIndex: number) {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const services = getGlobalApogeeDataServices();
 
   const now = new Date();

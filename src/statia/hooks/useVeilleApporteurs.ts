@@ -40,7 +40,7 @@ function getDefaultFilters(): VeilleFilters {
 }
 
 export function useVeilleApporteurs() {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const agenceSlug = agence || '';
   
   const [filters, setFilters] = useState<VeilleFilters>(getDefaultFilters);
