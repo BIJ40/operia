@@ -266,7 +266,7 @@ export function ApporteurSessionProvider({ children }: { children: ReactNode }) 
       console.error('[ApporteurSession] Error logging out:', error);
     } finally {
       setSession(null);
-      clearDevSession();
+      clearStoredSession();
     }
   }, []);
 
