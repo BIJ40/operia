@@ -3,7 +3,7 @@
  * Extracted from TicketDetailDrawer.tsx for maintainability
  */
 
-import type { AuthorType, ReportedBy } from '../types';
+import type { AuthorType, ReportedBy } from '../../types';
 
 export const AUTHOR_COLORS: Record<AuthorType, string> = {
   HC: 'bg-helpconfort-blue text-white',
