@@ -7,7 +7,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { apogeeProxy } from '@/services/apogeeProxy';
 import type { AggregatedKPIs, UniversAggregated } from '../engine/aggregators';
 import type { ApporteurDashboardData } from './useApporteurDashboard';
