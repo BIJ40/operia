@@ -223,7 +223,8 @@ export function useProspectInteractions(cardId: string | null) {
 
 export function useCreateInteraction() {
   const queryClient = useQueryClient();
-  const { agencyId, user } = useAuth();
+  const { agencyId } = useProfile();
+  const { user } = useAuthCore();
 
   return useMutation({
     mutationFn: async (input: {
