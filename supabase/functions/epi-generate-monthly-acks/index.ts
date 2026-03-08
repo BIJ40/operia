@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
 };
 
 serve(async (req) => {
@@ -13,6 +13,21 @@ serve(async (req) => {
   }
 
   try {
+    // Verify CRON secret
+    const cronSecret = Deno.env.get("CRON_SECRET");
+    const providedSecret = req.headers.get("X-CRON-SECRET");
+
+    if (!cronSecret || !providedSecret || providedSecret !== cronSecret) {
+      console.error("[epi-generate-monthly-acks] Unauthorized: Invalid or missing CRON_SECRET");
+      return new Response(
+        JSON.stringify({ success: false, error: "Unauthorized" }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 401,
+        }
+      );
+    }
+
     console.log("[epi-generate-monthly-acks] Starting monthly EPI acknowledgement generation...");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
