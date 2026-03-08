@@ -42,7 +42,7 @@ import {
   migrateFromLocalStorage,
   MetricStatus
 } from '../hooks/useMetricValidations';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 
 // Icônes par catégorie
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
