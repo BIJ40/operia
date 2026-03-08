@@ -56,7 +56,7 @@ export function useApporteurDossiers() {
       }
       return result.data || { success: false, error: 'Réponse vide' };
     },
-    enabled: hasToken,
+    enabled: isAuthenticated,
     staleTime: 60 * 1000, // 1 minute
     retry: 1,
   });

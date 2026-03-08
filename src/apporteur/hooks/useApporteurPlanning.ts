@@ -40,7 +40,7 @@ export function useApporteurPlanning() {
       }
       return result.data || { success: false, error: 'Réponse vide' };
     },
-    enabled: hasToken,
+    enabled: isAuthenticated,
     staleTime: 60 * 1000,
     retry: 1,
   });
