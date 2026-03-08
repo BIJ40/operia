@@ -7,10 +7,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { safeMutation } from '@/lib/safeQuery';
 import { errorToast, successToast } from '@/lib/toastHelpers';
 import { logError } from '@/lib/logger';
-import { Block } from '@/types/block';
+import { Block, Attachment } from '@/types/block';
 import { ROUTES } from '@/config/routes';
+import type { DragEndEvent } from '@dnd-kit/core';
+import type { Json } from '@/integrations/supabase/types';
 
-export interface Section extends Block {}
+export type Section = Block;
 
 export const useCategoryHelpConfort = () => {
   const { slug } = useParams();
