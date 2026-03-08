@@ -7,7 +7,8 @@ import { logDebug } from "@/lib/logger";
 
 function FranchiseurLayoutContent() {
   const { franchiseurRole, isLoading } = useFranchiseur();
-  const { hasGlobalRole, isAuthLoading } = useAuth();
+  const { hasGlobalRole } = usePermissions();
+  const { isAuthLoading } = useAuthCore();
   
   const isPlatformAdmin = hasGlobalRole('platform_admin');
 
