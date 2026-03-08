@@ -384,7 +384,7 @@ export function useUpdateApporteurUserRole() {
  */
 export function useCreateApporteurUser() {
   const queryClient = useQueryClient();
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
 
   return useMutation({
     mutationFn: async (input: {

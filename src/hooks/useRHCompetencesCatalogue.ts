@@ -68,7 +68,7 @@ export function useAddCompetenceCatalogue() {
 
 export function useDeleteCompetenceCatalogue() {
   const queryClient = useQueryClient();
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   
   return useMutation({
     mutationFn: async (id: string) => {
