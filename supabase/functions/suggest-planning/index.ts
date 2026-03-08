@@ -804,4 +804,4 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
       details: String(err),
     }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
   }
-});
+}));

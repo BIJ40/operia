@@ -998,4 +998,4 @@ Deno.serve(withSentry({ functionName: 'generate-monthly-report' }, async (req) =
     console.error("[generate-monthly-report] Unexpected error:", err);
     return withCors(req, errorResponse("INTERNAL_ERROR", "Erreur interne", err instanceof Error ? err.message : String(err)));
   }
-});
+}));
