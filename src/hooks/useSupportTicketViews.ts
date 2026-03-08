@@ -85,7 +85,7 @@ export function useSupportTicketShouldBlink(
   lastMessageBy: string | null,
   lastMessageAt: string | null
 ): boolean {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const { data: views = [] } = useMySupportTicketViews();
 
   // Pas de clignotement si:
