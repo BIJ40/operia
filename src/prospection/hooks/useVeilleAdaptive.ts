@@ -7,7 +7,7 @@
 
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { apogeeProxy } from '@/services/apogeeProxy';
 import { computeAdaptiveScore, type AdaptiveScore, type MonthlyTrendEntry, type ScoreLevel, type RecentMonthsOption } from '../engine/adaptiveScoring';
 
