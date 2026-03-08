@@ -114,7 +114,8 @@ export function useProspectCard(cardId: string | null) {
 
 export function useCreateProspectCards() {
   const queryClient = useQueryClient();
-  const { agencyId, user } = useAuth();
+  const { agencyId } = useProfile();
+  const { user } = useAuthCore();
 
   return useMutation({
     mutationFn: async (poolItems: ProspectPoolItem[]) => {
