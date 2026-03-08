@@ -66,7 +66,7 @@ interface UseProspectCardsOptions {
 }
 
 export function useProspectCards(options: UseProspectCardsOptions = {}) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
 
   return useQuery({
     queryKey: ['prospect-cards', agencyId, options],
