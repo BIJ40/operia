@@ -201,9 +201,10 @@ export function useCreateApporteurManager() {
         let msg = 'Erreur inconnue';
         try {
           // Try to get the response body from the error context
-          const contextBody = (error as any)?.context?.body;
-          if (contextBody) {
-            const reader = contextBody.getReader?.();
+          const contextBody = (error as Record<string, unknown>)?.context as Record<string, unknown> | undefined;
+          const body = contextBody?.body as ReadableStream | undefined;
+          if (body) {
+            const reader = body.getReader?.();
             if (reader) {
               const { value } = await reader.read();
               const text = new TextDecoder().decode(value);

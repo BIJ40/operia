@@ -11,7 +11,7 @@ export function useAutoSaveCollaborator(collaboratorId: string) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async (updates: Record<string, any>) => {
+    mutationFn: async (updates: Record<string, unknown>) => {
       const { error } = await supabase
         .from('collaborators')
         .update({ ...updates, updated_at: new Date().toISOString() })
@@ -28,7 +28,7 @@ export function useAutoSaveCollaborator(collaboratorId: string) {
     },
   });
 
-  const saveField = useCallback(async (field: string, value: any) => {
+  const saveField = useCallback(async (field: string, value: unknown) => {
     await mutation.mutateAsync({ [field]: value || null });
   }, [mutation]);
 
@@ -39,7 +39,7 @@ export function useAutoSaveEpi(collaboratorId: string) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async (updates: Record<string, any>) => {
+    mutationFn: async (updates: Record<string, unknown>) => {
       const { error } = await supabase
         .from('rh_epi_profiles')
         .upsert({ 
@@ -61,7 +61,7 @@ export function useAutoSaveEpi(collaboratorId: string) {
     },
   });
 
-  const saveField = useCallback(async (field: string, value: any) => {
+  const saveField = useCallback(async (field: string, value: unknown) => {
     await mutation.mutateAsync({ [field]: value || null });
   }, [mutation]);
 
@@ -72,14 +72,15 @@ export function useAutoSaveCompetencies(collaboratorId: string) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async (updates: Record<string, any>) => {
+    mutationFn: async (updates: Record<string, unknown>) => {
+      const payload = {
+        collaborator_id: collaboratorId,
+        derniere_maj: new Date().toISOString(),
+        ...updates,
+      };
       const { error } = await supabase
         .from('rh_competencies')
-        .upsert({ 
-          collaborator_id: collaboratorId,
-          derniere_maj: new Date().toISOString(),
-          ...updates,
-        } as any, { 
+        .upsert(payload, { 
           onConflict: 'collaborator_id' 
         });
       
@@ -94,11 +95,11 @@ export function useAutoSaveCompetencies(collaboratorId: string) {
     },
   });
 
-  const saveField = useCallback(async (field: string, value: any) => {
+  const saveField = useCallback(async (field: string, value: unknown) => {
     await mutation.mutateAsync({ [field]: value });
   }, [mutation]);
 
-  const saveMultiple = useCallback(async (updates: Record<string, any>) => {
+  const saveMultiple = useCallback(async (updates: Record<string, unknown>) => {
     await mutation.mutateAsync(updates);
   }, [mutation]);
 
@@ -106,7 +107,7 @@ export function useAutoSaveCompetencies(collaboratorId: string) {
 }
 
 // Direct update function (for use outside of hooks)
-export async function updateCollaboratorField(collaboratorId: string, field: string, value: any): Promise<void> {
+export async function updateCollaboratorField(collaboratorId: string, field: string, value: unknown): Promise<void> {
   const { error } = await supabase
     .from('collaborators')
     .update({ [field]: value || null, updated_at: new Date().toISOString() })

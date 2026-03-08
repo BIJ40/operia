@@ -89,39 +89,40 @@ export function usePlanningProjects(agencySlug: string | undefined) {
       ]);
 
       // Index clients by id
-      const clientsById = new Map<number, any>();
-      (clients || []).forEach((c: any) => {
-        clientsById.set(c.id, c);
+      const clientsById = new Map<number, Record<string, unknown>>();
+      (clients || []).forEach((c: Record<string, unknown>) => {
+        clientsById.set(c.id as number, c);
       });
 
       // Build a set of projectIds that already have a planned/validated TVX intervention
       // These are no longer truly "à planifier travaux"
       const projectsWithPlannedTvx = new Set<number>();
-      (interventions || []).forEach((interv: any) => {
-        const type = (interv.type || interv.type2 || '').toLowerCase();
-        const state = (interv.state || '').toLowerCase();
+      (interventions || []).forEach((interv: Record<string, unknown>) => {
+        const type = (String(interv.type || '') + String(interv.type2 || '')).toLowerCase();
+        const state = String(interv.state || '').toLowerCase();
         const isTvx = type.includes('travaux') || type.includes('tvx') || type.includes('work');
         const isPlanned = state.includes('planned') || state.includes('planifi') || 
                           state.includes('validated') || state.includes('done') || 
                           state.includes('in_progress') || state.includes('finished');
         if (isTvx && isPlanned && interv.projectId) {
-          projectsWithPlannedTvx.add(interv.projectId);
+          projectsWithPlannedTvx.add(interv.projectId as number);
         }
       });
 
       // Enrich projects with client name
-      const enriched: PlanningProject[] = (projects || []).map((p: any) => {
-        const client = clientsById.get(p.clientId);
+      const enriched: PlanningProject[] = (projects || []).map((p: Record<string, unknown>) => {
+        const client = clientsById.get(p.clientId as number);
+        const pData = (p.data ?? {}) as Record<string, unknown>;
         return {
-          id: p.id,
-          ref: p.ref || `#${p.id}`,
-          label: p.label || '',
-          state: p.state || '',
-          date: p.date || p.createdAt || '',
-          clientId: p.clientId,
-          clientName: client?.nom || client?.raisonSociale || client?.name || '',
-          ville: p.ville || client?.ville || '',
-          data: p.data,
+          id: p.id as number,
+          ref: String(p.ref || `#${p.id}`),
+          label: String(p.label || ''),
+          state: String(p.state || ''),
+          date: String(p.date || p.createdAt || ''),
+          clientId: p.clientId as number,
+          clientName: String(client?.nom || client?.raisonSociale || client?.name || ''),
+          ville: String(p.ville || client?.ville || ''),
+          data: pData as PlanningProject['data'],
         };
       });
 
@@ -162,8 +163,8 @@ export function usePlanningTechnicians(agencySlug: string | undefined) {
       if (!agencySlug) return [];
       const users = await apogeeProxy.getUsers({ agencySlug });
       // Filter to only technicians
-      return (users || []).filter((u: any) => {
-        const type = (u.type || '').toLowerCase();
+      return (users || []).filter((u: Record<string, unknown>) => {
+        const type = String(u.type || '').toLowerCase();
         return type.includes('tech') || type.includes('ouvrier') || type.includes('intervenant');
       }) as PlanningTechnician[];
     },
