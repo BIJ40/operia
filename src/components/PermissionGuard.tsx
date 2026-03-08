@@ -75,7 +75,7 @@ export function ConditionalRender({
   children,
   fallback = null
 }: ConditionalRenderProps) {
-  const { globalRole, isAdmin } = useAuth();
+  const { globalRole, isAdmin } = usePermissions();
   
   const hasAccess = isAdmin || !minRole || hasMinimumRole(globalRole, minRole);
 
