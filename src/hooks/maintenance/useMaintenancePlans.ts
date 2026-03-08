@@ -86,7 +86,7 @@ export function useMaintenancePlan(planId: string | undefined) {
 
 export function useCreatePlanTemplate() {
   const queryClient = useQueryClient();
-  const { agence } = useAuth();
+  const { agence } = useProfile();
 
   return useMutation({
     mutationFn: async (data: MaintenancePlanTemplateFormData) => {
