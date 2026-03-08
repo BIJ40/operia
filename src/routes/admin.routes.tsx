@@ -3,6 +3,7 @@ import { Route, Navigate } from "react-router-dom";
 import { MinimalLayout } from "@/components/layout";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { ModuleGuard } from "@/components/auth/ModuleGuard";
+import { MfaGuard } from "@/components/auth/MfaGuard";
 
 // Lazy loaded pages - Only those still needed for standalone routes
 const SupportSettings = lazy(() => import("@/pages/admin/SupportSettings"));
@@ -70,12 +71,12 @@ export function AdminRoutes() {
       {/* ===== ROUTES STANDALONE (MinimalLayout) - Gardées pour cas spéciaux ===== */}
       
       {/* Agency detail page - ouvre en standalone */}
-      <Route path="/admin/agencies/:agencyId" element={<AdminLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><FranchiseurLayout /></ModuleGuard></RoleGuard></AdminLayout>}>
+      <Route path="/admin/agencies/:agencyId" element={<AdminLayout><RoleGuard minRole="platform_admin"><MfaGuard><ModuleGuard moduleKey="admin_plateforme"><FranchiseurLayout /></ModuleGuard></MfaGuard></RoleGuard></AdminLayout>}>
         <Route index element={<FranchiseurAgencyProfile />} />
       </Route>
       
       {/* Support settings - standalone */}
-      <Route path="/admin/support/settings" element={<AdminLayout><RoleGuard minRole="platform_admin"><ModuleGuard moduleKey="admin_plateforme"><SupportSettings /></ModuleGuard></RoleGuard></AdminLayout>} />
+      <Route path="/admin/support/settings" element={<AdminLayout><RoleGuard minRole="platform_admin"><MfaGuard><ModuleGuard moduleKey="admin_plateforme"><SupportSettings /></ModuleGuard></MfaGuard></RoleGuard></AdminLayout>} />
       
       {/* Rapport activité - standalone (nécessite contexte agence) */}
       <Route path="/admin/rapportactivite" element={<AdminLayout><RoleGuard minRole="franchisee_admin"><ReportActivityPage /></RoleGuard></AdminLayout>} />
