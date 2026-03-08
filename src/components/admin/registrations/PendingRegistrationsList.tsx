@@ -98,7 +98,7 @@ export default function PendingRegistrationsList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pending-registrations'] });
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast({ title: 'Erreur', description: err.message, variant: 'destructive' });
     },
   });
