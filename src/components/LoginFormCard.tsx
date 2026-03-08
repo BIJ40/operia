@@ -43,8 +43,9 @@ export function LoginFormCard() {
       });
       if (error) throw error;
       setForgotSent(true);
-    } catch (err: any) {
-      toast({ title: 'Erreur', description: err.message || "Impossible d'envoyer l'email.", variant: 'destructive' });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Impossible d'envoyer l'email.";
+      toast({ title: 'Erreur', description: message, variant: 'destructive' });
     } finally {
       setForgotLoading(false);
     }
