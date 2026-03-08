@@ -37,7 +37,7 @@ export function useApporteurKpis({ period, from, to }: UseApporteurKpisOptions) 
       }
       return result.data || { success: false, error: 'Réponse vide' };
     },
-    enabled: hasToken,
+    enabled: isAuthenticated,
     staleTime: 5 * 60 * 1000,   // 5 min
     gcTime: 15 * 60 * 1000,     // 15 min
     retry: 1,
