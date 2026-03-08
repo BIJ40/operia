@@ -228,8 +228,8 @@ Deno.serve(async (req) => {
         role: manager.role as "reader" | "manager",
       },
       expiresAt: expiresAt.toISOString(),
-      // Token returned in body for DEV environments only
-      ...(isDevEnvironment(origin) && { token: sessionToken }),
+      // Always return token in body — cookie approach doesn't work cross-origin
+      token: sessionToken,
     };
 
     // Set httpOnly cookie for production

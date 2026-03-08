@@ -37,39 +37,28 @@ interface ApporteurSessionContextType {
 
 const ApporteurSessionContext = createContext<ApporteurSessionContextType | undefined>(undefined);
 
-// Check if we're in dev/preview mode (for localStorage fallback)
-const isDevMode = () => {
-  const hostname = window.location.hostname;
-  return hostname === 'localhost' || 
-         hostname === '127.0.0.1' ||
-         hostname.includes('preview') || 
-         hostname.includes('lovable');
+// Storage helpers — always use localStorage for token persistence
+// (cross-origin cookies don't work between app domain and Supabase domain)
+const TOKEN_KEY = 'apporteur_session_token';
+const SESSION_KEY = 'apporteur_session_data';
+
+const getStoredToken = (): string | null => {
+  return localStorage.getItem(TOKEN_KEY);
 };
 
-// Storage helpers for DEV mode
-const DEV_TOKEN_KEY = 'apporteur_session_token';
-const DEV_SESSION_KEY = 'apporteur_session_data';
-
-const getDevToken = (): string | null => {
-  if (!isDevMode()) return null;
-  return localStorage.getItem(DEV_TOKEN_KEY);
+const setStoredSession = (token: string, session: ApporteurSession) => {
+  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
 };
 
-const setDevSession = (token: string, session: ApporteurSession) => {
-  if (!isDevMode()) return;
-  localStorage.setItem(DEV_TOKEN_KEY, token);
-  localStorage.setItem(DEV_SESSION_KEY, JSON.stringify(session));
+const clearStoredSession = () => {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(SESSION_KEY);
 };
 
-const clearDevSession = () => {
-  localStorage.removeItem(DEV_TOKEN_KEY);
-  localStorage.removeItem(DEV_SESSION_KEY);
-};
-
-const getStoredDevSession = (): ApporteurSession | null => {
-  if (!isDevMode()) return null;
+const getStoredSessionData = (): ApporteurSession | null => {
   try {
-    const stored = localStorage.getItem(DEV_SESSION_KEY);
+    const stored = localStorage.getItem(SESSION_KEY);
     if (!stored) return null;
     const parsed = JSON.parse(stored);
     return {
