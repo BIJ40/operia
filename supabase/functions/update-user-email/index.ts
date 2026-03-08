@@ -2,6 +2,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts'
 import { validateString, validateUUID } from '../_shared/validation.ts'
+import { checkRateLimit } from '../_shared/rateLimiter.ts'
 
 // ============================================================================
 // SYSTÈME DE PERMISSIONS V2.0 - Helpers centralisés
@@ -90,6 +91,9 @@ serve(async (req) => {
     }
 
     const userId = user.id
+
+    // Rate limiting: 5 attempts per 5 minutes per user
+    await checkRateLimit(userId, { action: 'update-email', maxAttempts: 5, windowSeconds: 300 })
 
     // Valider les paramètres d'entrée
     const bodyRaw = await req.json()

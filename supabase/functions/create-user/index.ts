@@ -5,6 +5,7 @@ import { GLOBAL_ROLES, getRoleLevel, canAccessUsersPage, canEditTarget } from '.
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts'
 import { validateString, validateOptionalString, validateOptionalBoolean } from '../_shared/validation.ts'
 import { getDefaultModulesForCreation, EnabledModule } from '../_shared/defaultModules.ts'
+import { checkRateLimit } from '../_shared/rateLimiter.ts'
 
 // Resend initialized lazily inside handler to avoid boot crash on invalid API key chars
 
@@ -56,6 +57,9 @@ serve(async (req) => {
     const callerAgencyId = callerProfile?.agency_id || null
 
     console.log(`[create-user] Appelant: N${callerLevel}`)
+
+    // Rate limiting: 10 creations per 10 minutes per user
+    await checkRateLimit(user.id, { action: 'create-user', maxAttempts: 10, windowSeconds: 600 })
 
     // Vérifier les droits de gestion (N3+ requis pour créer, N2 uniquement sa propre agence)
     if (!canAccessUsersPage(callerLevel)) {
