@@ -2,6 +2,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { GLOBAL_ROLES, getRoleLevel } from '../_shared/roles.ts'
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts'
+import { requireAal2 } from '../_shared/mfa.ts'
 
 // N5+ (platform_admin) peut supprimer des utilisateurs
 const canDeleteUsers = (roleLevel: number): boolean => {
