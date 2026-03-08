@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
 import { withSentry } from '../_shared/withSentry.ts';
+import { requireAal2 } from '../_shared/mfa.ts';
 
 // Tiered page limits based on row payload size
 const EXTREME_TABLES = ['knowledge_base', 'guide_chunks', 'rag_index_documents'];
