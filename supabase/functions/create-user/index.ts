@@ -7,6 +7,7 @@ import { validateString, validateOptionalString, validateOptionalBoolean } from 
 import { getDefaultModulesForCreation, EnabledModule } from '../_shared/defaultModules.ts'
 import { checkRateLimit } from '../_shared/rateLimiter.ts'
 import { withSentry } from '../_shared/withSentry.ts'
+import { requireAal2 } from '../_shared/mfa.ts'
 
 // Resend initialized lazily inside handler to avoid boot crash on invalid API key chars
 
