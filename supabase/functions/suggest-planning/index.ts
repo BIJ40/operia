@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
+import { withSentry } from '../_shared/withSentry.ts';
 
 // =============================================================================
 // CONSTANTS
@@ -351,7 +352,7 @@ function parseDateAndTime(dateLike: unknown): { dateStr: string; startMinutes: n
 // MAIN HANDLER
 // =============================================================================
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request) => {
   const corsResponse = handleCorsPreflightOrReject(req);
   if (corsResponse) return corsResponse;
 
@@ -803,4 +804,4 @@ Deno.serve(async (req: Request) => {
       details: String(err),
     }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
   }
-});
+}));

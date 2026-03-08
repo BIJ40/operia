@@ -78,6 +78,23 @@ function topoSort(allTables: string[], deps: { child_table: string; parent_table
   return sorted;
 }
 
+// Simple IP-based rate limiting (in-memory, resets on cold start)
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = 10; // max requests
+const RATE_WINDOW_MS = 60_000; // per minute
+
+function checkMigrateRateLimit(identifier: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(identifier);
+  if (!entry || entry.resetAt < now) {
+    rateLimitMap.set(identifier, { count: 1, resetAt: now + RATE_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT) return false;
+  entry.count++;
+  return true;
+}
+
 Deno.serve(async (req) => {
   const corsResult = handleCorsPreflightOrReject(req);
   if (corsResult) return corsResult;
@@ -87,10 +104,24 @@ Deno.serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const secret = url.searchParams.get('secret');
 
-    if (secret !== MIGRATION_SECRET) {
+    // Accept secret from header (preferred) or query param (deprecated, backward compat)
+    const headerSecret = req.headers.get('X-Migration-Secret');
+    const querySecret = url.searchParams.get('secret');
+    const secret = headerSecret || querySecret;
+
+    if (querySecret && !headerSecret) {
+      console.warn('[migrate-export] DEPRECATED: secret via query param. Use X-Migration-Secret header instead.');
+    }
+
+    if (!secret || secret !== MIGRATION_SECRET) {
       return respond({ error: 'Secret invalide' }, 403);
+    }
+
+    // Rate limiting by secret (single caller expected)
+    const rateLimitKey = `migrate-export`;
+    if (!checkMigrateRateLimit(rateLimitKey)) {
+      return respond({ error: 'Trop de requêtes. Réessayez dans 1 minute.' }, 429);
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;

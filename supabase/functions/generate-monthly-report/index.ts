@@ -2,6 +2,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { handleCorsPreflightOrReject, withCors } from "../_shared/cors.ts";
 import { errorResponse, successResponse, authError, forbiddenError } from "../_shared/error.ts";
+import { withSentry } from '../_shared/withSentry.ts';
 
 // Role level mapping
 const ROLE_LEVELS: Record<string, number> = {
@@ -33,7 +34,7 @@ function formatCurrency(amount: number, format: 'euro' | 'kilo'): string {
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount);
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry({ functionName: 'generate-monthly-report' }, async (req) => {
   // Handle CORS preflight
   const corsResponse = handleCorsPreflightOrReject(req);
   if (corsResponse) return corsResponse;
@@ -997,4 +998,4 @@ Deno.serve(async (req) => {
     console.error("[generate-monthly-report] Unexpected error:", err);
     return withCors(req, errorResponse("INTERNAL_ERROR", "Erreur interne", err instanceof Error ? err.message : String(err)));
   }
-});
+}));
