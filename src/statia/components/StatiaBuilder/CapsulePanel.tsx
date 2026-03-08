@@ -18,7 +18,7 @@ interface CapsulePanelProps {
     unit?: string;
   }>;
   type: 'dimension' | 'measure' | 'filter';
-  onDragStart?: (item: any) => void;
+  onDragStart?: (item: CapsulePanelProps['items'][number]) => void;
 }
 
 export function CapsulePanel({ 
