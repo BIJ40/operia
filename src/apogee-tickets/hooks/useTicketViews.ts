@@ -45,7 +45,7 @@ export function useMyTicketViews() {
  * Hook pour marquer un ticket comme vu
  */
 export function useMarkTicketAsViewed() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
 
   return useMutation({
