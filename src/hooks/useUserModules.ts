@@ -31,7 +31,7 @@ export { userModulesToEnabledModules as rowsToEnabledModules, enabledModulesToRo
  * Hook principal pour récupérer les modules d'un utilisateur
  */
 export function useUserModules(userId?: string) {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const targetUserId = userId || user?.id;
   
   return useQuery({
