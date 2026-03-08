@@ -1,11 +1,13 @@
 /**
  * OpsView - Vue Ops (Backups, HC-Backup, Cache, Rapport Apogée, Stockage)
  * Utilise DraggableFolderTabs avec bordures colorées
+ * Exports critiques protégés par MfaGuard
  */
 
 import { lazy, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { MfaGuard } from '@/components/auth/MfaGuard';
 import { 
   DraggableFolderTabsList, 
   DraggableFolderContentContainer,

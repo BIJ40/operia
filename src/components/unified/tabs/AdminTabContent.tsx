@@ -1,10 +1,11 @@
 /**
  * AdminTabContent - Contenu de l'onglet "Admin"
- * Nouveau workspace à 6 onglets (Accès, Réseau, IA, Contenu, Ops, Plateforme)
+ * Protégé par MfaGuard pour les rôles sensibles (N4+)
  */
 
 import { lazy, Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
+import { MfaGuard } from '@/components/auth/MfaGuard';
 
 const AdminHubContent = lazy(() => import('./AdminHubContent'));
 
@@ -18,8 +19,10 @@ function LoadingFallback() {
 
 export default function AdminTabContent() {
   return (
-    <Suspense fallback={<LoadingFallback />}>
-      <AdminHubContent />
-    </Suspense>
+    <MfaGuard>
+      <Suspense fallback={<LoadingFallback />}>
+        <AdminHubContent />
+      </Suspense>
+    </MfaGuard>
   );
 }
