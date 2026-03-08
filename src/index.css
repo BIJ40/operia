@@ -251,14 +251,14 @@
     --sidebar-border: 210 18% 85%;
     --sidebar-ring: 207 45% 62%;
 
-    --warm-blue: 207 45% 62%;
-    --warm-green: 170 35% 55%;
-    --warm-orange: 35 40% 60%;
-    --warm-purple: 240 30% 65%;
-    --warm-pink: 340 25% 65%;
-    --warm-teal: 190 35% 52%;
-    --warm-cyan: 195 40% 58%;
-    --warm-red: 0 40% 55%;
+    --warm-blue: 210 62% 52%;
+    --warm-green: 170 52% 45%;
+    --warm-orange: 30 65% 52%;
+    --warm-purple: 242 48% 58%;
+    --warm-pink: 338 48% 58%;
+    --warm-teal: 190 52% 44%;
+    --warm-cyan: 195 58% 48%;
+    --warm-red: 4 58% 50%;
   }
 
   /* ============================================
