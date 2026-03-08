@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { logError } from '@/lib/logger';
 
 const HEARTBEAT_INTERVAL = 30000; // 30 secondes
