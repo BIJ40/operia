@@ -283,7 +283,7 @@ export function WelcomeWizard({
           supabase.auth.signOut();
         }, 1000);
       } else {
-        setPasswordError(error.message || 'Impossible de changer le mot de passe');
+        setPasswordError(errorMessage || 'Impossible de changer le mot de passe');
       }
     } finally {
       setPasswordLoading(false);
