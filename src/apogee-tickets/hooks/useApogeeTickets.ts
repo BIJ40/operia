@@ -118,7 +118,7 @@ async function logTicketChanges(
 }
 
 export function useApogeeTickets(filters?: TicketFilters) {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
 
   // Fetch statuses
