@@ -85,11 +85,11 @@ export function useTechnicianSavDetails(technicianId: string | null, dateRange: 
         const clients = loaded?.clients || [];
         
         // Indexer projets et clients
-        const projectsById = new Map<string, any>();
-        for (const p of projects) projectsById.set(String(p.id), p);
+        const projectsById = new Map<string, Record<string, unknown>>();
+        for (const p of projects) projectsById.set(String(p.id), p as Record<string, unknown>);
         
-        const clientsById = new Map<string, any>();
-        for (const c of clients) clientsById.set(String(c.id), c);
+        const clientsById = new Map<string, Record<string, unknown>>();
+        for (const c of clients) clientsById.set(String(c.id), c as Record<string, unknown>);
         
         const startTs = dateRange.start.getTime();
         const endTs = dateRange.end.getTime();
