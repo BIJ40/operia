@@ -5,6 +5,7 @@ import { GLOBAL_ROLES, getRoleLevel, canAccessUsersPage, canEditTarget } from '.
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts'
 import { validateString, validateOptionalString, validateOptionalBoolean } from '../_shared/validation.ts'
 import { getDefaultModulesForCreation, EnabledModule } from '../_shared/defaultModules.ts'
+import { checkRateLimit } from '../_shared/rateLimiter.ts'
 
 // Resend initialized lazily inside handler to avoid boot crash on invalid API key chars
 
