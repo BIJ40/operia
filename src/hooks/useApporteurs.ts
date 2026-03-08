@@ -273,7 +273,7 @@ export function useToggleApporteurManagerStatus() {
  */
 export function useCreateApporteur() {
   const queryClient = useQueryClient();
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
 
   return useMutation({
     mutationFn: async (input: CreateApporteurInput) => {
