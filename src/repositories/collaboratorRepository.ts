@@ -42,10 +42,6 @@ export async function listCollaborators(agencyId: string, options?: {
     .order('last_name', { ascending: true })
     .limit(limit);
 
-  if (activeOnly) {
-    query = query.eq('is_active', true);
-  }
-
   const { data, error } = await query;
   if (error) {
     logError('[collaboratorRepository.listCollaborators]', error);

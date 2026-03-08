@@ -12,7 +12,7 @@ export interface ProfileRow {
   email: string | null;
   first_name: string | null;
   last_name: string | null;
-  pseudo: string | null;
+  
   agence: string | null;
   agency_id: string | null;
   global_role: string | null;
