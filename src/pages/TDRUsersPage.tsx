@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useUserManagement, UserProfile } from '@/hooks/use-user-management';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { getUserManagementCapabilities } from '@/config/roleMatrix';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
