@@ -133,7 +133,7 @@ export function useRHExport() {
       
       toast.success('Export demandes téléchargé');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       logError('[useRHExport] Requests export error:', error);
       toast.error(error.message || 'Erreur lors de l\'export');
     },

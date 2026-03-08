@@ -163,8 +163,8 @@ export function usePlanningTechnicians(agencySlug: string | undefined) {
       if (!agencySlug) return [];
       const users = await apogeeProxy.getUsers({ agencySlug });
       // Filter to only technicians
-      return (users || []).filter((u: any) => {
-        const type = (u.type || '').toLowerCase();
+      return (users || []).filter((u: Record<string, unknown>) => {
+        const type = String(u.type || '').toLowerCase();
         return type.includes('tech') || type.includes('ouvrier') || type.includes('intervenant');
       }) as PlanningTechnician[];
     },
