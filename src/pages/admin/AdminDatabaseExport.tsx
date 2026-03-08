@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Download, Loader2, RefreshCw, DatabaseIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { monitorEdgeCall } from '@/lib/edge-monitor';
 import { toast } from 'sonner';
 
 type ExportFormat = 'json' | 'sql';
