@@ -1,6 +1,7 @@
 import { useParams, useLocation, Navigate } from 'react-router-dom';
 import { useEditor } from '@/contexts/EditorContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical, ChevronDown } from 'lucide-react';
