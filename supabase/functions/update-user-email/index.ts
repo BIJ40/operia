@@ -92,6 +92,9 @@ serve(async (req) => {
 
     const userId = user.id
 
+    // Rate limiting: 5 attempts per 5 minutes per user
+    await checkRateLimit(userId, { action: 'update-email', maxAttempts: 5, windowSeconds: 300 })
+
     // Valider les paramètres d'entrée
     const bodyRaw = await req.json()
     const targetUserId = validateUUID(bodyRaw.targetUserId, 'targetUserId')

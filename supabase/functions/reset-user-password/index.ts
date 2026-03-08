@@ -59,6 +59,9 @@ serve(async (req) => {
 
     console.log(`[reset-user-password] Appelant: ${userId}, N${callerLevel}`)
 
+    // Rate limiting: 5 resets per 5 minutes per user
+    await checkRateLimit(userId, { action: 'reset-password', maxAttempts: 5, windowSeconds: 300 })
+
     // Récupérer les données de la requête
     const body = await req.json()
     const targetUserId = body.targetUserId || body.userId

@@ -58,6 +58,9 @@ serve(async (req) => {
 
     console.log(`[create-user] Appelant: N${callerLevel}`)
 
+    // Rate limiting: 10 creations per 10 minutes per user
+    await checkRateLimit(user.id, { action: 'create-user', maxAttempts: 10, windowSeconds: 600 })
+
     // Vérifier les droits de gestion (N3+ requis pour créer, N2 uniquement sa propre agence)
     if (!canAccessUsersPage(callerLevel)) {
       console.log(`[create-user] Accès refusé: N${callerLevel} < N2`)
