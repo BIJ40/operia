@@ -14,6 +14,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed } from '../_shared/cors.ts';
 import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 import { captureEdgeException } from '../_shared/sentry.ts';
+import { requireAal2 } from '../_shared/mfa.ts';
+import { getRoleLevel } from '../_shared/roles.ts';
 
 // AES-256-GCM encryption using Web Crypto API
 async function getEncryptionKey(): Promise<CryptoKey> {
