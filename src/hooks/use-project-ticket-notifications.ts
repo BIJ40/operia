@@ -154,7 +154,7 @@ export function useSupportProjectUnreadCount() {
  * côté utilisateur (pour faire clignoter les tickets dans la liste)
  */
 export function useUserProjectUnreadTickets() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   return useQuery({
     queryKey: ['user-project-unread-tickets', user?.id],
