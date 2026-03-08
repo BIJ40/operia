@@ -169,10 +169,9 @@ serve(async (req) => {
     }
 
     // Vérifier si l'email existe déjà
-    const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers()
-    if (existingUser?.users?.some(u => u.email === email)) {
-      throw new Error('Cet email est déjà utilisé')
-    }
+    // FIX: Remplace listUsers() (non paginé, tronqué à 1000) par createUser
+    // qui retourne une erreur spécifique si l'email existe déjà.
+    // La vérification est donc déléguée à createUser ci-dessous, qui est atomique.
 
     // Créer l'utilisateur
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
