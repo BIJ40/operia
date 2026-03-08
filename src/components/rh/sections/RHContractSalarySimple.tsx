@@ -51,6 +51,7 @@ import {
 import { useEmploymentContracts, useSalaryHistory } from '@/hooks/useEmploymentContracts';
 import { useHasMinLevel } from '@/hooks/useHasGlobalRole';
 import { supabase } from '@/integrations/supabase/client';
+import { monitorEdgeCall } from '@/lib/edge-monitor';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -196,9 +197,11 @@ export function RHContractSalarySimple({ collaborator }: RHContractSalarySimpleP
     if (!contractDocument?.storage_path) return;
     
     // Get signed URL
-    const { data } = await supabase.functions.invoke('media-get-signed-url', {
-      body: { filePath: contractDocument.storage_path },
-    });
+    const { data } = await monitorEdgeCall('media-get-signed-url', () =>
+      supabase.functions.invoke('media-get-signed-url', {
+        body: { filePath: contractDocument.storage_path },
+      })
+    );
     
     if (data?.signedUrl) {
       window.open(data.signedUrl, '_blank');

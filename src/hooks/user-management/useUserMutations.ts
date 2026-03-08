@@ -3,6 +3,7 @@
  */
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { monitorEdgeCall } from '@/lib/edge-monitor';
 import { GlobalRole } from '@/types/globalRoles';
 import { EnabledModules } from '@/types/modules';
 import { UserManagementCapabilities } from '@/config/roleMatrix';
@@ -90,9 +91,11 @@ export function useUserMutations({
         throw new Error('Vous ne pouvez pas créer un utilisateur avec ce rôle');
       }
       
-      const { data, error } = await supabase.functions.invoke('create-user', { 
-        body: { ...userData, globalRole: effectiveGlobalRole } 
-      });
+      const { data, error } = await monitorEdgeCall('create-user', () =>
+        supabase.functions.invoke('create-user', { 
+          body: { ...userData, globalRole: effectiveGlobalRole } 
+        })
+      );
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       return data;
