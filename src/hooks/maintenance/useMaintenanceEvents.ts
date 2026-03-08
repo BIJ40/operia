@@ -106,7 +106,7 @@ export function useMaintenanceEvent(eventId: string | undefined) {
 
 export function useCreateMaintenanceEvent() {
   const queryClient = useQueryClient();
-  const { agence } = useAuth();
+  const { agence } = useProfile();
 
   return useMutation({
     mutationFn: async (data: MaintenanceEventFormData) => {
