@@ -51,6 +51,15 @@ Deno.serve(async (req) => {
     ));
   }
 
+  // P2 FIX: Role guard — require N6 (superadmin) even in dev environments
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return withCors(req, new Response(
+      JSON.stringify({ error: 'Authentication required' }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } }
+    ));
+  }
+
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -59,52 +68,79 @@ Deno.serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false }
     })
 
+    // Verify caller identity and role
+    const { data: { user }, error: authErr } = await supabaseAdmin.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+
+    if (authErr || !user) {
+      return withCors(req, new Response(
+        JSON.stringify({ error: 'Invalid authentication' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      ));
+    }
+
+    const { data: callerProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('global_role')
+      .eq('id', user.id)
+      .single();
+
+    const callerRole = callerProfile?.global_role ?? 'base_user';
+    if (callerRole !== 'superadmin') {
+      console.warn(`[SEED-TEST-USERS] Role blocked: user ${user.id} has role ${callerRole}, superadmin required`);
+      return withCors(req, new Response(
+        JSON.stringify({ error: 'Superadmin role required to seed test users' }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      ));
+    }
+
     const results: Array<{ email: string; status: string; error?: string }> = []
 
-    for (const user of testUsers) {
-      console.log(`Creating test user: ${user.email}`)
+    for (const testUser of testUsers) {
+      console.log(`Creating test user: ${testUser.email}`)
       
       // Check if user already exists
       const { data: existingProfile } = await supabaseAdmin
         .from('profiles')
         .select('id, email')
-        .eq('email', user.email)
+        .eq('email', testUser.email)
         .maybeSingle()
 
       if (existingProfile) {
-        console.log(`User ${user.email} already exists, updating global_role...`)
+        console.log(`User ${testUser.email} already exists, updating global_role...`)
         
         // Update existing user's global_role
         const { error: updateError } = await supabaseAdmin
           .from('profiles')
           .update({ 
-            global_role: user.globalRole,
-            agence: user.agence
+            global_role: testUser.globalRole,
+            agence: testUser.agence
           })
           .eq('id', existingProfile.id)
 
         if (updateError) {
-          results.push({ email: user.email, status: 'error', error: updateError.message })
+          results.push({ email: testUser.email, status: 'error', error: updateError.message })
         } else {
-          results.push({ email: user.email, status: 'updated' })
+          results.push({ email: testUser.email, status: 'updated' })
         }
         continue
       }
 
       // Create new auth user
       const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
-        email: user.email,
-        password: user.password,
+        email: testUser.email,
+        password: testUser.password,
         email_confirm: true,
         user_metadata: {
-          first_name: user.firstName,
-          last_name: user.lastName
+          first_name: testUser.firstName,
+          last_name: testUser.lastName
         }
       })
 
       if (authError) {
-        console.error(`Error creating auth user ${user.email}:`, authError)
-        results.push({ email: user.email, status: 'error', error: authError.message })
+        console.error(`Error creating auth user ${testUser.email}:`, authError)
+        results.push({ email: testUser.email, status: 'error', error: authError.message })
         continue
       }
 
@@ -112,19 +148,19 @@ Deno.serve(async (req) => {
       const { error: profileError } = await supabaseAdmin
         .from('profiles')
         .update({
-          first_name: user.firstName,
-          last_name: user.lastName,
-          agence: user.agence,
-          global_role: user.globalRole
+          first_name: testUser.firstName,
+          last_name: testUser.lastName,
+          agence: testUser.agence,
+          global_role: testUser.globalRole
         })
         .eq('id', authUser.user.id)
 
       if (profileError) {
-        console.error(`Error updating profile for ${user.email}:`, profileError)
-        results.push({ email: user.email, status: 'partial', error: profileError.message })
+        console.error(`Error updating profile for ${testUser.email}:`, profileError)
+        results.push({ email: testUser.email, status: 'partial', error: profileError.message })
       } else {
-        console.log(`Successfully created test user: ${user.email}`)
-        results.push({ email: user.email, status: 'created' })
+        console.log(`Successfully created test user: ${testUser.email}`)
+        results.push({ email: testUser.email, status: 'created' })
       }
     }
 

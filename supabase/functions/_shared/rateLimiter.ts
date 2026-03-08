@@ -1,6 +1,13 @@
 /**
  * Rate limiter for Edge Functions using Supabase rate_limits table.
  * Prevents brute-force attacks on sensitive endpoints.
+ * 
+ * P2 NOTE: This is the "legacy" rate limiter (throws on limit exceeded).
+ * Preferred module: ./rateLimit.ts (returns RateLimitResult, has in-memory fallback).
+ * This file is kept for backward compatibility with create-user, update-user-email,
+ * reset-user-password which import from here.
+ * 
+ * New functions should use ./rateLimit.ts instead.
  */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -22,6 +29,7 @@ const DEFAULT_CONFIG: RateLimitConfig = {
 /**
  * Check and enforce rate limit.
  * @returns true if allowed, throws if rate limited
+ * @deprecated Prefer checkRateLimit from ./rateLimit.ts for new functions
  */
 export async function checkRateLimit(
   identifier: string,

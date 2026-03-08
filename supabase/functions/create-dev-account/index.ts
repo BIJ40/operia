@@ -1,6 +1,15 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
 import { handleCorsPreflightOrReject, getCorsHeaders, isOriginAllowed } from '../_shared/cors.ts';
 
+const ROLE_LEVELS: Record<string, number> = {
+  base_user: 0, franchisee_user: 1, franchisee_admin: 2,
+  franchisor_user: 3, franchisor_admin: 4, platform_admin: 5, superadmin: 6,
+};
+
+function getRoleLevel(role: string | null): number {
+  return ROLE_LEVELS[role ?? ''] ?? 0;
+}
+
 Deno.serve(async (req) => {
   const corsResponse = handleCorsPreflightOrReject(req);
   if (corsResponse) return corsResponse;
@@ -9,7 +18,7 @@ Deno.serve(async (req) => {
   const corsHeaders = isOriginAllowed(origin) ? getCorsHeaders(origin) : {};
 
   try {
-    // Auth: only N6 (superadmin) can create dev accounts
+    // Auth: only N5+ (platform_admin or superadmin) can create dev accounts
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Non autorisé' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -33,10 +42,7 @@ Deno.serve(async (req) => {
       .eq('id', user.id)
       .single();
 
-    const callerLevel = {
-      superadmin: 6, platform_admin: 5, franchisor_admin: 4, franchisor_user: 3,
-      franchisee_admin: 2, franchisee_user: 1, base_user: 0,
-    }[callerProfile?.global_role ?? 'base_user'] ?? 0;
+    const callerLevel = getRoleLevel(callerProfile?.global_role ?? null);
 
     if (callerLevel < 5) {
       return new Response(JSON.stringify({ error: 'Rôle insuffisant (N5+ requis)' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -46,6 +52,18 @@ Deno.serve(async (req) => {
 
     if (!email || !password) {
       return new Response(JSON.stringify({ error: 'Email et mot de passe requis' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // P2 FIX: Prevent privilege escalation — caller cannot create account with role >= their own level
+    // Exception: superadmin (N6) can create other superadmins
+    const targetRole = globalRole || 'platform_admin';
+    const targetLevel = getRoleLevel(targetRole);
+
+    if (targetLevel >= callerLevel && callerLevel < 6) {
+      console.warn(`[create-dev-account] Privilege escalation blocked: user ${user.id} (${callerProfile?.global_role}) tried to create ${targetRole}`);
+      return new Response(JSON.stringify({ 
+        error: `Vous ne pouvez pas créer un compte de niveau ${targetRole} (niveau égal ou supérieur au vôtre)` 
+      }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     // Use service role to create user
@@ -70,7 +88,7 @@ Deno.serve(async (req) => {
     const { error: profileErr } = await supabaseAdmin
       .from('profiles')
       .update({
-        global_role: globalRole || 'platform_admin',
+        global_role: targetRole,
         is_read_only: isReadOnly === true,
         first_name: firstName || 'Dev',
         last_name: lastName || 'Account',
@@ -81,10 +99,12 @@ Deno.serve(async (req) => {
       console.error('Profile update error:', profileErr);
     }
 
+    console.log(`[create-dev-account] Account created by ${user.id} (${callerProfile?.global_role}): ${email} as ${targetRole}`);
+
     return new Response(JSON.stringify({ 
       success: true, 
       userId: newUser.user.id,
-      message: `Compte créé: ${email} (${globalRole || 'platform_admin'}, read_only: ${isReadOnly === true})`,
+      message: `Compte créé: ${email} (${targetRole}, read_only: ${isReadOnly === true})`,
     }), { 
       status: 200, 
       headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
