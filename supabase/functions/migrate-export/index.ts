@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
 
     // ============================================
     // MODE: Liste des tables + count exact + ordre d'import
-    // GET ?secret=xxx&mode=tables
+    // GET with X-Migration-Secret header, ?mode=tables
     // ============================================
     if (mode === 'tables') {
       const tableNames = await listAllTables(admin);
