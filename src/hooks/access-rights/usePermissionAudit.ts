@@ -71,7 +71,7 @@ export function usePermissionAudit(filters?: AuditFilters) {
 }
 
 export function useAuditLog() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
   
   const logMutation = useMutation({

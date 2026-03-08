@@ -38,7 +38,7 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 }
 
 export function usePushNotifications() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const [state, setState] = useState<PushSubscriptionState>({
     isSupported: false,
     isSubscribed: false,

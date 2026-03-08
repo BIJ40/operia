@@ -49,7 +49,7 @@ export function useMaintenanceMode() {
 
 export function useMaintenanceAdmin() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ['maintenance-settings'],

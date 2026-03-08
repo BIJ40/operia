@@ -183,7 +183,7 @@ export function useMarkNotificationsRead() {
 }
 
 export function useMarkAllNotificationsRead() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
 
   return useMutation({

@@ -178,7 +178,7 @@ export function useLogStatusChange() {
 
 // Hook pour logger l'ajout d'un commentaire
 export function useLogCommentAdded() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
   
   return useMutation({
