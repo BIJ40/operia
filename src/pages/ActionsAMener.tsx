@@ -17,7 +17,7 @@ import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
 import { ActionType } from '@/apogee-connect/types/actions';
 import { toast } from '@/hooks/use-toast';
 import { ConditionalRender } from '@/components/PermissionGuard';
-import { useAuth } from '@/contexts/AuthContext';
+
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ROUTES } from '@/config/routes';
 import { useSessionState } from '@/hooks/useSessionState';

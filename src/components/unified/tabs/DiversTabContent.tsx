@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
 import { ModuleKey } from '@/types/modules';
-import { useAuth } from '@/contexts/AuthContext';
+
 import {
   DndContext,
   closestCenter,
