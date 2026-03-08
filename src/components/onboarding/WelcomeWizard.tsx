@@ -65,7 +65,7 @@ import { cn } from '@/lib/utils';
 import { GLOBAL_ROLES, GlobalRole } from '@/types/globalRoles';
 import { OnboardingState, OnboardingPayload, OnboardingUpdateData } from '@/hooks/useOnboardingState';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { toast } from 'sonner';
 import { CollaboratorWizard } from '@/components/collaborators';
 import { useCollaborators } from '@/hooks/useCollaborators';
