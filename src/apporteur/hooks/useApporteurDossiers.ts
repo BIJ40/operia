@@ -5,6 +5,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useApporteurApi } from './useApporteurApi';
+import { useApporteurSession } from '../contexts/ApporteurSessionContext';
 
 export interface DossierRow {
   id: number;
