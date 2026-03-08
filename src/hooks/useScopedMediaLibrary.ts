@@ -117,7 +117,7 @@ export function useScopedMediaLibrary({
         setCurrentFolderId(resolvedRootFolder.id);
       }
     }
-  }, [resolvedRootFolder]);
+  }, [resolvedRootFolder, currentFolderId]);
 
   // Effective folder ID (current or root)
   const effectiveFolderId = currentFolderId || rootFolderId;
@@ -446,7 +446,7 @@ export function useScopedMediaLibrary({
       queryClient.invalidateQueries({ queryKey: ['media-folders', agencyId] });
       toast.success('Dossier créé');
     },
-    onError: (error: any) => {
+    onError: (error: Error & { code?: string }) => {
       if (error.code === '23505') {
         toast.error('Un dossier avec ce nom existe déjà');
       } else {

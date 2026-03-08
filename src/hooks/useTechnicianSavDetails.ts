@@ -35,21 +35,23 @@ interface DateRange {
 /**
  * Détecte les SAV et leur source de détection
  */
-function detectSavSource(intervention: any, project: any): { isSav: boolean; source?: 'type2' | 'visite' | 'picto' } {
+function detectSavSource(intervention: Record<string, unknown>, project: Record<string, unknown> | undefined): { isSav: boolean; source?: 'type2' | 'visite' | 'picto' } {
   // 1. intervention.type2 === 'sav'
-  const type2 = (intervention?.type2 || intervention?.data?.type2 || '').toLowerCase().trim();
+  const interData = (intervention?.data ?? {}) as Record<string, unknown>;
+  const type2 = (String(intervention?.type2 || interData?.type2 || '')).toLowerCase().trim();
   if (type2 === 'sav') return { isSav: true, source: 'type2' };
   
   // 2. Visites avec type2 === 'sav'
-  const visites = intervention?.visites || intervention?.data?.visites || [];
+  const visites = (intervention?.visites || interData?.visites || []) as Record<string, unknown>[];
   for (const v of visites) {
-    const vType2 = (v.type2 || '').toLowerCase().trim();
+    const vType2 = String(v.type2 || '').toLowerCase().trim();
     if (vType2 === 'sav') return { isSav: true, source: 'visite' };
   }
   
   // 3. Pictos du projet
-  const pictos = project?.data?.pictosInterv || project?.pictosInterv || [];
-  if (Array.isArray(pictos) && pictos.some((p: string) => (p || '').toLowerCase().trim() === 'sav')) {
+  const projData = (project?.data ?? {}) as Record<string, unknown>;
+  const pictos = (projData?.pictosInterv || project?.pictosInterv || []) as unknown[];
+  if (Array.isArray(pictos) && pictos.some((p) => String(p || '').toLowerCase().trim() === 'sav')) {
     return { isSav: true, source: 'picto' };
   }
   
@@ -83,11 +85,11 @@ export function useTechnicianSavDetails(technicianId: string | null, dateRange: 
         const clients = loaded?.clients || [];
         
         // Indexer projets et clients
-        const projectsById = new Map<string, any>();
-        for (const p of projects) projectsById.set(String(p.id), p);
+        const projectsById = new Map<string, Record<string, unknown>>();
+        for (const p of projects) projectsById.set(String(p.id), p as unknown as Record<string, unknown>);
         
-        const clientsById = new Map<string, any>();
-        for (const c of clients) clientsById.set(String(c.id), c);
+        const clientsById = new Map<string, Record<string, unknown>>();
+        for (const c of clients) clientsById.set(String(c.id), c as unknown as Record<string, unknown>);
         
         const startTs = dateRange.start.getTime();
         const endTs = dateRange.end.getTime();
@@ -99,59 +101,63 @@ export function useTechnicianSavDetails(technicianId: string | null, dateRange: 
           .eq('agency_id', effectiveAgencyId)
           .limit(1000);
         
-        const validationsMap = new Map<string, any>();
+        const validationsMap = new Map<string, Record<string, unknown>>();
         for (const v of validations || []) {
           validationsMap.set(v.intervention_id, v);
         }
         
         const savDetails: SavDetail[] = [];
         
-        for (const intervention of interventions as any[]) {
+        for (const intervention of interventions as unknown as Record<string, unknown>[]) {
           // Vérifier si ce technicien est impliqué
-          const visites = intervention?.data?.visites || intervention?.visites || [];
+          const interData = (intervention?.data ?? {}) as Record<string, unknown>;
+          const visites = (interData?.visites || intervention?.visites || []) as Record<string, unknown>[];
           const techIds = new Set<string>();
           
           for (const v of visites) {
-            const dateStr = v?.date || v?.dateIntervention || '';
+            const dateStr = String(v?.date || v?.dateIntervention || '');
             if (dateStr) {
               const ts = new Date(dateStr).getTime();
               if (ts >= startTs && ts <= endTs) {
-                const usersIds = v?.usersIds || v?.userIds || [];
+                const usersIds = (v?.usersIds || v?.userIds || []) as unknown[];
                 for (const uid of usersIds) techIds.add(String(uid));
               }
             }
           }
           
           // Fallback: usersIds de l'intervention
-          const interventionUsers = intervention?.usersIds || [];
+          const interventionUsers = (intervention?.usersIds || []) as unknown[];
           if (Array.isArray(interventionUsers)) {
             for (const uid of interventionUsers) techIds.add(String(uid));
           }
           
           if (!techIds.has(technicianId)) continue;
           
-          const projectId = intervention?.projectId;
+          const projectId = intervention?.projectId as string | number | undefined;
           const project = projectId ? projectsById.get(String(projectId)) : undefined;
           const { isSav, source } = detectSavSource(intervention, project);
           
           if (!isSav) continue;
           
-          const client = project?.clientId ? clientsById.get(String(project.clientId)) : undefined;
+          const clientId = project?.clientId as string | number | undefined;
+          const client = clientId ? clientsById.get(String(clientId)) : undefined;
           const validation = validationsMap.get(String(intervention.id));
+          const projData = (project?.data ?? {}) as Record<string, unknown>;
+          const projClient = (projData?.client ?? {}) as Record<string, unknown>;
           
           savDetails.push({
             interventionId: String(intervention.id),
             projectId: String(projectId || ''),
-            projectRef: project?.ref || `#${projectId}`,
-            clientName: client?.name || project?.data?.client?.name || 'Client inconnu',
-            date: visites[0]?.date || intervention?.date || '',
-            type: intervention?.type || '',
-            type2: intervention?.type2 || intervention?.data?.type2 || '',
-            description: project?.label || intervention?.data?.label || '',
+            projectRef: String(project?.ref || `#${projectId}`),
+            clientName: String(client?.name || projClient?.name || 'Client inconnu'),
+            date: String(visites[0]?.date || intervention?.date || ''),
+            type: String(intervention?.type || ''),
+            type2: String(intervention?.type2 || interData?.type2 || ''),
+            description: String(project?.label || interData?.label || ''),
             source: source!,
-            isValidated: validation?.is_valid_sav,
-            validatedAt: validation?.validated_at,
-            validatedBy: validation?.validated_by,
+            isValidated: validation?.is_valid_sav as boolean | undefined,
+            validatedAt: validation?.validated_at as string | undefined,
+            validatedBy: validation?.validated_by as string | undefined,
           });
         }
         
