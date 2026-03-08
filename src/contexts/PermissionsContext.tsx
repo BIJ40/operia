@@ -36,6 +36,9 @@ export interface PermissionsContextType {
   hasFaqAdminRole: boolean;
   canAccessFaqAdmin: boolean;
 
+  // Scope-based access (maps scope → module check)
+  hasAccessToScope: (scope: string) => boolean;
+
   // Compat
   suggestedGlobalRole: GlobalRole;
 }
