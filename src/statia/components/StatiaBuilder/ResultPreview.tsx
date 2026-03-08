@@ -11,8 +11,14 @@ import { Loader2, AlertCircle, CheckCircle2, Info } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
+interface ResultPreviewResult {
+  computedAt: string;
+  values: Record<string, { label: string; value: number | Record<string, number>; unit?: string }>;
+  query?: { dimension?: string; measures: unknown[]; agencySlug: string };
+}
+
 interface ResultPreviewProps {
-  result: any;
+  result: ResultPreviewResult | null;
   error: string | null;
   isLoading: boolean;
 }
