@@ -1,5 +1,5 @@
-export const APP_VERSION = '0.9.1';
-export const APP_CODENAME = 'Permissions Unifiées';
+export const APP_VERSION = '0.9.2';
+export const APP_CODENAME = 'Phase 3 — Consolidation';
 
 /**
  * Changelog v0.8.7 (2026-01-31)
