@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { HardHat, AlertTriangle, FileCheck, Plus, ClipboardList } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuthCore } from "@/contexts/AuthCoreContext";
 import { useMyEpiAssignments } from "@/hooks/epi/useEpiAssignments";
 import { useMyEpiRequests, EPI_REQUEST_STATUSES } from "@/hooks/epi/useEpiRequests";
 import { useMyEpiIncidents, EPI_INCIDENT_STATUSES } from "@/hooks/epi/useEpiIncidents";
