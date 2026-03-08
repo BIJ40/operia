@@ -23,7 +23,7 @@ import {
   Mail, Phone, MapPin, Users, RefreshCw, CheckCircle2,
   Link2Off, AlertCircle
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { useCreateApporteur, useCreateApporteurUser } from '@/hooks/useApporteurs';
 import { useApogeeCommanditaires, getApporteurTypeLabel, ApogeeCommanditaire, ApogeeContact } from '@/hooks/useApogeeCommanditaires';
 import { toast } from 'sonner';
