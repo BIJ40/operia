@@ -6,7 +6,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { useApogeeUsers } from '@/shared/api/apogee/useApogeeUsers';
 import { buildTechMap } from '@/apogee-connect/utils/techTools';
 
