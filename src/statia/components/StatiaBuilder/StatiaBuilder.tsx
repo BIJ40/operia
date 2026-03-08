@@ -256,7 +256,7 @@ export function StatiaBuilder({ agencySlug = 'dax', onSaveQuery }: StatiaBuilder
           <div className="flex-1 p-6">
             <DropZone
               selectedDimension={selectedDimension}
-              selectedMeasures={selectedMeasures as any}
+              selectedMeasures={selectedMeasures.filter((m): m is NonNullable<typeof m> => m != null)}
               onDimensionDrop={handleDimensionDrop}
               onMeasureDrop={handleMeasureDrop}
               onRemoveDimension={handleRemoveDimension}

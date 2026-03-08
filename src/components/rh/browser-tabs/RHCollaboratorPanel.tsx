@@ -190,7 +190,7 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
   } = useSensitiveData(collaboratorId);
   
   // Helper pour update avec invalidation cache
-  const handleFieldUpdate = useCallback(async (field: string, value: any) => {
+  const handleFieldUpdate = useCallback(async (field: string, value: unknown) => {
     await updateCollaboratorField(collaboratorId, field, value);
     queryClient.invalidateQueries({ queryKey: ['rh-collaborators'] });
     queryClient.invalidateQueries({ queryKey: ['rh-collaborator', collaboratorId] });

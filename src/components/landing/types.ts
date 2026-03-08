@@ -33,7 +33,7 @@ export interface SortableCardProps {
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   getColorClass: (color?: ColorPreset) => string;
-  IconComponent: (iconName: string) => any;
+  IconComponent: (iconName: string) => React.ComponentType<{ className?: string }> | undefined;
 }
 
 export const getColorClass = (color?: ColorPreset) => {

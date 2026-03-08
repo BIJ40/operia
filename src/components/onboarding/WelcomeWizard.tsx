@@ -260,6 +260,7 @@ export function WelcomeWizard({
       if (user) {
         await supabase
           .from('profiles')
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- must_change_password not in generated types yet
           .update({ must_change_password: false } as any)
           .eq('id', user.id);
       }

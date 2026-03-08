@@ -75,9 +75,9 @@ export function AgencyInfoCompact() {
 
       toast.success("Informations mises à jour");
       setIsEditDialogOpen(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       logError('AGENCY_INFO', 'Error updating agency info:', error);
-      toast.error(error.message || "Erreur lors de la mise à jour");
+      toast.error(error instanceof Error ? error.message : "Erreur lors de la mise à jour");
     } finally {
       setIsSaving(false);
     }

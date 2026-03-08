@@ -135,7 +135,7 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
           <ScrollArea className="h-64">
             <div className="grid grid-cols-6 gap-2">
               {filteredIcons.map((iconName) => {
-                const Icon = (Icons as any)[iconName];
+                const Icon = IconsMap[iconName];
                 if (!Icon) return null;
                 return (
                   <Button

@@ -134,7 +134,7 @@ export default function PendingRegistrationsList() {
       setApproveDialogOpen(false);
       setSelectedRegistration(null);
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast({ title: 'Erreur de création', description: err.message, variant: 'destructive' });
     },
   });
