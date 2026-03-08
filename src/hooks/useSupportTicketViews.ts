@@ -18,7 +18,7 @@ export interface SupportTicketView {
  * Hook pour récupérer les vues de l'utilisateur connecté
  */
 export function useMySupportTicketViews() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   return useQuery({
     queryKey: ['support-ticket-views', user?.id],
