@@ -67,7 +67,7 @@ export function useMaintenanceAlerts(agencyId?: string, filters?: MaintenanceAle
 }
 
 export function useOpenMaintenanceAlertsCount(agencyId?: string) {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const effectiveAgencyId = agencyId || agence;
 
   return useQuery({
