@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { useCombinedUserTickets } from '@/hooks/use-user-project-tickets';
 import { useUserProjectUnreadCount } from '@/hooks/use-project-ticket-notifications';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
