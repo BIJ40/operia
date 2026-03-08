@@ -69,7 +69,14 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
       refetchOnMount: false,
-      retry: 1,
+      retry: (failureCount, error) => {
+        // Don't retry on auth errors or not-found
+        const status = (error as any)?.status ?? (error as any)?.code;
+        if (status === 401 || status === 403 || status === 404) return false;
+        // Max 2 retries with exponential backoff
+        return failureCount < 2;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
     },
   },
 });
