@@ -174,7 +174,7 @@ export const useAdminBackup = () => {
     setExportingHelpconfort(true);
     try {
       const result = await safeQuery<any[]>(
-        supabase.from('blocks').select('*').like('slug', 'helpconfort-%').order('order'),
+        supabase.from('blocks').select(BLOCK_COLUMNS).like('slug', 'helpconfort-%').order('order'),
         'BACKUP_EXPORT_HELPCONFORT'
       );
 
