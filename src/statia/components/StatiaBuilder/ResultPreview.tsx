@@ -14,7 +14,7 @@ import { fr } from 'date-fns/locale';
 interface ResultPreviewResult {
   computedAt: string;
   values: Record<string, { label: string; value: number | Record<string, number>; unit?: string }>;
-  query?: { dimension?: string; measures: unknown[]; agencySlug: string };
+  query?: { dimension?: string; measures: unknown[]; agencySlug?: string };
 }
 
 interface ResultPreviewProps {
