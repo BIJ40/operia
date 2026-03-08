@@ -7,10 +7,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { safeMutation } from '@/lib/safeQuery';
 import { errorToast, successToast } from '@/lib/toastHelpers';
 import { logError } from '@/lib/logger';
-import { Block } from '@/types/block';
+import { Block, Attachment } from '@/types/block';
 import { ROUTES } from '@/config/routes';
+import type { DragEndEvent } from '@dnd-kit/core';
+import type { Json } from '@/integrations/supabase/types';
 
-export interface Section extends Block {}
+export type Section = Block;
 
 export const useCategoryHelpConfort = () => {
   const { slug } = useParams();
@@ -100,7 +102,7 @@ export const useCategoryHelpConfort = () => {
           hide_title: updatedSection.hideTitle,
           show_summary: updatedSection.showSummary,
           summary: updatedSection.summary,
-          attachments: updatedSection.attachments as any || [],
+          attachments: (updatedSection.attachments ?? []) as unknown as Json,
           hide_from_sidebar: updatedSection.hideFromSidebar,
         })
         .eq('id', updatedSection.id),
@@ -132,7 +134,7 @@ export const useCategoryHelpConfort = () => {
           color_preset: updatedSection.colorPreset,
           tips_type: updatedSection.tipsType,
           hide_title: updatedSection.hideTitle,
-          attachments: updatedSection.attachments as any || [],
+          attachments: (updatedSection.attachments ?? []) as unknown as Json,
           hide_from_sidebar: updatedSection.hideFromSidebar,
         })
         .eq('id', updatedSection.id),
@@ -278,7 +280,7 @@ export const useCategoryHelpConfort = () => {
       hide_title: section.hideTitle,
       show_summary: section.showSummary,
       summary: section.summary,
-      attachments: section.attachments as any || [],
+      attachments: (section.attachments ?? []) as unknown as Json,
     };
 
     const result = await safeMutation(
@@ -315,7 +317,7 @@ export const useCategoryHelpConfort = () => {
     successToast('Section déplacée');
   };
 
-  const handleDragEnd = async (event: any) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 

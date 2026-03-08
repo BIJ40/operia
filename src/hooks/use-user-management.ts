@@ -246,7 +246,8 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
         const userModules = modulesByUser.get(profile.id);
         const enabled_modules = userModulesToEnabledModules(userModules ?? []);
         // Supprimer le champ legacy enabled_modules du profil avant merge
-        const { enabled_modules: _legacyIgnored, ...cleanProfile } = profile as any;
+        // Cast nécessaire : le select() ne renvoie pas enabled_modules mais le type Row l'inclut
+        const { enabled_modules: _legacyIgnored, ...cleanProfile } = profile as Record<string, unknown>;
         return { ...cleanProfile, enabled_modules };
       }) ?? [];
       
@@ -392,7 +393,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       sendEmail: boolean;
     }) => {
       // Le rôle global est celui choisi par l'admin, pas de forçage automatique
-      let effectiveGlobalRole = userData.globalRole;
+      const effectiveGlobalRole = userData.globalRole;
       
       // ✅ VÉRIFICATION CRITIQUE : Le rôle cible est-il créable ?
       if (!capabilities.canCreateRoles.includes(effectiveGlobalRole)) {
@@ -490,7 +491,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       } 
     }) => {
       // Le rôle global est celui choisi par l'admin, pas de forçage automatique
-      let effectiveGlobalRole = data.global_role;
+      const effectiveGlobalRole = data.global_role;
       
       // ✅ VÉRIFICATION : Si changement de rôle, est-il autorisé ?
       if (effectiveGlobalRole && !capabilities.canEditRoles.includes(effectiveGlobalRole)) {
@@ -643,16 +644,17 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
     
     // 🛡️ P0.2 + P1: GESTION SPÉCIALE aide.agent
     if (moduleKey === 'aide' && optionKey === 'agent') {
+      const opts = (newModuleState.options ?? {}) as Record<string, unknown>;
       if (enabled) {
         // ✅ ACTIVATION agent support → forcer level: 1 (SA1) si absent
-        const currentLevel = (newModuleState.options as any).level;
-        if (!currentLevel) {
-          (newModuleState.options as any).level = 1;
+        if (!opts.level) {
+          opts.level = 1;
         }
       } else {
         // ✅ DÉSACTIVATION agent support → supprimer level
-        delete (newModuleState.options as any).level;
+        delete opts.level;
       }
+      newModuleState = { ...newModuleState, options: opts as Record<string, boolean> };
     }
     
     setModifiedUsers(prev => ({
