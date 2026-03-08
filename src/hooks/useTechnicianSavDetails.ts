@@ -60,7 +60,7 @@ function detectSavSource(intervention: any, project: any): { isSav: boolean; sou
  * Hook pour charger les SAV d'un technicien
  */
 export function useTechnicianSavDetails(technicianId: string | null, dateRange: DateRange) {
-  const { agence, agencyId } = useAuth();
+  const { agence, agencyId } = useProfile();
   const { currentAgency } = useAgency();
   
   const agencySlug = currentAgency?.slug || currentAgency?.id || agence || '';
