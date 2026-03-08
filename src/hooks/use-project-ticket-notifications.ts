@@ -198,7 +198,8 @@ export function useUserProjectUnreadTickets() {
  * Hook pour le support - Liste des tickets avec messages non lus
  */
 export function useSupportProjectUnreadTickets() {
-  const { user, isSupport, isAdmin } = useAuth();
+  const { user } = useAuthCore();
+  const { isSupport, isAdmin } = usePermissions();
 
   return useQuery({
     queryKey: ['support-project-unread-tickets', user?.id],
