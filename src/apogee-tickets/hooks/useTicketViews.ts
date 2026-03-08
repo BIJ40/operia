@@ -78,7 +78,7 @@ export function useMarkTicketAsViewed() {
  * Hook pour marquer plusieurs tickets comme lus en une seule opération
  */
 export function useMarkAllTicketsAsViewed() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
 
   return useMutation({
