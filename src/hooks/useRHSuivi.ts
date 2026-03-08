@@ -244,7 +244,7 @@ export function useUpdateItAccess() {
 // ============================================================================
 
 export function useRHTablePrefs() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   
   return useQuery({
     queryKey: ['rh-table-prefs', user?.id],
