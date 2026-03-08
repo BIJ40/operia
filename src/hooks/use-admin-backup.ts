@@ -5,6 +5,40 @@ import { safeQuery, safeMutation } from '@/lib/safeQuery';
 import { errorToast, successToast } from '@/lib/toastHelpers';
 // jsPDF loaded dynamically to reduce bundle
 
+// Explicit columns to avoid select('*') — prevents data leakage and future schema breaks
+const BLOCK_COLUMNS = 'id, title, slug, type, content, content_type, content_updated_at, summary, show_summary, icon, color_preset, order, parent_id, tips_type, hide_from_sidebar, hide_title, is_empty, is_single_section, show_title_in_menu, show_title_on_card, attachments, created_at, updated_at' as const;
+
+/**
+ * Paginated fetch — fetches all rows in pages of PAGE_SIZE to avoid Supabase's 1000-row default limit.
+ */
+const PAGE_SIZE = 500;
+
+async function fetchAllPaginated<T>(
+  buildQuery: (from: number, to: number) => ReturnType<typeof supabase.from>,
+  label: string
+): Promise<{ success: boolean; data: T[] }> {
+  const allRows: T[] = [];
+  let page = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const from = page * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+    const result = await safeQuery<T[]>(buildQuery(from, to), `${label}_PAGE_${page}`);
+    
+    if (!result.success) {
+      return { success: false, data: [] };
+    }
+
+    const rows = result.data || [];
+    allRows.push(...rows);
+    hasMore = rows.length === PAGE_SIZE;
+    page++;
+  }
+
+  return { success: true, data: allRows };
+}
+
 interface CategoryBlock {
   id: string;
   title: string;
@@ -94,7 +128,7 @@ export const useAdminBackup = () => {
     setExportingApogee(true);
     try {
       const result = await safeQuery<any[]>(
-        supabase.from('blocks').select('*').order('order'),
+        supabase.from('blocks').select(BLOCK_COLUMNS).order('order'),
         'BACKUP_EXPORT_APOGEE'
       );
 
@@ -140,7 +174,7 @@ export const useAdminBackup = () => {
     setExportingHelpconfort(true);
     try {
       const result = await safeQuery<any[]>(
-        supabase.from('blocks').select('*').like('slug', 'helpconfort-%').order('order'),
+        supabase.from('blocks').select(BLOCK_COLUMNS).like('slug', 'helpconfort-%').order('order'),
         'BACKUP_EXPORT_HELPCONFORT'
       );
 
@@ -186,7 +220,7 @@ export const useAdminBackup = () => {
     setExportingApporteur(true);
     try {
       const result = await safeQuery<any[]>(
-        supabase.from('apporteur_blocks').select('*').order('order'),
+        supabase.from('apporteur_blocks').select(BLOCK_COLUMNS).order('order'),
         'BACKUP_EXPORT_APPORTEUR'
       );
 
@@ -268,7 +302,7 @@ export const useAdminBackup = () => {
     
     config.setLoading(true);
     try {
-      const baseQuery = supabase.from(config.tableName).select('*').order('order');
+      const baseQuery = supabase.from(config.tableName).select(BLOCK_COLUMNS).order('order');
       const result = await safeQuery<any[]>(
         config.slugFilter(baseQuery),
         `BACKUP_EXPORT_TEXT_${scope.toUpperCase()}`
@@ -314,7 +348,7 @@ export const useAdminBackup = () => {
     config.setLoading(true);
     try {
       const result = await safeQuery<any[]>(
-        supabase.from(config.tableName).select('*').or(`id.eq.${categoryId},parent_id.eq.${categoryId}`).order('order'),
+        supabase.from(config.tableName).select(BLOCK_COLUMNS).or(`id.eq.${categoryId},parent_id.eq.${categoryId}`).order('order'),
         `BACKUP_EXPORT_SINGLE_${scope.toUpperCase()}`
       );
 
@@ -378,7 +412,7 @@ export const useAdminBackup = () => {
     config.setLoading(true);
     try {
       const result = await safeQuery<any[]>(
-        supabase.from(config.tableName).select('*').or(`id.eq.${categoryId},parent_id.eq.${categoryId}`).order('order'),
+        supabase.from(config.tableName).select(BLOCK_COLUMNS).or(`id.eq.${categoryId},parent_id.eq.${categoryId}`).order('order'),
         `BACKUP_EXPORT_PDF_${scope.toUpperCase()}`
       );
 
@@ -623,11 +657,26 @@ export const useAdminBackup = () => {
     setExporting(true);
     try {
       const [blocksResult, apporteurBlocksResult, documentsResult, categoriesResult, sectionsResult] = await Promise.all([
-        safeQuery<any[]>(supabase.from('blocks').select('*').order('order'), 'BACKUP_EXPORT_ALL_BLOCKS'),
-        safeQuery<any[]>(supabase.from('apporteur_blocks').select('*').order('order'), 'BACKUP_EXPORT_ALL_APPORTEUR'),
-        safeQuery<any[]>(supabase.from('documents').select('*'), 'BACKUP_EXPORT_ALL_DOCUMENTS'),
-        safeQuery<any[]>(supabase.from('categories').select('*'), 'BACKUP_EXPORT_ALL_CATEGORIES'),
-        safeQuery<any[]>(supabase.from('sections').select('*'), 'BACKUP_EXPORT_ALL_SECTIONS'),
+        fetchAllPaginated<Record<string, unknown>>(
+          (from, to) => supabase.from('blocks').select(BLOCK_COLUMNS).order('order').range(from, to),
+          'BACKUP_EXPORT_ALL_BLOCKS'
+        ),
+        fetchAllPaginated<Record<string, unknown>>(
+          (from, to) => supabase.from('apporteur_blocks').select(BLOCK_COLUMNS).order('order').range(from, to),
+          'BACKUP_EXPORT_ALL_APPORTEUR'
+        ),
+        fetchAllPaginated<Record<string, unknown>>(
+          (from, to) => supabase.from('documents').select('id, title, content, category_id, order, created_at, updated_at').order('id').range(from, to),
+          'BACKUP_EXPORT_ALL_DOCUMENTS'
+        ),
+        fetchAllPaginated<Record<string, unknown>>(
+          (from, to) => supabase.from('categories').select('id, name, slug, order, created_at, updated_at').order('id').range(from, to),
+          'BACKUP_EXPORT_ALL_CATEGORIES'
+        ),
+        fetchAllPaginated<Record<string, unknown>>(
+          (from, to) => supabase.from('sections').select('id, title, content, category_id, order, created_at, updated_at').order('id').range(from, to),
+          'BACKUP_EXPORT_ALL_SECTIONS'
+        ),
       ]);
 
       if (!blocksResult.success || !apporteurBlocksResult.success || !documentsResult.success || !categoriesResult.success || !sectionsResult.success) {

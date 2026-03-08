@@ -3,6 +3,10 @@ import DOMPurify from 'dompurify';
 /**
  * Sanitize HTML content to prevent XSS attacks
  * Allows safe HTML elements and attributes for rich text content
+ * 
+ * Security hardening (Phase 1):
+ * - `style` attribute REMOVED (CSS injection vector)
+ * - `ALLOW_DATA_ATTR` set to false; only explicit data-* attrs allowed
  */
 export function sanitizeHtml(html: string): string {
   if (!html) return '';
@@ -29,12 +33,14 @@ export function sanitizeHtml(html: string): string {
     ALLOWED_ATTR: [
       'href', 'target', 'rel',
       'src', 'alt', 'title', 'width', 'height',
-      'class', 'style', 'type', 'disabled',
+      'class', 'type', 'disabled',
+      // Explicit data attributes used by the app (no wildcard)
       'data-callout', 'data-callout-type',
       'data-image-modal', 'data-src',
       'colspan', 'rowspan',
     ],
-    ALLOW_DATA_ATTR: true,
+    // Disable wildcard data-* to prevent attribute injection
+    ALLOW_DATA_ATTR: false,
   });
 }
 
