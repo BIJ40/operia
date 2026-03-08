@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
+import { withSentry } from '../_shared/withSentry.ts';
 
 // Tiered page limits based on row payload size
 const EXTREME_TABLES = ['knowledge_base', 'guide_chunks', 'rag_index_documents'];
@@ -13,7 +14,7 @@ function getMaxPageSize(tableName: string): number {
   return 100;
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry({ functionName: 'export-all-data' }, async (req) => {
   const corsResponse = handleCorsPreflightOrReject(req);
   if (corsResponse) return corsResponse;
 
