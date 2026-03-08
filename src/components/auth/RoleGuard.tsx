@@ -5,7 +5,8 @@
 
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { hasMinRole } from '@/permissions';
 import { GlobalRole } from '@/types/globalRoles';
 import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
