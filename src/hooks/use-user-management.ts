@@ -246,7 +246,8 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
         const userModules = modulesByUser.get(profile.id);
         const enabled_modules = userModulesToEnabledModules(userModules ?? []);
         // Supprimer le champ legacy enabled_modules du profil avant merge
-        const { enabled_modules: _legacyIgnored, ...cleanProfile } = profile as any;
+        // Cast nécessaire : le select() ne renvoie pas enabled_modules mais le type Row l'inclut
+        const { enabled_modules: _legacyIgnored, ...cleanProfile } = profile as Record<string, unknown>;
         return { ...cleanProfile, enabled_modules };
       }) ?? [];
       
