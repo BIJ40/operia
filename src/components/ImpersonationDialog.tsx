@@ -195,6 +195,7 @@ export function ImpersonationDialog({ open, onOpenChange }: ImpersonationDialogP
             Démarrer la simulation
           </Button>
         </DialogFooter>
+        </MfaGuard>
       </DialogContent>
     </Dialog>
   );
