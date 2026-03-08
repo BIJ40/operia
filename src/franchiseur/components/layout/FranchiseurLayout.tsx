@@ -1,7 +1,8 @@
 import { Outlet, Navigate } from "react-router-dom";
 import { FranchiseurProvider, useFranchiseur } from "@/franchiseur/contexts/FranchiseurContext";
 import { NetworkFiltersProvider } from "@/franchiseur/contexts/NetworkFiltersContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { logDebug } from "@/lib/logger";
 
 function FranchiseurLayoutContent() {
