@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { logError } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { toast } from 'sonner';
 import type { Json } from '@/integrations/supabase/types';
 
@@ -40,7 +40,7 @@ export interface OnboardingUpdateData {
 }
 
 export function useOnboardingState() {
-  const { user, isAuthLoading } = useAuth();
+  const { user, isAuthLoading } = useAuthCore();
   const [state, setState] = useState<OnboardingState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMutating, setIsMutating] = useState(false);

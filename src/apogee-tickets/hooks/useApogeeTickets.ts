@@ -6,7 +6,7 @@
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { logError } from '@/lib/logger';
 import { safeMutation, safeQuery } from '@/lib/safeQuery';
 import { errorToast, successToast } from '@/lib/toastHelpers';
@@ -118,7 +118,7 @@ async function logTicketChanges(
 }
 
 export function useApogeeTickets(filters?: TicketFilters) {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
 
   // Fetch statuses
@@ -556,7 +556,7 @@ export function useApogeeTickets(filters?: TicketFilters) {
 
 // Hook for single ticket with comments
 export function useApogeeTicket(ticketId: string | null) {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
 
   const { data: ticket, isLoading } = useQuery({

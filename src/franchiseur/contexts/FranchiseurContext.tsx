@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { logError, logDebug } from '@/lib/logger';
 
 const STORAGE_KEY = 'franchiseur_selected_agencies';
@@ -81,7 +82,8 @@ function getPersistedAgencies(searchParams: URLSearchParams): string[] {
 }
 
 export function FranchiseurProvider({ children }: { children: ReactNode }) {
-  const { user, isFranchiseur, isAdmin, globalRole, isAuthLoading } = useAuth();
+  const { user, isAuthLoading } = useAuthCore();
+  const { isFranchiseur, isAdmin, globalRole } = usePermissions();
   const [searchParams, setSearchParams] = useSearchParams();
   const [franchiseurRole, setFranchiseurRole] = useState<FranchiseurRole>(null);
   const [assignedAgencies, setAssignedAgencies] = useState<string[]>([]);

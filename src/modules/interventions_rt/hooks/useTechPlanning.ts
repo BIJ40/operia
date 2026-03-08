@@ -7,7 +7,8 @@ import { TechIntervention, RtStatus } from '../types';
 import { format, addDays, parseISO, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { apogeeProxy } from '@/services/apogeeProxy';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { supabase } from '@/integrations/supabase/client';
 import { logDebug } from '@/lib/logger';
 
@@ -106,7 +107,8 @@ function findApogeeUserId(
 }
 
 export function useTechPlanning(): UseTechPlanningResult {
-  const { agence, user } = useAuth();
+  const { agence } = useProfile();
+  const { user } = useAuthCore();
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
   const [rtStatuses, setRtStatuses] = useState<Record<string, RtStatus>>({});
 

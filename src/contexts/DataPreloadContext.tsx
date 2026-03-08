@@ -10,7 +10,9 @@
  */
 
 import { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo, ReactNode } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { useProfile } from '@/contexts/ProfileContext';
+import { usePermissions as usePermissionsCtx } from '@/contexts/PermissionsContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
 import { apogeeProxy } from '@/services/apogeeProxy';
@@ -156,7 +158,9 @@ function initializeSteps(): PreloadStep[] {
 // =============================================================================
 
 export function DataPreloadProvider({ children }: { children: ReactNode }) {
-  const { user, isAuthLoading, agence, globalRole } = useAuth();
+  const { user, isAuthLoading } = useAuthCore();
+  const { agence } = useProfile();
+  const { globalRole } = usePermissionsCtx();
   const { isRealUserImpersonation, impersonatedUser } = useImpersonation();
   const { hasModuleOption, isLoading: isModulesLoading } = useEffectiveModules();
   

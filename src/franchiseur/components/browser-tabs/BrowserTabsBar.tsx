@@ -24,12 +24,12 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useBrowserTabs, AVAILABLE_MODULES } from './BrowserTabsContext';
 import { BrowserTab } from './BrowserTab';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { hasMinimumRole } from '@/types/globalRoles';
 
 export function BrowserTabsBar() {
   const { tabs, activeTabId, openTab, closeTab, setActiveTab, reorderTabs, isTabOpen } = useBrowserTabs();
-  const { globalRole } = useAuth();
+  const { globalRole } = usePermissions();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {

@@ -8,7 +8,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { safeMutation, safeQuery } from '@/lib/safeQuery';
 import { logError } from '@/lib/logger';
 import type { ApogeeTicket } from '../types';
@@ -64,7 +64,7 @@ function formatHistoryValue(value: unknown): string | null {
 }
 
 export function useTicketTabs() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
   
   // Open tabs

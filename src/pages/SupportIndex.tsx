@@ -4,7 +4,7 @@
  * V3: Utilise uniquement apogee_tickets via useCombinedUserTickets
  */
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { useCombinedUserTickets } from '@/hooks/use-user-project-tickets';
 import { useUserProjectUnreadCount } from '@/hooks/use-project-ticket-notifications';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,7 +31,7 @@ import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 
 export default function SupportIndex() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
   const { tickets: combinedTickets, isLoading: combinedLoading } = useCombinedUserTickets();
   const { unreadCount: totalUnreadCount } = useUserProjectUnreadCount();

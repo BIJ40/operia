@@ -1,12 +1,14 @@
 import { Outlet, Navigate } from "react-router-dom";
 import { FranchiseurProvider, useFranchiseur } from "@/franchiseur/contexts/FranchiseurContext";
 import { NetworkFiltersProvider } from "@/franchiseur/contexts/NetworkFiltersContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { logDebug } from "@/lib/logger";
 
 function FranchiseurLayoutContent() {
   const { franchiseurRole, isLoading } = useFranchiseur();
-  const { hasGlobalRole, isAuthLoading } = useAuth();
+  const { hasGlobalRole } = usePermissions();
+  const { isAuthLoading } = useAuthCore();
   
   const isPlatformAdmin = hasGlobalRole('platform_admin');
 
@@ -36,7 +38,8 @@ function FranchiseurLayoutContent() {
 }
 
 export default function FranchiseurLayout() {
-  const { user, isFranchiseur, hasGlobalRole, isAuthLoading } = useAuth();
+  const { user, isAuthLoading } = useAuthCore();
+  const { isFranchiseur, hasGlobalRole } = usePermissions();
   
   const isPlatformAdmin = hasGlobalRole('platform_admin');
 

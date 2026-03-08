@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { GlobalRole, hasMinimumRole } from '@/types/globalRoles';
 import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 import { Shield, Lock } from 'lucide-react';
@@ -23,7 +23,7 @@ export function PermissionGuard({
   redirectTo,
   showAccessDenied = true
 }: PermissionGuardProps) {
-  const { globalRole, isAdmin } = useAuth();
+  const { globalRole, isAdmin } = usePermissions();
   
   const hasAccess = isAdmin || !minRole || hasMinimumRole(globalRole, minRole);
 
@@ -75,7 +75,7 @@ export function ConditionalRender({
   children,
   fallback = null
 }: ConditionalRenderProps) {
-  const { globalRole, isAdmin } = useAuth();
+  const { globalRole, isAdmin } = usePermissions();
   
   const hasAccess = isAdmin || !minRole || hasMinimumRole(globalRole, minRole);
 
@@ -86,7 +86,7 @@ export function ConditionalRender({
  * Hook pour vérifier l'accès basé sur le rôle
  */
 export function useRoleAccess(minRole?: GlobalRole): boolean {
-  const { globalRole, isAdmin } = useAuth();
+  const { globalRole, isAdmin } = usePermissions();
   return isAdmin || !minRole || hasMinimumRole(globalRole, minRole);
 }
 

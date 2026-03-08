@@ -10,7 +10,7 @@ import { RHCockpitTable } from '@/components/rh/cockpit';
 import { CompetencesMatrixPrint } from '@/components/rh/CompetencesMatrixPrint';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useCollaboratorsEpiSummary } from '@/hooks/epi/useCollaboratorsEpiSummary';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { CollaboratorWizard } from '@/components/collaborators';
 import { useCollaborators } from '@/hooks/useCollaborators';
 import { useSensitiveData } from '@/hooks/useSensitiveData';
@@ -26,7 +26,7 @@ import { RHCollaborator } from '@/types/rh-suivi';
 
 function RHSuiviContent() {
   const queryClient = useQueryClient();
-  const { agencyId, agence } = useAuth();
+  const { agencyId, agence } = useProfile();
   const { openCollaborator } = useRHTabs();
   
   const { data: collaborators = [], isLoading, refetch } = useRHCollaborators({ includeFormer: false });

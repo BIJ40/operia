@@ -5,7 +5,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import type { ModuleKey, EnabledModules } from '@/types/modules';
 import { 
   userModulesToEnabledModules, 
@@ -31,7 +31,7 @@ export { userModulesToEnabledModules as rowsToEnabledModules, enabledModulesToRo
  * Hook principal pour récupérer les modules d'un utilisateur
  */
 export function useUserModules(userId?: string) {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const targetUserId = userId || user?.id;
   
   return useQuery({
@@ -90,7 +90,7 @@ export function useHasModuleOption(
  */
 export function useToggleModule() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   
   return useMutation({
     mutationFn: async ({ 
@@ -154,7 +154,7 @@ export function useUpdateModuleOptions() {
  */
 export function useSyncModulesFromJsonb() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   
   return useMutation({
     mutationFn: async ({ 

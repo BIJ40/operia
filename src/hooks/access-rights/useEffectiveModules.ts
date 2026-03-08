@@ -10,7 +10,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { ModuleKey } from '@/types/modules';
@@ -29,7 +29,7 @@ export interface EffectiveModulesResult {
 }
 
 export function useEffectiveModules(): EffectiveModulesResult & { isLoading: boolean } {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const { isRealUserImpersonation, impersonatedUser } = useImpersonation();
   const effectiveAuth = useEffectiveAuth();
   

@@ -22,7 +22,8 @@ import {
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Tabs } from '@/components/ui/tabs';
 import { useSessionState } from '@/hooks/useSessionState';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
@@ -60,7 +61,8 @@ function LoadingFallback() {
 }
 
 function UnifiedWorkspaceContent() {
-  const { globalRole, isFranchiseur, isLoggingOut } = useAuth();
+  const { isLoggingOut } = useAuthCore();
+  const { globalRole, isFranchiseur } = usePermissions();
   const { isImpersonating, isRealUserImpersonation } = useImpersonation();
   const effectiveAuth = useEffectiveAuth();
   const { hasModule, hasModuleOption } = useEffectiveModules();
@@ -258,7 +260,7 @@ function UnifiedWorkspaceContent() {
 }
 
 function UnifiedWorkspaceAuth() {
-  const { isAuthenticated, isAuthLoading } = useAuth();
+  const { isAuthenticated, isAuthLoading } = useAuthCore();
   
   if (isAuthLoading) {
     return (

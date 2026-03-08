@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Bell } from 'lucide-react';
 import { format, subDays, subMonths } from 'date-fns';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { useApporteurAlerts } from '../hooks/useApporteurAlerts';
 import { AlertCard } from '../components/AlertCard';
 
@@ -27,7 +27,7 @@ interface Props {
 }
 
 export function ApporteurAlertsPage({ onSelectApporteur }: Props) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   const [period, setPeriod] = useState<PeriodKey>('90j');
 
   const { from, to } = getPeriodDates(period);

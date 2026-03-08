@@ -36,7 +36,7 @@ import { useMyTicketRole, useTicketTransitions } from '../hooks/useTicketPermiss
 import { usePersistedListFilters } from '../hooks/usePersistedListFilters';
 import { useTicketTabs } from '../hooks/useTicketTabs';
 import { useMyTicketViews } from '../hooks/useTicketViews';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { TicketTable } from '../components/TicketTable';
 import { TicketTableFilters } from '../components/TicketTableFilters';
 import { TicketTabBar } from '../components/TicketTabBar';
@@ -103,7 +103,7 @@ export default function ApogeeTicketsListPage({ embedded = false }: ApogeeTicket
 
 function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: NonNullable<ReturnType<typeof useMyTicketRole>['data']>; embedded?: boolean }) {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const { canViewKanban, canImport, canManage, ticketRole, isPlatformAdmin } = roleInfo;
 
   // Filtres persistés

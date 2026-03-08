@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { toast } from 'sonner';
 import { logError } from '@/lib/logger';
 
@@ -76,7 +77,8 @@ export const TICKET_ROLE_LABELS: Record<TicketRole, string> = {
 
 // Hook to get current user's ticket role - NEVER returns undefined
 export function useMyTicketRole() {
-  const { user, globalRole } = useAuth();
+  const { user } = useAuthCore();
+  const { globalRole } = usePermissions();
   
   return useQuery<TicketRoleInfo>({
     queryKey: ['my-ticket-role', user?.id],
@@ -273,7 +275,7 @@ export function useTicketTransitions() {
 // Hook to get allowed transitions for current user
 // SIMPLIFIED: Everyone can transition to any status (history is logged)
 export function useAllowedTransitions(fromStatus: string) {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const { data: roleInfo } = useMyTicketRole();
   
   return useQuery({
@@ -487,7 +489,7 @@ export function useTicketHistory(ticketId?: string) {
 // Log an action to history
 export function useLogTicketAction() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   
   return useMutation({
     mutationFn: async ({

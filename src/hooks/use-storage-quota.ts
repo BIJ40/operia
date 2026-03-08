@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { CacheManager } from '@/lib/cache-manager';
 import { logCache, logError } from '@/lib/logger';
 import { safeMutation } from '@/lib/safeQuery';
@@ -9,7 +10,8 @@ const QUOTA_WARNING_THRESHOLD = 80; // Alerte à 80% d'utilisation
 const CHECK_INTERVAL = 5 * 60 * 1000; // Vérifier toutes les 5 minutes
 
 export const useStorageQuota = () => {
-  const { user, agence } = useAuth();
+  const { user } = useAuthCore();
+  const { agence } = useProfile();
 
   useEffect(() => {
     if (!user?.email) return;

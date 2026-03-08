@@ -5,11 +5,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { MediaLink, MediaAsset, MediaLinkWithAsset, SignedUrlResponse } from '@/types/mediaLibrary';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { toast } from 'sonner';
 
 export function useMediaLinks(folderId: string | null = null) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   const queryClient = useQueryClient();
 
   // Fetch links (files) in current folder

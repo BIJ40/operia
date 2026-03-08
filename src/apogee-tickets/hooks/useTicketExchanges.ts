@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { logError } from '@/lib/logger';
 import { errorToast, successToast } from '@/lib/toastHelpers';
 import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
@@ -32,7 +32,7 @@ interface UseTicketExchangesOptions {
 }
 
 export function useTicketExchanges({ ticketId, enabled = true }: UseTicketExchangesOptions) {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
 
   // Fetch exchanges for this ticket
@@ -191,7 +191,7 @@ export function useTicketExchanges({ ticketId, enabled = true }: UseTicketExchan
  * Hook pour obtenir le nombre de messages non lus sur tous les tickets projet de l'utilisateur
  */
 export function useUserProjectTicketsUnreadCount() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   return useQuery({
     queryKey: ['user-project-tickets-unread', user?.id],

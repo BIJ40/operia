@@ -5,7 +5,7 @@
  * Les références legacy (isAdmin) sont supprimées pour éviter les bypasses.
  */
 
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { GlobalRole, GLOBAL_ROLES, hasMinimumRole } from '@/types/globalRoles';
 
 /**
@@ -14,7 +14,7 @@ import { GlobalRole, GLOBAL_ROLES, hasMinimumRole } from '@/types/globalRoles';
  * @returns true si l'utilisateur a le niveau requis ou supérieur
  */
 export function useHasGlobalRole(minRole?: GlobalRole): boolean {
-  const { globalRole, suggestedGlobalRole } = useAuth();
+  const { globalRole, suggestedGlobalRole } = usePermissions();
   
   // Si pas de rôle requis, juste vérifier l'authentification
   if (!minRole) return true;
@@ -31,7 +31,7 @@ export function useHasGlobalRole(minRole?: GlobalRole): boolean {
  * @returns true si l'utilisateur a le niveau requis
  */
 export function useHasMinLevel(minLevel: number): boolean {
-  const { globalRole, suggestedGlobalRole } = useAuth();
+  const { globalRole, suggestedGlobalRole } = usePermissions();
   
   // V2: Plus de bypass legacy
   const effectiveRole = globalRole ?? suggestedGlobalRole;
@@ -44,7 +44,7 @@ export function useHasMinLevel(minLevel: number): boolean {
  * Retourne le niveau effectif de l'utilisateur
  */
 export function useGlobalRoleLevel(): number {
-  const { globalRole, suggestedGlobalRole } = useAuth();
+  const { globalRole, suggestedGlobalRole } = usePermissions();
   
   // V2: Calculer le niveau à partir du globalRole uniquement
   const effectiveRole = globalRole ?? suggestedGlobalRole;

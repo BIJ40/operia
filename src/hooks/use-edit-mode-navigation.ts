@@ -1,12 +1,12 @@
 import { useSearchParams } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 /**
  * Hook to help preserve edit mode when navigating between pages
  */
 export const useEditModeNavigation = () => {
   const [searchParams] = useSearchParams();
-  const { isAdmin } = useAuth();
+  const { isAdmin } = usePermissions();
   
   const isInEditMode = searchParams.get('edit') === 'true' && isAdmin;
   

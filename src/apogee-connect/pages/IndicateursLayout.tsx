@@ -3,12 +3,14 @@ import { ApiToggleProvider } from "@/apogee-connect/contexts/ApiToggleContext";
 import { AgencyProvider } from "@/apogee-connect/contexts/AgencyContext";
 import { FiltersProvider } from "@/apogee-connect/contexts/FiltersContext";
 import { SecondaryFiltersProvider } from "@/apogee-connect/contexts/SecondaryFiltersContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/contexts/ProfileContext";
+import { usePermissions } from "@/contexts/PermissionsContext";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 
 export default function IndicateursLayout() {
-  const { agence, hasAccessToScope, hasModule } = useAuth();
+  const { agence } = useProfile();
+  const { hasAccessToScope, hasModule } = usePermissions();
   const { toast } = useToast();
 
   // Block access if no agency defined

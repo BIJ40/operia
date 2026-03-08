@@ -3,7 +3,8 @@ import { useLocation } from 'react-router-dom';
 import { Block, AppData } from '@/types/block';
 import { loadAppData, saveAppData } from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { supabase } from '@/integrations/supabase/client';
 import apogeeData from '@/data/apogee-data.json';
 import { CacheManager } from '@/lib/cache-manager';
@@ -36,7 +37,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { hasGlobalRole, hasModuleOption, user } = useAuth();
+  const { hasGlobalRole, hasModuleOption } = usePermissions();
+  const { user } = useAuthCore();
   const location = useLocation();
   
   // V2: Remplace isAdmin par vérification de rôle + option module

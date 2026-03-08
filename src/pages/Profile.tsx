@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { supabase } from '@/integrations/supabase/client';
 import { logError } from '@/lib/logger';
 import { Button } from '@/components/ui/button';
@@ -65,7 +66,8 @@ const ROLE_AGENCE_LABELS: Record<string, string> = {
 };
 
 export default function Profile() {
-  const { user, isAuthenticated, globalRole } = useAuth();
+  const { user, isAuthenticated } = useAuthCore();
+  const { globalRole } = usePermissions();
   const { modules: effectiveModulesData } = useEffectiveModules();
   const navigate = useNavigate();
   const queryClient = useQueryClient();

@@ -5,7 +5,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 
 export interface ApogeeContact {
   nom: string;
@@ -37,7 +37,7 @@ interface ListResponse {
  * Liste tous les commanditaires Apogée de l'agence
  */
 export function useApogeeCommanditaires() {
-  const { agence, agencyId } = useAuth();
+  const { agence, agencyId } = useProfile();
 
   return useQuery<ApogeeCommanditaire[]>({
     queryKey: ['apogee-commanditaires', agence],

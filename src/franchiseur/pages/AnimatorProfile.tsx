@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { useFranchiseur } from '../contexts/FranchiseurContext';
 import { useAnimatorVisits, VISIT_TYPE_LABELS, VISIT_STATUS_LABELS, VISIT_STATUS_COLORS, AnimatorVisit } from '../hooks/useAnimatorVisits';
 import { AnimatorVisitDialog } from '../components/AnimatorVisitDialog';
@@ -31,7 +32,8 @@ const ROLE_LABELS: Record<string, string> = {
 export default function AnimatorProfile() {
   const { animatorId } = useParams<{ animatorId: string }>();
   const navigate = useNavigate();
-  const { user, globalRole } = useAuth();
+  const { user } = useAuthCore();
+  const { globalRole } = usePermissions();
   const { franchiseurRole } = useFranchiseur();
   
   const [visitDialogOpen, setVisitDialogOpen] = useState(false);

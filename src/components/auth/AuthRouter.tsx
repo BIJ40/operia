@@ -9,7 +9,7 @@
 
 import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { useApporteurCheck } from '@/hooks/useApporteurCheck';
 import { Loader2 } from 'lucide-react';
 
@@ -29,7 +29,7 @@ function FullPageLoader() {
 }
 
 export function AuthRouter({ children }: AuthRouterProps) {
-  const { user, isAuthLoading } = useAuth();
+  const { user, isAuthLoading } = useAuthCore();
   const { isApporteur, isLoading: isApporteurLoading } = useApporteurCheck();
   const location = useLocation();
 

@@ -3,13 +3,13 @@ import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { logError } from '@/lib/logger';
 
 export function ChatbotNotifications() {
   const [pendingCount, setPendingCount] = useState(0);
   const navigate = useNavigate();
-  const { hasGlobalRole } = useAuth();
+  const { hasGlobalRole } = usePermissions();
   
   // P0: Remplacer isAdmin par hasGlobalRole (V2)
   const canViewNotifications = hasGlobalRole('platform_admin');
