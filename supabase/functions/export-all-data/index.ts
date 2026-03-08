@@ -114,4 +114,4 @@ Deno.serve(withSentry({ functionName: 'export-all-data' }, async (req) => {
   } catch (err) {
     return withCors(req, new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: { 'Content-Type': 'application/json' } }));
   }
-});
+}));

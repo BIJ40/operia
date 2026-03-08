@@ -370,7 +370,7 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
       { status: 400, headers: { 'Content-Type': 'application/json' } }
     ))
   }
-})
+}))
 
 // Génère un mot de passe sécurisé de 18 caractères si non fourni
 function generateSecurePassword(): string {
