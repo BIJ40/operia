@@ -51,7 +51,7 @@ function saveNACells(cells: Set<string>) {
 }
 
 export function EpiAssignmentMatrix({ agencyId }: EpiAssignmentMatrixProps) {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   // Use profiles (accounts) as source of truth, not collaborators table
   const { data: technicians = [], isLoading: techLoading } = useAgencyTechnicians({ agencyId });
   const { data: catalog = [], isLoading: catalogLoading } = useEpiCatalog(agencyId);

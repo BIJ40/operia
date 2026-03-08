@@ -266,7 +266,7 @@ export function useRHTablePrefs() {
 
 export function useUpdateRHTablePrefs() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   
   return useMutation({
     mutationFn: async (data: { hidden_columns?: string[]; column_order?: string[] }) => {

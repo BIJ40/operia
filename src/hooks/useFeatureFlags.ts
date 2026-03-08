@@ -258,7 +258,7 @@ export const DEV_STATUS_CONFIG: Record<DevStatus, { icon: string; label: string;
  */
 export function useUpdateDevStatus() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   return useMutation({
     mutationFn: async ({ id, dev_status }: { id: string; dev_status: DevStatus }) => {

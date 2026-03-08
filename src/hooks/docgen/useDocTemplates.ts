@@ -60,7 +60,7 @@ export function useDocTemplate(templateId: string | undefined) {
 
 export function useCreateDocTemplate() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   return useMutation({
     mutationFn: async (data: {

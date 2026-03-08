@@ -36,7 +36,7 @@ const COLOR_CLASSES: Record<string, string> = {
 
 export function useTicketTags() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   const { data: tags = [], isLoading } = useQuery({
     queryKey: ['apogee-ticket-tags'],

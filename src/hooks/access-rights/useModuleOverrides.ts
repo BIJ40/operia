@@ -56,7 +56,7 @@ export function useModuleOverrides() {
 
 export function useAddOverride() {
   const qc = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   return useMutation({
     mutationFn: async ({ userId, moduleKey }: { userId: string; moduleKey: string }) => {
