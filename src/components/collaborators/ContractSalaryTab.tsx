@@ -57,7 +57,7 @@ import {
 } from '@/types/collaborator';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 
 interface ContractSalaryTabProps {
   collaboratorId: string;
