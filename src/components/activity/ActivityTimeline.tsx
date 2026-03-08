@@ -181,7 +181,7 @@ function ActivityTimelineItem({
           <Tooltip>
             <TooltipTrigger asChild>
               <p className="text-xs text-muted-foreground cursor-help">
-                {formatActorType(entry.actor_type)} • {timeAgo}
+                {formatActorType(entry.actor_type as any)} • {timeAgo}
               </p>
             </TooltipTrigger>
             <TooltipContent>
