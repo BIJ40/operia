@@ -110,7 +110,8 @@ export function useTechnicianSavDetails(technicianId: string | null, dateRange: 
         
         for (const intervention of interventions as Record<string, unknown>[]) {
           // Vérifier si ce technicien est impliqué
-          const visites = intervention?.data?.visites || intervention?.visites || [];
+          const interData = (intervention?.data ?? {}) as Record<string, unknown>;
+          const visites = (interData?.visites || intervention?.visites || []) as Record<string, unknown>[];
           const techIds = new Set<string>();
           
           for (const v of visites) {
