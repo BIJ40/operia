@@ -69,6 +69,10 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
       throw new Error('Accès refusé - Niveau N2 minimum requis')
     }
 
+    // MFA/AAL2 enforcement for user creation
+    const mfaCheck = await requireAal2(req, callerLevel, user.id, { functionName: 'create-user' });
+    if (!mfaCheck.ok) return mfaCheck.response;
+
     // Valider les données d'entrée
     const bodyRaw = await req.json()
     

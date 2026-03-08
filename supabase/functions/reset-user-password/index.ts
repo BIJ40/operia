@@ -94,6 +94,10 @@ serve(async (req) => {
       throw new Error(resetCheck.reason || 'Action non autorisée')
     }
 
+    // MFA/AAL2 enforcement for password reset
+    const mfaCheck = await requireAal2(req, callerLevel, userId, { functionName: 'reset-user-password' });
+    if (!mfaCheck.ok) return mfaCheck.response;
+
     // Validation simplifiée - 8 caractères minimum avec majuscule, minuscule, chiffre et symbole
     const hasLower = /[a-z]/.test(newPassword)
     const hasUpper = /[A-Z]/.test(newPassword)

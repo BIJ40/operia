@@ -132,6 +132,10 @@ serve(async (req) => {
       throw new Error(updateCheck.reason || 'Action non autorisée')
     }
 
+    // MFA/AAL2 enforcement for email update
+    const mfaCheck = await requireAal2(req, callerLevel, userId, { functionName: 'update-user-email' });
+    if (!mfaCheck.ok) return mfaCheck.response;
+
     // Mettre à jour l'email dans auth.users
     const { error: updateAuthError } = await supabaseAdmin.auth.admin.updateUserById(
       targetUserId,

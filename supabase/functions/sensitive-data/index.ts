@@ -198,6 +198,11 @@ serve(async (req) => {
       ));
     }
 
+    // P3: MFA/AAL2 enforcement for sensitive data access
+    const userRoleLevel = getRoleLevel(profile.global_role);
+    const mfaCheck = await requireAal2(req, userRoleLevel, user.id, { functionName: 'sensitive-data' });
+    if (!mfaCheck.ok) return mfaCheck.response;
+
     // P2: Validate action
     if (action !== 'read' && action !== 'write') {
       return withCors(req, new Response(

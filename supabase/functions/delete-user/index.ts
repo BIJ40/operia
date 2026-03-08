@@ -105,6 +105,10 @@ serve(async (req) => {
       throw new Error(deleteCheck.reason || 'Action non autorisée')
     }
 
+    // MFA/AAL2 enforcement for user deletion
+    const mfaCheck = await requireAal2(req, callerLevel, user.id, { functionName: 'delete-user' });
+    if (!mfaCheck.ok) return mfaCheck.response;
+
     // Supprimer toutes les dépendances avant de supprimer l'utilisateur
     console.log(`[delete-user] Suppression des dépendances pour ${userId}`)
     
