@@ -8,7 +8,7 @@ import { subDays, startOfDay, endOfDay } from 'date-fns';
 import { getGlobalApogeeDataServices } from '../adapters/dataServiceAdapter';
 import { loadAllData } from '../engine/loaders';
 import { computeVeilleApporteurs, VeilleApporteursResult, VeilleApporteurConsolide } from '../engines/veilleApporteursEngine';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { logError } from '@/lib/logger';
 
 // ==================== TYPES ====================
