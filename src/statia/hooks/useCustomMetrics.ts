@@ -60,7 +60,7 @@ export function useAllAvailableMetrics(agencySlug?: string) {
  */
 export function useCreateCustomMetric() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   return useMutation({
     mutationFn: (payload: CreateCustomMetricPayload) => {
