@@ -139,7 +139,7 @@ export function useCreateMaintenanceEvent() {
  */
 export function useCompleteMaintenanceEvent() {
   const queryClient = useQueryClient();
-  const { agence } = useAuth();
+  const { agence } = useProfile();
 
   return useMutation({
     mutationFn: async ({ 
