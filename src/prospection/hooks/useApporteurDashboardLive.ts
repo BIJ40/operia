@@ -34,7 +34,7 @@ export function useApporteurDashboardLive({
   dateTo,
   enabled = true,
 }: UseApporteurDashboardLiveOptions) {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
 
   return useQuery<ApporteurDashboardLiveData>({
     queryKey: ['prospection-apporteur-live', agence, apporteurId, dateFrom, dateTo],

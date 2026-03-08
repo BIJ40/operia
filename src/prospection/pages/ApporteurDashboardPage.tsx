@@ -42,7 +42,7 @@ function getPeriodDates(period: PeriodKey): { from: string; to: string } {
 }
 
 export function ApporteurDashboardPage({ apporteurId, onBack }: Props) {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const [period, setPeriod] = useState<PeriodKey>('6m');
 
   // Résoudre le nom de l'apporteur depuis Apogée
