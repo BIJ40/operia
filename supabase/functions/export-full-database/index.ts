@@ -227,6 +227,11 @@ serve(async (req) => {
       ));
     }
 
+    // MFA/AAL2 enforcement for full database export
+    const userRoleLevel = getRoleLevel(profile.global_role);
+    const mfaCheck = await requireAal2(req, userRoleLevel, user.id, { functionName: 'export-full-database' });
+    if (!mfaCheck.ok) return mfaCheck.response;
+
     const url = new URL(req.url);
     const partParam = url.searchParams.get("part");
     

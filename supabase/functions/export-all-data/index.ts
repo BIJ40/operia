@@ -44,6 +44,10 @@ Deno.serve(withSentry({ functionName: 'export-all-data' }, async (req) => {
       return withCors(req, new Response(JSON.stringify({ error: 'Accès réservé N5+' }), { status: 403, headers: { 'Content-Type': 'application/json' } }));
     }
 
+    // MFA/AAL2 enforcement for full data export
+    const mfaCheck = await requireAal2(req, level, claimsData.claims.sub as string, { functionName: 'export-all-data' });
+    if (!mfaCheck.ok) return mfaCheck.response;
+
     // Fetch all public tables dynamically via RPC
     const { data: tableRows, error: tableError } = await serviceClient.rpc('list_public_tables');
     if (tableError || !tableRows) {
