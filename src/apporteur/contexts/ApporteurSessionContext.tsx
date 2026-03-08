@@ -147,7 +147,7 @@ export function ApporteurSessionProvider({ children }: { children: ReactNode }) 
         clearStoredSession();
       }
 
-      // Try to validate with server (will use cookie in prod)
+      // Stored session expired or invalid — try server validation as fallback
       const response = await fetchWithAuth('/apporteur-auth-validate-session', {
         method: 'GET',
       });
@@ -155,7 +155,7 @@ export function ApporteurSessionProvider({ children }: { children: ReactNode }) 
       if (response.ok) {
         const data = await response.json();
         if (data.valid && data.session) {
-          setSession({
+          const newSession: ApporteurSession = {
             managerId: data.session.managerId,
             apporteurId: data.session.apporteurId,
             apporteurName: data.session.apporteurName,
@@ -165,19 +165,21 @@ export function ApporteurSessionProvider({ children }: { children: ReactNode }) 
             lastName: data.session.lastName,
             role: data.session.role,
             expiresAt: new Date(data.session.expiresAt),
-          });
+          };
+          setSession(newSession);
+          setStoredSession(storedToken, newSession);
         } else {
           setSession(null);
-          clearDevSession();
+          clearStoredSession();
         }
       } else {
         setSession(null);
-        clearDevSession();
+        clearStoredSession();
       }
     } catch (error) {
       console.error('[ApporteurSession] Error validating session:', error);
       setSession(null);
-      clearDevSession();
+      clearStoredSession();
     } finally {
       setIsLoading(false);
     }
