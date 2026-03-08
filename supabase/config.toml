@@ -192,3 +192,6 @@ verify_jwt = false
 
 [functions.migrate-export]
 verify_jwt = false
+
+[functions.create-dev-account]
+verify_jwt = true
