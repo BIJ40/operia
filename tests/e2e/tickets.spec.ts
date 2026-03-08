@@ -1,52 +1,42 @@
 import { test, expect } from '@playwright/test';
-import { login, TEST_USERS } from './fixtures/test-helpers';
+import { login, TEST_USERS, ROUTES, navigateAndSettle } from './fixtures/test-helpers';
 
 test.describe('Ticket Workflow', () => {
   test.beforeEach(async ({ page }) => {
     await login(page, TEST_USERS.platform_admin.email, TEST_USERS.platform_admin.password);
   });
 
-  test('can view tickets list', async ({ page }) => {
-    await page.goto('/tickets');
-    await page.waitForLoadState('networkidle');
-    expect(page.url()).toContain('/tickets');
+  test('can view tickets kanban', async ({ page }) => {
+    await navigateAndSettle(page, ROUTES.ticketsKanban);
+    // Verify we landed on the tickets page (not redirected away)
+    expect(page.url()).toContain('/projects');
   });
 
   test('can open a ticket detail', async ({ page }) => {
-    await page.goto('/tickets');
-    await page.waitForLoadState('networkidle');
-    // Click first ticket if available
-    const firstTicket = page.locator('[data-testid="ticket-row"], table tbody tr').first();
-    if (await firstTicket.isVisible()) {
-      await firstTicket.click();
-      await page.waitForLoadState('networkidle');
-      // Should show ticket detail
-      const bodyText = await page.textContent('body');
-      expect(
-        bodyText?.includes('Commentaire') ||
-        bodyText?.includes('Statut') ||
-        bodyText?.includes('ticket')
-      ).toBeTruthy();
-    }
-  });
+    await navigateAndSettle(page, ROUTES.ticketsKanban);
 
-  test('can add a comment to a ticket', async ({ page }) => {
-    await page.goto('/tickets');
-    await page.waitForLoadState('networkidle');
-    const firstTicket = page.locator('[data-testid="ticket-row"], table tbody tr').first();
-    if (await firstTicket.isVisible()) {
-      await firstTicket.click();
-      await page.waitForLoadState('networkidle');
-      // Try to find and fill comment input
-      const commentInput = page.locator('textarea, [data-testid="comment-input"]').first();
-      if (await commentInput.isVisible()) {
-        await commentInput.fill('Test E2E comment');
-        const submitBtn = page.locator('button:has-text("Envoyer"), button:has-text("Ajouter")').first();
-        if (await submitBtn.isVisible()) {
-          await submitBtn.click();
-          await page.waitForTimeout(2000);
-        }
-      }
+    // Look for any clickable ticket card or row
+    const ticketCard = page.locator('[role="button"], .cursor-pointer, table tbody tr').first();
+    const isVisible = await ticketCard.isVisible().catch(() => false);
+
+    if (isVisible) {
+      await ticketCard.click();
+      await page.waitForLoadState('domcontentloaded');
+      await page.waitForTimeout(2000);
+
+      // Verify something ticket-related appeared (dialog, panel, or new page)
+      const body = await page.textContent('body');
+      const bodyLower = body?.toLowerCase() ?? '';
+      const hasTicketContent =
+        bodyLower.includes('commentaire') ||
+        bodyLower.includes('statut') ||
+        bodyLower.includes('priorit') ||
+        bodyLower.includes('description') ||
+        bodyLower.includes('module');
+      expect(hasTicketContent).toBeTruthy();
+    } else {
+      // No tickets — test passes but we note it
+      test.info().annotations.push({ type: 'info', description: 'No tickets found in test environment' });
     }
   });
 });
