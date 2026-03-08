@@ -5,7 +5,7 @@ import { Settings, FileText, HelpCircle } from "lucide-react";
 import { CommercialProfileForm } from "../components/CommercialProfileForm";
 import { CommercialGenerateTab } from "../components/CommercialGenerateTab";
 import { CommercialDocumentation } from "../components/CommercialDocumentation";
-import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from '@/contexts/ProfileContext';
 import { useHasGlobalRole } from "@/hooks/useHasGlobalRole";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
