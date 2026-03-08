@@ -220,7 +220,7 @@ export const useAdminBackup = () => {
     setExportingApporteur(true);
     try {
       const result = await safeQuery<any[]>(
-        supabase.from('apporteur_blocks').select('*').order('order'),
+        supabase.from('apporteur_blocks').select(BLOCK_COLUMNS).order('order'),
         'BACKUP_EXPORT_APPORTEUR'
       );
 
