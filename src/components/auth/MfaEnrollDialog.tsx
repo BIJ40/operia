@@ -113,7 +113,7 @@ export function MfaEnrollDialog({ open, onOpenChange, onSuccess }: MfaEnrollDial
                 {secret}
               </code>
               <Button variant="outline" size="icon" onClick={handleCopySecret}>
-                {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
               </Button>
             </div>
             <Button onClick={() => setStep('verify')} className="w-full">

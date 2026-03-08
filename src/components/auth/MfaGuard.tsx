@@ -143,8 +143,8 @@ function MfaAdvisoryBanner({
   onDismiss: () => void;
 }) {
   return (
-    <div className="mx-4 mt-4 mb-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-4 flex items-start gap-3">
-      <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5 shrink-0" />
+    <div className="mx-4 mt-4 mb-2 rounded-lg border border-accent/30 bg-accent/10 p-4 flex items-start gap-3">
+      <AlertTriangle className="w-5 h-5 text-accent-foreground mt-0.5 shrink-0" />
       <div className="flex-1">
         <p className="text-sm font-medium text-foreground">
           Sécurité : activez l'authentification à deux facteurs
