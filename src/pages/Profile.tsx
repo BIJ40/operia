@@ -66,7 +66,8 @@ const ROLE_AGENCE_LABELS: Record<string, string> = {
 };
 
 export default function Profile() {
-  const { user, isAuthenticated, globalRole } = useAuth();
+  const { user, isAuthenticated } = useAuthCore();
+  const { globalRole } = usePermissions();
   const { modules: effectiveModulesData } = useEffectiveModules();
   const navigate = useNavigate();
   const queryClient = useQueryClient();

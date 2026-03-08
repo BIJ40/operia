@@ -29,7 +29,7 @@ import { hasMinimumRole } from '@/types/globalRoles';
 
 export function BrowserTabsBar() {
   const { tabs, activeTabId, openTab, closeTab, setActiveTab, reorderTabs, isTabOpen } = useBrowserTabs();
-  const { globalRole } = useAuth();
+  const { globalRole } = usePermissions();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {

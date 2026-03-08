@@ -9,7 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 
 export default function IndicateursLayout() {
-  const { agence, hasAccessToScope, hasModule } = useAuth();
+  const { agence } = useProfile();
+  const { hasAccessToScope, hasModule } = usePermissions();
   const { toast } = useToast();
 
   // Block access if no agency defined

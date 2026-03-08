@@ -33,7 +33,7 @@ import { fr } from 'date-fns/locale';
 import { Checkbox } from '@/components/ui/checkbox';
 
 export default function ApogeeTicketsAdmin() {
-  const { isAdmin } = useAuth();
+  const { isAdmin } = usePermissions();
   
   if (!isAdmin) {
     return <Navigate to="/apogee-tickets" replace />;

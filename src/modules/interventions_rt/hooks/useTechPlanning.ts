@@ -107,7 +107,8 @@ function findApogeeUserId(
 }
 
 export function useTechPlanning(): UseTechPlanningResult {
-  const { agence, user } = useAuth();
+  const { agence } = useProfile();
+  const { user } = useAuthCore();
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
   const [rtStatuses, setRtStatuses] = useState<Record<string, RtStatus>>({});
 

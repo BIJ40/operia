@@ -83,7 +83,7 @@ export function SimplifiedSupportChat({
   onChatClosed,
   className = '',
 }: SimplifiedSupportChatProps) {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);

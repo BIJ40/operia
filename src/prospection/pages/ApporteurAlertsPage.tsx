@@ -27,7 +27,7 @@ interface Props {
 }
 
 export function ApporteurAlertsPage({ onSelectApporteur }: Props) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   const [period, setPeriod] = useState<PeriodKey>('90j');
 
   const { from, to } = getPeriodDates(period);

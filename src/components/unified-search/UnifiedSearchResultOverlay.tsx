@@ -22,12 +22,7 @@ import { QUICK_PERIOD_CHIPS } from './nlDictionaries';
 
 export function UnifiedSearchResultOverlay() {
   const { result, query, clearResult, submitQuery } = useUnifiedSearch();
-  const { user } = useAuth();
-
-  // N5/N6 can see debug info - check via global_role from user metadata
-  const globalRole = (user as any)?.user_metadata?.global_role || 
-                     (user as any)?.app_metadata?.global_role;
-  const isAdmin = globalRole === 'platform_admin' || globalRole === 'superadmin';
+  const { isAdmin } = usePermissions();
 
   // Close on Escape
   useEffect(() => {

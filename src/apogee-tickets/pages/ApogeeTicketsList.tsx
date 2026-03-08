@@ -103,7 +103,7 @@ export default function ApogeeTicketsListPage({ embedded = false }: ApogeeTicket
 
 function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: NonNullable<ReturnType<typeof useMyTicketRole>['data']>; embedded?: boolean }) {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const { canViewKanban, canImport, canManage, ticketRole, isPlatformAdmin } = roleInfo;
 
   // Filtres persistés
