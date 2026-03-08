@@ -20,7 +20,7 @@ import { addDays, addMonths, addYears, parseISO, format } from 'date-fns';
 const QUERY_KEY = 'maintenance-events';
 
 export function useMaintenanceEvents(agencyId?: string, filters?: MaintenanceEventsFilters) {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const effectiveAgencyId = agencyId || agence;
 
   return useQuery({
