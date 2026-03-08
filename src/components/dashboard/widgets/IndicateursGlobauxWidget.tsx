@@ -3,7 +3,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { Card } from '@/components/ui/card';
 import { formatEuros } from '@/apogee-connect/utils/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
