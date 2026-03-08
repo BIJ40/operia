@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { CacheManager } from '@/lib/cache-manager';
 import { logCache, logError } from '@/lib/logger';
 import { safeMutation } from '@/lib/safeQuery';
