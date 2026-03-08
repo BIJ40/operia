@@ -99,7 +99,7 @@ export function useRHExport() {
       
       toast.success('Export collaborateurs téléchargé');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       logError('[useRHExport] Collaborators export error:', error);
       toast.error(error.message || 'Erreur lors de l\'export');
     },
