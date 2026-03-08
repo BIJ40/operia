@@ -14,7 +14,7 @@ export interface MaintenanceSettings {
 }
 
 export function useMaintenanceMode() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   
   const { data: settings, isLoading } = useQuery({
     queryKey: ['maintenance-settings'],
