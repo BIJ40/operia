@@ -139,7 +139,7 @@ function ActivityTimelineItem({
         entry.actor_type === 'system' && "bg-muted",
         entry.actor_type === 'ai' && "bg-primary/10 border-primary/30"
       )}>
-        {getActorIcon(entry.actor_type)}
+        {getActorIcon(entry.actor_type as any)}
       </div>
 
       {/* Content */}
