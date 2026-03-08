@@ -14,7 +14,7 @@ import { GlobalRole, GLOBAL_ROLES, hasMinimumRole } from '@/types/globalRoles';
  * @returns true si l'utilisateur a le niveau requis ou supérieur
  */
 export function useHasGlobalRole(minRole?: GlobalRole): boolean {
-  const { globalRole, suggestedGlobalRole } = useAuth();
+  const { globalRole, suggestedGlobalRole } = usePermissions();
   
   // Si pas de rôle requis, juste vérifier l'authentification
   if (!minRole) return true;
