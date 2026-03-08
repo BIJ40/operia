@@ -115,11 +115,11 @@ export function useTechnicianSavDetails(technicianId: string | null, dateRange: 
           const techIds = new Set<string>();
           
           for (const v of visites) {
-            const dateStr = v?.date || v?.dateIntervention || '';
+            const dateStr = String(v?.date || v?.dateIntervention || '');
             if (dateStr) {
               const ts = new Date(dateStr).getTime();
               if (ts >= startTs && ts <= endTs) {
-                const usersIds = v?.usersIds || v?.userIds || [];
+                const usersIds = (v?.usersIds || v?.userIds || []) as unknown[];
                 for (const uid of usersIds) techIds.add(String(uid));
               }
             }
