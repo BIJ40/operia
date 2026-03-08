@@ -37,39 +37,28 @@ interface ApporteurSessionContextType {
 
 const ApporteurSessionContext = createContext<ApporteurSessionContextType | undefined>(undefined);
 
-// Check if we're in dev/preview mode (for localStorage fallback)
-const isDevMode = () => {
-  const hostname = window.location.hostname;
-  return hostname === 'localhost' || 
-         hostname === '127.0.0.1' ||
-         hostname.includes('preview') || 
-         hostname.includes('lovable');
+// Storage helpers — always use localStorage for token persistence
+// (cross-origin cookies don't work between app domain and Supabase domain)
+const TOKEN_KEY = 'apporteur_session_token';
+const SESSION_KEY = 'apporteur_session_data';
+
+const getStoredToken = (): string | null => {
+  return localStorage.getItem(TOKEN_KEY);
 };
 
-// Storage helpers for DEV mode
-const DEV_TOKEN_KEY = 'apporteur_session_token';
-const DEV_SESSION_KEY = 'apporteur_session_data';
-
-const getDevToken = (): string | null => {
-  if (!isDevMode()) return null;
-  return localStorage.getItem(DEV_TOKEN_KEY);
+const setStoredSession = (token: string, session: ApporteurSession) => {
+  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
 };
 
-const setDevSession = (token: string, session: ApporteurSession) => {
-  if (!isDevMode()) return;
-  localStorage.setItem(DEV_TOKEN_KEY, token);
-  localStorage.setItem(DEV_SESSION_KEY, JSON.stringify(session));
+const clearStoredSession = () => {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(SESSION_KEY);
 };
 
-const clearDevSession = () => {
-  localStorage.removeItem(DEV_TOKEN_KEY);
-  localStorage.removeItem(DEV_SESSION_KEY);
-};
-
-const getStoredDevSession = (): ApporteurSession | null => {
-  if (!isDevMode()) return null;
+const getStoredSessionData = (): ApporteurSession | null => {
   try {
-    const stored = localStorage.getItem(DEV_SESSION_KEY);
+    const stored = localStorage.getItem(SESSION_KEY);
     if (!stored) return null;
     const parsed = JSON.parse(stored);
     return {
@@ -88,24 +77,23 @@ const getApiBaseUrl = () => {
 
 const fetchWithAuth = async (path: string, options: RequestInit = {}) => {
   const baseUrl = getApiBaseUrl();
+  const token = getStoredToken();
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '',
     ...options.headers,
   };
 
-  // In DEV mode, add token to header
-  if (isDevMode()) {
-    const token = getDevToken();
-    if (token) {
-      (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
-    }
+  // Add token to header for session validation
+  if (token) {
+    (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+    (headers as Record<string, string>)['x-apporteur-token'] = token;
   }
 
   return fetch(`${baseUrl}${path}`, {
     ...options,
     headers,
-    credentials: 'include', // Send cookies in prod
+    credentials: 'include',
   });
 };
 
@@ -118,52 +106,48 @@ export function ApporteurSessionProvider({ children }: { children: ReactNode }) 
     setIsLoading(true);
     
     try {
-      // In DEV, check localStorage first for quick restore
-      if (isDevMode()) {
-        const storedSession = getStoredDevSession();
-        if (storedSession && storedSession.expiresAt > new Date()) {
-          // Validate with server
-          const response = await fetchWithAuth('/apporteur-auth-validate-session', {
-            method: 'GET',
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            if (data.valid && data.session) {
-              const newSession: ApporteurSession = {
-                managerId: data.session.managerId,
-                apporteurId: data.session.apporteurId,
-                apporteurName: data.session.apporteurName,
-                agencyId: data.session.agencyId,
-                email: data.session.email,
-                firstName: data.session.firstName,
-                lastName: data.session.lastName,
-                role: data.session.role,
-                expiresAt: new Date(data.session.expiresAt),
-              };
-              setSession(newSession);
-              // Update stored session
-              const token = getDevToken();
-              if (token) {
-                setDevSession(token, newSession);
-              }
-              setIsLoading(false);
-              return;
-            }
-          }
-          // Session invalid, clear it
-          clearDevSession();
-        }
-      }
-
-      // In DEV mode without stored token, skip server validation (would always fail)
-      if (isDevMode() && !getDevToken()) {
+      const storedToken = getStoredToken();
+      
+      // No stored token → no session
+      if (!storedToken) {
         setSession(null);
         setIsLoading(false);
         return;
       }
 
-      // Try to validate with server (will use cookie in prod)
+      // Quick restore from localStorage while we validate
+      const storedSession = getStoredSessionData();
+      if (storedSession && storedSession.expiresAt > new Date()) {
+        // Validate with server
+        const response = await fetchWithAuth('/apporteur-auth-validate-session', {
+          method: 'GET',
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.valid && data.session) {
+            const newSession: ApporteurSession = {
+              managerId: data.session.managerId,
+              apporteurId: data.session.apporteurId,
+              apporteurName: data.session.apporteurName,
+              agencyId: data.session.agencyId,
+              email: data.session.email,
+              firstName: data.session.firstName,
+              lastName: data.session.lastName,
+              role: data.session.role,
+              expiresAt: new Date(data.session.expiresAt),
+            };
+            setSession(newSession);
+            setStoredSession(storedToken, newSession);
+            setIsLoading(false);
+            return;
+          }
+        }
+        // Session invalid, clear it
+        clearStoredSession();
+      }
+
+      // Stored session expired or invalid — try server validation as fallback
       const response = await fetchWithAuth('/apporteur-auth-validate-session', {
         method: 'GET',
       });
@@ -171,7 +155,7 @@ export function ApporteurSessionProvider({ children }: { children: ReactNode }) 
       if (response.ok) {
         const data = await response.json();
         if (data.valid && data.session) {
-          setSession({
+          const newSession: ApporteurSession = {
             managerId: data.session.managerId,
             apporteurId: data.session.apporteurId,
             apporteurName: data.session.apporteurName,
@@ -181,19 +165,21 @@ export function ApporteurSessionProvider({ children }: { children: ReactNode }) 
             lastName: data.session.lastName,
             role: data.session.role,
             expiresAt: new Date(data.session.expiresAt),
-          });
+          };
+          setSession(newSession);
+          setStoredSession(storedToken, newSession);
         } else {
           setSession(null);
-          clearDevSession();
+          clearStoredSession();
         }
       } else {
         setSession(null);
-        clearDevSession();
+        clearStoredSession();
       }
     } catch (error) {
       console.error('[ApporteurSession] Error validating session:', error);
       setSession(null);
-      clearDevSession();
+      clearStoredSession();
     } finally {
       setIsLoading(false);
     }
@@ -255,9 +241,9 @@ export function ApporteurSessionProvider({ children }: { children: ReactNode }) 
 
         setSession(newSession);
 
-        // In DEV mode, store token and session
-        if (isDevMode() && data.token) {
-          setDevSession(data.token, newSession);
+        // Always store token in localStorage for session persistence
+        if (data.token) {
+          setStoredSession(data.token, newSession);
         }
 
         return { success: true };
@@ -280,7 +266,7 @@ export function ApporteurSessionProvider({ children }: { children: ReactNode }) 
       console.error('[ApporteurSession] Error logging out:', error);
     } finally {
       setSession(null);
-      clearDevSession();
+      clearStoredSession();
     }
   }, []);
 

@@ -8,20 +8,10 @@
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-// Check if we're in dev/preview mode
-const isDevMode = () => {
-  const hostname = window.location.hostname;
-  return hostname === 'localhost' || 
-         hostname === '127.0.0.1' ||
-         hostname.includes('preview') || 
-         hostname.includes('lovable');
-};
+const TOKEN_KEY = 'apporteur_session_token';
 
-const DEV_TOKEN_KEY = 'apporteur_session_token';
-
-const getDevToken = (): string | null => {
-  if (!isDevMode()) return null;
-  return localStorage.getItem(DEV_TOKEN_KEY);
+const getStoredToken = (): string | null => {
+  return localStorage.getItem(TOKEN_KEY);
 };
 
 const getApiBaseUrl = () => {
@@ -64,10 +54,9 @@ export function useApporteurApi() {
     }
 
     // Custom apporteur token (OTP auth) sent in dedicated header
-    // to avoid collision with JWT verification at edge gateway level
-    const devToken = getDevToken();
-    if (devToken) {
-      headers['x-apporteur-token'] = devToken;
+    const token = getStoredToken();
+    if (token) {
+      headers['x-apporteur-token'] = token;
     }
 
     try {
