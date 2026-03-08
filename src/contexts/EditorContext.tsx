@@ -37,7 +37,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { hasGlobalRole, hasModuleOption, user } = useAuth();
+  const { hasGlobalRole, hasModuleOption } = usePermissions();
+  const { user } = useAuthCore();
   const location = useLocation();
   
   // V2: Remplace isAdmin par vérification de rôle + option module

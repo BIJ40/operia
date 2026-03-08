@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { logError } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { toast } from 'sonner';
 import type { Json } from '@/integrations/supabase/types';
 

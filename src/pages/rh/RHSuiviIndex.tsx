@@ -26,7 +26,7 @@ import { RHCollaborator } from '@/types/rh-suivi';
 
 function RHSuiviContent() {
   const queryClient = useQueryClient();
-  const { agencyId, agence } = useAuth();
+  const { agencyId, agence } = useProfile();
   const { openCollaborator } = useRHTabs();
   
   const { data: collaborators = [], isLoading, refetch } = useRHCollaborators({ includeFormer: false });

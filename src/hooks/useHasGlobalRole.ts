@@ -44,7 +44,7 @@ export function useHasMinLevel(minLevel: number): boolean {
  * Retourne le niveau effectif de l'utilisateur
  */
 export function useGlobalRoleLevel(): number {
-  const { globalRole, suggestedGlobalRole } = useAuth();
+  const { globalRole, suggestedGlobalRole } = usePermissions();
   
   // V2: Calculer le niveau à partir du globalRole uniquement
   const effectiveRole = globalRole ?? suggestedGlobalRole;
