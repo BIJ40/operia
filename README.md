@@ -1,4 +1,6 @@
 # Manuel CRM Apogée - Guide d'utilisation éditable
+
+[![Operia CI](https://github.com/<OWNER>/<REPO>/actions/workflows/operia-ci.yml/badge.svg)](https://github.com/<OWNER>/<REPO>/actions/workflows/operia-ci.yml)
  
 Application React permettant de gérer et éditer le guide d'utilisation du CRM Apogée avec un système de blocs modulaires, navigation conditionnelle et édition visuelle.
 

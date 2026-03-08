@@ -10,6 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test:e2e": "playwright test --config tests/e2e/playwright.config.ts",
+    "typecheck": "tsc --noEmit",
+    "ci:check": "tsc --noEmit && npx vitest run && vite build",
     "prepublish:check": "vite build && echo '✅ Build succeeded — ready to publish'"
   },
   "dependencies": {
