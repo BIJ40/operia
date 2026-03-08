@@ -5,7 +5,8 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { toast } from '@/hooks/use-toast';
 
 // Types de documents administratifs prédéfinis
@@ -38,7 +39,7 @@ export interface AgencyAdminDocument {
 }
 
 export function useAgencyAdminDocuments() {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
 
   return useQuery({
     queryKey: ['agency-admin-documents', agencyId],
@@ -60,7 +61,8 @@ export function useAgencyAdminDocuments() {
 
 export function useUploadAgencyAdminDocument() {
   const queryClient = useQueryClient();
-  const { agencyId, user } = useAuth();
+  const { agencyId } = useProfile();
+  const { user } = useAuthCore();
 
   return useMutation({
     mutationFn: async ({

@@ -1,4 +1,4 @@
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { useQuery } from '@tanstack/react-query';
 import { DataService } from '@/apogee-connect/services/dataService';
 import { calculateMonthlyCA } from '@/apogee-connect/utils/monthlyCalculations';
@@ -11,7 +11,7 @@ interface DiffusionSaviezVousProps {
 }
 
 export const DiffusionSaviezVous = ({ currentMonthIndex, templates }: DiffusionSaviezVousProps) => {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
 
   const { data } = useQuery({
     queryKey: ['diffusion-saviez-vous', agence],

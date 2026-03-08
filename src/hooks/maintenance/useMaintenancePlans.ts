@@ -4,7 +4,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { safeQuery, safeMutation } from '@/lib/safeQuery';
 import { logError } from '@/lib/logger';
 import type { 
@@ -19,7 +19,7 @@ import { addDays, format } from 'date-fns';
 const QUERY_KEY = 'maintenance-plans';
 
 export function useMaintenancePlans(agencyId?: string, targetType?: MaintenanceTargetType) {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const effectiveAgencyId = agencyId || agence;
 
   return useQuery({
@@ -86,7 +86,7 @@ export function useMaintenancePlan(planId: string | undefined) {
 
 export function useCreatePlanTemplate() {
   const queryClient = useQueryClient();
-  const { agence } = useAuth();
+  const { agence } = useProfile();
 
   return useMutation({
     mutationFn: async (data: MaintenancePlanTemplateFormData) => {
@@ -248,7 +248,7 @@ export function useDeletePlanItem() {
 
 export function useApplyPlanToAsset() {
   const queryClient = useQueryClient();
-  const { agence } = useAuth();
+  const { agence } = useProfile();
 
   return useMutation({
     mutationFn: async ({ 

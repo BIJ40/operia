@@ -6,7 +6,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { 
   MediaFolder, 
   MediaLinkWithAsset, 
@@ -32,7 +32,7 @@ export function useScopedMediaLibrary({
   rootPath, 
   allowNavigateUp = false 
 }: UseScopedMediaLibraryOptions) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   const queryClient = useQueryClient();
   
   // Current folder ID (starts at null = root of scope)

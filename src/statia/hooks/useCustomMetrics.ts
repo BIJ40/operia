@@ -3,7 +3,9 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { useProfile } from '@/contexts/ProfileContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import {
   listCustomMetrics,
   getCustomMetric,
@@ -58,7 +60,7 @@ export function useAllAvailableMetrics(agencySlug?: string) {
  */
 export function useCreateCustomMetric() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   return useMutation({
     mutationFn: (payload: CreateCustomMetricPayload) => {
@@ -116,7 +118,9 @@ export function useDeleteCustomMetric() {
  * Hook pour contexte StatIA Builder (admin vs agence)
  */
 export function useStatiaBuilderContext() {
-  const { user, agence, globalRole } = useAuth();
+  const { user } = useAuthCore();
+  const { agence } = useProfile();
+  const { globalRole } = usePermissions();
   
   const globalRoleLevel = globalRole ? GLOBAL_ROLES[globalRole] : 0;
   const isAdmin = globalRoleLevel >= 5; // N5+

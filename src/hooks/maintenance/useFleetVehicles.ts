@@ -4,7 +4,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { safeQuery, safeMutation } from '@/lib/safeQuery';
 import { logError } from '@/lib/logger';
 import type { FleetVehicle, FleetVehiclesFilters, FleetVehicleFormData } from '@/types/maintenance';
@@ -13,7 +13,7 @@ import { addDays, isBefore, isAfter, parseISO } from 'date-fns';
 const QUERY_KEY = 'fleet-vehicles';
 
 export function useFleetVehicles(agencyIdParam?: string, filters?: FleetVehiclesFilters) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   const effectiveAgencyId = agencyIdParam || agencyId;
 
   return useQuery({
@@ -101,7 +101,7 @@ export function useFleetVehicle(vehicleId: string | undefined) {
 
 export function useCreateFleetVehicle() {
   const queryClient = useQueryClient();
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
 
   return useMutation({
     mutationFn: async (data: FleetVehicleFormData) => {

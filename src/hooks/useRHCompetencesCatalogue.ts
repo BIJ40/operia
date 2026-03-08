@@ -4,7 +4,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { toast } from 'sonner';
 
 export interface CompetenceCatalogue {
@@ -16,7 +16,7 @@ export interface CompetenceCatalogue {
 }
 
 export function useCompetencesCatalogue() {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   
   return useQuery({
     queryKey: ['rh-competences-catalogue', agencyId],
@@ -39,7 +39,7 @@ export function useCompetencesCatalogue() {
 
 export function useAddCompetenceCatalogue() {
   const queryClient = useQueryClient();
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   
   return useMutation({
     mutationFn: async (label: string) => {
@@ -68,7 +68,7 @@ export function useAddCompetenceCatalogue() {
 
 export function useDeleteCompetenceCatalogue() {
   const queryClient = useQueryClient();
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   
   return useMutation({
     mutationFn: async (id: string) => {

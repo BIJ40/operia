@@ -3,7 +3,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DataService } from '@/apogee-connect/services/dataService';
 import { calculateMonthlyCA } from '@/apogee-connect/utils/monthlyCalculations';
@@ -11,7 +11,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { formatEuros } from '@/apogee-connect/utils/formatters';
 
 export function CAMensuelChartWidget() {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const agencySlug = agence || '';
   const selectedYear = new Date().getFullYear();
 

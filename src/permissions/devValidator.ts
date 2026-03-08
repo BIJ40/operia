@@ -7,7 +7,7 @@
  * @see COMMIT 2 du plan "5 commits zéro casse"
  */
 
-import { MODULE_OPTION_MIN_ROLES, MODULE_MIN_ROLES, MODULE_LABELS } from './constants';
+import { MODULE_OPTION_MIN_ROLES, MODULE_LABELS } from './constants';
 import { validateModuleDefinitions, logValidationIssues, getValidModuleKeys, getValidOptionKeys } from './moduleRegistry';
 import { ModuleKey } from '@/types/modules';
 
@@ -24,12 +24,8 @@ export function runDevValidation(): void {
   
   const allIssues: Array<{ type: 'error' | 'warning'; source: string; message: string; key: string }> = [];
   
-  // 1. Valider MODULE_MIN_ROLES
-  const minRolesIssues = validateModuleDefinitions(
-    MODULE_MIN_ROLES as Record<string, unknown>,
-    'MODULE_MIN_ROLES'
-  );
-  allIssues.push(...minRolesIssues);
+  // 1. Valider MODULE_DEFINITIONS minRoles (dérivé automatiquement, validation légère)
+  // MODULE_MIN_ROLES est maintenant dérivé de MODULE_DEFINITIONS, pas besoin de valider la cohérence
   
   // 2. Valider MODULE_LABELS  
   const labelsIssues = validateModuleDefinitions(

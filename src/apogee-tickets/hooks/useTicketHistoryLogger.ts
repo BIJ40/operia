@@ -4,7 +4,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { logError } from '@/lib/logger';
 import type { Json } from '@/integrations/supabase/types';
 import type { ApogeeTicket } from '../types';
@@ -80,7 +80,7 @@ interface LogHistoryParams {
 }
 
 export function useTicketHistoryLogger() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
   
   return useMutation({
@@ -140,7 +140,7 @@ export function useTicketHistoryLogger() {
 
 // Hook pour logger un changement de statut spécifiquement
 export function useLogStatusChange() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
   
   return useMutation({
@@ -178,7 +178,7 @@ export function useLogStatusChange() {
 
 // Hook pour logger l'ajout d'un commentaire
 export function useLogCommentAdded() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
   
   return useMutation({

@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { getMetricForAgency } from '@/statia/api/getMetricForAgency';
 import { getGlobalApogeeDataServices } from '@/statia/adapters/dataServiceAdapter';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,7 +16,7 @@ interface TauxSavWidgetProps {
 }
 
 export function TauxSavWidget({ compact = false }: TauxSavWidgetProps) {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const agencySlug = agence || '';
 
   const { dateRange, periodLabel } = useDashboardPeriod();

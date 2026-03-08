@@ -5,7 +5,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { logError } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import { toast } from 'sonner';
 import type { 
@@ -244,7 +244,7 @@ export function useUpdateItAccess() {
 // ============================================================================
 
 export function useRHTablePrefs() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   
   return useQuery({
     queryKey: ['rh-table-prefs', user?.id],
@@ -266,7 +266,7 @@ export function useRHTablePrefs() {
 
 export function useUpdateRHTablePrefs() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   
   return useMutation({
     mutationFn: async (data: { hidden_columns?: string[]; column_order?: string[] }) => {

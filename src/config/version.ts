@@ -1,5 +1,5 @@
-export const APP_VERSION = '0.9.4';
-export const APP_CODENAME = 'Phase 3 — Repository + KPI + Tests';
+export const APP_VERSION = '0.9.5';
+export const APP_CODENAME = 'Phase 3 — Granular Hooks + MODULE_DEFINITIONS + CSP';
 
 /**
  * Changelog v0.8.7 (2026-01-31)

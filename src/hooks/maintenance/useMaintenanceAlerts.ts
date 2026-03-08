@@ -4,7 +4,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { safeQuery, safeMutation } from '@/lib/safeQuery';
 import { logError } from '@/lib/logger';
 import type { MaintenanceAlert, MaintenanceAlertsFilters } from '@/types/maintenance';
@@ -12,7 +12,7 @@ import type { MaintenanceAlert, MaintenanceAlertsFilters } from '@/types/mainten
 const QUERY_KEY = 'maintenance-alerts';
 
 export function useMaintenanceAlerts(agencyId?: string, filters?: MaintenanceAlertsFilters) {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const effectiveAgencyId = agencyId || agence;
 
   return useQuery({
@@ -67,7 +67,7 @@ export function useMaintenanceAlerts(agencyId?: string, filters?: MaintenanceAle
 }
 
 export function useOpenMaintenanceAlertsCount(agencyId?: string) {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const effectiveAgencyId = agencyId || agence;
 
   return useQuery({

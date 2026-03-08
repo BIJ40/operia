@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 
 export interface MaintenanceSettings {
   id: string;
@@ -14,7 +14,7 @@ export interface MaintenanceSettings {
 }
 
 export function useMaintenanceMode() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   
   const { data: settings, isLoading } = useQuery({
     queryKey: ['maintenance-settings'],
@@ -49,7 +49,7 @@ export function useMaintenanceMode() {
 
 export function useMaintenanceAdmin() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ['maintenance-settings'],

@@ -5,7 +5,7 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/contexts/ProfileContext";
 import { getGlobalApogeeDataServices } from "@/statia/adapters/dataServiceAdapter";
 import { getMetricForAgency } from "@/statia/api/getMetricForAgency";
 import { startOfMonth, endOfMonth } from "date-fns";
@@ -36,7 +36,7 @@ export interface DiffusionKpisData {
 }
 
 export function useDiffusionKpisStatia(currentMonthIndex: number) {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const services = getGlobalApogeeDataServices();
 
   const now = new Date();

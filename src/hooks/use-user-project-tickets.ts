@@ -5,7 +5,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { logError } from '@/lib/logger';
 
 export interface UserProjectTicket {
@@ -35,7 +35,7 @@ export interface UserProjectTicket {
  * Récupère tous les tickets projet où l'utilisateur est l'initiateur support
  */
 export function useUserProjectTickets() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   return useQuery({
     queryKey: ['user-project-tickets', user?.id],

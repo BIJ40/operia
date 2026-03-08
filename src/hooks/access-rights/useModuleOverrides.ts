@@ -5,7 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { toast } from 'sonner';
 
 export interface UserOverride {
@@ -56,7 +56,7 @@ export function useModuleOverrides() {
 
 export function useAddOverride() {
   const qc = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   return useMutation({
     mutationFn: async ({ userId, moduleKey }: { userId: string; moduleKey: string }) => {

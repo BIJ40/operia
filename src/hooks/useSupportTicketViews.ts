@@ -5,7 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { logError } from '@/lib/logger';
 
 export interface SupportTicketView {
@@ -18,7 +18,7 @@ export interface SupportTicketView {
  * Hook pour récupérer les vues de l'utilisateur connecté
  */
 export function useMySupportTicketViews() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   return useQuery({
     queryKey: ['support-ticket-views', user?.id],
@@ -45,7 +45,7 @@ export function useMySupportTicketViews() {
  * Hook pour marquer un ticket comme vu
  */
 export function useMarkSupportTicketAsViewed() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -85,7 +85,7 @@ export function useSupportTicketShouldBlink(
   lastMessageBy: string | null,
   lastMessageAt: string | null
 ): boolean {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const { data: views = [] } = useMySupportTicketViews();
 
   // Pas de clignotement si:
@@ -122,7 +122,7 @@ export function useSupportTicketShouldBlink(
 export function useSupportTicketsBlinkStatus(
   tickets: Array<{ id: string; last_message_by?: string | null; last_message_at?: string | null }>
 ): Record<string, boolean> {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const { data: views = [] } = useMySupportTicketViews();
 
   if (!user?.id) {

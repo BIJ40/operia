@@ -6,7 +6,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { logError } from '@/lib/logger';
 
 export interface TicketTag {
@@ -36,7 +36,7 @@ const COLOR_CLASSES: Record<string, string> = {
 
 export function useTicketTags() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   const { data: tags = [], isLoading } = useQuery({
     queryKey: ['apogee-ticket-tags'],

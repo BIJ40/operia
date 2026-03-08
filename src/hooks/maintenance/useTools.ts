@@ -4,7 +4,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { safeQuery, safeMutation } from '@/lib/safeQuery';
 import { logError } from '@/lib/logger';
 import type { Tool, ToolsFilters, ToolFormData } from '@/types/maintenance';
@@ -12,7 +12,7 @@ import type { Tool, ToolsFilters, ToolFormData } from '@/types/maintenance';
 const QUERY_KEY = 'tools';
 
 export function useTools(agencyIdParam?: string, filters?: ToolsFilters) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   const effectiveAgencyId = agencyIdParam || agencyId;
 
   return useQuery({
@@ -88,7 +88,7 @@ export function useTool(toolId: string | undefined) {
 
 export function useCreateTool() {
   const queryClient = useQueryClient();
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
 
   return useMutation({
     mutationFn: async (data: ToolFormData) => {

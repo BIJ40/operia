@@ -5,7 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { toast } from 'sonner';
 
 export type DevStatus = 'done' | 'in_progress' | 'todo' | 'disabled';
@@ -121,7 +121,7 @@ export function useFeatureFlag(moduleKey: string) {
  */
 export function useUpdateFeatureFlag() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   return useMutation({
     mutationFn: async ({ id, is_enabled }: { id: string; is_enabled: boolean }) => {
@@ -153,7 +153,7 @@ export function useUpdateFeatureFlag() {
  */
 export function useCreateFeatureFlag() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   return useMutation({
     mutationFn: async (flag: Omit<FeatureFlag, 'id' | 'created_at' | 'updated_at' | 'updated_by'>) => {
@@ -258,7 +258,7 @@ export const DEV_STATUS_CONFIG: Record<DevStatus, { icon: string; label: string;
  */
 export function useUpdateDevStatus() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   return useMutation({
     mutationFn: async ({ id, dev_status }: { id: string; dev_status: DevStatus }) => {

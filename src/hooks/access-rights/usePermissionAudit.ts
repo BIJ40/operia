@@ -5,7 +5,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 
 export interface PermissionAuditEntry {
   id: string;
@@ -71,7 +71,7 @@ export function usePermissionAudit(filters?: AuditFilters) {
 }
 
 export function useAuditLog() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
   
   const logMutation = useMutation({

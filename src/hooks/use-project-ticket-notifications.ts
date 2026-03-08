@@ -11,7 +11,8 @@
 import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { logError } from '@/lib/logger';
 
 /**
@@ -19,7 +20,7 @@ import { logError } from '@/lib/logger';
  * sur leurs tickets projet initiés via le chat support
  */
 export function useUserProjectUnreadCount() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
 
   const { data: totalUnreadCount = 0, refetch } = useQuery({
@@ -94,7 +95,8 @@ export function useUserProjectUnreadCount() {
  * sur les tickets projet avec échanges
  */
 export function useSupportProjectUnreadCount() {
-  const { user, isSupport, isAdmin } = useAuth();
+  const { user } = useAuthCore();
+  const { isSupport, isAdmin } = usePermissions();
   const queryClient = useQueryClient();
 
   const { data: totalUnreadCount = 0, refetch } = useQuery({
@@ -152,7 +154,7 @@ export function useSupportProjectUnreadCount() {
  * côté utilisateur (pour faire clignoter les tickets dans la liste)
  */
 export function useUserProjectUnreadTickets() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   return useQuery({
     queryKey: ['user-project-unread-tickets', user?.id],
@@ -196,7 +198,8 @@ export function useUserProjectUnreadTickets() {
  * Hook pour le support - Liste des tickets avec messages non lus
  */
 export function useSupportProjectUnreadTickets() {
-  const { user, isSupport, isAdmin } = useAuth();
+  const { user } = useAuthCore();
+  const { isSupport, isAdmin } = usePermissions();
 
   return useQuery({
     queryKey: ['support-project-unread-tickets', user?.id],

@@ -5,7 +5,7 @@
  * mais ne peut effectuer AUCUNE action de mutation (créer, modifier, supprimer).
  */
 
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 
@@ -13,7 +13,7 @@ import { toast } from 'sonner';
  * Hook principal pour le mode lecture seule
  */
 export function useReadOnly() {
-  const { isReadOnly } = useAuth();
+  const { isReadOnly } = useProfile();
 
   /**
    * Bloque une action si l'utilisateur est en mode lecture seule.

@@ -97,11 +97,14 @@ export const ROLE_HIERARCHY: Record<GlobalRole, number> = {
   superadmin: 6,
 };
 
+// Derived from MODULE_DEFINITIONS canonical source (src/types/modules.ts)
+// Edge functions can't import from src/, so this is a synced copy.
+// Last sync: 2026-03-08
 export const MODULE_MIN_ROLES: Partial<Record<ModuleKey, GlobalRole>> = {
   agence: 'franchisee_admin',
   stats: 'franchisee_admin',
-  rh: 'base_user',
-  parc: 'franchisee_user',
+  rh: 'franchisee_admin',  // Aligned with MODULE_DEFINITIONS.minRole
+  parc: 'franchisee_admin', // Aligned with MODULE_DEFINITIONS.minRole
   divers_apporteurs: 'franchisee_admin',
   divers_plannings: 'franchisee_admin',
   divers_reunions: 'franchisee_admin',
@@ -138,7 +141,14 @@ export function isBypassRole(role: GlobalRole | null): boolean {
  * Normalise un module_key legacy vers V3
  */
 export function normalizeModuleKey(key: string): ModuleKey | null {
-  if (key in MODULE_MIN_ROLES) return key as ModuleKey;
+  // Check all known module keys (MODULE_MIN_ROLES covers all canonical keys)
+  const ALL_MODULE_KEYS: ModuleKey[] = [
+    'agence', 'stats', 'rh', 'parc', 'divers_apporteurs', 'divers_plannings',
+    'divers_reunions', 'divers_documents', 'guides', 'ticketing', 'aide',
+    'prospection', 'planning_augmente', 'reseau_franchiseur', 'admin_plateforme',
+    'unified_search',
+  ];
+  if (ALL_MODULE_KEYS.includes(key as ModuleKey)) return key as ModuleKey;
   if (key in MODULE_COMPAT_MAP) return MODULE_COMPAT_MAP[key];
   return null;
 }

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuthCore } from "@/contexts/AuthCoreContext";
 import { useEffect } from "react";
 import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
@@ -26,7 +26,7 @@ export interface UnifiedNotification {
 }
 
 export function useUnifiedNotifications(limit = 50) {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
 
   const query = useQuery({
@@ -106,7 +106,7 @@ export function useUnifiedNotifications(limit = 50) {
 }
 
 export function useUnreadNotificationsCount() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
 
   const query = useQuery({
@@ -160,7 +160,7 @@ export function useUnreadNotificationsCount() {
 }
 
 export function useMarkNotificationsRead() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -183,7 +183,7 @@ export function useMarkNotificationsRead() {
 }
 
 export function useMarkAllNotificationsRead() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
 
   return useMutation({

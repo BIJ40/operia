@@ -1,4 +1,4 @@
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { useQuery } from '@tanstack/react-query';
 import { DataService } from '@/apogee-connect/services/dataService';
 import { calculateMonthlySegmentation } from '@/apogee-connect/utils/segmentationCalculations';
@@ -11,7 +11,7 @@ interface SlideSegmentationProps {
 }
 
 export const SlideSegmentation = ({ currentMonthIndex }: SlideSegmentationProps) => {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
 
   const { data } = useQuery({
     queryKey: ['diffusion-segmentation', agence, currentMonthIndex],
