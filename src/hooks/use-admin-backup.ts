@@ -5,6 +5,40 @@ import { safeQuery, safeMutation } from '@/lib/safeQuery';
 import { errorToast, successToast } from '@/lib/toastHelpers';
 // jsPDF loaded dynamically to reduce bundle
 
+// Explicit columns to avoid select('*') — prevents data leakage and future schema breaks
+const BLOCK_COLUMNS = 'id, title, slug, type, content, content_type, content_updated_at, summary, show_summary, icon, color_preset, order, parent_id, tips_type, hide_from_sidebar, hide_title, is_empty, is_single_section, show_title_in_menu, show_title_on_card, attachments, created_at, updated_at' as const;
+
+/**
+ * Paginated fetch — fetches all rows in pages of PAGE_SIZE to avoid Supabase's 1000-row default limit.
+ */
+const PAGE_SIZE = 500;
+
+async function fetchAllPaginated<T>(
+  buildQuery: (from: number, to: number) => ReturnType<typeof supabase.from>,
+  label: string
+): Promise<{ success: boolean; data: T[] }> {
+  const allRows: T[] = [];
+  let page = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const from = page * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+    const result = await safeQuery<T[]>(buildQuery(from, to), `${label}_PAGE_${page}`);
+    
+    if (!result.success) {
+      return { success: false, data: [] };
+    }
+
+    const rows = result.data || [];
+    allRows.push(...rows);
+    hasMore = rows.length === PAGE_SIZE;
+    page++;
+  }
+
+  return { success: true, data: allRows };
+}
+
 interface CategoryBlock {
   id: string;
   title: string;
