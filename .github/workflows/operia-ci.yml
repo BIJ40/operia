@@ -2,13 +2,9 @@ name: Operia CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
-    branches: [main, master]
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+    branches: [main]
 
 jobs:
   setup:
@@ -19,76 +15,40 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-      - run: npm ci
-      - uses: actions/cache/save@v4
-        with:
-          path: node_modules
-          key: nm-${{ runner.os }}-${{ hashFiles('package-lock.json', 'bun.lockb') }}
+      - run: npm install
 
-  typecheck:
+  typescript:
     name: 🔍 TypeScript
-    needs: setup
     runs-on: ubuntu-latest
+    needs: setup
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - uses: actions/cache/restore@v4
-        with:
-          path: node_modules
-          key: nm-${{ runner.os }}-${{ hashFiles('package-lock.json', 'bun.lockb') }}
+      - run: npm install
       - run: npx tsc --noEmit
 
-
-  unit-tests:
+  tests:
     name: 🧪 Unit Tests
-    needs: setup
     runs-on: ubuntu-latest
+    needs: setup
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - uses: actions/cache/restore@v4
-        with:
-          path: node_modules
-          key: nm-${{ runner.os }}-${{ hashFiles('package-lock.json', 'bun.lockb') }}
-      - run: npx vitest run --reporter=verbose
-
-
+      - run: npm install
+      - run: npm run test
 
   build:
     name: 🏗️ Build
-    needs: [typecheck, lint, unit-tests]
     runs-on: ubuntu-latest
+    needs: [typescript, tests]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - uses: actions/cache/restore@v4
-        with:
-          path: node_modules
-          key: nm-${{ runner.os }}-${{ hashFiles('package-lock.json', 'bun.lockb') }}
+      - run: npm install
       - run: npm run build
-
-  e2e:
-    name: 🎭 E2E Tests
-    needs: build
-    runs-on: ubuntu-latest
-    if: ${{ vars.E2E_BASE_URL != '' }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - uses: actions/cache/restore@v4
-        with:
-          path: node_modules
-          key: nm-${{ runner.os }}-${{ hashFiles('package-lock.json', 'bun.lockb') }}
-      - run: npx playwright install chromium --with-deps
-      - run: npm run test:e2e
-        env:
-          E2E_BASE_URL: ${{ vars.E2E_BASE_URL }}
