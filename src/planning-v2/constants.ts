@@ -45,14 +45,14 @@ export const DURATION_FALLBACK: Record<string, number> = {
 export const DEFAULT_TECH_COLOR = "#808080";
 
 export const BLOCK_COLORS: Record<string, string> = {
-  conge: "hsl(210 20% 90%)",
-  absence: "hsl(0 60% 92%)",
-  pause: "hsl(43 40% 92%)",
-  tache: "hsl(200 30% 92%)",
-  atelier: "hsl(260 30% 92%)",
-  formation: "hsl(150 30% 92%)",
-  repos: "hsl(210 10% 94%)",
-  rappel: "hsl(43 60% 92%)",
+  conge: "hsl(210 30% 82%)",
+  absence: "hsl(0 65% 85%)",
+  pause: "hsl(43 50% 82%)",
+  tache: "hsl(200 40% 82%)",
+  atelier: "hsl(260 40% 82%)",
+  formation: "hsl(150 40% 82%)",
+  repos: "hsl(210 15% 86%)",
+  rappel: "hsl(43 65% 82%)",
 };
 
 export const BLOCK_LABELS: Record<string, string> = {
