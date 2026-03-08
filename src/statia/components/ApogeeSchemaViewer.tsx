@@ -109,7 +109,7 @@ export function ApogeeSchemaViewer() {
                 className="pl-10"
               />
             </div>
-            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)} className="w-auto">
+            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'cards' | 'relations' | 'concepts')} className="w-auto">
               <TabsList>
                 <TabsTrigger value="cards" className="gap-2">
                   <Database className="h-4 w-4" />

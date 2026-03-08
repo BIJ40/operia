@@ -72,7 +72,7 @@ export function ResultPreview({ result, error, isLoading }: ResultPreviewProps) 
 
         {/* Valeurs */}
         <div className="space-y-3">
-          {Object.entries(result.values).map(([key, data]: [string, any]) => (
+          {Object.entries(result.values).map(([key, data]) => (
             <Card key={key} className="overflow-hidden">
               <CardHeader className="p-3 pb-1">
                 <CardTitle className="text-sm font-medium">{data.label}</CardTitle>

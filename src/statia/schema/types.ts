@@ -197,5 +197,5 @@ export interface MetricDebugOutput {
     field?: string;
     groupBy?: string;
   };
-  result: any;
+  result: unknown;
 }

@@ -148,7 +148,7 @@ export function DropZone({
           {selectedMeasures.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {selectedMeasures.map((measure) => {
-                const IconComponent = (Icons as any)[measure.icon] || Icons.Circle;
+                const IconComponent = (Icons as Record<string, React.ComponentType<{ className?: string }>>)[measure.icon] || Icons.Circle;
                 return (
                   <div
                     key={measure.id}

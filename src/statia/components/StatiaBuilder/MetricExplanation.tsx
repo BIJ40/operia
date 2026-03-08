@@ -25,7 +25,7 @@ interface MetricExplanationProps {
   measureId: string;
   measureLabel: string;
   value: number | Record<string, number>;
-  breakdown?: Record<string, any>;
+  breakdown?: Record<string, unknown>;
   dateRange: { start: Date; end: Date };
   agencySlug: string;
   dimensions?: {
