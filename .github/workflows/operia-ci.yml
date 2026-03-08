@@ -1,0 +1,120 @@
+name: Operia CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  setup:
+    name: 📦 Setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - uses: actions/cache/save@v4
+        with:
+          path: node_modules
+          key: nm-${{ runner.os }}-${{ hashFiles('package-lock.json', 'bun.lockb') }}
+
+  typecheck:
+    name: 🔍 TypeScript
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: nm-${{ runner.os }}-${{ hashFiles('package-lock.json', 'bun.lockb') }}
+      - run: npx tsc --noEmit
+
+  lint:
+    name: 🧹 Lint
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: nm-${{ runner.os }}-${{ hashFiles('package-lock.json', 'bun.lockb') }}
+      - run: npm run lint
+
+  unit-tests:
+    name: 🧪 Unit Tests
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: nm-${{ runner.os }}-${{ hashFiles('package-lock.json', 'bun.lockb') }}
+      - run: npx vitest run --reporter=verbose
+
+  edge-tests:
+    name: 🦕 Edge Function Tests
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v1.x
+      - run: deno test supabase/functions/tests/ --allow-net --allow-env --allow-read
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
+  build:
+    name: 🏗️ Build
+    needs: [typecheck, lint, unit-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: nm-${{ runner.os }}-${{ hashFiles('package-lock.json', 'bun.lockb') }}
+      - run: npm run build
+
+  e2e:
+    name: 🎭 E2E Tests
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ vars.E2E_BASE_URL != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: nm-${{ runner.os }}-${{ hashFiles('package-lock.json', 'bun.lockb') }}
+      - run: npx playwright install chromium --with-deps
+      - run: npm run test:e2e
+        env:
+          E2E_BASE_URL: ${{ vars.E2E_BASE_URL }}
