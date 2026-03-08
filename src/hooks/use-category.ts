@@ -101,7 +101,7 @@ export const useCategory = () => {
           hide_title: updatedSection.hideTitle,
           show_summary: updatedSection.showSummary,
           summary: updatedSection.summary,
-          attachments: updatedSection.attachments as any || [],
+          attachments: (updatedSection.attachments ?? []) as unknown as Json,
           hide_from_sidebar: updatedSection.hideFromSidebar,
           is_in_progress: updatedSection.isInProgress || false,
           completed_at: updatedSection.completedAt || null,
