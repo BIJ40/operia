@@ -134,7 +134,7 @@ export const useCategoryHelpConfort = () => {
           color_preset: updatedSection.colorPreset,
           tips_type: updatedSection.tipsType,
           hide_title: updatedSection.hideTitle,
-          attachments: updatedSection.attachments as any || [],
+          attachments: (updatedSection.attachments ?? []) as unknown as Json,
           hide_from_sidebar: updatedSection.hideFromSidebar,
         })
         .eq('id', updatedSection.id),
