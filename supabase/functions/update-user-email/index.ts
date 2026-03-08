@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts'
 import { validateString, validateUUID } from '../_shared/validation.ts'
 import { checkRateLimit } from '../_shared/rateLimiter.ts'
+import { requireAal2 } from '../_shared/mfa.ts'
 
 // ============================================================================
 // SYSTÈME DE PERMISSIONS V2.0 - Helpers centralisés
