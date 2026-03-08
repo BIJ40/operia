@@ -7,7 +7,7 @@
  * @see COMMIT 2 du plan "5 commits zéro casse"
  */
 
-import { MODULE_OPTION_MIN_ROLES, MODULE_MIN_ROLES, MODULE_LABELS } from './constants';
+import { MODULE_OPTION_MIN_ROLES, MODULE_LABELS } from './constants';
 import { validateModuleDefinitions, logValidationIssues, getValidModuleKeys, getValidOptionKeys } from './moduleRegistry';
 import { ModuleKey } from '@/types/modules';
 
