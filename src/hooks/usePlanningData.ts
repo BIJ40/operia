@@ -89,9 +89,9 @@ export function usePlanningProjects(agencySlug: string | undefined) {
       ]);
 
       // Index clients by id
-      const clientsById = new Map<number, any>();
-      (clients || []).forEach((c: any) => {
-        clientsById.set(c.id, c);
+      const clientsById = new Map<number, Record<string, unknown>>();
+      (clients || []).forEach((c: Record<string, unknown>) => {
+        clientsById.set(c.id as number, c);
       });
 
       // Build a set of projectIds that already have a planned/validated TVX intervention
