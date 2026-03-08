@@ -93,7 +93,7 @@ export interface LoadDebugInfo {
   apiKeyPresent: boolean;
   rawCounts: Record<string, number>;
   filteredCounts: Record<string, number>;
-  appliedFilters: Record<string, any[]>;
+  appliedFilters: Record<string, FilterCondition[]>;
   aggregationStats?: {
     min?: number;
     max?: number;
