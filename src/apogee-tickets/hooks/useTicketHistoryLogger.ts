@@ -80,7 +80,7 @@ interface LogHistoryParams {
 }
 
 export function useTicketHistoryLogger() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
   
   return useMutation({
