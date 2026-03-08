@@ -101,7 +101,7 @@ async function upsertValidation(
  */
 export function useValidateMetric() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   
   return useMutation({
     mutationFn: (metricId: string) => 

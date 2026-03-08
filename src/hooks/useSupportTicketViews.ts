@@ -122,7 +122,7 @@ export function useSupportTicketShouldBlink(
 export function useSupportTicketsBlinkStatus(
   tickets: Array<{ id: string; last_message_by?: string | null; last_message_at?: string | null }>
 ): Record<string, boolean> {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const { data: views = [] } = useMySupportTicketViews();
 
   if (!user?.id) {

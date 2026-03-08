@@ -118,7 +118,9 @@ export function useDeleteCustomMetric() {
  * Hook pour contexte StatIA Builder (admin vs agence)
  */
 export function useStatiaBuilderContext() {
-  const { user, agence, globalRole } = useAuth();
+  const { user } = useAuthCore();
+  const { agence } = useProfile();
+  const { globalRole } = usePermissions();
   
   const globalRoleLevel = globalRole ? GLOBAL_ROLES[globalRole] : 0;
   const isAdmin = globalRoleLevel >= 5; // N5+

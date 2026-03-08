@@ -25,7 +25,8 @@ function showReadOnlyToast() {
 }
 
 export function ReadOnlyEnforcer() {
-  const { isReadOnly, isAuthLoading } = useAuth();
+  const { isReadOnly } = useProfile();
+  const { isAuthLoading } = useAuthCore();
 
   useEffect(() => {
     if (isAuthLoading) return;

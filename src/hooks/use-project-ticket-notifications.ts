@@ -20,7 +20,7 @@ import { logError } from '@/lib/logger';
  * sur leurs tickets projet initiés via le chat support
  */
 export function useUserProjectUnreadCount() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
 
   const { data: totalUnreadCount = 0, refetch } = useQuery({

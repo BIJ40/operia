@@ -35,7 +35,7 @@ export interface UserProjectTicket {
  * Récupère tous les tickets projet où l'utilisateur est l'initiateur support
  */
 export function useUserProjectTickets() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   return useQuery({
     queryKey: ['user-project-tickets', user?.id],
