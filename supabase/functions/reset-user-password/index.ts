@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { Resend } from 'https://esm.sh/resend@2.0.0'
 import { GLOBAL_ROLES, getRoleLevel, canResetPassword } from '../_shared/roles.ts'
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts'
+import { checkRateLimit } from '../_shared/rateLimiter.ts'
 
 serve(async (req) => {
   console.log(`[reset-user-password] === FUNCTION CALLED === Method: ${req.method}, Origin: ${req.headers.get('origin')}`)
