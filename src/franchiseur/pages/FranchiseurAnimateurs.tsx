@@ -30,7 +30,8 @@ const ROLE_COLORS: Record<string, string> = {
 
 export default function FranchiseurAnimateurs() {
   const navigate = useNavigate();
-  const { user, globalRole } = useAuth();
+  const { user } = useAuthCore();
+  const { globalRole } = usePermissions();
   const { permissions, franchiseurRole } = useFranchiseur();
   const queryClient = useQueryClient();
   const [selectedAnimatorId, setSelectedAnimatorId] = useState<string | null>(null);
