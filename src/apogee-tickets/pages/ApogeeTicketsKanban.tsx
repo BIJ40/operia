@@ -37,7 +37,7 @@ import { Badge } from '@/components/ui/badge';
 import { ROUTES } from '@/config/routes';
 import { useMyRecentlyModifiedTickets } from '../hooks/useMyRecentlyModifiedTickets';
 import { useMyTicketViews } from '../hooks/useTicketViews';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { PageHeader } from '@/components/layout/PageHeader';
 
 interface ApogeeTicketsKanbanPageProps {
