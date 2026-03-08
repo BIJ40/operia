@@ -52,9 +52,9 @@ export default function AdminSitemap() {
       // Role filter - show routes requiring this role level or higher
       if (filters.minRole !== 'all') {
         const routeRoleLevel = route.guards.roleGuard 
-          ? ROLE_LEVELS[route.guards.roleGuard.minRole] 
+          ? ROLE_HIERARCHY[route.guards.roleGuard.minRole] 
           : 0;
-        const filterRoleLevel = ROLE_LEVELS[filters.minRole];
+        const filterRoleLevel = ROLE_HIERARCHY[filters.minRole];
         if (routeRoleLevel < filterRoleLevel) return false;
       }
 
