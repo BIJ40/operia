@@ -393,7 +393,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       sendEmail: boolean;
     }) => {
       // Le rôle global est celui choisi par l'admin, pas de forçage automatique
-      let effectiveGlobalRole = userData.globalRole;
+      const effectiveGlobalRole = userData.globalRole;
       
       // ✅ VÉRIFICATION CRITIQUE : Le rôle cible est-il créable ?
       if (!capabilities.canCreateRoles.includes(effectiveGlobalRole)) {
