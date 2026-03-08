@@ -76,7 +76,8 @@ export async function createMaintenanceEvent(payload: Record<string, unknown>) {
 }
 
 export async function updateMaintenanceEvent(id: string, payload: Record<string, unknown>) {
-  const { data, error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
     .from('maintenance_events')
     .update(payload)
     .eq('id', id)

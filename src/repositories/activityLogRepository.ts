@@ -49,7 +49,7 @@ export async function listActivityLogs(
   if (filters.module) query = query.eq('module', filters.module);
   if (filters.entityType) query = query.eq('entity_type', filters.entityType);
   if (filters.entityId) query = query.eq('entity_id', filters.entityId);
-  if (filters.actorType) query = query.eq('actor_type', filters.actorType);
+  if (filters.actorType) query = query.eq('actor_type', filters.actorType as 'user' | 'apporteur' | 'system' | 'ai');
   if (filters.actorId) query = query.eq('actor_id', filters.actorId);
   if (filters.action) query = query.eq('action', filters.action);
   if (filters.fromDate) query = query.gte('created_at', filters.fromDate);

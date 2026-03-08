@@ -83,9 +83,10 @@ export async function upsertAnnouncementRead(params: {
 }
 
 export async function createAnnouncement(
-  data: Partial<AnnouncementRow>
+  data: Record<string, unknown>
 ): Promise<AnnouncementRow> {
-  const { data: result, error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: result, error } = await (supabase as any)
     .from('priority_announcements')
     .insert(data)
     .select()

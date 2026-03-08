@@ -35,9 +35,10 @@ export async function listAdminDocuments(agencyId: string): Promise<AdminDocumen
 }
 
 export async function upsertAdminDocument(
-  doc: Partial<AdminDocumentRow> & { agency_id: string; document_type: string }
+  doc: Record<string, unknown>
 ): Promise<AdminDocumentRow> {
-  const { data, error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
     .from('agency_admin_documents')
     .upsert(doc, { onConflict: 'agency_id,document_type' })
     .select()
