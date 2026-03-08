@@ -79,12 +79,12 @@ export const TYPE_LABELS: Record<string, string> = {
 };
 
 export const TYPE_BADGE_COLORS: Record<string, { bg: string; text: string }> = {
-  depannage: { bg: "hsl(200 80% 92%)", text: "hsl(200 80% 30%)" },
-  travaux:   { bg: "hsl(150 60% 90%)", text: "hsl(150 60% 25%)" },
-  tvx:       { bg: "hsl(150 60% 90%)", text: "hsl(150 60% 25%)" },
-  rt:        { bg: "hsl(260 50% 92%)", text: "hsl(260 50% 30%)" },
-  rdvtech:   { bg: "hsl(260 50% 92%)", text: "hsl(260 50% 30%)" },
-  sav:       { bg: "hsl(0 60% 92%)",   text: "hsl(0 60% 35%)" },
-  diagnostic:{ bg: "hsl(43 60% 90%)",  text: "hsl(43 60% 30%)" },
-  th:        { bg: "hsl(210 20% 92%)", text: "hsl(210 20% 35%)" },
+  depannage: { bg: "hsl(200 80% 85%)", text: "hsl(200 80% 22%)" },
+  travaux:   { bg: "hsl(150 60% 82%)", text: "hsl(150 60% 18%)" },
+  tvx:       { bg: "hsl(150 60% 82%)", text: "hsl(150 60% 18%)" },
+  rt:        { bg: "hsl(260 50% 84%)", text: "hsl(260 50% 22%)" },
+  rdvtech:   { bg: "hsl(260 50% 84%)", text: "hsl(260 50% 22%)" },
+  sav:       { bg: "hsl(0 60% 84%)",   text: "hsl(0 60% 25%)" },
+  diagnostic:{ bg: "hsl(43 60% 82%)",  text: "hsl(43 60% 22%)" },
+  th:        { bg: "hsl(210 25% 84%)", text: "hsl(210 25% 25%)" },
 };
