@@ -141,7 +141,14 @@ export function isBypassRole(role: GlobalRole | null): boolean {
  * Normalise un module_key legacy vers V3
  */
 export function normalizeModuleKey(key: string): ModuleKey | null {
-  if (key in MODULE_MIN_ROLES) return key as ModuleKey;
+  // Check all known module keys (MODULE_MIN_ROLES covers all canonical keys)
+  const ALL_MODULE_KEYS: ModuleKey[] = [
+    'agence', 'stats', 'rh', 'parc', 'divers_apporteurs', 'divers_plannings',
+    'divers_reunions', 'divers_documents', 'guides', 'ticketing', 'aide',
+    'prospection', 'planning_augmente', 'reseau_franchiseur', 'admin_plateforme',
+    'unified_search',
+  ];
+  if (ALL_MODULE_KEYS.includes(key as ModuleKey)) return key as ModuleKey;
   if (key in MODULE_COMPAT_MAP) return MODULE_COMPAT_MAP[key];
   return null;
 }

@@ -113,10 +113,10 @@ describe('getValidModuleKeys', () => {
 // ============================================================================
 
 describe('Constants ↔ MODULE_DEFINITIONS consistency', () => {
-  it('MODULE_MIN_ROLES only contains valid module keys', () => {
-    const validKeys = new Set(getValidModuleKeys());
-    for (const key of Object.keys(MODULE_MIN_ROLES)) {
-      expect(validKeys.has(key as any)).toBe(true);
+  it('MODULE_MIN_ROLES is derived from MODULE_DEFINITIONS', () => {
+    // MODULE_MIN_ROLES is now auto-derived, verify it matches MODULE_DEFINITIONS
+    for (const mod of MODULE_DEFINITIONS) {
+      expect(MODULE_MIN_ROLES[mod.key as keyof typeof MODULE_MIN_ROLES]).toBe(mod.minRole);
     }
   });
 
