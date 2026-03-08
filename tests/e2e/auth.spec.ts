@@ -1,35 +1,31 @@
 import { test, expect } from '@playwright/test';
-import { login, TEST_USERS, expectPath } from './fixtures/test-helpers';
+import { login, TEST_USERS, ROUTES, expectAuthenticated } from './fixtures/test-helpers';
 
 test.describe('Authentication', () => {
-  test('valid login redirects to workspace', async ({ page }) => {
+  test('valid login redirects to workspace @smoke', async ({ page }) => {
     const user = TEST_USERS.franchisee_admin;
     await login(page, user.email, user.password);
-    // Should not be on login page anymore
-    expect(page.url()).not.toContain('/login');
+    await expectAuthenticated(page);
   });
 
-  test('invalid login shows error', async ({ page }) => {
-    await page.goto('/login');
-    await page.fill('input[type="email"]', 'invalid@test.com');
-    await page.fill('input[type="password"]', 'wrongpassword');
-    await page.click('button[type="submit"]');
-    // Should stay on login or show error
+  test('invalid login stays on login page @smoke', async ({ page }) => {
+    await page.goto(ROUTES.login);
+    await page.locator('input[type="email"]').waitFor({ state: 'visible', timeout: 10_000 });
+    await page.locator('input[type="email"]').fill('invalid@test.com');
+    await page.locator('input[type="password"]').fill('wrongpassword');
+    await page.locator('button[type="submit"]').click();
+
+    // Wait a moment then verify we're still on login
     await page.waitForTimeout(3000);
-    const hasError =
-      page.url().includes('/login') ||
-      (await page.textContent('body'))?.toLowerCase().includes('erreur') ||
-      (await page.textContent('body'))?.toLowerCase().includes('incorrect');
-    expect(hasError).toBeTruthy();
+    expect(page.url()).toContain('/login');
   });
 
   test('active session persists on reload', async ({ page }) => {
     const user = TEST_USERS.franchisee_admin;
     await login(page, user.email, user.password);
-    const urlAfterLogin = page.url();
     await page.reload();
-    await page.waitForLoadState('networkidle');
-    // Should not redirect back to login
-    expect(page.url()).not.toContain('/login');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
+    await expectAuthenticated(page);
   });
 });
