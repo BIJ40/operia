@@ -77,7 +77,8 @@ export const TICKET_ROLE_LABELS: Record<TicketRole, string> = {
 
 // Hook to get current user's ticket role - NEVER returns undefined
 export function useMyTicketRole() {
-  const { user, globalRole } = useAuth();
+  const { user } = useAuthCore();
+  const { globalRole } = usePermissions();
   
   return useQuery<TicketRoleInfo>({
     queryKey: ['my-ticket-role', user?.id],
