@@ -53,7 +53,8 @@ export function useProspectingFollowups({ apporteurId, enabled = true }: UsePros
 
 export function useCreateFollowup() {
   const queryClient = useQueryClient();
-  const { agencyId, user } = useAuth();
+  const { agencyId } = useProfile();
+  const { user } = useAuthCore();
 
   return useMutation({
     mutationFn: async (input: {
