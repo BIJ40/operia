@@ -3,6 +3,7 @@
  */
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { monitorEdgeCall } from '@/lib/edge-monitor';
 import { GlobalRole } from '@/types/globalRoles';
 import { EnabledModules } from '@/types/modules';
 import { UserManagementCapabilities } from '@/config/roleMatrix';
