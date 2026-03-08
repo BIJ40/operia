@@ -11,7 +11,7 @@ export type AggregationType = 'sum' | 'avg' | 'count' | 'distinct_count' | 'rati
 export interface FilterCondition {
   field: string;
   operator: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'in' | 'not_in' | 'contains' | 'exists';
-  value: any;
+  value: unknown;
 }
 
 export interface FormulaDefinition {
