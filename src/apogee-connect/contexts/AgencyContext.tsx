@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { DataService } from '@/apogee-connect/services/dataService';
 import { logApogee } from '@/lib/logger';
