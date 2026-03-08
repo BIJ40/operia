@@ -196,9 +196,11 @@ export function RHContractSalarySimple({ collaborator }: RHContractSalarySimpleP
     if (!contractDocument?.storage_path) return;
     
     // Get signed URL
-    const { data } = await supabase.functions.invoke('media-get-signed-url', {
-      body: { filePath: contractDocument.storage_path },
-    });
+    const { data } = await monitorEdgeCall('media-get-signed-url', () =>
+      supabase.functions.invoke('media-get-signed-url', {
+        body: { filePath: contractDocument.storage_path },
+      })
+    );
     
     if (data?.signedUrl) {
       window.open(data.signedUrl, '_blank');
