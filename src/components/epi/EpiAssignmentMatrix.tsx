@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { useAgencyTechnicians, AgencyTechnician } from "@/hooks/useAgencyTechnicians";
 import { useEpiCatalog, EpiCatalogItem, EPI_CATEGORIES } from "@/hooks/epi/useEpiCatalog";
 import { useEpiAssignments, EpiAssignment, useCreateEpiAssignment, useUpdateEpiAssignment } from "@/hooks/epi/useEpiAssignments";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuthCore } from "@/contexts/AuthCoreContext";
 import {
   Table,
   TableBody,
