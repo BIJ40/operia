@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils';
 import { useRdvMap, calculateBounds, MapRdv } from '@/hooks/useRdvMap';
 import { createPinMarkerElement } from '@/components/map/PinMarker';
 import { RdvMiniPreview } from '@/components/map/RdvMiniPreview';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { supabase } from '@/integrations/supabase/client';
 
 // Mapbox token sera récupéré via Edge Function
@@ -32,7 +32,7 @@ const DEFAULT_CENTER: [number, number] = [1.4442, 43.6047]; // Toulouse (centre 
 const DEFAULT_ZOOM = 6;
 
 export default function RdvMapPage() {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);

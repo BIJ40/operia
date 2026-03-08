@@ -7,7 +7,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { apogeeProxy } from '@/services/apogeeProxy';
 import type { AggregatedKPIs, UniversAggregated } from '../engine/aggregators';
 import type { ApporteurDashboardData } from './useApporteurDashboard';
@@ -34,7 +34,7 @@ export function useApporteurDashboardLive({
   dateTo,
   enabled = true,
 }: UseApporteurDashboardLiveOptions) {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
 
   return useQuery<ApporteurDashboardLiveData>({
     queryKey: ['prospection-apporteur-live', agence, apporteurId, dateFrom, dateTo],

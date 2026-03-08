@@ -1,4 +1,4 @@
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { useQuery } from '@tanstack/react-query';
 import { DataService } from '@/apogee-connect/services/dataService';
 import { calculateUniversStats } from '@/apogee-connect/utils/universCalculations';
@@ -25,7 +25,7 @@ const COLORS = [
 ];
 
 export const SlideUniversApporteurs = ({ currentMonthIndex }: SlideUniversApporteursProps) => {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
 
   const { data } = useQuery({
     queryKey: ['diffusion-univers-apporteurs', agence, currentMonthIndex],

@@ -5,7 +5,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { 
   FolderOpen, Users, Truck, FileText, Building2, 
   ChevronRight, ChevronDown, Home, Loader2 
@@ -29,7 +29,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
 };
 
 export function MediaSidebar({ currentFolderId, onNavigate }: MediaSidebarProps) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
   // Fetch root folders (system folders and user folders at root level)

@@ -3,7 +3,8 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { toast } from 'sonner';
 
 export interface ProspectPoolItem {
@@ -44,7 +45,7 @@ export interface ProspectPoolFilters {
 }
 
 export function useProspectPool(filters: ProspectPoolFilters = {}) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
 
   return useQuery({
     queryKey: ['prospect-pool', agencyId, filters],
@@ -83,7 +84,8 @@ export function useProspectPool(filters: ProspectPoolFilters = {}) {
 
 export function useImportProspects() {
   const queryClient = useQueryClient();
-  const { agencyId, user } = useAuth();
+  const { agencyId } = useProfile();
+  const { user } = useAuthCore();
 
   return useMutation({
     mutationFn: async (rows: Omit<ProspectPoolItem, 'id' | 'agency_id' | 'imported_at' | 'imported_by'>[]) => {

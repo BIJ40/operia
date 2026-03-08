@@ -1,4 +1,4 @@
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { useQuery } from '@tanstack/react-query';
 import { DataService } from '@/apogee-connect/services/dataService';
 import { calculateTop10Apporteurs } from '@/apogee-connect/utils/apporteursCalculations';
@@ -12,7 +12,7 @@ interface SlideApporteursSAVProps {
 }
 
 export const SlideApporteursSAV = ({ currentMonthIndex }: SlideApporteursSAVProps) => {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
 
   const { data } = useQuery({
     queryKey: ['diffusion-apporteurs-sav', agence, currentMonthIndex],

@@ -4,7 +4,8 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 
 export interface ProspectingFollowup {
   id: string;
@@ -27,7 +28,7 @@ interface UseProspectingFollowupsOptions {
 }
 
 export function useProspectingFollowups({ apporteurId, enabled = true }: UseProspectingFollowupsOptions = {}) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
 
   return useQuery({
     queryKey: ['prospecting-followups', agencyId, apporteurId],
@@ -52,7 +53,8 @@ export function useProspectingFollowups({ apporteurId, enabled = true }: UsePros
 
 export function useCreateFollowup() {
   const queryClient = useQueryClient();
-  const { agencyId, user } = useAuth();
+  const { agencyId } = useProfile();
+  const { user } = useAuthCore();
 
   return useMutation({
     mutationFn: async (input: {

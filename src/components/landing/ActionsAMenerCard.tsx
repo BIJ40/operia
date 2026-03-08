@@ -6,11 +6,11 @@ import { useAgency } from '@/apogee-connect/contexts/AgencyContext';
 import { buildActionsAMener, calculateActionsStats } from '@/apogee-connect/utils/actionsAMenerCalculations';
 import { useActionsConfig } from '@/apogee-connect/hooks/useActionsConfig';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { logError } from '@/lib/logger';
 
 export function ActionsAMenerCard() {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const { isAgencyReady, currentAgency } = useAgency();
   const { config, isLoading: isLoadingConfig } = useActionsConfig();
 

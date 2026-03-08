@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 
 export interface RecentTicket {
   id: string;
@@ -11,7 +11,7 @@ export interface RecentTicket {
 }
 
 export function useMyRecentlyModifiedTickets(limit = 5) {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   return useQuery({
     queryKey: ['my-recently-modified-tickets', user?.id, limit],

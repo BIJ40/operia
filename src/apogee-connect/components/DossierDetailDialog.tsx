@@ -10,7 +10,7 @@ import { DataService } from '../services/dataService';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { toast } from 'sonner';
 
 interface DossierDetailDialogProps {
@@ -35,7 +35,7 @@ interface ClientContact {
 }
 
 export function DossierDetailDialog({ open, onOpenChange, projectId }: DossierDetailDialogProps) {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const [showContact, setShowContact] = useState(false);
   const [contactData, setContactData] = useState<ClientContact | null>(null);
 

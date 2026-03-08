@@ -18,7 +18,7 @@ import {
   Briefcase
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 
 interface RHStats {
   collaborators: {
@@ -46,7 +46,7 @@ interface RHStats {
 }
 
 export function RHDashboard() {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
 
   const { data: stats, isLoading } = useQuery<RHStats>({
     queryKey: ['rh-dashboard-stats', agencyId],

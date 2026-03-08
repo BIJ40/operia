@@ -3,7 +3,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { Card } from '@/components/ui/card';
 import { formatEuros } from '@/apogee-connect/utils/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -92,7 +92,7 @@ function formatValue(value: number | null | undefined, format: string): string {
 }
 
 export function IndicateursGlobauxWidget() {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const agencySlug = agence || '';
   const selectedYear = new Date().getFullYear();
 

@@ -3,7 +3,8 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { toast } from 'sonner';
 import type { ProspectPoolItem } from './useProspectPool';
 
@@ -65,7 +66,7 @@ interface UseProspectCardsOptions {
 }
 
 export function useProspectCards(options: UseProspectCardsOptions = {}) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
 
   return useQuery({
     queryKey: ['prospect-cards', agencyId, options],
@@ -113,7 +114,8 @@ export function useProspectCard(cardId: string | null) {
 
 export function useCreateProspectCards() {
   const queryClient = useQueryClient();
-  const { agencyId, user } = useAuth();
+  const { agencyId } = useProfile();
+  const { user } = useAuthCore();
 
   return useMutation({
     mutationFn: async (poolItems: ProspectPoolItem[]) => {
@@ -221,7 +223,8 @@ export function useProspectInteractions(cardId: string | null) {
 
 export function useCreateInteraction() {
   const queryClient = useQueryClient();
-  const { agencyId, user } = useAuth();
+  const { agencyId } = useProfile();
+  const { user } = useAuthCore();
 
   return useMutation({
     mutationFn: async (input: {

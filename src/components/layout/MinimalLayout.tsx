@@ -16,7 +16,7 @@ import { LoginDialog } from '@/components/LoginDialog';
 import { ImageModal } from '@/components/ImageModal';
 import { AiUnifiedProvider } from '@/components/ai';
 import { SidebarChat } from '@/components/chat/SidebarChat';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useStorageQuota } from '@/hooks/use-storage-quota';
 import { useUserPresence } from '@/hooks/use-user-presence';
@@ -43,7 +43,7 @@ export function MinimalLayout({
   backTab = 'accueil',
   backLabel = "Retour à l'espace de travail"
 }: MinimalLayoutProps) {
-  const { isAuthenticated, isAuthLoading } = useAuth();
+  const { isAuthenticated, isAuthLoading } = useAuthCore();
   const { isImpersonating } = useImpersonation();
   const [loginOpen, setLoginOpen] = useState(false);
   const navigate = useNavigate();

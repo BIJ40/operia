@@ -6,7 +6,7 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Brain, Settings, Loader2, AlertCircle } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { usePlanningProjects, type PlanningProject } from '@/hooks/usePlanningData';
 import { usePlanningData, useApogeeUsersNormalized } from '@/shared/api/apogee/usePlanningData';
 import { buildUserMap } from '@/shared/planning/planningMapper';
@@ -35,7 +35,7 @@ function getMonday(): Date {
 }
 
 export default function PlanningAugmenteAdmin() {
-  const { agencyId, agence: agencySlug } = useAuth();
+  const { agencyId, agence: agencySlug } = useProfile();
   const [selectedDossier, setSelectedDossier] = useState<PlanningProject | null>(null);
   const [weekStart, setWeekStart] = useState<Date>(getMonday);
 

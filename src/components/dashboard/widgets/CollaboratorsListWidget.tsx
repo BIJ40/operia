@@ -4,7 +4,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -13,7 +13,7 @@ import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 export function CollaboratorsListWidget() {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
 
   const { data: collaborators, isLoading } = useQuery({
     queryKey: ['widget-collaborators', agencyId],

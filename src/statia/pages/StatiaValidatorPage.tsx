@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CheckCircle2, XCircle, AlertCircle, Play, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -162,7 +162,7 @@ function compareValues(frontend: any, edge: any, _formatType: string): { match: 
 }
 
 export default function StatiaValidatorPage() {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const agencySlug = agence || 'dax';
   
   const [selectedPeriod, setSelectedPeriod] = useState('last_month');

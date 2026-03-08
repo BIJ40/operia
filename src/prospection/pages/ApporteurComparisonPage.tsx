@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { X, Loader2, GitCompare, Search, Building2, RefreshCw } from 'lucide-react';
 import { format, subDays, subMonths } from 'date-fns';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { useApporteurComparison } from '../hooks/useApporteurComparison';
 import { useApogeeCommanditaires, type ApogeeCommanditaire } from '@/hooks/useApogeeCommanditaires';
 import { ComparisonTable } from '../components/ComparisonTable';
@@ -38,7 +38,7 @@ interface SelectedApporteur {
 }
 
 export function ApporteurComparisonPage() {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   const queryClient = useQueryClient();
   const [period, setPeriod] = useState<PeriodKey>('6m');
   const [selected, setSelected] = useState<SelectedApporteur[]>([]);

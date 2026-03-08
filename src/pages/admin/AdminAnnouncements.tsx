@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, Eye, Calendar } from 'lucide-react';
 import { AnnouncementForm } from '@/components/admin/announcements/AnnouncementForm';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { format, isPast } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
@@ -39,7 +39,7 @@ function AnnouncementStatsDisplay({ announcementId }: { announcementId: string }
 }
 
 export default function AdminAnnouncements() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const { data: announcements = [], isLoading } = useAllAnnouncements();
   const deleteAnnouncement = useDeleteAnnouncement();
 

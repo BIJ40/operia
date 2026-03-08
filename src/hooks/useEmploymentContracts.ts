@@ -7,12 +7,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { EmploymentContract, SalaryHistory } from '@/types/collaborator';
 import { toast } from 'sonner';
 import { useHasMinLevel } from '@/hooks/useHasGlobalRole';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 
 export function useEmploymentContracts(collaboratorId: string | undefined) {
   const queryClient = useQueryClient();
   const canManage = useHasMinLevel(2);
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
 
   const { data: contracts = [], isLoading, error } = useQuery({
     queryKey: ['employment-contracts', collaboratorId],

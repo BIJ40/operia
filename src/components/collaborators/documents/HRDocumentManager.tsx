@@ -8,7 +8,7 @@ import { MediaLibraryPortal } from '@/components/media-library/MediaLibraryPorta
 import { FolderOpen, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 
 interface HRDocumentManagerProps {
   collaboratorId: string;
@@ -16,7 +16,7 @@ interface HRDocumentManagerProps {
 }
 
 export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManagerProps) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
 
   // Trouver le dossier du collaborateur dans la médiathèque
   const { data: collaboratorFolder, isLoading } = useQuery({

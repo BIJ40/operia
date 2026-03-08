@@ -5,14 +5,14 @@ import { Settings, FileText, HelpCircle } from "lucide-react";
 import { CommercialProfileForm } from "../components/CommercialProfileForm";
 import { CommercialGenerateTab } from "../components/CommercialGenerateTab";
 import { CommercialDocumentation } from "../components/CommercialDocumentation";
-import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from '@/contexts/ProfileContext';
 import { useHasGlobalRole } from "@/hooks/useHasGlobalRole";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function CommercialSupportPptx() {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   const isFranchiseur = useHasGlobalRole('franchisor_user');
   const [selectedAgencyId, setSelectedAgencyId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("config");

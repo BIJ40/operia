@@ -14,7 +14,7 @@ import { FolderOpen, Maximize2, FileText, Image as ImageIcon } from 'lucide-reac
 import { cn } from '@/lib/utils';
 import { useHasMinLevel } from '@/hooks/useHasGlobalRole';
 import { HRDocumentManager } from '@/components/collaborators/documents';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 
 interface Props {
   collaborator: RHCollaborator;
@@ -31,7 +31,7 @@ interface MediaLinkPreview {
 export function RHSectionDocuments({ collaborator }: Props) {
   const [openManager, setOpenManager] = React.useState(false);
   const canManage = useHasMinLevel(2);
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
 
   // Query documents from media_links (unified media library)
   const { data: documents = [], isLoading } = useQuery({

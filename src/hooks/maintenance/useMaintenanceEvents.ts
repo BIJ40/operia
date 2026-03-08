@@ -4,7 +4,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { safeQuery, safeMutation } from '@/lib/safeQuery';
 import { logError } from '@/lib/logger';
 import type { 
@@ -20,7 +20,7 @@ import { addDays, addMonths, addYears, parseISO, format } from 'date-fns';
 const QUERY_KEY = 'maintenance-events';
 
 export function useMaintenanceEvents(agencyId?: string, filters?: MaintenanceEventsFilters) {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const effectiveAgencyId = agencyId || agence;
 
   return useQuery({
@@ -106,7 +106,7 @@ export function useMaintenanceEvent(eventId: string | undefined) {
 
 export function useCreateMaintenanceEvent() {
   const queryClient = useQueryClient();
-  const { agence } = useAuth();
+  const { agence } = useProfile();
 
   return useMutation({
     mutationFn: async (data: MaintenanceEventFormData) => {
@@ -139,7 +139,7 @@ export function useCreateMaintenanceEvent() {
  */
 export function useCompleteMaintenanceEvent() {
   const queryClient = useQueryClient();
-  const { agence } = useAuth();
+  const { agence } = useProfile();
 
   return useMutation({
     mutationFn: async ({ 
