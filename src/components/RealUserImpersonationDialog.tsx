@@ -241,6 +241,7 @@ export function RealUserImpersonationDialog({ open, onOpenChange }: RealUserImpe
             )}
           </Button>
         </DialogFooter>
+        </MfaGuard>
       </DialogContent>
     </Dialog>
   );
