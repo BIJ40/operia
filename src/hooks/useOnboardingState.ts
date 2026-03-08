@@ -40,7 +40,7 @@ export interface OnboardingUpdateData {
 }
 
 export function useOnboardingState() {
-  const { user, isAuthLoading } = useAuth();
+  const { user, isAuthLoading } = useAuthCore();
   const [state, setState] = useState<OnboardingState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMutating, setIsMutating] = useState(false);

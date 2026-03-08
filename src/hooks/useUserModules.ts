@@ -154,7 +154,7 @@ export function useUpdateModuleOptions() {
  */
 export function useSyncModulesFromJsonb() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   
   return useMutation({
     mutationFn: async ({ 
