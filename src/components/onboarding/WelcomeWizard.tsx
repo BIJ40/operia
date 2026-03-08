@@ -124,7 +124,7 @@ export function WelcomeWizard({
   mustChangePassword = false,
   onPasswordChanged,
 }: WelcomeWizardProps) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [showCollaboratorWizard, setShowCollaboratorWizard] = useState(false);
   const [passwordChanged, setPasswordChanged] = useState(false);

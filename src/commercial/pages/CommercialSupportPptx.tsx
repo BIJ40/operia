@@ -12,7 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function CommercialSupportPptx() {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   const isFranchiseur = useHasGlobalRole('franchisor_user');
   const [selectedAgencyId, setSelectedAgencyId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("config");

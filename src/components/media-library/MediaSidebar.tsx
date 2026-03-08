@@ -29,7 +29,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
 };
 
 export function MediaSidebar({ currentFolderId, onNavigate }: MediaSidebarProps) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
   // Fetch root folders (system folders and user folders at root level)
