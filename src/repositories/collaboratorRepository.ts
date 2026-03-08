@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { logError } from '@/lib/logger';
 import { DEFAULT_LIST_LIMIT } from '@/services/BaseQueryService';
 
-const COLLABORATOR_COLUMNS = 'id, agency_id, user_id, first_name, last_name, email, phone, type, role, hiring_date, leaving_date, is_active, is_registered_user, apogee_user_id, notes, street, postal_code, city, created_at, updated_at' as const;
+const COLLABORATOR_COLUMNS = 'id, agency_id, user_id, first_name, last_name, email, phone, type, role, hiring_date, leaving_date, is_registered_user, apogee_user_id, notes, street, postal_code, city, created_at, updated_at' as const;
 
 export interface CollaboratorRow {
   id: string;
