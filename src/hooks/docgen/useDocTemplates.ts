@@ -22,7 +22,7 @@ export interface DocTemplate {
 }
 
 export function useDocTemplates() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   return useQuery({
     queryKey: ["doc-templates"],
