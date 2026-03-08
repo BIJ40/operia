@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { AgencyInfoCompact } from '@/components/pilotage/AgencyInfoCompact';
 import { ActionsAMenerTab } from '@/components/pilotage/ActionsAMenerTab';
 import { MesApporteursTab } from '@/components/pilotage/MesApporteursTab';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
 import { useSessionState } from '@/hooks/useSessionState';
 import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
