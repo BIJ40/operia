@@ -3,7 +3,7 @@
  */
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import {
   useMaintenanceAlerts,
   useAcknowledgeAlert,
