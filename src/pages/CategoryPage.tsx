@@ -67,7 +67,8 @@ export default function CategoryPage({ scope }: CategoryPageProps) {
   const config = CATEGORY_CONFIGS[scope];
 
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks, reloadBlocks, loading } = useEditor();
-  const { isAuthenticated, hasGlobalRole, hasModuleOption, hasAccessToScope } = useAuth();
+  const { isAuthenticated } = useAuthCore();
+  const { hasGlobalRole, hasModuleOption, hasAccessToScope } = usePermissions();
   
   // V2: Vérification par rôle global + option module
   const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('guides', 'edition');

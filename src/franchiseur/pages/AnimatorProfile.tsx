@@ -32,7 +32,8 @@ const ROLE_LABELS: Record<string, string> = {
 export default function AnimatorProfile() {
   const { animatorId } = useParams<{ animatorId: string }>();
   const navigate = useNavigate();
-  const { user, globalRole } = useAuth();
+  const { user } = useAuthCore();
+  const { globalRole } = usePermissions();
   const { franchiseurRole } = useFranchiseur();
   
   const [visitDialogOpen, setVisitDialogOpen] = useState(false);

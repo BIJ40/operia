@@ -89,7 +89,8 @@ export function TicketInlinePanel({
   onDelete,
   onClose,
 }: TicketInlinePanelProps) {
-  const { user, isAdmin, isSupport } = useAuth();
+  const { user } = useAuthCore();
+  const { isAdmin, isSupport } = usePermissions();
   const { data: roleInfo } = useMyTicketRole();
   const canManage = roleInfo?.canManage ?? false;
   const isDeveloper = roleInfo?.ticketRole === 'developer';
