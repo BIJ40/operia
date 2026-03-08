@@ -19,7 +19,7 @@ export interface CollaboratorRow {
   role: string | null;
   hiring_date: string | null;
   leaving_date: string | null;
-  is_active: boolean;
+  status?: string;
   is_registered_user: boolean;
   apogee_user_id: number | null;
   notes: string | null;
