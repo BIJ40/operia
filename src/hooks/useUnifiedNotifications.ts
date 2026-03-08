@@ -106,7 +106,7 @@ export function useUnifiedNotifications(limit = 50) {
 }
 
 export function useUnreadNotificationsCount() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
 
   const query = useQuery({
