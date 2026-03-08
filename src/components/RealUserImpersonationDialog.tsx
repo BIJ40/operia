@@ -3,6 +3,8 @@
  * 
  * Permet aux admins (N5+) de voir l'application comme un utilisateur spécifique
  * en chargeant ses vraies données (rôle, modules, agence).
+ * 
+ * Protégé par MfaGuard — nécessite AAL2 si MFA enforced.
  */
 
 import { useState, useMemo, useCallback } from 'react';
@@ -18,6 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { cn } from '@/lib/utils';
+import { MfaGuard } from '@/components/auth/MfaGuard';
 
 interface UserResult {
   id: string;
@@ -104,6 +107,7 @@ export function RealUserImpersonationDialog({ open, onOpenChange }: RealUserImpe
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
+        <MfaGuard>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Eye className="h-5 w-5 text-primary" />
@@ -237,6 +241,7 @@ export function RealUserImpersonationDialog({ open, onOpenChange }: RealUserImpe
             )}
           </Button>
         </DialogFooter>
+        </MfaGuard>
       </DialogContent>
     </Dialog>
   );

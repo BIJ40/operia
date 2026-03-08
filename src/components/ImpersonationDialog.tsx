@@ -8,6 +8,7 @@ import { useImpersonation, ROLE_AGENCE_OPTIONS, FRANCHISEUR_ROLE_OPTIONS, type I
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Eye, Info } from 'lucide-react';
+import { MfaGuard } from '@/components/auth/MfaGuard';
 
 interface ImpersonationDialogProps {
   open: boolean;
@@ -80,7 +81,8 @@ export function ImpersonationDialog({ open, onOpenChange }: ImpersonationDialogP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md">
+        <MfaGuard>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Eye className="h-5 w-5 text-primary" />
@@ -193,6 +195,7 @@ export function ImpersonationDialog({ open, onOpenChange }: ImpersonationDialogP
             Démarrer la simulation
           </Button>
         </DialogFooter>
+        </MfaGuard>
       </DialogContent>
     </Dialog>
   );
