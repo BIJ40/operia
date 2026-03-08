@@ -31,7 +31,7 @@ import {
 import { useEpiCatalog, EPI_CATEGORIES } from "@/hooks/epi/useEpiCatalog";
 import { useCreateEpiAssignment } from "@/hooks/epi/useEpiAssignments";
 import { useCollaborators } from "@/hooks/useCollaborators";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuthCore } from "@/contexts/AuthCoreContext";
 import { HardHat, UserPlus } from "lucide-react";
 import { addDays, format } from "date-fns";
 
