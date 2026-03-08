@@ -35,7 +35,7 @@ interface ClientContact {
 }
 
 export function DossierDetailDialog({ open, onOpenChange, projectId }: DossierDetailDialogProps) {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const [showContact, setShowContact] = useState(false);
   const [contactData, setContactData] = useState<ClientContact | null>(null);
 

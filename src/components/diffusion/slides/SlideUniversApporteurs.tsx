@@ -25,7 +25,7 @@ const COLORS = [
 ];
 
 export const SlideUniversApporteurs = ({ currentMonthIndex }: SlideUniversApporteursProps) => {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
 
   const { data } = useQuery({
     queryKey: ['diffusion-univers-apporteurs', agence, currentMonthIndex],

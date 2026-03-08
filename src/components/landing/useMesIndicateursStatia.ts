@@ -17,7 +17,7 @@ interface MesIndicateursData {
 }
 
 export function useMesIndicateursStatia() {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const { isAgencyReady, currentAgency } = useAgency();
   
   const agencySlug = currentAgency?.id || agence || '';

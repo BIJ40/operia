@@ -162,7 +162,7 @@ function compareValues(frontend: any, edge: any, _formatType: string): { match: 
 }
 
 export default function StatiaValidatorPage() {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const agencySlug = agence || 'dax';
   
   const [selectedPeriod, setSelectedPeriod] = useState('last_month');

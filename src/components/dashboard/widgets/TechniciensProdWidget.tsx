@@ -18,7 +18,7 @@ interface TechData {
 }
 
 export function TechniciensProdWidget() {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const agencySlug = agence || '';
 
   // Utiliser la période du dashboard parent

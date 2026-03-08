@@ -10,7 +10,7 @@ import { useProfile } from '@/contexts/ProfileContext';
 import { logError } from '@/lib/logger';
 
 export function ActionsAMenerCard() {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const { isAgencyReady, currentAgency } = useAgency();
   const { config, isLoading: isLoadingConfig } = useActionsConfig();
 

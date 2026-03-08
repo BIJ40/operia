@@ -139,7 +139,7 @@ function computeJoursInactivite(projects: any[]): { jours: number; dernierDate: 
 // ==================== HOOK ====================
 
 export function useVeilleAdaptive() {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const agenceSlug = agence || '';
 
   const [recentMonths, setRecentMonths] = useState<RecentMonthsOption>(3);
