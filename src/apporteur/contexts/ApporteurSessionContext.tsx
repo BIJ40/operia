@@ -241,9 +241,9 @@ export function ApporteurSessionProvider({ children }: { children: ReactNode }) 
 
         setSession(newSession);
 
-        // In DEV mode, store token and session
-        if (isDevMode() && data.token) {
-          setDevSession(data.token, newSession);
+        // Always store token in localStorage for session persistence
+        if (data.token) {
+          setStoredSession(data.token, newSession);
         }
 
         return { success: true };
