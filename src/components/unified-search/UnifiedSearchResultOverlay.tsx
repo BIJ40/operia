@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { QUICK_PERIOD_CHIPS } from './nlDictionaries';
 
 export function UnifiedSearchResultOverlay() {
