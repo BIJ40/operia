@@ -31,7 +31,7 @@ import {
   useSearchProfiles,
   type UserOverride,
 } from '@/hooks/access-rights/useModuleOverrides';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
