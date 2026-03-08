@@ -1,5 +1,3 @@
-import React from 'react';
-
 export type ColorPreset = 'red' | 'blanc' | 'blue' | 'green' | 'yellow' | 'purple' | 'orange';
 
 export interface HomeCard {
