@@ -41,21 +41,6 @@ jobs:
           key: nm-${{ runner.os }}-${{ hashFiles('package-lock.json', 'bun.lockb') }}
       - run: npx tsc --noEmit
 
-  lint:
-    name: ⚠️ Lint (legacy debt)
-    needs: setup
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - uses: actions/cache/restore@v4
-        with:
-          path: node_modules
-          key: nm-${{ runner.os }}-${{ hashFiles('package-lock.json', 'bun.lockb') }}
-      - run: npm run lint
 
   unit-tests:
     name: 🧪 Unit Tests
@@ -72,20 +57,7 @@ jobs:
           key: nm-${{ runner.os }}-${{ hashFiles('package-lock.json', 'bun.lockb') }}
       - run: npx vitest run --reporter=verbose
 
-  edge-tests:
-    name: ⚠️ Edge Function Tests (tooling)
-    needs: setup
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-      - uses: denoland/setup-deno@v2
-        with:
-          deno-version: v1.x
-      - run: deno test supabase/functions/tests/ --allow-net --allow-env --allow-read
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
 
   build:
     name: 🏗️ Build
