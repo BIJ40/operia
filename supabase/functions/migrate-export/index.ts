@@ -233,7 +233,7 @@ Deno.serve(async (req) => {
 
     // ============================================
     // MODE: Export auth.users
-    // GET ?secret=xxx&mode=auth_users
+    // GET with X-Migration-Secret header, ?mode=auth_users
     // ============================================
     if (mode === 'auth_users') {
       const allUsers: any[] = [];
