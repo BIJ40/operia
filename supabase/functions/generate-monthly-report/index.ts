@@ -34,7 +34,7 @@ function formatCurrency(amount: number, format: 'euro' | 'kilo'): string {
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount);
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withSentry({ functionName: 'generate-monthly-report' }, async (req) => {
   // Handle CORS preflight
   const corsResponse = handleCorsPreflightOrReject(req);
   if (corsResponse) return corsResponse;
