@@ -3,6 +3,7 @@ import { Route, Navigate } from "react-router-dom";
 import { MinimalLayout } from "@/components/layout";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { ModuleGuard } from "@/components/auth/ModuleGuard";
+import { MfaGuard } from "@/components/auth/MfaGuard";
 
 // Lazy loaded pages - Only those still needed for standalone routes
 const SupportSettings = lazy(() => import("@/pages/admin/SupportSettings"));
