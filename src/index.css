@@ -84,14 +84,14 @@
     /* ============================================
        WARM DASHBOARD - Palette émotionnelle pastel
        ============================================ */
-    --warm-blue: 205 90% 52%;
-    --warm-green: 150 72% 45%;
-    --warm-orange: 30 95% 55%;
-    --warm-purple: 265 72% 58%;
-    --warm-pink: 338 80% 58%;
-    --warm-teal: 172 72% 42%;
-    --warm-cyan: 188 80% 48%;
-    --warm-red: 4 78% 55%;
+    --warm-blue: 200 85% 60%;
+    --warm-green: 145 60% 55%;
+    --warm-orange: 35 90% 60%;
+    --warm-purple: 270 60% 65%;
+    --warm-pink: 340 70% 65%;
+    --warm-teal: 175 60% 50%;
+    --warm-cyan: 185 70% 55%;
+    --warm-red: 0 70% 60%;
     
     /* Ombres douces */
     --shadow-card: 0 4px 20px -4px rgba(0,0,0,0.08);
@@ -197,14 +197,14 @@
     --sidebar-border: 35 18% 82%;
     --sidebar-ring: 100 20% 55%;
 
-    --warm-blue: 110 35% 48%;
-    --warm-green: 115 42% 42%;
-    --warm-orange: 35 58% 52%;
-    --warm-purple: 110 28% 50%;
-    --warm-pink: 340 40% 58%;
-    --warm-teal: 160 40% 42%;
-    --warm-cyan: 110 35% 52%;
-    --warm-red: 0 55% 50%;
+    --warm-blue: 100 20% 55%;
+    --warm-green: 100 30% 50%;
+    --warm-orange: 35 40% 60%;
+    --warm-purple: 100 15% 55%;
+    --warm-pink: 340 25% 65%;
+    --warm-teal: 160 25% 50%;
+    --warm-cyan: 100 20% 60%;
+    --warm-red: 0 40% 55%;
   }
 
   /* ============================================
@@ -251,14 +251,14 @@
     --sidebar-border: 210 18% 85%;
     --sidebar-ring: 207 45% 62%;
 
-    --warm-blue: 210 62% 52%;
-    --warm-green: 170 52% 45%;
-    --warm-orange: 30 65% 52%;
-    --warm-purple: 242 48% 58%;
-    --warm-pink: 338 48% 58%;
-    --warm-teal: 190 52% 44%;
-    --warm-cyan: 195 58% 48%;
-    --warm-red: 4 58% 50%;
+    --warm-blue: 207 45% 62%;
+    --warm-green: 170 35% 55%;
+    --warm-orange: 35 40% 60%;
+    --warm-purple: 240 30% 65%;
+    --warm-pink: 340 25% 65%;
+    --warm-teal: 190 35% 52%;
+    --warm-cyan: 195 40% 58%;
+    --warm-red: 0 40% 55%;
   }
 
   /* ============================================
@@ -305,14 +305,14 @@
     --sidebar-border: 220 8% 25%;
     --sidebar-ring: 200 70% 55%;
 
-    --warm-blue: 205 80% 58%;
-    --warm-green: 150 62% 50%;
-    --warm-orange: 30 82% 58%;
-    --warm-purple: 268 58% 62%;
-    --warm-pink: 338 62% 62%;
-    --warm-teal: 172 62% 48%;
-    --warm-cyan: 188 68% 52%;
-    --warm-red: 4 68% 56%;
+    --warm-blue: 200 70% 55%;
+    --warm-green: 145 50% 50%;
+    --warm-orange: 35 70% 55%;
+    --warm-purple: 270 45% 60%;
+    --warm-pink: 340 50% 60%;
+    --warm-teal: 175 50% 48%;
+    --warm-cyan: 185 55% 52%;
+    --warm-red: 0 55% 55%;
   }
 }
 
