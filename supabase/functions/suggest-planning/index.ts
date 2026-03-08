@@ -352,7 +352,7 @@ function parseDateAndTime(dateLike: unknown): { dateStr: string; startMinutes: n
 // MAIN HANDLER
 // =============================================================================
 
-Deno.serve(async (req: Request) => {
+Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request) => {
   const corsResponse = handleCorsPreflightOrReject(req);
   if (corsResponse) return corsResponse;
 
