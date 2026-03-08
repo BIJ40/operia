@@ -5,7 +5,7 @@
 
 import { ShieldAlert } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { WarmPageContainer } from '@/components/ui/warm-page-container';
 import { WarmEmptyState } from '@/components/ui/warm-empty-state';
 
