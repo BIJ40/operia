@@ -17,17 +17,7 @@ import {
 } from "@/config/sitemapData";
 import type { GlobalRole } from "@/types/globalRoles";
 import type { ModuleKey } from "@/types/modules";
-
-// Role hierarchy for filtering
-const ROLE_LEVELS: Record<GlobalRole, number> = {
-  base_user: 1,
-  franchisee_user: 2,
-  franchisee_admin: 3,
-  franchisor_user: 4,
-  franchisor_admin: 5,
-  platform_admin: 6,
-  superadmin: 7,
-};
+import { ROLE_HIERARCHY } from "@/permissions";
 
 export default function AdminSitemap() {
   const [activeTab, setActiveTab] = useState<'tree' | 'table' | 'diagram'>('tree');
@@ -62,9 +52,9 @@ export default function AdminSitemap() {
       // Role filter - show routes requiring this role level or higher
       if (filters.minRole !== 'all') {
         const routeRoleLevel = route.guards.roleGuard 
-          ? ROLE_LEVELS[route.guards.roleGuard.minRole] 
+          ? ROLE_HIERARCHY[route.guards.roleGuard.minRole] 
           : 0;
-        const filterRoleLevel = ROLE_LEVELS[filters.minRole];
+        const filterRoleLevel = ROLE_HIERARCHY[filters.minRole];
         if (routeRoleLevel < filterRoleLevel) return false;
       }
 

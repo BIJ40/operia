@@ -78,11 +78,15 @@ export const SHARED_NETWORK_MODULES: SharedModuleKey[] = ['reseau_franchiseur'];
 
 export const SHARED_NETWORK_MIN_ROLE: SharedGlobalRole = 'franchisor_user';
 
+/**
+ * Module minimum roles — MUST stay aligned with MODULE_DEFINITIONS in src/types/modules.ts
+ * Last sync: 2026-03-08 (aligned rh/parc to franchisee_admin per MODULE_DEFINITIONS)
+ */
 export const SHARED_MODULE_MIN_ROLES: Partial<Record<SharedModuleKey, SharedGlobalRole>> = {
   agence: 'franchisee_admin',
   stats: 'franchisee_admin',
-  rh: 'base_user',
-  parc: 'franchisee_user',
+  rh: 'franchisee_admin',
+  parc: 'franchisee_admin',
   divers_apporteurs: 'franchisee_admin',
   divers_plannings: 'franchisee_admin',
   divers_reunions: 'franchisee_admin',
