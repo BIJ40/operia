@@ -16,7 +16,7 @@ export interface CompetenceCatalogue {
 }
 
 export function useCompetencesCatalogue() {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   
   return useQuery({
     queryKey: ['rh-competences-catalogue', agencyId],
