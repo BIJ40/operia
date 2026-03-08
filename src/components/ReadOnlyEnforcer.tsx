@@ -10,7 +10,8 @@
  */
 
 import { useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { toast } from 'sonner';
 import { Eye } from 'lucide-react';
 
