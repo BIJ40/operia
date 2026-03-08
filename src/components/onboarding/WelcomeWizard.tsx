@@ -273,9 +273,10 @@ export function WelcomeWizard({
       // Move to next step (steps will rebuild without password step)
       // Since steps rebuild, index 0 will now be 'profile'
       setCurrentStepIndex(0);
-    } catch (error: any) {
+    } catch (error: unknown) {
       logError('PASSWORD_CHANGE', 'Erreur changement mot de passe', { error });
-      if (error.message?.includes('session') || error.message?.includes('Session')) {
+      const errorMessage = error instanceof Error ? error.message : '';
+      if (errorMessage.includes('session') || errorMessage.includes('Session')) {
         toast.error('Session expirée. Veuillez vous reconnecter.');
         setTimeout(() => {
           onOpenChange(false);
