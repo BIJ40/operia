@@ -21,7 +21,7 @@ import {
   Trash2,
   FolderUp,
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { 
   createIngestionJob, 
   getIngestionJobs, 
