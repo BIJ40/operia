@@ -191,7 +191,7 @@ export function useTicketExchanges({ ticketId, enabled = true }: UseTicketExchan
  * Hook pour obtenir le nombre de messages non lus sur tous les tickets projet de l'utilisateur
  */
 export function useUserProjectTicketsUnreadCount() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   return useQuery({
     queryKey: ['user-project-tickets-unread', user?.id],

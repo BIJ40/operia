@@ -21,7 +21,7 @@ import { ChevronUp, ChevronDown, ChevronsUpDown, Columns3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TicketTableRow } from './TicketTableRow';
 import { useMyTicketViews } from '../hooks/useTicketViews';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import type { ApogeeTicket, ApogeeModule, ApogeeTicketStatus, ApogeeOwnerSide } from '../types';
 import type { TicketRoleInfo } from '../hooks/useTicketPermissions';
 
