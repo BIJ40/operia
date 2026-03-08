@@ -120,7 +120,7 @@ export interface MetricResult<T = number> {
 export interface MetricError {
   code: 'NOT_FOUND' | 'VALIDATION_ERROR' | 'COMPUTE_ERROR' | 'PERMISSION_DENIED' | 'DATA_UNAVAILABLE';
   message: string;
-  details?: any;
+  details?: unknown;
 }
 
 // ============================================

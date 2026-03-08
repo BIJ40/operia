@@ -167,7 +167,7 @@ export async function getMetricForNetwork(
     value: aggregatedValue,
     metadata: {
       computedAt: new Date(),
-      source: definition.source as any,
+      source: Array.isArray(definition.source) ? definition.source[0] : definition.source,
       recordCount: totalRecordCount,
     },
     breakdown: {
