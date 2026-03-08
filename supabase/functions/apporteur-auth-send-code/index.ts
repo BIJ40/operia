@@ -162,7 +162,7 @@ Deno.serve(async (req) => {
 
     // Send email via Resend
     const firstName = manager.first_name || "Partenaire";
-    const emailResult = await resend.emails.send({
+    const emailResult = await getResend().emails.send({
       from: "HelpConfort <noreply@helpconfort.services>",
       to: [manager.email],
       subject: "Votre code de connexion HelpConfort",
