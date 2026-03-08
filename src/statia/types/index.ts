@@ -85,7 +85,7 @@ export interface MetricParams {
   tech_id?: string | number;
   univers?: string;
   // Paramètres additionnels dynamiques
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface LoadDebugInfo {
