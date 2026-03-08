@@ -5,7 +5,7 @@
  * mais ne peut effectuer AUCUNE action de mutation (créer, modifier, supprimer).
  */
 
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 
