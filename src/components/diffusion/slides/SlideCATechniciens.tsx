@@ -5,7 +5,7 @@ import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { computeTechUniversStatsForAgency } from '@/shared/utils/technicienUniversEngine';
 import { formatEuros } from '@/apogee-connect/utils/formatters';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { DataService } from '@/apogee-connect/services/dataService';
 
 interface SlideCATechniciensProps {
