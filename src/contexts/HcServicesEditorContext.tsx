@@ -2,7 +2,8 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { logError } from '@/lib/logger';
 import { useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { supabase } from '@/integrations/supabase/client';
 import { CacheManager } from '@/lib/cache-manager';
 
@@ -78,7 +79,8 @@ export function HcServicesEditorProvider({ children }: { children: ReactNode }) 
   const [blocks, setBlocks] = useState<HcServicesBlock[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { hasGlobalRole, hasModuleOption, user } = useAuth();
+  const { hasGlobalRole, hasModuleOption } = usePermissions();
+  const { user } = useAuthCore();
   const location = useLocation();
   
   const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('guides', 'edition');

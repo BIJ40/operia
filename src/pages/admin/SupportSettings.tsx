@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -50,7 +50,7 @@ const SUPPORT_LEVELS = [
 ];
 
 export default function SupportSettings() {
-  const { globalRole } = useAuth();
+  const { globalRole } = usePermissions();
   const [activeTab, setActiveTab] = useState('agents');
   const [agents, setAgents] = useState<SupportAgentConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);

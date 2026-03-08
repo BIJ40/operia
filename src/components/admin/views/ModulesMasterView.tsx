@@ -31,7 +31,7 @@ import {
   useSearchProfiles,
   type UserOverride,
 } from '@/hooks/access-rights/useModuleOverrides';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
@@ -403,7 +403,7 @@ interface PropagateDialogState {
 export function ModulesMasterView() {
   const { tree, flatNodes, isLoading } = useModuleRegistry();
   const { overrides } = useModuleOverrides();
-  const { hasGlobalRole } = useAuth();
+  const { hasGlobalRole } = usePermissions();
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const updateNode = useUpdateModuleNode();
   const propagate = usePropagateToChildren();

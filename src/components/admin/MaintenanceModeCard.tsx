@@ -12,7 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { useMaintenanceAdmin } from '@/hooks/useMaintenanceMode';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { cn } from '@/lib/utils';
 
 interface UserInfo {
@@ -28,7 +28,7 @@ interface MaintenanceModeCardProps {
 
 export function MaintenanceModeCard({ compact = false }: MaintenanceModeCardProps) {
   const { settings, isLoading, updateSettings, isUpdating } = useMaintenanceAdmin();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const [message, setMessage] = useState('');
   const [whitelistedUsers, setWhitelistedUsers] = useState<UserInfo[]>([]);
   const [allUsers, setAllUsers] = useState<UserInfo[]>([]);

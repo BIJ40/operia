@@ -1,6 +1,8 @@
 // Page dédiée à la Base de connaissance HelpConfort
 import { useEditor } from '@/contexts/EditorContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { useState, useEffect, useMemo } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { ROUTES } from '@/config/routes';
@@ -271,7 +273,9 @@ const SortableCategory = ({
 export default function HelpConfort() {
   const { blocks, updateBlock, deleteBlock, addBlock } = useEditor();
   const { isEditMode } = useEditor();
-  const { isAdmin, isAuthenticated, roleAgence, hasAccessToScope } = useAuth();
+  const { isAuthenticated } = useAuthCore();
+  const { isAdmin, hasAccessToScope } = usePermissions();
+  const { roleAgence } = useProfile();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editIcon, setEditIcon] = useState('BookOpen');

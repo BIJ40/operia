@@ -4,7 +4,8 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { useAgency } from '@/apogee-connect/contexts/AgencyContext';
 import { DataService } from '@/apogee-connect/services/dataService';
 import { supabase } from '@/integrations/supabase/client';
@@ -59,7 +60,7 @@ function detectSavSource(intervention: any, project: any): { isSav: boolean; sou
  * Hook pour charger les SAV d'un technicien
  */
 export function useTechnicianSavDetails(technicianId: string | null, dateRange: DateRange) {
-  const { agence, agencyId } = useAuth();
+  const { agence, agencyId } = useProfile();
   const { currentAgency } = useAgency();
   
   const agencySlug = currentAgency?.slug || currentAgency?.id || agence || '';
@@ -168,7 +169,8 @@ export function useTechnicianSavDetails(technicianId: string | null, dateRange: 
  */
 export function useValidateSav() {
   const queryClient = useQueryClient();
-  const { agencyId, user, firstName, lastName } = useAuth();
+  const { user } = useAuthCore();
+  const { agencyId, firstName, lastName } = useProfile();
   
   const displayName = [firstName, lastName].filter(Boolean).join(' ') || 'Utilisateur';
   

@@ -3,7 +3,8 @@
  * Phase 6 du Plan de Simplification V3.0
  */
 
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { useAgencySubscription } from './useAgencySubscription';
 import { PlanKey, PLAN_LABELS } from '@/config/planTiers';
 
@@ -61,7 +62,8 @@ export function isPlanSufficient(
  * }
  */
 export function usePlanAccess(requiredPlan: PlanKey | null | undefined): PlanAccessResult {
-  const { agencyId, globalRole } = useAuth();
+  const { agencyId } = useProfile();
+  const { globalRole } = usePermissions();
   const { data: subscription, isLoading } = useAgencySubscription(agencyId);
   
   // N5+ bypass: accès à tout

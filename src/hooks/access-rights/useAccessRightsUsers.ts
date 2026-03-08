@@ -4,7 +4,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { useProfile } from '@/contexts/ProfileContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { EnabledModules, ModuleKey } from '@/types/modules';
 import { getUserManagementCapabilities, UserManagementCapabilities } from '@/config/roleMatrix';
@@ -44,7 +46,9 @@ export interface Agency {
 }
 
 export function useAccessRightsUsers() {
-  const { globalRole, agence, user } = useAuth();
+  const { globalRole } = usePermissions();
+  const { agence } = useProfile();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
   const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
   

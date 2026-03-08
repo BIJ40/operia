@@ -1,6 +1,7 @@
 // Page Guide Apporteurs (clone d'ApogeeGuide avec données séparées)
 import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { useState, useMemo } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { ROUTES } from '@/config/routes';
@@ -306,7 +307,8 @@ const SortableCategory = ({
 
 export default function ApporteurGuide() {
   const { blocks, isEditMode, addBlock, updateBlock, deleteBlock, reorderBlocks } = useApporteurEditor();
-  const { isAuthenticated, hasAccessToScope, hasGlobalRole, hasModuleOption } = useAuth();
+  const { isAuthenticated } = useAuthCore();
+  const { hasAccessToScope, hasGlobalRole, hasModuleOption } = usePermissions();
   
   // P0: Utiliser V2 - hasModuleOption au lieu de isAdmin
   const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('guides', 'edition');

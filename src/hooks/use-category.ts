@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEditor } from '@/contexts/EditorContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { supabase } from '@/integrations/supabase/client';
 import { safeMutation } from '@/lib/safeQuery';
 import { errorToast, successToast } from '@/lib/toastHelpers';
@@ -14,7 +15,8 @@ export const useCategory = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { blocks, reloadBlocks } = useEditor();
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuthCore();
+  const { isAdmin } = usePermissions();
 
   const [editingSection, setEditingSection] = useState<Section | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

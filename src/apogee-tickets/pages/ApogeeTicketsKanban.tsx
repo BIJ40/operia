@@ -37,7 +37,7 @@ import { Badge } from '@/components/ui/badge';
 import { ROUTES } from '@/config/routes';
 import { useMyRecentlyModifiedTickets } from '../hooks/useMyRecentlyModifiedTickets';
 import { useMyTicketViews } from '../hooks/useTicketViews';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { PageHeader } from '@/components/layout/PageHeader';
 
 interface ApogeeTicketsKanbanPageProps {
@@ -103,7 +103,7 @@ export default function ApogeeTicketsKanbanPage({ embedded = false }: ApogeeTick
 function ApogeeTicketsKanbanContent({ roleInfo, embedded = false }: { roleInfo: TicketRoleInfo; embedded?: boolean }) {
   const { isPlatformAdmin, isSupport, ticketRole, canManage, canImport, canViewKanban } = roleInfo;
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const { data: recentTickets = [] } = useMyRecentlyModifiedTickets(5);
   const { data: myViews = [] } = useMyTicketViews();
   

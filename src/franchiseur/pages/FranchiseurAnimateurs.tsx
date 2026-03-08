@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { useAnimators } from '../hooks/useAnimators';
 import { useFranchiseur } from '../contexts/FranchiseurContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,7 +31,8 @@ const ROLE_COLORS: Record<string, string> = {
 
 export default function FranchiseurAnimateurs() {
   const navigate = useNavigate();
-  const { user, globalRole } = useAuth();
+  const { user } = useAuthCore();
+  const { globalRole } = usePermissions();
   const { permissions, franchiseurRole } = useFranchiseur();
   const queryClient = useQueryClient();
   const [selectedAnimatorId, setSelectedAnimatorId] = useState<string | null>(null);

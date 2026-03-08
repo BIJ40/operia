@@ -42,7 +42,7 @@ import {
   migrateFromLocalStorage,
   MetricStatus
 } from '../hooks/useMetricValidations';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 
 // Icônes par catégorie
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -116,7 +116,7 @@ interface DeleteDialog {
 
 export function AllMetricsViewer({ mode, fixedAgencySlug }: AllMetricsViewerProps) {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const [selectedAgency, setSelectedAgency] = useState(fixedAgencySlug || 'dax');
   const [period, setPeriod] = useState<PeriodType>('current_month');
   const [showHidden, setShowHidden] = useState(false);

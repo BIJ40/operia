@@ -1,6 +1,7 @@
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { useOperiaEditor, OperiaBlock } from '@/contexts/HcServicesEditorContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { ROUTES } from '@/config/routes';
 import { Button } from '@/components/ui/button';
 import { Plus, ChevronsDownUp, ChevronsUpDown, Lightbulb, ArrowLeft, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
@@ -41,7 +42,8 @@ import {
 export default function CategoryOperia() {
   const { slug } = useParams();
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reloadBlocks, loading } = useOperiaEditor();
-  const { isAuthenticated, hasGlobalRole, hasModuleOption } = useAuth();
+  const { isAuthenticated } = useAuthCore();
+  const { hasGlobalRole, hasModuleOption } = usePermissions();
   
   const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('guides', 'edition');
   const getEditUrl = (url: string) => isEditMode ? `${url}?edit=true` : url;

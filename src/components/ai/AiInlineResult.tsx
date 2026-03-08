@@ -19,7 +19,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { SimplifiedSupportChat } from '@/components/support/SimplifiedSupportChat';
 
 interface AiInlineResultProps {
@@ -36,7 +37,8 @@ export function AiInlineResult({ messages, isLoading, onClose, onContactSupport,
   const [supportMessage, setSupportMessage] = useState('');
   const [isSendingTicket, setIsSendingTicket] = useState(false);
   const navigate = useNavigate();
-  const { user, agence, agencyId } = useAuth();
+  const { user } = useAuthCore();
+  const { agence } = useProfile();
   
   const lastAssistantMessage = messages.filter(m => m.role === 'assistant').slice(-1)[0];
   const conversationHistory = messages.slice(0, -1);

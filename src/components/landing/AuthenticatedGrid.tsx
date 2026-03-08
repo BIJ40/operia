@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import helpConfortServicesImg from '@/assets/help-confort-services.png';
 import { MesIndicateursCard } from '@/components/landing/MesIndicateursCard';
 import { ActionsAMenerCard } from '@/components/landing/ActionsAMenerCard';
@@ -69,7 +70,8 @@ export function AuthenticatedGrid({
   onDragEnd,
 }: AuthenticatedGridProps) {
   const { toast } = useToast();
-  const { hasAccessToScope, agence } = useAuth();
+  const { hasAccessToScope } = usePermissions();
+  const { agence } = useProfile();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {

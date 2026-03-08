@@ -5,7 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { logError } from '@/lib/logger';
 
 export interface TicketView {
@@ -18,7 +18,7 @@ export interface TicketView {
  * Hook pour récupérer les vues de l'utilisateur connecté
  */
 export function useMyTicketViews() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   return useQuery({
     queryKey: ['apogee-ticket-views', user?.id],
@@ -45,7 +45,7 @@ export function useMyTicketViews() {
  * Hook pour marquer un ticket comme vu
  */
 export function useMarkTicketAsViewed() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -78,7 +78,7 @@ export function useMarkTicketAsViewed() {
  * Hook pour marquer plusieurs tickets comme lus en une seule opération
  */
 export function useMarkAllTicketsAsViewed() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -119,7 +119,7 @@ export function useTicketShouldBlink(
   lastModifiedByUserId: string | null,
   lastModifiedAt: string | null
 ): boolean {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const { data: views = [] } = useMyTicketViews();
 
   // Pas de clignotement si:

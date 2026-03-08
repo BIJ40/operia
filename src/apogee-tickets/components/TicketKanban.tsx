@@ -28,7 +28,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useCanTransition } from '../hooks/useTicketPermissions';
 import { useMyTicketViews } from '../hooks/useTicketViews';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import type { ApogeeTicket, ApogeeTicketStatus, ApogeeModule, ApogeeOwnerSide } from '../types';
 
 const COLLAPSED_COLUMNS_STORAGE_KEY = 'apogee-kanban-collapsed-columns';
@@ -545,7 +545,7 @@ function DroppableColumn({
 }
 
 export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusChange, onTicketClick, onMerge, columnWidth = 288, onColumnWidthChange, filterBlinkingOnly = false }: TicketKanbanProps) {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const [activeTicket, setActiveTicket] = useState<ApogeeTicket | null>(null);
   const canTransition = useCanTransition();
   const { data: myViews = [] } = useMyTicketViews();

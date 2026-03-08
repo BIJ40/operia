@@ -13,7 +13,8 @@ import {
 } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { useProfile } from '@/contexts/ProfileContext';
 
 interface ApogeeUser {
   id: number;
@@ -32,7 +33,8 @@ interface ApogeeUserSelectProps {
 }
 
 export function ApogeeUserSelect({ value, onChange, collaboratorName, label, agencySlug: agencySlugProp }: ApogeeUserSelectProps) {
-  const { user, agence } = useAuth();
+  const { user } = useAuthCore();
+  const { agence } = useProfile();
   const agencySlug = agencySlugProp || agence;
 
   // Charger les utilisateurs Apogée via proxy

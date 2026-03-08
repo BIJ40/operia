@@ -1,7 +1,7 @@
 import { Kanban, Settings, Star, AlertTriangle, ListTodo } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { IndexTile, type IndexTileProps } from '@/components/ui/index-tile';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { ExcelImportTile } from '@/apogee-tickets/components/ExcelImportTile';
 import { PageHeader } from '@/components/layout/PageHeader';
 
@@ -51,8 +51,7 @@ const ADMIN_MODULES: ProjectModule[] = [
 ];
 
 export default function ProjectsIndex() {
-  const { globalRole } = useAuth();
-  const isAdmin = globalRole === 'platform_admin' || globalRole === 'superadmin';
+  const { isAdmin } = usePermissions();
 
   return (
     <div className="container mx-auto py-8 px-4 space-y-8">

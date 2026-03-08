@@ -5,7 +5,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { useAgency } from '@/apogee-connect/contexts/AgencyContext';
 import { STATIA_RULES } from '@/statia/domain/rules';
 import { DataService } from '@/apogee-connect/services/dataService';
@@ -175,7 +175,7 @@ function isSavIntervention(intervention: any, project: any): boolean {
  * Hook principal Performance Terrain
  */
 export function usePerformanceTerrain(dateRange: DateRange) {
-  const { agence, agencyId } = useAuth();
+  const { agence, agencyId } = useProfile();
   const { isAgencyReady, currentAgency } = useAgency();
   
   const agencySlug = currentAgency?.slug || currentAgency?.id || agence || '';

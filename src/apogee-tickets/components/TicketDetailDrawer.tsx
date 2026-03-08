@@ -60,7 +60,8 @@ import { useMarkTicketAsViewed } from '../hooks/useTicketViews';
 import { HeatPriorityBadge } from './HeatPriorityBadge';
 import { OwnerSideSlider, ownerSideToSliderValue, sliderValueToOwnerSide } from './OwnerSideSlider';
 import { Slider } from '@/components/ui/slider';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { useMyTicketRole, useAllowedTransitions, useTicketHistory } from '../hooks/useTicketPermissions';
 import { TicketTimelineTab } from './TicketTimelineTab';
 import { errorToast, successToast } from '@/lib/toastHelpers';
@@ -120,7 +121,8 @@ export function TicketDetailDrawer({
   hasPrevious = false,
   hasNext = false,
 }: TicketDetailDrawerProps) {
-  const { user, isAdmin, isSupport } = useAuth();
+  const { user } = useAuthCore();
+  const { isAdmin, isSupport } = usePermissions();
   const { data: roleInfo } = useMyTicketRole();
   const canManage = roleInfo?.canManage ?? false;
   const isDeveloper = roleInfo?.ticketRole === 'developer';

@@ -23,7 +23,9 @@ import { motion } from 'framer-motion';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ChevronDown, BarChart3, Trophy, PieChart, TrendingUp, Users, Building2, Network, MapPin } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { useProfile } from '@/contexts/ProfileContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { Button } from '@/components/ui/button';
 
 // Widgets existants
@@ -162,7 +164,9 @@ const itemVariants = {
 };
 
 export default function DashboardStatic() {
-  const { firstName, globalRole, roleAgence, user, agence } = useAuth();
+  const { user } = useAuthCore();
+  const { firstName, agence, roleAgence } = useProfile();
+  const { globalRole } = usePermissions();
   const greeting = getGreeting();
   
   // Détermination du niveau d'accès

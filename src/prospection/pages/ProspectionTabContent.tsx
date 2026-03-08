@@ -15,7 +15,7 @@ import { ApporteurListPage } from '../pages/ApporteurListPage';
 import { ApporteurComparisonPage } from '../pages/ApporteurComparisonPage';
 import { ProspectsUnifiedPage } from '../pages/ProspectsUnifiedPage';
 import { VeilleApporteursTab } from '../pages/VeilleApporteursTab';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 /** Mapping tab id → clé d'option du module prospection */
 const TAB_OPTION_MAP: Record<string, string> = {
@@ -52,7 +52,7 @@ function ApporteursTabInner() {
 }
 
 function ProspectionInner() {
-  const { hasModuleOption } = useAuth();
+  const { hasModuleOption } = usePermissions();
   const { openApporteur } = useApporteurTabs();
 
   // Filtrer les onglets visibles selon les permissions

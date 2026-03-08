@@ -2,7 +2,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { ROUTES } from '@/config/routes';
 import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical, X } from 'lucide-react';
 import * as Icons from 'lucide-react';
@@ -214,7 +214,7 @@ function SortableSubcategory({
 export default function ApporteurSubcategories() {
   const { slug } = useParams<{ slug: string }>();
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks } = useApporteurEditor();
-  const { isAdmin } = useAuth();
+  const { isAdmin } = usePermissions();
 
   const category = useMemo(
     () => blocks.find(b => b.type === 'category' && b.slug === slug),

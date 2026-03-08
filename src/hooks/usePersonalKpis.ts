@@ -5,7 +5,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { startOfMonth, endOfMonth, parseISO, isWithinInterval } from 'date-fns';
 import { computeCaParTechnicienCore, CaParTechnicienParams } from '@/statia/engines/caParTechnicienCore';
 import { DataService } from '@/apogee-connect/services/dataService';
@@ -77,7 +78,8 @@ function isTechInIntervention(inter: Record<string, unknown>, apogeeUserId: numb
 }
 
 export function usePersonalKpis(options?: UsePersonalKpisOptions) {
-  const { user, agence } = useAuth();
+  const { user } = useAuthCore();
+  const { agence } = useProfile();
 
   const now = new Date();
   const dateRange = useMemo(() => options?.dateRange || {
