@@ -84,14 +84,14 @@
     /* ============================================
        WARM DASHBOARD - Palette émotionnelle pastel
        ============================================ */
-    --warm-blue: 200 85% 60%;
-    --warm-green: 145 60% 55%;
-    --warm-orange: 35 90% 60%;
-    --warm-purple: 270 60% 65%;
-    --warm-pink: 340 70% 65%;
-    --warm-teal: 175 60% 50%;
-    --warm-cyan: 185 70% 55%;
-    --warm-red: 0 70% 60%;
+    --warm-blue: 205 90% 52%;
+    --warm-green: 150 72% 45%;
+    --warm-orange: 30 95% 55%;
+    --warm-purple: 265 72% 58%;
+    --warm-pink: 338 80% 58%;
+    --warm-teal: 172 72% 42%;
+    --warm-cyan: 188 80% 48%;
+    --warm-red: 4 78% 55%;
     
     /* Ombres douces */
     --shadow-card: 0 4px 20px -4px rgba(0,0,0,0.08);
