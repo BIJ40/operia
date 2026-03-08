@@ -5,7 +5,7 @@
  * Les références legacy (isAdmin) sont supprimées pour éviter les bypasses.
  */
 
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { GlobalRole, GLOBAL_ROLES, hasMinimumRole } from '@/types/globalRoles';
 
 /**
