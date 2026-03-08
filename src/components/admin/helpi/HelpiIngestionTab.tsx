@@ -21,7 +21,7 @@ import {
   Trash2,
   FolderUp,
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { 
   createIngestionJob, 
   getIngestionJobs, 
@@ -69,7 +69,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export function HelpiIngestionTab() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
   const [selectedFiles, setSelectedFiles] = useState<UploadedFile[]>([]);
   const [globalContext, setGlobalContext] = useState<RAGContextType>('auto');

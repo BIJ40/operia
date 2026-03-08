@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { DataService } from '@/apogee-connect/services/dataService';
 import { logApogee } from '@/lib/logger';
@@ -19,7 +20,8 @@ interface AgencyContextType {
 const AgencyContext = createContext<AgencyContextType | undefined>(undefined);
 
 export function AgencyProvider({ children }: { children: ReactNode }) {
-  const { agence, isAuthLoading } = useAuth();
+  const { agence } = useProfile();
+  const { isAuthLoading } = useAuthCore();
   const { isRealUserImpersonation, impersonatedUser } = useImpersonation();
   const [isApiConfigured, setIsApiConfigured] = useState(false);
   

@@ -1,11 +1,11 @@
 /**
  * Hooks de permissions V2.0
  * 
- * Ce fichier est maintenant un simple wrapper vers useAuth().
- * À terme, utiliser directement useAuth() avec hasGlobalRole() et hasModule().
+ * Ce fichier est maintenant un wrapper vers usePermissions() du PermissionsContext.
+ * À terme, utiliser directement usePermissions() du contexte.
  */
 
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { useMemo } from 'react';
 
 // ============================================================================
@@ -14,11 +14,11 @@ import { useMemo } from 'react';
 
 /**
  * Hook principal pour les permissions V2
- * Préférez utiliser useAuth() directement avec hasGlobalRole/hasModule
+ * Préférez utiliser usePermissions() directement du PermissionsContext
  */
-export function usePermissions() {
-  const auth = useAuth();
-  const { isSupport, isFranchiseur, hasSupportAgentRole, isSupportAdmin, canManageTickets, hasGlobalRole } = auth;
+export function usePermissionsV2() {
+  const perms = usePermissions();
+  const { isSupport, isFranchiseur, hasSupportAgentRole, isSupportAdmin, canManageTickets, hasGlobalRole } = perms;
   
   const isPlatformAdmin = hasGlobalRole('platform_admin');
 
@@ -32,9 +32,9 @@ export function usePermissions() {
 
   return {
     // V2 - Source de vérité
-    hasGlobalRole: auth.hasGlobalRole,
-    hasModule: auth.hasModule,
-    hasModuleOption: auth.hasModuleOption,
+    hasGlobalRole: perms.hasGlobalRole,
+    hasModule: perms.hasModule,
+    hasModuleOption: perms.hasModuleOption,
     
     // Support module flags
     hasSupportAgentRole,
