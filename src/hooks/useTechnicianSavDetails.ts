@@ -101,7 +101,7 @@ export function useTechnicianSavDetails(technicianId: string | null, dateRange: 
           .eq('agency_id', effectiveAgencyId)
           .limit(1000);
         
-        const validationsMap = new Map<string, any>();
+        const validationsMap = new Map<string, Record<string, unknown>>();
         for (const v of validations || []) {
           validationsMap.set(v.intervention_id, v);
         }
