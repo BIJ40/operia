@@ -153,7 +153,7 @@ export function useUpdateFeatureFlag() {
  */
 export function useCreateFeatureFlag() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   return useMutation({
     mutationFn: async (flag: Omit<FeatureFlag, 'id' | 'created_at' | 'updated_at' | 'updated_by'>) => {
