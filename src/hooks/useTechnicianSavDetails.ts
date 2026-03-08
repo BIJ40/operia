@@ -37,19 +37,21 @@ interface DateRange {
  */
 function detectSavSource(intervention: Record<string, unknown>, project: Record<string, unknown> | undefined): { isSav: boolean; source?: 'type2' | 'visite' | 'picto' } {
   // 1. intervention.type2 === 'sav'
-  const type2 = (intervention?.type2 || intervention?.data?.type2 || '').toLowerCase().trim();
+  const interData = (intervention?.data ?? {}) as Record<string, unknown>;
+  const type2 = (String(intervention?.type2 || interData?.type2 || '')).toLowerCase().trim();
   if (type2 === 'sav') return { isSav: true, source: 'type2' };
   
   // 2. Visites avec type2 === 'sav'
-  const visites = intervention?.visites || intervention?.data?.visites || [];
+  const visites = (intervention?.visites || interData?.visites || []) as Record<string, unknown>[];
   for (const v of visites) {
-    const vType2 = (v.type2 || '').toLowerCase().trim();
+    const vType2 = String(v.type2 || '').toLowerCase().trim();
     if (vType2 === 'sav') return { isSav: true, source: 'visite' };
   }
   
   // 3. Pictos du projet
-  const pictos = project?.data?.pictosInterv || project?.pictosInterv || [];
-  if (Array.isArray(pictos) && pictos.some((p: string) => (p || '').toLowerCase().trim() === 'sav')) {
+  const projData = (project?.data ?? {}) as Record<string, unknown>;
+  const pictos = (projData?.pictosInterv || project?.pictosInterv || []) as unknown[];
+  if (Array.isArray(pictos) && pictos.some((p) => String(p || '').toLowerCase().trim() === 'sav')) {
     return { isSav: true, source: 'picto' };
   }
   
