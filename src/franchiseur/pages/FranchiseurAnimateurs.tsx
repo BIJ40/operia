@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { useAnimators } from '../hooks/useAnimators';
 import { useFranchiseur } from '../contexts/FranchiseurContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
