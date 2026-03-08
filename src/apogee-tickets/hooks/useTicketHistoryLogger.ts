@@ -140,7 +140,7 @@ export function useTicketHistoryLogger() {
 
 // Hook pour logger un changement de statut spécifiquement
 export function useLogStatusChange() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
   
   return useMutation({
