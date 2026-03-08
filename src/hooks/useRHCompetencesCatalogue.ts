@@ -39,7 +39,7 @@ export function useCompetencesCatalogue() {
 
 export function useAddCompetenceCatalogue() {
   const queryClient = useQueryClient();
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   
   return useMutation({
     mutationFn: async (label: string) => {
