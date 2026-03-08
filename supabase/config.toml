@@ -112,19 +112,16 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.get-apporteur-stats]
-verify_jwt = true
-
-[functions.create-apporteur-user]
-verify_jwt = true
+verify_jwt = false
 
 [functions.validate-apogee-commanditaire]
 verify_jwt = true
 
 [functions.get-apporteur-dossiers]
-verify_jwt = true
+verify_jwt = false
 
 [functions.get-apporteur-planning]
-verify_jwt = true
+verify_jwt = false
 
 [functions.cancel-apporteur-request]
 verify_jwt = true

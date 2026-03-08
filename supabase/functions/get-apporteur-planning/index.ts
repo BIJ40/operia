@@ -67,6 +67,7 @@ Deno.serve(async (req) => {
     // Dual auth: custom apporteur token OR Supabase JWT
     const authResult = await authenticateApporteur(req);
     if (!authResult) {
+      console.warn('[GET-APPORTEUR-PLANNING] authenticateApporteur returned null — rejecting request');
       return withCors(req, new Response(
         JSON.stringify({ success: false, error: 'Non autorisé' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }

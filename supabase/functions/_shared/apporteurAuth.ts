@@ -64,8 +64,13 @@ export async function authenticateApporteur(req: Request): Promise<ApporteurAuth
   const authHeader = req.headers.get('Authorization') ?? req.headers.get('authorization');
   const customToken = extractCustomApporteurToken(req);
 
+  console.log('[apporteurAuth] Starting auth. customToken?', !!customToken, 'length:', customToken?.length ?? 0, 'authHeader?', !!authHeader);
+
   // Need at least one auth mechanism
-  if (!customToken && !authHeader) return null;
+  if (!customToken && !authHeader) {
+    console.warn('[apporteurAuth] No auth mechanism found (no token, no header)');
+    return null;
+  }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -77,7 +82,9 @@ export async function authenticateApporteur(req: Request): Promise<ApporteurAuth
   if (customToken) {
     try {
       const tokenHash = await sha256(customToken);
-      const { data: session } = await supabaseAdmin
+      console.log('[apporteurAuth] Token hash (first 12):', tokenHash.substring(0, 12));
+
+      const { data: session, error: sessionError } = await supabaseAdmin
         .from('apporteur_sessions')
         .select(`
           id, manager_id, expires_at, revoked_at,
@@ -91,12 +98,25 @@ export async function authenticateApporteur(req: Request): Promise<ApporteurAuth
         .gt('expires_at', new Date().toISOString())
         .maybeSingle();
 
+      if (sessionError) {
+        console.warn('[apporteurAuth] Session query error:', sessionError.message);
+      }
+
+      if (!session) {
+        console.warn('[apporteurAuth] No session found for token hash (first 12):', tokenHash.substring(0, 12));
+      }
+
       if (session) {
         // deno-lint-ignore no-explicit-any
         const manager = session.apporteur_managers as any;
+        console.log('[apporteurAuth] Session found. manager_id:', session.manager_id, 'manager.is_active:', manager?.is_active, 'apporteur.is_active:', manager?.apporteurs?.is_active, 'apogee_client_id:', manager?.apporteurs?.apogee_client_id);
+
         if (manager?.is_active && manager.apporteurs?.is_active) {
           const apporteur = manager.apporteurs;
-          if (!apporteur.apogee_client_id) return null; // non raccordé
+          if (!apporteur.apogee_client_id) {
+            console.warn('[apporteurAuth] Apporteur has no apogee_client_id — not linked');
+            return null;
+          }
 
           // Get agency slug
           const { data: agency } = await supabaseAdmin
@@ -105,8 +125,12 @@ export async function authenticateApporteur(req: Request): Promise<ApporteurAuth
             .eq('id', manager.agency_id)
             .single();
 
-          if (!agency?.slug) return null;
+          if (!agency?.slug) {
+            console.warn('[apporteurAuth] Agency slug not found for agency_id:', manager.agency_id);
+            return null;
+          }
 
+          console.log('[apporteurAuth] ✅ Auth success via custom token. apporteur:', apporteur.name, 'agency:', agency.slug);
           return {
             apporteurId: apporteur.id,
             agencyId: manager.agency_id,
@@ -114,6 +138,8 @@ export async function authenticateApporteur(req: Request): Promise<ApporteurAuth
             agencySlug: agency.slug,
             apporteurName: apporteur.name,
           };
+        } else {
+          console.warn('[apporteurAuth] Manager or apporteur inactive');
         }
       }
     } catch (e) {

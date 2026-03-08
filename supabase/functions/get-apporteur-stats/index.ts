@@ -276,6 +276,7 @@ Deno.serve(async (req) => {
   try {
     const authResult = await authenticateApporteur(req);
     if (!authResult) {
+      console.warn('[GET-APPORTEUR-STATS] authenticateApporteur returned null — rejecting request');
       return withCors(req, new Response(
         JSON.stringify({ success: false, error: 'Non autorisé' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
