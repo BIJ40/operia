@@ -3,7 +3,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DataService } from '@/apogee-connect/services/dataService';
 import { calculateMonthlyCA } from '@/apogee-connect/utils/monthlyCalculations';
