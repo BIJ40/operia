@@ -57,7 +57,7 @@ export function StatiaBuilder({ agencySlug = 'dax', onSaveQuery }: StatiaBuilder
   const [isComputing, setIsComputing] = useState(false);
   interface BuilderResult {
     query: BuilderQuery;
-    computedAt: Date;
+    computedAt: string;
     values: Record<string, { label: string; value: number; unit?: string }>;
   }
   const [result, setResult] = useState<BuilderResult | null>(null);
