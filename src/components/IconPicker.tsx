@@ -107,7 +107,8 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
     icon.toLowerCase().includes(search.toLowerCase())
   );
 
-  const CurrentIcon = (Icons as any)[value] || Icons.BookOpen;
+  const IconsMap = Icons as unknown as Record<string, React.ComponentType<{ className?: string }>>;
+  const CurrentIcon = IconsMap[value] || Icons.BookOpen;
 
   return (
     <div className="space-y-2">
