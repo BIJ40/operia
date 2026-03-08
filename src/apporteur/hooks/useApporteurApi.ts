@@ -54,10 +54,9 @@ export function useApporteurApi() {
     }
 
     // Custom apporteur token (OTP auth) sent in dedicated header
-    // to avoid collision with JWT verification at edge gateway level
-    const devToken = getDevToken();
-    if (devToken) {
-      headers['x-apporteur-token'] = devToken;
+    const token = getStoredToken();
+    if (token) {
+      headers['x-apporteur-token'] = token;
     }
 
     try {
