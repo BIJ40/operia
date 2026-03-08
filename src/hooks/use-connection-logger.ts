@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { logConnection } from '@/lib/logger';
 
 export const useConnectionLogger = () => {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   // Use stable userId to prevent re-runs on tab switch (user object changes reference)
   const userId = user?.id;
   const connectionLogIdRef = useRef<string | null>(null);

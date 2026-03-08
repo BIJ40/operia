@@ -445,6 +445,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     canManageTickets,
     hasFaqAdminRole,
     canAccessFaqAdmin,
+    hasAccessToScope,
     suggestedGlobalRole: globalRole ?? 'base_user',
   }), [
     globalRole, enabledModules, accessContext,
@@ -452,7 +453,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAdmin, isSupport, isFranchiseur,
     canAccessSupportUser, hasSupportAgentRole, isSupportAdmin,
     canAccessSupportConsoleUI, canManageTickets,
-    hasFaqAdminRole, canAccessFaqAdmin,
+    hasFaqAdminRole, canAccessFaqAdmin, hasAccessToScope,
   ]);
 
   // Legacy combined value for useAuth() backward compat

@@ -5,7 +5,8 @@
 
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { hasAccess, MODULE_LABELS } from '@/permissions';
 import { ModuleKey } from '@/types/modules';
 import { Loader2, Lock } from 'lucide-react';
@@ -46,7 +47,8 @@ export function ModuleGuard({
   showError = false,
   errorMessage
 }: ModuleGuardProps) {
-  const { user, isAuthLoading, enabledModules, globalRole, agencyId } = useAuth();
+  const { user, isAuthLoading } = useAuthCore();
+  const { enabledModules, globalRole, accessContext: { agencyId } } = usePermissions();
 
   // Afficher un loader pendant le chargement
   if (isAuthLoading) {

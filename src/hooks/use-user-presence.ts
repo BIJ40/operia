@@ -1,13 +1,13 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { logError } from '@/lib/logger';
 
 const HEARTBEAT_INTERVAL = 30000; // 30 secondes
 const OFFLINE_THRESHOLD = 60000; // 1 minute
 
 export const useUserPresence = () => {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   // Use stable userId to prevent re-runs on tab switch (user object changes reference)
   const userId = user?.id;
 
