@@ -13,7 +13,7 @@ import { toast } from 'sonner';
  * Hook principal pour le mode lecture seule
  */
 export function useReadOnly() {
-  const { isReadOnly } = useAuth();
+  const { isReadOnly } = useProfile();
 
   /**
    * Bloque une action si l'utilisateur est en mode lecture seule.
