@@ -105,16 +105,10 @@ Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
 
-    // Accept secret from header (preferred) or query param (deprecated, backward compat)
+    // Authentication: X-Migration-Secret header ONLY (query param removed for security)
     const headerSecret = req.headers.get('X-Migration-Secret');
-    const querySecret = url.searchParams.get('secret');
-    const secret = headerSecret || querySecret;
 
-    if (querySecret && !headerSecret) {
-      console.warn('[migrate-export] DEPRECATED: secret via query param. Use X-Migration-Secret header instead.');
-    }
-
-    if (!secret || secret !== MIGRATION_SECRET) {
+    if (!headerSecret || headerSecret !== MIGRATION_SECRET) {
       return respond({ error: 'Secret invalide' }, 403);
     }
 
