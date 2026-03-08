@@ -29,7 +29,7 @@ export interface EffectiveModulesResult {
 }
 
 export function useEffectiveModules(): EffectiveModulesResult & { isLoading: boolean } {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const { isRealUserImpersonation, impersonatedUser } = useImpersonation();
   const effectiveAuth = useEffectiveAuth();
   

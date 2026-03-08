@@ -28,7 +28,7 @@ const ApporteurEditorContext = createContext<ApporteurEditorContextType | null>(
 export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [loading, setLoading] = useState(true);
-  const { hasGlobalRole, hasModuleOption } = useAuth();
+  const { hasGlobalRole, hasModuleOption } = usePermissions();
   
   // V2: Remplace isAdmin par vérification de rôle + option module
   const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('guides', 'edition');

@@ -37,7 +37,7 @@ interface ListResponse {
  * Liste tous les commanditaires Apogée de l'agence
  */
 export function useApogeeCommanditaires() {
-  const { agence, agencyId } = useAuth();
+  const { agence, agencyId } = useProfile();
 
   return useQuery<ApogeeCommanditaire[]>({
     queryKey: ['apogee-commanditaires', agence],

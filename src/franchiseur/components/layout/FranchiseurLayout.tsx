@@ -38,7 +38,8 @@ function FranchiseurLayoutContent() {
 }
 
 export default function FranchiseurLayout() {
-  const { user, isFranchiseur, hasGlobalRole, isAuthLoading } = useAuth();
+  const { user, isAuthLoading } = useAuthCore();
+  const { isFranchiseur, hasGlobalRole } = usePermissions();
   
   const isPlatformAdmin = hasGlobalRole('platform_admin');
 

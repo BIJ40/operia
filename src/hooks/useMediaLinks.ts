@@ -9,7 +9,7 @@ import { useProfile } from '@/contexts/ProfileContext';
 import { toast } from 'sonner';
 
 export function useMediaLinks(folderId: string | null = null) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   const queryClient = useQueryClient();
 
   // Fetch links (files) in current folder
