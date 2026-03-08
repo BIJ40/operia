@@ -3,7 +3,9 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { useProfile } from '@/contexts/ProfileContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import {
   listCustomMetrics,
   getCustomMetric,
