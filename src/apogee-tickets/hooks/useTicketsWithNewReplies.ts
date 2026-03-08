@@ -19,7 +19,7 @@ export interface TicketWithNewReply {
  * côté support (messages reçus de la part des users, non lus par le support)
  */
 export function useTicketsWithNewReplies() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
 
   const query = useQuery({

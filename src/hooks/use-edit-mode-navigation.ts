@@ -6,7 +6,7 @@ import { usePermissions } from '@/contexts/PermissionsContext';
  */
 export const useEditModeNavigation = () => {
   const [searchParams] = useSearchParams();
-  const { isAdmin } = useAuth();
+  const { isAdmin } = usePermissions();
   
   const isInEditMode = searchParams.get('edit') === 'true' && isAdmin;
   

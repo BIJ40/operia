@@ -9,7 +9,7 @@ import { logError } from '@/lib/logger';
 export function ChatbotNotifications() {
   const [pendingCount, setPendingCount] = useState(0);
   const navigate = useNavigate();
-  const { hasGlobalRole } = useAuth();
+  const { hasGlobalRole } = usePermissions();
   
   // P0: Remplacer isAdmin par hasGlobalRole (V2)
   const canViewNotifications = hasGlobalRole('platform_admin');

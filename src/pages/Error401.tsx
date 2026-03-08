@@ -11,7 +11,7 @@ import { WarmEmptyState } from '@/components/ui/warm-empty-state';
 
 export default function Error401() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout } = useAuthCore();
 
   const handleRelogin = async () => {
     await logout();

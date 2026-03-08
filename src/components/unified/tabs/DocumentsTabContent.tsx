@@ -12,7 +12,7 @@ type DocumentsSubTab = 'library' | 'shortcuts' | 'trash';
 
 export default function DocumentsTabContent() {
   const [activeSubTab, setActiveSubTab] = useState<DocumentsSubTab>('library');
-  const { hasModuleOption } = useAuth();
+  const { hasModuleOption } = usePermissions();
   
   // Vérifier les permissions granulaires
   const canManage = hasModuleOption('divers_documents', 'gerer');

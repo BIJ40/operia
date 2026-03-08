@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { logError } from '@/lib/logger';
 
 export function useActionsConfig() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
 
   // Récupérer la configuration de l'utilisateur

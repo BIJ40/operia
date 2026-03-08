@@ -24,7 +24,7 @@ interface ApporteurDetailSheetProps {
 }
 
 export function ApporteurDetailSheet({ apporteur, open, onOpenChange }: ApporteurDetailSheetProps) {
-  const { hasGlobalRole } = useAuth();
+  const { hasGlobalRole } = usePermissions();
   const toggleStatus = useToggleApporteurStatus();
   const togglePortal = useTogglePortalEnabled();
   const deleteApporteur = useDeleteApporteur();

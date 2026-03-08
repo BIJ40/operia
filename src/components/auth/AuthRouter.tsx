@@ -29,7 +29,7 @@ function FullPageLoader() {
 }
 
 export function AuthRouter({ children }: AuthRouterProps) {
-  const { user, isAuthLoading } = useAuth();
+  const { user, isAuthLoading } = useAuthCore();
   const { isApporteur, isLoading: isApporteurLoading } = useApporteurCheck();
   const location = useLocation();
 
