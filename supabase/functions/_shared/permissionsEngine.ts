@@ -97,11 +97,14 @@ export const ROLE_HIERARCHY: Record<GlobalRole, number> = {
   superadmin: 6,
 };
 
+// Derived from MODULE_DEFINITIONS canonical source (src/types/modules.ts)
+// Edge functions can't import from src/, so this is a synced copy.
+// Last sync: 2026-03-08
 export const MODULE_MIN_ROLES: Partial<Record<ModuleKey, GlobalRole>> = {
   agence: 'franchisee_admin',
   stats: 'franchisee_admin',
-  rh: 'base_user',
-  parc: 'franchisee_user',
+  rh: 'franchisee_admin',  // Aligned with MODULE_DEFINITIONS.minRole
+  parc: 'franchisee_admin', // Aligned with MODULE_DEFINITIONS.minRole
   divers_apporteurs: 'franchisee_admin',
   divers_plannings: 'franchisee_admin',
   divers_reunions: 'franchisee_admin',
