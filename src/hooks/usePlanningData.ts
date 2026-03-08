@@ -110,18 +110,19 @@ export function usePlanningProjects(agencySlug: string | undefined) {
       });
 
       // Enrich projects with client name
-      const enriched: PlanningProject[] = (projects || []).map((p: any) => {
-        const client = clientsById.get(p.clientId);
+      const enriched: PlanningProject[] = (projects || []).map((p: Record<string, unknown>) => {
+        const client = clientsById.get(p.clientId as number);
+        const pData = (p.data ?? {}) as Record<string, unknown>;
         return {
-          id: p.id,
-          ref: p.ref || `#${p.id}`,
-          label: p.label || '',
-          state: p.state || '',
-          date: p.date || p.createdAt || '',
-          clientId: p.clientId,
-          clientName: client?.nom || client?.raisonSociale || client?.name || '',
-          ville: p.ville || client?.ville || '',
-          data: p.data,
+          id: p.id as number,
+          ref: String(p.ref || `#${p.id}`),
+          label: String(p.label || ''),
+          state: String(p.state || ''),
+          date: String(p.date || p.createdAt || ''),
+          clientId: p.clientId as number,
+          clientName: String(client?.nom || client?.raisonSociale || client?.name || ''),
+          ville: String(p.ville || client?.ville || ''),
+          data: pData as PlanningProject['data'],
         };
       });
 
