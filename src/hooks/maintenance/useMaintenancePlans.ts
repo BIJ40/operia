@@ -19,7 +19,7 @@ import { addDays, format } from 'date-fns';
 const QUERY_KEY = 'maintenance-plans';
 
 export function useMaintenancePlans(agencyId?: string, targetType?: MaintenanceTargetType) {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const effectiveAgencyId = agencyId || agence;
 
   return useQuery({
