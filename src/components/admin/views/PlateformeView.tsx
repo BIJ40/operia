@@ -12,7 +12,7 @@ import {
   FolderTabConfig 
 } from '@/components/ui/draggable-folder-tabs';
 import { Activity, Map, GitBranch, ToggleRight, Brain, Bell, Loader2 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { MaintenanceModeCard } from '@/components/admin/MaintenanceModeCard';
 import { useSessionState } from '@/hooks/useSessionState';
 import { usePersistedTab } from '@/hooks/usePersistedState';
