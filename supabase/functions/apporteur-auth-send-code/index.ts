@@ -11,7 +11,16 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { handleCorsPreflightOrReject, getCorsHeaders, isOriginAllowed } from "../_shared/cors.ts";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+// Resend initialized lazily inside handler to avoid crash if secret is missing at boot
+let _resend: Resend | null = null;
+function getResend(): Resend {
+  if (!_resend) {
+    const key = Deno.env.get("RESEND_API_KEY");
+    if (!key) throw new Error("RESEND_API_KEY not configured");
+    _resend = new Resend(key);
+  }
+  return _resend;
+}
 
 // SHA-256 hash helper
 async function sha256(message: string): Promise<string> {
