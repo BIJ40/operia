@@ -126,7 +126,7 @@ export function useTechnicianSavDetails(technicianId: string | null, dateRange: 
           }
           
           // Fallback: usersIds de l'intervention
-          const interventionUsers = intervention?.usersIds || [];
+          const interventionUsers = (intervention?.usersIds || []) as unknown[];
           if (Array.isArray(interventionUsers)) {
             for (const uid of interventionUsers) techIds.add(String(uid));
           }
