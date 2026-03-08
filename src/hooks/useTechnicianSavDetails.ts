@@ -35,7 +35,7 @@ interface DateRange {
 /**
  * Détecte les SAV et leur source de détection
  */
-function detectSavSource(intervention: any, project: any): { isSav: boolean; source?: 'type2' | 'visite' | 'picto' } {
+function detectSavSource(intervention: Record<string, unknown>, project: Record<string, unknown> | undefined): { isSav: boolean; source?: 'type2' | 'visite' | 'picto' } {
   // 1. intervention.type2 === 'sav'
   const type2 = (intervention?.type2 || intervention?.data?.type2 || '').toLowerCase().trim();
   if (type2 === 'sav') return { isSav: true, source: 'type2' };
