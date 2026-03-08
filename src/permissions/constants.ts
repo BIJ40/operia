@@ -151,27 +151,13 @@ export const MODULE_OPTION_MIN_ROLES: Record<string, GlobalRole> = {
 };
 
 // ============================================================================
-// RÈGLE 7: LABELS POUR L'UI
+// RÈGLE 7: LABELS POUR L'UI (dérivé de MODULE_DEFINITIONS)
 // ============================================================================
 
 /**
- * @deprecated Utiliser MODULE_DEFINITIONS[x].label ou MODULE_SHORT_LABELS à la place
+ * Labels des modules pour l'UI.
+ * Dérivé automatiquement de MODULE_DEFINITIONS — source de vérité unique.
  */
-export const MODULE_LABELS: Partial<Record<ModuleKey, string>> = {
-  agence: 'Mon agence',
-  stats: 'Stats',
-  rh: 'RH',
-  parc: 'Parc',
-  divers_apporteurs: 'Apporteurs',
-  divers_plannings: 'Plannings',
-  divers_reunions: 'Réunions',
-  divers_documents: 'Documents',
-  guides: 'Guides',
-  ticketing: 'Ticketing',
-  aide: 'Aide',
-  prospection: 'Commercial',
-  planning_augmente: 'Planification Augmentée',
-  reseau_franchiseur: 'Réseau Franchiseur',
-  admin_plateforme: 'Administration',
-  unified_search: 'Recherche unifiée',
-};
+export const MODULE_LABELS: Partial<Record<ModuleKey, string>> = Object.fromEntries(
+  MODULE_DEFINITIONS.map(m => [m.key, m.label])
+) as Partial<Record<ModuleKey, string>>;
