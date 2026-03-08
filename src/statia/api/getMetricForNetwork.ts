@@ -14,7 +14,7 @@ import { ApogeeDataServices } from '../engine/loaders';
 export interface NetworkMetricParams {
   dateRange: DateRange;
   groupBy?: ('univers' | 'apporteur' | 'technicien' | 'mois' | 'agence')[];
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
 }
 
 /**
@@ -143,7 +143,7 @@ export async function getMetricForNetwork(
           value: 0,
           metadata: {
             computedAt: new Date(),
-            source: definition.source as any,
+            source: Array.isArray(definition.source) ? definition.source[0] : definition.source,
             recordCount: 0,
           },
           breakdown: {
@@ -167,7 +167,7 @@ export async function getMetricForNetwork(
     value: aggregatedValue,
     metadata: {
       computedAt: new Date(),
-      source: definition.source as any,
+      source: Array.isArray(definition.source) ? definition.source[0] : definition.source,
       recordCount: totalRecordCount,
     },
     breakdown: {

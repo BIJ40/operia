@@ -11,7 +11,7 @@ export type AggregationType = 'sum' | 'avg' | 'count' | 'distinct_count' | 'rati
 export interface FilterCondition {
   field: string;
   operator: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'in' | 'not_in' | 'contains' | 'exists';
-  value: any;
+  value: unknown;
 }
 
 export interface FormulaDefinition {
@@ -85,7 +85,7 @@ export interface MetricParams {
   tech_id?: string | number;
   univers?: string;
   // Paramètres additionnels dynamiques
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface LoadDebugInfo {
@@ -93,7 +93,7 @@ export interface LoadDebugInfo {
   apiKeyPresent: boolean;
   rawCounts: Record<string, number>;
   filteredCounts: Record<string, number>;
-  appliedFilters: Record<string, any[]>;
+  appliedFilters: Record<string, FilterCondition[]>;
   aggregationStats?: {
     min?: number;
     max?: number;
@@ -120,7 +120,7 @@ export interface MetricResult<T = number> {
 export interface MetricError {
   code: 'NOT_FOUND' | 'VALIDATION_ERROR' | 'COMPUTE_ERROR' | 'PERMISSION_DENIED' | 'DATA_UNAVAILABLE';
   message: string;
-  details?: any;
+  details?: unknown;
 }
 
 // ============================================
