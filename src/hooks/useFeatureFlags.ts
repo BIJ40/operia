@@ -121,7 +121,7 @@ export function useFeatureFlag(moduleKey: string) {
  */
 export function useUpdateFeatureFlag() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   return useMutation({
     mutationFn: async ({ id, is_enabled }: { id: string; is_enabled: boolean }) => {
