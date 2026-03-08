@@ -2,7 +2,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { ROUTES } from '@/config/routes';
 import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical, X } from 'lucide-react';
 import * as Icons from 'lucide-react';
