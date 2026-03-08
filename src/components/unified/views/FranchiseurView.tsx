@@ -34,6 +34,7 @@ import { FranchiseurProvider } from '@/franchiseur/contexts/FranchiseurContext';
 import { NetworkFiltersProvider } from '@/franchiseur/contexts/NetworkFiltersContext';
 import { AiUnifiedProvider } from '@/components/ai';
 import { DraggableTab } from '@/components/unified/DraggableTab';
+import { ProfileMenu } from '@/components/unified/workspace/ProfileMenu';
 import { SidebarChat } from '@/components/chat/SidebarChat';
 import { ImageModal } from '@/components/ImageModal';
 import { ACCENT_THEMES, type AccentThemeKey } from '@/lib/accentThemes';
