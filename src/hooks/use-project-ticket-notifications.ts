@@ -95,7 +95,8 @@ export function useUserProjectUnreadCount() {
  * sur les tickets projet avec échanges
  */
 export function useSupportProjectUnreadCount() {
-  const { user, isSupport, isAdmin } = useAuth();
+  const { user } = useAuthCore();
+  const { isSupport, isAdmin } = usePermissions();
   const queryClient = useQueryClient();
 
   const { data: totalUnreadCount = 0, refetch } = useQuery({
