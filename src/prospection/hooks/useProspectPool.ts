@@ -45,7 +45,7 @@ export interface ProspectPoolFilters {
 }
 
 export function useProspectPool(filters: ProspectPoolFilters = {}) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
 
   return useQuery({
     queryKey: ['prospect-pool', agencyId, filters],
