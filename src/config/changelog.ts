@@ -15,6 +15,42 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.9.5",
+    title: "Industrialisation & Observabilité (LOT 2)",
+    date: "2026-03-08",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // TESTS E2E
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'audit', description: '5 suites Playwright E2E : auth, permissions, tickets, admin-users, backup' },
+      { type: 'audit', description: 'Helpers de test partagés (login, credentials, assertions)' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // TESTS EDGE FUNCTIONS
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'audit', description: '13 tests Deno pour 4 edge functions critiques (sensitive-data, create-user, export-all-data, media-get-signed-url)' },
+      { type: 'audit', description: 'Validation CORS, auth refusée, body vide sur chaque fonction' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // OBSERVABILITÉ
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Logger structuré (module, userId, agencyId, requestId) avec intégration Sentry' },
+      { type: 'improvement', description: 'Edge monitor : mesure durée, détection appels lents (>3s), métriques agrégées' },
+      { type: 'security', description: 'Audit sécurité dev : vérification CSP, headers, secrets exposés au démarrage' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // MONITORING DB
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: '7 health checks SQL : orphelins, sync triggers, rate limits, documents, résumé global' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // DOCUMENTATION
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'audit', description: 'Documentation architecture complète (docs/operia-architecture.md)' },
+      { type: 'audit', description: 'Rapports LOT 2 et LOT 2B (industrialisation + validation)' },
+    ],
+  },
+  {
     version: "V0.9.2",
     title: "Audit Sécurité & Thèmes Zen",
     date: "2026-03-07",

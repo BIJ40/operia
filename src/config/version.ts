@@ -1,5 +1,5 @@
 export const APP_VERSION = '0.9.5';
-export const APP_CODENAME = 'Phase 3 — Granular Hooks + MODULE_DEFINITIONS + CSP';
+export const APP_CODENAME = 'LOT 2 — Industrialisation & Observabilité';
 
 /**
  * Changelog v0.8.7 (2026-01-31)
