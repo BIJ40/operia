@@ -3,6 +3,8 @@
  * 
  * Permet aux admins (N5+) de voir l'application comme un utilisateur spécifique
  * en chargeant ses vraies données (rôle, modules, agence).
+ * 
+ * Protégé par MfaGuard — nécessite AAL2 si MFA enforced.
  */
 
 import { useState, useMemo, useCallback } from 'react';
@@ -18,6 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { cn } from '@/lib/utils';
+import { MfaGuard } from '@/components/auth/MfaGuard';
 
 interface UserResult {
   id: string;
