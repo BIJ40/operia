@@ -97,7 +97,9 @@ function getRestrictedScope(
 export function useUserManagement(options: UseUserManagementOptions = {}) {
   const { scope = 'allAgencies', restrictToAgencyId } = options;
   const queryClient = useQueryClient();
-  const { globalRole, suggestedGlobalRole, isAdmin, user, agence: currentUserAgency } = useAuth();
+  const { globalRole, suggestedGlobalRole, isAdmin } = usePermissions();
+  const { user } = useAuthCore();
+  const { agence: currentUserAgency } = useProfile();
   
   // ✅ SOURCE DE VÉRITÉ : Permissions depuis roleMatrix.ts
   const effectiveUserRole = globalRole ?? suggestedGlobalRole;

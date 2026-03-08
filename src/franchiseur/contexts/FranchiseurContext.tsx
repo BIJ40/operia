@@ -82,7 +82,8 @@ function getPersistedAgencies(searchParams: URLSearchParams): string[] {
 }
 
 export function FranchiseurProvider({ children }: { children: ReactNode }) {
-  const { user, isFranchiseur, isAdmin, globalRole, isAuthLoading } = useAuth();
+  const { user, isAuthLoading } = useAuthCore();
+  const { isFranchiseur, isAdmin, globalRole } = usePermissions();
   const [searchParams, setSearchParams] = useSearchParams();
   const [franchiseurRole, setFranchiseurRole] = useState<FranchiseurRole>(null);
   const [assignedAgencies, setAssignedAgencies] = useState<string[]>([]);

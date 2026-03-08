@@ -260,7 +260,7 @@ function UnifiedWorkspaceContent() {
 }
 
 function UnifiedWorkspaceAuth() {
-  const { isAuthenticated, isAuthLoading } = useAuth();
+  const { isAuthenticated, isAuthLoading } = useAuthCore();
   
   if (isAuthLoading) {
     return (
