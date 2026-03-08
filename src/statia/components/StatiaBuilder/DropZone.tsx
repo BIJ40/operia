@@ -93,7 +93,7 @@ export function DropZone({
                   selectedDimension.color
                 )}>
                   {(() => {
-                    const IconComponent = (Icons as Record<string, React.ComponentType<{ className?: string }>>)[selectedDimension.icon] || Icons.Circle;
+                    const IconComponent = (Icons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[selectedDimension.icon] || Icons.Circle;
                     return <IconComponent className="h-5 w-5" />;
                   })()}
                 </div>
