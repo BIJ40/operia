@@ -52,7 +52,8 @@ export function useProspectingMeetings({ apporteurId, enabled = true }: UseProsp
 
 export function useCreateMeeting() {
   const queryClient = useQueryClient();
-  const { agencyId, user } = useAuth();
+  const { agencyId } = useProfile();
+  const { user } = useAuthCore();
 
   return useMutation({
     mutationFn: async (input: {
