@@ -50,7 +50,8 @@ import { ModuleSelector } from './ModuleSelector';
 import { OrigineBadge } from './OrigineBadge';
 import { OwnerSideSlider, ownerSideToSliderValue, sliderValueToOwnerSide } from './OwnerSideSlider';
 
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { useMyTicketRole, useAllowedTransitions } from '../hooks/useTicketPermissions';
 import { TicketTimelineTab } from './TicketTimelineTab';
 import { errorToast, successToast } from '@/lib/toastHelpers';
