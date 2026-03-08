@@ -99,7 +99,7 @@ export function AppointmentCard({
           borderLeft: `3px solid ${techColor}`,
           backgroundColor: isBinome && partnerColor
             ? undefined
-            : `${techColor}28`,
+            : `${techColor}50`,
           boxShadow: "0 1px 3px 0 hsl(var(--foreground) / 0.06)",
         }}
         onClick={() => onViewDetails?.(a)}
@@ -109,7 +109,7 @@ export function AppointmentCard({
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
-              background: `linear-gradient(135deg, ${techColor}50 50%, ${partnerColor}50 50%)`,
+              background: `linear-gradient(135deg, ${techColor}70 50%, ${partnerColor}70 50%)`,
             }}
           />
         )}
