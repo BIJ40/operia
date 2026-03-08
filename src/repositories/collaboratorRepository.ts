@@ -31,7 +31,6 @@ export interface CollaboratorRow {
 }
 
 export async function listCollaborators(agencyId: string, options?: {
-  activeOnly?: boolean;
   limit?: number;
 }): Promise<CollaboratorRow[]> {
   const { activeOnly = false, limit = DEFAULT_LIST_LIMIT } = options ?? {};
