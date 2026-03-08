@@ -21,7 +21,11 @@ async function sha256(message: string): Promise<string> {
 
 // Extract token from request (cookie priority, then header)
 function extractToken(req: Request): string | null {
-  // Try cookie first
+  // Try x-apporteur-token header first (cross-origin compatible)
+  const customHeader = req.headers.get("x-apporteur-token") ?? req.headers.get("X-Apporteur-Token");
+  if (customHeader?.trim()) return customHeader.trim();
+
+  // Try cookie
   const cookieHeader = req.headers.get("cookie");
   if (cookieHeader) {
     const cookies = cookieHeader.split(";").map(c => c.trim());
@@ -31,10 +35,14 @@ function extractToken(req: Request): string | null {
     }
   }
 
-  // Try Authorization header
+  // Try Authorization header (non-JWT tokens only)
   const authHeader = req.headers.get("authorization");
   if (authHeader?.startsWith("Bearer ")) {
-    return authHeader.substring(7);
+    const token = authHeader.substring(7);
+    // Skip if it looks like a JWT (contains dots)
+    if (!token.includes('.')) {
+      return token;
+    }
   }
 
   return null;
