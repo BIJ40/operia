@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
+import { withSentry } from '../_shared/withSentry.ts';
 
 // =============================================================================
 // CONSTANTS
