@@ -146,7 +146,7 @@ export function TicketTable({
   onTicketClick,
   onTicketUpdate,
 }: TicketTableProps) {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const { data: myViews = [] } = useMyTicketViews();
 
   const initialUI = useMemo(() => loadTableUIState(), []);

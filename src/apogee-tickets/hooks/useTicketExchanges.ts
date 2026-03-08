@@ -32,7 +32,7 @@ interface UseTicketExchangesOptions {
 }
 
 export function useTicketExchanges({ ticketId, enabled = true }: UseTicketExchangesOptions) {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
 
   // Fetch exchanges for this ticket

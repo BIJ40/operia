@@ -489,7 +489,7 @@ export function useTicketHistory(ticketId?: string) {
 // Log an action to history
 export function useLogTicketAction() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   
   return useMutation({
     mutationFn: async ({

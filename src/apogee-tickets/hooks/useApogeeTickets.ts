@@ -556,7 +556,7 @@ export function useApogeeTickets(filters?: TicketFilters) {
 
 // Hook for single ticket with comments
 export function useApogeeTicket(ticketId: string | null) {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
 
   const { data: ticket, isLoading } = useQuery({

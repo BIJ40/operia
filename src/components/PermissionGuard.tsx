@@ -86,7 +86,7 @@ export function ConditionalRender({
  * Hook pour vérifier l'accès basé sur le rôle
  */
 export function useRoleAccess(minRole?: GlobalRole): boolean {
-  const { globalRole, isAdmin } = useAuth();
+  const { globalRole, isAdmin } = usePermissions();
   return isAdmin || !minRole || hasMinimumRole(globalRole, minRole);
 }
 

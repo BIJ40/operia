@@ -64,7 +64,7 @@ function formatHistoryValue(value: unknown): string | null {
 }
 
 export function useTicketTabs() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
   
   // Open tabs
