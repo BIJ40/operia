@@ -49,6 +49,10 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Rôle insuffisant (N5+ requis)' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    // MFA/AAL2 enforcement for dev account creation
+    const mfaCheck = await requireAal2(req, callerLevel, user.id, { functionName: 'create-dev-account' });
+    if (!mfaCheck.ok) return mfaCheck.response;
+
     const { email, password, firstName, lastName, globalRole, isReadOnly } = await req.json();
 
     if (!email || !password) {
