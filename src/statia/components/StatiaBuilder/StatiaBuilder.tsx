@@ -140,7 +140,7 @@ export function StatiaBuilder({ agencySlug = 'dax', onSaveQuery }: StatiaBuilder
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Résultat simulé
-      const mockResult: any = {
+      const mockResult: BuilderResult = {
         query,
         computedAt: new Date(),
         values: {},
