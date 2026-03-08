@@ -23,7 +23,7 @@ export function PermissionGuard({
   redirectTo,
   showAccessDenied = true
 }: PermissionGuardProps) {
-  const { globalRole, isAdmin } = useAuth();
+  const { globalRole, isAdmin } = usePermissions();
   
   const hasAccess = isAdmin || !minRole || hasMinimumRole(globalRole, minRole);
 
