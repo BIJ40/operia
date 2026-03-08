@@ -107,7 +107,8 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
     icon.toLowerCase().includes(search.toLowerCase())
   );
 
-  const CurrentIcon = (Icons as any)[value] || Icons.BookOpen;
+  const IconsMap = Icons as unknown as Record<string, React.ComponentType<{ className?: string }>>;
+  const CurrentIcon = IconsMap[value] || Icons.BookOpen;
 
   return (
     <div className="space-y-2">
@@ -134,7 +135,7 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
           <ScrollArea className="h-64">
             <div className="grid grid-cols-6 gap-2">
               {filteredIcons.map((iconName) => {
-                const Icon = (Icons as any)[iconName];
+                const Icon = IconsMap[iconName];
                 if (!Icon) return null;
                 return (
                   <Button

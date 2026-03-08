@@ -16,7 +16,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-const tipsConfig: Record<TipsType, { label: string; icon: any; color: string; defaultTitle: string }> = {
+const tipsConfig: Record<TipsType, { label: string; icon: React.ComponentType<{ className?: string }>; color: string; defaultTitle: string }> = {
   danger: { label: 'À ne surtout pas faire', icon: XCircle, color: 'red', defaultTitle: '🚫 À ne surtout pas faire' },
   warning: { label: 'Attention', icon: AlertTriangle, color: 'orange', defaultTitle: '⚠️ Attention' },
   success: { label: 'Astuce / Conseil', icon: Lightbulb, color: 'green', defaultTitle: '💡 Astuce / Conseil' },

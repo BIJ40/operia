@@ -55,7 +55,12 @@ export function StatiaBuilder({ agencySlug = 'dax', onSaveQuery }: StatiaBuilder
   
   // État du résultat
   const [isComputing, setIsComputing] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  interface BuilderResult {
+    query: BuilderQuery;
+    computedAt: string;
+    values: Record<string, { label: string; value: number; unit?: string }>;
+  }
+  const [result, setResult] = useState<BuilderResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   
   // Handlers drag & drop
@@ -135,9 +140,9 @@ export function StatiaBuilder({ agencySlug = 'dax', onSaveQuery }: StatiaBuilder
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Résultat simulé
-      const mockResult: any = {
+      const mockResult: BuilderResult = {
         query,
-        computedAt: new Date(),
+        computedAt: new Date().toISOString(),
         values: {},
       };
       
@@ -251,7 +256,7 @@ export function StatiaBuilder({ agencySlug = 'dax', onSaveQuery }: StatiaBuilder
           <div className="flex-1 p-6">
             <DropZone
               selectedDimension={selectedDimension}
-              selectedMeasures={selectedMeasures as any}
+              selectedMeasures={selectedMeasures.filter((m): m is NonNullable<typeof m> => m != null)}
               onDimensionDrop={handleDimensionDrop}
               onMeasureDrop={handleMeasureDrop}
               onRemoveDimension={handleRemoveDimension}

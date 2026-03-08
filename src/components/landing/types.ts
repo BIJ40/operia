@@ -31,7 +31,7 @@ export interface SortableCardProps {
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   getColorClass: (color?: ColorPreset) => string;
-  IconComponent: (iconName: string) => any;
+  IconComponent: (iconName: string) => React.ComponentType<{ className?: string }> | undefined;
 }
 
 export const getColorClass = (color?: ColorPreset) => {
@@ -47,6 +47,7 @@ export const getColorClass = (color?: ColorPreset) => {
   return colors[color || 'blue'] || colors.blue;
 };
 
-export const getIconComponent = (iconName: string, Icons: any) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- lucide-react exports non-component utilities alongside icons
+export const getIconComponent = (iconName: string, Icons: Record<string, any>) => {
   return Icons[iconName] || Icons.BookOpen;
 };

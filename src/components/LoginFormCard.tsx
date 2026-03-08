@@ -43,8 +43,9 @@ export function LoginFormCard() {
       });
       if (error) throw error;
       setForgotSent(true);
-    } catch (err: any) {
-      toast({ title: 'Erreur', description: err.message || "Impossible d'envoyer l'email.", variant: 'destructive' });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Impossible d'envoyer l'email.";
+      toast({ title: 'Erreur', description: message, variant: 'destructive' });
     } finally {
       setForgotLoading(false);
     }
@@ -98,10 +99,10 @@ export function LoginFormCard() {
       }
 
       // Success - auth state change will handle redirect
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Erreur de connexion',
-        description: error.message,
+        description: error instanceof Error ? error.message : 'Erreur inconnue',
         variant: 'destructive',
       });
     } finally {

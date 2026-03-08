@@ -260,6 +260,7 @@ export function WelcomeWizard({
       if (user) {
         await supabase
           .from('profiles')
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- must_change_password not in generated types yet
           .update({ must_change_password: false } as any)
           .eq('id', user.id);
       }
@@ -273,16 +274,17 @@ export function WelcomeWizard({
       // Move to next step (steps will rebuild without password step)
       // Since steps rebuild, index 0 will now be 'profile'
       setCurrentStepIndex(0);
-    } catch (error: any) {
+    } catch (error: unknown) {
       logError('PASSWORD_CHANGE', 'Erreur changement mot de passe', { error });
-      if (error.message?.includes('session') || error.message?.includes('Session')) {
+      const errorMessage = error instanceof Error ? error.message : '';
+      if (errorMessage.includes('session') || errorMessage.includes('Session')) {
         toast.error('Session expirée. Veuillez vous reconnecter.');
         setTimeout(() => {
           onOpenChange(false);
           supabase.auth.signOut();
         }, 1000);
       } else {
-        setPasswordError(error.message || 'Impossible de changer le mot de passe');
+        setPasswordError(errorMessage || 'Impossible de changer le mot de passe');
       }
     } finally {
       setPasswordLoading(false);
