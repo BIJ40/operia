@@ -20,6 +20,10 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { logError } from '@/lib/logger';
+import type { PostgrestFilterBuilder } from '@supabase/postgrest-js';
+
+// Type alias for the Supabase query builder used in cursor pagination filters
+type SupabaseQueryBuilder = PostgrestFilterBuilder<never, never, unknown>;
 
 export interface CursorPaginationOptions<T = unknown> {
   /** React Query key */
