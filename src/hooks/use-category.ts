@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { safeMutation } from '@/lib/safeQuery';
 import { errorToast, successToast } from '@/lib/toastHelpers';
 import { logError } from '@/lib/logger';
-import { Block, Attachment } from '@/types/block';
+import { Block } from '@/types/block';
 import type { DragEndEvent } from '@dnd-kit/core';
 import type { Json } from '@/integrations/supabase/types';
 
