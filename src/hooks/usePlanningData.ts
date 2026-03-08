@@ -97,15 +97,15 @@ export function usePlanningProjects(agencySlug: string | undefined) {
       // Build a set of projectIds that already have a planned/validated TVX intervention
       // These are no longer truly "à planifier travaux"
       const projectsWithPlannedTvx = new Set<number>();
-      (interventions || []).forEach((interv: any) => {
-        const type = (interv.type || interv.type2 || '').toLowerCase();
-        const state = (interv.state || '').toLowerCase();
+      (interventions || []).forEach((interv: Record<string, unknown>) => {
+        const type = (String(interv.type || '') + String(interv.type2 || '')).toLowerCase();
+        const state = String(interv.state || '').toLowerCase();
         const isTvx = type.includes('travaux') || type.includes('tvx') || type.includes('work');
         const isPlanned = state.includes('planned') || state.includes('planifi') || 
                           state.includes('validated') || state.includes('done') || 
                           state.includes('in_progress') || state.includes('finished');
         if (isTvx && isPlanned && interv.projectId) {
-          projectsWithPlannedTvx.add(interv.projectId);
+          projectsWithPlannedTvx.add(interv.projectId as number);
         }
       });
 
