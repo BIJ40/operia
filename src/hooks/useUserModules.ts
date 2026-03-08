@@ -1,27 +1,28 @@
 /**
  * Hook pour accéder aux modules utilisateur depuis la table relationnelle user_modules
  * 
- * P3.2 - Normalisation enabled_modules JSONB → table relationnelle
- * Ce hook remplace progressivement l'accès direct à profiles.enabled_modules
- * 
- * NOTE: Les fonctions de conversion sont centralisées dans src/lib/userModulesUtils.ts
- * - userModulesToEnabledModules() - conversion user_modules rows → EnabledModules
- * - enabledModulesToRows() - conversion EnabledModules → rows pour insertion
+ * MIGRATED: Uses userModulesRepository for data access
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { ModuleKey, EnabledModules } from '@/types/modules';
 import { 
   userModulesToEnabledModules, 
   enabledModulesToRows,
-  type UserModuleRow,
+  type UserModuleRow as UtilsModuleRow,
   type UserModuleReadRow 
 } from '@/lib/userModulesUtils';
+import {
+  listUserModules,
+  upsertUserModule,
+  deleteUserModule,
+  deleteAllUserModules,
+  bulkInsertUserModules,
+} from '@/repositories/userModulesRepository';
 
 // Re-export des types pour compatibilité
-export type { UserModuleRow, UserModuleReadRow };
+export type { UtilsModuleRow as UserModuleRow, UserModuleReadRow };
 
 // Re-export des fonctions de conversion pour compatibilité avec le code existant
 export { userModulesToEnabledModules as rowsToEnabledModules, enabledModulesToRows };
@@ -37,18 +38,11 @@ export function useUserModules(userId?: string) {
     queryKey: ['user-modules', targetUserId],
     queryFn: async () => {
       if (!targetUserId) return null;
-      
-      const { data, error } = await supabase
-        .from('user_modules')
-        .select('*')
-        .eq('user_id', targetUserId);
-      
-      if (error) throw error;
-      
-      return userModulesToEnabledModules(data as UserModuleRow[]);
+      const data = await listUserModules(targetUserId);
+      return userModulesToEnabledModules(data);
     },
     enabled: !!targetUserId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -111,29 +105,14 @@ export function useToggleModule() {
       options?: Record<string, boolean>;
     }) => {
       if (enabled) {
-        // Upsert: activer ou mettre à jour le module
-        const { error } = await supabase
-          .from('user_modules')
-          .upsert({
-            user_id: userId,
-            module_key: moduleKey,
-            options: options || null,
-            enabled_at: new Date().toISOString(),
-            enabled_by: user?.id || null,
-          }, {
-            onConflict: 'user_id,module_key',
-          });
-        
-        if (error) throw error;
+        await upsertUserModule({
+          userId,
+          moduleKey,
+          options: options || null,
+          enabledBy: user?.id || null,
+        });
       } else {
-        // Delete: désactiver le module
-        const { error } = await supabase
-          .from('user_modules')
-          .delete()
-          .eq('user_id', userId)
-          .eq('module_key', moduleKey);
-        
-        if (error) throw error;
+        await deleteUserModule(userId, moduleKey);
       }
     },
     onSuccess: (_, variables) => {
@@ -158,13 +137,11 @@ export function useUpdateModuleOptions() {
       moduleKey: ModuleKey; 
       options: Record<string, boolean>;
     }) => {
-      const { error } = await supabase
-        .from('user_modules')
-        .update({ options, updated_at: new Date().toISOString() })
-        .eq('user_id', userId)
-        .eq('module_key', moduleKey);
-      
-      if (error) throw error;
+      await upsertUserModule({
+        userId,
+        moduleKey,
+        options,
+      });
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['user-modules', variables.userId] });
@@ -174,7 +151,6 @@ export function useUpdateModuleOptions() {
 
 /**
  * Mutation pour synchroniser les modules depuis JSONB vers la table
- * Utilisée pour la migration progressive
  */
 export function useSyncModulesFromJsonb() {
   const queryClient = useQueryClient();
@@ -188,21 +164,20 @@ export function useSyncModulesFromJsonb() {
       userId: string; 
       enabledModules: EnabledModules;
     }) => {
-      // Supprimer les anciens modules
-      await supabase
-        .from('user_modules')
-        .delete()
-        .eq('user_id', userId);
+      await deleteAllUserModules(userId);
       
-      // Insérer les nouveaux
       const rows = enabledModulesToRows(userId, enabledModules, user?.id);
       
       if (rows.length > 0) {
-        const { error } = await supabase
-          .from('user_modules')
-          .insert(rows);
-        
-        if (error) throw error;
+        await bulkInsertUserModules(
+          rows.map(r => ({
+            user_id: r.user_id,
+            module_key: r.module_key,
+            options: r.options,
+            enabled_at: r.enabled_at || new Date().toISOString(),
+            enabled_by: r.enabled_by || null,
+          }))
+        );
       }
     },
     onSuccess: (_, variables) => {

@@ -1,6 +1,8 @@
 /**
  * Hook pour la gestion des collaborateurs (Module RH & Maintenance)
  * RGPD: Les données sensibles sont stockées séparément dans collaborator_sensitive_data
+ * 
+ * MIGRATED: Uses collaboratorRepository for data access
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -10,42 +12,36 @@ import { Collaborator, CollaboratorFormData } from '@/types/collaborator';
 import { toast } from 'sonner';
 import { useHasMinLevel } from '@/hooks/useHasGlobalRole';
 import { saveSensitiveData } from './useSensitiveData';
+import {
+  listCollaborators as repoListCollaborators,
+  getCollaboratorById,
+} from '@/repositories/collaboratorRepository';
 
 export function useCollaborators(agencyId?: string) {
   const { agencyId: userAgencyId } = useEffectiveAuth();
-  const canManageCollaborators = useHasMinLevel(2); // N2+ (Dirigeant)
+  const canManageCollaborators = useHasMinLevel(2);
   const effectiveAgencyId = agencyId || userAgencyId;
   const queryClient = useQueryClient();
 
-  // Fetch collaborators for agency
   const { data: collaborators = [], isLoading, error } = useQuery({
     queryKey: ['collaborators', effectiveAgencyId],
     queryFn: async () => {
       if (!effectiveAgencyId) return [];
-
-      const { data, error } = await supabase
-        .from('collaborators')
-        .select('*')
-        .eq('agency_id', effectiveAgencyId)
-        .order('last_name', { ascending: true });
-
-      if (error) throw error;
-      return data as Collaborator[];
+      return repoListCollaborators(effectiveAgencyId) as Promise<Collaborator[]>;
     },
     enabled: !!effectiveAgencyId,
   });
 
-  // Create collaborator - Simple fiche RH sans compte utilisateur
+  // Create collaborator
   const createMutation = useMutation({
     mutationFn: async (formData: CollaboratorFormData) => {
       if (!effectiveAgencyId) throw new Error('Agency ID required');
 
-      // Créer le collaborateur (fiche RH uniquement, pas de compte système)
       const { data, error } = await supabase
         .from('collaborators')
         .insert({
           agency_id: effectiveAgencyId,
-          user_id: null, // Pas de lien avec un compte utilisateur
+          user_id: null,
           first_name: formData.first_name,
           last_name: formData.last_name,
           email: formData.email || null,
@@ -60,14 +56,13 @@ export function useCollaborators(agencyId?: string) {
           city: formData.city || null,
           birth_place: formData.birth_place || null,
           apogee_user_id: formData.apogee_user_id || null,
-          is_registered_user: false, // Pas un utilisateur du système
+          is_registered_user: false,
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      // Sauvegarder les données sensibles séparément (RGPD)
       if (data?.id) {
         await saveSensitiveData(data.id, {
           birth_date: formData.birth_date,
@@ -88,14 +83,11 @@ export function useCollaborators(agencyId?: string) {
     },
   });
 
-  // Update collaborator - données sensibles mises à jour séparément
+  // Update collaborator
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<CollaboratorFormData> }) => {
-      // Extraire les données sensibles et les champs non-DB (competences stocké dans rh_competencies)
       const { birth_date, social_security_number, emergency_contact, emergency_phone, competences, ...safeData } = data;
 
-      // Update collaborateur (sans données sensibles)
-      // Forcer null si apogee_user_id est undefined (pour pouvoir "désélectionner")
       const updatePayload = {
         ...safeData,
         apogee_user_id: 'apogee_user_id' in data 
@@ -104,7 +96,6 @@ export function useCollaborators(agencyId?: string) {
         updated_at: new Date().toISOString(),
       };
       
-      // Supprimer les champs undefined pour éviter de les envoyer
       Object.keys(updatePayload).forEach(key => {
         if (updatePayload[key as keyof typeof updatePayload] === undefined) {
           delete updatePayload[key as keyof typeof updatePayload];
@@ -120,7 +111,6 @@ export function useCollaborators(agencyId?: string) {
 
       if (error) throw error;
 
-      // Mettre à jour les données sensibles si fournies
       if (birth_date !== undefined || social_security_number !== undefined || 
           emergency_contact !== undefined || emergency_phone !== undefined) {
         await saveSensitiveData(id, {
@@ -179,7 +169,6 @@ export function useCollaborators(agencyId?: string) {
     createMutation,
     updateMutation,
     deleteMutation,
-    // Permissions
     canManage: canManageCollaborators,
   };
 }
@@ -190,15 +179,7 @@ export function useCollaborator(id: string | undefined) {
     queryKey: ['collaborator', id],
     queryFn: async () => {
       if (!id) return null;
-
-      const { data, error } = await supabase
-        .from('collaborators')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error) throw error;
-      return data as Collaborator;
+      return getCollaboratorById(id) as Promise<Collaborator | null>;
     },
     enabled: !!id,
   });
