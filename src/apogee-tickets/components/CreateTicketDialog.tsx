@@ -22,7 +22,7 @@ import { Plus, Paperclip, X, FileIcon } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import type { ApogeeModule, ApogeeTicketInsert, OwnerSide, ApogeeTicketStatus } from '../types';
 import type { TicketRole } from '../hooks/useTicketPermissions';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { supabase } from '@/integrations/supabase/client';
 import { TagSelector } from './TagSelector';
 import { OwnerSideSlider, ownerSideToSliderValue, sliderValueToOwnerSide } from './OwnerSideSlider';
