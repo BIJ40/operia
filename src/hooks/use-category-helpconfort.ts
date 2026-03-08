@@ -102,7 +102,7 @@ export const useCategoryHelpConfort = () => {
           hide_title: updatedSection.hideTitle,
           show_summary: updatedSection.showSummary,
           summary: updatedSection.summary,
-          attachments: updatedSection.attachments as any || [],
+          attachments: (updatedSection.attachments ?? []) as unknown as Json,
           hide_from_sidebar: updatedSection.hideFromSidebar,
         })
         .eq('id', updatedSection.id),
