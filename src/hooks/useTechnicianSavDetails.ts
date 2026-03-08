@@ -108,7 +108,7 @@ export function useTechnicianSavDetails(technicianId: string | null, dateRange: 
         
         const savDetails: SavDetail[] = [];
         
-        for (const intervention of interventions as any[]) {
+        for (const intervention of interventions as Record<string, unknown>[]) {
           // Vérifier si ce technicien est impliqué
           const visites = intervention?.data?.visites || intervention?.visites || [];
           const techIds = new Set<string>();
