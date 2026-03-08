@@ -15,7 +15,7 @@ interface ApporteurData {
 }
 
 export function CAApporteursWidget() {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const agencySlug = agence || '';
 
   // Utiliser la période du dashboard parent

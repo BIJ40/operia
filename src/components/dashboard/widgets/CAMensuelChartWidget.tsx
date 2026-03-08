@@ -11,7 +11,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { formatEuros } from '@/apogee-connect/utils/formatters';
 
 export function CAMensuelChartWidget() {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const agencySlug = agence || '';
   const selectedYear = new Date().getFullYear();
 

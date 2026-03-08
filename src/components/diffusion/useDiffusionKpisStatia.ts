@@ -36,7 +36,7 @@ export interface DiffusionKpisData {
 }
 
 export function useDiffusionKpisStatia(currentMonthIndex: number) {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const services = getGlobalApogeeDataServices();
 
   const now = new Date();

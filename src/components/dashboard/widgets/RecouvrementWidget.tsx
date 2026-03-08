@@ -12,7 +12,7 @@ import { formatEuros } from '@/apogee-connect/utils/formatters';
 import { cn } from '@/lib/utils';
 
 export function RecouvrementWidget() {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const agencySlug = agence || '';
 
   const now = new Date();

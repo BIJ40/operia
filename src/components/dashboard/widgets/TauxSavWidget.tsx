@@ -16,7 +16,7 @@ interface TauxSavWidgetProps {
 }
 
 export function TauxSavWidget({ compact = false }: TauxSavWidgetProps) {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const agencySlug = agence || '';
 
   const { dateRange, periodLabel } = useDashboardPeriod();
