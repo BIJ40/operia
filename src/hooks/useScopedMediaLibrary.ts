@@ -117,7 +117,7 @@ export function useScopedMediaLibrary({
         setCurrentFolderId(resolvedRootFolder.id);
       }
     }
-  }, [resolvedRootFolder]);
+  }, [resolvedRootFolder, currentFolderId]);
 
   // Effective folder ID (current or root)
   const effectiveFolderId = currentFolderId || rootFolderId;
