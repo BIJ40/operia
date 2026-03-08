@@ -63,7 +63,7 @@ export interface CreateApporteurInput {
  * Liste des apporteurs de l'agence courante avec count utilisateurs
  */
 export function useApporteurs() {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
 
   return useQuery({
     queryKey: ['apporteurs', agencyId],
