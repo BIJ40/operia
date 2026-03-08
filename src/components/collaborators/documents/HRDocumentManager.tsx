@@ -8,7 +8,7 @@ import { MediaLibraryPortal } from '@/components/media-library/MediaLibraryPorta
 import { FolderOpen, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 
 interface HRDocumentManagerProps {
   collaboratorId: string;
