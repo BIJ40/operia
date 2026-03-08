@@ -35,7 +35,7 @@ function getPeriodDates(period: PeriodKey): { from: string; to: string } {
 }
 
 export function ApporteurListPage({ onSelectApporteur }: Props) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   const [period, setPeriod] = useState<PeriodKey>('90j');
   const [search, setSearch] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);

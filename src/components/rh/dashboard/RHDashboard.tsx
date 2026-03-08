@@ -46,7 +46,7 @@ interface RHStats {
 }
 
 export function RHDashboard() {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
 
   const { data: stats, isLoading } = useQuery<RHStats>({
     queryKey: ['rh-dashboard-stats', agencyId],

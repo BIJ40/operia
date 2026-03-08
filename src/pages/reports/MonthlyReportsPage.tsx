@@ -27,7 +27,7 @@ interface MonthlyReport {
 }
 
 export default function MonthlyReportsPage() {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   const queryClient = useQueryClient();
   const [isGenerating, setIsGenerating] = useState(false);
 

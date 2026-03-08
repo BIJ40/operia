@@ -16,7 +16,7 @@ interface HRDocumentManagerProps {
 }
 
 export function HRDocumentManager({ collaboratorId, canManage }: HRDocumentManagerProps) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
 
   // Trouver le dossier du collaborateur dans la médiathèque
   const { data: collaboratorFolder, isLoading } = useQuery({

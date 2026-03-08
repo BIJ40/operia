@@ -65,7 +65,7 @@ interface ContractSalaryTabProps {
 }
 
 export function ContractSalaryTab({ collaboratorId, canManage }: ContractSalaryTabProps) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   const {
     currentContract,
     pastContracts,

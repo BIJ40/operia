@@ -38,7 +38,7 @@ interface SelectedApporteur {
 }
 
 export function ApporteurComparisonPage() {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   const queryClient = useQueryClient();
   const [period, setPeriod] = useState<PeriodKey>('6m');
   const [selected, setSelected] = useState<SelectedApporteur[]>([]);

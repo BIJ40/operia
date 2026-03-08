@@ -27,7 +27,7 @@ interface UseProspectingFollowupsOptions {
 }
 
 export function useProspectingFollowups({ apporteurId, enabled = true }: UseProspectingFollowupsOptions = {}) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
 
   return useQuery({
     queryKey: ['prospecting-followups', agencyId, apporteurId],
