@@ -13,7 +13,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { notifyNewTicket } from '@/utils/notifyNewTicket';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { supabase } from '@/integrations/supabase/client';
 import { safeQuery, safeInvoke, safeMutation } from '@/lib/safeQuery';
 import { logError, logDebug } from '@/lib/logger';
