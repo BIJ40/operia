@@ -140,10 +140,10 @@ export function MetricExplanation({
 
   // Extraire les détails du breakdown pour CA
   const hasCABreakdown = breakdown && (breakdown.factureCount !== undefined || breakdown.avoirCount !== undefined);
-  const factureCount = breakdown?.factureCount || 0;
-  const avoirCount = breakdown?.avoirCount || 0;
-  const factureTotal = breakdown?.factureTotal || 0;
-  const avoirTotal = breakdown?.avoirTotal || 0;
+  const factureCount = Number(breakdown?.factureCount) || 0;
+  const avoirCount = Number(breakdown?.avoirCount) || 0;
+  const factureTotal = Number(breakdown?.factureTotal) || 0;
+  const avoirTotal = Number(breakdown?.avoirTotal) || 0;
 
   return (
     <div className="mt-4 space-y-3 border-t pt-3">
