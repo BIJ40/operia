@@ -280,7 +280,7 @@ export const useCategoryHelpConfort = () => {
       hide_title: section.hideTitle,
       show_summary: section.showSummary,
       summary: section.summary,
-      attachments: section.attachments as any || [],
+      attachments: (section.attachments ?? []) as unknown as Json,
     };
 
     const result = await safeMutation(
