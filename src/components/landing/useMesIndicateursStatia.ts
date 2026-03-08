@@ -4,7 +4,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from '@/contexts/ProfileContext';
 import { getGlobalApogeeDataServices } from "@/statia/adapters/dataServiceAdapter";
 import { getMetricForAgency } from "@/statia/api/getMetricForAgency";
 import { logDebug, logError } from "@/lib/logger";
