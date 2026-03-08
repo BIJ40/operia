@@ -43,7 +43,7 @@ export function MinimalLayout({
   backTab = 'accueil',
   backLabel = "Retour à l'espace de travail"
 }: MinimalLayoutProps) {
-  const { isAuthenticated, isAuthLoading } = useAuth();
+  const { isAuthenticated, isAuthLoading } = useAuthCore();
   const { isImpersonating } = useImpersonation();
   const [loginOpen, setLoginOpen] = useState(false);
   const navigate = useNavigate();

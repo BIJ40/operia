@@ -92,7 +92,7 @@ function formatValue(value: number | null | undefined, format: string): string {
 }
 
 export function IndicateursGlobauxWidget() {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
   const agencySlug = agence || '';
   const selectedYear = new Date().getFullYear();
 

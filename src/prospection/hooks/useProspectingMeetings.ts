@@ -26,7 +26,7 @@ interface UseProspectingMeetingsOptions {
 }
 
 export function useProspectingMeetings({ apporteurId, enabled = true }: UseProspectingMeetingsOptions = {}) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
 
   return useQuery({
     queryKey: ['prospecting-meetings', agencyId, apporteurId],

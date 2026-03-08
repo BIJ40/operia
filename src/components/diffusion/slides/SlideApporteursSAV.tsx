@@ -12,7 +12,7 @@ interface SlideApporteursSAVProps {
 }
 
 export const SlideApporteursSAV = ({ currentMonthIndex }: SlideApporteursSAVProps) => {
-  const { agence } = useAuth();
+  const { agence } = useProfile();
 
   const { data } = useQuery({
     queryKey: ['diffusion-apporteurs-sav', agence, currentMonthIndex],

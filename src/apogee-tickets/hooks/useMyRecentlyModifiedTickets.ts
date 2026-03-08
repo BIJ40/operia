@@ -11,7 +11,7 @@ export interface RecentTicket {
 }
 
 export function useMyRecentlyModifiedTickets(limit = 5) {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   return useQuery({
     queryKey: ['my-recently-modified-tickets', user?.id, limit],

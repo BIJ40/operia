@@ -39,7 +39,7 @@ function AnnouncementStatsDisplay({ announcementId }: { announcementId: string }
 }
 
 export default function AdminAnnouncements() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const { data: announcements = [], isLoading } = useAllAnnouncements();
   const deleteAnnouncement = useDeleteAnnouncement();
 

@@ -35,7 +35,7 @@ function getMonday(): Date {
 }
 
 export default function PlanningAugmenteAdmin() {
-  const { agencyId, agence: agencySlug } = useAuth();
+  const { agencyId, agence: agencySlug } = useProfile();
   const [selectedDossier, setSelectedDossier] = useState<PlanningProject | null>(null);
   const [weekStart, setWeekStart] = useState<Date>(getMonday);
 
