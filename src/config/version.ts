@@ -1,5 +1,5 @@
-export const APP_VERSION = '0.9.3';
-export const APP_CODENAME = 'Phase 3 — Hardening';
+export const APP_VERSION = '0.9.4';
+export const APP_CODENAME = 'Phase 3 — Repository + KPI + Tests';
 
 /**
  * Changelog v0.8.7 (2026-01-31)

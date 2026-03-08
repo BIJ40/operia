@@ -139,7 +139,7 @@ function ActivityTimelineItem({
         entry.actor_type === 'system' && "bg-muted",
         entry.actor_type === 'ai' && "bg-primary/10 border-primary/30"
       )}>
-        {getActorIcon(entry.actor_type)}
+        {getActorIcon(entry.actor_type as any)}
       </div>
 
       {/* Content */}
@@ -181,7 +181,7 @@ function ActivityTimelineItem({
           <Tooltip>
             <TooltipTrigger asChild>
               <p className="text-xs text-muted-foreground cursor-help">
-                {formatActorType(entry.actor_type)} • {timeAgo}
+                {formatActorType(entry.actor_type as any)} • {timeAgo}
               </p>
             </TooltipTrigger>
             <TooltipContent>

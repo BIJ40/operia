@@ -1,42 +1,26 @@
 /**
  * Hook unifié pour le système Activity Log
  * Base de données pour le Copilote IA
+ * 
+ * MIGRATED: Uses activityLogRepository for data access
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { logError } from '@/lib/logger';
 import type { Json } from '@/integrations/supabase/types';
+import {
+  listActivityLogs,
+  listEntityHistory,
+  type ActivityLogRow,
+  type ActivityLogFilters as RepoFilters,
+} from '@/repositories/activityLogRepository';
 
 export type ActivityActorType = 'user' | 'apporteur' | 'system' | 'ai';
 
-export interface ActivityLogEntry {
-  id: string;
-  agency_id: string | null;
-  actor_type: ActivityActorType;
-  actor_id: string | null;
-  action: string;
-  module: string;
-  entity_type: string;
-  entity_id: string | null;
-  entity_label: string | null;
-  old_values: Record<string, unknown> | null;
-  new_values: Record<string, unknown> | null;
-  metadata: Record<string, unknown> | null;
-  created_at: string;
-}
+export type ActivityLogEntry = ActivityLogRow;
 
-export interface ActivityLogFilters {
-  module?: string;
-  entityType?: string;
-  entityId?: string;
-  actorType?: ActivityActorType;
-  actorId?: string;
-  action?: string;
-  limit?: number;
-  fromDate?: string;
-  toDate?: string;
-}
+export interface ActivityLogFilters extends RepoFilters {}
 
 interface LogActivityParams {
   action: string;
@@ -58,31 +42,7 @@ interface LogActivityParams {
 export function useActivityLog(filters?: ActivityLogFilters) {
   return useQuery({
     queryKey: ['activity-log', filters],
-    queryFn: async () => {
-      let query = supabase
-        .from('activity_log')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(filters?.limit || 100);
-
-      if (filters?.module) query = query.eq('module', filters.module);
-      if (filters?.entityType) query = query.eq('entity_type', filters.entityType);
-      if (filters?.entityId) query = query.eq('entity_id', filters.entityId);
-      if (filters?.actorType) query = query.eq('actor_type', filters.actorType);
-      if (filters?.actorId) query = query.eq('actor_id', filters.actorId);
-      if (filters?.action) query = query.eq('action', filters.action);
-      if (filters?.fromDate) query = query.gte('created_at', filters.fromDate);
-      if (filters?.toDate) query = query.lte('created_at', filters.toDate);
-
-      const { data, error } = await query;
-      
-      if (error) {
-        logError('[ACTIVITY_LOG] Failed to fetch logs', { error, filters });
-        throw error;
-      }
-      
-      return (data || []) as ActivityLogEntry[];
-    },
+    queryFn: () => listActivityLogs(filters),
     staleTime: 30000,
   });
 }
@@ -93,24 +53,7 @@ export function useActivityLog(filters?: ActivityLogFilters) {
 export function useEntityHistory(entityType: string, entityId: string | undefined) {
   return useQuery({
     queryKey: ['activity-log', 'entity', entityType, entityId],
-    queryFn: async () => {
-      if (!entityId) return [];
-      
-      const { data, error } = await supabase
-        .from('activity_log')
-        .select('*')
-        .eq('entity_type', entityType)
-        .eq('entity_id', entityId)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) {
-        logError('[ACTIVITY_LOG] Failed to fetch entity history', { error, entityType, entityId });
-        throw error;
-      }
-
-      return (data || []) as ActivityLogEntry[];
-    },
+    queryFn: () => listEntityHistory(entityType, entityId!),
     enabled: !!entityId,
     staleTime: 30000,
   });
