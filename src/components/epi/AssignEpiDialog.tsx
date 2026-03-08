@@ -58,7 +58,7 @@ export function AssignEpiDialog({
   agencyId,
   preselectedCollaboratorId 
 }: AssignEpiDialogProps) {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const createAssignment = useCreateEpiAssignment();
   
   const { data: catalog = [] } = useEpiCatalog(agencyId);

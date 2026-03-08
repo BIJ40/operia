@@ -21,7 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 // Hook inline pour récupérer le collaborateur (remplace useMyCollaborator supprimé)
 function useCollaboratorForEpi() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   return useQuery({
     queryKey: ["epi-collaborator", user?.id],
     queryFn: async () => {
