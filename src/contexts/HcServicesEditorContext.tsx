@@ -79,7 +79,8 @@ export function HcServicesEditorProvider({ children }: { children: ReactNode }) 
   const [blocks, setBlocks] = useState<HcServicesBlock[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { hasGlobalRole, hasModuleOption, user } = useAuth();
+  const { hasGlobalRole, hasModuleOption } = usePermissions();
+  const { user } = useAuthCore();
   const location = useLocation();
   
   const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('guides', 'edition');

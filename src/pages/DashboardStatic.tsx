@@ -164,7 +164,9 @@ const itemVariants = {
 };
 
 export default function DashboardStatic() {
-  const { firstName, globalRole, roleAgence, user, agence } = useAuth();
+  const { user } = useAuthCore();
+  const { firstName, agence, roleAgence } = useProfile();
+  const { globalRole } = usePermissions();
   const greeting = getGreeting();
   
   // Détermination du niveau d'accès

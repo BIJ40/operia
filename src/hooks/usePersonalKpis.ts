@@ -78,7 +78,8 @@ function isTechInIntervention(inter: Record<string, unknown>, apogeeUserId: numb
 }
 
 export function usePersonalKpis(options?: UsePersonalKpisOptions) {
-  const { user, agence } = useAuth();
+  const { user } = useAuthCore();
+  const { agence } = useProfile();
 
   const now = new Date();
   const dateRange = useMemo(() => options?.dateRange || {

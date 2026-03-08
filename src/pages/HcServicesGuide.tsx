@@ -247,7 +247,8 @@ const SortableCategory = ({
 
 export default function OperiaGuide() {
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, loading } = useOperiaEditor();
-  const { hasGlobalRole, isAuthenticated, hasModuleOption } = useAuth();
+  const { isAuthenticated } = useAuthCore();
+  const { hasGlobalRole, hasModuleOption } = usePermissions();
   
   const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('guides', 'edition');
   const canDelete = hasGlobalRole('platform_admin');

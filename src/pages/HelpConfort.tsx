@@ -273,7 +273,9 @@ const SortableCategory = ({
 export default function HelpConfort() {
   const { blocks, updateBlock, deleteBlock, addBlock } = useEditor();
   const { isEditMode } = useEditor();
-  const { isAdmin, isAuthenticated, roleAgence, hasAccessToScope } = useAuth();
+  const { isAuthenticated } = useAuthCore();
+  const { isAdmin, hasAccessToScope } = usePermissions();
+  const { roleAgence } = useProfile();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editIcon, setEditIcon] = useState('BookOpen');

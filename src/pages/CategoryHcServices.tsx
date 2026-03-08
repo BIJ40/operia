@@ -42,7 +42,8 @@ import {
 export default function CategoryOperia() {
   const { slug } = useParams();
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reloadBlocks, loading } = useOperiaEditor();
-  const { isAuthenticated, hasGlobalRole, hasModuleOption } = useAuth();
+  const { isAuthenticated } = useAuthCore();
+  const { hasGlobalRole, hasModuleOption } = usePermissions();
   
   const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('guides', 'edition');
   const getEditUrl = (url: string) => isEditMode ? `${url}?edit=true` : url;
