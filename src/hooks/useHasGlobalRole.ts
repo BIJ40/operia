@@ -31,7 +31,7 @@ export function useHasGlobalRole(minRole?: GlobalRole): boolean {
  * @returns true si l'utilisateur a le niveau requis
  */
 export function useHasMinLevel(minLevel: number): boolean {
-  const { globalRole, suggestedGlobalRole } = useAuth();
+  const { globalRole, suggestedGlobalRole } = usePermissions();
   
   // V2: Plus de bypass legacy
   const effectiveRole = globalRole ?? suggestedGlobalRole;
