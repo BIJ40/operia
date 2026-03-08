@@ -61,7 +61,8 @@ function LoadingFallback() {
 }
 
 function UnifiedWorkspaceContent() {
-  const { globalRole, isFranchiseur, isLoggingOut } = useAuth();
+  const { isLoggingOut } = useAuthCore();
+  const { globalRole, isFranchiseur } = usePermissions();
   const { isImpersonating, isRealUserImpersonation } = useImpersonation();
   const effectiveAuth = useEffectiveAuth();
   const { hasModule, hasModuleOption } = useEffectiveModules();
