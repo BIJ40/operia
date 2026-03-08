@@ -6,10 +6,11 @@ import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts'
 import { validateString, validateOptionalString, validateOptionalBoolean } from '../_shared/validation.ts'
 import { getDefaultModulesForCreation, EnabledModule } from '../_shared/defaultModules.ts'
 import { checkRateLimit } from '../_shared/rateLimiter.ts'
+import { withSentry } from '../_shared/withSentry.ts'
 
 // Resend initialized lazily inside handler to avoid boot crash on invalid API key chars
 
-serve(async (req) => {
+serve(withSentry({ functionName: 'create-user' }, async (req) => {
   // Handle CORS preflight or reject unauthorized origins
   const corsResult = handleCorsPreflightOrReject(req);
   if (corsResult) return corsResult;
