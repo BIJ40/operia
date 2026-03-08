@@ -9,7 +9,7 @@ import { logError } from '@/lib/logger';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useApogeeUsers } from '@/shared/api/apogee/useApogeeUsers';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { toast } from 'sonner';
 import type { RHCollaborator } from '@/types/rh-suivi';
 import type { ApogeeUserFull, ApogeeUserData } from '@/shared/types/apogeeUser';
