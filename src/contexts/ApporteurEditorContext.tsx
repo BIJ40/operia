@@ -1,7 +1,7 @@
 import { createContext, useContext, ReactNode, useState, useCallback, useEffect } from 'react';
 import { Block } from '@/types/block';
 import { loadApporteurData, saveApporteurData, exportApporteurData, importApporteurData } from '@/lib/db-apporteurs';
-import { useAuth } from './AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { supabase } from '@/integrations/supabase/client';
 import { CacheManager } from '@/lib/cache-manager';
 import { logError, logDebug } from '@/lib/logger';
