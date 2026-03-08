@@ -59,30 +59,18 @@ export const ROLE_HIERARCHY: Record<GlobalRole, number> = {
 };
 
 // ============================================================================
-// RÈGLE 6: RÔLE MINIMUM PAR MODULE
+// RÈGLE 6: RÔLE MINIMUM PAR MODULE (dérivé de MODULE_DEFINITIONS)
 // ============================================================================
 
+import { MODULE_DEFINITIONS } from '@/types/modules';
+
 /**
- * Rôle minimum requis pour activer chaque module
- * @deprecated Utiliser MODULE_DEFINITIONS[x].minRole à la place
+ * Rôle minimum requis pour activer chaque module.
+ * Dérivé automatiquement de MODULE_DEFINITIONS — source de vérité unique.
  */
-export const MODULE_MIN_ROLES: Partial<Record<ModuleKey, GlobalRole>> = {
-  agence: 'franchisee_admin',
-  stats: 'franchisee_admin',
-  rh: 'base_user',
-  parc: 'franchisee_user',
-  divers_apporteurs: 'franchisee_admin',
-  divers_plannings: 'franchisee_admin',
-  divers_reunions: 'franchisee_admin',
-  divers_documents: 'franchisee_admin',
-  guides: 'base_user',
-  ticketing: 'base_user',
-  aide: 'base_user',
-  prospection: 'franchisee_admin',
-  planning_augmente: 'franchisee_admin',
-  reseau_franchiseur: 'franchisor_user',
-  admin_plateforme: 'platform_admin',
-};
+export const MODULE_MIN_ROLES: Partial<Record<ModuleKey, GlobalRole>> = Object.fromEntries(
+  MODULE_DEFINITIONS.map(m => [m.key, m.minRole])
+) as Partial<Record<ModuleKey, GlobalRole>>;
 
 // ============================================================================
 // RÈGLE 8: RÔLE MINIMUM PAR OPTION DE MODULE
