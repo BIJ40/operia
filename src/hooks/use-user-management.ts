@@ -491,7 +491,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       } 
     }) => {
       // Le rôle global est celui choisi par l'admin, pas de forçage automatique
-      let effectiveGlobalRole = data.global_role;
+      const effectiveGlobalRole = data.global_role;
       
       // ✅ VÉRIFICATION : Si changement de rôle, est-il autorisé ?
       if (effectiveGlobalRole && !capabilities.canEditRoles.includes(effectiveGlobalRole)) {
