@@ -8,7 +8,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useOnboardingState } from '@/hooks/useOnboardingState';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { WelcomeWizard } from './WelcomeWizard';
 
 export function WelcomeWizardGate() {
