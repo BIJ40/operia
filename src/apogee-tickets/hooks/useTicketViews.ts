@@ -18,7 +18,7 @@ export interface TicketView {
  * Hook pour récupérer les vues de l'utilisateur connecté
  */
 export function useMyTicketViews() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   return useQuery({
     queryKey: ['apogee-ticket-views', user?.id],
