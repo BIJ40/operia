@@ -5,7 +5,7 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { UnifiedSearchResult, UnifiedSearchState } from './types';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { toast } from 'sonner';
 
 interface UnifiedSearchContextValue extends UnifiedSearchState {

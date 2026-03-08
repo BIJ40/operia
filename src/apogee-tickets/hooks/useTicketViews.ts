@@ -119,7 +119,7 @@ export function useTicketShouldBlink(
   lastModifiedByUserId: string | null,
   lastModifiedAt: string | null
 ): boolean {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const { data: views = [] } = useMyTicketViews();
 
   // Pas de clignotement si:

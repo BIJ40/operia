@@ -104,7 +104,7 @@ function StatsHubContent() {
 }
 
 function PilotageContent() {
-  const { globalRole } = useAuth();
+  const { globalRole } = usePermissions();
   const { hasModuleOption } = useEffectiveModules();
   const [activeTab, setActiveTab] = useSessionState<MainTab>('pilotage_active_tab', 'agence');
   

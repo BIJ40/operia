@@ -175,7 +175,7 @@ function isSavIntervention(intervention: any, project: any): boolean {
  * Hook principal Performance Terrain
  */
 export function usePerformanceTerrain(dateRange: DateRange) {
-  const { agence, agencyId } = useAuth();
+  const { agence, agencyId } = useProfile();
   const { isAgencyReady, currentAgency } = useAgency();
   
   const agencySlug = currentAgency?.slug || currentAgency?.id || agence || '';

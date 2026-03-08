@@ -27,7 +27,7 @@ interface TicketItem {
 }
 
 export function RecentTicketsWidget() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
 
   const { data: tickets, isLoading } = useQuery({
     queryKey: ['widget-recent-tickets-v3', user?.id],

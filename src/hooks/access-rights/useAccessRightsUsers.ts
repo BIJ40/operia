@@ -46,7 +46,9 @@ export interface Agency {
 }
 
 export function useAccessRightsUsers() {
-  const { globalRole, agence, user } = useAuth();
+  const { globalRole } = usePermissions();
+  const { agence } = useProfile();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
   const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
   

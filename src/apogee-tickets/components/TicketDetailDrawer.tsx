@@ -121,7 +121,8 @@ export function TicketDetailDrawer({
   hasPrevious = false,
   hasNext = false,
 }: TicketDetailDrawerProps) {
-  const { user, isAdmin, isSupport } = useAuth();
+  const { user } = useAuthCore();
+  const { isAdmin, isSupport } = usePermissions();
   const { data: roleInfo } = useMyTicketRole();
   const canManage = roleInfo?.canManage ?? false;
   const isDeveloper = roleInfo?.ticketRole === 'developer';

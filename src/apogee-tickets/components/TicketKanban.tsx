@@ -545,7 +545,7 @@ function DroppableColumn({
 }
 
 export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusChange, onTicketClick, onMerge, columnWidth = 288, onColumnWidthChange, filterBlinkingOnly = false }: TicketKanbanProps) {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const [activeTicket, setActiveTicket] = useState<ApogeeTicket | null>(null);
   const canTransition = useCanTransition();
   const { data: myViews = [] } = useMyTicketViews();

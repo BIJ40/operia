@@ -103,7 +103,7 @@ export default function ApogeeTicketsKanbanPage({ embedded = false }: ApogeeTick
 function ApogeeTicketsKanbanContent({ roleInfo, embedded = false }: { roleInfo: TicketRoleInfo; embedded?: boolean }) {
   const { isPlatformAdmin, isSupport, ticketRole, canManage, canImport, canViewKanban } = roleInfo;
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const { data: recentTickets = [] } = useMyRecentlyModifiedTickets(5);
   const { data: myViews = [] } = useMyTicketViews();
   
