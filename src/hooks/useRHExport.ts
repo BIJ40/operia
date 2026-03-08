@@ -65,7 +65,7 @@ export function useRHExport() {
         toast.success(`${data.count} document(s) téléchargé(s)`);
       }
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       logError('[useRHExport] Documents export error:', error);
       toast.error(error.message || 'Erreur lors de l\'export');
     },
