@@ -13,7 +13,7 @@ import { addDays, isBefore, isAfter, parseISO } from 'date-fns';
 const QUERY_KEY = 'fleet-vehicles';
 
 export function useFleetVehicles(agencyIdParam?: string, filters?: FleetVehiclesFilters) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   const effectiveAgencyId = agencyIdParam || agencyId;
 
   return useQuery({
