@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
 import { handleCorsPreflightOrReject, getCorsHeaders, isOriginAllowed } from '../_shared/cors.ts';
+import { requireAal2 } from '../_shared/mfa.ts';
 
 const ROLE_LEVELS: Record<string, number> = {
   base_user: 0, franchisee_user: 1, franchisee_admin: 2,
@@ -47,6 +48,10 @@ Deno.serve(async (req) => {
     if (callerLevel < 5) {
       return new Response(JSON.stringify({ error: 'Rôle insuffisant (N5+ requis)' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
+
+    // MFA/AAL2 enforcement for dev account creation
+    const mfaCheck = await requireAal2(req, callerLevel, user.id, { functionName: 'create-dev-account' });
+    if (!mfaCheck.ok) return mfaCheck.response;
 
     const { email, password, firstName, lastName, globalRole, isReadOnly } = await req.json();
 

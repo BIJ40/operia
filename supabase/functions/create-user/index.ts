@@ -7,6 +7,7 @@ import { validateString, validateOptionalString, validateOptionalBoolean } from 
 import { getDefaultModulesForCreation, EnabledModule } from '../_shared/defaultModules.ts'
 import { checkRateLimit } from '../_shared/rateLimiter.ts'
 import { withSentry } from '../_shared/withSentry.ts'
+import { requireAal2 } from '../_shared/mfa.ts'
 
 // Resend initialized lazily inside handler to avoid boot crash on invalid API key chars
 
@@ -67,6 +68,10 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
       console.log(`[create-user] Accès refusé: N${callerLevel} < N2`)
       throw new Error('Accès refusé - Niveau N2 minimum requis')
     }
+
+    // MFA/AAL2 enforcement for user creation
+    const mfaCheck = await requireAal2(req, callerLevel, user.id, { functionName: 'create-user' });
+    if (!mfaCheck.ok) return mfaCheck.response;
 
     // Valider les données d'entrée
     const bodyRaw = await req.json()

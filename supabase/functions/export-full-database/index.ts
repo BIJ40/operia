@@ -7,6 +7,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { handleCorsPreflightOrReject, withCors } from "../_shared/cors.ts";
+import { requireAal2 } from '../_shared/mfa.ts';
+import { getRoleLevel } from '../_shared/roles.ts';
 
 // Tables avec embeddings - EXCLUES car régénérables via RAG indexing
 const EXCLUDED_EMBEDDING_TABLES = [
@@ -224,6 +226,11 @@ serve(async (req) => {
         { status: 403, headers: { "Content-Type": "application/json" } }
       ));
     }
+
+    // MFA/AAL2 enforcement for full database export
+    const userRoleLevel = getRoleLevel(profile.global_role);
+    const mfaCheck = await requireAal2(req, userRoleLevel, user.id, { functionName: 'export-full-database' });
+    if (!mfaCheck.ok) return mfaCheck.response;
 
     const url = new URL(req.url);
     const partParam = url.searchParams.get("part");

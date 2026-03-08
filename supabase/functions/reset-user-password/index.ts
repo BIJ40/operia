@@ -4,6 +4,7 @@ import { Resend } from 'https://esm.sh/resend@2.0.0'
 import { GLOBAL_ROLES, getRoleLevel, canResetPassword } from '../_shared/roles.ts'
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts'
 import { checkRateLimit } from '../_shared/rateLimiter.ts'
+import { requireAal2 } from '../_shared/mfa.ts'
 
 serve(async (req) => {
   console.log(`[reset-user-password] === FUNCTION CALLED === Method: ${req.method}, Origin: ${req.headers.get('origin')}`)
@@ -92,6 +93,10 @@ serve(async (req) => {
       console.log(`[reset-user-password] RÉINIT BLOQUÉE: ${resetCheck.reason}`)
       throw new Error(resetCheck.reason || 'Action non autorisée')
     }
+
+    // MFA/AAL2 enforcement for password reset
+    const mfaCheck = await requireAal2(req, callerLevel, userId, { functionName: 'reset-user-password' });
+    if (!mfaCheck.ok) return mfaCheck.response;
 
     // Validation simplifiée - 8 caractères minimum avec majuscule, minuscule, chiffre et symbole
     const hasLower = /[a-z]/.test(newPassword)

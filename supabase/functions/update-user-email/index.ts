@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts'
 import { validateString, validateUUID } from '../_shared/validation.ts'
 import { checkRateLimit } from '../_shared/rateLimiter.ts'
+import { requireAal2 } from '../_shared/mfa.ts'
 
 // ============================================================================
 // SYSTÈME DE PERMISSIONS V2.0 - Helpers centralisés
@@ -130,6 +131,10 @@ serve(async (req) => {
       console.log(`[update-user-email] MODIFICATION BLOQUÉE: ${updateCheck.reason}`)
       throw new Error(updateCheck.reason || 'Action non autorisée')
     }
+
+    // MFA/AAL2 enforcement for email update
+    const mfaCheck = await requireAal2(req, callerLevel, userId, { functionName: 'update-user-email' });
+    if (!mfaCheck.ok) return mfaCheck.response;
 
     // Mettre à jour l'email dans auth.users
     const { error: updateAuthError } = await supabaseAdmin.auth.admin.updateUserById(

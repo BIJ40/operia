@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
 import { handleCorsPreflightOrReject, withCors } from '../_shared/cors.ts';
 import { withSentry } from '../_shared/withSentry.ts';
+import { requireAal2 } from '../_shared/mfa.ts';
 
 // Tiered page limits based on row payload size
 const EXTREME_TABLES = ['knowledge_base', 'guide_chunks', 'rag_index_documents'];
@@ -42,6 +43,10 @@ Deno.serve(withSentry({ functionName: 'export-all-data' }, async (req) => {
     if (level < 5) {
       return withCors(req, new Response(JSON.stringify({ error: 'Accès réservé N5+' }), { status: 403, headers: { 'Content-Type': 'application/json' } }));
     }
+
+    // MFA/AAL2 enforcement for full data export
+    const mfaCheck = await requireAal2(req, level, claimsData.claims.sub as string, { functionName: 'export-all-data' });
+    if (!mfaCheck.ok) return mfaCheck.response;
 
     // Fetch all public tables dynamically via RPC
     const { data: tableRows, error: tableError } = await serviceClient.rpc('list_public_tables');

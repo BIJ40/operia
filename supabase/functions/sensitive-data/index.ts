@@ -14,6 +14,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed } from '../_shared/cors.ts';
 import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 import { captureEdgeException } from '../_shared/sentry.ts';
+import { requireAal2 } from '../_shared/mfa.ts';
+import { getRoleLevel } from '../_shared/roles.ts';
 
 // AES-256-GCM encryption using Web Crypto API
 async function getEncryptionKey(): Promise<CryptoKey> {
@@ -195,6 +197,11 @@ serve(async (req) => {
         { status: 403, headers: { 'Content-Type': 'application/json' } }
       ));
     }
+
+    // P3: MFA/AAL2 enforcement for sensitive data access
+    const userRoleLevel = getRoleLevel(profile.global_role);
+    const mfaCheck = await requireAal2(req, userRoleLevel, user.id, { functionName: 'sensitive-data' });
+    if (!mfaCheck.ok) return mfaCheck.response;
 
     // P2: Validate action
     if (action !== 'read' && action !== 'write') {
