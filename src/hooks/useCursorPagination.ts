@@ -62,8 +62,9 @@ export function useCursorPagination<T = unknown>(options: CursorPaginationOption
   return useInfiniteQuery<T[], Error>({
     queryKey: [...queryKey, { pageSize, cursorColumn, orderAscending }],
     queryFn: async ({ pageParam }) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let query = (supabase as any)
+      // supabase.from() returns a dynamic type based on table name; we use SupabaseQueryBuilder
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic table name prevents static typing
+      let query: SupabaseQueryBuilder = (supabase as any)
         .from(table)
         .select(select)
         .order(cursorColumn, { ascending: orderAscending })

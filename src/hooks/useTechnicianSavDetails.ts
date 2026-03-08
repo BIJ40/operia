@@ -139,22 +139,25 @@ export function useTechnicianSavDetails(technicianId: string | null, dateRange: 
           
           if (!isSav) continue;
           
-          const client = project?.clientId ? clientsById.get(String(project.clientId)) : undefined;
+          const clientId = project?.clientId as string | number | undefined;
+          const client = clientId ? clientsById.get(String(clientId)) : undefined;
           const validation = validationsMap.get(String(intervention.id));
+          const projData = (project?.data ?? {}) as Record<string, unknown>;
+          const projClient = (projData?.client ?? {}) as Record<string, unknown>;
           
           savDetails.push({
             interventionId: String(intervention.id),
             projectId: String(projectId || ''),
-            projectRef: project?.ref || `#${projectId}`,
-            clientName: client?.name || project?.data?.client?.name || 'Client inconnu',
-            date: visites[0]?.date || intervention?.date || '',
-            type: intervention?.type || '',
-            type2: intervention?.type2 || intervention?.data?.type2 || '',
-            description: project?.label || intervention?.data?.label || '',
+            projectRef: String(project?.ref || `#${projectId}`),
+            clientName: String(client?.name || projClient?.name || 'Client inconnu'),
+            date: String(visites[0]?.date || intervention?.date || ''),
+            type: String(intervention?.type || ''),
+            type2: String(intervention?.type2 || interData?.type2 || ''),
+            description: String(project?.label || interData?.label || ''),
             source: source!,
-            isValidated: validation?.is_valid_sav,
-            validatedAt: validation?.validated_at,
-            validatedBy: validation?.validated_by,
+            isValidated: validation?.is_valid_sav as boolean | undefined,
+            validatedAt: validation?.validated_at as string | undefined,
+            validatedBy: validation?.validated_by as string | undefined,
           });
         }
         

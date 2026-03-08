@@ -20,7 +20,7 @@ export type ActivityActorType = 'user' | 'apporteur' | 'system' | 'ai';
 
 export type ActivityLogEntry = ActivityLogRow;
 
-export interface ActivityLogFilters extends RepoFilters {}
+export type ActivityLogFilters = RepoFilters;
 
 interface LogActivityParams {
   action: string;
