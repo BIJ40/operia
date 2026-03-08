@@ -8,6 +8,7 @@ import { useImpersonation, ROLE_AGENCE_OPTIONS, FRANCHISEUR_ROLE_OPTIONS, type I
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Eye, Info } from 'lucide-react';
+import { MfaGuard } from '@/components/auth/MfaGuard';
 
 interface ImpersonationDialogProps {
   open: boolean;
