@@ -5,21 +5,29 @@
 La pipeline CI s'exécute automatiquement sur chaque `push` et `pull_request` vers `main`/`master`.
 
 ```
-Setup → TypeScript + Lint + Unit Tests (parallèle) → Build → E2E (conditionnel)
-                                                   ↗
-                               Edge Tests (parallèle, indépendant)
+Setup → TypeScript + Unit Tests (parallèle, bloquants) → Build (bloquant)
+     ↘ Lint (parallèle, non bloquant)
+     ↘ Edge Tests (parallèle, non bloquant)
 ```
 
-## Jobs
+## Statut des jobs
 
-| Job | Outil | Condition | Seuil |
-|-----|-------|-----------|-------|
-| **TypeScript** | `tsc --noEmit` | Toujours | 0 erreur |
-| **Lint** | `eslint` | Toujours | 0 erreur |
-| **Unit Tests** | `vitest run` | Toujours | 255+ tests passent |
-| **Edge Tests** | `deno test` | Toujours | 19 tests passent |
-| **Build** | `vite build` | Après typecheck+lint+tests | Compilation réussie |
-| **E2E** | `playwright` | Si `E2E_BASE_URL` configuré | Tous les specs passent |
+| Job | Outil | Bloquant | Notes |
+|-----|-------|----------|-------|
+| **✅ TypeScript** | `tsc --noEmit` | **Oui** | 0 erreur requis |
+| **✅ Unit Tests** | `vitest run` | **Oui** | Tous les tests doivent passer |
+| **✅ Build** | `vite build` | **Oui** | Compilation réussie requise |
+| **⚠️ Lint** | `eslint` | **Non (temporaire)** | ~1900 problèmes legacy — `continue-on-error: true` |
+| **⚠️ Edge Function Tests** | `deno test` | **Non (temporaire)** | Incompatibilité lock Deno v5 — `continue-on-error: true` |
+| **🎭 E2E** | `playwright` | Conditionnel | Uniquement si `E2E_BASE_URL` configuré |
+
+### Pourquoi Lint est non bloquant ?
+
+Le projet contient ~1900 problèmes ESLint hérités. Bloquer les merges sur ce volume de dette empêcherait tout déploiement. Le job reste visible pour suivre la résorption progressive.
+
+### Pourquoi Edge Tests sont non bloquants ?
+
+Le lockfile Deno v5 génère des erreurs de compatibilité avec `setup-deno`. Le job reste visible pour détecter les régressions dès que le tooling sera mis à jour.
 
 ## Secrets GitHub requis
 
@@ -28,6 +36,18 @@ Setup → TypeScript + Lint + Unit Tests (parallèle) → Build → E2E (conditi
 | `SUPABASE_URL` | Oui (pour edge tests) | URL du projet Supabase |
 | `SUPABASE_ANON_KEY` | Oui (pour edge tests) | Clé anon publique |
 | `E2E_BASE_URL` (variable) | Non | Active les tests E2E si présent |
+
+## Branch protection recommandée
+
+Checks à sélectionner comme **required** dans GitHub → Settings → Branches → `main` :
+
+1. **🔍 TypeScript**
+2. **🧪 Unit Tests**
+3. **🏗️ Build**
+
+Ne **pas** sélectionner comme required :
+- ⚠️ Lint (legacy debt)
+- ⚠️ Edge Function Tests (tooling)
 
 ## Lancer la CI en local
 
@@ -53,12 +73,3 @@ E2E_BASE_URL=http://localhost:5173 npm run test:e2e
 3. **Unit Tests** — `npx vitest run` pour reproduire, corriger le test ou le code
 4. **Edge Tests** — Vérifier les secrets Supabase, relancer `deno test`
 5. **Build** — Souvent lié à un problème TypeScript déjà visible en typecheck
-
-## Bloquer les merges
-
-Pour empêcher les merges quand la CI échoue :
-
-1. GitHub → Settings → Branches → Branch protection rules
-2. Ajouter une règle pour `main`
-3. Cocher **Require status checks to pass before merging**
-4. Sélectionner les jobs : `Build`, `Unit Tests`, `TypeScript`
