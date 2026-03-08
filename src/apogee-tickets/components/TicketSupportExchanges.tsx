@@ -4,7 +4,7 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { useTicketExchanges } from '../hooks/useTicketExchanges';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
