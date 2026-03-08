@@ -129,8 +129,9 @@ export function useMfa(): MfaState & MfaActions {
       // Refresh state after successful verification
       await refresh();
       return { success: true };
-    } catch (err: any) {
-      return { success: false, error: err.message ?? 'Erreur inattendue' };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erreur inattendue';
+      return { success: false, error: message };
     }
   }, [refresh]);
 
