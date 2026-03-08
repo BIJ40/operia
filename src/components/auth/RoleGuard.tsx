@@ -42,7 +42,8 @@ export function RoleGuard({
   showError = false,
   errorMessage
 }: RoleGuardProps) {
-  const { user, isAuthLoading, globalRole } = useAuth();
+  const { user, isAuthLoading } = useAuthCore();
+  const { globalRole } = usePermissions();
 
   // Afficher un loader pendant le chargement
   if (isAuthLoading) {

@@ -47,7 +47,8 @@ export function ModuleGuard({
   showError = false,
   errorMessage
 }: ModuleGuardProps) {
-  const { user, isAuthLoading, enabledModules, globalRole, agencyId } = useAuth();
+  const { user, isAuthLoading } = useAuthCore();
+  const { enabledModules, globalRole, accessContext: { agencyId } } = usePermissions();
 
   // Afficher un loader pendant le chargement
   if (isAuthLoading) {
