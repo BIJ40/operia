@@ -381,7 +381,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [resetState]);
 
-  const hasAccessToScope = useCallback((_scope: string): boolean => true, []);
+  /**
+   * Scope-to-module mapping for legacy hasAccessToScope checks.
+   * Each scope maps to a module (and optionally a required role/option).
+   */
+  const hasAccessToScope = useCallback((scope: string): boolean => {
+    // Bypass for platform_admin and above
+    if (isAdmin) return true;
+
+    switch (scope) {
+      case 'mes_indicateurs':
+        return hasModuleGuard('agence' as ModuleKey);
+      case 'apporteurs':
+        return hasModuleGuard('apporteurs' as ModuleKey);
+      case 'helpconfort':
+        return hasModuleGuard('helpconfort' as ModuleKey);
+      case 'apogee':
+        return hasModuleGuard('guide_apogee' as ModuleKey);
+      default:
+        // Unknown scope = deny by default (secure)
+        logAuth.warn(`hasAccessToScope: unknown scope "${scope}", denying access`);
+        return false;
+    }
+  }, [isAdmin, hasModuleGuard]);
 
   // ============================================================================
   // Sub-context values (memoized independently to prevent cascading re-renders)
