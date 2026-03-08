@@ -275,7 +275,7 @@ export function useTicketTransitions() {
 // Hook to get allowed transitions for current user
 // SIMPLIFIED: Everyone can transition to any status (history is logged)
 export function useAllowedTransitions(fromStatus: string) {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const { data: roleInfo } = useMyTicketRole();
   
   return useQuery({
