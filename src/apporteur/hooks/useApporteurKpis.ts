@@ -25,7 +25,7 @@ interface UseApporteurKpisOptions {
 
 export function useApporteurKpis({ period, from, to }: UseApporteurKpisOptions) {
   const { post } = useApporteurApi();
-  const hasToken = !!localStorage.getItem('apporteur_session_token');
+  const { isAuthenticated } = useApporteurSession();
 
   return useQuery({
     queryKey: ['apporteur-kpis', period, from, to],
