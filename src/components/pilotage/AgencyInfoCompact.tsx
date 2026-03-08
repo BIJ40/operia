@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 
 export function AgencyInfoCompact() {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   const { data: agency, isLoading } = useAgency(agencyId);
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);

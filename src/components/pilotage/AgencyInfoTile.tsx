@@ -17,7 +17,7 @@ interface AgencyInfoTileProps {
 }
 
 export function AgencyInfoTile({ hideHeader = false }: AgencyInfoTileProps) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   const { data: agency, isLoading } = useAgency(agencyId);
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);

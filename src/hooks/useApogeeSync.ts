@@ -29,7 +29,7 @@ interface UseApogeeSyncOptions {
 
 export function useApogeeSync({ agencySlug, collaborators }: UseApogeeSyncOptions) {
   const queryClient = useQueryClient();
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   
   // Récupérer les utilisateurs Apogée
   const { users: apogeeUsers, loading: loadingUsers, refetch } = useApogeeUsers({ agencySlug });

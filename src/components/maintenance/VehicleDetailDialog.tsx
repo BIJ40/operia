@@ -45,7 +45,7 @@ interface VehicleDetailDialogProps {
 
 export function VehicleDetailDialog({ open, onOpenChange, vehicle }: VehicleDetailDialogProps) {
   const [activeTab, setActiveTab] = useState('info');
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
 
   // Fetch maintenance events for this vehicle
   const { data: maintenanceEvents = [], isLoading: isLoadingEvents } = useQuery({

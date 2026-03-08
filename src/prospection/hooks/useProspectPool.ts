@@ -84,7 +84,8 @@ export function useProspectPool(filters: ProspectPoolFilters = {}) {
 
 export function useImportProspects() {
   const queryClient = useQueryClient();
-  const { agencyId, user } = useAuth();
+  const { agencyId } = useProfile();
+  const { user } = useAuthCore();
 
   return useMutation({
     mutationFn: async (rows: Omit<ProspectPoolItem, 'id' | 'agency_id' | 'imported_at' | 'imported_by'>[]) => {

@@ -31,7 +31,7 @@ interface MediaLinkPreview {
 export function RHSectionDocuments({ collaborator }: Props) {
   const [openManager, setOpenManager] = React.useState(false);
   const canManage = useHasMinLevel(2);
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
 
   // Query documents from media_links (unified media library)
   const { data: documents = [], isLoading } = useQuery({

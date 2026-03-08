@@ -43,7 +43,7 @@ interface SelectedContact extends ApogeeContact {
 }
 
 export function ApporteurCreateWizard({ open, onOpenChange }: ApporteurCreateWizardProps) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   const queryClient = useQueryClient();
   const createApporteur = useCreateApporteur();
   const createApporteurUser = useCreateApporteurUser();
