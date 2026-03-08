@@ -160,7 +160,7 @@ export function useUnreadNotificationsCount() {
 }
 
 export function useMarkNotificationsRead() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
 
   return useMutation({
