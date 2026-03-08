@@ -40,7 +40,7 @@ export interface FilterConfig {
 export interface BuilderQuery {
   dimension?: DimensionType;
   measures: string[];
-  filters: Record<string, any>;
+  filters: Record<string, unknown>;
   dateRange: {
     start: Date;
     end: Date;

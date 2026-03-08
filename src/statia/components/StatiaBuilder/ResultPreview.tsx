@@ -11,8 +11,14 @@ import { Loader2, AlertCircle, CheckCircle2, Info } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
+interface ResultPreviewResult {
+  computedAt: string;
+  values: Record<string, { label: string; value: number | Record<string, number>; unit?: string }>;
+  query?: { dimension?: string; measures: unknown[]; agencySlug: string };
+}
+
 interface ResultPreviewProps {
-  result: any;
+  result: ResultPreviewResult | null;
   error: string | null;
   isLoading: boolean;
 }
@@ -66,7 +72,7 @@ export function ResultPreview({ result, error, isLoading }: ResultPreviewProps) 
 
         {/* Valeurs */}
         <div className="space-y-3">
-          {Object.entries(result.values).map(([key, data]: [string, any]) => (
+          {Object.entries(result.values).map(([key, data]) => (
             <Card key={key} className="overflow-hidden">
               <CardHeader className="p-3 pb-1">
                 <CardTitle className="text-sm font-medium">{data.label}</CardTitle>

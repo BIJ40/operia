@@ -170,10 +170,10 @@ export interface MetricDebugSource {
   source: string;
   endpoint: string;
   url: string;
-  params: Record<string, any>;
+  params: Record<string, unknown>;
   rawCount: number;
   filteredCount: number;
-  sampleData?: any[];
+  sampleData?: unknown[];
 }
 
 export interface MetricDebugStats {
@@ -197,5 +197,5 @@ export interface MetricDebugOutput {
     field?: string;
     groupBy?: string;
   };
-  result: any;
+  result: unknown;
 }

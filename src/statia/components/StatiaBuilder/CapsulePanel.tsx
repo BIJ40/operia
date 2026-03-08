@@ -18,7 +18,7 @@ interface CapsulePanelProps {
     unit?: string;
   }>;
   type: 'dimension' | 'measure' | 'filter';
-  onDragStart?: (item: any) => void;
+  onDragStart?: (item: CapsulePanelProps['items'][number]) => void;
 }
 
 export function CapsulePanel({ 
@@ -37,7 +37,7 @@ export function CapsulePanel({
       
       <div className="space-y-1.5">
         {items.map((item) => {
-          const IconComponent = (Icons as any)[item.icon] || Icons.Circle;
+          const IconComponent = (Icons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[item.icon] || Icons.Circle;
           
           return (
             <div
