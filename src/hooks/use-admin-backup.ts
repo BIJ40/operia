@@ -302,7 +302,7 @@ export const useAdminBackup = () => {
     
     config.setLoading(true);
     try {
-      const baseQuery = supabase.from(config.tableName).select('*').order('order');
+      const baseQuery = supabase.from(config.tableName).select(BLOCK_COLUMNS).order('order');
       const result = await safeQuery<any[]>(
         config.slugFilter(baseQuery),
         `BACKUP_EXPORT_TEXT_${scope.toUpperCase()}`
