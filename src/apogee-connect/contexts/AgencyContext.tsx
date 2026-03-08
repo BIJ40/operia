@@ -20,7 +20,8 @@ interface AgencyContextType {
 const AgencyContext = createContext<AgencyContextType | undefined>(undefined);
 
 export function AgencyProvider({ children }: { children: ReactNode }) {
-  const { agence, isAuthLoading } = useAuth();
+  const { agence } = useProfile();
+  const { isAuthLoading } = useAuthCore();
   const { isRealUserImpersonation, impersonatedUser } = useImpersonation();
   const [isApiConfigured, setIsApiConfigured] = useState(false);
   

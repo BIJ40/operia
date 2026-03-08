@@ -85,7 +85,7 @@ export function CreateProjectTicketDialog({
   onOpenChange,
   onTicketCreated,
 }: CreateProjectTicketDialogProps) {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
   const [isCreating, setIsCreating] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);

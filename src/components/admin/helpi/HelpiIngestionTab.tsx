@@ -69,7 +69,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export function HelpiIngestionTab() {
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   const queryClient = useQueryClient();
   const [selectedFiles, setSelectedFiles] = useState<UploadedFile[]>([]);
   const [globalContext, setGlobalContext] = useState<RAGContextType>('auto');

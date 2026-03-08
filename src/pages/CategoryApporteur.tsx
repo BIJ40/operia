@@ -45,7 +45,8 @@ import { CategoryBlock } from '@/components/category/types';
 export default function CategoryApporteur() {
   const { slug, subslug } = useParams<{ slug: string; subslug: string }>();
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks } = useApporteurEditor();
-  const { isAuthenticated, hasAccessToScope } = useAuth();
+  const { isAuthenticated } = useAuthCore();
+  const { hasAccessToScope } = usePermissions();
   
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;

@@ -42,7 +42,8 @@ import { SortableCategory } from '@/components/guides/apogee/SortableCategory';
 
 export default function ApogeeGuide() {
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, loading } = useEditor();
-  const { hasGlobalRole, isAuthenticated, hasModuleOption } = useAuth();
+  const { isAuthenticated } = useAuthCore();
+  const { hasGlobalRole, hasModuleOption } = usePermissions();
   
   const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('guides', 'edition');
   const canDelete = hasGlobalRole('platform_admin');

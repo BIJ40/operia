@@ -12,7 +12,7 @@ import { useProfile } from '@/contexts/ProfileContext';
 import { WelcomeWizard } from './WelcomeWizard';
 
 export function WelcomeWizardGate() {
-  const { mustChangePassword } = useAuth();
+  const { mustChangePassword } = useProfile();
   const {
     state,
     isLoading,
