@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { format, subDays, subMonths } from 'date-fns';
-import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { useApporteurDashboardLive } from '../hooks/useApporteurDashboardLive';
 import { useApogeeCommanditaires } from '@/hooks/useApogeeCommanditaires';
 import { generateApporteurInsights } from '../engine/insights';
