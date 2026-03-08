@@ -90,7 +90,7 @@ export function useHasModuleOption(
  */
 export function useToggleModule() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthCore();
   
   return useMutation({
     mutationFn: async ({ 
