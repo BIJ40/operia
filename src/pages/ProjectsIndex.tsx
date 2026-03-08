@@ -1,7 +1,7 @@
 import { Kanban, Settings, Star, AlertTriangle, ListTodo } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { IndexTile, type IndexTileProps } from '@/components/ui/index-tile';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { ExcelImportTile } from '@/apogee-tickets/components/ExcelImportTile';
 import { PageHeader } from '@/components/layout/PageHeader';
 
