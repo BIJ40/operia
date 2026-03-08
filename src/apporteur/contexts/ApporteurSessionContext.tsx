@@ -77,24 +77,23 @@ const getApiBaseUrl = () => {
 
 const fetchWithAuth = async (path: string, options: RequestInit = {}) => {
   const baseUrl = getApiBaseUrl();
+  const token = getStoredToken();
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '',
     ...options.headers,
   };
 
-  // In DEV mode, add token to header
-  if (isDevMode()) {
-    const token = getDevToken();
-    if (token) {
-      (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
-    }
+  // Add token to header for session validation
+  if (token) {
+    (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+    (headers as Record<string, string>)['x-apporteur-token'] = token;
   }
 
   return fetch(`${baseUrl}${path}`, {
     ...options,
     headers,
-    credentials: 'include', // Send cookies in prod
+    credentials: 'include',
   });
 };
 
@@ -107,49 +106,45 @@ export function ApporteurSessionProvider({ children }: { children: ReactNode }) 
     setIsLoading(true);
     
     try {
-      // In DEV, check localStorage first for quick restore
-      if (isDevMode()) {
-        const storedSession = getStoredDevSession();
-        if (storedSession && storedSession.expiresAt > new Date()) {
-          // Validate with server
-          const response = await fetchWithAuth('/apporteur-auth-validate-session', {
-            method: 'GET',
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            if (data.valid && data.session) {
-              const newSession: ApporteurSession = {
-                managerId: data.session.managerId,
-                apporteurId: data.session.apporteurId,
-                apporteurName: data.session.apporteurName,
-                agencyId: data.session.agencyId,
-                email: data.session.email,
-                firstName: data.session.firstName,
-                lastName: data.session.lastName,
-                role: data.session.role,
-                expiresAt: new Date(data.session.expiresAt),
-              };
-              setSession(newSession);
-              // Update stored session
-              const token = getDevToken();
-              if (token) {
-                setDevSession(token, newSession);
-              }
-              setIsLoading(false);
-              return;
-            }
-          }
-          // Session invalid, clear it
-          clearDevSession();
-        }
-      }
-
-      // In DEV mode without stored token, skip server validation (would always fail)
-      if (isDevMode() && !getDevToken()) {
+      const storedToken = getStoredToken();
+      
+      // No stored token → no session
+      if (!storedToken) {
         setSession(null);
         setIsLoading(false);
         return;
+      }
+
+      // Quick restore from localStorage while we validate
+      const storedSession = getStoredSessionData();
+      if (storedSession && storedSession.expiresAt > new Date()) {
+        // Validate with server
+        const response = await fetchWithAuth('/apporteur-auth-validate-session', {
+          method: 'GET',
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.valid && data.session) {
+            const newSession: ApporteurSession = {
+              managerId: data.session.managerId,
+              apporteurId: data.session.apporteurId,
+              apporteurName: data.session.apporteurName,
+              agencyId: data.session.agencyId,
+              email: data.session.email,
+              firstName: data.session.firstName,
+              lastName: data.session.lastName,
+              role: data.session.role,
+              expiresAt: new Date(data.session.expiresAt),
+            };
+            setSession(newSession);
+            setStoredSession(storedToken, newSession);
+            setIsLoading(false);
+            return;
+          }
+        }
+        // Session invalid, clear it
+        clearStoredSession();
       }
 
       // Try to validate with server (will use cookie in prod)
