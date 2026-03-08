@@ -109,7 +109,7 @@ export function AppointmentCard({
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
-              background: `linear-gradient(135deg, ${techColor}50 50%, ${partnerColor}50 50%)`,
+              background: `linear-gradient(135deg, ${techColor}70 50%, ${partnerColor}70 50%)`,
             }}
           />
         )}
