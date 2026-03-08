@@ -137,7 +137,7 @@ export const useCategory = () => {
           color_preset: updatedSection.colorPreset,
           tips_type: updatedSection.tipsType,
           hide_title: updatedSection.hideTitle,
-          attachments: updatedSection.attachments as any || [],
+          attachments: (updatedSection.attachments ?? []) as unknown as Json,
           hide_from_sidebar: updatedSection.hideFromSidebar,
           is_in_progress: updatedSection.isInProgress || false,
           completed_at: updatedSection.completedAt || null,
