@@ -4,7 +4,7 @@
  */
 import { useState, useMemo } from 'react';
 import { notifyNewTicket } from '@/utils/notifyNewTicket';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { safeMutation } from '@/lib/safeQuery';
