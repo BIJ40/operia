@@ -657,11 +657,26 @@ export const useAdminBackup = () => {
     setExporting(true);
     try {
       const [blocksResult, apporteurBlocksResult, documentsResult, categoriesResult, sectionsResult] = await Promise.all([
-        safeQuery<any[]>(supabase.from('blocks').select('*').order('order'), 'BACKUP_EXPORT_ALL_BLOCKS'),
-        safeQuery<any[]>(supabase.from('apporteur_blocks').select('*').order('order'), 'BACKUP_EXPORT_ALL_APPORTEUR'),
-        safeQuery<any[]>(supabase.from('documents').select('*'), 'BACKUP_EXPORT_ALL_DOCUMENTS'),
-        safeQuery<any[]>(supabase.from('categories').select('*'), 'BACKUP_EXPORT_ALL_CATEGORIES'),
-        safeQuery<any[]>(supabase.from('sections').select('*'), 'BACKUP_EXPORT_ALL_SECTIONS'),
+        fetchAllPaginated<Record<string, unknown>>(
+          (from, to) => supabase.from('blocks').select(BLOCK_COLUMNS).order('order').range(from, to),
+          'BACKUP_EXPORT_ALL_BLOCKS'
+        ),
+        fetchAllPaginated<Record<string, unknown>>(
+          (from, to) => supabase.from('apporteur_blocks').select(BLOCK_COLUMNS).order('order').range(from, to),
+          'BACKUP_EXPORT_ALL_APPORTEUR'
+        ),
+        fetchAllPaginated<Record<string, unknown>>(
+          (from, to) => supabase.from('documents').select('id, title, content, category_id, order, created_at, updated_at').order('id').range(from, to),
+          'BACKUP_EXPORT_ALL_DOCUMENTS'
+        ),
+        fetchAllPaginated<Record<string, unknown>>(
+          (from, to) => supabase.from('categories').select('id, name, slug, order, created_at, updated_at').order('id').range(from, to),
+          'BACKUP_EXPORT_ALL_CATEGORIES'
+        ),
+        fetchAllPaginated<Record<string, unknown>>(
+          (from, to) => supabase.from('sections').select('id, title, content, category_id, order, created_at, updated_at').order('id').range(from, to),
+          'BACKUP_EXPORT_ALL_SECTIONS'
+        ),
       ]);
 
       if (!blocksResult.success || !apporteurBlocksResult.success || !documentsResult.success || !categoriesResult.success || !sectionsResult.success) {
