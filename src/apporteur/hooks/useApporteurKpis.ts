@@ -24,6 +24,7 @@ interface UseApporteurKpisOptions {
 
 export function useApporteurKpis({ period, from, to }: UseApporteurKpisOptions) {
   const { post } = useApporteurApi();
+  const hasToken = !!localStorage.getItem('apporteur_session_token');
 
   return useQuery({
     queryKey: ['apporteur-kpis', period, from, to],
@@ -35,6 +36,7 @@ export function useApporteurKpis({ period, from, to }: UseApporteurKpisOptions) 
       }
       return result.data || { success: false, error: 'Réponse vide' };
     },
+    enabled: hasToken,
     staleTime: 5 * 60 * 1000,   // 5 min
     gcTime: 15 * 60 * 1000,     // 15 min
     retry: 1,

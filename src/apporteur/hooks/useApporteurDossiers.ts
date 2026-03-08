@@ -44,6 +44,7 @@ interface DossiersResponse {
 
 export function useApporteurDossiers() {
   const { post } = useApporteurApi();
+  const hasToken = !!localStorage.getItem('apporteur_session_token');
 
   return useQuery({
     queryKey: ['apporteur-dossiers'],
@@ -54,6 +55,7 @@ export function useApporteurDossiers() {
       }
       return result.data || { success: false, error: 'Réponse vide' };
     },
+    enabled: hasToken,
     staleTime: 60 * 1000, // 1 minute
     retry: 1,
   });

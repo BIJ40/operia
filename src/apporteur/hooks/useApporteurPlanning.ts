@@ -28,6 +28,7 @@ interface PlanningResponse {
 
 export function useApporteurPlanning() {
   const { post } = useApporteurApi();
+  const hasToken = !!localStorage.getItem('apporteur_session_token');
 
   return useQuery({
     queryKey: ['apporteur-planning'],
@@ -38,6 +39,7 @@ export function useApporteurPlanning() {
       }
       return result.data || { success: false, error: 'Réponse vide' };
     },
+    enabled: hasToken,
     staleTime: 60 * 1000,
     retry: 1,
   });
