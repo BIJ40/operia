@@ -14,7 +14,7 @@ import { ApogeeDataServices } from '../engine/loaders';
 export interface NetworkMetricParams {
   dateRange: DateRange;
   groupBy?: ('univers' | 'apporteur' | 'technicien' | 'mois' | 'agence')[];
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
 }
 
 /**
