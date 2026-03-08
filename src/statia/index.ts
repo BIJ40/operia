@@ -1,6 +1,8 @@
 /**
  * StatIA V2 - Module principal
  * Exports publics du moteur de statistiques centralisé
+ * 
+ * PHASE 2 CLEANUP: Removed unused V1/POC exports, consolidated barrel
  */
 
 // === API principale ===
@@ -61,7 +63,7 @@ export type {
   AggregationType
 } from './definitions/types';
 
-// === Engine ===
+// === V1 Engine (legacy — prefer V2 metricEngine for new code) ===
 export { computeStat, computeMultipleStats, clearComputeCache as clearEngineCache } from './engine/computeStat';
 export type { ApogeeDataServices } from './engine/loaders';
 
@@ -133,19 +135,13 @@ export { isValidAggregationType, isValidScope } from './types';
 // === Schema Apogée ===
 export { APOGEE_SOURCES, getSourceDefinition, getFieldDefinition, canJoin, getJoinKeys, getAggregableFields, getGroupableFields } from './schema/apogeeSchema';
 
-// === Moteur de calcul ===
-export { computeMetric, evaluateComplexity, determineExecutionTarget } from './engine/computeEngine';
-
-// === Moteur V2 ===
+// === V2 Metric Engine (preferred for new metrics) ===
 export { runMetric } from './engine/metricEngine';
 export type { MetricExecutionParams, MetricDefinitionJSON, MetricExecutionResult } from './engine/metricEngine';
-
-// === Hooks legacy ===
-export { useMetric, useAvailableMetrics, useMetricDefinition } from './hooks/useMetric';
-export type { UseMetricOptions, UseMetricReturn } from './hooks/useMetric';
 
 // === Hooks V2 ===
 export { useMetricEngine, useMetricExecutor, clearMetricCache, invalidateMetricCache } from './hooks/useMetricEngine';
 
-// === Métriques POC ===
-export { POC_METRICS, getPocMetricById, getValidatedPocMetrics } from './metrics/pocMetrics';
+// === Hooks legacy (thin wrappers) ===
+export { useMetric, useAvailableMetrics, useMetricDefinition } from './hooks/useMetric';
+export type { UseMetricOptions, UseMetricReturn } from './hooks/useMetric';
