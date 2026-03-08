@@ -248,7 +248,7 @@ export function useDeletePlanItem() {
 
 export function useApplyPlanToAsset() {
   const queryClient = useQueryClient();
-  const { agence } = useAuth();
+  const { agence } = useProfile();
 
   return useMutation({
     mutationFn: async ({ 

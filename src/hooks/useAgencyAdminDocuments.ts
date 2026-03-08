@@ -38,7 +38,7 @@ export interface AgencyAdminDocument {
 }
 
 export function useAgencyAdminDocuments() {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
 
   return useQuery({
     queryKey: ['agency-admin-documents', agencyId],

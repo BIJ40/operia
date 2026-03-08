@@ -32,7 +32,7 @@ export function useScopedMediaLibrary({
   rootPath, 
   allowNavigateUp = false 
 }: UseScopedMediaLibraryOptions) {
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
   const queryClient = useQueryClient();
   
   // Current folder ID (starts at null = root of scope)

@@ -101,7 +101,7 @@ export function useFleetVehicle(vehicleId: string | undefined) {
 
 export function useCreateFleetVehicle() {
   const queryClient = useQueryClient();
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
 
   return useMutation({
     mutationFn: async (data: FleetVehicleFormData) => {

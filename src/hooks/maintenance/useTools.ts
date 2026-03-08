@@ -88,7 +88,7 @@ export function useTool(toolId: string | undefined) {
 
 export function useCreateTool() {
   const queryClient = useQueryClient();
-  const { agencyId } = useAuth();
+  const { agencyId } = useProfile();
 
   return useMutation({
     mutationFn: async (data: ToolFormData) => {
