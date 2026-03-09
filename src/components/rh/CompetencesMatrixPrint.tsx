@@ -111,22 +111,25 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
           body { font-family: Arial, sans-serif; padding: 10px; font-size: 9px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
           h1 { font-size: 14px; margin-bottom: 4px; text-align: center; }
           .date { text-align: center; color: #666; margin-bottom: 10px; font-size: 9px; }
-          table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-          th, td { border: 1px solid #aaa; padding: 2px; text-align: center; overflow: hidden; }
-          th { background: #f0f0f0 !important; font-weight: bold; }
-           th.name-col { text-align: left; width: 100px; min-width: 80px; }
-           th.univers-header { background: #d4e6f1 !important; font-size: 7px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+           table { width: auto; border-collapse: collapse; }
+           th, td { border: 1px solid #aaa; padding: 1px 3px; text-align: center; overflow: hidden; }
+           th { background: #f0f0f0 !important; font-weight: bold; }
+           th.name-col { text-align: left; width: 110px; }
+           th.univers-header { background: #d4e6f1 !important; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
            th.sub-col {
-            writing-mode: vertical-rl;
-            text-orientation: mixed;
-            transform: rotate(180deg);
-            height: 90px;
-            font-size: 7px;
-            padding: 4px 2px;
-            font-weight: normal;
-            overflow: hidden;
-          }
-          td.name-cell { text-align: left; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 8px; }
+             writing-mode: vertical-rl;
+             text-orientation: mixed;
+             transform: rotate(180deg);
+             height: 100px;
+             font-size: 8px;
+             padding: 4px 1px;
+             font-weight: normal;
+             overflow: hidden;
+             width: 22px;
+             max-width: 22px;
+           }
+           td.name-cell { text-align: left; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 9px; }
+           td.comp-cell { width: 22px; max-width: 22px; height: 18px; }
           td[data-has="true"] { background: #22c55e !important; }
           td[data-has="false"] { background: #fff !important; }
           .legend { margin-top: 10px; display: flex; gap: 20px; justify-content: center; font-size: 9px; }
