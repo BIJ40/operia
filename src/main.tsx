@@ -11,14 +11,15 @@ initSentry();
 
 // Dev-only: security headers & secrets audit
 if (import.meta.env.DEV) {
-  // Run after DOM is ready
-  requestIdleCallback?.(() => {
+  const run = () => {
     verifySecurityHeaders();
     auditExposedSecrets();
-  }) ?? setTimeout(() => {
-    verifySecurityHeaders();
-    auditExposedSecrets();
-  }, 2000);
+  };
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(run);
+  } else {
+    setTimeout(run, 2000);
+  }
 }
 
 // Preview: mémorise le token de session pour pouvoir l'utiliser lors d'ouvertures en nouvel onglet
