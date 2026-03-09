@@ -136,7 +136,7 @@ export function ApporteurPlanningCard() {
 
   if (error || data?.error === 'non_raccorde') {
     return (
-      <Card className="border-amber-300 bg-amber-50 dark:bg-amber-900/20">
+      <Card className="border-[hsl(var(--ap-warning)/.4)] bg-[hsl(var(--ap-warning-light))]">
         <CardContent className="py-4">
           <div className="flex items-center gap-2 text-sm">
             <AlertTriangle className="w-4 h-4 text-amber-600" />
