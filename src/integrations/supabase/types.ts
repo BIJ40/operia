@@ -2256,6 +2256,42 @@ export type Database = {
           },
         ]
       }
+      collaborator_sub_skills: {
+        Row: {
+          collaborator_id: string
+          created_at: string | null
+          id: string
+          sub_skill_id: string
+        }
+        Insert: {
+          collaborator_id: string
+          created_at?: string | null
+          id?: string
+          sub_skill_id: string
+        }
+        Update: {
+          collaborator_id?: string
+          created_at?: string | null
+          id?: string
+          sub_skill_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collaborator_sub_skills_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaborator_sub_skills_sub_skill_id_fkey"
+            columns: ["sub_skill_id"]
+            isOneToOne: false
+            referencedRelation: "competence_sub_skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       collaborator_work_profiles: {
         Row: {
           break_minutes_default: number
@@ -2408,6 +2444,48 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      competence_sub_skills: {
+        Row: {
+          agency_id: string | null
+          created_at: string | null
+          id: string
+          is_default: boolean | null
+          label: string
+          univers_id: string
+        }
+        Insert: {
+          agency_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          label: string
+          univers_id: string
+        }
+        Update: {
+          agency_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          label?: string
+          univers_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competence_sub_skills_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "competence_sub_skills_univers_id_fkey"
+            columns: ["univers_id"]
+            isOneToOne: false
+            referencedRelation: "univers_catalog"
             referencedColumns: ["id"]
           },
         ]
