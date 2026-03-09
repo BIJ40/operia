@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Card, CardContent } from '@/components/ui/card';
 import { AlertTriangle, Clock, FileX, CalendarX, ChevronRight, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/formatters';
@@ -22,12 +21,6 @@ const ALERTE_CONFIG: Record<string, { icon: typeof AlertTriangle; label: string 
   dossier_sans_action_7j: { icon: Clock, label: 'Dossiers inactifs +7j' },
   rdv_annule: { icon: CalendarX, label: 'RDV annulés' },
   devis_refuse: { icon: FileX, label: 'Devis refusés' },
-};
-
-const SEVERITY_STYLES: Record<string, string> = {
-  high: 'border-amber-300 bg-amber-50 dark:bg-amber-950/20',
-  medium: 'border-amber-300 bg-amber-50 dark:bg-amber-950/20',
-  low: 'border-slate-200 bg-slate-50 dark:bg-slate-900/20',
 };
 
 const SEVERITY_BADGE: Record<string, string> = {
@@ -61,37 +54,30 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
 
   return (
     <>
-      <div className="space-y-2">
+      {/* Compact inline alerts — half-line style, no yellow background */}
+      <div className="flex flex-wrap gap-2">
         {important.map((alerte) => {
           const conf = ALERTE_CONFIG[alerte.type] || { icon: AlertTriangle, label: alerte.type };
           const Icon = conf.icon;
-          const style = SEVERITY_STYLES[alerte.severity] || SEVERITY_STYLES.low;
 
           return (
-            <Card
+            <button
               key={alerte.type}
-              className={cn('rounded-xl border cursor-pointer transition-all hover:shadow-md hover:scale-[1.01]', style)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-card text-sm cursor-pointer transition-all hover:shadow-sm hover:bg-muted/50"
               onClick={() => setOpenAlerte(alerte)}
             >
-              <CardContent className="py-3 px-4">
-                <div className="flex items-center gap-3">
-                  <Icon className={cn(
-                    'w-4 h-4 shrink-0',
-                    alerte.severity === 'high' ? 'text-amber-600' : 'text-amber-600'
-                  )} />
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium text-foreground">
-                      {conf.label}
-                    </span>
-                    <span className="text-sm text-muted-foreground ml-2">
-                      — {alerte.count} dossier(s)
-                      {alerte.amount ? ` · ${formatCurrency(alerte.amount)}` : ''}
-                    </span>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-                </div>
-              </CardContent>
-            </Card>
+              <Icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              <span className="font-medium text-foreground">{conf.label}</span>
+              <Badge variant="secondary" className="text-[10px] h-4 px-1.5 ml-0.5">
+                {alerte.count}
+              </Badge>
+              {alerte.amount ? (
+                <span className="text-xs text-muted-foreground">
+                  · {formatCurrency(alerte.amount)}
+                </span>
+              ) : null}
+              <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0" />
+            </button>
           );
         })}
       </div>
@@ -103,10 +89,7 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
             <>
               <SheetHeader className="pb-4">
                 <SheetTitle className="flex items-center gap-2">
-                  <openConf.icon className={cn(
-                    'w-5 h-5',
-                    openAlerte.severity === 'high' ? 'text-amber-600' : 'text-amber-600'
-                  )} />
+                  <openConf.icon className="w-5 h-5 text-muted-foreground" />
                   {openConf.label}
                 </SheetTitle>
                 <div className="flex items-center gap-2 mt-2">
@@ -121,7 +104,6 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
               </SheetHeader>
 
               <div className="space-y-4">
-                {/* Bouton "Voir dans Dossiers" */}
                 <Button
                   variant="outline"
                   size="sm"
@@ -132,7 +114,6 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
                   Filtrer dans l'onglet Dossiers
                 </Button>
 
-                {/* Liste des dossiers concernés */}
                 <div className="text-sm font-medium text-muted-foreground">
                   Dossiers concernés ({openAlerte.sample_refs.length})
                 </div>

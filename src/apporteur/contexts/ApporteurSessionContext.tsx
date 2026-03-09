@@ -10,6 +10,8 @@ interface ApporteurSession {
   apporteurId: string;
   apporteurName: string;
   agencyId: string;
+  agencyName?: string;
+  agencyCity?: string;
   email: string;
   firstName: string | null;
   lastName: string | null;
@@ -131,6 +133,8 @@ export function ApporteurSessionProvider({ children }: { children: ReactNode }) 
               apporteurId: data.session.apporteurId,
               apporteurName: data.session.apporteurName,
               agencyId: data.session.agencyId,
+              agencyName: data.session.agencyName || undefined,
+              agencyCity: data.session.agencyCity || undefined,
               email: data.session.email,
               firstName: data.session.firstName,
               lastName: data.session.lastName,
@@ -160,6 +164,8 @@ export function ApporteurSessionProvider({ children }: { children: ReactNode }) 
             apporteurId: data.session.apporteurId,
             apporteurName: data.session.apporteurName,
             agencyId: data.session.agencyId,
+            agencyName: data.session.agencyName || undefined,
+            agencyCity: data.session.agencyCity || undefined,
             email: data.session.email,
             firstName: data.session.firstName,
             lastName: data.session.lastName,
@@ -232,6 +238,8 @@ export function ApporteurSessionProvider({ children }: { children: ReactNode }) 
           apporteurId: data.manager.apporteurId,
           apporteurName: data.manager.apporteurName,
           agencyId: data.manager.agencyId,
+          agencyName: data.manager.agencyName || undefined,
+          agencyCity: data.manager.agencyCity || undefined,
           email: data.manager.email,
           firstName: data.manager.firstName,
           lastName: data.manager.lastName,
