@@ -30,8 +30,10 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
   const { data: universCatalog = [] } = useUniversCatalog();
   const { data: allSubSkills = [] } = useSubSkills();
 
-  // Filter only active collaborators (not just technicians)
-  const activeCollabs = collaborators.filter(c => !c.leaving_date);
+  // Filter only active technicians & apprentices
+  const activeCollabs = collaborators.filter(c =>
+    !c.leaving_date && (c.type === 'TECHNICIEN' || c.role?.toLowerCase().includes('apprenti'))
+  );
 
   const collabIds = activeCollabs.map(t => t.id);
   const { data: allCollabSubSkills = [] } = useAllCollaboratorSubSkills(collabIds);
@@ -75,32 +77,33 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
         <title>Matrice Techniciens x Compétences</title>
         <style>
           * { box-sizing: border-box; margin: 0; padding: 0; }
-          body { font-family: Arial, sans-serif; padding: 15px; font-size: 10px; }
+          body { font-family: Arial, sans-serif; padding: 10px; font-size: 9px; }
           h1 { font-size: 14px; margin-bottom: 4px; text-align: center; }
-          .date { text-align: center; color: #666; margin-bottom: 15px; font-size: 9px; }
+          .date { text-align: center; color: #666; margin-bottom: 10px; font-size: 9px; }
           table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-          th, td { border: 1px solid #333; padding: 3px 4px; text-align: center; }
+          th, td { border: 1px solid #aaa; padding: 2px; text-align: center; overflow: hidden; }
           th { background: #f0f0f0; font-weight: bold; }
-          th.name-col { text-align: left; width: 130px; min-width: 130px; }
-          th.univers-header { background: #d4e6f1; font-size: 9px; font-weight: 700; }
+          th.name-col { text-align: left; width: 120px; min-width: 100px; }
+          th.univers-header { background: #d4e6f1; font-size: 8px; font-weight: 700; text-transform: uppercase; }
           th.sub-col {
             writing-mode: vertical-rl;
             text-orientation: mixed;
             transform: rotate(180deg);
-            height: 100px;
-            font-size: 8px;
-            padding: 6px 3px;
+            height: 90px;
+            font-size: 7px;
+            padding: 4px 2px;
             font-weight: normal;
+            overflow: hidden;
           }
-          td.name-cell { text-align: left; font-weight: 500; white-space: nowrap; }
+          td.name-cell { text-align: left; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 8px; }
           td.has { background: #22c55e; }
           td.no { background: #fff; }
-          .legend { margin-top: 15px; display: flex; gap: 20px; justify-content: center; font-size: 9px; }
+          .legend { margin-top: 10px; display: flex; gap: 20px; justify-content: center; font-size: 9px; }
           .legend-item { display: flex; align-items: center; gap: 5px; }
           .legend-box { width: 14px; height: 14px; border: 1px solid #333; }
           .legend-box.green { background: #22c55e; }
           .legend-box.white { background: #fff; }
-          @media print { @page { size: landscape; margin: 10mm; } }
+          @media print { @page { size: landscape; margin: 8mm; } }
         </style>
       </head>
       <body>
@@ -156,9 +159,7 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
               <tr>
                 {groupedColumns.map(({ univers, subSkills }) =>
                   subSkills.length === 0 ? (
-                    <th key={univers.id} className="sub-col">
-                      ✓
-                    </th>
+                    <th key={univers.id} className="sub-col">—</th>
                   ) : (
                     subSkills.map(sub => (
                       <th key={sub.id} className="sub-col">
@@ -180,17 +181,13 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
                       <td
                         key={univers.id}
                         className={collabHasUnivers(collab.id, univers.label) ? 'has' : 'no'}
-                      >
-                        {collabHasUnivers(collab.id, univers.label) && '✓'}
-                      </td>
+                      />
                     ) : (
                       subSkills.map(sub => (
                         <td
                           key={sub.id}
                           className={collabHasSubSkill(collab.id, sub.id) ? 'has' : 'no'}
-                        >
-                          {collabHasSubSkill(collab.id, sub.id) && '✓'}
-                        </td>
+                        />
                       ))
                     )
                   )}
