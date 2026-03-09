@@ -77,14 +77,14 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
         <title>Matrice Techniciens x Compétences</title>
         <style>
           * { box-sizing: border-box; margin: 0; padding: 0; }
-          body { font-family: Arial, sans-serif; padding: 10px; font-size: 9px; }
+          body { font-family: Arial, sans-serif; padding: 10px; font-size: 9px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
           h1 { font-size: 14px; margin-bottom: 4px; text-align: center; }
           .date { text-align: center; color: #666; margin-bottom: 10px; font-size: 9px; }
           table { width: 100%; border-collapse: collapse; table-layout: fixed; }
           th, td { border: 1px solid #aaa; padding: 2px; text-align: center; overflow: hidden; }
-          th { background: #f0f0f0; font-weight: bold; }
+          th { background: #f0f0f0 !important; font-weight: bold; }
           th.name-col { text-align: left; width: 120px; min-width: 100px; }
-          th.univers-header { background: #d4e6f1; font-size: 8px; font-weight: 700; text-transform: uppercase; }
+          th.univers-header { background: #d4e6f1 !important; font-size: 8px; font-weight: 700; text-transform: uppercase; }
           th.sub-col {
             writing-mode: vertical-rl;
             text-orientation: mixed;
@@ -96,14 +96,19 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
             overflow: hidden;
           }
           td.name-cell { text-align: left; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 8px; }
-          td.has { background: #22c55e; }
-          td.no { background: #fff; }
+          td[data-has="true"] { background: #22c55e !important; }
+          td[data-has="false"] { background: #fff !important; }
           .legend { margin-top: 10px; display: flex; gap: 20px; justify-content: center; font-size: 9px; }
           .legend-item { display: flex; align-items: center; gap: 5px; }
           .legend-box { width: 14px; height: 14px; border: 1px solid #333; }
-          .legend-box.green { background: #22c55e; }
-          .legend-box.white { background: #fff; }
-          @media print { @page { size: landscape; margin: 8mm; } }
+          .legend-box.green { background: #22c55e !important; }
+          .legend-box.white { background: #fff !important; }
+          .print-btn { margin: 15px auto; display: block; padding: 8px 24px; font-size: 13px; cursor: pointer; background: #2563eb; color: #fff; border: none; border-radius: 6px; }
+          .print-btn:hover { background: #1d4ed8; }
+          @media print {
+            @page { size: landscape; margin: 8mm; }
+            .print-btn { display: none !important; }
+          }
         </style>
       </head>
       <body>
@@ -112,16 +117,12 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
           <div class="legend-item"><div class="legend-box green"></div><span>Compétence acquise</span></div>
           <div class="legend-item"><div class="legend-box white"></div><span>Non acquise</span></div>
         </div>
+        <button class="print-btn" onclick="window.print()">🖨️ Imprimer</button>
       </body>
       </html>
     `);
 
     printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 250);
   };
 
   return (
@@ -180,13 +181,15 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
                     subSkills.length === 0 ? (
                       <td
                         key={univers.id}
-                        className={collabHasUnivers(collab.id, univers.label) ? 'has' : 'no'}
+                        data-has={collabHasUnivers(collab.id, univers.label) ? 'true' : 'false'}
+                        style={collabHasUnivers(collab.id, univers.label) ? { backgroundColor: '#22c55e' } : undefined}
                       />
                     ) : (
                       subSkills.map(sub => (
                         <td
                           key={sub.id}
-                          className={collabHasSubSkill(collab.id, sub.id) ? 'has' : 'no'}
+                          data-has={collabHasSubSkill(collab.id, sub.id) ? 'true' : 'false'}
+                          style={collabHasSubSkill(collab.id, sub.id) ? { backgroundColor: '#22c55e' } : undefined}
                         />
                       ))
                     )
