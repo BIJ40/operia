@@ -32,6 +32,7 @@ const AdminUserActivity = lazy(() => import('@/pages/AdminUserActivity'));
 const FranchiseurView = lazy(() => import('@/components/unified/views/FranchiseurView'));
 const ApporteurManagersAdminView = lazy(() => import('@/components/admin/views/ApporteurManagersAdminView'));
 const PendingRegistrationsList = lazy(() => import('@/components/admin/registrations/PendingRegistrationsList'));
+const ApporteurAuditLogView = lazy(() => import('@/components/admin/views/ApporteurAuditLogView'));
 
 function LoadingFallback() {
   return (
