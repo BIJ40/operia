@@ -282,6 +282,7 @@ export function ApporteurLoginPage() {
               <a href="http://www.helpconfort-40.fr" rel="noopener noreferrer">
               <Home className="w-4 h-4 mr-2" />
               Retour à l'accueil
+              </a>
             </Button>
           </div>
         </div>
