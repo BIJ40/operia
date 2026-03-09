@@ -25,6 +25,7 @@ import { usePlanningV2Data } from "../hooks/usePlanningV2Data";
 import { DayDispatchView } from "./day/DayDispatchView";
 import { WeekHeatmapView } from "./week/WeekHeatmapView";
 import { WeekPlanningView } from "./week/WeekPlanningView";
+import { MapPlanningView } from "./map/MapPlanningView";
 import { DisplaySettings } from "./shared/DisplaySettings";
 import { UnscheduledPanel } from "./shared/UnscheduledPanel";
 import type { PlanningView } from "../types";
