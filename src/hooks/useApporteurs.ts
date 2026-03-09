@@ -505,6 +505,60 @@ export function useDeleteApporteur() {
 }
 
 /**
+ * Supprimer un gestionnaire apporteur (système OTP)
+ */
+export function useDeleteApporteurManager() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      // Delete associated sessions first
+      const { data: manager } = await supabase
+        .from('apporteur_managers')
+        .select('id')
+        .eq('id', id)
+        .single();
+
+      if (!manager) throw new Error('Gestionnaire non trouvé');
+
+      // Delete OTP codes
+      await supabase
+        .from('apporteur_otp_codes')
+        .delete()
+        .eq('manager_id', id);
+
+      // Delete sessions
+      await supabase
+        .from('apporteur_sessions')
+        .delete()
+        .eq('manager_id', id);
+
+      // Delete invitation links
+      await supabase
+        .from('apporteur_invitation_links')
+        .delete()
+        .eq('manager_id', id);
+
+      // Delete the manager
+      const { error } = await supabase
+        .from('apporteur_managers')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['apporteur-managers'] });
+      queryClient.invalidateQueries({ queryKey: ['apporteurs'] });
+      toast.success('Utilisateur supprimé définitivement');
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || 'Erreur lors de la suppression');
+    },
+  });
+}
+
+/**
  * Mettre à jour l'apogee_client_id d'un apporteur (liaison Apogée)
  */
 export function useUpdateApporteurApogeeId() {
