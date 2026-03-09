@@ -88,7 +88,7 @@ function buildInitials(firstname: string, name: string): string {
   return `${f}${n}` || "??";
 }
 
-function isTechnicienUser(u: Record<string, unknown>): boolean {
+function isPlanningUser(u: Record<string, unknown>): boolean {
   const type = norm(u.type);
   const data = u.data as Record<string, unknown> | undefined;
   const universes = data?.universes;
@@ -96,8 +96,14 @@ function isTechnicienUser(u: Record<string, unknown>): boolean {
   return (
     u.isTechnicien === true ||
     type === "technicien" ||
+    type === "commercial" ||
     (type === "utilisateur" && hasUniverses)
   );
+}
+
+function resolveUserType(u: Record<string, unknown>): "technicien" | "commercial" {
+  const type = norm(u.type);
+  return type === "commercial" ? "commercial" : "technicien";
 }
 
 function safeDate(v: unknown): Date | null {
@@ -437,7 +443,7 @@ function normalizeTechnicians(rawUsers: unknown[]): PlanningTechnician[] {
   return rawUsers
     .filter((u) => {
       const obj = u as Record<string, unknown>;
-      return isTechnicienUser(obj) && isActiveUser(obj);
+      return isPlanningUser(obj) && isActiveUser(obj);
     })
     .map((u, index) => {
       const obj = u as Record<string, unknown>;
@@ -449,11 +455,12 @@ function normalizeTechnicians(rawUsers: unknown[]): PlanningTechnician[] {
       return {
         id: Number(obj.id),
         apogeeId: Number(obj.id),
-        name: `${firstname} ${name}`.trim() || `Tech #${obj.id}`,
+        name: `${firstname} ${name}`.trim() || `User #${obj.id}`,
         initials: buildInitials(firstname, name),
         color: extractColor(obj),
         skills: [],
         univers: universes,
+        userType: resolveUserType(obj),
         workStart: "07:00",
         workEnd: "18:00",
         lunchStart: "12:00",

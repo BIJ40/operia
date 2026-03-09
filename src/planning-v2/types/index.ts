@@ -9,6 +9,8 @@ export type DisplayDensity = "compact" | "standard" | "detailed";
 export type PlanningView = "day" | "week" | "charge" | "map";
 
 // ─── Technicien ─────────────────────────────────────────────────────────────
+export type PlanningUserType = "technicien" | "commercial";
+
 export interface PlanningTechnician {
   id: number;
   apogeeId: number;
@@ -17,6 +19,7 @@ export interface PlanningTechnician {
   color: string;
   skills: string[];
   univers: string[];
+  userType: PlanningUserType;
   workStart: string;   // "07:00"
   workEnd: string;     // "18:00"
   lunchStart: string;  // "12:00"

@@ -158,11 +158,9 @@ export function MapPlanningView({ technicians, selectedDate }: MapPlanningViewPr
     }
   }, [mapboxToken]);
 
-  // Reset fit when date changes
-  useEffect(() => {
-    hasFittedRef.current = false;
-    lastCountRef.current = 0;
-  }, [selectedDate]);
+  // Track current date key to force marker refresh
+  const currentDateKey = format(selectedDate, "yyyy-MM-dd");
+  const lastDateKeyRef = useRef(currentDateKey);
 
   // Update markers
   useEffect(() => {
@@ -184,11 +182,13 @@ export function MapPlanningView({ technicians, selectedDate }: MapPlanningViewPr
       markersRef.current.push(marker);
     });
 
-    // Fit bounds only when data changes
-    const changed = rdvs.length !== lastCountRef.current || !hasFittedRef.current;
+    // Fit bounds when date changes or data changes
+    const dateChanged = currentDateKey !== lastDateKeyRef.current;
+    const countChanged = rdvs.length !== lastCountRef.current;
+    lastDateKeyRef.current = currentDateKey;
     lastCountRef.current = rdvs.length;
 
-    if (changed && rdvs.length > 0) {
+    if ((dateChanged || countChanged || !hasFittedRef.current) && rdvs.length > 0) {
       const bounds = calculateBounds(rdvs);
       if (bounds) {
         const container = map.current.getContainer();
@@ -202,7 +202,7 @@ export function MapPlanningView({ technicians, selectedDate }: MapPlanningViewPr
         hasFittedRef.current = true;
       }
     }
-  }, [rdvs, selectedRdv, mapReady]);
+  }, [rdvs, selectedRdv, mapReady, currentDateKey]);
 
   // Toggle tech filter
   const toggleTech = useCallback((id: number) => {
@@ -222,8 +222,6 @@ export function MapPlanningView({ technicians, selectedDate }: MapPlanningViewPr
       </div>
     );
   }
-
-  console.log("[MapPlanningView] render", { mapboxToken, tokenError, mapInitError, mapReady, rdvsLoading, rdvsCount: rdvs.length, agencySlug });
 
   return (
     <div className="relative w-full" style={{ height: "100%", minHeight: "400px" }}>
