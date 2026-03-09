@@ -163,10 +163,12 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
         </style>
       </head>
       <body>
+        <div class="page-wrap">
         ${printContent.innerHTML}
         <div class="legend">
           <div class="legend-item"><div class="legend-box green"></div><span>Compétence acquise</span></div>
           <div class="legend-item"><div class="legend-box white"></div><span>Non acquise</span></div>
+        </div>
         </div>
         <button class="print-btn" onclick="window.print()">🖨️ Imprimer</button>
       </body>
