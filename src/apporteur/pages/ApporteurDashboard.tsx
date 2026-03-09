@@ -122,13 +122,13 @@ export default function ApporteurDashboard() {
                   </p>
                   <p className={cn(
                     "text-sm font-medium mt-1",
-                    kpis.facturesNonReglees.montant > 0 ? "text-rose-600" : "text-green-600"
+                    kpis.facturesNonReglees.montant > 0 ? "text-[hsl(var(--ap-danger))]" : "text-[hsl(var(--ap-success))]"
                   )}>
                     {formatCurrency(kpis.facturesNonReglees.montant)}
                   </p>
                 </div>
-                <div className="w-12 h-12 rounded-xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
-                  <Receipt className="w-6 h-6 text-rose-600" />
+                <div className="w-12 h-12 rounded-xl bg-[hsl(var(--ap-danger-light))] flex items-center justify-center">
+                  <Receipt className="w-6 h-6 text-[hsl(var(--ap-danger))]" />
                 </div>
               </div>
             </CardContent>
