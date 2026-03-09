@@ -766,10 +766,10 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
     // =========================================================================
     try {
       await supabase.from('planning_suggestions').insert({
-        agency_id,
+        agency_id: agencyUuid,
         dossier_id,
         requested_by: user.id,
-        input_json: { agency_id, dossier_id, requiredCodes, estimatedDuration, minSkillLevel, weights },
+        input_json: { agency_id: agencyUuid, dossier_id, requiredCodes, estimatedDuration, minSkillLevel, weights },
         output_json: { suggestions: cleanSuggestions, alternatives: cleanAlternatives, blockers: uniqueBlockers },
         score_breakdown_json: {
           techs_total: techProfiles.length,
