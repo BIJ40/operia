@@ -134,7 +134,7 @@ export function ApporteurLoginPage() {
           </div>
 
           {/* Login Card */}
-          <div className="bg-card border rounded-2xl shadow-xl p-6">
+          <div className="bg-card border rounded-2xl p-6 shadow-apporteur">
             {step === 'email' ? (
               <form onSubmit={handleRequestCode} className="space-y-4">
                 <div className="space-y-2">
