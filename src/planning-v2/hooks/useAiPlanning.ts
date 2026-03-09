@@ -58,8 +58,28 @@ export const DEFAULT_HARD_CONSTRAINTS: HardConstraints = {
 // ─── Hook principal ─────────────────────────────────────────────────────────
 export function useAiPlanning() {
   const { currentAgency } = useAgency();
-  const agencyId = currentAgency?.id;
+  const { user } = useAuthCore();
+  const agencySlug = currentAgency?.id; // This is actually the slug
   const queryClient = useQueryClient();
+
+  // Resolve the real UUID agency_id from the user's profile
+  const agencyUuidQuery = useQuery({
+    queryKey: ["agency-uuid", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("agency_id")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as any)?.agency_id as string | null;
+    },
+    enabled: !!user?.id,
+    staleTime: 30 * 60 * 1000, // 30 min cache
+  });
+
+  const agencyUuid = agencyUuidQuery.data;
 
   // --- Suggest planning for a dossier ---
   const suggestMutation = useMutation({
