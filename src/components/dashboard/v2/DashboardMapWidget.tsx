@@ -60,30 +60,30 @@ function MapContent({
   isExpanded?: boolean;
   mapboxToken: string;
 }) {
+  const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
 
+  // Render a dedicated map div inside the parent
   useEffect(() => {
-    if (!containerRef.current || mapRef.current || !mapboxToken) return;
+    if (!mapContainerRef.current || mapRef.current || !mapboxToken) return;
 
     mapboxgl.accessToken = mapboxToken;
 
     const map = new mapboxgl.Map({
-      container: containerRef.current,
+      container: mapContainerRef.current,
       style: 'mapbox://styles/mapbox/light-v11',
-      center: [2.3522, 48.8566], // Paris par défaut
+      center: [2.3522, 48.8566],
       zoom: 10,
       attributionControl: false,
       failIfMajorPerformanceCaveat: false,
       preserveDrawingBuffer: true,
     });
 
-    // Force resize after load to fix blank canvas in iframes
     map.on('load', () => {
       map.resize();
     });
 
-    // Ajouter contrôles de navigation en mode expanded
     if (isExpanded) {
       map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
     }
@@ -95,7 +95,7 @@ function MapContent({
       map.remove();
       mapRef.current = null;
     };
-  }, [containerRef, isExpanded, mapboxToken]);
+  }, [mapboxToken, isExpanded]);
 
   // Mise à jour des markers
   useEffect(() => {
