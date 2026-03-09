@@ -416,7 +416,12 @@ export function normalizeApogeeData(
       else if (motif.includes("devis")) reason = "en_attente_devis";
     }
 
-    const rawUniverses: string[] = Array.isArray(project.data?.universes) ? project.data.universes : [];
+    // Collect universes from multiple sources: project.data.universes, pictosInterv, intervention competences
+    const projectUniverses: string[] = Array.isArray(project.data?.universes) ? project.data.universes : [];
+    const pictosInterv: string[] = Array.isArray(project.data?.pictosInterv) ? project.data.pictosInterv.map((p: any) => String(p)) : [];
+    const intervCompetences: string[] = projectIntervs.flatMap(i => Array.isArray(i.data?.competences) ? i.data.competences : []);
+    // Merge & deduplicate, prefer universes > pictos > competences
+    const allUniverses = [...new Set([...projectUniverses, ...pictosInterv, ...intervCompetences])].filter(Boolean);
 
     unscheduled.push({
       id: `unsched-proj-${pid}`,
@@ -424,8 +429,8 @@ export function normalizeApogeeData(
       dossierId: pid,
       client: clientName,
       city: client?.ville || client?.city || null,
-      universe: rawUniverses[0] ?? null,
-      universes: rawUniverses,
+      universe: allUniverses[0] ?? null,
+      universes: allUniverses,
       priority,
       estimatedDuration,
       estimatedPassages,
