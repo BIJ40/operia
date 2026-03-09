@@ -59,7 +59,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { Layers, Monitor, Zap, TreePine, ChevronRight, CornerDownRight, X, Search, Users, Construction } from 'lucide-react';
+import { Layers, Monitor, Zap, TreePine, ChevronRight, CornerDownRight, X, Search, Users, Construction, ExternalLink } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 // ============================================================================
 // Role config for badges
