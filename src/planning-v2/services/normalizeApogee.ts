@@ -271,7 +271,38 @@ export function normalizeApogeeData(
     }
   }
 
-  // ── Unscheduled: interventions sans créneau planifié ──
+  // ── Unscheduled: projets à planifier (filtrage par STATE du PROJET, pas de l'intervention) ──
+  // Logique alignée sur usePlanningData (planif IA) :
+  //   - project.state === "new" → premier RDV à planifier
+  //   - project.state === "to_planify_tvx" → travaux à planifier
+  //     SAUF si le projet a déjà une intervention TVX planifiée
+
+  // 1. Collecter les projectIds qui ont déjà une intervention TVX planifiée/validée
+  const projectsWithPlannedTvx = new Set<number>();
+  for (const interv of interventions) {
+    const typeN = norm(interv.type2 || interv.type);
+    const stateN = norm(interv.state);
+    const isTvx = typeN.includes("travaux") || typeN.includes("tvx") || typeN.includes("work");
+    const isPlanned = stateN.includes("planned") || stateN.includes("planifi") ||
+      stateN.includes("validated") || stateN.includes("done") ||
+      stateN.includes("in_progress") || stateN.includes("finished");
+    if (isTvx && isPlanned && interv.projectId) {
+      projectsWithPlannedTvx.add(interv.projectId);
+    }
+  }
+
+  // 2. Identifier les projets planifiables
+  const PLANIFIABLE_PROJECT_STATES = new Set(["new", "to_planify_tvx"]);
+  const planifiableProjectIds = new Set<number>();
+  for (const [pid, proj] of projectMap.entries()) {
+    const stateN = norm(proj.state);
+    if (!PLANIFIABLE_PROJECT_STATES.has(stateN)) continue;
+    if (stateN === "to_planify_tvx" && projectsWithPlannedTvx.has(pid)) continue;
+    planifiableProjectIds.add(pid);
+  }
+
+  // 3. Construire les entrées non-planifiées à partir des projets planifiables
+  const unscheduled: PlanningUnscheduled[] = [];
   const scheduledIntervIds = new Set<number>();
   for (const c of creneaux) {
     if (c.refType === "visite-interv") {
@@ -280,17 +311,75 @@ export function normalizeApogeeData(
     }
   }
 
-  const unscheduled: PlanningUnscheduled[] = [];
-  // Only show interventions that actually need planning (new or to_planify_tvx)
-  const PLANIFIABLE_STATES = new Set(["new", "to_planify_tvx"]);
-
+  // Group interventions by project for planifiable projects
+  const intervsByProject = new Map<number, typeof interventions>();
   for (const interv of interventions) {
+    if (!interv.projectId || !planifiableProjectIds.has(interv.projectId)) continue;
     if (scheduledIntervIds.has(interv.id)) continue;
     const stateN = norm(interv.state);
-    if (!PLANIFIABLE_STATES.has(stateN)) continue;
+    // Exclude cancelled/closed interventions
+    if (["cancelled", "canceled", "refused", "annule", "clos"].includes(stateN)) continue;
+    
+    if (!intervsByProject.has(interv.projectId)) {
+      intervsByProject.set(interv.projectId, []);
+    }
+    intervsByProject.get(interv.projectId)!.push(interv);
+  }
 
-    const project = interv.projectId ? projectMap.get(interv.projectId) : undefined;
-    const client = project?.clientId ? clientMap.get(project.clientId) : undefined;
+  // For projects with unscheduled interventions, create entries
+  for (const [pid, intervs] of intervsByProject.entries()) {
+    for (const interv of intervs) {
+      const project = projectMap.get(pid);
+      const client = project?.clientId ? clientMap.get(project.clientId) : undefined;
+
+      let clientName = "Inconnu";
+      if (client) {
+        const p = (client.prenom || "").trim();
+        const n = (client.nom || "").trim();
+        clientName = `${p} ${n}`.trim() || "Inconnu";
+      }
+
+      // Determine reason
+      let reason: PlanningUnscheduled["reason"] = "a_planifier";
+      const motif = norm(interv.data?.motifAttente);
+      const prioriteN = norm(interv.data?.priorite);
+      if (prioriteN === "urgent" || prioriteN === "urgente") reason = "urgent";
+      else if (motif.includes("client")) reason = "en_attente_client";
+      else if (motif.includes("piece") || motif.includes("pièce")) reason = "en_attente_piece";
+      else if (motif.includes("devis")) reason = "en_attente_devis";
+
+      let priority: AppointmentPriority = "normal";
+      if (prioriteN === "urgent" || prioriteN === "urgente") priority = "urgent";
+      else if (prioriteN === "haute" || prioriteN === "high") priority = "high";
+      else if (prioriteN === "basse" || prioriteN === "low") priority = "low";
+
+      const rawType = interv.type2 || interv.type;
+      const type = resolveInterventionType(rawType);
+
+      unscheduled.push({
+        id: `unsched-${interv.id}`,
+        apogeeId: interv.id,
+        dossierId: interv.projectId ?? 0,
+        client: clientName,
+        city: client?.ville || client?.city || null,
+        universe: project?.data?.universes?.[0] ?? null,
+        priority,
+        estimatedDuration: interv.data?.dureeEstimee || DURATION_FALLBACK[type] || DURATION_FALLBACK.default,
+        requiredSkills: interv.data?.competences ?? [],
+        reason,
+        dueDate: null,
+        status: project?.state || interv.state || "unknown",
+        apporteur: null,
+      });
+    }
+  }
+
+  // Also add planifiable projects that have NO interventions at all
+  for (const pid of planifiableProjectIds) {
+    if (intervsByProject.has(pid)) continue; // Already handled above
+    const project = projectMap.get(pid);
+    if (!project) continue;
+    const client = project.clientId ? clientMap.get(project.clientId) : undefined;
 
     let clientName = "Inconnu";
     if (client) {
@@ -299,37 +388,22 @@ export function normalizeApogeeData(
       clientName = `${p} ${n}`.trim() || "Inconnu";
     }
 
-    // Determine reason
-    let reason: PlanningUnscheduled["reason"] = "a_planifier";
-    const motif = norm(interv.data?.motifAttente);
-    const prioriteN = norm(interv.data?.priorite);
-    if (prioriteN === "urgent" || prioriteN === "urgente") reason = "urgent";
-    else if (motif.includes("client")) reason = "en_attente_client";
-    else if (motif.includes("piece") || motif.includes("pièce")) reason = "en_attente_piece";
-    else if (motif.includes("devis")) reason = "en_attente_devis";
-
-    // Priority mapping
-    let priority: AppointmentPriority = "normal";
-    if (prioriteN === "urgent" || prioriteN === "urgente") priority = "urgent";
-    else if (prioriteN === "haute" || prioriteN === "high") priority = "high";
-    else if (prioriteN === "basse" || prioriteN === "low") priority = "low";
-
-    const rawType = interv.type2 || interv.type;
-    const type = resolveInterventionType(rawType);
+    const projectState = norm(project.state);
+    const reason: PlanningUnscheduled["reason"] = projectState === "to_planify_tvx" ? "a_planifier" : "a_planifier";
 
     unscheduled.push({
-      id: `unsched-${interv.id}`,
-      apogeeId: interv.id,
-      dossierId: interv.projectId ?? 0,
+      id: `unsched-proj-${pid}`,
+      apogeeId: pid,
+      dossierId: pid,
       client: clientName,
       city: client?.ville || client?.city || null,
-      universe: project?.data?.universes?.[0] ?? null,
-      priority,
-      estimatedDuration: interv.data?.dureeEstimee || DURATION_FALLBACK[type] || DURATION_FALLBACK.default,
-      requiredSkills: interv.data?.competences ?? [],
+      universe: project.data?.universes?.[0] ?? null,
+      priority: "normal",
+      estimatedDuration: DURATION_FALLBACK.default,
+      requiredSkills: [],
       reason,
       dueDate: null,
-      status: interv.state || "unknown",
+      status: project.state || "unknown",
       apporteur: null,
     });
   }
