@@ -528,6 +528,9 @@ export default function DossiersTabContent() {
                           ) : null}
                         </TableCell>
                         <TableCell onClick={() => setSelectedDossier(d)}>
+                          <span className="text-xs font-mono text-muted-foreground">{d.ref}</span>
+                        </TableCell>
+                        <TableCell onClick={() => setSelectedDossier(d)}>
                           <div>
                             <div className="font-medium">{d.clientName}</div>
                             <div className="text-xs text-muted-foreground">{d.city}</div>
