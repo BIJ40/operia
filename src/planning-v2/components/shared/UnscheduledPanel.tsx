@@ -1,32 +1,24 @@
 /**
  * Planning V2 — Panel des interventions non planifiées
- * Panneau latéral rétractable affichant les RDV à planifier
+ * Panneau latéral rétractable avec filtre 1er RDV / Travaux
  */
 
 import { useState, useMemo } from "react";
 import {
   AlertCircle,
   Clock,
-  User,
   MapPin,
   ChevronRight,
   ChevronLeft,
   Search,
-  Filter,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import type { PlanningUnscheduled, UnscheduledReason } from "../../types";
+
+type CategoryFilter = "all" | "premier_rdv" | "travaux";
 
 interface UnscheduledPanelProps {
   items: PlanningUnscheduled[];
@@ -61,14 +53,30 @@ const PRIORITY_DOT: Record<string, string> = {
   low: "bg-muted-foreground",
 };
 
+/** Determine if an item is "1er RDV" (new project) or "Travaux" (to_planify_tvx) */
+function getCategory(item: PlanningUnscheduled): "premier_rdv" | "travaux" {
+  const st = (item.status || "").toLowerCase();
+  if (st === "to_planify_tvx") return "travaux";
+  return "premier_rdv";
+}
+
 export function UnscheduledPanel({ items, open, onToggle }: UnscheduledPanelProps) {
   const [search, setSearch] = useState("");
-  const [reasonFilter, setReasonFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all");
+
+  const counts = useMemo(() => {
+    let premier = 0, travaux = 0;
+    for (const i of items) {
+      if (getCategory(i) === "travaux") travaux++;
+      else premier++;
+    }
+    return { premier, travaux };
+  }, [items]);
 
   const filtered = useMemo(() => {
     let result = items;
-    if (reasonFilter !== "all") {
-      result = result.filter((i) => i.reason === reasonFilter);
+    if (categoryFilter !== "all") {
+      result = result.filter((i) => getCategory(i) === categoryFilter);
     }
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -81,18 +89,9 @@ export function UnscheduledPanel({ items, open, onToggle }: UnscheduledPanelProp
       );
     }
     return result;
-  }, [items, reasonFilter, search]);
+  }, [items, categoryFilter, search]);
 
-  // Count by reason for badges
-  const countByReason = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const i of items) {
-      map.set(i.reason, (map.get(i.reason) || 0) + 1);
-    }
-    return map;
-  }, [items]);
-
-  const urgentCount = countByReason.get("urgent") || 0;
+  const urgentCount = useMemo(() => items.filter(i => i.priority === "urgent").length, [items]);
 
   if (!open) {
     return (
@@ -148,25 +147,33 @@ export function UnscheduledPanel({ items, open, onToggle }: UnscheduledPanelProp
           />
         </div>
 
-        {/* Filter by reason */}
-        <Select value={reasonFilter} onValueChange={setReasonFilter}>
-          <SelectTrigger className="h-7 text-xs">
-            <Filter className="h-3 w-3 mr-1" />
-            <SelectValue placeholder="Tous les motifs" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous les motifs</SelectItem>
-            {Object.entries(REASON_LABELS).map(([key, label]) => {
-              const count = countByReason.get(key) || 0;
-              if (count === 0) return null;
-              return (
-                <SelectItem key={key} value={key}>
-                  {label} ({count})
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
+        {/* Category toggle: 1er RDV / Travaux */}
+        <div className="flex gap-1">
+          <Button
+            variant={categoryFilter === "all" ? "default" : "outline"}
+            size="sm"
+            className="h-7 text-[10px] flex-1 px-2"
+            onClick={() => setCategoryFilter("all")}
+          >
+            Tous ({items.length})
+          </Button>
+          <Button
+            variant={categoryFilter === "premier_rdv" ? "default" : "outline"}
+            size="sm"
+            className="h-7 text-[10px] flex-1 px-2"
+            onClick={() => setCategoryFilter("premier_rdv")}
+          >
+            1er RDV ({counts.premier})
+          </Button>
+          <Button
+            variant={categoryFilter === "travaux" ? "default" : "outline"}
+            size="sm"
+            className="h-7 text-[10px] flex-1 px-2"
+            onClick={() => setCategoryFilter("travaux")}
+          >
+            Travaux ({counts.travaux})
+          </Button>
+        </div>
       </div>
 
       {/* List */}
@@ -200,6 +207,7 @@ export function UnscheduledPanel({ items, open, onToggle }: UnscheduledPanelProp
 }
 
 function UnscheduledCard({ item }: { item: PlanningUnscheduled }) {
+  const category = getCategory(item);
   return (
     <div className="rounded-md border border-border bg-card p-2.5 hover:shadow-sm transition-shadow cursor-pointer group">
       {/* Top: priority dot + client */}
@@ -216,6 +224,17 @@ function UnscheduledCard({ item }: { item: PlanningUnscheduled }) {
             </div>
           )}
         </div>
+        {/* Category badge */}
+        <Badge
+          variant="outline"
+          className={`text-[9px] px-1.5 py-0 h-4 font-medium shrink-0 ${
+            category === "travaux"
+              ? "border-warm-green/50 text-warm-green"
+              : "border-warm-blue/50 text-warm-blue"
+          }`}
+        >
+          {category === "travaux" ? "TVX" : "1er RDV"}
+        </Badge>
       </div>
 
       {/* Info row */}
