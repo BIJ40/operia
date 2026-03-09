@@ -114,9 +114,9 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
           table { width: 100%; border-collapse: collapse; table-layout: fixed; }
           th, td { border: 1px solid #aaa; padding: 2px; text-align: center; overflow: hidden; }
           th { background: #f0f0f0 !important; font-weight: bold; }
-          th.name-col { text-align: left; width: 120px; min-width: 100px; }
-          th.univers-header { background: #d4e6f1 !important; font-size: 8px; font-weight: 700; text-transform: uppercase; }
-          th.sub-col {
+           th.name-col { text-align: left; width: 100px; min-width: 80px; }
+           th.univers-header { background: #d4e6f1 !important; font-size: 7px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+           th.sub-col {
             writing-mode: vertical-rl;
             text-orientation: mixed;
             transform: rotate(180deg);
