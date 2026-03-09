@@ -460,6 +460,11 @@ export default function DossiersTabContent() {
                       />
                     )}
                   </TableHead>
+                  <TableHead>
+                    <div className="flex items-center">
+                      Réf.
+                    </div>
+                  </TableHead>
                   <TableHead 
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleSort('clientName')}
