@@ -204,9 +204,11 @@ function PlanningV2ShellContent() {
                 />
               )}
               {filters.view === "map" && (
-                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                  Vue Carte — à venir (Phase 9)
-                </div>
+                <MapPlanningView
+                  technicians={data.technicians}
+                  appointments={data.appointments}
+                  selectedDate={filters.selectedDate}
+                />
               )}
             </>
           )}
