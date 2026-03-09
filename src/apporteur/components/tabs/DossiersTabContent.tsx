@@ -91,6 +91,7 @@ export default function DossiersTabContent() {
     if (urlAlerteRefs) {
       const refs = urlAlerteRefs.split(',').filter(Boolean);
       setAlerteRefs(refs);
+      setStatusFilter('all'); // Reset status filter when alerte filter is active
       setSearchParams(prev => {
         const newParams = new URLSearchParams(prev);
         newParams.delete('alerteRefs');
