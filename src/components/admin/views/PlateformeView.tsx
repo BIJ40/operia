@@ -111,11 +111,6 @@ export function PlateformeView() {
             </Suspense>
           </TabsContent>
 
-          <TabsContent value="modules" className="mt-0 focus-visible:outline-none">
-            <Suspense fallback={<LoadingFallback />}>
-              <AdminFeatureFlags />
-            </Suspense>
-          </TabsContent>
 
           <TabsContent value="sitemap" className="mt-0 focus-visible:outline-none">
             <Suspense fallback={<LoadingFallback />}>
