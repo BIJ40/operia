@@ -102,16 +102,61 @@ export default function DossiersTabContent() {
   const dossiers = data?.data?.dossiers || [];
   const totals = data?.data?.totals || { count: 0, resteDu: 0 };
 
-  const STATUS_ORDER = ['en_cours', 'stand_by', 'devis_en_cours', 'devis_envoye', 'devis_valide', 'attente_paiement', 'facture', 'regle', 'clos', 'annule'];
+  // Friendly label mapping for apporteur view
+  const getApporteurLabel = (d: DossierRow): string => {
+    if (d.status === 'en_cours') {
+      return d.datePremierRdv ? 'Planifié' : 'À planifier';
+    }
+    if (d.status === 'programme') {
+      return 'Planifié';
+    }
+    return d.statusLabel;
+  };
+
+  // Virtual status for filtering: "en_cours_all" = everything not facturé+
+  const FINISHED_STATUSES = new Set(['facture', 'attente_paiement', 'regle', 'clos', 'annule']);
+
+  const STATUS_ORDER = ['en_cours_all', 'en_cours', 'programme', 'stand_by', 'devis_en_cours', 'devis_envoye', 'devis_valide', 'attente_paiement', 'facture', 'regle', 'clos', 'annule'];
 
   const statuses = useMemo(() => {
     const unique = new Set(dossiers.map(d => d.status));
-    return STATUS_ORDER
-      .filter(s => unique.has(s))
-      .map(s => ({
-        value: s,
-        label: dossiers.find(d => d.status === s)?.statusLabel || s,
-      }));
+    const hasEnCoursAll = dossiers.some(d => !FINISHED_STATUSES.has(d.status));
+    
+    const items: { value: string; label: string }[] = [];
+    
+    if (hasEnCoursAll) {
+      const count = dossiers.filter(d => !FINISHED_STATUSES.has(d.status)).length;
+      items.push({ value: 'en_cours_all', label: `En cours (${count})` });
+    }
+
+    // Split en_cours into "À planifier" and "Planifié"
+    const aplanifier = dossiers.filter(d => d.status === 'en_cours' && !d.datePremierRdv);
+    const planifie = dossiers.filter(d => d.status === 'en_cours' && d.datePremierRdv);
+    
+    if (aplanifier.length > 0) {
+      items.push({ value: 'a_planifier', label: 'À planifier' });
+    }
+    if (planifie.length > 0) {
+      items.push({ value: 'planifie', label: 'Planifié' });
+    }
+
+    // Add programme as "Planifié (programme)" if exists and not already covered
+    if (unique.has('programme')) {
+      items.push({ value: 'programme', label: 'Programmé' });
+    }
+
+    // Rest of statuses (skip en_cours and programme, already handled)
+    const skipStatuses = new Set(['en_cours', 'programme', 'en_cours_all']);
+    STATUS_ORDER
+      .filter(s => !skipStatuses.has(s) && unique.has(s))
+      .forEach(s => {
+        items.push({
+          value: s,
+          label: dossiers.find(d => d.status === s)?.statusLabel || s,
+        });
+      });
+
+    return items;
   }, [dossiers]);
 
   const filteredDossiers = useMemo(() => {
