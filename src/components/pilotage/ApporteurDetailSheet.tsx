@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Building2, Users, ExternalLink, Check, X, Info, Link2, Link2Off, Archive, Trash2, Plus, Mail, UserPlus, Globe } from 'lucide-react';
-import { Apporteur, useToggleApporteurStatus, useApporteurManagers, useCreateApporteurManager, useToggleApporteurManagerStatus, useUpdateApporteurApogeeId, useDeleteApporteur, useTogglePortalEnabled } from '@/hooks/useApporteurs';
+import { Apporteur, useToggleApporteurStatus, useApporteurManagers, useCreateApporteurManager, useToggleApporteurManagerStatus, useDeleteApporteurManager, useUpdateApporteurApogeeId, useDeleteApporteur, useTogglePortalEnabled } from '@/hooks/useApporteurs';
 import { Switch } from '@/components/ui/switch';
 import { ApporteurContactsSection } from './ApporteurContactsSection';
 import { ApogeeCommanditaireSelector } from '@/components/shared/apporteurs/ApogeeCommanditaireSelector';
