@@ -460,6 +460,11 @@ export default function DossiersTabContent() {
                       />
                     )}
                   </TableHead>
+                  <TableHead>
+                    <div className="flex items-center">
+                      Réf.
+                    </div>
+                  </TableHead>
                   <TableHead 
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleSort('clientName')}
@@ -499,7 +504,7 @@ export default function DossiersTabContent() {
               <TableBody>
                 {filteredDossiers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       Aucun dossier trouvé
                     </TableCell>
                   </TableRow>
@@ -521,6 +526,9 @@ export default function DossiersTabContent() {
                               aria-label={`Sélectionner ${d.ref}`}
                             />
                           ) : null}
+                        </TableCell>
+                        <TableCell onClick={() => setSelectedDossier(d)}>
+                          <span className="text-xs font-mono text-muted-foreground">{d.ref}</span>
                         </TableCell>
                         <TableCell onClick={() => setSelectedDossier(d)}>
                           <div>
