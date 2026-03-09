@@ -67,6 +67,14 @@ function isSameDay(a: Date, b: Date): boolean {
     a.getDate() === b.getDate();
 }
 
+/** Local YYYY-MM-DD (avoid UTC offset issues with toISOString) */
+function toLocalDateKey(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 function getTimeSlot(time: string | null): 'matin' | 'apres-midi' {
   if (!time) return 'matin';
   const hour = parseInt(time.split(':')[0] || '8', 10);
@@ -201,7 +209,7 @@ export function ApporteurPlanningCard() {
     const map = new Map<string, { matin: PlanningEvent[]; 'apres-midi': PlanningEvent[] }>();
 
     for (const day of weekDays) {
-      const key = day.toISOString().split('T')[0];
+      const key = toLocalDateKey(day);
       map.set(key, { matin: [], 'apres-midi': [] });
     }
 
@@ -302,7 +310,7 @@ export function ApporteurPlanningCard() {
           ) : (
             <div className="grid grid-cols-5 gap-px bg-border rounded-lg overflow-hidden">
               {weekDays.map((day, dayIdx) => {
-                const key = day.toISOString().split('T')[0];
+                const key = toLocalDateKey(day);
                 const bucket = eventsByDaySlot.get(key) || { matin: [], 'apres-midi': [] };
                 const isToday = isSameDay(day, new Date());
                 const dayNum = day.getDate();
