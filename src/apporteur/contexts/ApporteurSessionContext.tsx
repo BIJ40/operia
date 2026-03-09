@@ -125,13 +125,17 @@ export function ApporteurSessionProvider({ children }: { children: ReactNode }) 
       // Quick restore from localStorage while we validate
       const storedSession = getStoredSessionData();
       if (storedSession && storedSession.expiresAt > new Date()) {
+        console.log('[ApporteurSession] Stored session found, validating with server...');
         // Validate with server
         const response = await fetchWithAuth('/apporteur-auth-validate-session', {
           method: 'GET',
         });
 
+        console.log('[ApporteurSession] Validate response status:', response.status);
+
         if (response.ok) {
           const data = await response.json();
+          console.log('[ApporteurSession] Validate response data valid:', data.valid);
           if (data.valid && data.session) {
             const newSession: ApporteurSession = {
               managerId: data.session.managerId,
@@ -151,6 +155,9 @@ export function ApporteurSessionProvider({ children }: { children: ReactNode }) 
             setIsLoading(false);
             return;
           }
+        } else {
+          const errorText = await response.text().catch(() => 'no body');
+          console.warn('[ApporteurSession] Validate failed:', response.status, errorText);
         }
         // Session invalid, clear it
         clearStoredSession();
