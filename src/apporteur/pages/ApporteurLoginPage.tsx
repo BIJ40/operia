@@ -110,7 +110,7 @@ export function ApporteurLoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex flex-col">
       {/* Header */}
       <header className="w-full bg-gradient-to-r from-primary to-primary/80">
-        <div className="container mx-auto px-4 py-3">
+        <div className="container mx-auto px-4 py-4">
           <p className="text-center text-primary-foreground text-lg font-medium">
             Espace Partenaires Apporteurs d'Affaires
           </p>
