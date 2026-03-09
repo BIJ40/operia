@@ -281,12 +281,13 @@ export function normalizeApogeeData(
   }
 
   const unscheduled: PlanningUnscheduled[] = [];
-  const EXCLUDED_STATES = new Set(["cancelled", "canceled", "refused", "annule", "clos"]);
+  // Only show interventions that actually need planning (new or to_planify_tvx)
+  const PLANIFIABLE_STATES = new Set(["new", "to_planify_tvx"]);
 
   for (const interv of interventions) {
     if (scheduledIntervIds.has(interv.id)) continue;
     const stateN = norm(interv.state);
-    if (EXCLUDED_STATES.has(stateN)) continue;
+    if (!PLANIFIABLE_STATES.has(stateN)) continue;
 
     const project = interv.projectId ? projectMap.get(interv.projectId) : undefined;
     const client = project?.clientId ? clientMap.get(project.clientId) : undefined;
