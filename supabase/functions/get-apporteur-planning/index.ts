@@ -1,7 +1,8 @@
 /**
  * GET APPORTEUR PLANNING
  * 
- * Retourne les RDV de la semaine pour les clients d'un apporteur.
+ * Retourne TOUS les RDV à venir pour les clients d'un apporteur.
+ * V2 — fix baseUrl + retourne tous les RDV sans limite.
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';

@@ -1,5 +1,5 @@
 /**
- * ApporteurPlanningCard - 10 prochains RDV chronologiques
+ * ApporteurPlanningCard - Tous les prochains RDV chronologiques
  */
 
 import { useState, useMemo } from 'react';
@@ -116,8 +116,8 @@ export function ApporteurPlanningCard() {
     return map;
   }, [dossiers]);
 
-  // Sort all events chronologically and take next 10
-  const next10Events = useMemo(() => {
+  // Sort all events chronologically — show ALL upcoming
+  const allUpcomingEvents = useMemo(() => {
     const now = new Date();
     return [...events]
       .filter(e => {
@@ -128,8 +128,7 @@ export function ApporteurPlanningCard() {
         const da = `${a.date}T${a.time || '00:00'}`;
         const db = `${b.date}T${b.time || '00:00'}`;
         return da.localeCompare(db);
-      })
-      .slice(0, 10);
+      });
   }, [events]);
 
   const selectedDossier = selectedEvent ? dossiersById.get(selectedEvent.projectId) : null;
@@ -154,8 +153,8 @@ export function ApporteurPlanningCard() {
           <CardTitle className="text-lg flex items-center gap-2">
             <Calendar className="w-5 h-5 text-primary" />
             Prochains RDV
-            {next10Events.length > 0 && (
-              <Badge variant="secondary" className="text-xs ml-auto">{next10Events.length}</Badge>
+            {allUpcomingEvents.length > 0 && (
+              <Badge variant="secondary" className="text-xs ml-auto">{allUpcomingEvents.length}</Badge>
             )}
           </CardTitle>
         </CardHeader>
@@ -164,13 +163,13 @@ export function ApporteurPlanningCard() {
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
             </div>
-          ) : next10Events.length === 0 ? (
+          ) : allUpcomingEvents.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground py-6">
               Aucun RDV planifié à venir
             </p>
           ) : (
             <div className="space-y-1">
-              {next10Events.map((event) => {
+              {allUpcomingEvents.map((event) => {
                 const d = new Date(event.date);
                 const isToday = event.date === new Date().toISOString().split('T')[0];
                 const dayLabel = d.toLocaleDateString('fr-FR', {
