@@ -414,8 +414,14 @@ export default function DossiersTabContent() {
           Tous ({dossiers.length})
         </Button>
         {statuses.map(s => {
-          const count = dossiers.filter(d => d.status === s.value).length;
-          const conf = STATUS_CONFIG[s.value] || STATUS_CONFIG.en_cours;
+          const count = (() => {
+            if (s.value === 'en_cours_all') return dossiers.filter(d => !FINISHED_STATUSES.has(d.status)).length;
+            if (s.value === 'a_planifier') return dossiers.filter(d => d.status === 'en_cours' && !d.datePremierRdv).length;
+            if (s.value === 'planifie') return dossiers.filter(d => d.status === 'en_cours' && !!d.datePremierRdv).length;
+            return dossiers.filter(d => d.status === s.value).length;
+          })();
+          const confKey = s.value === 'a_planifier' || s.value === 'planifie' || s.value === 'en_cours_all' ? 'en_cours' : s.value;
+          const conf = STATUS_CONFIG[confKey] || STATUS_CONFIG.en_cours;
           return (
             <Button
               key={s.value}
