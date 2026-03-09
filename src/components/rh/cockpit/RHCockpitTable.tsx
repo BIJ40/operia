@@ -25,6 +25,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableHeader, TableBody, TableHead, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { HRDocumentManager } from '@/components/collaborators/documents';
+import { useHasMinLevel } from '@/hooks/useHasGlobalRole';
 
 interface RHCockpitTableProps {
   collaborators: RHCollaborator[];
