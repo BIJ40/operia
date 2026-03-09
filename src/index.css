@@ -1154,21 +1154,3 @@ body[data-read-only] [draggable="true"] {
   pointer-events: none !important;
   cursor: default !important;
 }
-
-/* ============================================
-   Mapbox GL - Force canvas visibility
-   Fix: Tailwind layers can override mapbox-gl.css
-   ============================================ */
-.mapboxgl-map {
-  width: 100% !important;
-  height: 100% !important;
-}
-
-.mapboxgl-canvas-container,
-.mapboxgl-canvas {
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-}
