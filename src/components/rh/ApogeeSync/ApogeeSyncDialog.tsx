@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
-import { UserPlus, RefreshCw, UserX, Loader2 } from 'lucide-react';
+import { UserPlus, RefreshCw, UserX, Loader2, Link } from 'lucide-react';
 import type { SyncAction } from '@/hooks/useApogeeSync';
 import { cn } from '@/lib/utils';
 
