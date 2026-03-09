@@ -199,9 +199,9 @@ export default function RapportTabContent() {
                       <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
                       <Tooltip contentStyle={chartStyle} labelFormatter={shortMonth} />
                       <Legend wrapperStyle={{ fontSize: '11px' }} />
-                      <Line type="monotone" dataKey="rdv" name="RDV" stroke="hsl(200, 70%, 50%)" strokeWidth={2} dot={false} />
-                      <Line type="monotone" dataKey="devis_validation" name="Validation devis" stroke="hsl(35, 90%, 55%)" strokeWidth={2} dot={false} />
-                      <Line type="monotone" dataKey="paiement" name="Paiement" stroke="hsl(0, 70%, 55%)" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="rdv" name="RDV" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="devis_validation" name="Validation devis" stroke="hsl(var(--secondary))" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="paiement" name="Paiement" stroke="hsl(var(--destructive))" strokeWidth={2} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
