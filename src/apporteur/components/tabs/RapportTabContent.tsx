@@ -154,7 +154,7 @@ export default function RapportTabContent() {
                       <XAxis dataKey="month" tickFormatter={shortMonth} tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
                       <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
                       <Tooltip contentStyle={chartStyle} formatter={(v: number) => [v, 'Dossiers']} labelFormatter={shortMonth} />
-                      <Line type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="value" stroke="hsl(var(--primary)))" strokeWidth={2} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -176,7 +176,7 @@ export default function RapportTabContent() {
                       <XAxis dataKey="month" tickFormatter={shortMonth} tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
                       <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
                       <Tooltip contentStyle={chartStyle} formatter={(v: number) => [`${v.toFixed(1)}%`, 'Taux']} labelFormatter={shortMonth} />
-                      <Line type="monotone" dataKey="value" stroke="hsl(280, 60%, 55%)" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="value" stroke="hslvar(--accent-foreground)%)" strokeWidth={2} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
