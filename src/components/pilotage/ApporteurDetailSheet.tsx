@@ -32,9 +32,12 @@ export function ApporteurDetailSheet({ apporteur, open, onOpenChange }: Apporteu
   const createManager = useCreateApporteurManager();
   const toggleManagerStatus = useToggleApporteurManagerStatus();
   const deleteManager = useDeleteApporteurManager();
+  const updateManager = useUpdateApporteurManager();
   const updateApogeeId = useUpdateApporteurApogeeId();
   const [showLinkSelector, setShowLinkSelector] = useState(false);
   const [showAddUser, setShowAddUser] = useState(false);
+  const [editingManagerId, setEditingManagerId] = useState<string | null>(null);
+  const [editData, setEditData] = useState({ email: '', first_name: '', last_name: '', role: '' });
   const [newUser, setNewUser] = useState({ email: '', first_name: '', last_name: '', role: 'reader' as 'reader' | 'manager' });
 
   const isAdmin = hasGlobalRole('platform_admin'); // N5+
