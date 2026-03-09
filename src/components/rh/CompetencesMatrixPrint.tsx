@@ -30,8 +30,10 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
   const { data: universCatalog = [] } = useUniversCatalog();
   const { data: allSubSkills = [] } = useSubSkills();
 
-  // Filter only active collaborators (not just technicians)
-  const activeCollabs = collaborators.filter(c => !c.leaving_date);
+  // Filter only active technicians & apprentices
+  const activeCollabs = collaborators.filter(c =>
+    !c.leaving_date && (c.type === 'TECHNICIEN' || c.role?.toLowerCase().includes('apprenti'))
+  );
 
   const collabIds = activeCollabs.map(t => t.id);
   const { data: allCollabSubSkills = [] } = useAllCollaboratorSubSkills(collabIds);
