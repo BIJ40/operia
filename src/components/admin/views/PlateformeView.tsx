@@ -11,7 +11,7 @@ import {
   DraggableFolderContentContainer,
   FolderTabConfig 
 } from '@/components/ui/draggable-folder-tabs';
-import { Activity, Map, GitBranch, Brain, Bell, Loader2 } from 'lucide-react';
+import { Activity, Map, GitBranch, Bell, Loader2 } from 'lucide-react';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { MaintenanceModeCard } from '@/components/admin/MaintenanceModeCard';
 import { useSessionState } from '@/hooks/useSessionState';
