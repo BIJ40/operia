@@ -6,11 +6,12 @@ import { withSentry } from '../_shared/withSentry.ts';
 // CONSTANTS
 // =============================================================================
 
-const ENGINE_VERSION = 'v2-hard-soft';
+const ENGINE_VERSION = 'v3-competence-first';
 const MAX_DAY_LOAD_MINUTES = 420; // 7h
 const DEFAULT_BUFFER = 15; // min
 const EARTH_RADIUS_KM = 6371;
 const DEFAULT_SPEED_KMH = 35;
+const FIRST_RDV_DURATION = 60; // 1er RDV = toujours 1h
 
 // Duration fallbacks by intervention type
 const DURATION_DEFAULTS: Record<string, number> = {
@@ -26,19 +27,6 @@ const DOW_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 // =============================================================================
 // TYPES
 // =============================================================================
-
-interface ScoringWeights {
-  coherence: number;
-  equity: number;
-  continuity: number;
-  route: number;
-  gap: number;
-  proximity: number;
-}
-
-const DEFAULT_WEIGHTS: ScoringWeights = {
-  coherence: 0.25, equity: 0.20, continuity: 0.15, route: 0.15, gap: 0.15, proximity: 0.10,
-};
 
 interface HardBlock {
   techId: number;
@@ -57,6 +45,7 @@ interface Suggestion {
   score: number;
   score_breakdown: Record<string, number>;
   reasons: string[];
+  universe_group?: string; // which universe this suggestion covers (multi-RDV)
 }
 
 interface TechProfile {
@@ -109,6 +98,10 @@ function estimateTravelMin(distKm: number): number {
   return Math.round((distKm / DEFAULT_SPEED_KMH) * 60);
 }
 
+function daysBetween(d1: string, d2: string): number {
+  return Math.abs(new Date(d1).getTime() - new Date(d2).getTime()) / (1000 * 60 * 60 * 24);
+}
+
 // =============================================================================
 // TECH DISCOVERY HELPERS
 // =============================================================================
@@ -128,29 +121,13 @@ function isExcludedOfficeType(typeRaw: unknown): boolean {
 // DOSSIER UNIVERSE EXTRACTION
 // =============================================================================
 
-const DOSSIER_STOPWORDS = new Set([
-  'de', 'du', 'des', 'les', 'pour', 'avec', 'sans', 'sur', 'dans', 'chez', 'client', 'dossier',
-  'monsieur', 'madame', 'mme', 'rue', 'avenue', 'impasse', 'allee', 'boulevard', 'place',
-]);
-
 function extractDossierUniverses(dossier: any): string[] {
   if (!dossier) return [];
   const fromUniverses = [
     ...(Array.isArray(dossier?.data?.universes) ? dossier.data.universes : []),
     ...(Array.isArray(dossier?.universes) ? dossier.universes : []),
   ].map((u: string) => normalizeSlug(u)).filter(Boolean);
-
-  const labelSource = [
-    dossier?.label, dossier?.data?.label,
-    ...(Array.isArray(dossier?.data?.pictosInterv) ? dossier.data.pictosInterv : []),
-  ].filter(Boolean).join(' ');
-
-  const labelTokens = labelSource
-    .split(/[\s\-\/\+,;:|()]+/)
-    .map((w: string) => normalizeSlug(w))
-    .filter((w: string) => w.length >= 4 && !DOSSIER_STOPWORDS.has(w));
-
-  return Array.from(new Set([...fromUniverses, ...labelTokens]));
+  return Array.from(new Set(fromUniverses));
 }
 
 // Mapping univers slug → catalog codes for fuzzy matching
@@ -177,20 +154,32 @@ function resolveUniversCode(slug: string): string {
 }
 
 // =============================================================================
-// HARD CONSTRAINTS
+// COMPETENCE CHECK — tech has ALL required codes (at any level)
 // =============================================================================
 
-function checkHardConstraints(
+function techHasCodes(tech: TechProfile, codes: string[]): boolean {
+  if (codes.length === 0) return true;
+  const techCodes = new Set(tech.skills.map(s => s.code));
+  return codes.every(c => techCodes.has(c));
+}
+
+function techMatchRatio(tech: TechProfile, codes: string[]): number {
+  if (codes.length === 0) return 1;
+  const techCodes = new Set(tech.skills.map(s => s.code));
+  return codes.filter(c => techCodes.has(c)).length / codes.length;
+}
+
+// =============================================================================
+// HARD CONSTRAINTS (scheduling only, NOT competence — that's handled at a higher level)
+// =============================================================================
+
+function checkSchedulingConstraints(
   tech: TechProfile,
   dateStr: string,
   slotStartMin: number,
   durationMin: number,
-  _requiredCodes: string[],
   occupiedIntervals: { start: number; end: number }[],
-  _minLevel: number,
 ): { pass: boolean; reason?: string } {
-  // NOTE: Competence check moved to soft scoring (penalty instead of block)
-
   // 1. Work day check
   const d = new Date(dateStr + 'T12:00:00Z');
   const dow = d.getUTCDay();
@@ -211,14 +200,14 @@ function checkHardConstraints(
   // 3. Lunch overlap check
   if (slotStartMin < tech.lunchEndMin && (slotStartMin + durationMin) > tech.lunchStartMin) {
     if (!(slotStartMin + durationMin <= tech.lunchStartMin || slotStartMin >= tech.lunchEndMin)) {
-      return { pass: false, reason: `Chevauche la pause déjeuner (${minutesToTime(tech.lunchStartMin)}-${minutesToTime(tech.lunchEndMin)})` };
+      return { pass: false, reason: `Chevauche la pause déjeuner` };
     }
   }
 
   // 4. Overlap check with existing events
   for (const interval of occupiedIntervals) {
     if (slotStartMin < interval.end && (slotStartMin + durationMin) > interval.start) {
-      return { pass: false, reason: `Chevauchement avec créneau existant (${minutesToTime(interval.start)}-${minutesToTime(interval.end)})` };
+      return { pass: false, reason: `Chevauchement avec créneau existant` };
     }
   }
 
@@ -226,97 +215,83 @@ function checkHardConstraints(
 }
 
 // =============================================================================
-// SOFT SCORING
+// SCORING — New priorities:
+//   #1 Competence match (45%) — HARD filter above, but score quality here
+//   #2 Urgency + dossier age (25%) — 1er RDV = sooner is better
+//   #3 Zone / proximity (20%) — distance tech↔dossier
+//   #4 Equity + other (10%)
 // =============================================================================
 
-function scoreSoft(
+function scoreCandidate(
   tech: TechProfile,
   slotStartMin: number,
+  dayStr: string,
   dayLoadMin: number,
   avgLoadMin: number,
   requiredCodes: string[],
   dossierLat: number | null,
   dossierLng: number | null,
-  weights: ScoringWeights,
-  minSkillLevel: number,
+  isFirstRdv: boolean,
+  dossierAgeDays: number,
+  todayStr: string,
 ): { total: number; breakdown: Record<string, number>; reasons: string[] } {
   const breakdown: Record<string, number> = {};
   const reasons: string[] = [];
 
-  // 1. Coherence: skill level quality — now soft (penalty, not block)
+  // ── #1 COMPETENCE (45%) ──────────────────────────────────────────────────
   if (requiredCodes.length > 0) {
-    const techCodes = new Set(tech.skills.filter(s => s.level >= minSkillLevel).map(s => s.code));
     const matchedSkills = tech.skills.filter(s => requiredCodes.includes(s.code));
-    const matchedCount = requiredCodes.filter(c => techCodes.has(c)).length;
-    const matchRatio = matchedCount / requiredCodes.length;
-
-    if (matchRatio === 0 && tech.skills.length === 0) {
-      // No skills at all → neutral score (data not enriched)
-      breakdown.coherence = 30;
-      reasons.push('⚠ Aucune compétence renseignée');
-    } else if (matchRatio === 0) {
-      // Has skills but none match → heavy penalty
-      breakdown.coherence = 10;
-      reasons.push('⚠ Compétences non correspondantes');
-    } else if (matchRatio < 1) {
-      // Partial match
-      const avgLevel = matchedSkills.reduce((s, sk) => s + sk.level, 0) / Math.max(matchedSkills.length, 1);
-      breakdown.coherence = Math.round(20 + matchRatio * 60 + avgLevel * 5);
-      const missing = requiredCodes.filter(c => !techCodes.has(c));
-      reasons.push(`Match partiel (${matchedCount}/${requiredCodes.length}), manque: ${missing.join(', ')}`);
-    } else {
-      // Full match
-      const avgLevel = matchedSkills.reduce((s, sk) => s + sk.level, 0) / Math.max(matchedSkills.length, 1);
-      const hasPrimary = matchedSkills.some(s => s.isPrimary);
-      let cScore = Math.min(100, avgLevel * 20);
-      if (hasPrimary) { cScore += 15; reasons.push('Compétence principale'); }
-      breakdown.coherence = Math.round(Math.min(100, cScore));
-      if (avgLevel >= 4) reasons.push(`Niveau élevé (${avgLevel.toFixed(1)}/5)`);
-    }
+    const avgLevel = matchedSkills.reduce((sum, sk) => sum + sk.level, 0) / Math.max(matchedSkills.length, 1);
+    const hasPrimary = matchedSkills.some(s => s.isPrimary);
+    let cScore = Math.min(100, avgLevel * 20);
+    if (hasPrimary) { cScore = Math.min(100, cScore + 20); reasons.push('Compétence principale'); }
+    if (avgLevel >= 4) reasons.push(`Niveau élevé (${avgLevel.toFixed(1)}/5)`);
+    breakdown.competence = Math.round(cScore);
   } else {
-    breakdown.coherence = 50;
+    breakdown.competence = 70; // no universe info → neutral
   }
 
-  // 2. Equity: less loaded → higher score
-  const diff = dayLoadMin - avgLoadMin;
-  breakdown.equity = Math.round(Math.max(0, Math.min(100, 80 - diff / 3)));
-  if (diff < -60) reasons.push('Charge sous la moyenne → équilibrage');
-  if (diff > 60) reasons.push('⚠ Journée déjà chargée');
+  // ── #2 URGENCY + AGE (25%) ──────────────────────────────────────────────
+  const daysFromNow = daysBetween(dayStr, todayStr);
+  let urgencyScore = 0;
 
-  // 3. Route/distance
+  if (isFirstRdv) {
+    // 1er RDV: the sooner the better. Day 1 = 100, Day 5 = 40
+    urgencyScore = Math.max(0, 100 - (daysFromNow - 1) * 15);
+    if (daysFromNow <= 2) reasons.push('1er RDV – créneau rapide');
+  } else {
+    // Travaux: older dossiers should be prioritized
+    // Age > 30j = very urgent, Age < 7j = less urgent
+    const ageBonus = Math.min(50, dossierAgeDays * 1.5);
+    // Earlier slot is still slightly better
+    const dateBonus = Math.max(0, 60 - daysFromNow * 8);
+    urgencyScore = Math.min(100, ageBonus + dateBonus);
+    if (dossierAgeDays > 21) reasons.push(`Dossier ancien (${Math.round(dossierAgeDays)}j)`);
+  }
+  breakdown.urgency = Math.round(urgencyScore);
+
+  // ── #3 ZONE / PROXIMITY (20%) ──────────────────────────────────────────
   if (dossierLat != null && dossierLng != null && tech.homeLat != null && tech.homeLng != null) {
     const km = haversineKm(tech.homeLat, tech.homeLng, dossierLat, dossierLng);
     const travelMin = estimateTravelMin(km);
-    breakdown.route = Math.round(Math.max(0, 100 - travelMin * 1.5));
+    breakdown.zone = Math.round(Math.max(0, 100 - travelMin * 2));
     if (travelMin <= 15) reasons.push(`Proche (${Math.round(km)} km)`);
-    else if (travelMin >= 45) reasons.push(`⚠ Distance élevée (~${Math.round(km)} km, ~${travelMin} min)`);
+    else if (travelMin >= 40) reasons.push(`⚠ Éloigné (~${Math.round(km)} km)`);
   } else {
-    breakdown.route = 50;
+    breakdown.zone = 50; // no geo data → neutral
   }
 
-  // 4. Gap penalty
-  if (slotStartMin > 9 * 60) {
-    breakdown.gap = Math.round(Math.max(0, 100 - (slotStartMin - 8 * 60) / 3));
-  } else {
-    breakdown.gap = 90;
-  }
+  // ── #4 EQUITY + OTHER (10%) ────────────────────────────────────────────
+  const diff = dayLoadMin - avgLoadMin;
+  breakdown.equity = Math.round(Math.max(0, Math.min(100, 80 - diff / 3)));
+  if (diff < -60) reasons.push('Journée légère → équilibrage');
 
-  // 5. Proximity: earlier dates better
-  const hourScore = Math.max(0, 100 - (slotStartMin - 8 * 60) / 4);
-  breakdown.proximity = Math.round(hourScore);
-  if (slotStartMin <= 9 * 60) reasons.push('Créneau tôt → meilleur SLA');
-
-  // 6. Continuity placeholder
-  breakdown.continuity = 50;
-
-  // Weighted total
+  // ── WEIGHTED TOTAL ─────────────────────────────────────────────────────
   const total = Math.round(
-    breakdown.coherence * weights.coherence +
-    breakdown.equity * weights.equity +
-    breakdown.route * weights.route +
-    breakdown.gap * weights.gap +
-    breakdown.proximity * weights.proximity +
-    breakdown.continuity * weights.continuity
+    breakdown.competence * 0.45 +
+    breakdown.urgency * 0.25 +
+    breakdown.zone * 0.20 +
+    breakdown.equity * 0.10
   );
 
   return { total: Math.max(0, Math.min(100, total)), breakdown, reasons };
@@ -381,12 +356,11 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
     }
 
     const body = await req.json();
-    const { agency_id, dossier_id, options } = body;
+    const { agency_id, dossier_id } = body;
     if (!agency_id || !dossier_id) {
       return withCors(req, new Response(JSON.stringify({ error: 'agency_id and dossier_id required' }), { status: 400 }));
     }
 
-    const minSkillLevel = options?.min_skill_level ?? 2;
     const supabase = createClient(supabaseUrl, serviceKey);
 
     // Get agency — accept UUID or slug
@@ -401,7 +375,7 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
     }
     const agencyUuid = agency.id;
 
-    console.log(`[SUGGEST] agency=${agency.slug} dossier=${dossier_id}`);
+    console.log(`[SUGGEST] V3 — agency=${agency.slug} dossier=${dossier_id}`);
 
     // =========================================================================
     // LOAD DATA IN PARALLEL
@@ -414,7 +388,6 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
       collabRows,
       skillRows,
       profileRows,
-      configRow,
     ] = await Promise.all([
       fetchApogee(agency.slug, 'apiGetUsers', apiKey),
       fetchApogee(agency.slug, 'getInterventionsCreneaux', apiKey),
@@ -435,30 +408,20 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
         .from('technician_profile')
         .select('*')
         .then(r => r.data || []),
-      supabase
-        .from('planning_optimizer_config')
-        .select('weights')
-        .eq('agency_id', agencyUuid)
-        .maybeSingle()
-        .then(r => r.data),
     ]);
 
-    const weights: ScoringWeights = { ...DEFAULT_WEIGHTS, ...(configRow?.weights as any ?? {}) };
-
-    console.log(`[SUGGEST] Data: ${apogeeUsers.length} users, ${creneaux.length} creneaux, ${interventions.length} interventions, ${collabRows.length} collabs, ${skillRows.length} skills, ${profileRows.length} profiles`);
+    console.log(`[SUGGEST] Data: ${apogeeUsers.length} users, ${creneaux.length} creneaux, ${collabRows.length} collabs, ${skillRows.length} skills`);
 
     // =========================================================================
     // BUILD TECH PROFILES
     // =========================================================================
 
-    // Index collaborators by apogee_user_id
     const collabByApogee = new Map<number, any>();
     for (const c of collabRows as any[]) {
       const uid = Number(c.apogee_user_id);
       if (Number.isFinite(uid)) collabByApogee.set(uid, c);
     }
 
-    // Index skills by collaborator_id
     const skillsByCollab = new Map<string, typeof skillRows>();
     for (const s of skillRows as any[]) {
       const key = s.collaborator_id;
@@ -466,13 +429,12 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
       skillsByCollab.get(key)!.push(s);
     }
 
-    // Index profiles by collaborator_id
     const profileByCollab = new Map<string, any>();
     for (const p of profileRows as any[]) {
       profileByCollab.set(p.collaborator_id, p);
     }
 
-    // Also index old rh_competencies for backward compat
+    // Fallback: rh_competencies
     const { data: rhCompRows } = await supabase
       .from('rh_competencies')
       .select('collaborator_id, competences_techniques')
@@ -484,8 +446,7 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
       }
     }
 
-    // Discover technicians: include anyone in collaborators who isn't excluded office type
-    // AND who has terrain activity or is a tech-type or has skills
+    // Discover terrain users
     const terrainUserIds = new Set<number>();
     for (const c of creneaux) {
       if (normalizeSlug(String((c as any)?.refType || '')) === 'visite_interv') {
@@ -502,11 +463,10 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
       if (isExcludedOfficeType(collab.type) || isExcludedOfficeType(collab.role)) continue;
       processedIds.add(apogeeId);
 
-      // Check if active in Apogée
       const apUser = apogeeUsers.find((u: any) => Number(u.id) === apogeeId);
       if (apUser && (apUser.is_on === false || apUser.isOn === false)) continue;
 
-      // Build skills from technician_skills (new structured) or fallback to rh_competencies
+      // Build skills
       const structuredSkills = (skillsByCollab.get(collab.id) || []) as any[];
       let skills: TechProfile['skills'] = structuredSkills.map(s => ({
         code: s.univers_code,
@@ -514,7 +474,6 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
         isPrimary: s.is_primary ?? false,
       }));
 
-      // Fallback: convert rh_competencies labels to codes
       if (skills.length === 0) {
         const rhComps = rhCompByCollab.get(collab.id) || [];
         skills = rhComps.map(label => ({
@@ -524,8 +483,7 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
         }));
       }
 
-      // STRICT TECH FILTER: only include if positively identified as technician
-      // Must have: type="technicien" OR terrain activity OR skills OR Apogée isTechnicien flag
+      // Strict tech filter: must be positively identified
       const collabType = normalize(collab.type || '');
       const collabRole = normalize(collab.role || '');
       const isTechType = collabType.includes('technicien') || collabRole.includes('technicien');
@@ -535,12 +493,8 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
                            normalize(String(apUser?.type || '')) === 'technicien';
       const hasUniverses = Array.isArray(apUser?.data?.universes) && apUser.data.universes.length > 0;
 
-      if (!isTechType && !hasTerrainActivity && !hasSkills && !apogeeIsTech && !hasUniverses) {
-        console.log(`[SUGGEST] Skipping non-tech: ${collab.first_name} ${collab.last_name} (type=${collab.type}, role=${collab.role})`);
-        continue;
-      }
+      if (!isTechType && !hasTerrainActivity && !hasSkills && !apogeeIsTech && !hasUniverses) continue;
 
-      // Profile (amplitude, work_days)
       const prof = profileByCollab.get(collab.id);
       const workDays = prof?.work_days ?? { mon: true, tue: true, wed: true, thu: true, fri: true, sat: false, sun: false };
 
@@ -565,27 +519,65 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
     console.log(`[SUGGEST] ${techProfiles.length} tech profiles built`);
 
     // =========================================================================
-    // FIND TARGET DOSSIER
+    // FIND TARGET DOSSIER & DETERMINE PLANNING MODE
     // =========================================================================
     const dossier = projects.find((p: any) => Number(p.id) === Number(dossier_id));
-    const dossierUniversSlugs = extractDossierUniverses(dossier);
-    const requiredCodes = [...new Set(dossierUniversSlugs.map(resolveUniversCode))];
-    const dossierType = normalize(dossier?.type || dossier?.data?.type || '');
+    const rawUniverses = extractDossierUniverses(dossier);
+    const requiredCodes = [...new Set(rawUniverses.map(resolveUniversCode))];
+    const dossierState = normalize(dossier?.state || dossier?.data?.state || '');
 
-    // Estimate duration
+    // Is this a 1er RDV or travaux?
+    const isFirstRdv = dossierState === 'new' || dossierState === '' || dossierState === 'nouveau';
+
+    // Count planned interventions to determine how many RDVs needed
+    const dossierIntervs = interventions.filter((i: any) => Number(i.projectId) === Number(dossier_id));
+    const plannedCount = dossierIntervs.filter((i: any) => {
+      const visites = Array.isArray(i?.data?.visites) ? i.data.visites : [];
+      return visites.some((v: any) => v?.date);
+    }).length;
+
+    // Determine planning mode:
+    // - 1er RDV → always 1 slot, 60min, all universes needed on 1 tech
+    // - Travaux, 1 univers → 1 tech, possibly multiple slots
+    // - Travaux, N univers → 1 tech per univers
+    let planningMode: 'single' | 'multi_slots' | 'multi_universe' = 'single';
     let estimatedDuration = DURATION_FALLBACK;
-    for (const [key, val] of Object.entries(DURATION_DEFAULTS)) {
-      if (dossierType.includes(key)) { estimatedDuration = val; break; }
+
+    if (isFirstRdv) {
+      estimatedDuration = FIRST_RDV_DURATION;
+      planningMode = 'single';
+    } else {
+      // Travaux duration estimation
+      const dossierType = normalize(dossier?.type || dossier?.data?.type || '');
+      for (const [key, val] of Object.entries(DURATION_DEFAULTS)) {
+        if (dossierType.includes(key)) { estimatedDuration = val; break; }
+      }
+
+      if (requiredCodes.length > 1) {
+        planningMode = 'multi_universe';
+      } else {
+        // Check if multiple passages needed (chiffrage)
+        const nbPassages = dossierIntervs.reduce((sum: number, i: any) => {
+          const postes = Array.isArray(i?.data?.chiffrages?.postes) ? i.data.chiffrages.postes : [];
+          return sum + Math.max(postes.length, 1);
+        }, 0);
+        if (nbPassages > 1) planningMode = 'multi_slots';
+      }
     }
 
     // Dossier location
     const dossierLat = Number(dossier?.data?.lat || dossier?.lat) || null;
     const dossierLng = Number(dossier?.data?.lng || dossier?.lng) || null;
 
-    console.log(`[SUGGEST] Dossier: univers=${requiredCodes.join(',')}, type=${dossierType}, duration=${estimatedDuration}min, geo=${dossierLat},${dossierLng}`);
+    // Dossier age (days since creation)
+    const dossierCreatedAt = dossier?.data?.dateCreation || dossier?.dateCreation || dossier?.created_at;
+    const todayStr = new Date().toISOString().split('T')[0];
+    const dossierAgeDays = dossierCreatedAt ? daysBetween(todayStr, String(dossierCreatedAt).split('T')[0]) : 0;
+
+    console.log(`[SUGGEST] Dossier: univers=${requiredCodes.join(',')}, mode=${planningMode}, isFirstRdv=${isFirstRdv}, duration=${estimatedDuration}min, age=${Math.round(dossierAgeDays)}j`);
 
     // =========================================================================
-    // BUILD OCCUPANCY INDEX: tech_id → date → intervals[]
+    // BUILD OCCUPANCY INDEX
     // =========================================================================
     const occupancy = new Map<string, { start: number; end: number }[]>();
     const dayLoad = new Map<string, number>();
@@ -597,14 +589,12 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
       const dedup = `${techId}-${dateStr}-${startMin}-${dur}`;
       if (seen.has(dedup)) return;
       seen.add(dedup);
-
       const key = `${techId}-${dateStr}`;
       if (!occupancy.has(key)) occupancy.set(key, []);
       occupancy.get(key)!.push({ start: startMin, end: startMin + dur });
       dayLoad.set(key, (dayLoad.get(key) || 0) + dur);
     };
 
-    // Source 1: getInterventionsCreneaux
     for (const c of creneaux) {
       const parsed = parseDateAndTime((c as any)?.date || (c as any)?.dateDebut);
       if (!parsed) continue;
@@ -613,7 +603,6 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
       for (const id of ids) addOccupied(Number(id), parsed.dateStr, parsed.startMinutes, dur);
     }
 
-    // Source 2: apiGetInterventions visites
     for (const interv of interventions) {
       const visites = Array.isArray((interv as any)?.data?.visites) ? (interv as any).data.visites : [];
       for (const v of visites) {
@@ -628,126 +617,162 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
     }
 
     // =========================================================================
-    // GENERATE CANDIDATE SLOTS (5 working days, no Saturday/Sunday)
+    // GENERATE WORKING DAYS (next 5)
     // =========================================================================
-    const today = new Date();
     const workingDays: string[] = [];
-    const d = new Date(today);
+    const dt = new Date();
     while (workingDays.length < 5) {
-      d.setDate(d.getDate() + 1);
-      const dow = d.getDay();
-      if (dow >= 1 && dow <= 5) { // Mon-Fri only
-        workingDays.push(d.toISOString().split('T')[0]);
-      }
+      dt.setDate(dt.getDate() + 1);
+      const dow = dt.getDay();
+      if (dow >= 1 && dow <= 5) workingDays.push(dt.toISOString().split('T')[0]);
     }
 
-    // Compute avg load across all tech-days for equity scoring
     const allLoads = Array.from(dayLoad.values());
     const avgLoad = allLoads.length > 0 ? allLoads.reduce((a, b) => a + b, 0) / allLoads.length : 0;
 
     // =========================================================================
-    // EVALUATE: HARD filter → SOFT score
+    // EVALUATE CANDIDATES
     // =========================================================================
-    const blockers: HardBlock[] = [];
-    const candidates: (Suggestion & { _raw: number })[] = [];
 
-    for (const tech of techProfiles) {
-      for (const dayStr of workingDays) {
-        const key = `${tech.apogeeUserId}-${dayStr}`;
-        const intervals = occupancy.get(key) || [];
-        const load = dayLoad.get(key) || 0;
+    // Define universe groups to search for
+    interface UniverseGroup {
+      label: string;
+      codes: string[];
+      duration: number;
+    }
 
-        // Skip fully booked days
-        if (load >= MAX_DAY_LOAD_MINUTES) {
-          blockers.push({ techId: tech.apogeeUserId, techName: tech.name, reason: `${dayStr}: planning plein (${load}min)` });
-          continue;
+    const universeGroups: UniverseGroup[] = [];
+
+    if (planningMode === 'multi_universe') {
+      // One group per universe → find 1 tech per universe
+      for (const code of requiredCodes) {
+        universeGroups.push({ label: code, codes: [code], duration: estimatedDuration });
+      }
+    } else {
+      // Single group with all codes → find 1 tech with all competences
+      universeGroups.push({ label: requiredCodes.join('+') || 'all', codes: requiredCodes, duration: estimatedDuration });
+    }
+
+    const allSuggestions: (Suggestion & { _raw: number })[] = [];
+    const allBlockers: HardBlock[] = [];
+
+    for (const group of universeGroups) {
+      const candidates: (Suggestion & { _raw: number })[] = [];
+      const groupBlockers: HardBlock[] = [];
+
+      // Filter techs that have the required competences for this group
+      const qualifiedTechs = techProfiles.filter(t => techHasCodes(t, group.codes));
+      const unqualifiedTechs = techProfiles.filter(t => !techHasCodes(t, group.codes));
+
+      // Log unqualified as blockers (grouped, not per-day)
+      for (const t of unqualifiedTechs) {
+        const techCodes = t.skills.map(s => s.code);
+        const missing = group.codes.filter(c => !techCodes.includes(c));
+        if (missing.length > 0) {
+          groupBlockers.push({
+            techId: t.apogeeUserId,
+            techName: t.name,
+            reason: `Compétence manquante : ${missing.join(', ')}`,
+          });
         }
+      }
 
-        // Find free contiguous blocks within amplitude
-        const sortedIntervals = [...intervals].sort((a, b) => a.start - b.start);
+      if (qualifiedTechs.length === 0) {
+        console.log(`[SUGGEST] No qualified techs for group ${group.label}`);
+        allBlockers.push(...groupBlockers);
+        continue;
+      }
 
-        // Build free windows
-        const freeWindows: { start: number; end: number }[] = [];
-        let cursor = tech.dayStartMin;
+      console.log(`[SUGGEST] Group "${group.label}": ${qualifiedTechs.length} techs qualifiés`);
 
-        for (const iv of sortedIntervals) {
-          if (iv.start > cursor) {
-            freeWindows.push({ start: cursor, end: iv.start });
-          }
-          cursor = Math.max(cursor, iv.end);
-        }
-        if (cursor < tech.dayEndMin) {
-          freeWindows.push({ start: cursor, end: tech.dayEndMin });
-        }
+      for (const tech of qualifiedTechs) {
+        for (const dayStr of workingDays) {
+          const key = `${tech.apogeeUserId}-${dayStr}`;
+          const intervals = occupancy.get(key) || [];
+          const load = dayLoad.get(key) || 0;
 
-        // Remove lunch overlap from free windows
-        const adjustedWindows: { start: number; end: number }[] = [];
-        for (const w of freeWindows) {
-          if (w.end <= tech.lunchStartMin || w.start >= tech.lunchEndMin) {
-            adjustedWindows.push(w);
-          } else {
-            // Split around lunch
-            if (w.start < tech.lunchStartMin) adjustedWindows.push({ start: w.start, end: tech.lunchStartMin });
-            if (w.end > tech.lunchEndMin) adjustedWindows.push({ start: tech.lunchEndMin, end: w.end });
-          }
-        }
-
-        // Filter windows large enough for duration + buffer
-        const neededMin = estimatedDuration + DEFAULT_BUFFER;
-        const viableWindows = adjustedWindows.filter(w => (w.end - w.start) >= neededMin);
-
-        if (viableWindows.length === 0) continue;
-
-        // Take the best (earliest) slot in each viable window
-        for (const window of viableWindows) {
-          const slotStart = window.start;
-
-          // Run hard constraints
-          const hardResult = checkHardConstraints(
-            tech, dayStr, slotStart, estimatedDuration,
-            requiredCodes, intervals, minSkillLevel,
-          );
-
-          if (!hardResult.pass) {
-            blockers.push({ techId: tech.apogeeUserId, techName: tech.name, reason: `${dayStr} ${minutesToTime(slotStart)}: ${hardResult.reason}` });
+          if (load >= MAX_DAY_LOAD_MINUTES) {
+            groupBlockers.push({ techId: tech.apogeeUserId, techName: tech.name, reason: `Planning plein (${load}min)` });
             continue;
           }
 
-          // Soft scoring
-          const { total, breakdown, reasons } = scoreSoft(
-            tech, slotStart, load, avgLoad,
-            requiredCodes, dossierLat, dossierLng, weights, minSkillLevel,
-          );
+          // Find free windows
+          const sortedIntervals = [...intervals].sort((a, b) => a.start - b.start);
+          const freeWindows: { start: number; end: number }[] = [];
+          let cursor = tech.dayStartMin;
+          for (const iv of sortedIntervals) {
+            if (iv.start > cursor) freeWindows.push({ start: cursor, end: iv.start });
+            cursor = Math.max(cursor, iv.end);
+          }
+          if (cursor < tech.dayEndMin) freeWindows.push({ start: cursor, end: tech.dayEndMin });
 
-          candidates.push({
-            rank: 0,
-            date: dayStr,
-            hour: minutesToTime(slotStart),
-            tech_id: tech.apogeeUserId,
-            tech_name: tech.name,
-            duration: estimatedDuration,
-            buffer: DEFAULT_BUFFER,
-            score: total,
-            score_breakdown: breakdown,
-            reasons: reasons.slice(0, 6),
-            _raw: total,
-          });
+          // Remove lunch
+          const adjustedWindows: { start: number; end: number }[] = [];
+          for (const w of freeWindows) {
+            if (w.end <= tech.lunchStartMin || w.start >= tech.lunchEndMin) {
+              adjustedWindows.push(w);
+            } else {
+              if (w.start < tech.lunchStartMin) adjustedWindows.push({ start: w.start, end: tech.lunchStartMin });
+              if (w.end > tech.lunchEndMin) adjustedWindows.push({ start: tech.lunchEndMin, end: w.end });
+            }
+          }
 
-          break; // Only best slot per tech per day
+          const neededMin = group.duration + DEFAULT_BUFFER;
+          const viableWindows = adjustedWindows.filter(w => (w.end - w.start) >= neededMin);
+          if (viableWindows.length === 0) continue;
+
+          // Best slot per tech per day
+          for (const window of viableWindows) {
+            const slotStart = window.start;
+            const hardResult = checkSchedulingConstraints(tech, dayStr, slotStart, group.duration, intervals);
+            if (!hardResult.pass) {
+              groupBlockers.push({ techId: tech.apogeeUserId, techName: tech.name, reason: `${dayStr}: ${hardResult.reason}` });
+              continue;
+            }
+
+            const { total, breakdown, reasons } = scoreCandidate(
+              tech, slotStart, dayStr, load, avgLoad,
+              group.codes, dossierLat, dossierLng,
+              isFirstRdv, dossierAgeDays, todayStr,
+            );
+
+            candidates.push({
+              rank: 0,
+              date: dayStr,
+              hour: minutesToTime(slotStart),
+              tech_id: tech.apogeeUserId,
+              tech_name: tech.name,
+              duration: group.duration,
+              buffer: DEFAULT_BUFFER,
+              score: total,
+              score_breakdown: breakdown,
+              reasons: reasons.slice(0, 6),
+              universe_group: group.label,
+              _raw: total,
+            });
+
+            break; // best slot per tech per day
+          }
         }
       }
+
+      // Sort candidates
+      candidates.sort((a, b) => b._raw - a._raw || a.date.localeCompare(b.date) || a.tech_id - b.tech_id);
+      allSuggestions.push(...candidates);
+      allBlockers.push(...groupBlockers);
     }
 
-    // Sort deterministically: score desc, then date asc, then tech_id asc
-    candidates.sort((a, b) => b._raw - a._raw || a.date.localeCompare(b.date) || a.tech_id - b.tech_id);
+    // =========================================================================
+    // SELECT TOP SUGGESTIONS
+    // =========================================================================
+    allSuggestions.sort((a, b) => b._raw - a._raw || a.date.localeCompare(b.date));
 
-    // Diversify: top 3 = different techs, then fill up to 10 alternatives
     const suggestions: Suggestion[] = [];
     const usedTechs = new Set<number>();
     const usedKeys = new Set<string>();
 
-    // Pass 1: different techs
-    for (const c of candidates) {
+    // Pass 1: diverse techs (top 3)
+    for (const c of allSuggestions) {
       if (usedTechs.has(c.tech_id)) continue;
       usedTechs.add(c.tech_id);
       usedKeys.add(`${c.tech_id}-${c.date}`);
@@ -755,9 +780,9 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
       if (suggestions.length >= 3) break;
     }
 
-    // Pass 2: fill with different tech-day combos
+    // Pass 2: fill to 3
     if (suggestions.length < 3) {
-      for (const c of candidates) {
+      for (const c of allSuggestions) {
         const key = `${c.tech_id}-${c.date}`;
         if (usedKeys.has(key)) continue;
         usedKeys.add(key);
@@ -768,7 +793,7 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
 
     // Alternatives (next 10)
     const alternatives: Suggestion[] = [];
-    for (const c of candidates) {
+    for (const c of allSuggestions) {
       const key = `${c.tech_id}-${c.date}`;
       if (usedKeys.has(key)) continue;
       usedKeys.add(key);
@@ -776,16 +801,16 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
       if (alternatives.length >= 10) break;
     }
 
-    // Clean _raw from output
+    // Clean output
     const cleanSuggestions = suggestions.map(({ _raw, ...rest }) => rest);
     const cleanAlternatives = alternatives.map(({ _raw, ...rest }) => rest);
 
-    // Deduplicate blockers (max 20)
-    const uniqueBlockers = blockers
+    // Deduplicate blockers by tech (not per-day)
+    const uniqueBlockers = allBlockers
       .filter((b, i, arr) => arr.findIndex(x => x.techId === b.techId && x.reason === b.reason) === i)
-      .slice(0, 20);
+      .slice(0, 30);
 
-    console.log(`[SUGGEST] Results: ${cleanSuggestions.length} suggestions, ${cleanAlternatives.length} alternatives, ${uniqueBlockers.length} blockers`);
+    console.log(`[SUGGEST] V3 Results: mode=${planningMode}, ${cleanSuggestions.length} suggestions, ${cleanAlternatives.length} alternatives, ${uniqueBlockers.length} blockers`);
 
     // =========================================================================
     // AUDIT TRAIL
@@ -795,13 +820,14 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
         agency_id: agencyUuid,
         dossier_id,
         requested_by: user.id,
-        input_json: { agency_id: agencyUuid, dossier_id, requiredCodes, estimatedDuration, minSkillLevel, weights },
+        input_json: { agency_id: agencyUuid, dossier_id, requiredCodes, estimatedDuration, planningMode, isFirstRdv },
         output_json: { suggestions: cleanSuggestions, alternatives: cleanAlternatives, blockers: uniqueBlockers },
         score_breakdown_json: {
+          engine_version: ENGINE_VERSION,
           techs_total: techProfiles.length,
-          candidates_evaluated: candidates.length,
-          hard_blocked: blockers.length,
-          weights,
+          candidates_evaluated: allSuggestions.length,
+          hard_blocked: allBlockers.length,
+          planning_mode: planningMode,
         },
         status: 'pending',
       });
@@ -814,14 +840,16 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
       blockers: uniqueBlockers,
       meta: {
         engine_version: ENGINE_VERSION,
-        weights,
+        planning_mode: planningMode,
+        is_first_rdv: isFirstRdv,
+        dossier_age_days: Math.round(dossierAgeDays),
         techs_total: techProfiles.length,
-        techs_with_skills: techProfiles.filter(t => t.skills.length > 0).length,
+        techs_qualified: techProfiles.filter(t => techHasCodes(t, requiredCodes)).length,
         dossier_found: !!dossier,
         dossier_universes: requiredCodes,
         estimated_duration: estimatedDuration,
-        candidates_evaluated: candidates.length,
-        hard_blocked: blockers.length,
+        candidates_evaluated: allSuggestions.length,
+        hard_blocked: allBlockers.length,
       },
     }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
   } catch (err) {
