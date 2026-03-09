@@ -1,5 +1,6 @@
 /**
  * Planning V2 — Drawer de suggestions IA pour planifier un dossier
+ * Affiche la grille visuelle du planning réel + créneaux clignotants
  */
 import { useState } from "react";
 import {
@@ -19,15 +20,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerDescription,
-} from "@/components/ui/drawer";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import type { PlanningUnscheduled } from "../../types";
+import { SuggestPlanningGrid } from "./SuggestPlanningGrid";
+import type { PlanningUnscheduled, PlanningTechnician, PlanningAppointment, PlanningBlock } from "../../types";
 import type { Suggestion, SuggestPlanningResponse } from "@/hooks/usePlanningAugmente";
 
 interface AiSuggestDrawerProps {
@@ -38,6 +34,10 @@ interface AiSuggestDrawerProps {
   data: SuggestPlanningResponse | null;
   onApply: (suggestion: Suggestion) => void;
   isApplying: boolean;
+  /** Real planning data for the visual grid */
+  technicians: PlanningTechnician[];
+  appointments: PlanningAppointment[];
+  blocks: PlanningBlock[];
 }
 
 const SCORE_COLORS: Record<string, string> = {
@@ -45,7 +45,6 @@ const SCORE_COLORS: Record<string, string> = {
   proximite_delai: "bg-emerald-500",
   urgence: "bg-amber-500",
   equilibrage: "bg-violet-500",
-  // Legacy keys
   coherence: "bg-blue-500",
   equity: "bg-emerald-500",
   continuity: "bg-amber-500",
@@ -70,62 +69,41 @@ export function AiSuggestDrawer({
   data,
   onApply,
   isApplying,
+  technicians,
+  appointments,
+  blocks,
 }: AiSuggestDrawerProps) {
   const [showAlternatives, setShowAlternatives] = useState(false);
+  const [selectedRank, setSelectedRank] = useState<number | null>(null);
 
   const suggestions = data?.suggestions || [];
   const alternatives = data?.alternatives || [];
   const blockers = data?.blockers || [];
   const meta = data?.meta;
 
+  const allSuggestions = [...suggestions, ...(showAlternatives ? alternatives : [])];
+
   return (
-    <Drawer open={open} onOpenChange={(o) => !o && onClose()}>
-      <DrawerContent className="max-h-[85vh]">
-        <DrawerHeader className="pb-2">
+    <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
+      <SheetContent side="bottom" className="h-[85vh] max-h-[85vh] flex flex-col p-0">
+        {/* Header */}
+        <SheetHeader className="px-4 py-3 border-b border-border shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Sparkles className="h-4 w-4 text-primary" />
               </div>
               <div>
-                <DrawerTitle className="text-base">Suggestions IA</DrawerTitle>
-                <DrawerDescription className="text-xs">
+                <SheetTitle className="text-base">Suggestions IA</SheetTitle>
+                <SheetDescription className="text-xs">
                   {item ? `${item.client} — Dossier #${item.dossierId}` : ""}
-                </DrawerDescription>
+                </SheetDescription>
               </div>
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </DrawerHeader>
-
-        <ScrollArea className="flex-1 px-4 pb-4">
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-3">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="text-sm text-muted-foreground">Analyse des créneaux…</span>
-            </div>
-          ) : suggestions.length === 0 && blockers.length === 0 ? (
-            <div className="text-center py-12 space-y-2">
-              <p className="text-sm text-muted-foreground">Aucun créneau trouvé</p>
-              {meta?.message && (
-                <p className="text-xs text-destructive">{meta.message}</p>
-              )}
-              {meta?.techs_qualified === 0 && (
-                <p className="text-xs text-muted-foreground">
-                  Aucun technicien n'a la compétence requise ({meta.dossier_universes?.join(' + ')})
-                </p>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {/* Meta summary */}
+            <div className="flex items-center gap-2">
               {meta && (
-                <div className="flex flex-wrap gap-2 text-[10px] text-muted-foreground">
+                <div className="hidden sm:flex flex-wrap gap-2 text-[10px] text-muted-foreground mr-2">
                   <span>{meta.techs_qualified}/{meta.techs_total} techs qualifiés</span>
-                  <span>•</span>
-                  <span>{meta.candidates_evaluated} créneaux évalués</span>
                   <span>•</span>
                   <span>{meta.estimated_duration} min</span>
                   {meta.dossier_universes?.length > 0 && (
@@ -135,61 +113,123 @@ export function AiSuggestDrawer({
                     </>
                   )}
                   {meta.is_first_rdv && (
-                    <>
-                      <span>•</span>
-                      <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-blue-300 text-blue-600">1er RDV</Badge>
-                    </>
+                    <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-primary/50 text-primary">1er RDV</Badge>
                   )}
                 </div>
               )}
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </SheetHeader>
 
-              {/* Genuine blockers — only techs with competence but unavailable */}
-              {blockers.length > 0 && (
-                <Collapsible>
-                  <CollapsibleTrigger className="w-full rounded-lg border border-amber-300/50 bg-amber-50 dark:bg-amber-900/10 p-2.5 flex items-center justify-between text-xs font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/20 transition-colors">
-                    <span className="flex items-center gap-1.5">
-                      <AlertTriangle className="h-3.5 w-3.5" />
-                      {blockers.length} tech{blockers.length > 1 ? "s" : ""} qualifié{blockers.length > 1 ? "s" : ""} indisponible{blockers.length > 1 ? "s" : ""}
-                    </span>
-                    <ChevronDown className="h-3.5 w-3.5" />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="rounded-b-lg border border-t-0 border-amber-300/50 bg-amber-50/50 dark:bg-amber-900/5 px-3 pb-2 pt-1 space-y-0.5">
-                    {blockers.map((b: any, i: number) => (
-                      <div key={i} className="text-[10px] text-muted-foreground">
-                        <span className="font-medium">{b.techName}</span> — {b.reason}
-                      </div>
-                    ))}
-                  </CollapsibleContent>
-                </Collapsible>
-              )}
-
-              {/* Top suggestions */}
-              {suggestions.map((s) => (
-                <SuggestionCard key={s.rank} suggestion={s} onApply={onApply} isApplying={isApplying} />
-              ))}
-
-              {/* Alternatives toggle */}
-              {alternatives.length > 0 && (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full text-xs gap-1"
-                    onClick={() => setShowAlternatives(!showAlternatives)}
-                  >
-                    {showAlternatives ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                    {showAlternatives ? "Masquer" : "Voir"} {alternatives.length} alternative{alternatives.length > 1 ? "s" : ""}
-                  </Button>
-                  {showAlternatives && alternatives.map((s) => (
-                    <SuggestionCard key={s.rank} suggestion={s} onApply={onApply} isApplying={isApplying} compact />
-                  ))}
-                </>
+        {/* Content */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center h-full gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="text-sm text-muted-foreground">Analyse des créneaux…</span>
+            </div>
+          ) : suggestions.length === 0 && blockers.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full gap-2">
+              <p className="text-sm text-muted-foreground">Aucun créneau trouvé</p>
+              {meta?.message && <p className="text-xs text-destructive">{meta.message}</p>}
+              {meta?.techs_qualified === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Aucun technicien n'a la compétence requise ({meta.dossier_universes?.join(' + ')})
+                </p>
               )}
             </div>
+          ) : (
+            <div className="flex h-full">
+              {/* LEFT: Visual planning grid */}
+              <div className="flex-1 min-w-0 p-3 overflow-hidden flex flex-col">
+                {/* Blockers */}
+                {blockers.length > 0 && (
+                  <Collapsible className="mb-2 shrink-0">
+                    <CollapsibleTrigger className="w-full rounded-lg border border-amber-500/30 bg-amber-500/5 p-2 flex items-center justify-between text-xs font-medium text-amber-700 dark:text-amber-400">
+                      <span className="flex items-center gap-1.5">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        {blockers.length} tech{blockers.length > 1 ? "s" : ""} qualifié{blockers.length > 1 ? "s" : ""} indisponible{blockers.length > 1 ? "s" : ""}
+                      </span>
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="rounded-b-lg border border-t-0 border-amber-500/30 bg-amber-500/5 px-3 pb-2 pt-1 space-y-0.5">
+                      {blockers.map((b: any, i: number) => (
+                        <div key={i} className="text-[10px] text-muted-foreground">
+                          <span className="font-medium">{b.techName}</span> — {b.reason}
+                        </div>
+                      ))}
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
+
+                {/* Grid */}
+                <div className="flex-1 min-h-0 overflow-auto">
+                  <SuggestPlanningGrid
+                    suggestions={allSuggestions}
+                    technicians={technicians}
+                    appointments={appointments}
+                    blocks={blocks}
+                    onApply={onApply}
+                    isApplying={isApplying}
+                    selectedRank={selectedRank}
+                    onSelectSuggestion={(s) => setSelectedRank(s.rank === selectedRank ? null : s.rank)}
+                  />
+                </div>
+              </div>
+
+              {/* RIGHT: Suggestion cards sidebar */}
+              <div className="w-[320px] shrink-0 border-l border-border bg-muted/20 flex flex-col">
+                <div className="px-3 py-2 border-b border-border shrink-0">
+                  <h3 className="text-xs font-semibold text-foreground">Créneaux proposés</h3>
+                </div>
+                <ScrollArea className="flex-1">
+                  <div className="p-2 space-y-2">
+                    {suggestions.map((s) => (
+                      <SuggestionCard
+                        key={s.rank}
+                        suggestion={s}
+                        onApply={onApply}
+                        isApplying={isApplying}
+                        isSelected={selectedRank === s.rank}
+                        onSelect={() => setSelectedRank(s.rank === selectedRank ? null : s.rank)}
+                      />
+                    ))}
+
+                    {alternatives.length > 0 && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full text-xs gap-1"
+                          onClick={() => setShowAlternatives(!showAlternatives)}
+                        >
+                          {showAlternatives ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                          {alternatives.length} alternative{alternatives.length > 1 ? "s" : ""}
+                        </Button>
+                        {showAlternatives && alternatives.map((s) => (
+                          <SuggestionCard
+                            key={s.rank}
+                            suggestion={s}
+                            onApply={onApply}
+                            isApplying={isApplying}
+                            compact
+                            isSelected={selectedRank === s.rank}
+                            onSelect={() => setSelectedRank(s.rank === selectedRank ? null : s.rank)}
+                          />
+                        ))}
+                      </>
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
+            </div>
           )}
-        </ScrollArea>
-      </DrawerContent>
-    </Drawer>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -200,11 +240,15 @@ function SuggestionCard({
   onApply,
   isApplying,
   compact = false,
+  isSelected = false,
+  onSelect,
 }: {
   suggestion: Suggestion;
   onApply: (s: Suggestion) => void;
   isApplying: boolean;
   compact?: boolean;
+  isSelected?: boolean;
+  onSelect?: () => void;
 }) {
   const s = suggestion;
   const scorePercent = Math.round(s.score);
@@ -212,20 +256,23 @@ function SuggestionCard({
 
   return (
     <div
-      className={`rounded-lg border p-3 space-y-2 transition-colors ${
-        isTop
-          ? "border-primary/40 bg-primary/5 shadow-sm"
-          : "border-border bg-card hover:bg-accent/30"
+      className={`rounded-lg border p-2.5 space-y-1.5 transition-all cursor-pointer ${
+        isSelected
+          ? "border-primary bg-primary/10 shadow-sm ring-1 ring-primary/30"
+          : isTop
+            ? "border-primary/30 bg-primary/5"
+            : "border-border bg-card hover:bg-accent/30"
       }`}
+      onClick={onSelect}
     >
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {isTop && <Star className="h-3.5 w-3.5 text-primary fill-primary" />}
-          <span className="text-xs font-semibold text-foreground">#{s.rank}</span>
+        <div className="flex items-center gap-1.5">
+          {isTop && <Star className="h-3 w-3 text-primary fill-primary" />}
+          <span className="text-[10px] font-semibold text-foreground">#{s.rank}</span>
           <Badge
             variant={scorePercent >= 70 ? "default" : scorePercent >= 50 ? "secondary" : "outline"}
-            className="text-[10px] px-1.5 h-5"
+            className="text-[9px] px-1 h-4"
           >
             {scorePercent}%
           </Badge>
@@ -233,41 +280,41 @@ function SuggestionCard({
         <Button
           size="sm"
           variant={isTop ? "default" : "outline"}
-          className="h-7 text-xs gap-1"
-          onClick={() => onApply(s)}
+          className="h-6 text-[10px] gap-0.5 px-2"
+          onClick={(e) => { e.stopPropagation(); onApply(s); }}
           disabled={isApplying}
         >
-          {isApplying ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+          {isApplying ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <Check className="h-2.5 w-2.5" />}
           Planifier
         </Button>
       </div>
 
       {/* Info */}
-      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-foreground">
-        <span className="flex items-center gap-1">
-          <User className="h-3 w-3 text-muted-foreground" />
+      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-foreground">
+        <span className="flex items-center gap-0.5">
+          <User className="h-2.5 w-2.5 text-muted-foreground" />
           {s.tech_name}
         </span>
-        <span className="flex items-center gap-1">
-          <CalendarDays className="h-3 w-3 text-muted-foreground" />
+        <span className="flex items-center gap-0.5">
+          <CalendarDays className="h-2.5 w-2.5 text-muted-foreground" />
           {s.date}
         </span>
-        <span className="flex items-center gap-1">
-          <Clock className="h-3 w-3 text-muted-foreground" />
-          {s.hour} ({s.duration} min)
+        <span className="flex items-center gap-0.5">
+          <Clock className="h-2.5 w-2.5 text-muted-foreground" />
+          {s.hour} ({s.duration}min)
         </span>
         {(s as any).travel_km != null && (
-          <span className="flex items-center gap-1 text-muted-foreground">
-            <Navigation className="h-3 w-3" />
-            ~{(s as any).travel_km} km
+          <span className="flex items-center gap-0.5 text-muted-foreground">
+            <Navigation className="h-2.5 w-2.5" />
+            ~{(s as any).travel_km}km
           </span>
         )}
       </div>
 
-      {/* Score breakdown bar */}
+      {/* Score breakdown */}
       {!compact && s.score_breakdown && (
-        <div className="space-y-1">
-          <div className="flex h-1.5 rounded-full overflow-hidden bg-muted">
+        <div className="space-y-0.5">
+          <div className="flex h-1 rounded-full overflow-hidden bg-muted">
             {Object.entries(s.score_breakdown).map(([key, val]) => (
               <div
                 key={key}
@@ -277,10 +324,10 @@ function SuggestionCard({
               />
             ))}
           </div>
-          <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+          <div className="flex flex-wrap gap-x-2 gap-y-0">
             {Object.entries(s.score_breakdown).map(([key, val]) => (
-              <span key={key} className="text-[9px] text-muted-foreground flex items-center gap-1">
-                <span className={`inline-block w-1.5 h-1.5 rounded-full ${SCORE_COLORS[key] || "bg-muted-foreground"}`} />
+              <span key={key} className="text-[8px] text-muted-foreground flex items-center gap-0.5">
+                <span className={`inline-block w-1 h-1 rounded-full ${SCORE_COLORS[key] || "bg-muted-foreground"}`} />
                 {SCORE_LABELS[key] || key} {Math.round(val as number)}%
               </span>
             ))}
@@ -290,7 +337,7 @@ function SuggestionCard({
 
       {/* Reasons */}
       {!compact && s.reasons?.length > 0 && (
-        <div className="text-[10px] text-muted-foreground space-y-0.5">
+        <div className="text-[9px] text-muted-foreground space-y-0">
           {s.reasons.map((r, i) => (
             <div key={i}>• {r}</div>
           ))}
