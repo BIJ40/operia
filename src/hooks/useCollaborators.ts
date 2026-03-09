@@ -37,6 +37,26 @@ export function useCollaborators(agencyId?: string) {
     mutationFn: async (formData: CollaboratorFormData) => {
       if (!effectiveAgencyId) throw new Error('Agency ID required');
 
+      // Anti-doublon : vérifier si un collaborateur avec le même nom existe déjà
+      if (formData.first_name && formData.last_name) {
+        const { data: existing } = await supabase
+          .from('collaborators')
+          .select('id, first_name, last_name, user_id')
+          .eq('agency_id', effectiveAgencyId)
+          .ilike('first_name', formData.first_name.trim())
+          .ilike('last_name', formData.last_name.trim())
+          .limit(1);
+
+        if (existing && existing.length > 0) {
+          throw new Error(
+            `Un collaborateur "${formData.first_name} ${formData.last_name}" existe déjà dans cette agence. ` +
+            (existing[0].user_id 
+              ? 'Il est déjà lié à un compte utilisateur.'
+              : 'Vous pouvez le retrouver dans la liste des salariés.')
+          );
+        }
+      }
+
       const { data, error } = await supabase
         .from('collaborators')
         .insert({
