@@ -292,7 +292,7 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
                 </DialogHeader>
                 <div className="relative flex-1 w-full h-full min-h-[500px]">
                   {isExpanded && (
-                    <MapContent
+                    <MapContentInner
                       rdvs={filteredRdvs}
                       selectedRdv={selectedRdv}
                       onSelectRdv={setSelectedRdv}
