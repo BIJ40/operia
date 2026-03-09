@@ -131,7 +131,7 @@ function MapContent({
     }
   }, [rdvs, selectedRdv, onSelectRdv, isExpanded]);
 
-  return null;
+  return <div ref={mapContainerRef} style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }} />;
 }
 
 type MapTimeFilter = 'jour' | 'actuel';
