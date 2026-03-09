@@ -164,6 +164,8 @@ export function ApporteurSessionProvider({ children }: { children: ReactNode }) 
             apporteurId: data.session.apporteurId,
             apporteurName: data.session.apporteurName,
             agencyId: data.session.agencyId,
+            agencyName: data.session.agencyName || undefined,
+            agencyCity: data.session.agencyCity || undefined,
             email: data.session.email,
             firstName: data.session.firstName,
             lastName: data.session.lastName,
