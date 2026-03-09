@@ -45,18 +45,18 @@ interface DashboardMapWidgetProps {
   agencySlug?: string;
 }
 
-function MapContent({
+const MAPBOX_STYLE = 'mapbox://styles/bij40/cmjbi8grj000t01s3ajxo3amm';
+
+const MapContent = React.memo(function MapContent({
   rdvs,
   selectedRdv,
   onSelectRdv,
-  containerRef,
   isExpanded = false,
   mapboxToken,
 }: {
   rdvs: MapRdv[];
   selectedRdv: MapRdv | null;
   onSelectRdv: (rdv: MapRdv | null) => void;
-  containerRef: React.RefObject<HTMLDivElement>;
   isExpanded?: boolean;
   mapboxToken: string;
 }) {
@@ -64,75 +64,123 @@ function MapContent({
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
 
-  // Render a dedicated map div inside the parent
   useEffect(() => {
-    if (!mapContainerRef.current || mapRef.current || !mapboxToken) return;
+    const container = mapContainerRef.current;
+    if (!container || mapRef.current || !mapboxToken) return;
 
-    mapboxgl.accessToken = mapboxToken;
-
-    const map = new mapboxgl.Map({
-      container: mapContainerRef.current,
-      style: 'mapbox://styles/mapbox/light-v11',
-      center: [2.3522, 48.8566],
-      zoom: 10,
-      attributionControl: false,
-      failIfMajorPerformanceCaveat: false,
-      preserveDrawingBuffer: true,
-    });
-
-    map.on('load', () => {
-      map.resize();
-    });
-
-    if (isExpanded) {
-      map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
+    // Ensure container has dimensions before initializing
+    if (container.clientWidth === 0 || container.clientHeight === 0) {
+      const observer = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+            observer.disconnect();
+            initMap();
+          }
+        }
+      });
+      observer.observe(container);
+      return () => observer.disconnect();
+    } else {
+      initMap();
     }
 
-    mapRef.current = map;
+    function initMap() {
+      if (!container || mapRef.current) return;
+      
+      mapboxgl.accessToken = mapboxToken;
+
+      const map = new mapboxgl.Map({
+        container: container,
+        style: MAPBOX_STYLE,
+        center: [2.3522, 48.8566],
+        zoom: 10,
+        attributionControl: true,
+        failIfMajorPerformanceCaveat: false,
+        preserveDrawingBuffer: true,
+      });
+
+      map.on('load', () => {
+        map.resize();
+      });
+
+      map.on('error', (e) => {
+        console.error('[MapWidget] Mapbox error:', e.error?.message || e);
+      });
+
+      if (isExpanded) {
+        map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
+      }
+
+      mapRef.current = map;
+    }
 
     return () => {
       markersRef.current.forEach(m => m.remove());
-      map.remove();
-      mapRef.current = null;
+      markersRef.current = [];
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
     };
   }, [mapboxToken, isExpanded]);
 
   // Mise à jour des markers
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || !map.loaded()) {
+      // Wait for map load
+      const onLoad = () => updateMarkers();
+      map?.on('load', onLoad);
+      return () => { map?.off('load', onLoad); };
+    }
+    updateMarkers();
 
-    // Nettoyer les anciens markers
-    markersRef.current.forEach(m => m.remove());
-    markersRef.current = [];
+    function updateMarkers() {
+      const map = mapRef.current;
+      if (!map) return;
 
-    // Ajouter les nouveaux markers
-    rdvs.forEach(rdv => {
-      const isSelected = selectedRdv?.rdvId === rdv.rdvId;
-      const el = createPinMarkerElement(rdv.users, isExpanded ? 40 : 32, isSelected, () => {
-        onSelectRdv(isSelected ? null : rdv);
+      markersRef.current.forEach(m => m.remove());
+      markersRef.current = [];
+
+      rdvs.forEach(rdv => {
+        const isSelected = selectedRdv?.rdvId === rdv.rdvId;
+        const el = createPinMarkerElement(rdv.users, isExpanded ? 40 : 32, isSelected, () => {
+          onSelectRdv(isSelected ? null : rdv);
+        });
+
+        const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+          .setLngLat([rdv.lng, rdv.lat])
+          .addTo(map);
+
+        markersRef.current.push(marker);
       });
 
-      const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
-        .setLngLat([rdv.lng, rdv.lat])
-        .addTo(map);
-
-      markersRef.current.push(marker);
-    });
-
-    // Ajuster la vue sur les markers
-    const bounds = calculateBounds(rdvs);
-    if (bounds && rdvs.length > 0) {
-      map.fitBounds(bounds as [[number, number], [number, number]], {
-        padding: isExpanded ? 60 : 40,
-        maxZoom: 14,
-        duration: 500,
-      });
+      const bounds = calculateBounds(rdvs);
+      if (bounds && rdvs.length > 0) {
+        map.fitBounds(bounds as [[number, number], [number, number]], {
+          padding: isExpanded ? 60 : 40,
+          maxZoom: 14,
+          duration: 500,
+        });
+      }
     }
   }, [rdvs, selectedRdv, onSelectRdv, isExpanded]);
 
-  return <div ref={mapContainerRef} style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }} />;
-}
+  return (
+    <div 
+      ref={mapContainerRef} 
+      style={{ 
+        position: 'absolute', 
+        top: 0, 
+        left: 0, 
+        right: 0, 
+        bottom: 0,
+        width: '100%', 
+        height: '100%',
+      }} 
+    />
+  );
+});
 
 type MapTimeFilter = 'jour' | 'actuel';
 
@@ -158,8 +206,6 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
     });
   }, [rdvs, timeFilter]);
 
-  const compactMapRef = useRef<HTMLDivElement>(null);
-  const expandedMapRef = useRef<HTMLDivElement>(null);
 
   if (isLoading || tokenLoading) {
     return (
@@ -277,13 +323,12 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
                     Carte des RDV du jour
                   </DialogTitle>
                 </DialogHeader>
-                <div ref={expandedMapRef} className="relative flex-1 w-full h-full min-h-[500px]">
+                <div className="relative flex-1 w-full h-full min-h-[500px]">
                   {isExpanded && (
                     <MapContent
                       rdvs={filteredRdvs}
                       selectedRdv={selectedRdv}
                       onSelectRdv={setSelectedRdv}
-                      containerRef={expandedMapRef}
                       isExpanded
                       mapboxToken={mapboxToken}
                     />
@@ -296,13 +341,12 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
       </div>
 
       {/* Carte compacte */}
-      <div ref={compactMapRef} className="relative w-full h-full min-h-[240px]">
+      <div className="relative w-full h-full min-h-[240px]">
         {!isExpanded && (
           <MapContent
             rdvs={filteredRdvs}
             selectedRdv={selectedRdv}
             onSelectRdv={setSelectedRdv}
-            containerRef={compactMapRef}
             mapboxToken={mapboxToken}
           />
         )}
