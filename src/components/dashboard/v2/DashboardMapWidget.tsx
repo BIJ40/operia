@@ -47,7 +47,7 @@ interface DashboardMapWidgetProps {
 
 const MAPBOX_STYLE = 'mapbox://styles/bij40/cmjbi8grj000t01s3ajxo3amm';
 
-const MapContent = React.memo(function MapContent({
+function MapContentInner({
   rdvs,
   selectedRdv,
   onSelectRdv,
@@ -63,108 +63,75 @@ const MapContent = React.memo(function MapContent({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const [mapReady, setMapReady] = useState(false);
 
+  // Init map
   useEffect(() => {
     const container = mapContainerRef.current;
-    if (!container || mapRef.current || !mapboxToken) return;
+    if (!container || !mapboxToken) return;
 
-    // Ensure container has dimensions before initializing
-    if (container.clientWidth === 0 || container.clientHeight === 0) {
-      const observer = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
-            observer.disconnect();
-            initMap();
-          }
-        }
-      });
-      observer.observe(container);
-      return () => observer.disconnect();
-    } else {
-      initMap();
+    mapboxgl.accessToken = mapboxToken;
+
+    const map = new mapboxgl.Map({
+      container,
+      style: MAPBOX_STYLE,
+      center: [2.3522, 48.8566],
+      zoom: 10,
+      attributionControl: true,
+      failIfMajorPerformanceCaveat: false,
+      preserveDrawingBuffer: true,
+    });
+
+    map.on('load', () => {
+      setMapReady(true);
+      map.resize();
+    });
+
+    if (isExpanded) {
+      map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
     }
 
-    function initMap() {
-      if (!container || mapRef.current) return;
-      
-      mapboxgl.accessToken = mapboxToken;
-
-      const map = new mapboxgl.Map({
-        container: container,
-        style: MAPBOX_STYLE,
-        center: [2.3522, 48.8566],
-        zoom: 10,
-        attributionControl: true,
-        failIfMajorPerformanceCaveat: false,
-        preserveDrawingBuffer: true,
-      });
-
-      map.on('load', () => {
-        map.resize();
-      });
-
-      map.on('error', (e) => {
-        console.error('[MapWidget] Mapbox error:', e.error?.message || e);
-      });
-
-      if (isExpanded) {
-        map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
-      }
-
-      mapRef.current = map;
-    }
+    mapRef.current = map;
 
     return () => {
+      setMapReady(false);
       markersRef.current.forEach(m => m.remove());
       markersRef.current = [];
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
+      map.remove();
+      mapRef.current = null;
     };
   }, [mapboxToken, isExpanded]);
 
-  // Mise à jour des markers
+  // Update markers when map is ready or rdvs change
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !map.loaded()) {
-      // Wait for map load
-      const onLoad = () => updateMarkers();
-      map?.on('load', onLoad);
-      return () => { map?.off('load', onLoad); };
-    }
-    updateMarkers();
+    if (!map || !mapReady) return;
 
-    function updateMarkers() {
-      const map = mapRef.current;
-      if (!map) return;
+    markersRef.current.forEach(m => m.remove());
+    markersRef.current = [];
 
-      markersRef.current.forEach(m => m.remove());
-      markersRef.current = [];
-
-      rdvs.forEach(rdv => {
-        const isSelected = selectedRdv?.rdvId === rdv.rdvId;
-        const el = createPinMarkerElement(rdv.users, isExpanded ? 40 : 32, isSelected, () => {
-          onSelectRdv(isSelected ? null : rdv);
-        });
-
-        const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
-          .setLngLat([rdv.lng, rdv.lat])
-          .addTo(map);
-
-        markersRef.current.push(marker);
+    rdvs.forEach(rdv => {
+      const isSelected = selectedRdv?.rdvId === rdv.rdvId;
+      const el = createPinMarkerElement(rdv.users, isExpanded ? 40 : 32, isSelected, () => {
+        onSelectRdv(isSelected ? null : rdv);
       });
 
-      const bounds = calculateBounds(rdvs);
-      if (bounds && rdvs.length > 0) {
-        map.fitBounds(bounds as [[number, number], [number, number]], {
-          padding: isExpanded ? 60 : 40,
-          maxZoom: 14,
-          duration: 500,
-        });
-      }
+      const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+        .setLngLat([rdv.lng, rdv.lat])
+        .addTo(map);
+
+      markersRef.current.push(marker);
+    });
+
+    const bounds = calculateBounds(rdvs);
+    if (bounds && rdvs.length > 0) {
+      map.fitBounds(bounds as [[number, number], [number, number]], {
+        padding: isExpanded ? 60 : 40,
+        maxZoom: 14,
+        duration: 500,
+      });
     }
-  }, [rdvs, selectedRdv, onSelectRdv, isExpanded]);
+  }, [rdvs, selectedRdv, onSelectRdv, isExpanded, mapReady]);
 
   return (
     <div 
@@ -180,7 +147,7 @@ const MapContent = React.memo(function MapContent({
       }} 
     />
   );
-});
+}
 
 type MapTimeFilter = 'jour' | 'actuel';
 
