@@ -153,8 +153,8 @@ export function ApporteurPlanningCard() {
           <CardTitle className="text-lg flex items-center gap-2">
             <Calendar className="w-5 h-5 text-primary" />
             Prochains RDV
-            {next10Events.length > 0 && (
-              <Badge variant="secondary" className="text-xs ml-auto">{next10Events.length}</Badge>
+            {allUpcomingEvents.length > 0 && (
+              <Badge variant="secondary" className="text-xs ml-auto">{allUpcomingEvents.length}</Badge>
             )}
           </CardTitle>
         </CardHeader>
