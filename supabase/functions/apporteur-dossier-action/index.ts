@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
     const { action, dossierRefs, dateReglement, typeReglement, inactifAction, message } = body;
 
     // Validate
-    if (!action || !['refuser_devis', 'facture_reglee', 'dossier_inactif'].includes(action)) {
+    if (!action || !['refuser_devis', 'valider_devis', 'facture_reglee', 'dossier_inactif'].includes(action)) {
       return withCors(req, new Response(
         JSON.stringify({ success: false, error: 'Action invalide' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
