@@ -341,8 +341,8 @@ export function normalizeApogeeData(
       else if (motif.includes("devis")) reason = "en_attente_devis";
     }
 
-    // Estimated hours from project data
-    const nbHeures = project.data?.nbHeures;
+    const projData = project.data as Record<string, unknown> | undefined;
+    const nbHeures = projData?.nbHeures as number | undefined;
     if (nbHeures && nbHeures > 0) {
       estimatedDuration = nbHeures * 60;
     }
