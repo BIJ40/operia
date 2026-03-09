@@ -83,7 +83,7 @@ function DossierStepper({ dossier }: { dossier: DossierRow }) {
         return (
           <div key={step} className="flex items-center gap-2">
             {done ? (
-              <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-[hsl(var(--ap-success))] shrink-0" />
             ) : (
               <Circle className="w-4 h-4 text-muted-foreground/40 shrink-0" />
             )}
