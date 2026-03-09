@@ -24,9 +24,9 @@ const ALERTE_CONFIG: Record<string, { icon: typeof AlertTriangle; label: string 
 };
 
 const SEVERITY_BADGE: Record<string, string> = {
-  high: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-  medium: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-  low: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
+  high: 'bg-[hsl(var(--ap-warning-light))] text-[hsl(var(--ap-warning))]',
+  medium: 'bg-[hsl(var(--ap-warning-light))] text-[hsl(var(--ap-warning))]',
+  low: 'bg-muted text-muted-foreground',
 };
 
 interface AlertesBannerProps {

@@ -91,24 +91,24 @@ export default function AccueilTabContent() {
               label="CA Généré"
               value={formatCurrency(kpis!.ca_genere)}
               icon={Euro}
-              iconBg="bg-emerald-100 dark:bg-emerald-900/30"
-              iconColor="text-emerald-600"
+              iconBg="bg-[hsl(var(--ap-success-light))]"
+              iconColor="text-[hsl(var(--ap-success))]"
               trend={trends?.ca_genere}
             />
             <KpiCard
               label="Panier moyen"
               value={formatCurrency(kpis!.panier_moyen)}
               icon={ShoppingCart}
-              iconBg="bg-blue-100 dark:bg-blue-900/30"
-              iconColor="text-blue-600"
+              iconBg="bg-primary/10"
+              iconColor="text-primary"
               trend={trends?.panier_moyen}
             />
             <KpiCard
               label="Taux transfo"
               value={`${kpis!.taux_transformation.toFixed(1)}%`}
               icon={TrendingUp}
-              iconBg="bg-violet-100 dark:bg-violet-900/30"
-              iconColor="text-violet-600"
+              iconBg="bg-accent"
+              iconColor="text-accent-foreground"
               trend={trends?.taux_transformation}
             />
             <KpiCard
@@ -123,16 +123,16 @@ export default function AccueilTabContent() {
               label="Devis envoyés"
               value={String(kpis!.devis_envoyes)}
               icon={FileText}
-              iconBg="bg-orange-100 dark:bg-orange-900/30"
-              iconColor="text-orange-600"
+              iconBg="bg-secondary/10"
+              iconColor="text-secondary"
               trend={trends?.devis_envoyes}
             />
             <KpiCard
               label="Factures en attente"
               value={formatCurrency(kpis!.factures_en_attente.amount)}
               icon={Receipt}
-              iconBg="bg-amber-100 dark:bg-amber-900/30"
-              iconColor="text-amber-600"
+              iconBg="bg-[hsl(var(--ap-warning-light))]"
+              iconColor="text-[hsl(var(--ap-warning))]"
               subtitle={`${kpis!.factures_en_attente.count} facture(s)`}
               trend={trends?.factures_en_attente}
             />
@@ -140,8 +140,8 @@ export default function AccueilTabContent() {
               label="Délai RDV"
               value={`${kpis!.avg_rdv_delay_days.toFixed(0)}j`}
               icon={Clock}
-              iconBg="bg-sky-100 dark:bg-sky-900/30"
-              iconColor="text-sky-600"
+              iconBg="bg-[hsl(var(--ap-info-light))]"
+              iconColor="text-[hsl(var(--ap-info))]"
               subtitle={kpis!.coverage_rdv_delay < 100 ? `${kpis!.coverage_rdv_delay.toFixed(0)}% couverture` : undefined}
               trend={trends?.avg_rdv_delay_days}
             />
@@ -149,8 +149,8 @@ export default function AccueilTabContent() {
               label="Délai validation devis"
               value={`${kpis!.avg_devis_validation_delay_days.toFixed(0)}j`}
               icon={Timer}
-              iconBg="bg-teal-100 dark:bg-teal-900/30"
-              iconColor="text-teal-600"
+              iconBg="bg-accent"
+              iconColor="text-accent-foreground"
               subtitle={kpis!.coverage_devis_validation_delay < 100 ? `${kpis!.coverage_devis_validation_delay.toFixed(0)}% couverture` : undefined}
               trend={trends?.avg_devis_validation_delay_days}
             />

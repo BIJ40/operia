@@ -58,7 +58,7 @@ export function CollaborationGauge({ data }: CollaborationGaugeProps) {
                   <div
                     className={cn(
                       'h-full rounded-full transition-all duration-500',
-                      val >= 75 ? 'bg-emerald-500' : val >= 50 ? 'bg-amber-500' : 'bg-rose-500'
+                      val >= 75 ? 'bg-[hsl(var(--ap-success))]' : val >= 50 ? 'bg-[hsl(var(--ap-warning))]' : 'bg-[hsl(var(--ap-danger))]'
                     )}
                     style={{ width: `${Math.min(100, val)}%` }}
                   />
