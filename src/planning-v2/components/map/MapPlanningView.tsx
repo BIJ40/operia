@@ -223,10 +223,12 @@ export function MapPlanningView({ technicians, selectedDate }: MapPlanningViewPr
     );
   }
 
+  console.log("[MapPlanningView] render", { mapboxToken, tokenError, mapInitError, mapReady, rdvsLoading, rdvsCount: rdvs.length, agencySlug });
+
   return (
-    <div className="relative h-full w-full">
+    <div className="relative w-full" style={{ height: "100%", minHeight: "400px" }}>
       {/* Map container */}
-      <div ref={mapContainer} className="absolute inset-0" />
+      <div ref={mapContainer} className="absolute inset-0" style={{ minHeight: "400px" }} />
 
       {/* Loading overlay */}
       {(!mapReady || rdvsLoading) && (
