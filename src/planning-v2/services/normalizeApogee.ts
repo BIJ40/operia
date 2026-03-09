@@ -377,12 +377,16 @@ export function normalizeApogeeData(
 
       // Priorité durée : 1) chiffrage postes  2) project.nbHeures  3) dureeEstimee  4) fallback type
       let chiffrageH = 0;
+      let chiffragePassages = 0;
       for (const itv of projectIntervs) {
-        chiffrageH += extractChiffrageHours(itv);
+        const info = extractChiffrageInfo(itv);
+        chiffrageH += info.hours;
+        chiffragePassages += info.passages;
       }
 
       if (chiffrageH > 0) {
         estimatedDuration = chiffrageH * 60; // heures → minutes
+        estimatedPassages = chiffragePassages > 1 ? chiffragePassages : null;
       } else {
         const projData = project.data as Record<string, unknown> | undefined;
         const nbHeures = parseNum(projData?.nbHeures);
