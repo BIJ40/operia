@@ -58,6 +58,10 @@ export function RHCockpitTable({
     collaborator: null,
   });
 
+  // État du gestionnaire de documents (dialog plein écran)
+  const [docManagerCollab, setDocManagerCollab] = useState<RHCollaborator | null>(null);
+  const canManage = useHasMinLevel(2);
+
   // Calcul des indicateurs pour tous les collaborateurs
   const indicatorsMap = useRHCockpitIndicatorsBatch(collaborators, epiSummaries);
 
