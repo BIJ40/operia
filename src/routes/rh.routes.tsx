@@ -39,18 +39,9 @@ export function RHRoutes() {
       {/* ============================================ */}
       {/* SUIVI RH - COCKPIT (N2 back-office) */}
       {/* ============================================ */}
-      <Route 
-        path="/rh/suivi" 
-        element={
-          <RHLayout>
-            <RoleGuard minRole="franchisee_admin">
-              <RHSuiviIndex />
-            </RoleGuard>
-          </RHLayout>
-        } 
-      />
-      {/* Legacy: /rh/suivi/:id redirige vers le cockpit */}
-      <Route path="/rh/suivi/:id" element={<Navigate to="/rh/suivi" replace />} />
+      {/* LEGACY: /rh/suivi remplacé par onglet Salariés */}
+      <Route path="/rh/suivi" element={<Navigate to="/?tab=salaries" replace />} />
+      <Route path="/rh/suivi/:id" element={<Navigate to="/?tab=salaries" replace />} />
       
       <Route 
         path="/rh/suivi/plannings" 
