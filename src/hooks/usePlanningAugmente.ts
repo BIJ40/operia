@@ -24,7 +24,7 @@ export interface Suggestion {
 }
 
 export interface HardBlock {
-  techId: number;
+  techId?: number;
   techName: string;
   reason: string;
 }
@@ -40,14 +40,15 @@ export interface SuggestPlanningResponse {
     techs_total: number;
     techs_with_skills?: number;
     techs_qualified?: number;
-    dossier_found: boolean;
+    dossier_found?: boolean;
     dossier_universes: string[];
     estimated_duration: number;
     candidates_evaluated: number;
-    hard_blocked: number;
+    hard_blocked?: number;
     planning_mode?: string;
     is_first_rdv?: boolean;
     dossier_age_days?: number;
+    message?: string;
   };
 }
 
