@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
-import { UserPlus, RefreshCw, UserX, Loader2 } from 'lucide-react';
+import { UserPlus, RefreshCw, UserX, Loader2, Link } from 'lucide-react';
 import type { SyncAction } from '@/hooks/useApogeeSync';
 import { cn } from '@/lib/utils';
 
@@ -46,6 +46,7 @@ export function ApogeeSyncDialog({
   const createActions = actions.filter(a => a.type === 'create');
   const updateActions = actions.filter(a => a.type === 'update');
   const departedActions = actions.filter(a => a.type === 'mark_departed');
+  const linkActions = actions.filter(a => a.type === 'link');
   
   const selectedActions = useMemo(() => 
     actions.filter(a => selectedIds.has(a.apogeeUser.id)),
@@ -228,6 +229,50 @@ export function ApogeeSyncDialog({
                         <Badge variant="outline" className="text-orange-600 border-orange-600">
                           Départ
                         </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Liaisons (doublons détectés) */}
+              {linkActions.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-purple-600 dark:text-purple-400">
+                    <Checkbox
+                      checked={isAllSelected(linkActions)}
+                      onCheckedChange={(checked) => toggleAll(linkActions, checked as boolean)}
+                    />
+                    <Link className="h-4 w-4" />
+                    <span>Doublons à fusionner ({linkActions.filter(a => selectedIds.has(a.apogeeUser.id)).length}/{linkActions.length})</span>
+                  </div>
+                  <div className="space-y-2 pl-6">
+                    {linkActions.map((action) => (
+                      <div
+                        key={action.apogeeUser.id}
+                        className={cn(
+                          "p-2 rounded-md transition-colors",
+                          selectedIds.has(action.apogeeUser.id)
+                            ? "bg-purple-50 dark:bg-purple-900/20"
+                            : "bg-muted/30 opacity-60"
+                        )}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            checked={selectedIds.has(action.apogeeUser.id)}
+                            onCheckedChange={() => toggleAction(action.apogeeUser.id)}
+                          />
+                          <p className="font-medium">
+                            {action.apogeeUser.firstname} {action.apogeeUser.name}
+                            <span className="text-muted-foreground font-normal"> → </span>
+                            {action.existingCollaborator?.first_name} {action.existingCollaborator?.last_name}
+                          </p>
+                        </div>
+                        <ul className="text-sm text-muted-foreground mt-1 space-y-0.5 pl-6">
+                          {action.changes?.map((change, cIdx) => (
+                            <li key={cIdx}>• {change}</li>
+                          ))}
+                        </ul>
                       </div>
                     ))}
                   </div>
