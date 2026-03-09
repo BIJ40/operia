@@ -84,6 +84,7 @@
     "jsdom": "^27.2.0",
     "jspdf": "^4.0.0",
     "lucide-react": "^0.462.0",
+    "mapbox-gl": "2.15.0",
     "next-themes": "^0.3.0",
     "pdfjs-dist": "^5.4.530",
     "react": "^18.3.1",
