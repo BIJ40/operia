@@ -1155,10 +1155,3 @@ body[data-read-only] [draggable="true"] {
   cursor: default !important;
 }
 
-/* Mapbox GL - Ensure map fills its container */
-.mapboxgl-map,
-.mapboxgl-canvas-container,
-.mapboxgl-canvas {
-  width: 100%;
-  height: 100%;
-}
