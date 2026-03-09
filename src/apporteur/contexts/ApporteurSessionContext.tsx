@@ -10,6 +10,8 @@ interface ApporteurSession {
   apporteurId: string;
   apporteurName: string;
   agencyId: string;
+  agencyName?: string;
+  agencyCity?: string;
   email: string;
   firstName: string | null;
   lastName: string | null;
