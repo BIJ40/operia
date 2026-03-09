@@ -7,13 +7,13 @@ type DonutEntry = { label: string; count: number; code: string; percentage: numb
 
 const COLORS = [
   'hsl(var(--primary))',
-  'hsl(215, 70%, 55%)',
-  'hsl(150, 60%, 45%)',
-  'hsl(35, 90%, 55%)',
-  'hsl(280, 60%, 55%)',
-  'hsl(0, 70%, 55%)',
-  'hsl(180, 50%, 45%)',
-  'hsl(60, 70%, 50%)',
+  'hsl(var(--secondary))',
+  'hsl(var(--ap-success))',
+  'hsl(var(--accent-foreground))',
+  'hsl(var(--ap-warning))',
+  'hsl(var(--ap-danger))',
+  'hsl(var(--ap-info))',
+  'hsl(var(--muted-foreground))',
 ];
 
 interface UniversDonutProps {

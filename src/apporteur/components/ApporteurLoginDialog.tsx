@@ -80,8 +80,8 @@ export function ApporteurLoginDialog({ open, onOpenChange }: ApporteurLoginDialo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="text-center">
-          <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center mb-4">
-            <Building2 className="w-8 h-8 text-white" />
+          <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-[hsl(var(--primary-dark))] flex items-center justify-center mb-4">
+            <Building2 className="w-8 h-8 text-primary-foreground" />
           </div>
           <DialogTitle className="text-xl">Connexion Apporteur</DialogTitle>
           <DialogDescription>
