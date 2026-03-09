@@ -159,9 +159,7 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
               <tr>
                 {groupedColumns.map(({ univers, subSkills }) =>
                   subSkills.length === 0 ? (
-                    <th key={univers.id} className="sub-col">
-                      ✓
-                    </th>
+                    <th key={univers.id} className="sub-col">—</th>
                   ) : (
                     subSkills.map(sub => (
                       <th key={sub.id} className="sub-col">
@@ -183,17 +181,13 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
                       <td
                         key={univers.id}
                         className={collabHasUnivers(collab.id, univers.label) ? 'has' : 'no'}
-                      >
-                        {collabHasUnivers(collab.id, univers.label) && '✓'}
-                      </td>
+                      />
                     ) : (
                       subSkills.map(sub => (
                         <td
                           key={sub.id}
                           className={collabHasSubSkill(collab.id, sub.id) ? 'has' : 'no'}
-                        >
-                          {collabHasSubSkill(collab.id, sub.id) && '✓'}
-                        </td>
+                        />
                       ))
                     )
                   )}
