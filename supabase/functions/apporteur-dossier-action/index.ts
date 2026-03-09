@@ -130,6 +130,19 @@ Deno.serve(async (req) => {
         `;
         break;
 
+      case 'valider_devis':
+        subject = isBulk
+          ? `[Portail Apporteur] ${auth.apporteurName} — Validation de ${dossierRefs.length} devis`
+          : `[Portail Apporteur] ${auth.apporteurName} — Validation devis ${refsStr}`;
+        detailHtml = `
+          <p>L'apporteur <strong>${auth.apporteurName}</strong> a <strong style="color: #16a34a;">validé</strong> le(s) devis suivant(s) :</p>
+          <ul style="color: #16a34a; font-weight: bold;">
+            ${dossierRefs.map(r => `<li>${r}</li>`).join('')}
+          </ul>
+          ${message ? `<p><strong>Commentaire :</strong> ${message}</p>` : ''}
+        `;
+        break;
+
       case 'facture_reglee':
         subject = `[Portail Apporteur] ${auth.apporteurName} — Facture réglée ${refsStr}`;
         detailHtml = `

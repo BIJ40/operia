@@ -31,6 +31,7 @@ export function useApporteurDossierActions() {
     onSuccess: (_, variables) => {
       const messages: Record<ActionType, string> = {
         refuser_devis: 'Refus de devis notifié à l\'agence',
+        valider_devis: 'Validation de devis notifiée à l\'agence',
         facture_reglee: 'Règlement de facture notifié à l\'agence',
         dossier_inactif: 'Demande envoyée à l\'agence',
       };
