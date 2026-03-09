@@ -1,7 +1,9 @@
 /**
  * Hook de synchronisation Apogée → Collaborateurs
  * Compare les utilisateurs Apogée avec les collaborateurs existants
- * et génère les actions de sync (créer, mettre à jour, marquer comme parti)
+ * et génère les actions de sync (créer, mettre à jour, marquer comme parti, lier)
+ * 
+ * Anti-doublon: détecte les collaborateurs existants par nom/email même sans apogee_user_id
  */
 
 import { useMemo } from 'react';
@@ -16,7 +18,7 @@ import type { ApogeeUserFull, ApogeeUserData } from '@/shared/types/apogeeUser';
 import { mapApogeeTypeToCollaboratorType } from '@/shared/types/apogeeUser';
 
 export interface SyncAction {
-  type: 'create' | 'update' | 'mark_departed';
+  type: 'create' | 'update' | 'mark_departed' | 'link';
   apogeeUser: ApogeeUserFull;
   existingCollaborator?: RHCollaborator;
   changes?: string[];
@@ -25,6 +27,11 @@ export interface SyncAction {
 interface UseApogeeSyncOptions {
   agencySlug?: string;
   collaborators: RHCollaborator[];
+}
+
+/** Normalize string for fuzzy matching */
+function norm(s: string | null | undefined): string {
+  return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 }
 
 export function useApogeeSync({ agencySlug, collaborators }: UseApogeeSyncOptions) {
@@ -48,11 +55,29 @@ export function useApogeeSync({ agencySlug, collaborators }: UseApogeeSyncOption
       }
     });
     
+    // Index des collaborateurs SANS apogee_user_id par nom normalisé et par email
+    const collabsByName = new Map<string, RHCollaborator[]>();
+    const collabsByEmail = new Map<string, RHCollaborator>();
+    collaborators.forEach(c => {
+      if (!c.apogee_user_id) {
+        // Index par nom
+        const key = `${norm(c.first_name)}|${norm(c.last_name)}`;
+        if (!collabsByName.has(key)) collabsByName.set(key, []);
+        collabsByName.get(key)!.push(c);
+        // Index par email
+        if (c.email) {
+          collabsByEmail.set(norm(c.email), c);
+        }
+      }
+    });
+    
+    // Track already matched collaborators to avoid double-matching
+    const matchedCollabIds = new Set<string>();
+    
     // Filtrer les utilisateurs système avant le traitement
     const validApogeeUsers = (apogeeUsers as ApogeeUserFull[]).filter(user => {
-      // Exclure les comptes système (Dynoco Admin, etc.)
       if (user.firstname?.toLowerCase() === 'dynoco') return false;
-      if (user.id === 1) return false; // Compte admin système
+      if (user.id === 1) return false;
       return true;
     });
     
@@ -60,10 +85,9 @@ export function useApogeeSync({ agencySlug, collaborators }: UseApogeeSyncOption
       const existing = collaboratorsByApogeeId.get(apogeeUser.id);
       
       if (existing) {
-        // Collaborateur existant - vérifier les modifications
+        // Collaborateur existant lié par apogee_user_id - vérifier les modifications
         const changes: string[] = [];
         
-        // Vérifier is_on=false → marquer comme parti
         if (apogeeUser.is_on === false && !existing.leaving_date) {
           actions.push({
             type: 'mark_departed',
@@ -74,7 +98,6 @@ export function useApogeeSync({ agencySlug, collaborators }: UseApogeeSyncOption
           continue;
         }
         
-        // Comparer les champs
         if (apogeeUser.firstname && apogeeUser.firstname !== existing.first_name) {
           changes.push(`Prénom: ${existing.first_name} → ${apogeeUser.firstname}`);
         }
@@ -89,22 +112,48 @@ export function useApogeeSync({ agencySlug, collaborators }: UseApogeeSyncOption
         }
         
         if (changes.length > 0) {
-          actions.push({
-            type: 'update',
-            apogeeUser,
-            existingCollaborator: existing,
-            changes,
-          });
+          actions.push({ type: 'update', apogeeUser, existingCollaborator: existing, changes });
         }
       } else if (apogeeUser.is_on === true) {
-        // Nouvel utilisateur actif → à créer
-        actions.push({
-          type: 'create',
-          apogeeUser,
-          changes: ['Nouveau collaborateur'],
-        });
+        // Pas de lien apogee_user_id → chercher par nom/email
+        const nameKey = `${norm(apogeeUser.firstname)}|${norm(apogeeUser.name)}`;
+        const emailKey = apogeeUser.email ? norm(apogeeUser.email) : null;
+        
+        // Match par email (prioritaire) ou par nom exact
+        let matchedCollab: RHCollaborator | undefined;
+        
+        if (emailKey && collabsByEmail.has(emailKey)) {
+          matchedCollab = collabsByEmail.get(emailKey);
+        }
+        if (!matchedCollab && collabsByName.has(nameKey)) {
+          const candidates = collabsByName.get(nameKey)!.filter(c => !matchedCollabIds.has(c.id));
+          if (candidates.length === 1) {
+            matchedCollab = candidates[0];
+          }
+        }
+        
+        if (matchedCollab && !matchedCollabIds.has(matchedCollab.id)) {
+          // Doublon détecté → proposer de lier
+          matchedCollabIds.add(matchedCollab.id);
+          actions.push({
+            type: 'link',
+            apogeeUser,
+            existingCollaborator: matchedCollab,
+            changes: [
+              `Lier à la fiche existante: ${matchedCollab.first_name} ${matchedCollab.last_name}`,
+              matchedCollab.is_registered_user ? '(utilisateur avec compte actif)' : '(fiche RH sans compte)',
+              `Apogée ID: ${apogeeUser.id}`,
+            ],
+          });
+        } else {
+          // Aucun match → à créer
+          actions.push({
+            type: 'create',
+            apogeeUser,
+            changes: ['Nouveau collaborateur'],
+          });
+        }
       }
-      // Si is_on=false et pas dans la base → on ignore (ancien salarié jamais synchronisé)
     }
     
     return actions;
@@ -115,14 +164,13 @@ export function useApogeeSync({ agencySlug, collaborators }: UseApogeeSyncOption
     mutationFn: async (actionsToExecute: SyncAction[]) => {
       if (!agencyId) throw new Error('Agence non définie');
       
-      const results = { created: 0, updated: 0, departed: 0 };
+      const results = { created: 0, updated: 0, departed: 0, linked: 0 };
       
       for (const action of actionsToExecute) {
         if (action.type === 'create') {
           const user = action.apogeeUser;
           const userData = user.data as ApogeeUserData | null | undefined;
           
-          // Fusionner universes + skills pour les compétences
           const competences = [
             ...(userData?.universes || []),
             ...(userData?.skills || []),
@@ -140,14 +188,29 @@ export function useApogeeSync({ agencySlug, collaborators }: UseApogeeSyncOption
             street: user.adresse || null,
             city: user.ville || null,
             postal_code: user.cp || null,
-            // hiring_date: NON importé - c'est la date de saisie dans Apogée, pas la date réelle du contrat
             is_registered_user: false,
           });
           
           if (error) throw error;
           results.created++;
           
-          // TODO: Créer rh_competencies avec competences si besoin
+        } else if (action.type === 'link' && action.existingCollaborator) {
+          // Lier le collaborateur existant à l'utilisateur Apogée
+          const user = action.apogeeUser;
+          const { error } = await supabase
+            .from('collaborators')
+            .update({
+              apogee_user_id: user.id,
+              // Mettre à jour les champs vides depuis Apogée
+              street: action.existingCollaborator.street || user.adresse || null,
+              city: action.existingCollaborator.city || user.ville || null,
+              postal_code: action.existingCollaborator.postal_code || user.cp || null,
+              phone: action.existingCollaborator.phone || user.numtel || null,
+            })
+            .eq('id', action.existingCollaborator.id);
+          
+          if (error) throw error;
+          results.linked++;
           
         } else if (action.type === 'update' && action.existingCollaborator) {
           const user = action.apogeeUser;
@@ -186,6 +249,7 @@ export function useApogeeSync({ agencySlug, collaborators }: UseApogeeSyncOption
     onSuccess: (results) => {
       const messages: string[] = [];
       if (results.created > 0) messages.push(`${results.created} créé(s)`);
+      if (results.linked > 0) messages.push(`${results.linked} lié(s)`);
       if (results.updated > 0) messages.push(`${results.updated} mis à jour`);
       if (results.departed > 0) messages.push(`${results.departed} marqué(s) comme parti(s)`);
       
@@ -207,6 +271,7 @@ export function useApogeeSync({ agencySlug, collaborators }: UseApogeeSyncOption
     createCount: syncActions.filter(a => a.type === 'create').length,
     updateCount: syncActions.filter(a => a.type === 'update').length,
     departedCount: syncActions.filter(a => a.type === 'mark_departed').length,
+    linkCount: syncActions.filter(a => a.type === 'link').length,
     executeSync: syncMutation.mutate,
     isSyncing: syncMutation.isPending,
     refetch,
