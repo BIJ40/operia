@@ -64,6 +64,8 @@ export function useApporteurDossiers() {
 
 export const STATUS_CONFIG: Record<string, { color: string; bgColor: string }> = {
   programme:        { color: 'text-[hsl(var(--ap-info))]',    bgColor: 'bg-[hsl(var(--ap-info-light))]' },
+  a_planifier:      { color: 'text-[hsl(var(--ap-warning))]', bgColor: 'bg-[hsl(var(--ap-warning-light))]' },
+  planifie:         { color: 'text-[hsl(var(--ap-info))]',    bgColor: 'bg-[hsl(var(--ap-info-light))]' },
   devis_en_cours:   { color: 'text-[hsl(var(--ap-warning))]', bgColor: 'bg-[hsl(var(--ap-warning-light))]' },
   devis_envoye:     { color: 'text-secondary',                bgColor: 'bg-secondary/10' },
   devis_valide:     { color: 'text-primary',                  bgColor: 'bg-primary/10' },

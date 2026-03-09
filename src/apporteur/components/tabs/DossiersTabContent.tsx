@@ -102,16 +102,61 @@ export default function DossiersTabContent() {
   const dossiers = data?.data?.dossiers || [];
   const totals = data?.data?.totals || { count: 0, resteDu: 0 };
 
-  const STATUS_ORDER = ['en_cours', 'stand_by', 'devis_en_cours', 'devis_envoye', 'devis_valide', 'attente_paiement', 'facture', 'regle', 'clos', 'annule'];
+  // Friendly label mapping for apporteur view
+  const getApporteurLabel = (d: DossierRow): string => {
+    if (d.status === 'en_cours') {
+      return d.datePremierRdv ? 'Planifié' : 'À planifier';
+    }
+    if (d.status === 'programme') {
+      return 'Planifié';
+    }
+    return d.statusLabel;
+  };
+
+  // Virtual status for filtering: "en_cours_all" = everything not facturé+
+  const FINISHED_STATUSES = new Set(['facture', 'attente_paiement', 'regle', 'clos', 'annule']);
+
+  const STATUS_ORDER = ['en_cours_all', 'en_cours', 'programme', 'stand_by', 'devis_en_cours', 'devis_envoye', 'devis_valide', 'attente_paiement', 'facture', 'regle', 'clos', 'annule'];
 
   const statuses = useMemo(() => {
     const unique = new Set(dossiers.map(d => d.status));
-    return STATUS_ORDER
-      .filter(s => unique.has(s))
-      .map(s => ({
-        value: s,
-        label: dossiers.find(d => d.status === s)?.statusLabel || s,
-      }));
+    const hasEnCoursAll = dossiers.some(d => !FINISHED_STATUSES.has(d.status));
+    
+    const items: { value: string; label: string }[] = [];
+    
+    if (hasEnCoursAll) {
+      const count = dossiers.filter(d => !FINISHED_STATUSES.has(d.status)).length;
+      items.push({ value: 'en_cours_all', label: `En cours (${count})` });
+    }
+
+    // Split en_cours into "À planifier" and "Planifié"
+    const aplanifier = dossiers.filter(d => d.status === 'en_cours' && !d.datePremierRdv);
+    const planifie = dossiers.filter(d => d.status === 'en_cours' && d.datePremierRdv);
+    
+    if (aplanifier.length > 0) {
+      items.push({ value: 'a_planifier', label: 'À planifier' });
+    }
+    if (planifie.length > 0) {
+      items.push({ value: 'planifie', label: 'Planifié' });
+    }
+
+    // Add programme as "Planifié (programme)" if exists and not already covered
+    if (unique.has('programme')) {
+      items.push({ value: 'programme', label: 'Programmé' });
+    }
+
+    // Rest of statuses (skip en_cours and programme, already handled)
+    const skipStatuses = new Set(['en_cours', 'programme', 'en_cours_all']);
+    STATUS_ORDER
+      .filter(s => !skipStatuses.has(s) && unique.has(s))
+      .forEach(s => {
+        items.push({
+          value: s,
+          label: dossiers.find(d => d.status === s)?.statusLabel || s,
+        });
+      });
+
+    return items;
   }, [dossiers]);
 
   const filteredDossiers = useMemo(() => {
@@ -132,7 +177,15 @@ export default function DossiersTabContent() {
     }
 
     if (statusFilter !== 'all') {
-      result = result.filter(d => d.status === statusFilter);
+      if (statusFilter === 'en_cours_all') {
+        result = result.filter(d => !FINISHED_STATUSES.has(d.status));
+      } else if (statusFilter === 'a_planifier') {
+        result = result.filter(d => d.status === 'en_cours' && !d.datePremierRdv);
+      } else if (statusFilter === 'planifie') {
+        result = result.filter(d => d.status === 'en_cours' && !!d.datePremierRdv);
+      } else {
+        result = result.filter(d => d.status === statusFilter);
+      }
     }
 
     result.sort((a, b) => {
@@ -361,8 +414,14 @@ export default function DossiersTabContent() {
           Tous ({dossiers.length})
         </Button>
         {statuses.map(s => {
-          const count = dossiers.filter(d => d.status === s.value).length;
-          const conf = STATUS_CONFIG[s.value] || STATUS_CONFIG.en_cours;
+          const count = (() => {
+            if (s.value === 'en_cours_all') return dossiers.filter(d => !FINISHED_STATUSES.has(d.status)).length;
+            if (s.value === 'a_planifier') return dossiers.filter(d => d.status === 'en_cours' && !d.datePremierRdv).length;
+            if (s.value === 'planifie') return dossiers.filter(d => d.status === 'en_cours' && !!d.datePremierRdv).length;
+            return dossiers.filter(d => d.status === s.value).length;
+          })();
+          const confKey = s.value === 'a_planifier' || s.value === 'planifie' || s.value === 'en_cours_all' ? 'en_cours' : s.value;
+          const conf = STATUS_CONFIG[confKey] || STATUS_CONFIG.en_cours;
           return (
             <Button
               key={s.value}
@@ -475,7 +534,7 @@ export default function DossiersTabContent() {
                         </TableCell>
                         <TableCell onClick={() => setSelectedDossier(d)}>
                           <Badge className={cn('text-xs', statusConf.bgColor, statusConf.color)}>
-                            {d.status === 'stand_by' ? '⏳ ' : ''}{d.statusLabel}
+                            {d.status === 'stand_by' ? '⏳ ' : ''}{getApporteurLabel(d)}
                           </Badge>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell text-sm" onClick={() => setSelectedDossier(d)}>
@@ -553,16 +612,22 @@ export default function DossiersTabContent() {
                   <p className="text-sm text-muted-foreground">Client</p>
                   <p className="font-medium">{selectedDossier.clientName}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Ville</p>
-                  <p className="font-medium">{selectedDossier.city || '-'}</p>
-                </div>
-                {selectedDossier.rawState && (
+                {selectedDossier.city && (
                   <div>
-                    <p className="text-sm text-muted-foreground">État Apogée</p>
-                    <p className="font-medium">{selectedDossier.rawState}</p>
+                    <p className="text-sm text-muted-foreground">Ville</p>
+                    <p className="font-medium">{selectedDossier.city}</p>
                   </div>
                 )}
+                {selectedDossier.address && (
+                  <div className="col-span-2">
+                    <p className="text-sm text-muted-foreground">Adresse</p>
+                    <p className="font-medium">{selectedDossier.address}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm text-muted-foreground">Statut du dossier</p>
+                  <p className="font-medium">{getApporteurLabel(selectedDossier)}</p>
+                </div>
               </div>
 
               {/* Triple badges (V2) or single badge (V1) */}
@@ -578,7 +643,7 @@ export default function DossiersTabContent() {
                             STATUS_CONFIG[selectedDossier.status]?.bgColor,
                             STATUS_CONFIG[selectedDossier.status]?.color
                           )}>
-                            📁 {selectedDossier.statusLabel}
+                            📁 {getApporteurLabel(selectedDossier)}
                           </Badge>
                           <Badge variant="outline" className="text-xs">
                             📄 Devis: {v2.status.devis.replace('_', ' ')}
@@ -594,7 +659,7 @@ export default function DossiersTabContent() {
                         STATUS_CONFIG[selectedDossier.status]?.bgColor,
                         STATUS_CONFIG[selectedDossier.status]?.color
                       )}>
-                        {selectedDossier.statusLabel}
+                        {getApporteurLabel(selectedDossier)}
                       </Badge>
                     );
                   })()}
