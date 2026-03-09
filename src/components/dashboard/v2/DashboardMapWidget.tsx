@@ -82,12 +82,7 @@ function MapContentInner({
     });
 
     map.on('load', () => {
-      console.log('[MapWidget] Map loaded, resizing. Container size:', container.offsetWidth, container.offsetHeight);
       map.resize();
-    });
-
-    map.on('error', (e: any) => {
-      console.error('[MapWidget] Mapbox error:', e.error?.message || e);
     });
     if (isExpanded) {
       map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
