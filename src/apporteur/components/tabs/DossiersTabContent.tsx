@@ -637,7 +637,7 @@ export default function DossiersTabContent() {
                             STATUS_CONFIG[selectedDossier.status]?.bgColor,
                             STATUS_CONFIG[selectedDossier.status]?.color
                           )}>
-                            📁 {getApporteurLabel(selectedDossier)ossier)}
+                            📁 {getApporteurLabel(selectedDossier)}
                           </Badge>
                           <Badge variant="outline" className="text-xs">
                             📄 Devis: {v2.status.devis.replace('_', ' ')}
