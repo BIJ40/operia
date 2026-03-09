@@ -107,9 +107,9 @@ export function ApporteurLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex flex-col">
       {/* Header */}
-      <header className="w-full bg-gradient-to-r from-primary to-primary/80">
+      <header className="w-full bg-gradient-hero">
         <div className="container mx-auto px-4 py-4">
           <p className="text-center text-primary-foreground text-lg font-medium">
             Espace Partenaires Apporteurs d'Affaires
