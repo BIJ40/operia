@@ -1,7 +1,7 @@
 /**
  * Planning V2 — Vue Carte
- * Affiche les RDV du jour sélectionné sur une carte Mapbox
- * Réutilise les données déjà chargées par usePlanningV2Data
+ * Utilise l'edge function get-rdv-map (géocodage serveur) pour les coordonnées GPS
+ * + les données technicians du planning V2 pour les couleurs
  */
 
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
@@ -15,10 +15,11 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { createPinMarkerElement } from "@/components/map/PinMarker";
+import { RdvMiniPreview } from "@/components/map/RdvMiniPreview";
+import { useRdvMap, calculateBounds, type MapRdv } from "@/hooks/useRdvMap";
+import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { supabase } from "@/integrations/supabase/client";
-import { dateKey } from "../../utils/dateUtils";
-import type { PlanningAppointment, PlanningTechnician } from "../../types";
-import { MapMiniPreview } from "./MapMiniPreview";
+import type { PlanningTechnician } from "../../types";
 
 const MAPBOX_STYLE = "mapbox://styles/bij40/cmjbi8grj000t01s3ajxo3amm";
 const DEFAULT_CENTER: [number, number] = [1.4442, 43.6047];
@@ -26,58 +27,56 @@ const DEFAULT_ZOOM = 6;
 
 interface MapPlanningViewProps {
   technicians: PlanningTechnician[];
-  appointments: PlanningAppointment[];
   selectedDate: Date;
 }
 
-/** Convert planning appointments to map-ready items for the selected day */
-function useMapAppointments(
-  appointments: PlanningAppointment[],
-  technicians: PlanningTechnician[],
-  selectedDate: Date
-) {
-  return useMemo(() => {
-    const dk = dateKey(selectedDate);
-    const techMap = new Map(technicians.map((t) => [t.id, t]));
-
-    return appointments
-      .filter((a) => dateKey(a.start) === dk && a.latitude != null && a.longitude != null)
-      .map((a) => ({
-        ...a,
-        lat: a.latitude!,
-        lng: a.longitude!,
-        users: a.technicianIds
-          .map((tid) => {
-            const t = techMap.get(tid);
-            return t ? { id: t.id, name: t.name, color: t.color } : null;
-          })
-          .filter(Boolean) as { id: number; name: string; color: string }[],
-      }));
-  }, [appointments, technicians, selectedDate]);
-}
-
-export function MapPlanningView({ technicians, appointments, selectedDate }: MapPlanningViewProps) {
+export function MapPlanningView({ technicians, selectedDate }: MapPlanningViewProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
+
+  const { currentAgency } = useAgency();
+  const agencySlug = currentAgency?.slug;
 
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [tokenError, setTokenError] = useState<string | null>(null);
   const [mapInitError, setMapInitError] = useState<string | null>(null);
   const [mapReady, setMapReady] = useState(false);
-  const [selectedAppt, setSelectedAppt] = useState<PlanningAppointment | null>(null);
+  const [selectedRdv, setSelectedRdv] = useState<MapRdv | null>(null);
   const [selectedTechIds, setSelectedTechIds] = useState<number[]>([]);
   const [techFilterOpen, setTechFilterOpen] = useState(false);
 
-  const allMapAppts = useMapAppointments(appointments, technicians, selectedDate);
+  // Use the existing hook that calls get-rdv-map edge function (with server-side geocoding)
+  const { rdvs: allRdvs, isLoading: rdvsLoading, technicians: rdvTechnicians } = useRdvMap({
+    date: selectedDate,
+    techIds: selectedTechIds.length > 0 ? selectedTechIds : undefined,
+    agencySlug,
+  });
 
-  // Filter by selected techs
-  const mapAppts = useMemo(() => {
-    if (selectedTechIds.length === 0) return allMapAppts;
-    return allMapAppts.filter((a) =>
-      a.technicianIds.some((tid) => selectedTechIds.includes(tid))
-    );
-  }, [allMapAppts, selectedTechIds]);
+  // Merge tech colors from planning V2 data into rdv users
+  const techColorMap = useMemo(() => {
+    const m = new Map<number, string>();
+    for (const t of technicians) m.set(t.id, t.color);
+    return m;
+  }, [technicians]);
+
+  const rdvs = useMemo(() => {
+    return allRdvs.map((rdv) => ({
+      ...rdv,
+      users: rdv.users.map((u) => ({
+        ...u,
+        color: techColorMap.get(u.id) || u.color,
+      })),
+    }));
+  }, [allRdvs, techColorMap]);
+
+  // Use planning V2 techs for filter list (richer data), fallback to rdv techs
+  const filterTechs = useMemo(() => {
+    if (technicians.length > 0) {
+      return technicians.map((t) => ({ id: t.id, name: t.name, color: t.color }));
+    }
+    return rdvTechnicians;
+  }, [technicians, rdvTechnicians]);
 
   const hasFittedRef = useRef(false);
   const lastCountRef = useRef(0);
@@ -172,25 +171,25 @@ export function MapPlanningView({ technicians, appointments, selectedDate }: Map
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
 
-    mapAppts.forEach((appt) => {
-      const isSelected = selectedAppt?.id === appt.id;
-      const el = createPinMarkerElement(appt.users, 40, isSelected, () => {
-        setSelectedAppt((prev) => (prev?.id === appt.id ? null : appt));
+    rdvs.forEach((rdv) => {
+      const isSelected = selectedRdv?.rdvId === rdv.rdvId;
+      const el = createPinMarkerElement(rdv.users, 40, isSelected, () => {
+        setSelectedRdv((prev) => (prev?.rdvId === rdv.rdvId ? null : rdv));
       });
 
       const marker = new mapboxgl.Marker({ element: el, anchor: "bottom" })
-        .setLngLat([appt.lng, appt.lat])
+        .setLngLat([rdv.lng, rdv.lat])
         .addTo(map.current!);
 
       markersRef.current.push(marker);
     });
 
     // Fit bounds only when data changes
-    const changed = mapAppts.length !== lastCountRef.current || !hasFittedRef.current;
-    lastCountRef.current = mapAppts.length;
+    const changed = rdvs.length !== lastCountRef.current || !hasFittedRef.current;
+    lastCountRef.current = rdvs.length;
 
-    if (changed && mapAppts.length > 0) {
-      const bounds = computeBounds(mapAppts);
+    if (changed && rdvs.length > 0) {
+      const bounds = calculateBounds(rdvs);
       if (bounds) {
         const container = map.current.getContainer();
         const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
@@ -203,7 +202,7 @@ export function MapPlanningView({ technicians, appointments, selectedDate }: Map
         hasFittedRef.current = true;
       }
     }
-  }, [mapAppts, selectedAppt, mapReady]);
+  }, [rdvs, selectedRdv, mapReady]);
 
   // Toggle tech filter
   const toggleTech = useCallback((id: number) => {
@@ -211,12 +210,6 @@ export function MapPlanningView({ technicians, appointments, selectedDate }: Map
       prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
     );
   }, []);
-
-  // Techs active this day
-  const dayTechs = useMemo(() => {
-    const activeTechIds = new Set(allMapAppts.flatMap((a) => a.technicianIds));
-    return technicians.filter((t) => activeTechIds.has(t.id));
-  }, [allMapAppts, technicians]);
 
   // Error / loading states
   if (tokenError || mapInitError) {
@@ -236,27 +229,27 @@ export function MapPlanningView({ technicians, appointments, selectedDate }: Map
       <div ref={mapContainer} className="absolute inset-0" />
 
       {/* Loading overlay */}
-      {!mapReady && mapboxToken && (
+      {(!mapReady || rdvsLoading) && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/60 z-10">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            {rdvsLoading && <span className="text-xs text-muted-foreground">Géocodage des adresses…</span>}
+          </div>
         </div>
       )}
 
       {/* Stats bar */}
-      <div className="absolute top-4 right-16 z-10 flex items-center gap-2">
-        <Badge variant="secondary" className="bg-background/90 backdrop-blur-sm shadow-sm">
-          <MapPin className="h-3 w-3 mr-1" />
-          {mapAppts.length} RDV géolocalisés
-        </Badge>
-        {allMapAppts.length !== mapAppts.length && (
-          <Badge variant="outline" className="bg-background/90 backdrop-blur-sm shadow-sm text-muted-foreground">
-            {allMapAppts.length - mapAppts.length} masqués
+      {mapReady && (
+        <div className="absolute top-4 right-16 z-10 flex items-center gap-2">
+          <Badge variant="secondary" className="bg-background/90 backdrop-blur-sm shadow-sm">
+            <MapPin className="h-3 w-3 mr-1" />
+            {rdvs.length} RDV géolocalisés
           </Badge>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Tech filter */}
-      {dayTechs.length > 0 && (
+      {filterTechs.length > 0 && (
         <div className="absolute bottom-4 left-4 z-10">
           <Popover open={techFilterOpen} onOpenChange={setTechFilterOpen}>
             <PopoverTrigger asChild>
@@ -277,7 +270,7 @@ export function MapPlanningView({ technicians, appointments, selectedDate }: Map
                 <CommandList>
                   <CommandEmpty>Aucun technicien</CommandEmpty>
                   <CommandGroup>
-                    {dayTechs.map((tech) => (
+                    {filterTechs.map((tech) => (
                       <CommandItem
                         key={tech.id}
                         onSelect={() => toggleTech(tech.id)}
@@ -314,14 +307,13 @@ export function MapPlanningView({ technicians, appointments, selectedDate }: Map
       )}
 
       {/* Mini preview */}
-      <MapMiniPreview
-        appointment={selectedAppt}
-        technicians={technicians}
-        onClose={() => setSelectedAppt(null)}
+      <RdvMiniPreview
+        rdv={selectedRdv}
+        onClose={() => setSelectedRdv(null)}
       />
 
       {/* Empty state */}
-      {mapReady && mapAppts.length === 0 && (
+      {mapReady && !rdvsLoading && rdvs.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="bg-background/90 backdrop-blur-sm rounded-lg p-6 shadow-lg text-center max-w-xs pointer-events-auto">
             <MapPin className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
@@ -334,24 +326,4 @@ export function MapPlanningView({ technicians, appointments, selectedDate }: Map
       )}
     </div>
   );
-}
-
-/** Calculate bounds from appointments with lat/lng */
-function computeBounds(
-  items: { lat: number; lng: number }[]
-): [[number, number], [number, number]] | null {
-  if (items.length === 0) return null;
-  let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
-  for (const item of items) {
-    minLng = Math.min(minLng, item.lng);
-    maxLng = Math.max(maxLng, item.lng);
-    minLat = Math.min(minLat, item.lat);
-    maxLat = Math.max(maxLat, item.lat);
-  }
-  const lngPad = (maxLng - minLng) * 0.1 || 0.01;
-  const latPad = (maxLat - minLat) * 0.1 || 0.01;
-  return [
-    [minLng - lngPad, minLat - latPad],
-    [maxLng + lngPad, maxLat + latPad],
-  ];
 }

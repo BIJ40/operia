@@ -206,7 +206,6 @@ function PlanningV2ShellContent() {
               {filters.view === "map" && (
                 <MapPlanningView
                   technicians={data.technicians}
-                  appointments={data.appointments}
                   selectedDate={filters.selectedDate}
                 />
               )}
