@@ -109,12 +109,17 @@ export function OnlineUsers() {
     const last = new Date(lastSeen);
     const diffMs = now.getTime() - last.getTime();
     const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
 
     if (diffMins < 1) return 'À l\'instant';
     if (diffMins === 1) return 'Il y a 1 minute';
     if (diffMins < 60) return `Il y a ${diffMins} minutes`;
+    if (diffHours === 1) return 'Il y a 1 heure';
+    if (diffHours < 24) return `Il y a ${diffHours} heures`;
+    if (diffDays === 1) return 'Hier à ' + format(last, 'HH:mm', { locale: fr });
     
-    return format(last, 'HH:mm', { locale: fr });
+    return format(last, 'dd/MM/yyyy à HH:mm', { locale: fr });
   };
 
   return (
