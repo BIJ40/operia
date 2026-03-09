@@ -25,6 +25,7 @@ import {
   DrawerTitle,
   DrawerDescription,
 } from "@/components/ui/drawer";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 import type { PlanningUnscheduled } from "../../types";
 import type { Suggestion, HardBlock, SuggestPlanningResponse } from "@/hooks/usePlanningAugmente";
@@ -114,20 +115,40 @@ export function AiSuggestDrawer({
                 </div>
               )}
 
-              {/* Blockers */}
-              {blockers.length > 0 && (
-                <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 space-y-1.5">
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-destructive">
-                    <AlertTriangle className="h-3.5 w-3.5" />
-                    {blockers.length} technicien{blockers.length > 1 ? "s" : ""} bloqué{blockers.length > 1 ? "s" : ""}
-                  </div>
-                  {blockers.map((b, i) => (
-                    <div key={i} className="text-[10px] text-muted-foreground">
-                      <span className="font-medium">{b.techName}</span> — {b.reason}
-                    </div>
-                  ))}
-                </div>
-              )}
+              {/* Blockers — grouped summary by tech */}
+              {blockers.length > 0 && (() => {
+                // Group by tech name, show summary not verbose per-day list
+                const byTech = new Map<string, string[]>();
+                for (const b of blockers) {
+                  if (!byTech.has(b.techName)) byTech.set(b.techName, []);
+                  byTech.get(b.techName)!.push(b.reason);
+                }
+                const uniqueTechs = Array.from(byTech.keys());
+                return (
+                  <Collapsible>
+                    <CollapsibleTrigger className="w-full rounded-lg border border-destructive/30 bg-destructive/5 p-3 flex items-center justify-between text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors">
+                      <span className="flex items-center gap-1.5">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        {uniqueTechs.length} technicien{uniqueTechs.length > 1 ? "s" : ""} indisponible{uniqueTechs.length > 1 ? "s" : ""} sur la période
+                      </span>
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="rounded-b-lg border border-t-0 border-destructive/30 bg-destructive/5 px-3 pb-3 space-y-1">
+                      {uniqueTechs.map(name => {
+                        const reasons = byTech.get(name)!;
+                        // Summarize: "planning plein (5j)" or first unique reason
+                        const fullDays = reasons.filter(r => r.includes('planning plein')).length;
+                        const summary = fullDays > 0 ? `Planning plein (${fullDays}j)` : reasons[0]?.replace(/^\d{4}-\d{2}-\d{2}[^:]*:\s*/, '') || 'Indisponible';
+                        return (
+                          <div key={name} className="text-[10px] text-muted-foreground">
+                            <span className="font-medium">{name}</span> — {summary}
+                          </div>
+                        );
+                      })}
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              })()}
 
               {/* Top 3 suggestions */}
               {suggestions.map((s) => (

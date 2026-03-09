@@ -524,6 +524,22 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
         }));
       }
 
+      // STRICT TECH FILTER: only include if positively identified as technician
+      // Must have: type="technicien" OR terrain activity OR skills OR Apogée isTechnicien flag
+      const collabType = normalize(collab.type || '');
+      const collabRole = normalize(collab.role || '');
+      const isTechType = collabType.includes('technicien') || collabRole.includes('technicien');
+      const hasTerrainActivity = terrainUserIds.has(apogeeId);
+      const hasSkills = skills.length > 0;
+      const apogeeIsTech = apUser?.isTechnicien === true || apUser?.isTechnicien === 1 ||
+                           normalize(String(apUser?.type || '')) === 'technicien';
+      const hasUniverses = Array.isArray(apUser?.data?.universes) && apUser.data.universes.length > 0;
+
+      if (!isTechType && !hasTerrainActivity && !hasSkills && !apogeeIsTech && !hasUniverses) {
+        console.log(`[SUGGEST] Skipping non-tech: ${collab.first_name} ${collab.last_name} (type=${collab.type}, role=${collab.role})`);
+        continue;
+      }
+
       // Profile (amplitude, work_days)
       const prof = profileByCollab.get(collab.id);
       const workDays = prof?.work_days ?? { mon: true, tue: true, wed: true, thu: true, fri: true, sat: false, sun: false };
