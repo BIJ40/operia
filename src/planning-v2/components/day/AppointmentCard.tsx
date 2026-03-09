@@ -168,26 +168,7 @@ export function AppointmentCard({
           )}
         </div>
 
-        {/* Partner tech badges (top-right corner) — hidden in compact/week */}
-        {isBinome && isFirst && density !== "compact" && (
-          <div className="absolute top-1 right-1.5 flex items-center gap-0.5 z-[2]">
-            {partnerTechs.map((pt) => (
-              <div
-                key={pt.id}
-                className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-white shadow-sm border border-white/80"
-                style={{ backgroundColor: pt.color }}
-                title={pt.name}
-              >
-                {pt.initials}
-              </div>
-            ))}
-            {a.technicianIds.length > 2 && (
-              <span className="text-[8px] font-bold text-muted-foreground ml-0.5">
-                +{a.technicianIds.length - 2}
-              </span>
-            )}
-          </div>
-        )}
+        {/* Partner tech badges removed per request */}
       </div>
     );
   };
