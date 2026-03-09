@@ -272,71 +272,154 @@ export function ApporteurDetailSheet({ apporteur, open, onOpenChange }: Apporteu
               {managers && managers.length > 0 ? (
                 <div className="space-y-2">
                   {managers.map((mgr) => (
-                    <div
-                      key={mgr.id}
-                      className="flex items-center justify-between p-2 rounded-md bg-muted/50"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">
-                          {mgr.first_name} {mgr.last_name}
-                        </p>
-                        <p className="text-xs text-muted-foreground truncate">{mgr.email}</p>
-                        {mgr.last_login_at && (
-                          <p className="text-xs text-muted-foreground">
-                            Dernière connexion : {format(new Date(mgr.last_login_at), 'dd/MM/yyyy', { locale: fr })}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <Badge variant="outline" className="text-xs">
-                          {mgr.role === 'manager' ? 'Gestionnaire' : 'Lecteur'}
-                        </Badge>
-                        {canManageUsers && (
-                          <>
+                    <div key={mgr.id} className="p-2 rounded-md bg-muted/50 space-y-2">
+                      {editingManagerId === mgr.id ? (
+                        /* Inline edit form */
+                        <div className="space-y-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-xs">Prénom</Label>
+                              <Input
+                                value={editData.first_name}
+                                onChange={(e) => setEditData(prev => ({ ...prev, first_name: e.target.value }))}
+                                className="h-8 text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Nom</Label>
+                              <Input
+                                value={editData.last_name}
+                                onChange={(e) => setEditData(prev => ({ ...prev, last_name: e.target.value }))}
+                                className="h-8 text-sm"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label className="text-xs">Email</Label>
+                            <Input
+                              type="email"
+                              value={editData.email}
+                              onChange={(e) => setEditData(prev => ({ ...prev, email: e.target.value }))}
+                              className="h-8 text-sm"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Rôle</Label>
+                            <Select value={editData.role} onValueChange={(v) => setEditData(prev => ({ ...prev, role: v }))}>
+                              <SelectTrigger className="h-8 text-sm">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="reader">Lecteur (consultation)</SelectItem>
+                                <SelectItem value="manager">Gestionnaire (consultation + demandes)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex gap-2">
                             <Button
-                              variant="ghost"
                               size="sm"
-                              className="h-6 w-6 p-0"
-                              onClick={() => toggleManagerStatus.mutate({ id: mgr.id, is_active: !mgr.is_active })}
+                              className="flex-1"
+                              disabled={updateManager.isPending || !editData.email || !editData.first_name || !editData.last_name}
+                              onClick={() => {
+                                updateManager.mutate({
+                                  id: mgr.id,
+                                  email: editData.email,
+                                  first_name: editData.first_name,
+                                  last_name: editData.last_name,
+                                  role: editData.role,
+                                }, { onSuccess: () => setEditingManagerId(null) });
+                              }}
                             >
-                              {mgr.is_active ? (
-                                <div className="w-2 h-2 rounded-full bg-green-500" title="Actif - cliquer pour désactiver" />
-                              ) : (
-                                <div className="w-2 h-2 rounded-full bg-red-500" title="Inactif - cliquer pour réactiver" />
-                              )}
+                              {updateManager.isPending ? 'Enregistrement...' : 'Enregistrer'}
                             </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" onClick={() => setEditingManagerId(null)}>
+                              Annuler
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Display mode */
+                        <div className="flex items-center justify-between">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium truncate">
+                              {mgr.first_name} {mgr.last_name}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate">{mgr.email}</p>
+                            {mgr.last_login_at && (
+                              <p className="text-xs text-muted-foreground">
+                                Dernière connexion : {format(new Date(mgr.last_login_at), 'dd/MM/yyyy', { locale: fr })}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <Badge variant="outline" className="text-xs">
+                              {mgr.role === 'manager' ? 'Gestionnaire' : 'Lecteur'}
+                            </Badge>
+                            {canManageUsers && (
+                              <>
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-                                  title="Supprimer cet utilisateur"
+                                  className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+                                  title="Modifier"
+                                  onClick={() => {
+                                    setEditingManagerId(mgr.id);
+                                    setEditData({
+                                      email: mgr.email,
+                                      first_name: mgr.first_name || '',
+                                      last_name: mgr.last_name || '',
+                                      role: mgr.role,
+                                    });
+                                  }}
                                 >
-                                  <Trash2 className="h-3 w-3" />
+                                  <Pencil className="h-3 w-3" />
                                 </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Supprimer cet utilisateur ?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    L'utilisateur {mgr.first_name} {mgr.last_name} ({mgr.email}) sera supprimé définitivement. Ses sessions et codes de connexion seront également supprimés.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Annuler</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => deleteManager.mutate(mgr.id)}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  >
-                                    Supprimer
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </>
-                        )}
-                      </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0"
+                                  onClick={() => toggleManagerStatus.mutate({ id: mgr.id, is_active: !mgr.is_active })}
+                                >
+                                  {mgr.is_active ? (
+                                    <div className="w-2 h-2 rounded-full bg-green-500" title="Actif - cliquer pour désactiver" />
+                                  ) : (
+                                    <div className="w-2 h-2 rounded-full bg-red-500" title="Inactif - cliquer pour réactiver" />
+                                  )}
+                                </Button>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                                      title="Supprimer cet utilisateur"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Supprimer cet utilisateur ?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        L'utilisateur {mgr.first_name} {mgr.last_name} ({mgr.email}) sera supprimé définitivement. Ses sessions et codes de connexion seront également supprimés.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Annuler</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => deleteManager.mutate(mgr.id)}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      >
+                                        Supprimer
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
