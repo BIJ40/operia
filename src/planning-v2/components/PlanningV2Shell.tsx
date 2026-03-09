@@ -1,7 +1,7 @@
 /**
- * Planning V2 — Shell principal (layout + tabs + navigation date)
+ * Planning V2 — Shell principal (layout + tabs + navigation date + IA)
  */
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { format, addDays, subDays, addWeeks, subWeeks, startOfWeek, endOfWeek, isToday } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
@@ -14,6 +14,8 @@ import {
   EyeOff,
   Eye,
   CalendarRange,
+  Zap,
+  BrainCircuit,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,19 +24,34 @@ import { AgencyProvider } from "@/apogee-connect/contexts/AgencyContext";
 import { ApiToggleProvider } from "@/apogee-connect/contexts/ApiToggleContext";
 import { useFilters } from "../hooks/useFilters";
 import { usePlanningV2Data } from "../hooks/usePlanningV2Data";
+import { useAiPlanning } from "../hooks/useAiPlanning";
 import { DayDispatchView } from "./day/DayDispatchView";
 import { WeekHeatmapView } from "./week/WeekHeatmapView";
 import { WeekPlanningView } from "./week/WeekPlanningView";
 import { MapPlanningView } from "./map/MapPlanningView";
 import { DisplaySettings } from "./shared/DisplaySettings";
 import { UnscheduledPanel } from "./shared/UnscheduledPanel";
-import type { PlanningView } from "../types";
+import { AiSuggestDrawer } from "./shared/AiSuggestDrawer";
+import { OptimizeWeekDialog } from "./shared/OptimizeWeekDialog";
+import { AiSettingsPanel } from "./shared/AiSettingsPanel";
+import type { PlanningView, PlanningUnscheduled } from "../types";
+import type { Suggestion, Move } from "@/hooks/usePlanningAugmente";
+import type { ScoringWeights, HardConstraints } from "../hooks/useAiPlanning";
 
 function PlanningV2ShellContent() {
   const { filters, setDate, setView, setFilters, setDensity, hoverSettings, setHoverSettings } = useFilters();
   const data = usePlanningV2Data(filters.selectedDate);
+  const ai = useAiPlanning();
+
   const [showUnavailable, setShowUnavailable] = useState(false);
   const [unscheduledOpen, setUnscheduledOpen] = useState(false);
+
+  // AI states
+  const [suggestItem, setSuggestItem] = useState<PlanningUnscheduled | null>(null);
+  const [suggestDrawerOpen, setSuggestDrawerOpen] = useState(false);
+  const [optimizeOpen, setOptimizeOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
   const goToday = () => setDate(new Date());
   const isWeekNav = filters.view === "week" || filters.view === "charge";
   const goPrev = () => setDate(isWeekNav ? subWeeks(filters.selectedDate, 1) : subDays(filters.selectedDate, 1));
@@ -44,6 +61,35 @@ function PlanningV2ShellContent() {
     ? `Semaine du ${format(startOfWeek(filters.selectedDate, { weekStartsOn: 1 }), "d MMM", { locale: fr })} au ${format(endOfWeek(filters.selectedDate, { weekStartsOn: 1 }), "d MMM yyyy", { locale: fr })}`
     : format(filters.selectedDate, "EEEE d MMMM yyyy", { locale: fr });
   const todayActive = isToday(filters.selectedDate);
+
+  // AI handlers
+  const handleRequestSuggest = useCallback(async (item: PlanningUnscheduled) => {
+    setSuggestItem(item);
+    setSuggestDrawerOpen(true);
+    ai.resetSuggestions();
+    await ai.suggest(item.dossierId);
+  }, [ai]);
+
+  const handleApplySuggestion = useCallback(async (suggestion: Suggestion) => {
+    await ai.applyAction({ type: "suggestion", id: String(suggestion.rank), action: "apply" });
+    setSuggestDrawerOpen(false);
+    data.refresh();
+  }, [ai, data]);
+
+  const handleOptimize = useCallback(async () => {
+    setOptimizeOpen(true);
+    ai.resetOptimize();
+    await ai.optimize(filters.selectedDate);
+  }, [ai, filters.selectedDate]);
+
+  const handleApplyMove = useCallback(async (move: Move, index: number) => {
+    await ai.applyAction({ type: "move", id: String(index), action: "apply" });
+    data.refresh();
+  }, [ai, data]);
+
+  const handleSaveConfig = useCallback(async (weights: ScoringWeights, constraints: HardConstraints) => {
+    await ai.saveConfig(weights, constraints);
+  }, [ai]);
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-background">
@@ -96,6 +142,42 @@ function PlanningV2ShellContent() {
             </TabsTrigger>
           </TabsList>
         </Tabs>
+
+        {/* AI: Optimize week */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1.5"
+              onClick={handleOptimize}
+              disabled={ai.isOptimizing}
+            >
+              <Zap className="h-3.5 w-3.5" />
+              Optimiser
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p className="text-xs">Optimiser la semaine avec l'IA</p>
+          </TooltipContent>
+        </Tooltip>
+
+        {/* AI Settings */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setSettingsOpen(true)}
+            >
+              <BrainCircuit className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p className="text-xs">Paramètres IA</p>
+          </TooltipContent>
+        </Tooltip>
 
         {/* Toggle indisponibles */}
         <Tooltip>
@@ -220,8 +302,38 @@ function PlanningV2ShellContent() {
           items={data.unscheduled}
           open={unscheduledOpen}
           onToggle={() => setUnscheduledOpen(!unscheduledOpen)}
+          onRequestSuggest={handleRequestSuggest}
         />
       </div>
+
+      {/* ── AI Drawers & Dialogs ── */}
+      <AiSuggestDrawer
+        open={suggestDrawerOpen}
+        onClose={() => setSuggestDrawerOpen(false)}
+        item={suggestItem}
+        isLoading={ai.isSuggesting}
+        data={ai.suggestions || null}
+        onApply={handleApplySuggestion}
+        isApplying={ai.isApplying}
+      />
+
+      <OptimizeWeekDialog
+        open={optimizeOpen}
+        onClose={() => setOptimizeOpen(false)}
+        isLoading={ai.isOptimizing}
+        data={ai.optimizeResult || null}
+        onApplyMove={handleApplyMove}
+        isApplying={ai.isApplying}
+      />
+
+      <AiSettingsPanel
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        currentWeights={(ai.config?.weights as ScoringWeights) || null}
+        currentConstraints={(ai.config?.hard_constraints as HardConstraints) || null}
+        onSave={handleSaveConfig}
+        isLoading={ai.isConfigLoading}
+      />
     </div>
   );
 }

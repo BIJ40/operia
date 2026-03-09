@@ -1,9 +1,24 @@
 /**
  * Planning V2 — Panel des interventions non planifiées
- * Panneau latéral rétractable avec filtre 1er RDV / Travaux
+ * Panneau latéral rétractable avec filtre 1er RDV / Travaux + bouton IA
  */
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
+import {
+  AlertCircle,
+  Clock,
+  MapPin,
+  ChevronRight,
+  ChevronLeft,
+  Search,
+  Sparkles,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import type { PlanningUnscheduled, UnscheduledReason } from "../../types";
 
 /** Format minutes → "Xh" ou "XhYY" */
 function formatDuration(minutes: number): string {
@@ -12,19 +27,6 @@ function formatDuration(minutes: number): string {
   const m = minutes % 60;
   return m > 0 ? `${h}h${String(m).padStart(2, "0")}` : `${h}h`;
 }
-import {
-  AlertCircle,
-  Clock,
-  MapPin,
-  ChevronRight,
-  ChevronLeft,
-  Search,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import type { PlanningUnscheduled, UnscheduledReason } from "../../types";
 
 type CategoryFilter = "all" | "premier_rdv" | "travaux";
 
@@ -32,6 +34,7 @@ interface UnscheduledPanelProps {
   items: PlanningUnscheduled[];
   open: boolean;
   onToggle: () => void;
+  onRequestSuggest?: (item: PlanningUnscheduled) => void;
 }
 
 const REASON_LABELS: Record<UnscheduledReason, string> = {
@@ -61,14 +64,13 @@ const PRIORITY_DOT: Record<string, string> = {
   low: "bg-muted-foreground",
 };
 
-/** Determine if an item is "1er RDV" (new project) or "Travaux" (to_planify_tvx) */
 function getCategory(item: PlanningUnscheduled): "premier_rdv" | "travaux" {
   const st = (item.status || "").toLowerCase();
   if (st === "to_planify_tvx") return "travaux";
   return "premier_rdv";
 }
 
-export function UnscheduledPanel({ items, open, onToggle }: UnscheduledPanelProps) {
+export function UnscheduledPanel({ items, open, onToggle, onRequestSuggest }: UnscheduledPanelProps) {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all");
 
@@ -155,7 +157,7 @@ export function UnscheduledPanel({ items, open, onToggle }: UnscheduledPanelProp
           />
         </div>
 
-        {/* Category toggle: 1er RDV / Travaux */}
+        {/* Category toggle */}
         <div className="flex gap-1">
           <Button
             variant={categoryFilter === "all" ? "default" : "outline"}
@@ -195,13 +197,13 @@ export function UnscheduledPanel({ items, open, onToggle }: UnscheduledPanelProp
             </div>
           ) : (
             filtered.map((item) => (
-              <UnscheduledCard key={item.id} item={item} />
+              <UnscheduledCard key={item.id} item={item} onRequestSuggest={onRequestSuggest} />
             ))
           )}
         </div>
       </ScrollArea>
 
-      {/* Footer summary */}
+      {/* Footer */}
       {urgentCount > 0 && (
         <div className="px-3 py-2 border-t border-border shrink-0">
           <div className="flex items-center gap-1.5 text-destructive text-[10px] font-medium">
@@ -214,10 +216,16 @@ export function UnscheduledPanel({ items, open, onToggle }: UnscheduledPanelProp
   );
 }
 
-function UnscheduledCard({ item }: { item: PlanningUnscheduled }) {
+function UnscheduledCard({
+  item,
+  onRequestSuggest,
+}: {
+  item: PlanningUnscheduled;
+  onRequestSuggest?: (item: PlanningUnscheduled) => void;
+}) {
   const category = getCategory(item);
   return (
-    <div className="rounded-md border border-border bg-card p-2.5 hover:shadow-sm transition-shadow cursor-pointer group">
+    <div className="rounded-md border border-border bg-card p-2.5 hover:shadow-sm transition-shadow group">
       {/* Top: priority dot + client */}
       <div className="flex items-start gap-2 mb-1.5">
         <div className={`w-2 h-2 rounded-full mt-1 shrink-0 ${PRIORITY_DOT[item.priority] || PRIORITY_DOT.normal}`} />
@@ -268,13 +276,36 @@ function UnscheduledCard({ item }: { item: PlanningUnscheduled }) {
         )}
       </div>
 
-      {/* Reason badge */}
-      <Badge
-        className={`text-[9px] px-1.5 py-0 h-4 font-medium ${REASON_COLORS[item.reason]}`}
-        variant="secondary"
-      >
-        {REASON_LABELS[item.reason]}
-      </Badge>
+      {/* Bottom: reason + AI button */}
+      <div className="flex items-center justify-between">
+        <Badge
+          className={`text-[9px] px-1.5 py-0 h-4 font-medium ${REASON_COLORS[item.reason]}`}
+          variant="secondary"
+        >
+          {REASON_LABELS[item.reason]}
+        </Badge>
+
+        {onRequestSuggest && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRequestSuggest(item);
+                }}
+              >
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="left">
+              <p className="text-xs">Suggestions IA</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </div>
     </div>
   );
 }
