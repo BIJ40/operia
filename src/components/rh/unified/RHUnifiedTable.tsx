@@ -89,31 +89,32 @@ export function RHUnifiedTable({
 
       if (uploadError) throw uploadError;
 
-      // Get or create the folder for this collaborator
+      // Get or create the folder for this collaborator under Salariés hierarchy
       const folderSlug = `salarie-${collaboratorId}`;
-      const { data: folder } = await supabase
-        .from('media_folders')
-        .select('id')
-        .eq('agency_id', agencyId)
-        .eq('slug', folderSlug)
-        .maybeSingle();
+      
+      // Use ensure_media_folder DB function to create full path: salaries/salarie-{id}
+      const { data: folderId, error: folderError } = await supabase
+        .rpc('ensure_media_folder', {
+          p_agency_id: agencyId,
+          p_path: `Salariés/${collab.first_name} ${collab.last_name}`.trim(),
+          p_entity_type: 'collaborator',
+          p_entity_id: collaboratorId,
+        });
 
-      let folderId = folder?.id;
-      if (!folderId) {
-        // Create folder if it doesn't exist
-        const { data: newFolder, error: folderError } = await supabase
+      if (folderError || !folderId) {
+        // Fallback: try to find existing folder by slug
+        const { data: existingFolder } = await supabase
           .from('media_folders')
-          .insert({
-            agency_id: agencyId,
-            name: `Salarié ${collaboratorId}`,
-            slug: folderSlug,
-            access_scope: 'rh',
-          })
           .select('id')
-          .single();
-        
-        if (folderError) throw folderError;
-        folderId = newFolder.id;
+          .eq('agency_id', agencyId)
+          .eq('slug', folderSlug)
+          .is('deleted_at', null)
+          .maybeSingle();
+
+        if (!existingFolder) throw folderError || new Error('Impossible de créer le dossier');
+        var finalFolderId = existingFolder.id;
+      } else {
+        var finalFolderId = folderId;
       }
 
       // Create media_asset
