@@ -1,6 +1,7 @@
 /**
  * DossiersTabContent - Contenu de l'onglet Dossiers (V2 enrichi)
  * Stepper horizontal + triple badges + colonne univers
+ * Actions: refuser devis (single + bulk), facture réglée, dossier inactif
  */
 
 import { useState, useMemo, useEffect } from 'react';
@@ -9,6 +10,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -17,7 +19,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-// Select removed - using buttons for status filter
 import {
   Dialog,
   DialogContent,
@@ -43,12 +44,18 @@ import {
   Loader2,
   AlertTriangle,
   RefreshCw,
-  X
+  X,
+  XCircle,
+  CheckCircle2,
+  MessageSquarePlus,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { DossierStepper } from '../cockpit/DossierStepper';
 import type { DossierRowV2 } from '../../types/apporteur-dossier-v2';
+import { RefuserDevisDialog } from '../dialogs/RefuserDevisDialog';
+import { FactureRegleeDialog } from '../dialogs/FactureRegleeDialog';
+import { DossierInactifDialog } from '../dialogs/DossierInactifDialog';
 
 type SortField = 'ref' | 'clientName' | 'status' | 'dateCreation' | 'factureHT' | 'restedu';
 type SortDirection = 'asc' | 'desc';
@@ -65,6 +72,14 @@ export default function DossiersTabContent() {
   const [selectedDossier, setSelectedDossier] = useState<DossierRow | null>(null);
   const [alerteRefs, setAlerteRefs] = useState<string[] | null>(null);
 
+  // Selection for bulk actions
+  const [selectedRefs, setSelectedRefs] = useState<Set<string>>(new Set());
+
+  // Dialog states
+  const [refuserDevisRefs, setRefuserDevisRefs] = useState<string[]>([]);
+  const [factureRegleeRef, setFactureRegleeRef] = useState<string | null>(null);
+  const [inactifRef, setInactifRef] = useState<string | null>(null);
+
   useEffect(() => {
     const urlStatus = searchParams.get('status');
     if (urlStatus) {
@@ -74,7 +89,6 @@ export default function DossiersTabContent() {
     if (urlAlerteRefs) {
       const refs = urlAlerteRefs.split(',').filter(Boolean);
       setAlerteRefs(refs);
-      // Clean the param so it doesn't persist on refresh
       setSearchParams(prev => {
         const newParams = new URLSearchParams(prev);
         newParams.delete('alerteRefs');
@@ -101,7 +115,6 @@ export default function DossiersTabContent() {
   const filteredDossiers = useMemo(() => {
     let result = [...dossiers];
 
-    // Filtre par alerteRefs (prioritaire)
     if (alerteRefs && alerteRefs.length > 0) {
       const refsSet = new Set(alerteRefs.map(r => r.toLowerCase()));
       result = result.filter(d => refsSet.has(d.ref.toLowerCase()));
@@ -154,6 +167,12 @@ export default function DossiersTabContent() {
     factureHT: filteredDossiers.reduce((sum, d) => sum + d.factureHT, 0),
   }), [filteredDossiers]);
 
+  // Dossiers with devis_envoye status (selectable for bulk refus)
+  const devisEnvoyeRefs = useMemo(() =>
+    new Set(filteredDossiers.filter(d => d.status === 'devis_envoye').map(d => d.ref)),
+    [filteredDossiers]
+  );
+
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDirection(d => d === 'asc' ? 'desc' : 'asc');
@@ -166,6 +185,38 @@ export default function DossiersTabContent() {
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['apporteur-dossiers'] });
   };
+
+  const toggleSelection = (ref: string) => {
+    setSelectedRefs(prev => {
+      const next = new Set(prev);
+      if (next.has(ref)) {
+        next.delete(ref);
+      } else {
+        next.add(ref);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedRefs.size === devisEnvoyeRefs.size) {
+      setSelectedRefs(new Set());
+    } else {
+      setSelectedRefs(new Set(devisEnvoyeRefs));
+    }
+  };
+
+  const handleBulkRefus = () => {
+    const refs = Array.from(selectedRefs);
+    if (refs.length > 0) {
+      setRefuserDevisRefs(refs);
+    }
+  };
+
+  // Determine available actions for a dossier
+  const canRefuserDevis = (d: DossierRow) => d.status === 'devis_envoye';
+  const canDeclareRegle = (d: DossierRow) => d.restedu > 0 && d.factureId !== null;
+  const isInactif = (d: DossierRow) => d.status === 'stand_by' || d.status === 'en_cours';
 
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-50" />;
@@ -235,15 +286,29 @@ export default function DossiersTabContent() {
             {totals.count} dossier(s) au total
           </p>
         </div>
-        <Button 
-          variant="outline" 
-          className="gap-2 rounded-xl"
-          onClick={handleRefresh}
-          disabled={isFetching}
-        >
-          <RefreshCw className={cn("w-4 h-4", isFetching && "animate-spin")} />
-          Actualiser
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Bulk refuser devis button */}
+          {selectedRefs.size > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              className="gap-2 rounded-xl"
+              onClick={handleBulkRefus}
+            >
+              <XCircle className="w-4 h-4" />
+              Refuser {selectedRefs.size} devis
+            </Button>
+          )}
+          <Button 
+            variant="outline" 
+            className="gap-2 rounded-xl"
+            onClick={handleRefresh}
+            disabled={isFetching}
+          >
+            <RefreshCw className={cn("w-4 h-4", isFetching && "animate-spin")} />
+            Actualiser
+          </Button>
+        </div>
       </div>
 
       {/* Bannière filtre alerte */}
@@ -310,6 +375,16 @@ export default function DossiersTabContent() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  {/* Checkbox column */}
+                  <TableHead className="w-10">
+                    {devisEnvoyeRefs.size > 0 && (
+                      <Checkbox
+                        checked={selectedRefs.size > 0 && selectedRefs.size === devisEnvoyeRefs.size}
+                        onCheckedChange={toggleSelectAll}
+                        aria-label="Tout sélectionner"
+                      />
+                    )}
+                  </TableHead>
                   <TableHead 
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleSort('clientName')}
@@ -349,40 +424,50 @@ export default function DossiersTabContent() {
               <TableBody>
                 {filteredDossiers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       Aucun dossier trouvé
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredDossiers.map((d) => {
                     const statusConf = STATUS_CONFIG[d.status] || STATUS_CONFIG.en_cours;
+                    const isSelectable = devisEnvoyeRefs.has(d.ref);
                     return (
                       <TableRow 
                         key={d.id} 
                         className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => setSelectedDossier(d)}
                       >
-                        <TableCell>
+                        {/* Checkbox */}
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          {isSelectable ? (
+                            <Checkbox
+                              checked={selectedRefs.has(d.ref)}
+                              onCheckedChange={() => toggleSelection(d.ref)}
+                              aria-label={`Sélectionner ${d.ref}`}
+                            />
+                          ) : null}
+                        </TableCell>
+                        <TableCell onClick={() => setSelectedDossier(d)}>
                           <div>
                             <div className="font-medium">{d.clientName}</div>
                             <div className="text-xs text-muted-foreground">{d.city}</div>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell onClick={() => setSelectedDossier(d)}>
                           <Badge className={cn('text-xs', statusConf.bgColor, statusConf.color)}>
                             {d.status === 'stand_by' ? '⏳ ' : ''}{d.statusLabel}
                           </Badge>
                         </TableCell>
-                        <TableCell className="hidden lg:table-cell text-sm">
+                        <TableCell className="hidden lg:table-cell text-sm" onClick={() => setSelectedDossier(d)}>
                           {formatDate(d.datePremierRdv)}
                         </TableCell>
-                        <TableCell className="hidden lg:table-cell text-right font-medium">
+                        <TableCell className="hidden lg:table-cell text-right font-medium" onClick={() => setSelectedDossier(d)}>
                           {d.devisHT > 0 ? formatCurrency(d.devisHT) : '-'}
                         </TableCell>
-                        <TableCell className="text-right font-medium">
+                        <TableCell className="text-right font-medium" onClick={() => setSelectedDossier(d)}>
                           {d.factureHT > 0 ? formatCurrency(d.factureHT) : '-'}
                         </TableCell>
-                        <TableCell className="text-right font-medium text-foreground">
+                        <TableCell className="text-right font-medium text-foreground" onClick={() => setSelectedDossier(d)}>
                           {d.restedu > 0 ? formatCurrency(d.restedu) : d.factureHT > 0 ? '✓' : '-'}
                         </TableCell>
                       </TableRow>
@@ -535,10 +620,78 @@ export default function DossiersTabContent() {
                   </div>
                 </div>
               )}
+
+              {/* ── Action Buttons ── */}
+              {(canRefuserDevis(selectedDossier) || canDeclareRegle(selectedDossier) || isInactif(selectedDossier)) && (
+                <div className="border-t pt-4">
+                  <p className="text-sm font-medium mb-3">Actions</p>
+                  <div className="flex flex-wrap gap-2">
+                    {canRefuserDevis(selectedDossier) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 border-[hsl(var(--ap-danger)/.4)] text-[hsl(var(--ap-danger))] hover:bg-[hsl(var(--ap-danger-light))]"
+                        onClick={() => {
+                          setSelectedDossier(null);
+                          setRefuserDevisRefs([selectedDossier.ref]);
+                        }}
+                      >
+                        <XCircle className="w-4 h-4" />
+                        Refuser le devis
+                      </Button>
+                    )}
+                    {canDeclareRegle(selectedDossier) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 border-[hsl(var(--ap-success)/.4)] text-[hsl(var(--ap-success))] hover:bg-[hsl(var(--ap-success-light))]"
+                        onClick={() => {
+                          setSelectedDossier(null);
+                          setFactureRegleeRef(selectedDossier.ref);
+                        }}
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        Déclarer réglée
+                      </Button>
+                    )}
+                    {isInactif(selectedDossier) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => {
+                          setSelectedDossier(null);
+                          setInactifRef(selectedDossier.ref);
+                        }}
+                      >
+                        <MessageSquarePlus className="w-4 h-4" />
+                        Action dossier
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Action Dialogs */}
+      <RefuserDevisDialog
+        open={refuserDevisRefs.length > 0}
+        onOpenChange={(open) => { if (!open) { setRefuserDevisRefs([]); setSelectedRefs(new Set()); } }}
+        dossierRefs={refuserDevisRefs}
+      />
+      <FactureRegleeDialog
+        open={!!factureRegleeRef}
+        onOpenChange={(open) => { if (!open) setFactureRegleeRef(null); }}
+        dossierRef={factureRegleeRef || ''}
+      />
+      <DossierInactifDialog
+        open={!!inactifRef}
+        onOpenChange={(open) => { if (!open) setInactifRef(null); }}
+        dossierRef={inactifRef || ''}
+      />
     </div>
   );
 }
