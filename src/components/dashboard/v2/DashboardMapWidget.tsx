@@ -349,7 +349,6 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
             rdvs={filteredRdvs}
             selectedRdv={selectedRdv}
             onSelectRdv={setSelectedRdv}
-            containerRef={compactMapRef}
             mapboxToken={mapboxToken}
           />
         )}
