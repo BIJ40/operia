@@ -315,6 +315,9 @@ function PlanningV2ShellContent() {
         data={ai.suggestions || null}
         onApply={handleApplySuggestion}
         isApplying={ai.isApplying}
+        technicians={data.technicians}
+        appointments={data.appointments}
+        blocks={data.blocks}
       />
 
       <OptimizeWeekDialog
