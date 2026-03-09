@@ -282,7 +282,7 @@ Deno.serve(async (req) => {
       return 0;
     });
 
-    console.log(`[GET-APPORTEUR-PLANNING] ${events.length} upcoming events`);
+    console.log(`[GET-APPORTEUR-PLANNING] ${events.length} upcoming events, times:`, events.map(e => ({ id: e.id, time: e.time, date: e.date })));
 
     return withCors(req, new Response(
       JSON.stringify({ 
