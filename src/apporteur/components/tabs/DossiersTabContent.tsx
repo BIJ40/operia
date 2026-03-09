@@ -54,6 +54,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { DossierStepper } from '../cockpit/DossierStepper';
 import type { DossierRowV2 } from '../../types/apporteur-dossier-v2';
 import { RefuserDevisDialog } from '../dialogs/RefuserDevisDialog';
+import { ValiderDevisDialog } from '../dialogs/ValiderDevisDialog';
 import { FactureRegleeDialog } from '../dialogs/FactureRegleeDialog';
 import { DossierInactifDialog } from '../dialogs/DossierInactifDialog';
 
@@ -77,6 +78,7 @@ export default function DossiersTabContent() {
 
   // Dialog states
   const [refuserDevisRefs, setRefuserDevisRefs] = useState<string[]>([]);
+  const [validerDevisRefs, setValiderDevisRefs] = useState<string[]>([]);
   const [factureRegleeRef, setFactureRegleeRef] = useState<string | null>(null);
   const [inactifRef, setInactifRef] = useState<string | null>(null);
 
@@ -213,8 +215,16 @@ export default function DossiersTabContent() {
     }
   };
 
+  const handleBulkValidation = () => {
+    const refs = Array.from(selectedRefs);
+    if (refs.length > 0) {
+      setValiderDevisRefs(refs);
+    }
+  };
+
   // Determine available actions for a dossier
   const canRefuserDevis = (d: DossierRow) => d.status === 'devis_envoye';
+  const canValiderDevis = (d: DossierRow) => d.status === 'devis_envoye';
   const canDeclareRegle = (d: DossierRow) => d.restedu > 0 && d.factureId !== null;
   const isInactif = (d: DossierRow) => d.status === 'stand_by' || d.status === 'en_cours';
 
@@ -287,17 +297,27 @@ export default function DossiersTabContent() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Bulk refuser devis button */}
+          {/* Bulk actions */}
           {selectedRefs.size > 0 && (
-            <Button
-              variant="destructive"
-              size="sm"
-              className="gap-2 rounded-xl"
-              onClick={handleBulkRefus}
-            >
-              <XCircle className="w-4 h-4" />
-              Refuser {selectedRefs.size} devis
-            </Button>
+            <>
+              <Button
+                size="sm"
+                className="gap-2 rounded-xl bg-[hsl(var(--ap-success))] hover:bg-[hsl(var(--ap-success)/.85)] text-white"
+                onClick={handleBulkValidation}
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                Valider {selectedRefs.size} devis
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="gap-2 rounded-xl"
+                onClick={handleBulkRefus}
+              >
+                <XCircle className="w-4 h-4" />
+                Refuser {selectedRefs.size} devis
+              </Button>
+            </>
           )}
           <Button 
             variant="outline" 
@@ -622,10 +642,24 @@ export default function DossiersTabContent() {
               )}
 
               {/* ── Action Buttons ── */}
-              {(canRefuserDevis(selectedDossier) || canDeclareRegle(selectedDossier) || isInactif(selectedDossier)) && (
+              {(canRefuserDevis(selectedDossier) || canValiderDevis(selectedDossier) || canDeclareRegle(selectedDossier) || isInactif(selectedDossier)) && (
                 <div className="border-t pt-4">
                   <p className="text-sm font-medium mb-3">Actions</p>
                   <div className="flex flex-wrap gap-2">
+                    {canValiderDevis(selectedDossier) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 border-[hsl(var(--ap-success)/.4)] text-[hsl(var(--ap-success))] hover:bg-[hsl(var(--ap-success-light))]"
+                        onClick={() => {
+                          setSelectedDossier(null);
+                          setValiderDevisRefs([selectedDossier.ref]);
+                        }}
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        Valider le devis
+                      </Button>
+                    )}
                     {canRefuserDevis(selectedDossier) && (
                       <Button
                         variant="outline"
@@ -681,6 +715,11 @@ export default function DossiersTabContent() {
         open={refuserDevisRefs.length > 0}
         onOpenChange={(open) => { if (!open) { setRefuserDevisRefs([]); setSelectedRefs(new Set()); } }}
         dossierRefs={refuserDevisRefs}
+      />
+      <ValiderDevisDialog
+        open={validerDevisRefs.length > 0}
+        onOpenChange={(open) => { if (!open) { setValiderDevisRefs([]); setSelectedRefs(new Set()); } }}
+        dossierRefs={validerDevisRefs}
       />
       <FactureRegleeDialog
         open={!!factureRegleeRef}

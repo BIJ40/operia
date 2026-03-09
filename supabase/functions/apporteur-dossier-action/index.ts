@@ -14,7 +14,7 @@ import { authenticateApporteur } from '../_shared/apporteurAuth.ts';
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
-type ActionType = 'refuser_devis' | 'facture_reglee' | 'dossier_inactif';
+type ActionType = 'refuser_devis' | 'valider_devis' | 'facture_reglee' | 'dossier_inactif';
 type InactifAction = 'annuler' | 'relancer' | 'donner_info';
 
 interface ActionRequest {
@@ -30,6 +30,7 @@ interface ActionRequest {
 
 const ACTION_LABELS: Record<ActionType, string> = {
   refuser_devis: 'Refus de devis',
+  valider_devis: 'Validation de devis',
   facture_reglee: 'Facture déclarée réglée',
   dossier_inactif: 'Action sur dossier inactif',
 };
@@ -58,7 +59,7 @@ Deno.serve(async (req) => {
     const { action, dossierRefs, dateReglement, typeReglement, inactifAction, message } = body;
 
     // Validate
-    if (!action || !['refuser_devis', 'facture_reglee', 'dossier_inactif'].includes(action)) {
+    if (!action || !['refuser_devis', 'valider_devis', 'facture_reglee', 'dossier_inactif'].includes(action)) {
       return withCors(req, new Response(
         JSON.stringify({ success: false, error: 'Action invalide' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -123,6 +124,19 @@ Deno.serve(async (req) => {
         detailHtml = `
           <p>L'apporteur <strong>${auth.apporteurName}</strong> a indiqué le <strong>refus</strong> du/des devis suivant(s) :</p>
           <ul style="color: #dc2626; font-weight: bold;">
+            ${dossierRefs.map(r => `<li>${r}</li>`).join('')}
+          </ul>
+          ${message ? `<p><strong>Commentaire :</strong> ${message}</p>` : ''}
+        `;
+        break;
+
+      case 'valider_devis':
+        subject = isBulk
+          ? `[Portail Apporteur] ${auth.apporteurName} — Validation de ${dossierRefs.length} devis`
+          : `[Portail Apporteur] ${auth.apporteurName} — Validation devis ${refsStr}`;
+        detailHtml = `
+          <p>L'apporteur <strong>${auth.apporteurName}</strong> a <strong style="color: #16a34a;">validé</strong> le(s) devis suivant(s) :</p>
+          <ul style="color: #16a34a; font-weight: bold;">
             ${dossierRefs.map(r => `<li>${r}</li>`).join('')}
           </ul>
           ${message ? `<p><strong>Commentaire :</strong> ${message}</p>` : ''}
