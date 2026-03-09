@@ -5,16 +5,6 @@
 
 import { cn } from '@/lib/utils';
 import { useApporteurTabs, APPORTEUR_MODULES } from './ApporteurTabsContext';
-import { ACCENT_THEMES, type AccentThemeKey } from '@/lib/accentThemes';
-
-// Mapping des accents par onglet
-const TAB_ACCENTS: Record<string, AccentThemeKey> = {
-  accueil: 'blue',
-  dossiers: 'purple',
-  demandes: 'pink',
-  rapport: 'orange',
-  profil: 'green',
-};
 
 export function ApporteurTabsBar() {
   const { tabs, activeTabId, setActiveTab } = useApporteurTabs();
