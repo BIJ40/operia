@@ -8,7 +8,7 @@
  * - Compteur de RDV visible
  */
 
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Maximize2, Users, Calendar, AlertCircle, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
