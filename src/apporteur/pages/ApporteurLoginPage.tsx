@@ -276,9 +276,10 @@ export function ApporteurLoginPage() {
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => navigate('/')}
+              asChild
               className="text-muted-foreground"
             >
+              <a href="http://www.helpconfort-40.fr" rel="noopener noreferrer">
               <Home className="w-4 h-4 mr-2" />
               Retour à l'accueil
             </Button>
