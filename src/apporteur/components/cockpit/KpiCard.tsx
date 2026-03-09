@@ -36,13 +36,13 @@ export function KpiCard({
       )}
       onClick={onClick}
     >
-      <CardContent className="pt-5 pb-4 px-5">
-        <div className="flex items-start justify-between gap-3">
+      <CardContent className="pt-3 pb-3 px-4">
+        <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide truncate">
+            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide truncate">
               {label}
             </p>
-            <p className="text-2xl font-bold text-foreground mt-1 truncate">{value}</p>
+            <p className="text-xl font-bold text-foreground mt-0.5 truncate">{value}</p>
             {hasTrend && (
               <div className={cn(
                 'flex items-center gap-1 mt-1.5 text-xs font-medium',
@@ -67,8 +67,8 @@ export function KpiCard({
               <p className="text-xs text-muted-foreground mt-1.5">{subtitle}</p>
             )}
           </div>
-          <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center shrink-0', iconBg)}>
-            <Icon className={cn('w-5 h-5', iconColor)} />
+          <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center shrink-0', iconBg)}>
+            <Icon className={cn('w-4 h-4', iconColor)} />
           </div>
         </div>
       </CardContent>

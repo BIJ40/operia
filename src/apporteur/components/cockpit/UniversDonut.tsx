@@ -27,13 +27,13 @@ export function UniversDonut({ data }: UniversDonutProps) {
 
   return (
     <Card className="rounded-2xl">
-      <CardContent className="pt-5 pb-4 px-5">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-4">
+      <CardContent className="pt-3 pb-3 px-4">
+        <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-2">
           Répartition par univers
         </p>
 
-        <div className="flex items-center gap-4">
-          <div className="w-32 h-32 shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-28 h-28 shrink-0">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
               <Pie

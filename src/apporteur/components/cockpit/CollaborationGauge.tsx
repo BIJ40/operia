@@ -23,14 +23,14 @@ export function CollaborationGauge({ data }: CollaborationGaugeProps) {
 
   return (
     <Card className="rounded-2xl">
-      <CardContent className="pt-5 pb-4 px-5">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-4">
+      <CardContent className="pt-3 pb-3 px-4">
+        <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-2">
           Indice de collaboration
         </p>
 
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4">
           {/* Gauge */}
-          <div className="relative w-24 h-24 shrink-0">
+          <div className="relative w-20 h-20 shrink-0">
             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
               <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeWidth="6" className="text-muted/20" />
               <circle
