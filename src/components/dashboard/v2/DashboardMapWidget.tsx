@@ -8,7 +8,7 @@
  * - Compteur de RDV visible
  */
 
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Maximize2, Users, Calendar, AlertCircle, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -64,54 +64,53 @@ function MapContentInner({
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
 
-  // Init map once
+  // Init map once — use setTimeout to ensure container has layout dimensions
   useEffect(() => {
     const container = mapContainerRef.current;
     if (!container || !mapboxToken) return;
 
-    // Wait for container to have actual dimensions
-    if (container.offsetWidth === 0 || container.offsetHeight === 0) {
-      console.warn('[MapWidget] Container has no dimensions, deferring init');
-      const raf = requestAnimationFrame(() => {
-        if (container.offsetWidth > 0 && container.offsetHeight > 0) {
-          // Trigger re-render by forcing effect re-run
-          container.dispatchEvent(new Event('resize'));
-        }
+    let map: mapboxgl.Map | null = null;
+
+    const timer = setTimeout(() => {
+      if (!container) return;
+      console.log('[MapWidget] Init. Container:', container.offsetWidth, 'x', container.offsetHeight);
+
+      mapboxgl.accessToken = mapboxToken;
+
+      map = new mapboxgl.Map({
+        container,
+        style: MAPBOX_STYLE,
+        center: [2.3522, 48.8566],
+        zoom: 10,
+        attributionControl: true,
+        failIfMajorPerformanceCaveat: false,
+        preserveDrawingBuffer: true,
       });
-      return () => cancelAnimationFrame(raf);
-    }
 
-    mapboxgl.accessToken = mapboxToken;
+      map.on('load', () => {
+        console.log('[MapWidget] Map loaded OK');
+        map?.resize();
+      });
 
-    const map = new mapboxgl.Map({
-      container,
-      style: MAPBOX_STYLE,
-      center: [2.3522, 48.8566],
-      zoom: 10,
-      attributionControl: true,
-      failIfMajorPerformanceCaveat: false,
-      preserveDrawingBuffer: true,
-    });
+      map.on('error', (e: any) => {
+        console.error('[MapWidget] Mapbox error:', e.error?.message || e);
+      });
 
-    map.on('load', () => {
-      console.log('[MapWidget] Map loaded OK. Container:', container.offsetWidth, 'x', container.offsetHeight);
-      map.resize();
-    });
+      if (isExpanded) {
+        map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
+      }
 
-    map.on('error', (e: any) => {
-      console.error('[MapWidget] Mapbox error:', e.error?.message || e);
-    });
-    if (isExpanded) {
-      map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
-    }
-
-    mapRef.current = map;
+      mapRef.current = map;
+    }, 150);
 
     return () => {
+      clearTimeout(timer);
       markersRef.current.forEach(m => m.remove());
       markersRef.current = [];
-      map.remove();
-      mapRef.current = null;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
     };
   }, [mapboxToken, isExpanded]);
 
