@@ -367,6 +367,7 @@ export function normalizeApogeeData(
     // Aggregate info from project's interventions for duration/priority
     const projectIntervs = interventions.filter(i => i.projectId === pid);
     let estimatedDuration = DURATION_FALLBACK.default;
+    let estimatedPassages: number | null = null;
     let priority: AppointmentPriority = "normal";
     let reason: PlanningUnscheduled["reason"] = "a_planifier";
 
