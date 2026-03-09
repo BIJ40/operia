@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Open+Sans:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -1155,3 +1157,68 @@ body[data-read-only] [draggable="true"] {
   cursor: default !important;
 }
 
+
+/* ============================================
+   THEME APPORTEUR (depan40) — Scoped
+   Bleu pro + Orange CTA, Montserrat / Open Sans
+   ============================================ */
+.apporteur-theme {
+  --background: 210 20% 98%;
+  --foreground: 215 25% 20%;
+  --card: 0 0% 100%;
+  --card-foreground: 215 25% 20%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 215 25% 20%;
+  --primary: 205 85% 45%;
+  --primary-foreground: 0 0% 100%;
+  --primary-light: 200 85% 55%;
+  --primary-dark: 210 85% 32%;
+  --secondary: 38 95% 55%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 210 20% 95%;
+  --muted-foreground: 215 15% 50%;
+  --accent: 205 85% 92%;
+  --accent-foreground: 205 85% 30%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 210 20% 90%;
+  --input: 210 20% 90%;
+  --ring: 205 85% 45%;
+  --radius: 0.75rem;
+
+  --gradient-hero: linear-gradient(135deg, hsl(205 85% 45%) 0%, hsl(200 85% 55%) 50%, hsl(195 80% 60%) 100%);
+  --gradient-cta: linear-gradient(135deg, hsl(38 95% 55%) 0%, hsl(30 95% 50%) 100%);
+  --shadow-card: 0 4px 20px -4px hsl(205 85% 45% / 0.12);
+  --shadow-card-hover: 0 8px 30px -4px hsl(205 85% 45% / 0.2);
+  --shadow-hero: 0 20px 60px -15px hsl(205 85% 45% / 0.3);
+
+  --font-display: 'Montserrat', sans-serif;
+  --font-body: 'Open Sans', sans-serif;
+
+  font-family: var(--font-body);
+}
+
+.apporteur-theme h1,
+.apporteur-theme h2,
+.apporteur-theme h3,
+.apporteur-theme h4,
+.apporteur-theme h5,
+.apporteur-theme h6 {
+  font-family: var(--font-display);
+}
+
+.apporteur-theme .shadow-apporteur {
+  box-shadow: var(--shadow-card);
+}
+
+.apporteur-theme .shadow-apporteur-hover {
+  box-shadow: var(--shadow-card-hover);
+}
+
+.apporteur-theme .bg-gradient-hero {
+  background: var(--gradient-hero);
+}
+
+.apporteur-theme .bg-gradient-cta {
+  background: var(--gradient-cta);
+}
