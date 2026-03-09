@@ -25,6 +25,7 @@ import {
   DrawerTitle,
   DrawerDescription,
 } from "@/components/ui/drawer";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 import type { PlanningUnscheduled } from "../../types";
 import type { Suggestion, HardBlock, SuggestPlanningResponse } from "@/hooks/usePlanningAugmente";
