@@ -73,8 +73,10 @@ Deno.serve(async (req: Request) => {
     if (!agency_id || !week_start) return withCors(req, new Response(JSON.stringify({ error: 'Missing params' }), { status: 400 }));
 
     const sb = createClient(supabaseUrl, serviceKey);
-    const { data: agency } = await sb.from('apogee_agencies').select('slug').eq('id', agency_id).single();
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(agency_id);
+    const { data: agency } = await sb.from('apogee_agencies').select('id, slug').eq(isUuid ? 'id' : 'slug', agency_id).single();
     if (!agency?.slug || !apiKey) return withCors(req, new Response(JSON.stringify({ error: 'No agency/key' }), { status: 400 }));
+    const agencyUuid = agency.id;
 
     console.log(`[OPTIMIZE] agency=${agency.slug} week=${week_start}`);
 
@@ -84,7 +86,7 @@ Deno.serve(async (req: Request) => {
       fetchApogee(agency.slug, 'getInterventionsCreneaux', apiKey),
       fetchApogee(agency.slug, 'apiGetInterventions', apiKey),
       sb.from('collaborators').select('id, apogee_user_id, first_name, last_name, type, role')
-        .eq('agency_id', agency_id).not('apogee_user_id', 'is', null).is('leaving_date', null)
+        .eq('agency_id', agencyUuid).not('apogee_user_id', 'is', null).is('leaving_date', null)
         .then(r => r.data || []),
       sb.from('technician_skills').select('collaborator_id, univers_code, level')
         .then(r => r.data || []),

@@ -379,15 +379,17 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
     const minSkillLevel = options?.min_skill_level ?? 2;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Get agency slug
+    // Get agency — accept UUID or slug
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(agency_id);
     const { data: agency } = await supabase
       .from('apogee_agencies')
-      .select('slug')
-      .eq('id', agency_id)
+      .select('id, slug')
+      .eq(isUuid ? 'id' : 'slug', agency_id)
       .single();
     if (!agency?.slug || !apiKey) {
       return withCors(req, new Response(JSON.stringify({ error: 'Agency not found or API key missing' }), { status: 400 }));
     }
+    const agencyUuid = agency.id;
 
     console.log(`[SUGGEST] agency=${agency.slug} dossier=${dossier_id}`);
 
@@ -411,7 +413,7 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
       supabase
         .from('collaborators')
         .select('id, apogee_user_id, first_name, last_name, type, role')
-        .eq('agency_id', agency_id)
+        .eq('agency_id', agencyUuid)
         .not('apogee_user_id', 'is', null)
         .is('leaving_date', null)
         .then(r => r.data || []),
@@ -426,7 +428,7 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
       supabase
         .from('planning_optimizer_config')
         .select('weights')
-        .eq('agency_id', agency_id)
+        .eq('agency_id', agencyUuid)
         .maybeSingle()
         .then(r => r.data),
     ]);
@@ -764,10 +766,10 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
     // =========================================================================
     try {
       await supabase.from('planning_suggestions').insert({
-        agency_id,
+        agency_id: agencyUuid,
         dossier_id,
         requested_by: user.id,
-        input_json: { agency_id, dossier_id, requiredCodes, estimatedDuration, minSkillLevel, weights },
+        input_json: { agency_id: agencyUuid, dossier_id, requiredCodes, estimatedDuration, minSkillLevel, weights },
         output_json: { suggestions: cleanSuggestions, alternatives: cleanAlternatives, blockers: uniqueBlockers },
         score_breakdown_json: {
           techs_total: techProfiles.length,
