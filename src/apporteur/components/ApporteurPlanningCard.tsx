@@ -310,7 +310,7 @@ export function ApporteurPlanningCard() {
           ) : (
             <div className="grid grid-cols-5 gap-px bg-border rounded-lg overflow-hidden">
               {weekDays.map((day, dayIdx) => {
-                const key = day.toISOString().split('T')[0];
+                const key = toLocalDateKey(day);
                 const bucket = eventsByDaySlot.get(key) || { matin: [], 'apres-midi': [] };
                 const isToday = isSameDay(day, new Date());
                 const dayNum = day.getDate();
