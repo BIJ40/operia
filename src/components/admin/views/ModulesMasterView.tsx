@@ -411,6 +411,23 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
       <div className="flex justify-center relative z-10">
         <OverridesPopover moduleKey={node.key} overrides={overrides} dimmed={!node.effectiveDeployed} />
       </div>
+
+      {/* Lien */}
+      <div className="flex justify-center">
+        {route ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-primary hover:text-primary/80 hover:bg-primary/10"
+            title={`Ouvrir ${node.label}`}
+            onClick={() => navigate(route)}
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+          </Button>
+        ) : (
+          <span className="text-muted-foreground/30 text-xs">—</span>
+        )}
+      </div>
     </div>
   );
 }
