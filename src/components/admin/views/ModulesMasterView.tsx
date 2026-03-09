@@ -59,7 +59,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { Layers, Monitor, Zap, TreePine, ChevronRight, CornerDownRight, X, Search, Users, Construction } from 'lucide-react';
+import { Layers, Monitor, Zap, TreePine, ChevronRight, CornerDownRight, X, Search, Users, Construction, ExternalLink } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 // ============================================================================
 // Role config for badges
@@ -296,7 +297,31 @@ function OverridesPopover({
 // Row component
 // ============================================================================
 
-const GRID_COLS = 'grid-cols-[minmax(200px,max-content)_80px_60px_80px_80px_140px_80px]';
+// Route mapping for module keys → app routes
+const MODULE_ROUTES: Record<string, string> = {
+  planning_v2: '/planning-v2',
+  agence: '/?tab=agence',
+  statistiques: '/?tab=stats',
+  commercial: '/commercial',
+  rh: '/rh',
+  parc: '/parc',
+  mediatheque: '/mediatheque',
+  apporteurs: '/apporteurs',
+  aide: '/aide',
+  ticketing: '/tickets',
+  apogee_tickets: '/tickets',
+  reseau_franchiseur: '/franchiseur',
+};
+
+function getModuleRoute(key: string): string | null {
+  // Check exact key first, then first segment
+  if (MODULE_ROUTES[key]) return MODULE_ROUTES[key];
+  const root = key.split('.')[0];
+  if (MODULE_ROUTES[root]) return MODULE_ROUTES[root];
+  return null;
+}
+
+const GRID_COLS = 'grid-cols-[minmax(200px,max-content)_80px_60px_80px_80px_140px_80px_50px]';
 
 interface ModuleRowProps {
   node: RegistryNode;
@@ -312,6 +337,8 @@ interface ModuleRowProps {
 }
 
 function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole, isUpdating, isCollapsed, onToggleCollapse, canDeploy, isDevSection }: ModuleRowProps) {
+  const navigate = useNavigate();
+  const route = getModuleRoute(node.key);
   const isNeutralized = !node.effectiveDeployed && node.is_deployed;
   const depthColors = ['text-primary', 'text-blue-500', 'text-violet-500', 'text-emerald-500'];
   const branchColor = depthColors[Math.min(node.depth, depthColors.length - 1)];
@@ -383,6 +410,23 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
       {/* Privilèges */}
       <div className="flex justify-center relative z-10">
         <OverridesPopover moduleKey={node.key} overrides={overrides} dimmed={!node.effectiveDeployed} />
+      </div>
+
+      {/* Lien */}
+      <div className="flex justify-center">
+        {route ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-primary hover:text-primary/80 hover:bg-primary/10"
+            title={`Ouvrir ${node.label}`}
+            onClick={() => navigate(route)}
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+          </Button>
+        ) : (
+          <span className="text-muted-foreground/30 text-xs">—</span>
+        )}
       </div>
     </div>
   );
@@ -514,6 +558,7 @@ export function ModulesMasterView() {
       <div className="text-center">Effectif</div>
       <div className="text-center">Rôle min.</div>
       <div className="text-center">Privil.</div>
+      <div className="text-center">Lien</div>
     </div>
   );
 
