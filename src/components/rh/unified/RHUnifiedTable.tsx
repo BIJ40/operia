@@ -141,7 +141,7 @@ export function RHUnifiedTable({
         .insert({
           agency_id: agencyId,
           asset_id: asset.id,
-          folder_id: folderId,
+          folder_id: finalFolderId,
           label: docInfo?.label || docType,
         });
 
