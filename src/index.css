@@ -1154,19 +1154,3 @@ body[data-read-only] [draggable="true"] {
   pointer-events: none !important;
   cursor: default !important;
 }
-
-/* Mapbox GL - Ensure canvas renders properly */
-.mapboxgl-map {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.mapboxgl-canvas-container,
-.mapboxgl-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-}
