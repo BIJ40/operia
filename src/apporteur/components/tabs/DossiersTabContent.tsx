@@ -606,16 +606,22 @@ export default function DossiersTabContent() {
                   <p className="text-sm text-muted-foreground">Client</p>
                   <p className="font-medium">{selectedDossier.clientName}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Ville</p>
-                  <p className="font-medium">{selectedDossier.city || '-'}</p>
-                </div>
-                {selectedDossier.rawState && (
+                {selectedDossier.city && (
                   <div>
-                    <p className="text-sm text-muted-foreground">État Apogée</p>
-                    <p className="font-medium">{selectedDossier.rawState}</p>
+                    <p className="text-sm text-muted-foreground">Ville</p>
+                    <p className="font-medium">{selectedDossier.city}</p>
                   </div>
                 )}
+                {selectedDossier.address && (
+                  <div className="col-span-2">
+                    <p className="text-sm text-muted-foreground">Adresse</p>
+                    <p className="font-medium">{selectedDossier.address}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm text-muted-foreground">Statut du dossier</p>
+                  <p className="font-medium">{getApporteurLabel(selectedDossier)}</p>
+                </div>
               </div>
 
               {/* Triple badges (V2) or single badge (V1) */}
