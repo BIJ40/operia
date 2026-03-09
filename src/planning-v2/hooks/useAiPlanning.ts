@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { startOfWeek, format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
+import { useAuthCore } from "@/contexts/AuthCoreContext";
 import { toast } from "sonner";
 import type {
   Suggestion,
@@ -57,15 +58,35 @@ export const DEFAULT_HARD_CONSTRAINTS: HardConstraints = {
 // ─── Hook principal ─────────────────────────────────────────────────────────
 export function useAiPlanning() {
   const { currentAgency } = useAgency();
-  const agencyId = currentAgency?.id;
+  const { user } = useAuthCore();
+  const agencySlug = currentAgency?.id; // This is actually the slug
   const queryClient = useQueryClient();
+
+  // Resolve the real UUID agency_id from the user's profile
+  const agencyUuidQuery = useQuery({
+    queryKey: ["agency-uuid", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("agency_id")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as any)?.agency_id as string | null;
+    },
+    enabled: !!user?.id,
+    staleTime: 30 * 60 * 1000, // 30 min cache
+  });
+
+  const agencyUuid = agencyUuidQuery.data;
 
   // --- Suggest planning for a dossier ---
   const suggestMutation = useMutation({
     mutationFn: async (dossierId: number): Promise<SuggestPlanningResponse> => {
-      if (!agencyId) throw new Error("Agence non définie");
+      if (!agencySlug) throw new Error("Agence non définie");
       const { data, error } = await supabase.functions.invoke("suggest-planning", {
-        body: { agency_id: agencyId, dossier_id: dossierId },
+        body: { agency_id: agencySlug, dossier_id: dossierId },
       });
       if (error) throw error;
       if (data && !data.success && data.error) throw new Error(data.error);
@@ -79,10 +100,10 @@ export function useAiPlanning() {
   // --- Optimize week ---
   const optimizeMutation = useMutation({
     mutationFn: async (selectedDate: Date): Promise<OptimizeWeekResponse> => {
-      if (!agencyId) throw new Error("Agence non définie");
+      if (!agencySlug) throw new Error("Agence non définie");
       const weekStart = format(startOfWeek(selectedDate, { weekStartsOn: 1 }), "yyyy-MM-dd");
       const { data, error } = await supabase.functions.invoke("optimize-week", {
-        body: { agency_id: agencyId, week_start: weekStart },
+        body: { agency_id: agencySlug, week_start: weekStart },
       });
       if (error) throw error;
       if (data && !data.success && data.error) throw new Error(data.error);
@@ -108,31 +129,31 @@ export function useAiPlanning() {
     },
   });
 
-  // --- Config (weights + hard constraints) ---
+  // --- Config (weights + hard constraints) — uses UUID ---
   const configQuery = useQuery({
-    queryKey: ["planning-optimizer-config", agencyId],
+    queryKey: ["planning-optimizer-config", agencyUuid],
     queryFn: async (): Promise<OptimizerConfig | null> => {
-      if (!agencyId) return null;
+      if (!agencyUuid) return null;
       const { data, error } = await supabase
         .from("planning_optimizer_config" as any)
         .select("*")
-        .eq("agency_id", agencyId)
+        .eq("agency_id", agencyUuid)
         .maybeSingle();
       if (error) throw error;
       return data as unknown as OptimizerConfig | null;
     },
-    enabled: !!agencyId,
+    enabled: !!agencyUuid,
     staleTime: 5 * 60 * 1000,
   });
 
   const saveConfig = useCallback(
     async (weights: ScoringWeights, hardConstraints: HardConstraints) => {
-      if (!agencyId) return;
+      if (!agencyUuid) return;
       const { error } = await supabase
         .from("planning_optimizer_config" as any)
         .upsert(
           {
-            agency_id: agencyId,
+            agency_id: agencyUuid,
             weights,
             hard_constraints: hardConstraints,
             updated_at: new Date().toISOString(),
@@ -144,9 +165,9 @@ export function useAiPlanning() {
         return;
       }
       toast.success("Configuration IA sauvegardée");
-      queryClient.invalidateQueries({ queryKey: ["planning-optimizer-config", agencyId] });
+      queryClient.invalidateQueries({ queryKey: ["planning-optimizer-config", agencyUuid] });
     },
-    [agencyId, queryClient]
+    [agencyUuid, queryClient]
   );
 
   return {
@@ -171,6 +192,6 @@ export function useAiPlanning() {
     isConfigLoading: configQuery.isLoading,
     saveConfig,
 
-    agencyId,
+    agencyId: agencySlug,
   };
 }
