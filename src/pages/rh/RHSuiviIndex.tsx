@@ -148,6 +148,14 @@ function RHSuiviContent() {
         backLabel="Retour RH"
         rightElement={
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowCompetencesMatrix(true)}
+            >
+              <Printer className="h-4 w-4 mr-2" />
+              <span className="hidden md:inline">Matrice compétences</span>
+            </Button>
             <ApogeeSyncButton
               agencySlug={agence || undefined}
               collaborators={collaborators}
