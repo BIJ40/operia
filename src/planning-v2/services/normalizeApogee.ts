@@ -416,13 +416,16 @@ export function normalizeApogeeData(
       else if (motif.includes("devis")) reason = "en_attente_devis";
     }
 
+    const rawUniverses: string[] = Array.isArray(project.data?.universes) ? project.data.universes : [];
+
     unscheduled.push({
       id: `unsched-proj-${pid}`,
       apogeeId: pid,
       dossierId: pid,
       client: clientName,
       city: client?.ville || client?.city || null,
-      universe: project.data?.universes?.[0] ?? null,
+      universe: rawUniverses[0] ?? null,
+      universes: rawUniverses,
       priority,
       estimatedDuration,
       estimatedPassages,

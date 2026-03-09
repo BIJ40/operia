@@ -100,6 +100,7 @@ export interface PlanningUnscheduled {
   client: string;
   city: string | null;
   universe: string | null;
+  universes: string[];
   priority: AppointmentPriority;
   estimatedDuration: number;
   estimatedPassages: number | null; // nombre de passages chiffrage

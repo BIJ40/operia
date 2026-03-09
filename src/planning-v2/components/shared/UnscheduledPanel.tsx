@@ -253,6 +253,21 @@ function UnscheduledCard({
         </Badge>
       </div>
 
+      {/* Universes */}
+      {item.universes && item.universes.length > 0 && (
+        <div className="flex items-center gap-1 flex-wrap mb-1.5">
+          {item.universes.map((u) => (
+            <Badge
+              key={u}
+              variant="secondary"
+              className="text-[9px] px-1.5 py-0 h-4 font-normal bg-muted/60 text-muted-foreground capitalize"
+            >
+              {u}
+            </Badge>
+          ))}
+        </div>
+      )}
+
       {/* Info row */}
       <div className="flex items-center gap-2 flex-wrap mb-1.5">
         <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
@@ -264,11 +279,6 @@ function UnscheduledCard({
             </span>
           )}
         </span>
-        {item.universe && (
-          <span className="text-[10px] text-muted-foreground truncate max-w-[100px]">
-            {item.universe}
-          </span>
-        )}
         {item.dossierId > 0 && (
           <span className="text-[10px] text-muted-foreground">
             #{item.dossierId}
