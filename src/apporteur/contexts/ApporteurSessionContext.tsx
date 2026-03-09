@@ -80,16 +80,19 @@ const getApiBaseUrl = () => {
 const fetchWithAuth = async (path: string, options: RequestInit = {}) => {
   const baseUrl = getApiBaseUrl();
   const token = getStoredToken();
-  const headers: HeadersInit = {
+  const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
+  
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '',
-    ...options.headers,
+    'apikey': anonKey,
+    // Use the anon key for Authorization so Supabase gateway accepts the request
+    'Authorization': `Bearer ${anonKey}`,
+    ...(options.headers as Record<string, string> || {}),
   };
 
-  // Add token to header for session validation
+  // Send apporteur token ONLY via custom header (not Authorization, which Supabase validates as JWT)
   if (token) {
-    (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
-    (headers as Record<string, string>)['x-apporteur-token'] = token;
+    headers['x-apporteur-token'] = token;
   }
 
   return fetch(`${baseUrl}${path}`, {
@@ -109,9 +112,11 @@ export function ApporteurSessionProvider({ children }: { children: ReactNode }) 
     
     try {
       const storedToken = getStoredToken();
+      console.log('[ApporteurSession] refreshSession — token present:', !!storedToken, 'length:', storedToken?.length || 0);
       
       // No stored token → no session
       if (!storedToken) {
+        console.log('[ApporteurSession] No stored token, clearing session');
         setSession(null);
         setIsLoading(false);
         return;
@@ -120,13 +125,17 @@ export function ApporteurSessionProvider({ children }: { children: ReactNode }) 
       // Quick restore from localStorage while we validate
       const storedSession = getStoredSessionData();
       if (storedSession && storedSession.expiresAt > new Date()) {
+        console.log('[ApporteurSession] Stored session found, validating with server...');
         // Validate with server
         const response = await fetchWithAuth('/apporteur-auth-validate-session', {
           method: 'GET',
         });
 
+        console.log('[ApporteurSession] Validate response status:', response.status);
+
         if (response.ok) {
           const data = await response.json();
+          console.log('[ApporteurSession] Validate response data valid:', data.valid);
           if (data.valid && data.session) {
             const newSession: ApporteurSession = {
               managerId: data.session.managerId,
@@ -146,6 +155,9 @@ export function ApporteurSessionProvider({ children }: { children: ReactNode }) 
             setIsLoading(false);
             return;
           }
+        } else {
+          const errorText = await response.text().catch(() => 'no body');
+          console.warn('[ApporteurSession] Validate failed:', response.status, errorText);
         }
         // Session invalid, clear it
         clearStoredSession();
