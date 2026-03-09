@@ -26,11 +26,10 @@ const SUB_TABS: FolderTabConfig[] = [
   { id: 'health', label: 'Santé', icon: Activity, accent: 'green' },
   { id: 'sitemap', label: 'Sitemap', icon: Map, accent: 'purple' },
   { id: 'flow', label: 'Flow', icon: GitBranch, accent: 'orange' },
-  { id: 'planning-ia', label: 'Planif. IA', icon: Brain, accent: 'blue' },
   { id: 'notifications', label: 'Notifs', icon: Bell, accent: 'orange' },
 ];
 
-const DEFAULT_TAB_ORDER = ['health', 'sitemap', 'flow', 'planning-ia', 'notifications'];
+const DEFAULT_TAB_ORDER = ['health', 'sitemap', 'flow', 'notifications'];
 const PLATFORM_TAB_IDS = SUB_TABS.map(tab => tab.id);
 
 function LoadingFallback() {
