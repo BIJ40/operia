@@ -559,6 +559,31 @@ export function useDeleteApporteurManager() {
 }
 
 /**
+ * Modifier un gestionnaire apporteur (nom, email, rôle)
+ */
+export function useUpdateApporteurManager() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string; email?: string; first_name?: string; last_name?: string; role?: string }) => {
+      const { error } = await supabase
+        .from('apporteur_managers')
+        .update(updates)
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['apporteur-managers'] });
+      toast.success('Utilisateur modifié');
+    },
+    onError: () => {
+      toast.error('Erreur lors de la modification');
+    },
+  });
+}
+
+/**
  * Mettre à jour l'apogee_client_id d'un apporteur (liaison Apogée)
  */
 export function useUpdateApporteurApogeeId() {
