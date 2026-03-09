@@ -303,6 +303,20 @@ Deno.serve(async (req) => {
       const rawTime = iData.heureDebut ?? iData.heure ?? iData.heureRdv ?? i.heureDebut ?? i.heure ?? null;
       const time = rawTime != null ? String(rawTime) : null;
 
+      events.push({
+        id: Number(i.id),
+        projectId,
+        projectRef: String(project?.ref || ''),
+        clientName,
+        city,
+        date: intDate.toISOString().split('T')[0],
+        time,
+        type,
+        typeLabel: getTypeLabel(type),
+        technicianName: i.userId ? usersMap[i.userId] || null : null,
+      });
+    }
+
     // Sort by date and time
     events.sort((a, b) => {
       const dateComp = a.date.localeCompare(b.date);
