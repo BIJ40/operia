@@ -9,18 +9,19 @@
  */
 
 import { captureEdgeException } from './sentry.ts';
-
-// Allowed origins for CORS — restrict to known domains
-const ALLOWED_ORIGINS = [
-  'https://operiav2.lovable.app',
-  'https://id-preview--e1e85053-04e1-4af8-bbaa-3e79b16d31ff.lovable.app',
-];
+import { isOriginAllowed, getCorsHeaders as getSharedCorsHeaders } from './cors.ts';
 
 function getCorsHeaders(req: Request): Record<string, string> {
   const origin = req.headers.get('origin') ?? '';
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  if (isOriginAllowed(origin)) {
+    return {
+      ...getSharedCorsHeaders(origin),
+      'Vary': 'Origin',
+    };
+  }
+  // Fallback for non-browser / server-to-server calls
   return {
-    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
     'Vary': 'Origin',
   };
