@@ -150,8 +150,8 @@ export default function ApporteurDashboard() {
                     {formatCurrency(kpis.devisEnvoyes.montant)}
                   </p>
                 </div>
-                <div className="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-                  <FileText className="w-6 h-6 text-orange-600" />
+                <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-secondary" />
                 </div>
               </div>
             </CardContent>

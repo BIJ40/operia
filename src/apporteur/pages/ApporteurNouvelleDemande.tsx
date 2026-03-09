@@ -190,7 +190,7 @@ export default function ApporteurNouvelleDemande() {
                     <SelectItem value="normal">Normal</SelectItem>
                     <SelectItem value="urgent">
                       <span className="flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4 text-orange-500" />
+                        <AlertTriangle className="w-4 h-4 text-[hsl(var(--ap-danger))]" />
                         Urgent
                       </span>
                     </SelectItem>
