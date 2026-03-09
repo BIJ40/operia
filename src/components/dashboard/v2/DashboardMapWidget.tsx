@@ -69,18 +69,6 @@ function MapContentInner({
     const container = mapContainerRef.current;
     if (!container || !mapboxToken) return;
 
-    // Wait for container to have actual dimensions
-    if (container.offsetWidth === 0 || container.offsetHeight === 0) {
-      console.warn('[MapWidget] Container has no dimensions, deferring init');
-      const raf = requestAnimationFrame(() => {
-        if (container.offsetWidth > 0 && container.offsetHeight > 0) {
-          // Trigger re-render by forcing effect re-run
-          container.dispatchEvent(new Event('resize'));
-        }
-      });
-      return () => cancelAnimationFrame(raf);
-    }
-
     mapboxgl.accessToken = mapboxToken;
 
     const map = new mapboxgl.Map({
@@ -94,7 +82,7 @@ function MapContentInner({
     });
 
     map.on('load', () => {
-      console.log('[MapWidget] Map loaded OK. Container:', container.offsetWidth, 'x', container.offsetHeight);
+      console.log('[MapWidget] Map loaded, resizing. Container size:', container.offsetWidth, container.offsetHeight);
       map.resize();
     });
 
@@ -157,7 +145,8 @@ function MapContentInner({
   return (
     <div 
       ref={mapContainerRef} 
-      style={{ width: '100%', height: '100%', minHeight: isExpanded ? '500px' : '240px' }}
+      className="absolute inset-0"
+      style={{ width: '100%', height: '100%' }}
     />
   );
 }
@@ -321,7 +310,7 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
       </div>
 
       {/* Carte compacte */}
-      <div className="w-full" style={{ height: '320px' }}>
+      <div className="relative w-full h-full min-h-[240px]">
         {!isExpanded && (
           <MapContentInner
             rdvs={filteredRdvs}
