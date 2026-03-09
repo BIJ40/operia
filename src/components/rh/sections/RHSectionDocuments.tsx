@@ -49,7 +49,17 @@ export function RHSectionDocuments({ collaborator }: Props) {
 
       if (!folder) return [];
 
-      // Get files from this folder and subfolders
+      // Get all subfolders (including the root folder itself)
+      const { data: subFolders } = await supabase
+        .from('media_folders')
+        .select('id')
+        .eq('agency_id', agencyId)
+        .eq('parent_id', folder.id)
+        .is('deleted_at', null);
+
+      const folderIds = [folder.id, ...(subFolders || []).map(f => f.id)];
+
+      // Get files from this folder and subfolders only
       const { data, error } = await supabase
         .from('media_links')
         .select(`
@@ -61,7 +71,8 @@ export function RHSectionDocuments({ collaborator }: Props) {
             file_size
           )
         `)
-        .eq('agency_id', agencyId)
+        .in('folder_id', folderIds)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
         .limit(5);
 
