@@ -1,5 +1,6 @@
 /**
- * Composant d'impression de la matrice Techniciens x Compétences
+ * Matrice Techniciens × Compétences (Univers + Sous-compétences)
+ * Colonnes groupées par univers parent
  */
 
 import { useRef } from 'react';
@@ -13,7 +14,8 @@ import {
 } from '@/components/ui/dialog';
 import { Printer, X, Check } from 'lucide-react';
 import { useRHCollaborators } from '@/hooks/useRHSuivi';
-import { useCompetencesCatalogue } from '@/hooks/useRHCompetencesCatalogue';
+import { useUniversCatalog } from '@/hooks/useUniversCatalog';
+import { useSubSkills, useAllCollaboratorSubSkills } from '@/hooks/useSubSkills';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -25,20 +27,34 @@ interface Props {
 export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
   const printRef = useRef<HTMLDivElement>(null);
   const { data: collaborators = [] } = useRHCollaborators();
-  const { data: catalogue = [] } = useCompetencesCatalogue();
+  const { data: universCatalog = [] } = useUniversCatalog();
+  const { data: allSubSkills = [] } = useSubSkills();
 
-  // Filter only technicians
-  const techniciens = collaborators.filter(c => 
+  // Filter only active technicians
+  const techniciens = collaborators.filter(c =>
     c.type === 'TECHNICIEN' && !c.leaving_date
   );
- 
-  // Get all unique competences (catalogue + réellement utilisées par les techniciens)
-  const allCompetences = Array.from(
-    new Set([
-      ...catalogue.map(c => c.label),
-      ...techniciens.flatMap(t => t.competencies?.competences_techniques || []),
-    ])
-  ).sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+
+  const technicianIds = techniciens.map(t => t.id);
+  const { data: allCollabSubSkills = [] } = useAllCollaboratorSubSkills(technicianIds);
+
+  // Build grouped structure: univers → sub-skills
+  const groupedColumns = universCatalog.map(univers => ({
+    univers,
+    subSkills: allSubSkills.filter(s => s.univers_id === univers.id).sort((a, b) =>
+      a.label.localeCompare(b.label, 'fr')
+    ),
+  }));
+
+  // Helper: does this tech have this univers?
+  const techHasUnivers = (techId: string, universLabel: string) => {
+    const tech = techniciens.find(t => t.id === techId);
+    return tech?.competencies?.competences_techniques?.includes(universLabel) ?? false;
+  };
+
+  // Helper: does this tech have this sub-skill?
+  const techHasSubSkill = (techId: string, subSkillId: string) =>
+    allCollabSubSkills.some(cs => cs.collaborator_id === techId && cs.sub_skill_id === subSkillId);
 
   const handlePrint = () => {
     const printContent = printRef.current;
@@ -54,99 +70,44 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
         <title>Matrice Techniciens x Compétences</title>
         <style>
           * { box-sizing: border-box; margin: 0; padding: 0; }
-          body { 
-            font-family: Arial, sans-serif; 
-            padding: 20px;
-            font-size: 11px;
-          }
-          h1 { 
-            font-size: 16px; 
-            margin-bottom: 5px;
-            text-align: center;
-          }
-          .date {
-            text-align: center;
-            color: #666;
-            margin-bottom: 20px;
-            font-size: 10px;
-          }
-          table { 
-            width: 100%; 
-            border-collapse: collapse;
-            table-layout: fixed;
-          }
-          th, td { 
-            border: 1px solid #333;
-            padding: 4px 6px;
-            text-align: center;
-          }
-          th { 
-            background: #f0f0f0;
-            font-weight: bold;
-          }
-          th.name-col {
-            text-align: left;
-            width: 150px;
-          }
-          th.comp-col {
+          body { font-family: Arial, sans-serif; padding: 15px; font-size: 10px; }
+          h1 { font-size: 14px; margin-bottom: 4px; text-align: center; }
+          .date { text-align: center; color: #666; margin-bottom: 15px; font-size: 9px; }
+          table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+          th, td { border: 1px solid #333; padding: 3px 4px; text-align: center; }
+          th { background: #f0f0f0; font-weight: bold; }
+          th.name-col { text-align: left; width: 130px; min-width: 130px; }
+          th.univers-header { background: #d4e6f1; font-size: 9px; font-weight: 700; }
+          th.sub-col {
             writing-mode: vertical-rl;
             text-orientation: mixed;
             transform: rotate(180deg);
-            height: 120px;
-            font-size: 10px;
-            padding: 8px 4px;
+            height: 100px;
+            font-size: 8px;
+            padding: 6px 3px;
+            font-weight: normal;
           }
-          td.name-cell {
-            text-align: left;
-            font-weight: 500;
-          }
-          td.has-comp {
-            background: #22c55e;
-          }
-          td.no-comp {
-            background: #fff;
-          }
-          .legend {
-            margin-top: 20px;
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            font-size: 10px;
-          }
-          .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-          }
-          .legend-box {
-            width: 16px;
-            height: 16px;
-            border: 1px solid #333;
-          }
+          td.name-cell { text-align: left; font-weight: 500; white-space: nowrap; }
+          td.has { background: #22c55e; }
+          td.no { background: #fff; }
+          .legend { margin-top: 15px; display: flex; gap: 20px; justify-content: center; font-size: 9px; }
+          .legend-item { display: flex; align-items: center; gap: 5px; }
+          .legend-box { width: 14px; height: 14px; border: 1px solid #333; }
           .legend-box.green { background: #22c55e; }
           .legend-box.white { background: #fff; }
-          @media print {
-            @page { size: landscape; }
-            body { padding: 10px; }
-          }
+          @media print { @page { size: landscape; margin: 10mm; } }
         </style>
       </head>
       <body>
         ${printContent.innerHTML}
         <div class="legend">
-          <div class="legend-item">
-            <div class="legend-box green"></div>
-            <span>Compétence acquise</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-box white"></div>
-            <span>Non acquise</span>
-          </div>
+          <div class="legend-item"><div class="legend-box green"></div><span>Compétence acquise</span></div>
+          <div class="legend-item"><div class="legend-box white"></div><span>Non acquise</span></div>
         </div>
       </body>
       </html>
     `);
-    
+
     printWindow.document.close();
     printWindow.focus();
     setTimeout(() => {
@@ -157,11 +118,11 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-auto">
+      <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Printer className="h-5 w-5" />
-            Matrice Techniciens x Compétences
+            Matrice Techniciens × Compétences
           </DialogTitle>
         </DialogHeader>
 
@@ -173,35 +134,63 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
 
           <table>
             <thead>
+              {/* Row 1: Univers group headers */}
               <tr>
-                <th className="name-col">Technicien</th>
-                {allCompetences.map(comp => (
-                  <th key={comp} className="comp-col">{comp}</th>
+                <th className="name-col" rowSpan={2}>Technicien</th>
+                {groupedColumns.map(({ univers, subSkills }) => (
+                  <th
+                    key={univers.id}
+                    className="univers-header"
+                    colSpan={Math.max(1, subSkills.length)}
+                  >
+                    {univers.label}
+                  </th>
                 ))}
+              </tr>
+              {/* Row 2: Sub-skill columns (or univers name if no sub-skills) */}
+              <tr>
+                {groupedColumns.map(({ univers, subSkills }) =>
+                  subSkills.length === 0 ? (
+                    <th key={univers.id} className="sub-col">
+                      ✓
+                    </th>
+                  ) : (
+                    subSkills.map(sub => (
+                      <th key={sub.id} className="sub-col">
+                        {sub.label}
+                      </th>
+                    ))
+                  )
+                )}
               </tr>
             </thead>
             <tbody>
-              {techniciens.map(tech => {
-                const techComps = tech.competencies?.competences_techniques || [];
-                return (
-                  <tr key={tech.id}>
-                    <td className="name-cell">
-                      {tech.first_name} {tech.last_name}
-                    </td>
-                    {allCompetences.map(comp => {
-                      const has = techComps.includes(comp);
-                      return (
-                        <td 
-                          key={comp} 
-                          className={has ? 'has-comp' : 'no-comp'}
+              {techniciens.map(tech => (
+                <tr key={tech.id}>
+                  <td className="name-cell">
+                    {tech.first_name} {tech.last_name}
+                  </td>
+                  {groupedColumns.map(({ univers, subSkills }) =>
+                    subSkills.length === 0 ? (
+                      <td
+                        key={univers.id}
+                        className={techHasUnivers(tech.id, univers.label) ? 'has' : 'no'}
+                      >
+                        {techHasUnivers(tech.id, univers.label) && '✓'}
+                      </td>
+                    ) : (
+                      subSkills.map(sub => (
+                        <td
+                          key={sub.id}
+                          className={techHasSubSkill(tech.id, sub.id) ? 'has' : 'no'}
                         >
-                          {has && <Check className="h-4 w-4 text-white mx-auto" />}
+                          {techHasSubSkill(tech.id, sub.id) && '✓'}
                         </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
+                      ))
+                    )
+                  )}
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
