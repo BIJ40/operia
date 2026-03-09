@@ -142,7 +142,7 @@ function PlanningV2ShellContent() {
 
       {/* ── Content ── */}
       <div className="flex-1 min-h-0 overflow-hidden flex">
-        <div className="flex-1 min-w-0 overflow-hidden">
+        <div className="flex-1 min-w-0 overflow-hidden h-full relative">
           {data.isLoading && data.technicians.length === 0 ? (
             <div className="flex items-center justify-center h-full">
               <div className="flex flex-col items-center gap-3 text-muted-foreground">
