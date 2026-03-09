@@ -53,10 +53,13 @@ export function OnlineUsers() {
   const loadOnlineUsers = async () => {
     try {
       // Récupérer les présences
+      // Ne garder que les présences récentes (< 2 min) pour éviter les fantômes
+      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
       const { data: presences, error } = await supabase
         .from('user_presence')
         .select('*')
         .eq('status', 'online')
+        .gte('last_seen', twoMinutesAgo)
         .order('last_seen', { ascending: false });
 
       if (error) throw error;
