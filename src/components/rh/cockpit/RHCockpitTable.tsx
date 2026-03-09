@@ -212,6 +212,26 @@ export function RHCockpitTable({
       >
         {renderDrawerContent()}
       </RHCockpitDrawer>
+      {/* Dialog gestionnaire de documents */}
+      <Dialog open={!!docManagerCollab} onOpenChange={(open) => !open && setDocManagerCollab(null)}>
+        <DialogContent className="max-w-6xl w-[96vw] h-[90vh] p-0 overflow-hidden">
+          <div className="h-full flex flex-col">
+            <div className="px-4 py-3 border-b bg-muted/30">
+              <p className="font-semibold truncate">
+                Documents — {docManagerCollab?.first_name} {docManagerCollab?.last_name}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Gestion complète des documents du collaborateur
+              </p>
+            </div>
+            <div className="flex-1 overflow-auto p-4">
+              {docManagerCollab && (
+                <HRDocumentManager collaboratorId={docManagerCollab.id} canManage={canManage} />
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
