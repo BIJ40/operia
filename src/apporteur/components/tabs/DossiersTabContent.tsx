@@ -215,8 +215,16 @@ export default function DossiersTabContent() {
     }
   };
 
+  const handleBulkValidation = () => {
+    const refs = Array.from(selectedRefs);
+    if (refs.length > 0) {
+      setValiderDevisRefs(refs);
+    }
+  };
+
   // Determine available actions for a dossier
   const canRefuserDevis = (d: DossierRow) => d.status === 'devis_envoye';
+  const canValiderDevis = (d: DossierRow) => d.status === 'devis_envoye';
   const canDeclareRegle = (d: DossierRow) => d.restedu > 0 && d.factureId !== null;
   const isInactif = (d: DossierRow) => d.status === 'stand_by' || d.status === 'en_cours';
 
