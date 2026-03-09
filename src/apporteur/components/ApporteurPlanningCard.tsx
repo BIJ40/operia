@@ -77,8 +77,11 @@ function toLocalDateKey(date: Date): string {
 
 function getTimeSlot(time: string | null): 'matin' | 'apres-midi' {
   if (!time) return 'matin';
-  const hour = parseInt(time.split(':')[0] || '8', 10);
-  return hour < 13 ? 'matin' : 'apres-midi';
+  // Handle formats: "14:00", "14:00:00", "1400", "14h00", etc.
+  const cleaned = time.replace(/[^0-9]/g, ''); // keep digits only
+  const hour = cleaned.length >= 2 ? parseInt(cleaned.substring(0, 2), 10) : parseInt(cleaned, 10);
+  if (isNaN(hour)) return 'matin';
+  return hour >= 13 ? 'apres-midi' : 'matin';
 }
 
 const DAYS_FR = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'];

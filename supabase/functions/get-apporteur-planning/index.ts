@@ -256,7 +256,9 @@ Deno.serve(async (req) => {
       const city = clientData.ville || '';
 
       const type = String(i.type || i.type2 || 'intervention').toLowerCase();
-      const time = i.heureDebut || i.heure || null;
+      const rawTime = i.heureDebut ?? i.heure ?? i.heureRdv ?? i.time ?? null;
+      // Normalize: could be number (1400), string ("14:00"), etc.
+      const time = rawTime != null ? String(rawTime) : null;
 
       events.push({
         id: Number(i.id),
@@ -280,7 +282,7 @@ Deno.serve(async (req) => {
       return 0;
     });
 
-    console.log(`[GET-APPORTEUR-PLANNING] ${events.length} upcoming events`);
+    console.log(`[GET-APPORTEUR-PLANNING] ${events.length} upcoming events, times:`, events.map(e => ({ id: e.id, time: e.time, date: e.date })));
 
     return withCors(req, new Response(
       JSON.stringify({ 
