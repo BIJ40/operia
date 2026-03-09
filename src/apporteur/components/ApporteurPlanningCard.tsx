@@ -308,66 +308,100 @@ export function ApporteurPlanningCard() {
               <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <div className="grid grid-cols-5 gap-px bg-border rounded-lg overflow-hidden">
-              {weekDays.map((day, dayIdx) => {
-                const key = toLocalDateKey(day);
-                const bucket = eventsByDaySlot.get(key) || { matin: [], 'apres-midi': [] };
-                const isToday = isSameDay(day, new Date());
-                const dayNum = day.getDate();
-
-                return (
-                  <div
-                    key={dayIdx}
-                    className={cn(
-                      "bg-card flex flex-col min-h-[180px]",
-                      isToday && "bg-primary/[0.03]"
-                    )}
-                  >
-                    {/* Day header */}
-                    <div className={cn(
-                      "text-center py-1.5 border-b",
-                      isToday ? "bg-primary text-primary-foreground" : "bg-muted/50"
-                    )}>
+            <div className="rounded-lg overflow-hidden border">
+              {/* Day headers row */}
+              <div className="grid grid-cols-[40px_repeat(5,1fr)] bg-muted/50">
+                <div className="border-b border-r" /> {/* corner */}
+                {weekDays.map((day, dayIdx) => {
+                  const isToday = isSameDay(day, new Date());
+                  return (
+                    <div
+                      key={dayIdx}
+                      className={cn(
+                        "text-center py-1.5 border-b border-r last:border-r-0",
+                        isToday ? "bg-primary text-primary-foreground" : ""
+                      )}
+                    >
                       <p className="text-[11px] font-medium uppercase tracking-wide">
                         {DAYS_FR[dayIdx]}
                       </p>
                       <p className={cn("text-lg font-bold leading-none", isToday ? "text-primary-foreground" : "text-foreground")}>
-                        {dayNum}
+                        {day.getDate()}
                       </p>
                     </div>
+                  );
+                })}
+              </div>
 
-                    {/* Matin */}
-                    <div className="flex-1 p-1.5 space-y-1 border-b border-dashed">
-                      <div className="flex items-center gap-1 mb-0.5">
-                        <Sun className="w-3 h-3 text-amber-500" />
-                        <span className="text-[10px] text-muted-foreground font-medium uppercase">Matin</span>
-                      </div>
+              {/* MATIN row */}
+              <div className="grid grid-cols-[40px_repeat(5,1fr)] border-b border-dashed">
+                {/* Vertical label */}
+                <div className="flex items-center justify-center border-r bg-amber-50 dark:bg-amber-950/20">
+                  <div className="flex flex-col items-center gap-1">
+                    <Sun className="w-3.5 h-3.5 text-[hsl(var(--ap-warning))]" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--ap-warning))]" style={{ writingMode: 'vertical-lr' }}>
+                      Matin
+                    </span>
+                  </div>
+                </div>
+                {weekDays.map((day, dayIdx) => {
+                  const key = toLocalDateKey(day);
+                  const bucket = eventsByDaySlot.get(key) || { matin: [], 'apres-midi': [] };
+                  const isToday = isSameDay(day, new Date());
+                  return (
+                    <div
+                      key={dayIdx}
+                      className={cn(
+                        "p-1.5 space-y-1 min-h-[90px] border-r last:border-r-0",
+                        isToday && "bg-primary/[0.03]"
+                      )}
+                    >
                       {bucket.matin.length === 0 ? (
-                        <p className="text-[10px] text-muted-foreground/50 text-center py-2">—</p>
+                        <p className="text-[10px] text-muted-foreground/40 text-center py-4">—</p>
                       ) : (
                         bucket.matin.map(ev => (
                           <EventCard key={ev.id} event={ev} onClick={() => setSelectedEvent(ev)} />
                         ))
                       )}
                     </div>
+                  );
+                })}
+              </div>
 
-                    {/* Après-midi */}
-                    <div className="flex-1 p-1.5 space-y-1">
-                      <div className="flex items-center gap-1 mb-0.5">
-                        <Moon className="w-3 h-3 text-indigo-400" />
-                        <span className="text-[10px] text-muted-foreground font-medium uppercase">Après-midi</span>
-                      </div>
+              {/* APRÈS-MIDI row */}
+              <div className="grid grid-cols-[40px_repeat(5,1fr)]">
+                {/* Vertical label */}
+                <div className="flex items-center justify-center border-r bg-indigo-50 dark:bg-indigo-950/20">
+                  <div className="flex flex-col items-center gap-1">
+                    <Moon className="w-3.5 h-3.5 text-[hsl(var(--ap-info))]" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--ap-info))]" style={{ writingMode: 'vertical-lr' }}>
+                      Après-midi
+                    </span>
+                  </div>
+                </div>
+                {weekDays.map((day, dayIdx) => {
+                  const key = toLocalDateKey(day);
+                  const bucket = eventsByDaySlot.get(key) || { matin: [], 'apres-midi': [] };
+                  const isToday = isSameDay(day, new Date());
+                  return (
+                    <div
+                      key={dayIdx}
+                      className={cn(
+                        "p-1.5 space-y-1 min-h-[90px] border-r last:border-r-0",
+                        isToday && "bg-primary/[0.03]"
+                      )}
+                    >
                       {bucket['apres-midi'].length === 0 ? (
-                        <p className="text-[10px] text-muted-foreground/50 text-center py-2">—</p>
+                        <p className="text-[10px] text-muted-foreground/40 text-center py-4">—</p>
                       ) : (
                         bucket['apres-midi'].map(ev => (
                           <EventCard key={ev.id} event={ev} onClick={() => setSelectedEvent(ev)} />
                         ))
                       )}
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           )}
         </CardContent>
