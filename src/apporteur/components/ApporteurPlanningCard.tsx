@@ -209,7 +209,7 @@ export function ApporteurPlanningCard() {
     const map = new Map<string, { matin: PlanningEvent[]; 'apres-midi': PlanningEvent[] }>();
 
     for (const day of weekDays) {
-      const key = day.toISOString().split('T')[0];
+      const key = toLocalDateKey(day);
       map.set(key, { matin: [], 'apres-midi': [] });
     }
 
