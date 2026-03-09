@@ -480,7 +480,7 @@ Deno.serve(async (req) => {
         id: projectId,
         ref: String(p.ref || ''),
         clientName,
-        address: '***',
+        address,
         city,
         status,
         statusLabel: label,
