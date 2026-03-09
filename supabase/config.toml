@@ -198,3 +198,6 @@ verify_jwt = true
 
 [functions.health-check]
 verify_jwt = false
+
+[functions.apporteur-dossier-action]
+verify_jwt = false
