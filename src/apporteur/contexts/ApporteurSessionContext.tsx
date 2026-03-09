@@ -112,9 +112,11 @@ export function ApporteurSessionProvider({ children }: { children: ReactNode }) 
     
     try {
       const storedToken = getStoredToken();
+      console.log('[ApporteurSession] refreshSession — token present:', !!storedToken, 'length:', storedToken?.length || 0);
       
       // No stored token → no session
       if (!storedToken) {
+        console.log('[ApporteurSession] No stored token, clearing session');
         setSession(null);
         setIsLoading(false);
         return;
