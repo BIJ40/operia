@@ -185,6 +185,12 @@ Deno.serve(async (req) => {
       if (raisonSociale.length > 2 && (!client.prenom || String(client.prenom).trim().length === 0)) {
         return true;
       }
+
+      // Detect company names: all uppercase with 3+ chars (e.g. NESTENN, FONCIA)
+      const nom = String(client.nom || client.name || '').trim();
+      if (nom.length >= 3 && nom === nom.toUpperCase() && /[A-Z]/.test(nom)) {
+        return true;
+      }
       
       return false;
     };
