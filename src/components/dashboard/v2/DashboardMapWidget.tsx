@@ -323,7 +323,7 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
                     Carte des RDV du jour
                   </DialogTitle>
                 </DialogHeader>
-                <div className="relative fclassName="relative flex-1 w-full h-full min-h-[500px]">
+                <div className="relative flex-1 w-full h-full min-h-[500px]">
                   {isExpanded && (
                     <MapContent
                       rdvs={filteredRdvs}
