@@ -419,6 +419,7 @@ export function normalizeApogeeData(
       universe: project.data?.universes?.[0] ?? null,
       priority,
       estimatedDuration,
+      estimatedPassages,
       requiredSkills: [],
       reason,
       dueDate: null,

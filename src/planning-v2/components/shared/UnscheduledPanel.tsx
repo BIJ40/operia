@@ -3,7 +3,15 @@
  * Panneau latéral rétractable avec filtre 1er RDV / Travaux
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
+
+/** Format minutes → "Xh" ou "XhYY" */
+function formatDuration(minutes: number): string {
+  if (minutes < 60) return `${minutes} min`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m > 0 ? `${h}h${String(m).padStart(2, "0")}` : `${h}h`;
+}
 import {
   AlertCircle,
   Clock,
