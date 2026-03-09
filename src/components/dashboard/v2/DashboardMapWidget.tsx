@@ -310,7 +310,7 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
       {/* Carte compacte */}
       <div className="relative w-full h-full min-h-[240px]">
         {!isExpanded && (
-          <MapContent
+          <MapContentInner
             rdvs={filteredRdvs}
             selectedRdv={selectedRdv}
             onSelectRdv={setSelectedRdv}
