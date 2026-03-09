@@ -206,8 +206,6 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
     });
   }, [rdvs, timeFilter]);
 
-  const compactMapRef = useRef<HTMLDivElement>(null);
-  const expandedMapRef = useRef<HTMLDivElement>(null);
 
   if (isLoading || tokenLoading) {
     return (
