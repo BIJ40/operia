@@ -297,7 +297,31 @@ function OverridesPopover({
 // Row component
 // ============================================================================
 
-const GRID_COLS = 'grid-cols-[minmax(200px,max-content)_80px_60px_80px_80px_140px_80px]';
+// Route mapping for module keys → app routes
+const MODULE_ROUTES: Record<string, string> = {
+  planning_v2: '/planning-v2',
+  agence: '/?tab=agence',
+  statistiques: '/?tab=stats',
+  commercial: '/commercial',
+  rh: '/rh',
+  parc: '/parc',
+  mediatheque: '/mediatheque',
+  apporteurs: '/apporteurs',
+  aide: '/aide',
+  ticketing: '/tickets',
+  apogee_tickets: '/tickets',
+  reseau_franchiseur: '/franchiseur',
+};
+
+function getModuleRoute(key: string): string | null {
+  // Check exact key first, then first segment
+  if (MODULE_ROUTES[key]) return MODULE_ROUTES[key];
+  const root = key.split('.')[0];
+  if (MODULE_ROUTES[root]) return MODULE_ROUTES[root];
+  return null;
+}
+
+const GRID_COLS = 'grid-cols-[minmax(200px,max-content)_80px_60px_80px_80px_140px_80px_50px]';
 
 interface ModuleRowProps {
   node: RegistryNode;
