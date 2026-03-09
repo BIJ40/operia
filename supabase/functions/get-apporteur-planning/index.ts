@@ -272,24 +272,36 @@ Deno.serve(async (req) => {
       const clientName = candidateNames[0] || 'Client inconnu';
       const city = clientData.ville || '';
 
-      const type = String(i.type || i.type2 || 'intervention').toLowerCase();
-      const rawTime = i.heureDebut ?? i.heure ?? i.heureRdv ?? i.time ?? null;
-      // Normalize: could be number (1400), string ("14:00"), etc.
-      const time = rawTime != null ? String(rawTime) : null;
+      // Log first matching intervention's full keys + time-related values
+      if (!loggedSample) {
+        loggedSample = true;
+        console.log(`[GET-APPORTEUR-PLANNING] Sample intervention keys:`, Object.keys(i));
+        if (i.data && typeof i.data === 'object') {
+          console.log(`[GET-APPORTEUR-PLANNING] Sample i.data keys:`, Object.keys(i.data as Record<string, unknown>));
+        }
+      }
 
-      events.push({
-        id: Number(i.id),
-        projectId,
-        projectRef: String(project?.ref || ''),
-        clientName,
-        city,
-        date: intDate.toISOString().split('T')[0],
-        time,
-        type,
-        typeLabel: getTypeLabel(type),
-        technicianName: i.userId ? usersMap[i.userId] || null : null,
-      });
-    }
+      const intDate = parseDate(i.dateReelle || i.date);
+      if (!intDate || intDate < bounds.start) continue;
+
+      const project = projectsMap[projectId];
+      const clientData = project?.data || {};
+
+      // Nom du client final : project.clientId -> apiGetClients
+      const finalClientId = project?.clientId != null ? String(project.clientId) : null;
+      const candidateNames = [finalClientId ? clientsMap[finalClientId] : null]
+        .map((v) => (typeof v === 'string' ? v.trim() : ''))
+        .filter((v) => v && v.toLowerCase() !== 'client');
+
+      const clientName = candidateNames[0] || 'Client inconnu';
+      const city = clientData.ville || '';
+
+      const type = String(i.type || i.type2 || 'intervention').toLowerCase();
+      
+      // heureDebut is nested inside i.data (see apogeeSchema: path 'data.heureDebut')
+      const iData = (i.data && typeof i.data === 'object') ? i.data as Record<string, unknown> : {};
+      const rawTime = iData.heureDebut ?? iData.heure ?? iData.heureRdv ?? i.heureDebut ?? i.heure ?? null;
+      const time = rawTime != null ? String(rawTime) : null;
 
     // Sort by date and time
     events.sort((a, b) => {
