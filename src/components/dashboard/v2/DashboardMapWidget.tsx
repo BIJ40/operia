@@ -199,7 +199,6 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
       transition={{ duration: 0.4 }}
       className={cn(
         'relative rounded-warm overflow-hidden border border-border/50 h-full min-h-[240px]',
-        'bg-gradient-to-br from-warm-blue/10 to-warm-teal/5',
         'shadow-warm',
         className
       )}
@@ -278,7 +277,7 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
                     Carte des RDV du jour
                   </DialogTitle>
                 </DialogHeader>
-                <div ref={expandedMapRef} className="flex-1 w-full h-full min-h-[500px]">
+                <div ref={expandedMapRef} className="relative flex-1 w-full h-full min-h-[500px]">
                   {isExpanded && (
                     <MapContent
                       rdvs={filteredRdvs}
@@ -297,7 +296,7 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
       </div>
 
       {/* Carte compacte */}
-      <div ref={compactMapRef} className="w-full h-full min-h-[240px]">
+      <div ref={compactMapRef} className="relative w-full h-full min-h-[240px]">
         {!isExpanded && (
           <MapContent
             rdvs={filteredRdvs}
