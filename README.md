@@ -1,4 +1,4 @@
-# Manuel CRM Apogée - Guide d'utilisation éditable
+# Manuel CRM Apogée - Guide d'utilisation éditable  
 
 [![Operia CI](https://github.com/<OWNER>/<REPO>/actions/workflows/operia-ci.yml/badge.svg)](https://github.com/<OWNER>/<REPO>/actions/workflows/operia-ci.yml)
  
