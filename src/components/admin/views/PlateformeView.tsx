@@ -11,7 +11,7 @@ import {
   DraggableFolderContentContainer,
   FolderTabConfig 
 } from '@/components/ui/draggable-folder-tabs';
-import { Activity, Map, GitBranch, Bell, Loader2 } from 'lucide-react';
+import { Activity, Map, GitBranch, Bader2 } from 'lucide-react';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { MaintenanceModeCard } from '@/components/admin/MaintenanceModeCard';
 import { useSessionState } from '@/hooks/useSessionState';
@@ -20,8 +20,7 @@ import { usePersistedTab } from '@/hooks/usePersistedState';
 const AdminSystemHealth = lazy(() => import('@/pages/AdminSystemHealth'));
 const AdminSitemap = lazy(() => import('@/pages/admin/AdminSitemap'));
 const AdminFlow = lazy(() => import('@/pages/admin/AdminFlow'));
-const PlanningAugmenteAdmin = lazy(() => import('@/components/planning-augmente/PlanningAugmenteAdmin'));
-const TicketNotificationSettings = lazy(() => import('@/components/admin/TicketNotificationSettings'));
+const P// PlanningAugmenteAdmin removed — replaced by planning-v2TicketNotificationSettings = lazy(() => import('@/components/admin/TicketNotificationSettings'));
 
 const SUB_TABS: FolderTabConfig[] = [
   { id: 'health', label: 'Santé', icon: Activity, accent: 'green' },
