@@ -63,9 +63,8 @@ function MapContentInner({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
-  const [mapReady, setMapReady] = useState(false);
 
-  // Init map
+  // Init map once
   useEffect(() => {
     const container = mapContainerRef.current;
     if (!container || !mapboxToken) return;
@@ -82,10 +81,7 @@ function MapContentInner({
       preserveDrawingBuffer: true,
     });
 
-    map.on('load', () => {
-      setMapReady(true);
-      map.resize();
-    });
+    map.once('load', () => map.resize());
 
     if (isExpanded) {
       map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
@@ -94,7 +90,6 @@ function MapContentInner({
     mapRef.current = map;
 
     return () => {
-      setMapReady(false);
       markersRef.current.forEach(m => m.remove());
       markersRef.current = [];
       map.remove();
@@ -102,10 +97,10 @@ function MapContentInner({
     };
   }, [mapboxToken, isExpanded]);
 
-  // Update markers when map is ready or rdvs change
+  // Markers — no need to wait for 'load', DOM markers work immediately
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !mapReady) return;
+    if (!map) return;
 
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
@@ -123,15 +118,23 @@ function MapContentInner({
       markersRef.current.push(marker);
     });
 
+    // Fit bounds — wait for style to be ready
     const bounds = calculateBounds(rdvs);
     if (bounds && rdvs.length > 0) {
-      map.fitBounds(bounds as [[number, number], [number, number]], {
-        padding: isExpanded ? 60 : 40,
-        maxZoom: 14,
-        duration: 500,
-      });
+      const doFit = () => {
+        map.fitBounds(bounds as [[number, number], [number, number]], {
+          padding: isExpanded ? 60 : 40,
+          maxZoom: 14,
+          duration: 500,
+        });
+      };
+      if (map.isStyleLoaded()) {
+        doFit();
+      } else {
+        map.once('load', doFit);
+      }
     }
-  }, [rdvs, selectedRdv, onSelectRdv, isExpanded, mapReady]);
+  }, [rdvs, selectedRdv, onSelectRdv, isExpanded]);
 
   return (
     <div 
