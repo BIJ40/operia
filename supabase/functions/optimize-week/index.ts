@@ -86,7 +86,7 @@ Deno.serve(async (req: Request) => {
       fetchApogee(agency.slug, 'getInterventionsCreneaux', apiKey),
       fetchApogee(agency.slug, 'apiGetInterventions', apiKey),
       sb.from('collaborators').select('id, apogee_user_id, first_name, last_name, type, role')
-        .eq('agency_id', agency_id).not('apogee_user_id', 'is', null).is('leaving_date', null)
+        .eq('agency_id', agencyUuid).not('apogee_user_id', 'is', null).is('leaving_date', null)
         .then(r => r.data || []),
       sb.from('technician_skills').select('collaborator_id, univers_code, level')
         .then(r => r.data || []),
