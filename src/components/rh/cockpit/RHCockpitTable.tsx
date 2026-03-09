@@ -104,7 +104,10 @@ export function RHCockpitTable({
       case 'parc':
         return <RHCockpitDrawerParc {...commonProps} />;
       case 'docs':
-        return <RHCockpitDrawerDocs {...commonProps} />;
+        return <RHCockpitDrawerDocs {...commonProps} onOpenFinder={() => {
+          setDocManagerCollab(drawer.collaborator);
+          handleCloseDrawer(false);
+        }} />;
       case 'competences':
         return <RHCockpitDrawerCompetences {...commonProps} />;
       default:
