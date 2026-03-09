@@ -1,10 +1,9 @@
 /**
- * ApporteurPlanningCard - Planning semaine des RDV pour l'apporteur
+ * ApporteurPlanningCard - 10 prochains RDV chronologiques
  */
 
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   Sheet,
@@ -41,7 +40,6 @@ import {
 import { cn } from '@/lib/utils';
 import { STEPPER_STEPS_ORDERED, STEPPER_LABELS, type StepperStep } from '../types/apporteur-dossier-v2';
 
-const DAY_NAMES_FULL = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 const TYPE_COLORS: Record<string, string> = {
   rt: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   travaux: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
@@ -61,7 +59,6 @@ function getTypeColor(type: string): string {
 
 /** Mini stepper for dossier detail */
 function DossierStepper({ dossier }: { dossier: DossierRow }) {
-  // Determine completed steps from dossier dates
   const completedSteps: StepperStep[] = [];
   if (dossier.dateCreation) completedSteps.push('created');
   if (dossier.datePremierRdv) completedSteps.push('rdv_planned');
@@ -119,14 +116,21 @@ export function ApporteurPlanningCard() {
     return map;
   }, [dossiers]);
 
-  // Group events by day
-  const eventsByDay: Record<string, PlanningEvent[]> = {};
-  for (const event of events) {
-    if (!eventsByDay[event.date]) {
-      eventsByDay[event.date] = [];
-    }
-    eventsByDay[event.date].push(event);
-  }
+  // Sort all events chronologically and take next 10
+  const next10Events = useMemo(() => {
+    const now = new Date();
+    return [...events]
+      .filter(e => {
+        const eventDate = new Date(`${e.date}T${e.time || '00:00'}`);
+        return eventDate >= now;
+      })
+      .sort((a, b) => {
+        const da = `${a.date}T${a.time || '00:00'}`;
+        const db = `${b.date}T${b.time || '00:00'}`;
+        return da.localeCompare(db);
+      })
+      .slice(0, 10);
+  }, [events]);
 
   const selectedDossier = selectedEvent ? dossiersById.get(selectedEvent.projectId) : null;
 
@@ -150,8 +154,8 @@ export function ApporteurPlanningCard() {
           <CardTitle className="text-lg flex items-center gap-2">
             <Calendar className="w-5 h-5 text-primary" />
             Prochains RDV
-            {events.length > 0 && (
-              <Badge variant="secondary" className="text-xs ml-auto">{events.length}</Badge>
+            {next10Events.length > 0 && (
+              <Badge variant="secondary" className="text-xs ml-auto">{next10Events.length}</Badge>
             )}
           </CardTitle>
         </CardHeader>
@@ -160,71 +164,57 @@ export function ApporteurPlanningCard() {
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
             </div>
-          ) : Object.keys(eventsByDay).length === 0 ? (
+          ) : next10Events.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground py-6">
-              Aucun RDV planifié cette semaine
+              Aucun RDV planifié à venir
             </p>
           ) : (
-            <div className="space-y-3">
-              {Object.entries(eventsByDay)
-                .sort(([a], [b]) => a.localeCompare(b))
-                .map(([date, dayEvents]) => {
-                  const d = new Date(date);
-                  const isToday = date === new Date().toISOString().split('T')[0];
-                  const dayName = DAY_NAMES_FULL[d.getDay()];
-                  const dayNum = d.getDate();
-                  const monthStr = d.toLocaleDateString('fr-FR', { month: 'short' });
+            <div className="space-y-1">
+              {next10Events.map((event) => {
+                const d = new Date(event.date);
+                const isToday = event.date === new Date().toISOString().split('T')[0];
+                const dayLabel = d.toLocaleDateString('fr-FR', {
+                  weekday: 'short',
+                  day: 'numeric',
+                  month: 'short',
+                });
 
-                  return (
-                    <div key={date} className={cn(
-                      "rounded-xl border p-3",
-                      isToday ? "bg-primary/5 border-primary/30" : "bg-muted/20 border-border"
+                return (
+                  <div
+                    key={event.id}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all hover:bg-muted/50",
+                      isToday && "bg-primary/5"
+                    )}
+                    onClick={() => setSelectedEvent(event)}
+                  >
+                    {/* Date */}
+                    <span className={cn(
+                      "text-xs font-medium w-20 shrink-0 capitalize",
+                      isToday ? "text-primary" : "text-muted-foreground"
                     )}>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className={cn(
-                          "text-sm font-semibold capitalize",
-                          isToday ? "text-primary" : "text-foreground"
-                        )}>
-                          {dayName} {dayNum} {monthStr}
-                        </span>
-                        {isToday && (
-                          <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-primary/40 text-primary">
-                            Aujourd'hui
-                          </Badge>
-                        )}
-                        <Badge variant="secondary" className="text-[10px] h-4 px-1.5 ml-auto">
-                          {dayEvents.length} RDV
-                        </Badge>
-                      </div>
-                      <div className="space-y-1.5">
-                        {dayEvents
-                          .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
-                          .map((event) => (
-                          <div
-                            key={event.id}
-                            className={cn(
-                              "flex items-center gap-2 px-2.5 py-1.5 rounded-lg cursor-pointer transition-all hover:scale-[1.01] hover:shadow-sm",
-                              getTypeColor(event.type)
-                            )}
-                            onClick={() => setSelectedEvent(event)}
-                          >
-                            {event.time && (
-                              <span className="text-xs font-mono font-medium shrink-0 opacity-80">
-                                {formatTime(event.time)}
-                              </span>
-                            )}
-                            <span className="text-xs font-medium truncate flex-1">
-                              {event.clientName}
-                            </span>
-                            <span className="text-[10px] opacity-70 shrink-0">
-                              {event.typeLabel}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
+                      {isToday ? "Aujourd'hui" : dayLabel}
+                    </span>
+
+                    {/* Time */}
+                    {event.time && (
+                      <span className="text-xs font-mono text-muted-foreground shrink-0 w-12">
+                        {formatTime(event.time)}
+                      </span>
+                    )}
+
+                    {/* Client name */}
+                    <span className="text-sm font-medium truncate flex-1 text-foreground">
+                      {event.clientName}
+                    </span>
+
+                    {/* Type badge */}
+                    <Badge className={cn("text-[10px] shrink-0", getTypeColor(event.type))}>
+                      {event.typeLabel}
+                    </Badge>
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>
@@ -332,10 +322,7 @@ export function ApporteurPlanningCard() {
                           <Euro className="w-3.5 h-3.5 text-muted-foreground" />
                           <span className="text-xs text-muted-foreground">Reste dû</span>
                         </div>
-                        <p className={cn(
-                          "font-semibold",
-                          selectedDossier.restedu > 0 ? "text-foreground" : "text-foreground"
-                        )}>
+                        <p className="font-semibold">
                           {selectedDossier.restedu > 0 
                             ? formatCurrency(selectedDossier.restedu) 
                             : selectedDossier.factureHT > 0 ? 'Soldé ✓' : '—'}

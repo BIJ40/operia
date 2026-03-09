@@ -28,6 +28,11 @@ export default function AccueilTabContent() {
 
   const displayFirstName = session?.firstName || apporteurUser?.firstName || apporteurUser?.apporteurName || 'Partenaire';
   const displayApporteurName = session?.apporteurName || apporteurUser?.apporteurName || 'Votre espace';
+  
+  // Agency name & city from session
+  const agencyName = session?.agencyName || '';
+  const agencyCity = session?.agencyCity || '';
+  const agencySubtitle = [agencyName, agencyCity].filter(Boolean).join(' — ') || displayApporteurName;
 
   const { data, isLoading, error } = useApporteurKpis({ period });
   const stats = data?.data;
@@ -43,11 +48,10 @@ export default function AccueilTabContent() {
             Bienvenue, {displayFirstName}
           </h1>
           <p className="text-muted-foreground">
-            {displayApporteurName} — Cockpit de pilotage
+            {agencySubtitle}
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <PeriodSelector value={period} onChange={setPeriod} />
           <Button onClick={() => setDemandeOpen(true)} className="gap-2 rounded-xl">
             <PlusCircle className="w-4 h-4" />
             Nouvelle demande
@@ -73,10 +77,13 @@ export default function AccueilTabContent() {
         </Card>
       ) : (
         <>
-          {/* Alertes */}
+          {/* Alertes — compact inline chips */}
           {stats.alertes && stats.alertes.length > 0 && (
             <AlertesBanner alertes={stats.alertes} />
           )}
+
+          {/* Period selector — just above KPI tiles */}
+          <PeriodSelector value={period} onChange={setPeriod} />
 
           {/* 8 KPI Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

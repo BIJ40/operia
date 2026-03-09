@@ -1,13 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import type { CollaborationScore, CollaborationLevel } from '../../types/apporteur-stats-v2';
-
-const LEVEL_CONFIG: Record<CollaborationLevel, { label: string; color: string; bg: string }> = {
-  bronze: { label: 'Bronze', color: 'text-amber-700', bg: 'bg-amber-100 dark:bg-amber-900/30' },
-  silver: { label: 'Silver', color: 'text-slate-600', bg: 'bg-slate-100 dark:bg-slate-800/50' },
-  gold: { label: 'Gold', color: 'text-yellow-600', bg: 'bg-yellow-100 dark:bg-yellow-900/30' },
-};
+import type { CollaborationScore } from '../../types/apporteur-stats-v2';
 
 const SCORE_LABELS: Record<string, string> = {
   volume_score: 'Volume',
@@ -21,21 +14,19 @@ interface CollaborationGaugeProps {
 }
 
 export function CollaborationGauge({ data }: CollaborationGaugeProps) {
-  const conf = LEVEL_CONFIG[data.level];
   const circumference = 2 * Math.PI * 42;
   const strokeDashoffset = circumference - (data.score / 100) * circumference;
+
+  // Color based on score value, no tier labeling
+  const strokeColor = data.score >= 75 ? 'stroke-emerald-500' :
+    data.score >= 50 ? 'stroke-amber-500' : 'stroke-rose-500';
 
   return (
     <Card className="rounded-2xl">
       <CardContent className="pt-5 pb-4 px-5">
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            Indice de collaboration
-          </p>
-          <Badge className={cn('text-xs', conf.bg, conf.color)}>
-            {conf.label}
-          </Badge>
-        </div>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-4">
+          Indice de collaboration
+        </p>
 
         <div className="flex items-center gap-6">
           {/* Gauge */}
@@ -45,11 +36,7 @@ export function CollaborationGauge({ data }: CollaborationGaugeProps) {
               <circle
                 cx="50" cy="50" r="42"
                 fill="none" strokeWidth="6" strokeLinecap="round"
-                className={cn(
-                  data.level === 'gold' ? 'stroke-yellow-500' :
-                  data.level === 'silver' ? 'stroke-slate-400' :
-                  'stroke-amber-500'
-                )}
+                className={strokeColor}
                 strokeDasharray={circumference}
                 strokeDashoffset={strokeDashoffset}
                 style={{ transition: 'stroke-dashoffset 0.8s ease' }}
