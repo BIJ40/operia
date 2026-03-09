@@ -185,23 +185,13 @@ function checkHardConstraints(
   dateStr: string,
   slotStartMin: number,
   durationMin: number,
-  requiredCodes: string[],
+  _requiredCodes: string[],
   occupiedIntervals: { start: number; end: number }[],
-  minLevel: number,
+  _minLevel: number,
 ): { pass: boolean; reason?: string } {
-  // 1. Competence check
-  if (requiredCodes.length > 0) {
-    const techCodes = new Set(tech.skills.filter(s => s.level >= minLevel).map(s => s.code));
-    if (techCodes.size === 0) {
-      return { pass: false, reason: `Aucune compétence renseignée (niveau ≥${minLevel})` };
-    }
-    const missing = requiredCodes.filter(c => !techCodes.has(c));
-    if (missing.length > 0) {
-      return { pass: false, reason: `Compétence manquante : ${missing.join(', ')}` };
-    }
-  }
+  // NOTE: Competence check moved to soft scoring (penalty instead of block)
 
-  // 2. Work day check
+  // 1. Work day check
   const d = new Date(dateStr + 'T12:00:00Z');
   const dow = d.getUTCDay();
   const dowKey = DOW_KEYS[dow];
@@ -209,7 +199,7 @@ function checkHardConstraints(
     return { pass: false, reason: `${dowKey.toUpperCase()} non travaillé` };
   }
 
-  // 3. Amplitude check
+  // 2. Amplitude check
   const slotEndMin = slotStartMin + durationMin + DEFAULT_BUFFER;
   if (slotStartMin < tech.dayStartMin) {
     return { pass: false, reason: `Avant amplitude (${minutesToTime(tech.dayStartMin)})` };
@@ -218,15 +208,14 @@ function checkHardConstraints(
     return { pass: false, reason: `Après amplitude (${minutesToTime(tech.dayEndMin)})` };
   }
 
-  // 4. Lunch overlap check
+  // 3. Lunch overlap check
   if (slotStartMin < tech.lunchEndMin && (slotStartMin + durationMin) > tech.lunchStartMin) {
-    // Allow if slot fits entirely before or after lunch
     if (!(slotStartMin + durationMin <= tech.lunchStartMin || slotStartMin >= tech.lunchEndMin)) {
       return { pass: false, reason: `Chevauche la pause déjeuner (${minutesToTime(tech.lunchStartMin)}-${minutesToTime(tech.lunchEndMin)})` };
     }
   }
 
-  // 5. Overlap check with existing events
+  // 4. Overlap check with existing events
   for (const interval of occupiedIntervals) {
     if (slotStartMin < interval.end && (slotStartMin + durationMin) > interval.start) {
       return { pass: false, reason: `Chevauchement avec créneau existant (${minutesToTime(interval.start)}-${minutesToTime(interval.end)})` };
