@@ -139,8 +139,8 @@ export function ApporteurPlanningCard() {
       <Card className="border-[hsl(var(--ap-warning)/.4)] bg-[hsl(var(--ap-warning-light))]">
         <CardContent className="py-4">
           <div className="flex items-center gap-2 text-sm">
-            <AlertTriangle className="w-4 h-4 text-amber-600" />
-            <span className="text-amber-800 dark:text-amber-200">Planning indisponible</span>
+            <AlertTriangle className="w-4 h-4 text-[hsl(var(--ap-warning))]" />
+            <span className="text-foreground">Planning indisponible</span>
           </div>
         </CardContent>
       </Card>

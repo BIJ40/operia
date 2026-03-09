@@ -431,7 +431,7 @@ export function ApporteurDossiersTable() {
                   </div>
                   <div className={cn(
                     "text-center p-3 rounded-lg",
-                    selectedDossier.restedu > 0 ? "bg-rose-100 dark:bg-rose-900/30" : "bg-green-100 dark:bg-green-900/30"
+                    selectedDossier.restedu > 0 ? "bg-[hsl(var(--ap-danger-light))]" : "bg-[hsl(var(--ap-success-light))]"
                   )}>
                     <p className="text-xs text-muted-foreground">Reste dû</p>
                     <p className="font-semibold text-foreground">

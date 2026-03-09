@@ -46,11 +46,11 @@ export default function RapportTabContent() {
   if (error || !stats) {
     return (
       <div className="p-4 sm:p-6">
-        <Card className="border-amber-300 bg-amber-50 dark:bg-amber-900/20 rounded-2xl">
+        <Card className="border-[hsl(var(--ap-warning)/.4)] bg-[hsl(var(--ap-warning-light))] rounded-2xl">
           <CardContent className="py-6">
             <div className="flex items-center gap-3">
-              <AlertTriangle className="w-5 h-5 text-amber-600" />
-              <p className="text-amber-800 dark:text-amber-200">
+              <AlertTriangle className="w-5 h-5 text-[hsl(var(--ap-warning))]" />
+              <p className="text-foreground">
                 {data?.error || 'Erreur de chargement du rapport.'}
               </p>
             </div>
