@@ -7,6 +7,8 @@ const ALLOWED_ORIGINS = [
   ...ENV_ORIGINS,
   'https://helpconfort.services',
   'https://www.helpconfort.services',
+  'https://operia.vision',
+  'https://www.operia.vision',
   'http://localhost:5173',
   'http://localhost:8080',
 ];
