@@ -700,7 +700,7 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
           // Soft scoring
           const { total, breakdown, reasons } = scoreSoft(
             tech, slotStart, load, avgLoad,
-            requiredCodes, dossierLat, dossierLng, weights,
+            requiredCodes, dossierLat, dossierLng, weights, minSkillLevel,
           );
 
           candidates.push({
