@@ -1,5 +1,5 @@
 /**
- * ApporteurPlanningCard - 10 prochains RDV chronologiques
+ * ApporteurPlanningCard - Tous les prochains RDV chronologiques
  */
 
 import { useState, useMemo } from 'react';
