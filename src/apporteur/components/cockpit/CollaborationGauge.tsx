@@ -18,8 +18,8 @@ export function CollaborationGauge({ data }: CollaborationGaugeProps) {
   const strokeDashoffset = circumference - (data.score / 100) * circumference;
 
   // Color based on score value, no tier labeling
-  const strokeColor = data.score >= 75 ? 'stroke-emerald-500' :
-    data.score >= 50 ? 'stroke-amber-500' : 'stroke-rose-500';
+  const strokeColor = data.score >= 75 ? 'stroke-[hsl(var(--ap-success))]' :
+    data.score >= 50 ? 'stroke-[hsl(var(--ap-warning))]' : 'stroke-[hsl(var(--ap-danger))]';
 
   return (
     <Card className="rounded-2xl">
@@ -58,7 +58,7 @@ export function CollaborationGauge({ data }: CollaborationGaugeProps) {
                   <div
                     className={cn(
                       'h-full rounded-full transition-all duration-500',
-                      val >= 75 ? 'bg-emerald-500' : val >= 50 ? 'bg-amber-500' : 'bg-rose-500'
+                      val >= 75 ? 'bg-[hsl(var(--ap-success))]' : val >= 50 ? 'bg-[hsl(var(--ap-warning))]' : 'bg-[hsl(var(--ap-danger))]'
                     )}
                     style={{ width: `${Math.min(100, val)}%` }}
                   />

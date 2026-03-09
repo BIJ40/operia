@@ -206,11 +206,11 @@ export default function DossiersTabContent() {
             Mes dossiers
           </h1>
         </div>
-        <Card className="border-amber-300 bg-amber-50 dark:bg-amber-900/20 rounded-2xl">
+        <Card className="border-[hsl(var(--ap-warning)/.4)] bg-[hsl(var(--ap-warning-light))] rounded-2xl">
           <CardContent className="py-6">
             <div className="flex items-center gap-3">
-              <AlertTriangle className="w-5 h-5 text-amber-600" />
-              <p className="text-amber-800 dark:text-amber-200">
+              <AlertTriangle className="w-5 h-5 text-[hsl(var(--ap-warning))]" />
+              <p className="text-foreground">
                 {data?.error === 'non_raccorde' 
                   ? 'Compte non raccordé à Apogée. Contactez l\'agence pour activer.'
                   : 'Erreur de chargement des dossiers.'}
@@ -248,8 +248,8 @@ export default function DossiersTabContent() {
 
       {/* Bannière filtre alerte */}
       {alerteRefs && alerteRefs.length > 0 && (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
-          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[hsl(var(--ap-warning-light))] border border-[hsl(var(--ap-warning)/.3)]">
+          <AlertTriangle className="w-4 h-4 text-[hsl(var(--ap-warning))] shrink-0" />
           <span className="text-sm text-foreground flex-1">
             Filtre actif : <strong>{alerteRefs.length} dossier(s)</strong> issus d'une alerte
           </span>
@@ -527,7 +527,7 @@ export default function DossiersTabContent() {
                       <span className="text-muted-foreground">Reste dû:</span>
                       <span className={cn(
                         "ml-2 font-semibold",
-                        selectedDossier.restedu > 0 ? "text-rose-600" : "text-green-600"
+                        selectedDossier.restedu > 0 ? "text-[hsl(var(--ap-danger))]" : "text-[hsl(var(--ap-success))]"
                       )}>
                         {selectedDossier.restedu > 0 ? formatCurrency(selectedDossier.restedu) : 'Réglé'}
                       </span>

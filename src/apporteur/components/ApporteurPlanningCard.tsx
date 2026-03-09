@@ -41,11 +41,11 @@ import { cn } from '@/lib/utils';
 import { STEPPER_STEPS_ORDERED, STEPPER_LABELS, type StepperStep } from '../types/apporteur-dossier-v2';
 
 const TYPE_COLORS: Record<string, string> = {
-  rt: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  travaux: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-  depannage: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-  sav: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  default: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
+  rt: 'bg-[hsl(var(--ap-info-light))] text-[hsl(var(--ap-info))]',
+  travaux: 'bg-primary/10 text-primary',
+  depannage: 'bg-secondary/10 text-secondary',
+  sav: 'bg-[hsl(var(--ap-warning-light))] text-[hsl(var(--ap-warning))]',
+  default: 'bg-muted text-muted-foreground',
 };
 
 function getTypeColor(type: string): string {
@@ -83,7 +83,7 @@ function DossierStepper({ dossier }: { dossier: DossierRow }) {
         return (
           <div key={step} className="flex items-center gap-2">
             {done ? (
-              <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-[hsl(var(--ap-success))] shrink-0" />
             ) : (
               <Circle className="w-4 h-4 text-muted-foreground/40 shrink-0" />
             )}
@@ -136,11 +136,11 @@ export function ApporteurPlanningCard() {
 
   if (error || data?.error === 'non_raccorde') {
     return (
-      <Card className="border-amber-300 bg-amber-50 dark:bg-amber-900/20">
+      <Card className="border-[hsl(var(--ap-warning)/.4)] bg-[hsl(var(--ap-warning-light))]">
         <CardContent className="py-4">
           <div className="flex items-center gap-2 text-sm">
-            <AlertTriangle className="w-4 h-4 text-amber-600" />
-            <span className="text-amber-800 dark:text-amber-200">Planning indisponible</span>
+            <AlertTriangle className="w-4 h-4 text-[hsl(var(--ap-warning))]" />
+            <span className="text-foreground">Planning indisponible</span>
           </div>
         </CardContent>
       </Card>

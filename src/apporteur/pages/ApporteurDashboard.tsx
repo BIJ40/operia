@@ -71,11 +71,11 @@ export default function ApporteurDashboard() {
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
       ) : error || data?.error === 'non_raccorde' ? (
-        <Card className="border-amber-300 bg-amber-50 dark:bg-amber-900/20">
+        <Card className="border-[hsl(var(--ap-warning)/.4)] bg-[hsl(var(--ap-warning-light))]">
           <CardContent className="py-6">
             <div className="flex items-center gap-3">
-              <AlertTriangle className="w-5 h-5 text-amber-600" />
-              <p className="text-amber-800 dark:text-amber-200">
+              <AlertTriangle className="w-5 h-5 text-[hsl(var(--ap-warning))]" />
+              <p className="text-foreground">
                 {data?.error === 'non_raccorde' 
                   ? 'Compte non raccordé à Apogée. Contactez l\'agence pour activer.'
                   : 'Erreur de chargement des données.'}
@@ -122,13 +122,13 @@ export default function ApporteurDashboard() {
                   </p>
                   <p className={cn(
                     "text-sm font-medium mt-1",
-                    kpis.facturesNonReglees.montant > 0 ? "text-rose-600" : "text-green-600"
+                    kpis.facturesNonReglees.montant > 0 ? "text-[hsl(var(--ap-danger))]" : "text-[hsl(var(--ap-success))]"
                   )}>
                     {formatCurrency(kpis.facturesNonReglees.montant)}
                   </p>
                 </div>
-                <div className="w-12 h-12 rounded-xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
-                  <Receipt className="w-6 h-6 text-rose-600" />
+                <div className="w-12 h-12 rounded-xl bg-[hsl(var(--ap-danger-light))] flex items-center justify-center">
+                  <Receipt className="w-6 h-6 text-[hsl(var(--ap-danger))]" />
                 </div>
               </div>
             </CardContent>
@@ -150,8 +150,8 @@ export default function ApporteurDashboard() {
                     {formatCurrency(kpis.devisEnvoyes.montant)}
                   </p>
                 </div>
-                <div className="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-                  <FileText className="w-6 h-6 text-orange-600" />
+                <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-secondary" />
                 </div>
               </div>
             </CardContent>

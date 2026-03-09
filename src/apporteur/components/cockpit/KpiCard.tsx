@@ -46,8 +46,8 @@ export function KpiCard({
             {hasTrend && (
               <div className={cn(
                 'flex items-center gap-1 mt-1.5 text-xs font-medium',
-                isPositive && 'text-emerald-600',
-                isNegative && 'text-rose-600',
+                isPositive && 'text-[hsl(var(--ap-success))]',
+                isNegative && 'text-[hsl(var(--ap-danger))]',
                 !isPositive && !isNegative && 'text-muted-foreground'
               )}>
                 {isPositive ? (

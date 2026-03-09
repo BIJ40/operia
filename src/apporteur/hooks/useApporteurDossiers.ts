@@ -63,18 +63,18 @@ export function useApporteurDossiers() {
 }
 
 export const STATUS_CONFIG: Record<string, { color: string; bgColor: string }> = {
-  programme: { color: 'text-blue-700', bgColor: 'bg-blue-100 dark:bg-blue-900/30' },
-  devis_en_cours: { color: 'text-amber-700', bgColor: 'bg-amber-100 dark:bg-amber-900/30' },
-  devis_envoye: { color: 'text-orange-700', bgColor: 'bg-orange-100 dark:bg-orange-900/30' },
-  devis_valide: { color: 'text-indigo-700', bgColor: 'bg-indigo-100 dark:bg-indigo-900/30' },
-  rdv_travaux: { color: 'text-purple-700', bgColor: 'bg-purple-100 dark:bg-purple-900/30' },
-  facture: { color: 'text-teal-700', bgColor: 'bg-teal-100 dark:bg-teal-900/30' },
-  attente_paiement: { color: 'text-amber-700', bgColor: 'bg-amber-100 dark:bg-amber-900/30' },
-  regle: { color: 'text-green-700', bgColor: 'bg-green-100 dark:bg-green-900/30' },
-  clos: { color: 'text-gray-600', bgColor: 'bg-gray-100 dark:bg-gray-800' },
-  en_cours: { color: 'text-cyan-700', bgColor: 'bg-cyan-100 dark:bg-cyan-900/30' },
-  stand_by: { color: 'text-yellow-700', bgColor: 'bg-yellow-100 dark:bg-yellow-900/30' },
-  annule: { color: 'text-slate-600', bgColor: 'bg-slate-100 dark:bg-slate-800' },
+  programme:        { color: 'text-[hsl(var(--ap-info))]',    bgColor: 'bg-[hsl(var(--ap-info-light))]' },
+  devis_en_cours:   { color: 'text-[hsl(var(--ap-warning))]', bgColor: 'bg-[hsl(var(--ap-warning-light))]' },
+  devis_envoye:     { color: 'text-secondary',                bgColor: 'bg-secondary/10' },
+  devis_valide:     { color: 'text-primary',                  bgColor: 'bg-primary/10' },
+  rdv_travaux:      { color: 'text-primary',                  bgColor: 'bg-accent' },
+  facture:          { color: 'text-[hsl(var(--ap-info))]',    bgColor: 'bg-[hsl(var(--ap-info-light))]' },
+  attente_paiement: { color: 'text-[hsl(var(--ap-warning))]', bgColor: 'bg-[hsl(var(--ap-warning-light))]' },
+  regle:            { color: 'text-[hsl(var(--ap-success))]', bgColor: 'bg-[hsl(var(--ap-success-light))]' },
+  clos:             { color: 'text-muted-foreground',         bgColor: 'bg-muted' },
+  en_cours:         { color: 'text-primary',                  bgColor: 'bg-primary/10' },
+  stand_by:         { color: 'text-[hsl(var(--ap-warning))]', bgColor: 'bg-[hsl(var(--ap-warning-light))]' },
+  annule:           { color: 'text-muted-foreground',         bgColor: 'bg-muted' },
 };
 
 export function formatCurrency(amount: number): string {

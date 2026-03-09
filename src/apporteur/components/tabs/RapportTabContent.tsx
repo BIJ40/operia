@@ -46,11 +46,11 @@ export default function RapportTabContent() {
   if (error || !stats) {
     return (
       <div className="p-4 sm:p-6">
-        <Card className="border-amber-300 bg-amber-50 dark:bg-amber-900/20 rounded-2xl">
+        <Card className="border-[hsl(var(--ap-warning)/.4)] bg-[hsl(var(--ap-warning-light))] rounded-2xl">
           <CardContent className="py-6">
             <div className="flex items-center gap-3">
-              <AlertTriangle className="w-5 h-5 text-amber-600" />
-              <p className="text-amber-800 dark:text-amber-200">
+              <AlertTriangle className="w-5 h-5 text-[hsl(var(--ap-warning))]" />
+              <p className="text-foreground">
                 {data?.error || 'Erreur de chargement du rapport.'}
               </p>
             </div>
@@ -154,7 +154,7 @@ export default function RapportTabContent() {
                       <XAxis dataKey="month" tickFormatter={shortMonth} tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
                       <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
                       <Tooltip contentStyle={chartStyle} formatter={(v: number) => [v, 'Dossiers']} labelFormatter={shortMonth} />
-                      <Line type="monotone" dataKey="value" stroke="hsl(215, 70%, 55%)" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="value" stroke="hsl(var(--primary)))" strokeWidth={2} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -176,7 +176,7 @@ export default function RapportTabContent() {
                       <XAxis dataKey="month" tickFormatter={shortMonth} tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
                       <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
                       <Tooltip contentStyle={chartStyle} formatter={(v: number) => [`${v.toFixed(1)}%`, 'Taux']} labelFormatter={shortMonth} />
-                      <Line type="monotone" dataKey="value" stroke="hsl(280, 60%, 55%)" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="value" stroke="hslvar(--accent-foreground)%)" strokeWidth={2} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -199,9 +199,9 @@ export default function RapportTabContent() {
                       <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
                       <Tooltip contentStyle={chartStyle} labelFormatter={shortMonth} />
                       <Legend wrapperStyle={{ fontSize: '11px' }} />
-                      <Line type="monotone" dataKey="rdv" name="RDV" stroke="hsl(200, 70%, 50%)" strokeWidth={2} dot={false} />
-                      <Line type="monotone" dataKey="devis_validation" name="Validation devis" stroke="hsl(35, 90%, 55%)" strokeWidth={2} dot={false} />
-                      <Line type="monotone" dataKey="paiement" name="Paiement" stroke="hsl(0, 70%, 55%)" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="rdv" name="RDV" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="devis_validation" name="Validation devis" stroke="hsl(var(--secondary))" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="paiement" name="Paiement" stroke="hsl(var(--destructive))" strokeWidth={2} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>

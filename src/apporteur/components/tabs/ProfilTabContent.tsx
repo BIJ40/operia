@@ -83,8 +83,8 @@ export default function ProfilTabContent() {
           </CardHeader>
           <CardContent>
             {devBypass ? (
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
-                <p className="text-sm text-amber-800 dark:text-amber-200">
+              <div className="bg-[hsl(var(--ap-warning-light))] border border-[hsl(var(--ap-warning)/.3)] rounded-xl p-4">
+                <p className="text-sm text-foreground">
                   Mode développement actif — déconnexion désactivée
                 </p>
               </div>
