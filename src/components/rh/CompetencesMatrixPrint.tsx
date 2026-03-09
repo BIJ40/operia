@@ -215,6 +215,7 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
                     subSkills.length === 0 ? (
                       <td
                         key={univers.id}
+                        className="comp-cell"
                         data-has={collabHasUnivers(collab.id, univers.label) ? 'true' : 'false'}
                         style={collabHasUnivers(collab.id, univers.label) ? { backgroundColor: '#22c55e' } : undefined}
                       />
@@ -222,6 +223,7 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
                       subSkills.map(sub => (
                         <td
                           key={sub.id}
+                          className="comp-cell"
                           data-has={collabHasSubSkill(collab.id, sub.id) ? 'true' : 'false'}
                           style={collabHasSubSkill(collab.id, sub.id) ? { backgroundColor: '#22c55e' } : undefined}
                         />
