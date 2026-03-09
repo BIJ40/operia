@@ -3,11 +3,12 @@
  * Utilise le nouveau système d'authentification autonome (ApporteurSessionContext)
  */
 
-import { ReactNode } from 'react';
+import { ReactNode, Component, ErrorInfo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApporteurSession } from '@/apporteur/contexts/ApporteurSessionContext';
 import { ApporteurAuthProvider } from '@/contexts/ApporteurAuthContext';
 import { ApporteurLoginPage } from '@/apporteur/pages/ApporteurLoginPage';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { ApporteurTabsProvider } from './browser-tabs/ApporteurTabsContext';
 import { ApporteurTabsBar } from './browser-tabs/ApporteurTabsBar';
 import { ApporteurTabsContent } from './browser-tabs/ApporteurTabsContent';
