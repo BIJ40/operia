@@ -16,7 +16,7 @@ import { useCollaborators } from '@/hooks/useCollaborators';
 import { useSensitiveData } from '@/hooks/useSensitiveData';
 import { CollaboratorFormData } from '@/types/collaborator';
 import { Button } from '@/components/ui/button';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Printer } from 'lucide-react';
 
 import { ApogeeSyncButton } from '@/components/rh/ApogeeSync';
 import { SalariesFolderTabs } from '@/components/rh/salaries/SalariesFolderTabs';
