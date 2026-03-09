@@ -163,13 +163,13 @@ export function ApporteurPlanningCard() {
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
             </div>
-          ) : next10Events.length === 0 ? (
+          ) : allUpcomingEvents.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground py-6">
               Aucun RDV planifié à venir
             </p>
           ) : (
             <div className="space-y-1">
-              {next10Events.map((event) => {
+              {allUpcomingEvents.map((event) => {
                 const d = new Date(event.date);
                 const isToday = event.date === new Date().toISOString().split('T')[0];
                 const dayLabel = d.toLocaleDateString('fr-FR', {
