@@ -196,17 +196,21 @@ export function RHContractSalarySimple({ collaborator }: RHContractSalarySimpleP
   const handleOpenDocument = async () => {
     if (!contractDocument?.id) return;
     
-    // Get signed URL via asset_id (required by Edge Function)
-    const { data } = await monitorEdgeCall('media-get-signed-url', () =>
-      supabase.functions.invoke('media-get-signed-url', {
-        body: { asset_id: contractDocument.id },
-      })
-    );
-    
-    if (data?.url) {
-      window.open(data.url, '_blank');
-    } else {
-      toast.error('Impossible d\'ouvrir le document');
+    try {
+      // Get signed URL via asset_id (required by Edge Function)
+      const { data } = await monitorEdgeCall('media-get-signed-url', () =>
+        supabase.functions.invoke('media-get-signed-url', {
+          body: { asset_id: contractDocument.id },
+        })
+      );
+      
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      } else {
+        toast.error('Impossible d\'ouvrir le document. Le fichier est peut-être introuvable dans le stockage.');
+      }
+    } catch {
+      toast.error('Erreur lors de l\'ouverture du document');
     }
   };
 
