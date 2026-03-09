@@ -199,7 +199,6 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
       transition={{ duration: 0.4 }}
       className={cn(
         'relative rounded-warm overflow-hidden border border-border/50 h-full min-h-[240px]',
-        'bg-gradient-to-br from-warm-blue/10 to-warm-teal/5',
         'shadow-warm',
         className
       )}
