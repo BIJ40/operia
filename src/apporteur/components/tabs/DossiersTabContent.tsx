@@ -716,6 +716,11 @@ export default function DossiersTabContent() {
         onOpenChange={(open) => { if (!open) { setRefuserDevisRefs([]); setSelectedRefs(new Set()); } }}
         dossierRefs={refuserDevisRefs}
       />
+      <ValiderDevisDialog
+        open={validerDevisRefs.length > 0}
+        onOpenChange={(open) => { if (!open) { setValiderDevisRefs([]); setSelectedRefs(new Set()); } }}
+        dossierRefs={validerDevisRefs}
+      />
       <FactureRegleeDialog
         open={!!factureRegleeRef}
         onOpenChange={(open) => { if (!open) setFactureRegleeRef(null); }}
