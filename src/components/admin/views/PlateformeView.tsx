@@ -11,14 +11,14 @@ import {
   DraggableFolderContentContainer,
   FolderTabConfig 
 } from '@/components/ui/draggable-folder-tabs';
-import { Activity, Map, GitBranch, Loader2 } from 'lucide-react';
+import { Activity, Map, GitBranch, Brain, Bell, Loader2 } from 'lucide-react';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { MaintenanceModeCard } from '@/components/admin/MaintenanceModeCard';
 import { useSessionState } from '@/hooks/useSessionState';
 import { usePersistedTab } from '@/hooks/usePersistedState';
 
 const AdminSystemHealth = lazy(() => import('@/pages/AdminSystemHealth'));
-const AdminFe// AdminFeatureFlags removed — legacy, replaced by ModulesMasterView in Droitsitemap = lazy(() => import('@/pages/admin/AdminSitemap'));
+const AdminSitemap = lazy(() => import('@/pages/admin/AdminSitemap'));
 const AdminFlow = lazy(() => import('@/pages/admin/AdminFlow'));
 const PlanningAugmenteAdmin = lazy(() => import('@/components/planning-augmente/PlanningAugmenteAdmin'));
 const TicketNotificationSettings = lazy(() => import('@/components/admin/TicketNotificationSettings'));
