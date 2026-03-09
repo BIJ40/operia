@@ -1,31 +1,33 @@
 /**
- * ApporteurPlanningCard - Tous les prochains RDV chronologiques
+ * ApporteurPlanningCard — Planning hebdomadaire des RDV
+ * Affiche les RDV sous forme de semaine avec navigation, matin/après-midi.
  */
 
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { 
-  useApporteurPlanning, 
+import {
+  useApporteurPlanning,
   PlanningEvent,
-  formatTime, 
 } from '../hooks/useApporteurPlanning';
-import { 
-  useApporteurDossiers, 
-  DossierRow, 
-  STATUS_CONFIG, 
-  formatCurrency, 
-  formatDate 
+import {
+  useApporteurDossiers,
+  DossierRow,
+  STATUS_CONFIG,
+  formatCurrency,
+  formatDate,
 } from '../hooks/useApporteurDossiers';
-import { 
+import {
   Calendar,
-  Clock,
+  ChevronLeft,
+  ChevronRight,
   MapPin,
   User,
   Loader2,
@@ -35,20 +37,63 @@ import {
   Receipt,
   Euro,
   CheckCircle2,
-  Circle
+  Circle,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { STEPPER_STEPS_ORDERED, STEPPER_LABELS, type StepperStep } from '../types/apporteur-dossier-v2';
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function getWeekStart(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day; // Monday start
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function addDays(date: Date, days: number): Date {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+function isSameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+}
+
+function getTimeSlot(time: string | null): 'matin' | 'apres-midi' {
+  if (!time) return 'matin';
+  const hour = parseInt(time.split(':')[0] || '8', 10);
+  return hour < 13 ? 'matin' : 'apres-midi';
+}
+
+const DAYS_FR = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'];
+const MONTHS_FR = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+
+function formatWeekLabel(weekStart: Date): string {
+  const weekEnd = addDays(weekStart, 4);
+  const sameMonth = weekStart.getMonth() === weekEnd.getMonth();
+  if (sameMonth) {
+    return `${weekStart.getDate()} – ${weekEnd.getDate()} ${MONTHS_FR[weekStart.getMonth()]} ${weekStart.getFullYear()}`;
+  }
+  return `${weekStart.getDate()} ${MONTHS_FR[weekStart.getMonth()]} – ${weekEnd.getDate()} ${MONTHS_FR[weekEnd.getMonth()]} ${weekEnd.getFullYear()}`;
+}
+
 const TYPE_COLORS: Record<string, string> = {
-  rt: 'bg-[hsl(var(--ap-info-light))] text-[hsl(var(--ap-info))]',
-  travaux: 'bg-primary/10 text-primary',
-  depannage: 'bg-secondary/10 text-secondary',
-  sav: 'bg-[hsl(var(--ap-warning-light))] text-[hsl(var(--ap-warning))]',
-  default: 'bg-muted text-muted-foreground',
+  rt: 'border-l-[hsl(var(--ap-info))]',
+  travaux: 'border-l-primary',
+  depannage: 'border-l-secondary',
+  sav: 'border-l-[hsl(var(--ap-warning))]',
+  default: 'border-l-muted-foreground',
 };
 
-function getTypeColor(type: string): string {
+function getTypeBorderColor(type: string): string {
   const t = type.toLowerCase();
   if (t.includes('rt') || t.includes('relev')) return TYPE_COLORS.rt;
   if (t.includes('tvx') || t.includes('travaux')) return TYPE_COLORS.travaux;
@@ -57,7 +102,8 @@ function getTypeColor(type: string): string {
   return TYPE_COLORS.default;
 }
 
-/** Mini stepper for dossier detail */
+// ─── Stepper (detail sheet) ──────────────────────────────────────────────────
+
 function DossierStepper({ dossier }: { dossier: DossierRow }) {
   const completedSteps: StepperStep[] = [];
   if (dossier.dateCreation) completedSteps.push('created');
@@ -100,38 +146,90 @@ function DossierStepper({ dossier }: { dossier: DossierRow }) {
   );
 }
 
+// ─── Event Card ──────────────────────────────────────────────────────────────
+
+function EventCard({ event, onClick }: { event: PlanningEvent; onClick: () => void }) {
+  return (
+    <div
+      className={cn(
+        "border-l-[3px] rounded-md bg-card px-2.5 py-1.5 cursor-pointer transition-all hover:shadow-sm hover:bg-muted/50 text-left w-full",
+        getTypeBorderColor(event.type)
+      )}
+      onClick={onClick}
+    >
+      <p className="text-sm font-semibold text-foreground truncate leading-tight">
+        {event.clientName}
+      </p>
+      <p className="text-[11px] text-muted-foreground font-mono truncate">
+        {event.projectRef}
+      </p>
+      {event.technicianName && (
+        <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1 mt-0.5">
+          <User className="w-3 h-3 shrink-0" />
+          {event.technicianName}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ─── Main Component ──────────────────────────────────────────────────────────
+
 export function ApporteurPlanningCard() {
   const [selectedEvent, setSelectedEvent] = useState<PlanningEvent | null>(null);
-  
+  const [weekOffset, setWeekOffset] = useState(0);
+
   const { data, isLoading, error } = useApporteurPlanning();
   const { data: dossiersData } = useApporteurDossiers();
 
   const events = data?.data?.events || [];
   const dossiers = dossiersData?.data?.dossiers || [];
 
-  // Index dossiers by projectId for quick lookup
   const dossiersById = useMemo(() => {
     const map = new Map<number, DossierRow>();
     for (const d of dossiers) map.set(d.id, d);
     return map;
   }, [dossiers]);
 
-  // Sort all events chronologically — show ALL upcoming
-  const allUpcomingEvents = useMemo(() => {
-    const now = new Date();
-    return [...events]
-      .filter(e => {
-        const eventDate = new Date(`${e.date}T${e.time || '00:00'}`);
-        return eventDate >= now;
-      })
-      .sort((a, b) => {
-        const da = `${a.date}T${a.time || '00:00'}`;
-        const db = `${b.date}T${b.time || '00:00'}`;
-        return da.localeCompare(db);
-      });
-  }, [events]);
+  // Current week days (Mon-Fri)
+  const today = useMemo(() => new Date(), []);
+  const weekStart = useMemo(() => addDays(getWeekStart(today), weekOffset * 7), [today, weekOffset]);
+  const weekDays = useMemo(() => Array.from({ length: 5 }, (_, i) => addDays(weekStart, i)), [weekStart]);
+
+  // Group events by day + slot
+  const eventsByDaySlot = useMemo(() => {
+    const map = new Map<string, { matin: PlanningEvent[]; 'apres-midi': PlanningEvent[] }>();
+
+    for (const day of weekDays) {
+      const key = day.toISOString().split('T')[0];
+      map.set(key, { matin: [], 'apres-midi': [] });
+    }
+
+    for (const ev of events) {
+      const evDate = new Date(ev.date);
+      const key = ev.date;
+      const bucket = map.get(key);
+      if (bucket) {
+        const slot = getTimeSlot(ev.time);
+        bucket[slot].push(ev);
+      }
+    }
+
+    return map;
+  }, [events, weekDays]);
+
+  // Count events this week
+  const weekEventCount = useMemo(() => {
+    let count = 0;
+    for (const bucket of eventsByDaySlot.values()) {
+      count += bucket.matin.length + bucket['apres-midi'].length;
+    }
+    return count;
+  }, [eventsByDaySlot]);
 
   const selectedDossier = selectedEvent ? dossiersById.get(selectedEvent.projectId) : null;
+
+  const goToCurrentWeek = () => setWeekOffset(0);
 
   if (error || data?.error === 'non_raccorde') {
     return (
@@ -149,68 +247,116 @@ export function ApporteurPlanningCard() {
   return (
     <>
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-primary" />
-            Prochains RDV
-            {allUpcomingEvents.length > 0 && (
-              <Badge variant="secondary" className="text-xs ml-auto">{allUpcomingEvents.length}</Badge>
-            )}
-          </CardTitle>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-primary" />
+              Planning RDV
+              {weekEventCount > 0 && (
+                <Badge variant="secondary" className="text-xs">{weekEventCount}</Badge>
+              )}
+            </CardTitle>
+
+            {/* Week navigation */}
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setWeekOffset(o => o - 1)}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+
+              <Button
+                variant={weekOffset === 0 ? 'default' : 'outline'}
+                size="sm"
+                className="h-8 text-xs px-3 min-w-[180px] font-medium"
+                onClick={goToCurrentWeek}
+              >
+                {weekOffset === 0 ? "Cette semaine" : formatWeekLabel(weekStart)}
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setWeekOffset(o => o + 1)}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Week date range subtitle when on current week */}
+          {weekOffset === 0 && (
+            <p className="text-xs text-muted-foreground mt-1">{formatWeekLabel(weekStart)}</p>
+          )}
         </CardHeader>
+
         <CardContent className="pt-0">
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
+            <div className="flex items-center justify-center py-12">
               <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
             </div>
-          ) : allUpcomingEvents.length === 0 ? (
-            <p className="text-center text-sm text-muted-foreground py-6">
-              Aucun RDV planifié à venir
-            </p>
           ) : (
-            <div className="space-y-1">
-              {allUpcomingEvents.map((event) => {
-                const d = new Date(event.date);
-                const isToday = event.date === new Date().toISOString().split('T')[0];
-                const dayLabel = d.toLocaleDateString('fr-FR', {
-                  weekday: 'short',
-                  day: 'numeric',
-                  month: 'short',
-                });
+            <div className="grid grid-cols-5 gap-px bg-border rounded-lg overflow-hidden">
+              {weekDays.map((day, dayIdx) => {
+                const key = day.toISOString().split('T')[0];
+                const bucket = eventsByDaySlot.get(key) || { matin: [], 'apres-midi': [] };
+                const isToday = isSameDay(day, new Date());
+                const dayNum = day.getDate();
 
                 return (
                   <div
-                    key={event.id}
+                    key={dayIdx}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all hover:bg-muted/50",
-                      isToday && "bg-primary/5"
+                      "bg-card flex flex-col min-h-[180px]",
+                      isToday && "bg-primary/[0.03]"
                     )}
-                    onClick={() => setSelectedEvent(event)}
                   >
-                    {/* Date */}
-                    <span className={cn(
-                      "text-xs font-medium w-20 shrink-0 capitalize",
-                      isToday ? "text-primary" : "text-muted-foreground"
+                    {/* Day header */}
+                    <div className={cn(
+                      "text-center py-1.5 border-b",
+                      isToday ? "bg-primary text-primary-foreground" : "bg-muted/50"
                     )}>
-                      {isToday ? "Aujourd'hui" : dayLabel}
-                    </span>
+                      <p className="text-[11px] font-medium uppercase tracking-wide">
+                        {DAYS_FR[dayIdx]}
+                      </p>
+                      <p className={cn("text-lg font-bold leading-none", isToday ? "text-primary-foreground" : "text-foreground")}>
+                        {dayNum}
+                      </p>
+                    </div>
 
-                    {/* Time */}
-                    {event.time && (
-                      <span className="text-xs font-mono text-muted-foreground shrink-0 w-12">
-                        {formatTime(event.time)}
-                      </span>
-                    )}
+                    {/* Matin */}
+                    <div className="flex-1 p-1.5 space-y-1 border-b border-dashed">
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <Sun className="w-3 h-3 text-amber-500" />
+                        <span className="text-[10px] text-muted-foreground font-medium uppercase">Matin</span>
+                      </div>
+                      {bucket.matin.length === 0 ? (
+                        <p className="text-[10px] text-muted-foreground/50 text-center py-2">—</p>
+                      ) : (
+                        bucket.matin.map(ev => (
+                          <EventCard key={ev.id} event={ev} onClick={() => setSelectedEvent(ev)} />
+                        ))
+                      )}
+                    </div>
 
-                    {/* Client name */}
-                    <span className="text-sm font-medium truncate flex-1 text-foreground">
-                      {event.clientName}
-                    </span>
-
-                    {/* Type badge */}
-                    <Badge className={cn("text-[10px] shrink-0", getTypeColor(event.type))}>
-                      {event.typeLabel}
-                    </Badge>
+                    {/* Après-midi */}
+                    <div className="flex-1 p-1.5 space-y-1">
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <Moon className="w-3 h-3 text-indigo-400" />
+                        <span className="text-[10px] text-muted-foreground font-medium uppercase">Après-midi</span>
+                      </div>
+                      {bucket['apres-midi'].length === 0 ? (
+                        <p className="text-[10px] text-muted-foreground/50 text-center py-2">—</p>
+                      ) : (
+                        bucket['apres-midi'].map(ev => (
+                          <EventCard key={ev.id} event={ev} onClick={() => setSelectedEvent(ev)} />
+                        ))
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -233,11 +379,6 @@ export function ApporteurPlanningCard() {
               {/* RDV info */}
               <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">RDV sélectionné</p>
-                <div className="flex items-center gap-2">
-                  <Badge className={getTypeColor(selectedEvent.type)}>
-                    {selectedEvent.typeLabel}
-                  </Badge>
-                </div>
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
@@ -245,12 +386,14 @@ export function ApporteurPlanningCard() {
                       weekday: 'short', day: 'numeric', month: 'long'
                     })}
                   </div>
-                  {selectedEvent.time && (
-                    <div className="flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                      {formatTime(selectedEvent.time)}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    {getTimeSlot(selectedEvent.time) === 'matin' ? (
+                      <Sun className="w-3.5 h-3.5 text-amber-500" />
+                    ) : (
+                      <Moon className="w-3.5 h-3.5 text-indigo-400" />
+                    )}
+                    {getTimeSlot(selectedEvent.time) === 'matin' ? 'Matin' : 'Après-midi'}
+                  </div>
                   {selectedEvent.technicianName && (
                     <div className="flex items-center gap-1.5">
                       <User className="w-3.5 h-3.5 text-muted-foreground" />
@@ -262,6 +405,7 @@ export function ApporteurPlanningCard() {
                     {selectedEvent.city || '—'}
                   </div>
                 </div>
+                <p className="text-xs text-muted-foreground font-mono">Réf. {selectedEvent.projectRef}</p>
               </div>
 
               {/* Client info */}
@@ -275,7 +419,7 @@ export function ApporteurPlanningCard() {
                 )}
               </div>
 
-              {/* Status */}
+              {/* Status + Stepper + Financials */}
               {selectedDossier && (
                 <>
                   <div className="space-y-2">
@@ -288,13 +432,11 @@ export function ApporteurPlanningCard() {
                     </Badge>
                   </div>
 
-                  {/* Stepper */}
                   <div className="space-y-2">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Avancement</p>
                     <DossierStepper dossier={selectedDossier} />
                   </div>
 
-                  {/* Financials */}
                   <div className="space-y-2">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Financier</p>
                     <div className="grid grid-cols-2 gap-3">
@@ -322,8 +464,8 @@ export function ApporteurPlanningCard() {
                           <span className="text-xs text-muted-foreground">Reste dû</span>
                         </div>
                         <p className="font-semibold">
-                          {selectedDossier.restedu > 0 
-                            ? formatCurrency(selectedDossier.restedu) 
+                          {selectedDossier.restedu > 0
+                            ? formatCurrency(selectedDossier.restedu)
                             : selectedDossier.factureHT > 0 ? 'Soldé ✓' : '—'}
                         </p>
                       </div>
