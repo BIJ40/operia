@@ -80,16 +80,19 @@ const getApiBaseUrl = () => {
 const fetchWithAuth = async (path: string, options: RequestInit = {}) => {
   const baseUrl = getApiBaseUrl();
   const token = getStoredToken();
-  const headers: HeadersInit = {
+  const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
+  
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '',
-    ...options.headers,
+    'apikey': anonKey,
+    // Use the anon key for Authorization so Supabase gateway accepts the request
+    'Authorization': `Bearer ${anonKey}`,
+    ...(options.headers as Record<string, string> || {}),
   };
 
-  // Add token to header for session validation
+  // Send apporteur token ONLY via custom header (not Authorization, which Supabase validates as JWT)
   if (token) {
-    (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
-    (headers as Record<string, string>)['x-apporteur-token'] = token;
+    headers['x-apporteur-token'] = token;
   }
 
   return fetch(`${baseUrl}${path}`, {
