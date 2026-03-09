@@ -85,21 +85,28 @@ export function ConnectionStats({ userId }: ConnectionStatsProps) {
       if (profilesError) throw profilesError;
 
       // Combiner les stats avec les profils
-      const enrichedStats: UserStats[] = (profiles || []).map(profile => {
-        const userStats = userStatsMap.get(profile.id)!;
-        return {
-          user_id: profile.id,
-          email: profile.email,
-          first_name: profile.first_name,
-          last_name: profile.last_name,
-          total_connections: userStats.total_connections,
-          total_hours: userStats.total_seconds / 3600,
-          avg_duration_minutes: userStats.total_connections > 0 
-            ? (userStats.total_seconds / userStats.total_connections) / 60 
-            : 0,
-          last_connection: userStats.last_connection
-        };
-      });
+      const enrichedStats: UserStats[] = (profiles || [])
+        .filter(profile => {
+          // Exclure les utilisateurs sans nom ni email
+          const hasName = profile.first_name || profile.last_name;
+          const hasEmail = profile.email;
+          return hasName || hasEmail;
+        })
+        .map(profile => {
+          const userStats = userStatsMap.get(profile.id)!;
+          return {
+            user_id: profile.id,
+            email: profile.email,
+            first_name: profile.first_name,
+            last_name: profile.last_name,
+            total_connections: userStats.total_connections,
+            total_hours: userStats.total_seconds / 3600,
+            avg_duration_minutes: userStats.total_connections > 0 
+              ? (userStats.total_seconds / userStats.total_connections) / 60 
+              : 0,
+            last_connection: userStats.last_connection
+          };
+        });
 
       // Trier par nombre total d'heures décroissant
       enrichedStats.sort((a, b) => b.total_hours - a.total_hours);
