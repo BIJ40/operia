@@ -428,7 +428,7 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
       supabase
         .from('planning_optimizer_config')
         .select('weights')
-        .eq('agency_id', agency_id)
+        .eq('agency_id', agencyUuid)
         .maybeSingle()
         .then(r => r.data),
     ]);
