@@ -38,6 +38,29 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
   const collabIds = activeCollabs.map(t => t.id);
   const { data: allCollabSubSkills = [] } = useAllCollaboratorSubSkills(collabIds);
 
+  // Abbreviation map for univers headers
+  const UNIVERS_ABBREV: Record<string, string> = {
+    'rénovation': 'RÉNO',
+    'renovation': 'RÉNO',
+    'amélioration du logement': 'PMR',
+    'amelioration du logement': 'PMR',
+    'volet roulant': 'VR',
+    'électricité': 'ÉLEC',
+    'electricite': 'ÉLEC',
+    'plomberie': 'PLOMB',
+    'serrurerie': 'SERR',
+    'vitrerie / miroiterie': 'VITR',
+    'vitrerie': 'VITR',
+    'menuiserie': 'MEN',
+    'recherche de fuite': 'RDF',
+    'multiservices': 'MULTI',
+  };
+
+  const getUniversAbbrev = (label: string) => {
+    const key = label.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    return UNIVERS_ABBREV[key] || label.substring(0, 4).toUpperCase();
+  };
+
   // Build grouped structure: univers → sub-skills
   const groupedColumns = universCatalog.map(univers => ({
     univers,
@@ -45,6 +68,14 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
       a.label.localeCompare(b.label, 'fr')
     ),
   }));
+
+  // Format tech name: Prénom + initiale Nom
+  const formatTechName = (collab: { first_name?: string | null; last_name?: string | null }) => {
+    const prenom = collab.first_name || '';
+    const nom = collab.last_name || '';
+    const initiale = nom.charAt(0).toUpperCase();
+    return `${prenom} ${initiale}.`.trim();
+  };
 
   // Normalize for accent/case insensitive comparison
   const normalize = (s: string) =>
@@ -83,9 +114,9 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
           table { width: 100%; border-collapse: collapse; table-layout: fixed; }
           th, td { border: 1px solid #aaa; padding: 2px; text-align: center; overflow: hidden; }
           th { background: #f0f0f0 !important; font-weight: bold; }
-          th.name-col { text-align: left; width: 120px; min-width: 100px; }
-          th.univers-header { background: #d4e6f1 !important; font-size: 8px; font-weight: 700; text-transform: uppercase; }
-          th.sub-col {
+           th.name-col { text-align: left; width: 100px; min-width: 80px; }
+           th.univers-header { background: #d4e6f1 !important; font-size: 7px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+           th.sub-col {
             writing-mode: vertical-rl;
             text-orientation: mixed;
             transform: rotate(180deg);
@@ -146,14 +177,14 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
               {/* Row 1: Univers group headers */}
               <tr>
                 <th className="name-col" rowSpan={2}>Technicien</th>
-                {groupedColumns.map(({ univers, subSkills }) => (
-                  <th
-                    key={univers.id}
-                    className="univers-header"
-                    colSpan={Math.max(1, subSkills.length)}
-                  >
-                    {univers.label}
-                  </th>
+                 {groupedColumns.map(({ univers, subSkills }) => (
+                   <th
+                     key={univers.id}
+                     className="univers-header"
+                     colSpan={Math.max(1, subSkills.length)}
+                   >
+                     {getUniversAbbrev(univers.label)}
+                   </th>
                 ))}
               </tr>
               {/* Row 2: Sub-skill columns (or univers name if no sub-skills) */}
@@ -172,10 +203,10 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
               </tr>
             </thead>
             <tbody>
-              {activeCollabs.map(collab => (
-                <tr key={collab.id}>
-                  <td className="name-cell">
-                    {collab.first_name} {collab.last_name}
+               {activeCollabs.map(collab => (
+                 <tr key={collab.id}>
+                   <td className="name-cell">
+                     {formatTechName(collab)}
                   </td>
                   {groupedColumns.map(({ univers, subSkills }) =>
                     subSkills.length === 0 ? (
