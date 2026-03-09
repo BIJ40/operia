@@ -478,6 +478,44 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
 
     console.log(`[SUGGEST] Data: ${apogeeUsers.length} users, ${creneaux.length} creneaux, ${collabRows.length} collabs, ${skillRows.length} skills, ${leaveRows?.length || 0} leave requests`);
 
+    // DEBUG: log unique creneau types/labels/refTypes to discover absence encoding
+    const uniqueTypes = new Set<string>();
+    const uniqueRefTypes = new Set<string>();
+    const sampleAbsenceLike: any[] = [];
+    for (const c of creneaux) {
+      const t = String((c as any)?.type || '').toLowerCase();
+      const rt = String((c as any)?.refType || (c as any)?.data?.refType || '').toLowerCase();
+      const lbl = String((c as any)?.label || '').toLowerCase();
+      if (t) uniqueTypes.add(t);
+      if (rt) uniqueRefTypes.add(rt);
+      // Capture any creneau that looks like it could be an absence (broader search)
+      const combined = `${t} ${rt} ${lbl} ${String((c as any)?.type2 || '')}`.toLowerCase();
+      if (combined.match(/arret|arrêt|maladie|absence|conge|congé|repos|indispo|at_|at |_at$/i) ||
+          t.includes('absence') || t.includes('leave') || rt.includes('absence') ||
+          t === '' && !lbl.includes('interv')) {
+        if (sampleAbsenceLike.length < 10) {
+          sampleAbsenceLike.push({
+            type: (c as any)?.type, type2: (c as any)?.type2, 
+            label: (c as any)?.label, refType: (c as any)?.refType || (c as any)?.data?.refType,
+            date: (c as any)?.date, usersIds: (c as any)?.usersIds, userId: (c as any)?.userId,
+            state: (c as any)?.state,
+          });
+        }
+      }
+    }
+    console.log(`[SUGGEST] DEBUG Creneau types: ${JSON.stringify([...uniqueTypes])}`);
+    console.log(`[SUGGEST] DEBUG Creneau refTypes: ${JSON.stringify([...uniqueRefTypes])}`);
+    if (sampleAbsenceLike.length > 0) {
+      console.log(`[SUGGEST] DEBUG Absence-like creneaux: ${JSON.stringify(sampleAbsenceLike)}`);
+    } else {
+      console.log(`[SUGGEST] DEBUG No absence-like creneaux found — checking raw sample of 5 creneaux:`);
+      console.log(JSON.stringify(creneaux.slice(0, 5).map((c: any) => ({
+        type: c?.type, type2: c?.type2, label: c?.label, refType: c?.refType, 
+        state: c?.state, date: c?.date, usersIds: c?.usersIds,
+        keys: Object.keys(c || {}),
+      }))));
+    }
+
     // =========================================================================
     // DETECT ABSENCES from Apogée creneaux + leave_requests
     // =========================================================================
