@@ -107,11 +107,25 @@ export function AiSuggestDrawer({
               {/* Meta summary */}
               {meta && (
                 <div className="flex flex-wrap gap-2 text-[10px] text-muted-foreground">
-                  <span>{meta.techs_with_skills}/{meta.techs_total} techs qualifiés</span>
+                  <span>{meta.techs_qualified ?? meta.techs_with_skills ?? '?'}/{meta.techs_total} techs qualifiés</span>
                   <span>•</span>
                   <span>{meta.candidates_evaluated} créneaux évalués</span>
                   <span>•</span>
                   <span>{meta.estimated_duration} min estimées</span>
+                  {meta.planning_mode && meta.planning_mode !== 'single' && (
+                    <>
+                      <span>•</span>
+                      <span className="font-medium text-primary">
+                        {meta.planning_mode === 'multi_universe' ? '1 tech/univers' : 'Multi-créneaux'}
+                      </span>
+                    </>
+                  )}
+                  {meta.is_first_rdv && (
+                    <>
+                      <span>•</span>
+                      <span className="font-medium text-warm-blue">1er RDV</span>
+                    </>
+                  )}
                 </div>
               )}
 
