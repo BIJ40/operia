@@ -46,6 +46,7 @@ export function ApogeeSyncDialog({
   const createActions = actions.filter(a => a.type === 'create');
   const updateActions = actions.filter(a => a.type === 'update');
   const departedActions = actions.filter(a => a.type === 'mark_departed');
+  const linkActions = actions.filter(a => a.type === 'link');
   
   const selectedActions = useMemo(() => 
     actions.filter(a => selectedIds.has(a.apogeeUser.id)),
