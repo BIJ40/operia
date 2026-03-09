@@ -27,33 +27,46 @@ const REQUIRED_DOCS = [
 ];
 
 export function RHCockpitDrawerDocs({ collaborator, onOpenFinder, onUpdate }: RHCockpitDrawerDocsProps) {
-  // Récupérer les documents depuis media_links via le slug du dossier collaborateur
+  // Récupérer les documents depuis media_links via le dossier du collaborateur
   const { data: documents = [] } = useQuery({
     queryKey: ['rh-documents-check', collaborator.id],
     queryFn: async () => {
-      // Chercher les fichiers via media_links avec jointure sur folder et asset
+      // 1. Trouver le dossier du collaborateur
+      const { data: folder } = await supabase
+        .from('media_folders')
+        .select('id')
+        .eq('agency_id', collaborator.agency_id)
+        .eq('slug', `salarie-${collaborator.id}`)
+        .is('deleted_at', null)
+        .maybeSingle();
+
+      if (!folder) return [];
+
+      // 2. Récupérer aussi les sous-dossiers
+      const { data: subFolders } = await supabase
+        .from('media_folders')
+        .select('id')
+        .eq('agency_id', collaborator.agency_id)
+        .eq('parent_id', folder.id)
+        .is('deleted_at', null);
+
+      const folderIds = [folder.id, ...(subFolders || []).map(f => f.id)];
+
+      // 3. Chercher les fichiers uniquement dans ces dossiers
       const { data, error } = await supabase
         .from('media_links')
         .select(`
           id,
           label,
-          asset:media_assets!inner(file_name),
-          folder:media_folders!inner(slug)
+          asset:media_assets!inner(file_name)
         `)
-        .eq('agency_id', collaborator.agency_id)
+        .in('folder_id', folderIds)
         .is('deleted_at', null);
       
       if (error) throw error;
       
-      // Filtrer pour ne garder que les documents dans le dossier du collaborateur
-      const collabSlug = `salarie-${collaborator.id}`;
-      const filtered = (data || []).filter(d => {
-        const folderSlug = (d.folder as any)?.slug || '';
-        return folderSlug.includes(collabSlug);
-      });
-      
       // Déterminer le type de document à partir du label ou du nom de fichier
-      return filtered.map(d => {
+      return (data || []).map(d => {
         const name = ((d.label || (d.asset as any)?.file_name) || '').toLowerCase();
         let docType: string | null = null;
         if (name.includes('permis') || name.includes('license') || name.includes('driving')) {
