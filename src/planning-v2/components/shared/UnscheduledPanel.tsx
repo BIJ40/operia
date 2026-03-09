@@ -7,25 +7,16 @@ import { useState, useMemo } from "react";
 import {
   AlertCircle,
   Clock,
-  User,
   MapPin,
   ChevronRight,
   ChevronLeft,
   Search,
-  Filter,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import type { PlanningUnscheduled, UnscheduledReason } from "../../types";
 import type { PlanningUnscheduled, UnscheduledReason } from "../../types";
 
 interface UnscheduledPanelProps {
