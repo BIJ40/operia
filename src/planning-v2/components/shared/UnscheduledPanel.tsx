@@ -131,7 +131,7 @@ export function UnscheduledPanel({ items, open, onToggle, onRequestSuggest }: Un
   }
 
   return (
-    <div className="w-[320px] shrink-0 border-l border-border bg-card flex flex-col h-full">
+    <div className="w-[320px] shrink-0 border-l border-border bg-card flex flex-col h-full min-h-0 overflow-hidden">
       {/* Header */}
       <div className="px-3 py-2.5 border-b border-border shrink-0">
         <div className="flex items-center justify-between mb-2">
