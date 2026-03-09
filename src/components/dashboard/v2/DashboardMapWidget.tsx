@@ -74,6 +74,13 @@ function MapContent({
       center: [2.3522, 48.8566], // Paris par défaut
       zoom: 10,
       attributionControl: false,
+      failIfMajorPerformanceCaveat: false,
+      preserveDrawingBuffer: true,
+    });
+
+    // Force resize after load to fix blank canvas in iframes
+    map.on('load', () => {
+      map.resize();
     });
 
     // Ajouter contrôles de navigation en mode expanded
@@ -88,7 +95,7 @@ function MapContent({
       map.remove();
       mapRef.current = null;
     };
-  }, [containerRef, isExpanded]);
+  }, [containerRef, isExpanded, mapboxToken]);
 
   // Mise à jour des markers
   useEffect(() => {
