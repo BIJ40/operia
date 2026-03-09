@@ -78,7 +78,7 @@ export function MinimalLayout({
   return (
     <AiUnifiedProvider>
       <div className={cn(
-        'min-h-screen w-full flex flex-col',
+        'h-screen w-full flex flex-col overflow-hidden',
         'bg-gradient-to-br from-background via-background to-muted/30',
         isImpersonating ? 'pt-10' : ''
       )}>
@@ -108,7 +108,7 @@ export function MinimalLayout({
         )}
         
         {/* Contenu principal */}
-        <main id="main-content" className="flex-1 overflow-auto" role="main">
+        <main id="main-content" className="flex-1 min-h-0 overflow-hidden" role="main">
           {children}
         </main>
       </div>
