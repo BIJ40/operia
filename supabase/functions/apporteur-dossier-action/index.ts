@@ -14,7 +14,7 @@ import { authenticateApporteur } from '../_shared/apporteurAuth.ts';
 
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
-type ActionType = 'refuser_devis' | 'facture_reglee' | 'dossier_inactif';
+type ActionType = 'refuser_devis' | 'valider_devis' | 'facture_reglee' | 'dossier_inactif';
 type InactifAction = 'annuler' | 'relancer' | 'donner_info';
 
 interface ActionRequest {
