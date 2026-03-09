@@ -170,26 +170,26 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
               </tr>
             </thead>
             <tbody>
-              {techniciens.map(tech => (
-                <tr key={tech.id}>
+              {activeCollabs.map(collab => (
+                <tr key={collab.id}>
                   <td className="name-cell">
-                    {tech.first_name} {tech.last_name}
+                    {collab.first_name} {collab.last_name}
                   </td>
                   {groupedColumns.map(({ univers, subSkills }) =>
                     subSkills.length === 0 ? (
                       <td
                         key={univers.id}
-                        className={techHasUnivers(tech.id, univers.label) ? 'has' : 'no'}
+                        className={collabHasUnivers(collab.id, univers.label) ? 'has' : 'no'}
                       >
-                        {techHasUnivers(tech.id, univers.label) && '✓'}
+                        {collabHasUnivers(collab.id, univers.label) && '✓'}
                       </td>
                     ) : (
                       subSkills.map(sub => (
                         <td
                           key={sub.id}
-                          className={techHasSubSkill(tech.id, sub.id) ? 'has' : 'no'}
+                          className={collabHasSubSkill(collab.id, sub.id) ? 'has' : 'no'}
                         >
-                          {techHasSubSkill(tech.id, sub.id) && '✓'}
+                          {collabHasSubSkill(collab.id, sub.id) && '✓'}
                         </td>
                       ))
                     )
