@@ -6,7 +6,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Shield, Network, UserCheck, UserPlus } from 'lucide-react';
+import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Shield, Network, UserCheck, UserPlus, ScrollText } from 'lucide-react';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { 
   DraggableFolderTabsList, 
@@ -32,6 +32,7 @@ const AdminUserActivity = lazy(() => import('@/pages/AdminUserActivity'));
 const FranchiseurView = lazy(() => import('@/components/unified/views/FranchiseurView'));
 const ApporteurManagersAdminView = lazy(() => import('@/components/admin/views/ApporteurManagersAdminView'));
 const PendingRegistrationsList = lazy(() => import('@/components/admin/registrations/PendingRegistrationsList'));
+const ApporteurAuditLogView = lazy(() => import('@/components/admin/views/ApporteurAuditLogView'));
 
 function LoadingFallback() {
   return (
@@ -56,13 +57,14 @@ const GESTION_SUB_TABS: FolderTabConfig[] = [
   { id: 'users', label: 'Utilisateurs', icon: Users, accent: 'blue' },
   { id: 'inscriptions', label: 'Inscriptions', icon: UserPlus, accent: 'orange' },
   { id: 'apporteurs', label: 'Apporteurs', icon: UserCheck, accent: 'orange' },
+  { id: 'audit-apporteurs', label: 'Audit Apporteurs', icon: ScrollText, accent: 'green' },
   { id: 'agences', label: 'Agences', icon: Building2, accent: 'purple' },
   { id: 'modules', label: 'Droits', icon: Shield, accent: 'orange' },
   { id: 'activity', label: 'Activité', icon: Activity, accent: 'green' },
 ];
 
 const ADMIN_MAIN_TAB_IDS = ADMIN_MAIN_TABS.map(tab => tab.id);
-const DEFAULT_GESTION_ORDER = ['users', 'inscriptions', 'apporteurs', 'agences', 'modules', 'activity'];
+const DEFAULT_GESTION_ORDER = ['users', 'inscriptions', 'apporteurs', 'audit-apporteurs', 'agences', 'modules', 'activity'];
 
 export default function AdminHubContent() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -157,6 +159,12 @@ export default function AdminHubContent() {
                 <TabsContent value="apporteurs" className="mt-0 focus-visible:outline-none">
                   <Suspense fallback={<LoadingFallback />}>
                     <ApporteurManagersAdminView />
+                  </Suspense>
+                </TabsContent>
+
+                <TabsContent value="audit-apporteurs" className="mt-0 focus-visible:outline-none">
+                  <Suspense fallback={<LoadingFallback />}>
+                    <ApporteurAuditLogView />
                   </Suspense>
                 </TabsContent>
 
