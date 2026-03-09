@@ -124,29 +124,24 @@ export default function DossiersTabContent() {
     
     const items: { value: string; label: string }[] = [];
     
+    // "En cours" = everything not finished
     if (hasEnCoursAll) {
-      const count = dossiers.filter(d => !FINISHED_STATUSES.has(d.status)).length;
-      items.push({ value: 'en_cours_all', label: `En cours (${count})` });
+      items.push({ value: 'en_cours_all', label: 'En cours' });
     }
 
-    // Split en_cours into "À planifier" and "Planifié"
-    const aplanifier = dossiers.filter(d => d.status === 'en_cours' && !d.datePremierRdv);
-    const planifie = dossiers.filter(d => d.status === 'en_cours' && d.datePremierRdv);
-    
-    if (aplanifier.length > 0) {
+    // Always show "À planifier" and "Planifié" if any en_cours dossiers exist
+    if (unique.has('en_cours')) {
       items.push({ value: 'a_planifier', label: 'À planifier' });
-    }
-    if (planifie.length > 0) {
       items.push({ value: 'planifie', label: 'Planifié' });
     }
 
-    // Add programme as "Planifié (programme)" if exists and not already covered
+    // Add programme as "Programmé" if exists
     if (unique.has('programme')) {
       items.push({ value: 'programme', label: 'Programmé' });
     }
 
     // Rest of statuses (skip en_cours and programme, already handled)
-    const skipStatuses = new Set(['en_cours', 'programme', 'en_cours_all']);
+    const skipStatuses = new Set(['en_cours', 'programme', 'en_cours_all', 'a_planifier', 'planifie']);
     STATUS_ORDER
       .filter(s => !skipStatuses.has(s) && unique.has(s))
       .forEach(s => {
