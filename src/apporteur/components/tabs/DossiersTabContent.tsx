@@ -78,6 +78,7 @@ export default function DossiersTabContent() {
 
   // Dialog states
   const [refuserDevisRefs, setRefuserDevisRefs] = useState<string[]>([]);
+  const [validerDevisRefs, setValiderDevisRefs] = useState<string[]>([]);
   const [factureRegleeRef, setFactureRegleeRef] = useState<string | null>(null);
   const [inactifRef, setInactifRef] = useState<string | null>(null);
 
