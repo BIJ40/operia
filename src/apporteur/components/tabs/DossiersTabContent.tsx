@@ -177,7 +177,15 @@ export default function DossiersTabContent() {
     }
 
     if (statusFilter !== 'all') {
-      result = result.filter(d => d.status === statusFilter);
+      if (statusFilter === 'en_cours_all') {
+        result = result.filter(d => !FINISHED_STATUSES.has(d.status));
+      } else if (statusFilter === 'a_planifier') {
+        result = result.filter(d => d.status === 'en_cours' && !d.datePremierRdv);
+      } else if (statusFilter === 'planifie') {
+        result = result.filter(d => d.status === 'en_cours' && !!d.datePremierRdv);
+      } else {
+        result = result.filter(d => d.status === statusFilter);
+      }
     }
 
     result.sort((a, b) => {
