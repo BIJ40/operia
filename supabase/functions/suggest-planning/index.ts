@@ -238,19 +238,41 @@ function scoreSoft(
   dossierLat: number | null,
   dossierLng: number | null,
   weights: ScoringWeights,
+  minSkillLevel: number,
 ): { total: number; breakdown: Record<string, number>; reasons: string[] } {
   const breakdown: Record<string, number> = {};
   const reasons: string[] = [];
 
-  // 1. Coherence: skill level quality
-  if (requiredCodes.length > 0 && tech.skills.length > 0) {
+  // 1. Coherence: skill level quality — now soft (penalty, not block)
+  if (requiredCodes.length > 0) {
+    const techCodes = new Set(tech.skills.filter(s => s.level >= minSkillLevel).map(s => s.code));
     const matchedSkills = tech.skills.filter(s => requiredCodes.includes(s.code));
-    const avgLevel = matchedSkills.reduce((s, sk) => s + sk.level, 0) / Math.max(matchedSkills.length, 1);
-    const hasPrimary = matchedSkills.some(s => s.isPrimary);
-    let cScore = Math.min(100, avgLevel * 20);
-    if (hasPrimary) { cScore += 15; reasons.push('Compétence principale'); }
-    breakdown.coherence = Math.round(cScore);
-    if (avgLevel >= 4) reasons.push(`Niveau élevé (${avgLevel.toFixed(1)}/5)`);
+    const matchedCount = requiredCodes.filter(c => techCodes.has(c)).length;
+    const matchRatio = matchedCount / requiredCodes.length;
+
+    if (matchRatio === 0 && tech.skills.length === 0) {
+      // No skills at all → neutral score (data not enriched)
+      breakdown.coherence = 30;
+      reasons.push('⚠ Aucune compétence renseignée');
+    } else if (matchRatio === 0) {
+      // Has skills but none match → heavy penalty
+      breakdown.coherence = 10;
+      reasons.push('⚠ Compétences non correspondantes');
+    } else if (matchRatio < 1) {
+      // Partial match
+      const avgLevel = matchedSkills.reduce((s, sk) => s + sk.level, 0) / Math.max(matchedSkills.length, 1);
+      breakdown.coherence = Math.round(20 + matchRatio * 60 + avgLevel * 5);
+      const missing = requiredCodes.filter(c => !techCodes.has(c));
+      reasons.push(`Match partiel (${matchedCount}/${requiredCodes.length}), manque: ${missing.join(', ')}`);
+    } else {
+      // Full match
+      const avgLevel = matchedSkills.reduce((s, sk) => s + sk.level, 0) / Math.max(matchedSkills.length, 1);
+      const hasPrimary = matchedSkills.some(s => s.isPrimary);
+      let cScore = Math.min(100, avgLevel * 20);
+      if (hasPrimary) { cScore += 15; reasons.push('Compétence principale'); }
+      breakdown.coherence = Math.round(Math.min(100, cScore));
+      if (avgLevel >= 4) reasons.push(`Niveau élevé (${avgLevel.toFixed(1)}/5)`);
+    }
   } else {
     breakdown.coherence = 50;
   }
@@ -269,23 +291,22 @@ function scoreSoft(
     if (travelMin <= 15) reasons.push(`Proche (${Math.round(km)} km)`);
     else if (travelMin >= 45) reasons.push(`⚠ Distance élevée (~${Math.round(km)} km, ~${travelMin} min)`);
   } else {
-    breakdown.route = 50; // neutral when no geo data
+    breakdown.route = 50;
   }
 
-  // 4. Gap penalty: penalize if start creates unusable gap before
+  // 4. Gap penalty
   if (slotStartMin > 9 * 60) {
-    // Simple: deduct for late starts unless heavily loaded before
     breakdown.gap = Math.round(Math.max(0, 100 - (slotStartMin - 8 * 60) / 3));
   } else {
     breakdown.gap = 90;
   }
 
-  // 5. Proximity: earlier dates better (reflected via hour preference)
+  // 5. Proximity: earlier dates better
   const hourScore = Math.max(0, 100 - (slotStartMin - 8 * 60) / 4);
   breakdown.proximity = Math.round(hourScore);
   if (slotStartMin <= 9 * 60) reasons.push('Créneau tôt → meilleur SLA');
 
-  // 6. Continuity placeholder (needs initiator tech info)
+  // 6. Continuity placeholder
   breakdown.continuity = 50;
 
   // Weighted total
