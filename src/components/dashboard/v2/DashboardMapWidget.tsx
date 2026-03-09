@@ -81,8 +81,14 @@ function MapContentInner({
       preserveDrawingBuffer: true,
     });
 
-    map.once('load', () => map.resize());
+    map.on('load', () => {
+      console.log('[MapWidget] Map loaded, resizing. Container size:', container.offsetWidth, container.offsetHeight);
+      map.resize();
+    });
 
+    map.on('error', (e: any) => {
+      console.error('[MapWidget] Mapbox error:', e.error?.message || e);
+    });
     if (isExpanded) {
       map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
     }
@@ -139,15 +145,8 @@ function MapContentInner({
   return (
     <div 
       ref={mapContainerRef} 
-      style={{ 
-        position: 'absolute', 
-        top: 0, 
-        left: 0, 
-        right: 0, 
-        bottom: 0,
-        width: '100%', 
-        height: '100%',
-      }} 
+      className="absolute inset-0"
+      style={{ width: '100%', height: '100%' }}
     />
   );
 }
