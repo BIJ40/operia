@@ -123,6 +123,7 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
     `);
 
     printWindow.document.close();
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
