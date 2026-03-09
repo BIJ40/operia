@@ -642,7 +642,7 @@ export default function DossiersTabContent() {
               )}
 
               {/* ── Action Buttons ── */}
-              {(canRefuserDevis(selectedDossier) || canDeclareRegle(selectedDossier) || isInactif(selectedDossier)) && (
+              {(canRefuserDevis(selectedDossier) || canValiderDevis(selectedDossier) || canDeclareRegle(selectedDossier) || isInactif(selectedDossier)) && (
                 <div className="border-t pt-4">
                   <p className="text-sm font-medium mb-3">Actions</p>
                   <div className="flex flex-wrap gap-2">
