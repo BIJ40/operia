@@ -99,6 +99,7 @@ export interface PlanningUnscheduled {
   universe: string | null;
   priority: AppointmentPriority;
   estimatedDuration: number;
+  estimatedPassages: number | null; // nombre de passages chiffrage
   requiredSkills: string[];
   reason: UnscheduledReason;
   dueDate: Date | null;
