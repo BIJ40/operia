@@ -203,10 +203,10 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
               </tr>
             </thead>
             <tbody>
-              {activeCollabs.map(collab => (
-                <tr key={collab.id}>
-                  <td className="name-cell">
-                    {collab.first_name} {collab.last_name}
+               {activeCollabs.map(collab => (
+                 <tr key={collab.id}>
+                   <td className="name-cell">
+                     {formatTechName(collab)}
                   </td>
                   {groupedColumns.map(({ univers, subSkills }) =>
                     subSkills.length === 0 ? (
