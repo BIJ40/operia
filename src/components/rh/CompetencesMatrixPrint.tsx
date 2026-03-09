@@ -30,13 +30,11 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
   const { data: universCatalog = [] } = useUniversCatalog();
   const { data: allSubSkills = [] } = useSubSkills();
 
-  // Filter only active technicians
-  const techniciens = collaborators.filter(c =>
-    c.type === 'TECHNICIEN' && !c.leaving_date
-  );
+  // Filter only active collaborators (not just technicians)
+  const activeCollabs = collaborators.filter(c => !c.leaving_date);
 
-  const technicianIds = techniciens.map(t => t.id);
-  const { data: allCollabSubSkills = [] } = useAllCollaboratorSubSkills(technicianIds);
+  const collabIds = activeCollabs.map(t => t.id);
+  const { data: allCollabSubSkills = [] } = useAllCollaboratorSubSkills(collabIds);
 
   // Build grouped structure: univers → sub-skills
   const groupedColumns = universCatalog.map(univers => ({
@@ -46,15 +44,22 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
     ),
   }));
 
-  // Helper: does this tech have this univers?
-  const techHasUnivers = (techId: string, universLabel: string) => {
-    const tech = techniciens.find(t => t.id === techId);
-    return tech?.competencies?.competences_techniques?.includes(universLabel) ?? false;
+  // Normalize for accent/case insensitive comparison
+  const normalize = (s: string) =>
+    s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
+  // Helper: does this collab have this univers?
+  const collabHasUnivers = (collabId: string, universLabel: string) => {
+    const collab = activeCollabs.find(t => t.id === collabId);
+    const normalizedTarget = normalize(universLabel);
+    return collab?.competencies?.competences_techniques?.some(
+      (ct: string) => normalize(ct) === normalizedTarget
+    ) ?? false;
   };
 
-  // Helper: does this tech have this sub-skill?
-  const techHasSubSkill = (techId: string, subSkillId: string) =>
-    allCollabSubSkills.some(cs => cs.collaborator_id === techId && cs.sub_skill_id === subSkillId);
+  // Helper: does this collab have this sub-skill?
+  const collabHasSubSkill = (collabId: string, subSkillId: string) =>
+    allCollabSubSkills.some(cs => cs.collaborator_id === collabId && cs.sub_skill_id === subSkillId);
 
   const handlePrint = () => {
     const printContent = printRef.current;
@@ -165,26 +170,26 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
               </tr>
             </thead>
             <tbody>
-              {techniciens.map(tech => (
-                <tr key={tech.id}>
+              {activeCollabs.map(collab => (
+                <tr key={collab.id}>
                   <td className="name-cell">
-                    {tech.first_name} {tech.last_name}
+                    {collab.first_name} {collab.last_name}
                   </td>
                   {groupedColumns.map(({ univers, subSkills }) =>
                     subSkills.length === 0 ? (
                       <td
                         key={univers.id}
-                        className={techHasUnivers(tech.id, univers.label) ? 'has' : 'no'}
+                        className={collabHasUnivers(collab.id, univers.label) ? 'has' : 'no'}
                       >
-                        {techHasUnivers(tech.id, univers.label) && '✓'}
+                        {collabHasUnivers(collab.id, univers.label) && '✓'}
                       </td>
                     ) : (
                       subSkills.map(sub => (
                         <td
                           key={sub.id}
-                          className={techHasSubSkill(tech.id, sub.id) ? 'has' : 'no'}
+                          className={collabHasSubSkill(collab.id, sub.id) ? 'has' : 'no'}
                         >
-                          {techHasSubSkill(tech.id, sub.id) && '✓'}
+                          {collabHasSubSkill(collab.id, sub.id) && '✓'}
                         </td>
                       ))
                     )
