@@ -99,7 +99,7 @@ export function AppointmentCard({
           borderLeft: `3px solid ${techColor}`,
           backgroundColor: isBinome && partnerColor
             ? undefined
-            : `${techColor}50`,
+            : `${techColor}90`,
           boxShadow: "0 1px 3px 0 hsl(var(--foreground) / 0.06)",
         }}
         onClick={() => onViewDetails?.(a)}
