@@ -204,10 +204,12 @@ function PlanningV2ShellContent() {
                 />
               )}
               {filters.view === "map" && (
-                <MapPlanningView
-                  technicians={data.technicians}
-                  selectedDate={filters.selectedDate}
-                />
+                <div className="relative w-full h-full">
+                  <MapPlanningView
+                    technicians={data.technicians}
+                    selectedDate={filters.selectedDate}
+                  />
+                </div>
               )}
             </>
           )}
