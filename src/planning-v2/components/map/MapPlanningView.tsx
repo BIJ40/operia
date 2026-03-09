@@ -223,8 +223,6 @@ export function MapPlanningView({ technicians, selectedDate }: MapPlanningViewPr
     );
   }
 
-  console.log("[MapPlanningView] render", { mapboxToken, tokenError, mapInitError, mapReady, rdvsLoading, rdvsCount: rdvs.length, agencySlug });
-
   return (
     <div className="relative w-full" style={{ height: "100%", minHeight: "400px" }}>
       {/* Map container */}
