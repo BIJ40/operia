@@ -646,6 +646,20 @@ export default function DossiersTabContent() {
                 <div className="border-t pt-4">
                   <p className="text-sm font-medium mb-3">Actions</p>
                   <div className="flex flex-wrap gap-2">
+                    {canValiderDevis(selectedDossier) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 border-[hsl(var(--ap-success)/.4)] text-[hsl(var(--ap-success))] hover:bg-[hsl(var(--ap-success-light))]"
+                        onClick={() => {
+                          setSelectedDossier(null);
+                          setValiderDevisRefs([selectedDossier.ref]);
+                        }}
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        Valider le devis
+                      </Button>
+                    )}
                     {canRefuserDevis(selectedDossier) && (
                       <Button
                         variant="outline"
