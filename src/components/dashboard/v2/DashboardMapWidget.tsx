@@ -1,14 +1,15 @@
 /**
  * DashboardMapWidget - Carte RDV intégrée au dashboard (Hero Section)
  * 
- * Version compacte de la carte des RDV pour le dashboard:
- * - Affiche les RDV du jour uniquement
- * - Pastilles colorées par technicien
- * - Bouton pour agrandir en modal
- * - Compteur de RDV visible
+ * ARCHITECTURE CORRIGÉE:
+ * - Le container map est TOUJOURS rendu (jamais démonté)
+ * - Le loading overlay se superpose au container au lieu de le remplacer
+ * - Cela évite la race condition mount/unmount qui tuait la map
+ * - La map s'initialise dès que le token est disponible
+ * - Les markers se mettent à jour quand les rdvs arrivent
  */
 
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Maximize2, Users, Calendar, AlertCircle, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -35,7 +36,7 @@ function useMapboxToken() {
       if (!data?.token) throw new Error('Token non disponible');
       return data.token as string;
     },
-    staleTime: Infinity, // Le token ne change pas
+    staleTime: Infinity,
     gcTime: Infinity,
   });
 }
@@ -47,137 +48,6 @@ interface DashboardMapWidgetProps {
 
 const MAPBOX_STYLE = 'mapbox://styles/bij40/cmjbi8grj000t01s3ajxo3amm';
 
-function MapContentInner({
-  rdvs,
-  selectedRdv,
-  onSelectRdv,
-  isExpanded = false,
-  mapboxToken,
-}: {
-  rdvs: MapRdv[];
-  selectedRdv: MapRdv | null;
-  onSelectRdv: (rdv: MapRdv | null) => void;
-  isExpanded?: boolean;
-  mapboxToken: string;
-}) {
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
-  const markersRef = useRef<mapboxgl.Marker[]>([]);
-  // Track map ready state to trigger marker re-render
-  const [mapReady, setMapReady] = useState(false);
-
-  // Init map once
-  useEffect(() => {
-    const container = mapContainerRef.current;
-    if (!container || !mapboxToken) return;
-
-    console.log('[MAP-AUDIT] Init map. Container size:', container.offsetWidth, 'x', container.offsetHeight, 'isExpanded:', isExpanded);
-
-    mapboxgl.accessToken = mapboxToken;
-
-    const map = new mapboxgl.Map({
-      container,
-      style: MAPBOX_STYLE,
-      center: [2.3522, 48.8566],
-      zoom: 10,
-      attributionControl: true,
-      failIfMajorPerformanceCaveat: false,
-      preserveDrawingBuffer: true,
-    });
-
-    map.on('load', () => {
-      console.log('[MAP-AUDIT] Map style loaded. Resizing.');
-      map.resize();
-    });
-
-    map.on('error', (e: any) => {
-      console.error('[MAP-AUDIT] Mapbox error:', e.error?.message || e);
-    });
-
-    if (isExpanded) {
-      map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
-    }
-
-    mapRef.current = map;
-    setMapReady(true);
-    console.log('[MAP-AUDIT] mapRef.current set. mapReady=true');
-
-    return () => {
-      console.log('[MAP-AUDIT] CLEANUP: destroying map. Removing', markersRef.current.length, 'markers');
-      setMapReady(false);
-      markersRef.current.forEach(m => m.remove());
-      markersRef.current = [];
-      map.remove();
-      mapRef.current = null;
-    };
-  }, [mapboxToken, isExpanded]);
-
-  // Markers — depends on mapReady to handle race condition
-  useEffect(() => {
-    const map = mapRef.current;
-    console.log('[MAP-AUDIT] Markers effect. mapReady:', mapReady, 'mapRef:', !!map, 'rdvs.length:', rdvs.length, 'isExpanded:', isExpanded);
-    
-    if (!map || !mapReady) {
-      console.log('[MAP-AUDIT] Markers effect SKIPPED: map not ready');
-      return;
-    }
-
-    // Clear old markers
-    const oldCount = markersRef.current.length;
-    markersRef.current.forEach(m => m.remove());
-    markersRef.current = [];
-    console.log('[MAP-AUDIT] Cleared', oldCount, 'old markers');
-
-    // Validate coordinates
-    const validRdvs = rdvs.filter(rdv => {
-      const valid = typeof rdv.lat === 'number' && typeof rdv.lng === 'number' && !isNaN(rdv.lat) && !isNaN(rdv.lng) && rdv.lat !== 0 && rdv.lng !== 0;
-      if (!valid) console.warn('[MAP-AUDIT] Invalid coordinates for rdv:', rdv.rdvId, 'lat:', rdv.lat, 'lng:', rdv.lng);
-      return valid;
-    });
-    console.log('[MAP-AUDIT] Valid coords:', validRdvs.length, '/', rdvs.length);
-
-    validRdvs.forEach(rdv => {
-      const isSelected = selectedRdv?.rdvId === rdv.rdvId;
-      const el = createPinMarkerElement(rdv.users, isExpanded ? 40 : 32, isSelected, () => {
-        onSelectRdv(isSelected ? null : rdv);
-      });
-
-      const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
-        .setLngLat([rdv.lng, rdv.lat])
-        .addTo(map);
-
-      markersRef.current.push(marker);
-    });
-
-    console.log('[MAP-AUDIT] Rendered', markersRef.current.length, 'markers on map');
-
-    // Fit bounds
-    const bounds = calculateBounds(validRdvs);
-    if (bounds && validRdvs.length > 0) {
-      const doFit = () => {
-        map.fitBounds(bounds as [[number, number], [number, number]], {
-          padding: isExpanded ? 60 : 40,
-          maxZoom: 14,
-          duration: 500,
-        });
-      };
-      if (map.isStyleLoaded()) {
-        doFit();
-      } else {
-        map.once('load', doFit);
-      }
-    }
-  }, [rdvs, selectedRdv, onSelectRdv, isExpanded, mapReady]);
-
-  return (
-    <div 
-      ref={mapContainerRef} 
-      className="absolute inset-0"
-      style={{ width: '100%', height: '100%' }}
-    />
-  );
-}
-
 type MapTimeFilter = 'jour' | 'actuel';
 
 export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidgetProps) {
@@ -188,8 +58,11 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
   const [isExpanded, setIsExpanded] = useState(false);
   const [timeFilter, setTimeFilter] = useState<MapTimeFilter>('jour');
 
-  // AUDIT LOG — trace data flow
-  console.log('[MAP-AUDIT] DashboardMapWidget render. rdvs:', rdvs.length, 'isLoading:', isLoading, 'tokenLoading:', tokenLoading, 'mapboxToken:', !!mapboxToken, 'tokenError:', tokenError?.message || null, 'agencySlug:', agencySlug);
+  // Refs for the compact map (always mounted)
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const [mapReady, setMapReady] = useState(false);
 
   // Filter RDVs based on timeFilter
   const filteredRdvs = useMemo(() => {
@@ -204,22 +77,111 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
     });
   }, [rdvs, timeFilter]);
 
-  console.log('[MAP-AUDIT] filteredRdvs:', filteredRdvs.length, 'timeFilter:', timeFilter);
+  // ====================================================================
+  // MAP INIT — runs once when token becomes available
+  // The container is ALWAYS in the DOM so dimensions are always valid
+  // ====================================================================
+  useEffect(() => {
+    const container = mapContainerRef.current;
+    if (!container || !mapboxToken || mapRef.current) return;
 
-  if (isLoading || tokenLoading) {
-    console.log('[MAP-AUDIT] Showing Skeleton (loading). isLoading:', isLoading, 'tokenLoading:', tokenLoading);
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className={cn('rounded-warm overflow-hidden h-full min-h-[240px]', className)}
-      >
-        <Skeleton className="w-full h-full min-h-[240px] rounded-warm" />
-      </motion.div>
+    console.log('[MAP] Init. Container:', container.offsetWidth, 'x', container.offsetHeight);
+
+    mapboxgl.accessToken = mapboxToken;
+
+    const map = new mapboxgl.Map({
+      container,
+      style: MAPBOX_STYLE,
+      center: [2.3522, 48.8566],
+      zoom: 10,
+      attributionControl: true,
+    });
+
+    map.on('load', () => {
+      console.log('[MAP] Style loaded');
+      map.resize();
+    });
+
+    map.on('error', (e: any) => {
+      console.error('[MAP] Error:', e.error?.message || e);
+    });
+
+    mapRef.current = map;
+    setMapReady(true);
+
+    return () => {
+      console.log('[MAP] Cleanup');
+      setMapReady(false);
+      markersRef.current.forEach(m => m.remove());
+      markersRef.current = [];
+      map.remove();
+      mapRef.current = null;
+    };
+  }, [mapboxToken]);
+
+  // ====================================================================
+  // MARKERS — re-run when rdvs change OR map becomes ready
+  // ====================================================================
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady) return;
+
+    // Clear old markers
+    markersRef.current.forEach(m => m.remove());
+    markersRef.current = [];
+
+    // Filter valid coordinates
+    const validRdvs = filteredRdvs.filter(rdv => 
+      typeof rdv.lat === 'number' && typeof rdv.lng === 'number' && 
+      !isNaN(rdv.lat) && !isNaN(rdv.lng) && rdv.lat !== 0 && rdv.lng !== 0
     );
-  }
 
-  if (tokenError || !mapboxToken) {
+    console.log('[MAP] Adding', validRdvs.length, 'markers (of', filteredRdvs.length, 'total)');
+
+    validRdvs.forEach(rdv => {
+      const isSelected = selectedRdv?.rdvId === rdv.rdvId;
+      const el = createPinMarkerElement(rdv.users, 32, isSelected, () => {
+        setSelectedRdv(prev => prev?.rdvId === rdv.rdvId ? null : rdv);
+      });
+
+      const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+        .setLngLat([rdv.lng, rdv.lat])
+        .addTo(map);
+
+      markersRef.current.push(marker);
+    });
+
+    // Fit bounds
+    const bounds = calculateBounds(validRdvs);
+    if (bounds && validRdvs.length > 0) {
+      const doFit = () => {
+        map.fitBounds(bounds as [[number, number], [number, number]], {
+          padding: 40,
+          maxZoom: 14,
+          duration: 500,
+        });
+      };
+      if (map.isStyleLoaded()) {
+        doFit();
+      } else {
+        map.once('load', doFit);
+      }
+    }
+  }, [filteredRdvs, selectedRdv, mapReady]);
+
+  // ====================================================================
+  // RESIZE on visibility change (e.g. tab switch)
+  // ====================================================================
+  useEffect(() => {
+    if (mapRef.current && mapReady) {
+      // Small delay to let layout settle
+      const timer = setTimeout(() => mapRef.current?.resize(), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [mapReady]);
+
+  // Error state
+  if (tokenError && !tokenLoading) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -249,108 +211,111 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
         className
       )}
     >
+      {/* MAP CONTAINER — ALWAYS MOUNTED, never conditional */}
+      <div className="absolute inset-0">
+        <div 
+          ref={mapContainerRef} 
+          className="w-full h-full"
+        />
+      </div>
+
+      {/* Loading overlay — superposed, doesn't unmount the map */}
+      {(isLoading || tokenLoading) && (
+        <div className="absolute inset-0 z-[5]">
+          <Skeleton className="w-full h-full rounded-warm" />
+        </div>
+      )}
+
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-10 px-4 py-3 bg-gradient-to-b from-white/90 to-white/0 dark:from-background/90 dark:to-background/0">
-        <div className="flex items-center justify-between">
-          <HumanTitle
-            titleKey="map"
-            icon={MapPin}
-            iconColor="text-warm-teal"
-            size="md"
-          />
-          
-          <div className="flex items-center gap-2">
-            {/* Toggle Jour / Actuel */}
-            <div className="flex items-center rounded-full bg-white/80 dark:bg-background/80 border border-border/50 shadow-sm p-0.5">
-              <button
-                onClick={() => setTimeFilter('jour')}
-                className={cn(
-                  "flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all",
-                  timeFilter === 'jour'
-                    ? "bg-warm-blue text-white shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Calendar className="h-3 w-3" />
-                Jour
-              </button>
-              <button
-                onClick={() => setTimeFilter('actuel')}
-                className={cn(
-                  "flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all",
-                  timeFilter === 'actuel'
-                    ? "bg-warm-teal text-white shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Clock className="h-3 w-3" />
-                Actuel
-              </button>
-            </div>
-
-            {/* Compteur de RDV */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 dark:bg-background/80 border border-border/50 shadow-sm">
-              <Calendar className="h-3.5 w-3.5 text-warm-blue" />
-              <span className="text-sm font-medium">
-                {filteredRdvs.length} RDV
-              </span>
-            </div>
-
-            {/* Compteur techniciens */}
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 dark:bg-background/80 border border-border/50 shadow-sm">
-              <Users className="h-3.5 w-3.5 text-warm-purple" />
-              <span className="text-sm font-medium">
-                {technicians.length} techs
-              </span>
-            </div>
-
-            {/* Bouton agrandir */}
-            <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
-              <DialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 px-2 bg-white/80 dark:bg-background/80 border-border/50 hover:bg-white dark:hover:bg-background"
+      {!isLoading && !tokenLoading && (
+        <div className="absolute top-0 left-0 right-0 z-10 px-4 py-3 bg-gradient-to-b from-white/90 to-white/0 dark:from-background/90 dark:to-background/0">
+          <div className="flex items-center justify-between">
+            <HumanTitle
+              titleKey="map"
+              icon={MapPin}
+              iconColor="text-warm-teal"
+              size="md"
+            />
+            
+            <div className="flex items-center gap-2">
+              {/* Toggle Jour / Actuel */}
+              <div className="flex items-center rounded-full bg-white/80 dark:bg-background/80 border border-border/50 shadow-sm p-0.5">
+                <button
+                  onClick={() => setTimeFilter('jour')}
+                  className={cn(
+                    "flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all",
+                    timeFilter === 'jour'
+                      ? "bg-warm-blue text-white shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
                 >
-                  <Maximize2 className="h-4 w-4" />
-                  <span className="ml-1.5 hidden sm:inline">Agrandir</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-5xl h-[80vh] p-0">
-                <DialogHeader className="px-6 py-4 border-b">
-                  <DialogTitle className="flex items-center gap-2">
-                    <MapPin className="h-5 w-5 text-warm-teal" />
-                    Carte des RDV du jour
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="relative flex-1 w-full h-full min-h-[500px]">
-                  {isExpanded && (
-                    <MapContentInner
+                  <Calendar className="h-3 w-3" />
+                  Jour
+                </button>
+                <button
+                  onClick={() => setTimeFilter('actuel')}
+                  className={cn(
+                    "flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all",
+                    timeFilter === 'actuel'
+                      ? "bg-warm-teal text-white shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Clock className="h-3 w-3" />
+                  Actuel
+                </button>
+              </div>
+
+              {/* Compteur de RDV */}
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 dark:bg-background/80 border border-border/50 shadow-sm">
+                <Calendar className="h-3.5 w-3.5 text-warm-blue" />
+                <span className="text-sm font-medium">
+                  {filteredRdvs.length} RDV
+                </span>
+              </div>
+
+              {/* Compteur techniciens */}
+              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 dark:bg-background/80 border border-border/50 shadow-sm">
+                <Users className="h-3.5 w-3.5 text-warm-purple" />
+                <span className="text-sm font-medium">
+                  {technicians.length} techs
+                </span>
+              </div>
+
+              {/* Bouton agrandir */}
+              <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-2 bg-white/80 dark:bg-background/80 border-border/50 hover:bg-white dark:hover:bg-background"
+                  >
+                    <Maximize2 className="h-4 w-4" />
+                    <span className="ml-1.5 hidden sm:inline">Agrandir</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-5xl h-[80vh] p-0">
+                  <DialogHeader className="px-6 py-4 border-b">
+                    <DialogTitle className="flex items-center gap-2">
+                      <MapPin className="h-5 w-5 text-warm-teal" />
+                      Carte des RDV du jour
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="relative flex-1 w-full h-full min-h-[500px]">
+                    <ExpandedMapContent
                       rdvs={filteredRdvs}
                       selectedRdv={selectedRdv}
                       onSelectRdv={setSelectedRdv}
-                      isExpanded
-                      mapboxToken={mapboxToken}
+                      mapboxToken={mapboxToken || ''}
+                      isOpen={isExpanded}
                     />
-                  )}
-                </div>
-              </DialogContent>
-            </Dialog>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* Carte compacte */}
-      <div className="relative w-full h-full min-h-[240px]">
-        {!isExpanded && (
-          <MapContentInner
-            rdvs={filteredRdvs}
-            selectedRdv={selectedRdv}
-            onSelectRdv={setSelectedRdv}
-            mapboxToken={mapboxToken}
-          />
-        )}
-      </div>
+      )}
 
       {/* Info RDV sélectionné */}
       {selectedRdv && (
@@ -394,8 +359,8 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
       )}
 
       {/* Message si pas de RDV */}
-      {filteredRdvs.length === 0 && !isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
+      {filteredRdvs.length === 0 && !isLoading && !tokenLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-muted/50 z-[6]">
           <div className="text-center">
             {timeFilter === 'actuel' ? (
               <>
@@ -415,6 +380,109 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
         </div>
       )}
     </motion.div>
+  );
+}
+
+/**
+ * Expanded map in dialog — separate instance, only mounts when dialog opens
+ */
+function ExpandedMapContent({
+  rdvs,
+  selectedRdv,
+  onSelectRdv,
+  mapboxToken,
+  isOpen,
+}: {
+  rdvs: MapRdv[];
+  selectedRdv: MapRdv | null;
+  onSelectRdv: (rdv: MapRdv | null) => void;
+  mapboxToken: string;
+  isOpen: boolean;
+}) {
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const [mapReady, setMapReady] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const container = mapContainerRef.current;
+    if (!container || !mapboxToken) return;
+
+    // Small delay to let dialog animate open and get dimensions
+    const timer = setTimeout(() => {
+      mapboxgl.accessToken = mapboxToken;
+
+      const map = new mapboxgl.Map({
+        container,
+        style: MAPBOX_STYLE,
+        center: [2.3522, 48.8566],
+        zoom: 10,
+        attributionControl: true,
+      });
+
+      map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
+
+      map.on('load', () => map.resize());
+
+      mapRef.current = map;
+      setMapReady(true);
+    }, 200);
+
+    return () => {
+      clearTimeout(timer);
+      setMapReady(false);
+      markersRef.current.forEach(m => m.remove());
+      markersRef.current = [];
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, [isOpen, mapboxToken]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady) return;
+
+    markersRef.current.forEach(m => m.remove());
+    markersRef.current = [];
+
+    rdvs.forEach(rdv => {
+      const isSelected = selectedRdv?.rdvId === rdv.rdvId;
+      const el = createPinMarkerElement(rdv.users, 40, isSelected, () => {
+        onSelectRdv(isSelected ? null : rdv);
+      });
+
+      const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+        .setLngLat([rdv.lng, rdv.lat])
+        .addTo(map);
+
+      markersRef.current.push(marker);
+    });
+
+    const bounds = calculateBounds(rdvs);
+    if (bounds && rdvs.length > 0) {
+      const doFit = () => {
+        map.fitBounds(bounds as [[number, number], [number, number]], {
+          padding: 60,
+          maxZoom: 14,
+          duration: 500,
+        });
+      };
+      if (map.isStyleLoaded()) {
+        doFit();
+      } else {
+        map.once('load', doFit);
+      }
+    }
+  }, [rdvs, selectedRdv, onSelectRdv, mapReady]);
+
+  return (
+    <div 
+      ref={mapContainerRef} 
+      className="absolute inset-0 w-full h-full"
+    />
   );
 }
 
