@@ -177,14 +177,14 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
               {/* Row 1: Univers group headers */}
               <tr>
                 <th className="name-col" rowSpan={2}>Technicien</th>
-                {groupedColumns.map(({ univers, subSkills }) => (
-                  <th
-                    key={univers.id}
-                    className="univers-header"
-                    colSpan={Math.max(1, subSkills.length)}
-                  >
-                    {univers.label}
-                  </th>
+                 {groupedColumns.map(({ univers, subSkills }) => (
+                   <th
+                     key={univers.id}
+                     className="univers-header"
+                     colSpan={Math.max(1, subSkills.length)}
+                   >
+                     {getUniversAbbrev(univers.label)}
+                   </th>
                 ))}
               </tr>
               {/* Row 2: Sub-skill columns (or univers name if no sub-skills) */}
