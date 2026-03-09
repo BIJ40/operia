@@ -22,6 +22,51 @@ function norm(v: unknown): string {
   return String(v ?? "").trim().toLowerCase();
 }
 
+function parseNum(value: unknown): number {
+  if (value == null) return 0;
+  if (typeof value === 'number') return isNaN(value) ? 0 : value;
+  if (typeof value === 'string') {
+    const num = parseFloat(value.replace(',', '.').trim());
+    return isNaN(num) ? 0 : num;
+  }
+  return 0;
+}
+
+/**
+ * Extrait les heures depuis le chiffrage d'une intervention
+ * (postes[].items[].data.nbHeures/nbTechs avec fallback dFields)
+ */
+function extractChiffrageHours(intervention: RawIntervention): number {
+  const chiffrage = (intervention.data as any)?.chiffrage;
+  if (!chiffrage?.postes || !Array.isArray(chiffrage.postes)) return 0;
+
+  let totalHeures = 0;
+  for (const poste of chiffrage.postes) {
+    for (const item of poste?.items || []) {
+      if (!item?.IS_BLOCK || item?.slug !== 'chiffrage') continue;
+      const data = item.data || {};
+      let nbHeures = parseNum(data.nbHeures);
+
+      // Fallback: dFields
+      if (nbHeures === 0) {
+        for (const sub of data.subItems || []) {
+          if (!sub?.IS_BLOCK || sub?.slug !== 'dfields') continue;
+          for (const df of sub.data?.dFields || []) {
+            const slug = String(df.EXPORT_generiqueSlug || '').toLowerCase();
+            if (slug.includes("temps_total d'intervention") || slug.includes("temps_total_d'intervention") || slug.includes('temps_total')) {
+              const val = parseNum(df.value);
+              if (val > 0) { nbHeures = val; break; }
+            }
+          }
+          if (nbHeures > 0) break;
+        }
+      }
+      if (nbHeures > 0) totalHeures += nbHeures;
+    }
+  }
+  return totalHeures;
+}
+
 function extractColor(u: Record<string, unknown>): string {
   const data = u.data as Record<string, unknown> | undefined;
   const bgcolor = data?.bgcolor as Record<string, string> | undefined;
