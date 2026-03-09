@@ -3,7 +3,7 @@
  * Utilise le nouveau système d'authentification autonome (ApporteurSessionContext)
  */
 
-import { ReactNode } from 'react';
+import { ReactNode, Component, ErrorInfo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApporteurSession } from '@/apporteur/contexts/ApporteurSessionContext';
 import { ApporteurAuthProvider } from '@/contexts/ApporteurAuthContext';
@@ -17,8 +17,8 @@ import {
   LogOut, 
   Bug,
   ChevronDown,
-  Building2,
-  Home,
+  AlertTriangle,
+  RefreshCw,
 } from 'lucide-react';
 import { 
   DropdownMenu,
@@ -33,16 +33,71 @@ interface ApporteurLayoutProps {
   children?: ReactNode;
 }
 
-// Check if we're in dev/preview mode
-const isDevMode = () => {
-  const hostname = window.location.hostname;
-  return (
-    hostname === 'localhost' ||
-    hostname === '127.0.0.1' ||
-    hostname.includes('preview') ||
-    hostname.includes('lovable')
-  );
-};
+// ── Local Error Boundary for Apporteur content ──────────────
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class ApporteurErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryState> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('[ApporteurLayout] Runtime error caught:', error);
+    console.error('[ApporteurLayout] Component stack:', errorInfo.componentStack);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-[60vh] flex items-center justify-center p-6">
+          <div className="max-w-md text-center space-y-4">
+            <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+              <AlertTriangle className="w-6 h-6 text-destructive" />
+            </div>
+            <h2 className="text-lg font-semibold text-foreground">
+              Erreur dans l'espace Apporteur
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Une erreur est survenue lors du chargement.
+            </p>
+            {import.meta.env.DEV && this.state.error && (
+              <div className="p-3 bg-muted rounded-lg text-left">
+                <p className="text-xs font-mono text-destructive break-all">
+                  {this.state.error.message}
+                </p>
+                <p className="text-xs font-mono text-muted-foreground mt-1 break-all">
+                  {this.state.error.stack?.split('\n').slice(0, 5).join('\n')}
+                </p>
+              </div>
+            )}
+            <Button
+              onClick={() => {
+                this.setState({ hasError: false, error: null });
+                window.location.reload();
+              }}
+              variant="default"
+              className="gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Recharger
+            </Button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// ── Main Layout ─────────────────────────────────────────────
 
 export function ApporteurLayout({ children }: ApporteurLayoutProps) {
   const {
@@ -53,15 +108,7 @@ export function ApporteurLayout({ children }: ApporteurLayoutProps) {
   } = useApporteurSession();
   const navigate = useNavigate();
 
-  const devBypass = false; // Disabled: use real auth flow even in dev
-  
-  const displayUser = devBypass
-    ? {
-        firstName: 'Mode DEV',
-        email: 'dev@preview.local',
-        apporteurName: 'Accès sans authentification',
-      }
-    : session
+  const displayUser = session
     ? {
         firstName: session.firstName || session.email?.split('@')[0] || 'Utilisateur',
         email: session.email,
@@ -78,8 +125,8 @@ export function ApporteurLayout({ children }: ApporteurLayoutProps) {
     );
   }
 
-  // Login page for unauthenticated users (prod only)
-  if (!isAuthenticated && !devBypass) {
+  // Login page for unauthenticated users
+  if (!isAuthenticated) {
     return <ApporteurLoginPage />;
   }
 
@@ -89,89 +136,60 @@ export function ApporteurLayout({ children }: ApporteurLayoutProps) {
   };
 
   return (
-    <ApporteurAuthProvider>
-      <ApporteurTabsProvider>
-        <div className={cn("min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex flex-col", devBypass && "pt-9")}>
-          {/* Dev Mode Banner */}
-          {devBypass && (
-            <div className="fixed top-0 inset-x-0 z-[60] h-9 border-b border-border bg-accent text-accent-foreground flex items-center justify-center gap-2 px-3 text-xs">
-              <Bug className="w-4 h-4" />
-              <span className="font-medium">Mode DEV</span>
-              <span className="hidden sm:inline">— accès apporteur sans authentification</span>
-            </div>
-          )}
+    <ApporteurErrorBoundary>
+      <ApporteurAuthProvider>
+        <ApporteurTabsProvider>
+          <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex flex-col">
+            {/* Header avec onglets intégrés */}
+            <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+              <div className="container flex h-14 items-center gap-4">
+                {/* Onglets de navigation - prennent toute la place */}
+                <div className="flex-1">
+                  <ApporteurTabsBar />
+                </div>
 
-          {/* Header avec onglets intégrés */}
-          <header
-            className={cn(
-              "sticky z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60",
-              devBypass ? "top-9" : "top-0"
-            )}
-          >
-            <div className="container flex h-14 items-center gap-4">
-              {/* Onglets de navigation - prennent toute la place */}
-              <div className="flex-1">
-                <ApporteurTabsBar />
+                {/* User Menu à droite */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="gap-2 shrink-0">
+                      <User className="w-4 h-4" />
+                      <span className="hidden sm:inline max-w-[100px] truncate text-sm">
+                        {displayUser?.firstName || 'Compte'}
+                      </span>
+                      <ChevronDown className="w-3 h-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <div className="px-2 py-1.5">
+                      <p className="text-sm font-medium">{displayUser?.apporteurName}</p>
+                      <p className="text-xs text-muted-foreground">{displayUser?.email}</p>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Déconnexion
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
+            </header>
 
-              {/* User Menu à droite */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-2 shrink-0">
-                    <User className="w-4 h-4" />
-                    <span className="hidden sm:inline max-w-[100px] truncate text-sm">
-                      {displayUser?.firstName || 'Compte'}
-                    </span>
-                    <ChevronDown className="w-3 h-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <div className="px-2 py-1.5">
-                    <p className="text-sm font-medium">{displayUser?.apporteurName}</p>
-                    <p className="text-xs text-muted-foreground">{displayUser?.email}</p>
-                  </div>
-                  {!devBypass && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
-                        <LogOut className="w-4 h-4 mr-2" />
-                        Déconnexion
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </header>
+            {/* Main Content */}
+            <main className="flex-1 overflow-auto">
+              <div className="container">
+                <ApporteurTabsContent />
+              </div>
+            </main>
 
-          {/* Main Content */}
-          <main className="flex-1 overflow-auto">
-            <div className="container">
-              <ApporteurTabsContent />
-            </div>
-          </main>
-
-          {/* Footer */}
-          <footer className="border-t bg-muted/30 py-3 mt-auto">
-            <div className="container text-center text-sm text-muted-foreground">
-              <p>© {new Date().getFullYear()} HelpConfort Services - Espace Apporteur</p>
-            </div>
-          </footer>
-        </div>
-      </ApporteurTabsProvider>
-    </ApporteurAuthProvider>
-  );
-}
-
-// Feature card component for landing page
-function FeatureCard({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description: string }) {
-  return (
-    <div className="bg-card border rounded-2xl p-6 text-center">
-      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-        <Icon className="w-6 h-6 text-primary" />
-      </div>
-      <h3 className="font-semibold text-foreground mb-2">{title}</h3>
-      <p className="text-sm text-muted-foreground">{description}</p>
-    </div>
+            {/* Footer */}
+            <footer className="border-t bg-muted/30 py-3 mt-auto">
+              <div className="container text-center text-sm text-muted-foreground">
+                <p>© {new Date().getFullYear()} HelpConfort Services - Espace Apporteur</p>
+              </div>
+            </footer>
+          </div>
+        </ApporteurTabsProvider>
+      </ApporteurAuthProvider>
+    </ApporteurErrorBoundary>
   );
 }
