@@ -443,7 +443,7 @@ function normalizeTechnicians(rawUsers: unknown[]): PlanningTechnician[] {
   return rawUsers
     .filter((u) => {
       const obj = u as Record<string, unknown>;
-      return isTechnicienUser(obj) && isActiveUser(obj);
+      return isPlanningUser(obj) && isActiveUser(obj);
     })
     .map((u, index) => {
       const obj = u as Record<string, unknown>;
@@ -455,11 +455,12 @@ function normalizeTechnicians(rawUsers: unknown[]): PlanningTechnician[] {
       return {
         id: Number(obj.id),
         apogeeId: Number(obj.id),
-        name: `${firstname} ${name}`.trim() || `Tech #${obj.id}`,
+        name: `${firstname} ${name}`.trim() || `User #${obj.id}`,
         initials: buildInitials(firstname, name),
         color: extractColor(obj),
         skills: [],
         univers: universes,
+        userType: resolveUserType(obj),
         workStart: "07:00",
         workEnd: "18:00",
         lunchStart: "12:00",
