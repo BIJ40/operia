@@ -141,7 +141,7 @@ export function useApogeeSync({ agencySlug, collaborators }: UseApogeeSyncOption
             existingCollaborator: matchedCollab,
             changes: [
               `Lier à la fiche existante: ${matchedCollab.first_name} ${matchedCollab.last_name}`,
-              matchedCollab.is_registered_user ? '(utilisateur avec compte actif)' : '(fiche RH sans compte)',
+              matchedCollab.user_id ? '(utilisateur avec compte actif)' : '(fiche RH sans compte)',
               `Apogée ID: ${apogeeUser.id}`,
             ],
           });
