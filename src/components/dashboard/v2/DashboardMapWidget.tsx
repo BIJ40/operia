@@ -188,13 +188,15 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
   const [isExpanded, setIsExpanded] = useState(false);
   const [timeFilter, setTimeFilter] = useState<MapTimeFilter>('jour');
 
+  // AUDIT LOG — trace data flow
+  console.log('[MAP-AUDIT] DashboardMapWidget render. rdvs:', rdvs.length, 'isLoading:', isLoading, 'tokenLoading:', tokenLoading, 'mapboxToken:', !!mapboxToken, 'tokenError:', tokenError?.message || null, 'agencySlug:', agencySlug);
+
   // Filter RDVs based on timeFilter
   const filteredRdvs = useMemo(() => {
     if (timeFilter === 'jour') return rdvs;
     const now = new Date();
     return rdvs.filter(rdv => {
       const start = new Date(rdv.startAt);
-      // Utiliser endAt (fin créneau planning) si disponible, sinon fallback sur startAt + durationMin
       const end = rdv.endAt 
         ? new Date(rdv.endAt) 
         : new Date(start.getTime() + rdv.durationMin * 60 * 1000);
@@ -202,8 +204,10 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
     });
   }, [rdvs, timeFilter]);
 
+  console.log('[MAP-AUDIT] filteredRdvs:', filteredRdvs.length, 'timeFilter:', timeFilter);
 
   if (isLoading || tokenLoading) {
+    console.log('[MAP-AUDIT] Showing Skeleton (loading). isLoading:', isLoading, 'tokenLoading:', tokenLoading);
     return (
       <motion.div
         initial={{ opacity: 0, y: 10 }}
