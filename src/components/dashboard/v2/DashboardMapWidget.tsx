@@ -88,7 +88,7 @@ function MapContent({
       map.remove();
       mapRef.current = null;
     };
-  }, [containerRef, isExpanded]);
+  }, [containerRef, isExpanded, mapboxToken]);
 
   // Mise à jour des markers
   useEffect(() => {
