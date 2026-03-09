@@ -527,7 +527,7 @@ export default function DossiersTabContent() {
                       <span className="text-muted-foreground">Reste dû:</span>
                       <span className={cn(
                         "ml-2 font-semibold",
-                        selectedDossier.restedu > 0 ? "text-rose-600" : "text-green-600"
+                        selectedDossier.restedu > 0 ? "text-[hsl(var(--ap-danger))]" : "text-[hsl(var(--ap-success))]"
                       )}>
                         {selectedDossier.restedu > 0 ? formatCurrency(selectedDossier.restedu) : 'Réglé'}
                       </span>
