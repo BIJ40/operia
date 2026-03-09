@@ -116,8 +116,8 @@ export function ApporteurPlanningCard() {
     return map;
   }, [dossiers]);
 
-  // Sort all events chronologically and take next 10
-  const next10Events = useMemo(() => {
+  // Sort all events chronologically — show ALL upcoming
+  const allUpcomingEvents = useMemo(() => {
     const now = new Date();
     return [...events]
       .filter(e => {
@@ -128,8 +128,7 @@ export function ApporteurPlanningCard() {
         const da = `${a.date}T${a.time || '00:00'}`;
         const db = `${b.date}T${b.time || '00:00'}`;
         return da.localeCompare(db);
-      })
-      .slice(0, 10);
+      });
   }, [events]);
 
   const selectedDossier = selectedEvent ? dossiersById.get(selectedEvent.projectId) : null;
