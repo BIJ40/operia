@@ -30,6 +30,7 @@ interface ActionRequest {
 
 const ACTION_LABELS: Record<ActionType, string> = {
   refuser_devis: 'Refus de devis',
+  valider_devis: 'Validation de devis',
   facture_reglee: 'Facture déclarée réglée',
   dossier_inactif: 'Action sur dossier inactif',
 };
