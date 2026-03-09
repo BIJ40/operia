@@ -273,17 +273,14 @@ export function ApporteurLoginPage() {
 
           {/* Back to home */}
           <div className="mt-4 text-center">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              asChild
-              className="text-muted-foreground"
+            <a 
+              href="http://www.helpconfort-40.fr" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors px-4 py-2"
             >
-              <a href="http://www.helpconfort-40.fr" rel="noopener noreferrer">
-              <Home className="w-4 h-4 mr-2" />
+              <Home className="w-4 h-4" />
               Retour à l'accueil
-              </a>
-            </Button>
+            </a>
           </div>
         </div>
       </main>
