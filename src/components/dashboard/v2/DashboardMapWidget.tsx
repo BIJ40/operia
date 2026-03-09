@@ -63,11 +63,15 @@ function MapContentInner({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
+  // Track map ready state to trigger marker re-render
+  const [mapReady, setMapReady] = useState(false);
 
   // Init map once
   useEffect(() => {
     const container = mapContainerRef.current;
     if (!container || !mapboxToken) return;
+
+    console.log('[MAP-AUDIT] Init map. Container size:', container.offsetWidth, 'x', container.offsetHeight, 'isExpanded:', isExpanded);
 
     mapboxgl.accessToken = mapboxToken;
 
@@ -82,15 +86,25 @@ function MapContentInner({
     });
 
     map.on('load', () => {
+      console.log('[MAP-AUDIT] Map style loaded. Resizing.');
       map.resize();
     });
+
+    map.on('error', (e: any) => {
+      console.error('[MAP-AUDIT] Mapbox error:', e.error?.message || e);
+    });
+
     if (isExpanded) {
       map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
     }
 
     mapRef.current = map;
+    setMapReady(true);
+    console.log('[MAP-AUDIT] mapRef.current set. mapReady=true');
 
     return () => {
+      console.log('[MAP-AUDIT] CLEANUP: destroying map. Removing', markersRef.current.length, 'markers');
+      setMapReady(false);
       markersRef.current.forEach(m => m.remove());
       markersRef.current = [];
       map.remove();
@@ -98,15 +112,31 @@ function MapContentInner({
     };
   }, [mapboxToken, isExpanded]);
 
-  // Markers — no need to wait for 'load', DOM markers work immediately
+  // Markers — depends on mapReady to handle race condition
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    console.log('[MAP-AUDIT] Markers effect. mapReady:', mapReady, 'mapRef:', !!map, 'rdvs.length:', rdvs.length, 'isExpanded:', isExpanded);
+    
+    if (!map || !mapReady) {
+      console.log('[MAP-AUDIT] Markers effect SKIPPED: map not ready');
+      return;
+    }
 
+    // Clear old markers
+    const oldCount = markersRef.current.length;
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
+    console.log('[MAP-AUDIT] Cleared', oldCount, 'old markers');
 
-    rdvs.forEach(rdv => {
+    // Validate coordinates
+    const validRdvs = rdvs.filter(rdv => {
+      const valid = typeof rdv.lat === 'number' && typeof rdv.lng === 'number' && !isNaN(rdv.lat) && !isNaN(rdv.lng) && rdv.lat !== 0 && rdv.lng !== 0;
+      if (!valid) console.warn('[MAP-AUDIT] Invalid coordinates for rdv:', rdv.rdvId, 'lat:', rdv.lat, 'lng:', rdv.lng);
+      return valid;
+    });
+    console.log('[MAP-AUDIT] Valid coords:', validRdvs.length, '/', rdvs.length);
+
+    validRdvs.forEach(rdv => {
       const isSelected = selectedRdv?.rdvId === rdv.rdvId;
       const el = createPinMarkerElement(rdv.users, isExpanded ? 40 : 32, isSelected, () => {
         onSelectRdv(isSelected ? null : rdv);
@@ -119,9 +149,11 @@ function MapContentInner({
       markersRef.current.push(marker);
     });
 
-    // Fit bounds — wait for style to be ready
-    const bounds = calculateBounds(rdvs);
-    if (bounds && rdvs.length > 0) {
+    console.log('[MAP-AUDIT] Rendered', markersRef.current.length, 'markers on map');
+
+    // Fit bounds
+    const bounds = calculateBounds(validRdvs);
+    if (bounds && validRdvs.length > 0) {
       const doFit = () => {
         map.fitBounds(bounds as [[number, number], [number, number]], {
           padding: isExpanded ? 60 : 40,
@@ -135,7 +167,7 @@ function MapContentInner({
         map.once('load', doFit);
       }
     }
-  }, [rdvs, selectedRdv, onSelectRdv, isExpanded]);
+  }, [rdvs, selectedRdv, onSelectRdv, isExpanded, mapReady]);
 
   return (
     <div 
