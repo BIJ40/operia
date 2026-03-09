@@ -102,11 +102,16 @@ export function MfaEnrollDialog({ open, onOpenChange, onSuccess }: MfaEnrollDial
 
         {step === 'scan' && (
           <div className="space-y-4">
+            <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-3 text-sm text-amber-800 dark:text-amber-200">
+              <p className="font-medium">⚠️ Important</p>
+              <p>Ouvrez d'abord votre application d'authentification (Google Authenticator, Authy…), puis scannez le QR code <strong>depuis l'application</strong>.</p>
+              <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">Ne scannez pas avec l'appareil photo de votre téléphone.</p>
+            </div>
             <div className="flex justify-center p-4 bg-white rounded-lg">
               <QRCodeSVG value={qrUri} size={200} />
             </div>
             <p className="text-sm text-center text-muted-foreground">
-              Scannez ce QR code avec votre application d'authentification
+              Ou entrez manuellement la clé secrète ci-dessous dans votre application :
             </p>
             <div className="flex items-center gap-2">
               <code className="flex-1 text-xs bg-muted p-2 rounded font-mono break-all">
