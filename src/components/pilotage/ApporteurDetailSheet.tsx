@@ -289,18 +289,49 @@ export function ApporteurDetailSheet({ apporteur, open, onOpenChange }: Apporteu
                           {mgr.role === 'manager' ? 'Gestionnaire' : 'Lecteur'}
                         </Badge>
                         {canManageUsers && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0"
-                            onClick={() => toggleManagerStatus.mutate({ id: mgr.id, is_active: !mgr.is_active })}
-                          >
-                            {mgr.is_active ? (
-                              <div className="w-2 h-2 rounded-full bg-green-500" title="Actif - cliquer pour désactiver" />
-                            ) : (
-                              <div className="w-2 h-2 rounded-full bg-red-500" title="Inactif - cliquer pour réactiver" />
-                            )}
-                          </Button>
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={() => toggleManagerStatus.mutate({ id: mgr.id, is_active: !mgr.is_active })}
+                            >
+                              {mgr.is_active ? (
+                                <div className="w-2 h-2 rounded-full bg-green-500" title="Actif - cliquer pour désactiver" />
+                              ) : (
+                                <div className="w-2 h-2 rounded-full bg-red-500" title="Inactif - cliquer pour réactiver" />
+                              )}
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                                  title="Supprimer cet utilisateur"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Supprimer cet utilisateur ?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    L'utilisateur {mgr.first_name} {mgr.last_name} ({mgr.email}) sera supprimé définitivement. Ses sessions et codes de connexion seront également supprimés.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteManager.mutate(mgr.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Supprimer
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </>
                         )}
                       </div>
                     </div>
