@@ -11,7 +11,7 @@ import {
   DraggableFolderContentContainer,
   FolderTabConfig 
 } from '@/components/ui/draggable-folder-tabs';
-import { Activity, Map, GitBranch, Brain, Bell, Loader2 } from 'lucide-react';
+import { Activity, Map, GitBranch, Bell, Loader2 } from 'lucide-react';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { MaintenanceModeCard } from '@/components/admin/MaintenanceModeCard';
 import { useSessionState } from '@/hooks/useSessionState';
@@ -20,18 +20,16 @@ import { usePersistedTab } from '@/hooks/usePersistedState';
 const AdminSystemHealth = lazy(() => import('@/pages/AdminSystemHealth'));
 const AdminSitemap = lazy(() => import('@/pages/admin/AdminSitemap'));
 const AdminFlow = lazy(() => import('@/pages/admin/AdminFlow'));
-const PlanningAugmenteAdmin = lazy(() => import('@/components/planning-augmente/PlanningAugmenteAdmin'));
 const TicketNotificationSettings = lazy(() => import('@/components/admin/TicketNotificationSettings'));
 
 const SUB_TABS: FolderTabConfig[] = [
   { id: 'health', label: 'Santé', icon: Activity, accent: 'green' },
   { id: 'sitemap', label: 'Sitemap', icon: Map, accent: 'purple' },
   { id: 'flow', label: 'Flow', icon: GitBranch, accent: 'orange' },
-  { id: 'planning-ia', label: 'Planif. IA', icon: Brain, accent: 'blue' },
   { id: 'notifications', label: 'Notifs', icon: Bell, accent: 'orange' },
 ];
 
-const DEFAULT_TAB_ORDER = ['health', 'sitemap', 'flow', 'planning-ia', 'notifications'];
+const DEFAULT_TAB_ORDER = ['health', 'sitemap', 'flow', 'notifications'];
 const PLATFORM_TAB_IDS = SUB_TABS.map(tab => tab.id);
 
 function LoadingFallback() {
@@ -124,11 +122,6 @@ export function PlateformeView() {
             </Suspense>
           </TabsContent>
 
-          <TabsContent value="planning-ia" className="mt-0 focus-visible:outline-none">
-            <Suspense fallback={<LoadingFallback />}>
-              <PlanningAugmenteAdmin />
-            </Suspense>
-          </TabsContent>
 
           <TabsContent value="notifications" className="mt-0 focus-visible:outline-none">
             <Suspense fallback={<LoadingFallback />}>
