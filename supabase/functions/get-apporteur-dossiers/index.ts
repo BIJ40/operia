@@ -360,7 +360,8 @@ Deno.serve(async (req) => {
         .filter((v) => v && v.toLowerCase() !== 'client');
 
       const clientName = candidateNames[0] || 'Client inconnu';
-      const city = clientData.ville || '';
+      const city = clientData.ville || clientData.city || '';
+      const address = clientData.adresse || clientData.address || clientData.adr || '';
 
       const projectDate = parseDate(p.dateReelle || p.date);
       
