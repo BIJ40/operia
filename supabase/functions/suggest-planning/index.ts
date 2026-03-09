@@ -413,7 +413,7 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
       supabase
         .from('collaborators')
         .select('id, apogee_user_id, first_name, last_name, type, role')
-        .eq('agency_id', agency_id)
+        .eq('agency_id', agencyUuid)
         .not('apogee_user_id', 'is', null)
         .is('leaving_date', null)
         .then(r => r.data || []),
