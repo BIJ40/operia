@@ -88,7 +88,7 @@ function buildInitials(firstname: string, name: string): string {
   return `${f}${n}` || "??";
 }
 
-function isTechnicienUser(u: Record<string, unknown>): boolean {
+function isPlanningUser(u: Record<string, unknown>): boolean {
   const type = norm(u.type);
   const data = u.data as Record<string, unknown> | undefined;
   const universes = data?.universes;
@@ -96,8 +96,14 @@ function isTechnicienUser(u: Record<string, unknown>): boolean {
   return (
     u.isTechnicien === true ||
     type === "technicien" ||
+    type === "commercial" ||
     (type === "utilisateur" && hasUniverses)
   );
+}
+
+function resolveUserType(u: Record<string, unknown>): "technicien" | "commercial" {
+  const type = norm(u.type);
+  return type === "commercial" ? "commercial" : "technicien";
 }
 
 function safeDate(v: unknown): Date | null {
