@@ -321,7 +321,7 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
       </div>
 
       {/* Carte compacte */}
-      <div className="relative w-full h-full min-h-[240px]">
+      <div className="w-full" style={{ height: '320px' }}>
         {!isExpanded && (
           <MapContentInner
             rdvs={filteredRdvs}
