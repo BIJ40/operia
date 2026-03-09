@@ -528,7 +528,7 @@ export default function DossiersTabContent() {
                         </TableCell>
                         <TableCell onClick={() => setSelectedDossier(d)}>
                           <Badge className={cn('text-xs', statusConf.bgColor, statusConf.color)}>
-                            {d.status === 'stand_by' ? '⏳ ' : ''}{d.statusLabel}
+                            {d.status === 'stand_by' ? '⏳ ' : ''}{getApporteurLabel(d)}
                           </Badge>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell text-sm" onClick={() => setSelectedDossier(d)}>
