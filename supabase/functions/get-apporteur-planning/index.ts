@@ -236,9 +236,26 @@ Deno.serve(async (req) => {
     // Filter interventions for the week
     const events: PlanningEvent[] = [];
     
+    let loggedSample = false;
     for (const i of (allInterventions || []) as AnyRecord[]) {
       const projectId = Number(i.projectId);
       if (!projectIds.has(projectId)) continue;
+
+      // Log first matching intervention's full keys + time-related values
+      if (!loggedSample) {
+        loggedSample = true;
+        const allKeys = Object.keys(i);
+        const timeRelated: Record<string, unknown> = {};
+        for (const k of allKeys) {
+          const kl = k.toLowerCase();
+          if (kl.includes('heur') || kl.includes('time') || kl.includes('hour') || kl.includes('matin') || kl.includes('midi') || kl.includes('creneau') || kl.includes('slot') || kl.includes('period') || kl.includes('moment') || kl.includes('am') || kl.includes('pm') || kl.includes('demi')) {
+            timeRelated[k] = i[k];
+          }
+        }
+        console.log(`[GET-APPORTEUR-PLANNING] Sample intervention keys:`, allKeys);
+        console.log(`[GET-APPORTEUR-PLANNING] Time-related fields:`, timeRelated);
+        console.log(`[GET-APPORTEUR-PLANNING] Full sample:`, JSON.stringify(i).substring(0, 1500));
+      }
 
       const intDate = parseDate(i.dateReelle || i.date);
       if (!intDate || intDate < bounds.start) continue;
