@@ -71,10 +71,15 @@ export function OnlineUsers() {
 
         const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
 
-        const enrichedPresences = presences.map(presence => ({
-          ...presence,
-          profile: profilesMap.get(presence.user_id)
-        }));
+        const enrichedPresences = presences
+          .filter(presence => {
+            const profile = profilesMap.get(presence.user_id);
+            return profile && (profile.first_name || profile.last_name || profile.email);
+          })
+          .map(presence => ({
+            ...presence,
+            profile: profilesMap.get(presence.user_id)
+          }));
 
         setOnlineUsers(enrichedPresences);
       } else {

@@ -165,12 +165,15 @@ export function ConnectionStats({ userId }: ConnectionStatsProps) {
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <p className="font-semibold">{getDisplayName(stat)}</p>
-                    {stat.last_connection && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Dernière connexion: {format(new Date(stat.last_connection), 'PPP à HH:mm', { locale: fr })}
-                      </p>
+                    {stat.email && (
+                      <p className="text-xs text-muted-foreground">{stat.email}</p>
                     )}
                   </div>
+                  {stat.last_connection && (
+                    <p className="text-xs text-muted-foreground whitespace-nowrap">
+                      Dernière connexion : {format(new Date(stat.last_connection), 'dd/MM/yyyy à HH:mm', { locale: fr })}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-3 gap-4 mt-3">
