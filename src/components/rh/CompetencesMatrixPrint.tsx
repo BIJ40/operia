@@ -38,6 +38,29 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
   const collabIds = activeCollabs.map(t => t.id);
   const { data: allCollabSubSkills = [] } = useAllCollaboratorSubSkills(collabIds);
 
+  // Abbreviation map for univers headers
+  const UNIVERS_ABBREV: Record<string, string> = {
+    'rénovation': 'RÉNO',
+    'renovation': 'RÉNO',
+    'amélioration du logement': 'PMR',
+    'amelioration du logement': 'PMR',
+    'volet roulant': 'VR',
+    'électricité': 'ÉLEC',
+    'electricite': 'ÉLEC',
+    'plomberie': 'PLOMB',
+    'serrurerie': 'SERR',
+    'vitrerie / miroiterie': 'VITR',
+    'vitrerie': 'VITR',
+    'menuiserie': 'MEN',
+    'recherche de fuite': 'RDF',
+    'multiservices': 'MULTI',
+  };
+
+  const getUniversAbbrev = (label: string) => {
+    const key = label.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    return UNIVERS_ABBREV[key] || label.substring(0, 4).toUpperCase();
+  };
+
   // Build grouped structure: univers → sub-skills
   const groupedColumns = universCatalog.map(univers => ({
     univers,
@@ -45,6 +68,14 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
       a.label.localeCompare(b.label, 'fr')
     ),
   }));
+
+  // Format tech name: Prénom + initiale Nom
+  const formatTechName = (collab: { first_name?: string | null; last_name?: string | null }) => {
+    const prenom = collab.first_name || '';
+    const nom = collab.last_name || '';
+    const initiale = nom.charAt(0).toUpperCase();
+    return `${prenom} ${initiale}.`.trim();
+  };
 
   // Normalize for accent/case insensitive comparison
   const normalize = (s: string) =>
