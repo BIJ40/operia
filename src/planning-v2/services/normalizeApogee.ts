@@ -301,82 +301,10 @@ export function normalizeApogeeData(
     planifiableProjectIds.add(pid);
   }
 
-  // 3. Construire les entrées non-planifiées à partir des projets planifiables
+  // 3. Construire UNE entrée par projet planifiable (pas par intervention)
   const unscheduled: PlanningUnscheduled[] = [];
-  const scheduledIntervIds = new Set<number>();
-  for (const c of creneaux) {
-    if (c.refType === "visite-interv") {
-      const interv = pEventToInterv.get(c.id);
-      if (interv) scheduledIntervIds.add(interv.id);
-    }
-  }
 
-  // Group interventions by project for planifiable projects
-  const intervsByProject = new Map<number, typeof interventions>();
-  for (const interv of interventions) {
-    if (!interv.projectId || !planifiableProjectIds.has(interv.projectId)) continue;
-    if (scheduledIntervIds.has(interv.id)) continue;
-    const stateN = norm(interv.state);
-    // Exclude cancelled/closed interventions
-    if (["cancelled", "canceled", "refused", "annule", "clos"].includes(stateN)) continue;
-    
-    if (!intervsByProject.has(interv.projectId)) {
-      intervsByProject.set(interv.projectId, []);
-    }
-    intervsByProject.get(interv.projectId)!.push(interv);
-  }
-
-  // For projects with unscheduled interventions, create entries
-  for (const [pid, intervs] of intervsByProject.entries()) {
-    for (const interv of intervs) {
-      const project = projectMap.get(pid);
-      const client = project?.clientId ? clientMap.get(project.clientId) : undefined;
-
-      let clientName = "Inconnu";
-      if (client) {
-        const p = (client.prenom || "").trim();
-        const n = (client.nom || "").trim();
-        clientName = `${p} ${n}`.trim() || "Inconnu";
-      }
-
-      // Determine reason
-      let reason: PlanningUnscheduled["reason"] = "a_planifier";
-      const motif = norm(interv.data?.motifAttente);
-      const prioriteN = norm(interv.data?.priorite);
-      if (prioriteN === "urgent" || prioriteN === "urgente") reason = "urgent";
-      else if (motif.includes("client")) reason = "en_attente_client";
-      else if (motif.includes("piece") || motif.includes("pièce")) reason = "en_attente_piece";
-      else if (motif.includes("devis")) reason = "en_attente_devis";
-
-      let priority: AppointmentPriority = "normal";
-      if (prioriteN === "urgent" || prioriteN === "urgente") priority = "urgent";
-      else if (prioriteN === "haute" || prioriteN === "high") priority = "high";
-      else if (prioriteN === "basse" || prioriteN === "low") priority = "low";
-
-      const rawType = interv.type2 || interv.type;
-      const type = resolveInterventionType(rawType);
-
-      unscheduled.push({
-        id: `unsched-${interv.id}`,
-        apogeeId: interv.id,
-        dossierId: interv.projectId ?? 0,
-        client: clientName,
-        city: client?.ville || client?.city || null,
-        universe: project?.data?.universes?.[0] ?? null,
-        priority,
-        estimatedDuration: interv.data?.dureeEstimee || DURATION_FALLBACK[type] || DURATION_FALLBACK.default,
-        requiredSkills: interv.data?.competences ?? [],
-        reason,
-        dueDate: null,
-        status: project?.state || interv.state || "unknown",
-        apporteur: null,
-      });
-    }
-  }
-
-  // Also add planifiable projects that have NO interventions at all
   for (const pid of planifiableProjectIds) {
-    if (intervsByProject.has(pid)) continue; // Already handled above
     const project = projectMap.get(pid);
     if (!project) continue;
     const client = project.clientId ? clientMap.get(project.clientId) : undefined;
@@ -388,8 +316,36 @@ export function normalizeApogeeData(
       clientName = `${p} ${n}`.trim() || "Inconnu";
     }
 
-    const projectState = norm(project.state);
-    const reason: PlanningUnscheduled["reason"] = projectState === "to_planify_tvx" ? "a_planifier" : "a_planifier";
+    // Aggregate info from project's interventions for duration/priority
+    const projectIntervs = interventions.filter(i => i.projectId === pid);
+    let estimatedDuration = DURATION_FALLBACK.default;
+    let priority: AppointmentPriority = "normal";
+    let reason: PlanningUnscheduled["reason"] = "a_planifier";
+
+    if (projectIntervs.length > 0) {
+      // Use first non-cancelled intervention for metadata
+      const mainInterv = projectIntervs[0];
+      const rawType = mainInterv.type2 || mainInterv.type;
+      const type = resolveInterventionType(rawType);
+      estimatedDuration = mainInterv.data?.dureeEstimee || DURATION_FALLBACK[type] || DURATION_FALLBACK.default;
+
+      const prioriteN = norm(mainInterv.data?.priorite);
+      if (prioriteN === "urgent" || prioriteN === "urgente") priority = "urgent";
+      else if (prioriteN === "haute" || prioriteN === "high") priority = "high";
+      else if (prioriteN === "basse" || prioriteN === "low") priority = "low";
+
+      const motif = norm(mainInterv.data?.motifAttente);
+      if (prioriteN === "urgent" || prioriteN === "urgente") reason = "urgent";
+      else if (motif.includes("client")) reason = "en_attente_client";
+      else if (motif.includes("piece") || motif.includes("pièce")) reason = "en_attente_piece";
+      else if (motif.includes("devis")) reason = "en_attente_devis";
+    }
+
+    const projData = project.data as Record<string, unknown> | undefined;
+    const nbHeures = projData?.nbHeures as number | undefined;
+    if (nbHeures && nbHeures > 0) {
+      estimatedDuration = nbHeures * 60;
+    }
 
     unscheduled.push({
       id: `unsched-proj-${pid}`,
@@ -398,8 +354,8 @@ export function normalizeApogeeData(
       client: clientName,
       city: client?.ville || client?.city || null,
       universe: project.data?.universes?.[0] ?? null,
-      priority: "normal",
-      estimatedDuration: DURATION_FALLBACK.default,
+      priority,
+      estimatedDuration,
       requiredSkills: [],
       reason,
       dueDate: null,
