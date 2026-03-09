@@ -69,6 +69,18 @@ function MapContentInner({
     const container = mapContainerRef.current;
     if (!container || !mapboxToken) return;
 
+    // Wait for container to have actual dimensions
+    if (container.offsetWidth === 0 || container.offsetHeight === 0) {
+      console.warn('[MapWidget] Container has no dimensions, deferring init');
+      const raf = requestAnimationFrame(() => {
+        if (container.offsetWidth > 0 && container.offsetHeight > 0) {
+          // Trigger re-render by forcing effect re-run
+          container.dispatchEvent(new Event('resize'));
+        }
+      });
+      return () => cancelAnimationFrame(raf);
+    }
+
     mapboxgl.accessToken = mapboxToken;
 
     const map = new mapboxgl.Map({
@@ -82,7 +94,7 @@ function MapContentInner({
     });
 
     map.on('load', () => {
-      console.log('[MapWidget] Map loaded, resizing. Container size:', container.offsetWidth, container.offsetHeight);
+      console.log('[MapWidget] Map loaded OK. Container:', container.offsetWidth, 'x', container.offsetHeight);
       map.resize();
     });
 
