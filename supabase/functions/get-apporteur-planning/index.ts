@@ -241,43 +241,24 @@ Deno.serve(async (req) => {
       const projectId = Number(i.projectId);
       if (!projectIds.has(projectId)) continue;
 
-      // Log first matching intervention's full keys + time-related values
-      if (!loggedSample) {
-        loggedSample = true;
-        const allKeys = Object.keys(i);
-        const timeRelated: Record<string, unknown> = {};
-        for (const k of allKeys) {
-          const kl = k.toLowerCase();
-          if (kl.includes('heur') || kl.includes('time') || kl.includes('hour') || kl.includes('matin') || kl.includes('midi') || kl.includes('creneau') || kl.includes('slot') || kl.includes('period') || kl.includes('moment') || kl.includes('am') || kl.includes('pm') || kl.includes('demi')) {
-            timeRelated[k] = i[k];
-          }
-        }
-        console.log(`[GET-APPORTEUR-PLANNING] Sample intervention keys:`, allKeys);
-        console.log(`[GET-APPORTEUR-PLANNING] Time-related fields:`, timeRelated);
-        console.log(`[GET-APPORTEUR-PLANNING] Full sample:`, JSON.stringify(i).substring(0, 1500));
-      }
-
-      const intDate = parseDate(i.dateReelle || i.date);
-      if (!intDate || intDate < bounds.start) continue;
-
-      const project = projectsMap[projectId];
-      const clientData = project?.data || {};
-
-      // Nom du client final : project.clientId -> apiGetClients
-      const finalClientId = project?.clientId != null ? String(project.clientId) : null;
-      const candidateNames = [finalClientId ? clientsMap[finalClientId] : null]
-        .map((v) => (typeof v === 'string' ? v.trim() : ''))
-        .filter((v) => v && v.toLowerCase() !== 'client');
-
-      const clientName = candidateNames[0] || 'Client inconnu';
-      const city = clientData.ville || '';
-
-      // Log first matching intervention's full keys + time-related values
+      // Log first matching intervention to discover available fields
       if (!loggedSample) {
         loggedSample = true;
         console.log(`[GET-APPORTEUR-PLANNING] Sample intervention keys:`, Object.keys(i));
-        if (i.data && typeof i.data === 'object') {
-          console.log(`[GET-APPORTEUR-PLANNING] Sample i.data keys:`, Object.keys(i.data as Record<string, unknown>));
+        const iData = (i.data && typeof i.data === 'object') ? i.data as Record<string, unknown> : {};
+        console.log(`[GET-APPORTEUR-PLANNING] Sample i.data keys:`, Object.keys(iData));
+        // Log all time-related fields
+        const timeFields: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(iData)) {
+          const kl = k.toLowerCase();
+          if (kl.includes('heur') || kl.includes('time') || kl.includes('creneau') || kl.includes('slot') || kl.includes('demi') || kl.includes('matin') || kl.includes('midi') || kl.includes('period') || kl.includes('visite')) {
+            timeFields[k] = typeof v === 'object' ? JSON.stringify(v)?.substring(0, 200) : v;
+          }
+        }
+        console.log(`[GET-APPORTEUR-PLANNING] Time-related data fields:`, timeFields);
+        // Also check visites
+        if (Array.isArray(iData.visites) && iData.visites.length > 0) {
+          console.log(`[GET-APPORTEUR-PLANNING] First visite:`, JSON.stringify(iData.visites[0]).substring(0, 500));
         }
       }
 
@@ -287,7 +268,6 @@ Deno.serve(async (req) => {
       const project = projectsMap[projectId];
       const clientData = project?.data || {};
 
-      // Nom du client final : project.clientId -> apiGetClients
       const finalClientId = project?.clientId != null ? String(project.clientId) : null;
       const candidateNames = [finalClientId ? clientsMap[finalClientId] : null]
         .map((v) => (typeof v === 'string' ? v.trim() : ''))
@@ -298,9 +278,24 @@ Deno.serve(async (req) => {
 
       const type = String(i.type || i.type2 || 'intervention').toLowerCase();
       
-      // heureDebut is nested inside i.data (see apogeeSchema: path 'data.heureDebut')
+      // Extract time: try data.heureDebut, then visites[0].date (datetime), then top-level fields
       const iData = (i.data && typeof i.data === 'object') ? i.data as Record<string, unknown> : {};
-      const rawTime = iData.heureDebut ?? iData.heure ?? iData.heureRdv ?? i.heureDebut ?? i.heure ?? null;
+      let rawTime: unknown = iData.heureDebut ?? iData.heure ?? iData.heureRdv ?? null;
+      
+      // Try extracting hour from visites datetime (e.g. "2026-03-10T14:00:00")
+      if (rawTime == null && Array.isArray(iData.visites) && iData.visites.length > 0) {
+        const vDate = String((iData.visites[0] as Record<string, unknown>)?.date || '');
+        const tMatch = vDate.match(/T(\d{2}:\d{2})/);
+        if (tMatch) rawTime = tMatch[1];
+      }
+      
+      // Try top-level date field with time component
+      if (rawTime == null) {
+        const topDate = String(i.date || '');
+        const tMatch = topDate.match(/T(\d{2}:\d{2})/);
+        if (tMatch) rawTime = tMatch[1];
+      }
+      
       const time = rawTime != null ? String(rawTime) : null;
 
       events.push({
