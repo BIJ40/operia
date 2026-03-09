@@ -248,8 +248,8 @@ export default function DossiersTabContent() {
 
       {/* Bannière filtre alerte */}
       {alerteRefs && alerteRefs.length > 0 && (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
-          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[hsl(var(--ap-warning-light))] border border-[hsl(var(--ap-warning)/.3)]">
+          <AlertTriangle className="w-4 h-4 text-[hsl(var(--ap-warning))] shrink-0" />
           <span className="text-sm text-foreground flex-1">
             Filtre actif : <strong>{alerteRefs.length} dossier(s)</strong> issus d'une alerte
           </span>
