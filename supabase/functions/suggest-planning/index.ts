@@ -379,15 +379,17 @@ Deno.serve(withSentry({ functionName: 'suggest-planning' }, async (req: Request)
     const minSkillLevel = options?.min_skill_level ?? 2;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Get agency slug
+    // Get agency — accept UUID or slug
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(agency_id);
     const { data: agency } = await supabase
       .from('apogee_agencies')
-      .select('slug')
-      .eq('id', agency_id)
+      .select('id, slug')
+      .eq(isUuid ? 'id' : 'slug', agency_id)
       .single();
     if (!agency?.slug || !apiKey) {
       return withCors(req, new Response(JSON.stringify({ error: 'Agency not found or API key missing' }), { status: 400 }));
     }
+    const agencyUuid = agency.id;
 
     console.log(`[SUGGEST] agency=${agency.slug} dossier=${dossier_id}`);
 
