@@ -84,6 +84,7 @@ Deno.serve(async (req) => {
       ));
     }
 
+    const baseUrl = `https://${agencySlug}.hc-apogee.fr/api`;
     const bounds = getAllFutureBounds();
 
     function extractApogeeList(endpoint: string, parsed: unknown): AnyRecord[] {
