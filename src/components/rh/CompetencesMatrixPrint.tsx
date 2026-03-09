@@ -108,31 +108,46 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
         <title>Matrice Techniciens x Compétences</title>
         <style>
           * { box-sizing: border-box; margin: 0; padding: 0; }
-          body { font-family: Arial, sans-serif; padding: 10px; font-size: 9px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-          h1 { font-size: 14px; margin-bottom: 4px; text-align: center; }
-          .date { text-align: center; color: #666; margin-bottom: 10px; font-size: 9px; }
-           table { width: auto; border-collapse: collapse; }
-           th, td { border: 1px solid #aaa; padding: 1px 3px; text-align: center; overflow: hidden; }
-           th { background: #f0f0f0 !important; font-weight: bold; }
-           th.name-col { text-align: left; width: 110px; }
-           th.univers-header { background: #d4e6f1 !important; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
-           th.sub-col {
-             writing-mode: vertical-rl;
-             text-orientation: mixed;
-             transform: rotate(180deg);
-             height: 100px;
-             font-size: 8px;
-             padding: 4px 1px;
-             font-weight: normal;
-             overflow: hidden;
-             width: 22px;
-             max-width: 22px;
-           }
-           td.name-cell { text-align: left; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 9px; }
-           td.comp-cell { width: 22px; max-width: 22px; height: 18px; }
+          body { 
+            font-family: Arial, sans-serif; 
+            -webkit-print-color-adjust: exact !important; 
+            print-color-adjust: exact !important; 
+            color-adjust: exact !important; 
+          }
+          h1 { font-size: 16px; margin-bottom: 4px; text-align: center; }
+          .date { text-align: center; color: #666; margin-bottom: 8px; font-size: 10px; }
+          .page-wrap { 
+            width: 297mm; 
+            height: 210mm; 
+            padding: 8mm; 
+            display: flex; 
+            flex-direction: column; 
+          }
+          table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            table-layout: fixed; 
+            flex: 1; 
+          }
+          th, td { border: 1px solid #999; text-align: center; overflow: hidden; }
+          th { background: #f0f0f0 !important; font-weight: bold; }
+          th.name-col { text-align: left; width: 120px; min-width: 120px; font-size: 11px; padding: 2px 6px; }
+          th.univers-header { background: #d4e6f1 !important; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 2px; }
+          th.sub-col {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            transform: rotate(180deg);
+            height: 120px;
+            font-size: 9px;
+            padding: 4px 2px;
+            font-weight: normal;
+            overflow: hidden;
+          }
+          td.name-cell { text-align: left; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; padding: 3px 6px; }
+          td.comp-cell { height: 22px; padding: 0; }
           td[data-has="true"] { background: #22c55e !important; }
           td[data-has="false"] { background: #fff !important; }
-          .legend { margin-top: 10px; display: flex; gap: 20px; justify-content: center; font-size: 9px; }
+          .legend { margin-top: 6px; display: flex; gap: 20px; justify-content: center; font-size: 10px; }
           .legend-item { display: flex; align-items: center; gap: 5px; }
           .legend-box { width: 14px; height: 14px; border: 1px solid #333; }
           .legend-box.green { background: #22c55e !important; }
@@ -140,16 +155,20 @@ export function CompetencesMatrixPrint({ open, onOpenChange }: Props) {
           .print-btn { margin: 15px auto; display: block; padding: 8px 24px; font-size: 13px; cursor: pointer; background: #2563eb; color: #fff; border: none; border-radius: 6px; }
           .print-btn:hover { background: #1d4ed8; }
           @media print {
-            @page { size: landscape; margin: 8mm; }
+            @page { size: A4 landscape; margin: 6mm; }
             .print-btn { display: none !important; }
+            body { padding: 0; }
+            .page-wrap { width: 100%; height: 100%; padding: 0; }
           }
         </style>
       </head>
       <body>
+        <div class="page-wrap">
         ${printContent.innerHTML}
         <div class="legend">
           <div class="legend-item"><div class="legend-box green"></div><span>Compétence acquise</span></div>
           <div class="legend-item"><div class="legend-box white"></div><span>Non acquise</span></div>
+        </div>
         </div>
         <button class="print-btn" onclick="window.print()">🖨️ Imprimer</button>
       </body>
