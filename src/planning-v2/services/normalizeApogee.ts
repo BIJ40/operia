@@ -36,18 +36,18 @@ function parseNum(value: unknown): number {
  * Extrait les heures depuis le chiffrage d'une intervention
  * (postes[].items[].data.nbHeures/nbTechs avec fallback dFields)
  */
-function extractChiffrageHours(intervention: RawIntervention): number {
+function extractChiffrageInfo(intervention: RawIntervention): { hours: number; passages: number } {
   const chiffrage = (intervention.data as any)?.chiffrage;
-  if (!chiffrage?.postes || !Array.isArray(chiffrage.postes)) return 0;
+  if (!chiffrage?.postes || !Array.isArray(chiffrage.postes)) return { hours: 0, passages: 0 };
 
   let totalHeures = 0;
+  let blocksCount = 0;
   for (const poste of chiffrage.postes) {
     for (const item of poste?.items || []) {
       if (!item?.IS_BLOCK || item?.slug !== 'chiffrage') continue;
       const data = item.data || {};
       let nbHeures = parseNum(data.nbHeures);
 
-      // Fallback: dFields
       if (nbHeures === 0) {
         for (const sub of data.subItems || []) {
           if (!sub?.IS_BLOCK || sub?.slug !== 'dfields') continue;
@@ -61,10 +61,13 @@ function extractChiffrageHours(intervention: RawIntervention): number {
           if (nbHeures > 0) break;
         }
       }
-      if (nbHeures > 0) totalHeures += nbHeures;
+      if (nbHeures > 0) {
+        totalHeures += nbHeures;
+        blocksCount++;
+      }
     }
   }
-  return totalHeures;
+  return { hours: totalHeures, passages: blocksCount };
 }
 
 function extractColor(u: Record<string, unknown>): string {
@@ -364,6 +367,7 @@ export function normalizeApogeeData(
     // Aggregate info from project's interventions for duration/priority
     const projectIntervs = interventions.filter(i => i.projectId === pid);
     let estimatedDuration = DURATION_FALLBACK.default;
+    let estimatedPassages: number | null = null;
     let priority: AppointmentPriority = "normal";
     let reason: PlanningUnscheduled["reason"] = "a_planifier";
 
@@ -374,12 +378,16 @@ export function normalizeApogeeData(
 
       // Priorité durée : 1) chiffrage postes  2) project.nbHeures  3) dureeEstimee  4) fallback type
       let chiffrageH = 0;
+      let chiffragePassages = 0;
       for (const itv of projectIntervs) {
-        chiffrageH += extractChiffrageHours(itv);
+        const info = extractChiffrageInfo(itv);
+        chiffrageH += info.hours;
+        chiffragePassages += info.passages;
       }
 
       if (chiffrageH > 0) {
         estimatedDuration = chiffrageH * 60; // heures → minutes
+        estimatedPassages = chiffragePassages > 1 ? chiffragePassages : null;
       } else {
         const projData = project.data as Record<string, unknown> | undefined;
         const nbHeures = parseNum(projData?.nbHeures);
@@ -411,6 +419,7 @@ export function normalizeApogeeData(
       universe: project.data?.universes?.[0] ?? null,
       priority,
       estimatedDuration,
+      estimatedPassages,
       requiredSkills: [],
       reason,
       dueDate: null,

@@ -3,7 +3,15 @@
  * Panneau latéral rétractable avec filtre 1er RDV / Travaux
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
+
+/** Format minutes → "Xh" ou "XhYY" */
+function formatDuration(minutes: number): string {
+  if (minutes < 60) return `${minutes} min`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m > 0 ? `${h}h${String(m).padStart(2, "0")}` : `${h}h`;
+}
 import {
   AlertCircle,
   Clock,
@@ -241,7 +249,12 @@ function UnscheduledCard({ item }: { item: PlanningUnscheduled }) {
       <div className="flex items-center gap-2 flex-wrap mb-1.5">
         <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
           <Clock className="h-2.5 w-2.5" />
-          {item.estimatedDuration} min
+          {formatDuration(item.estimatedDuration)}
+          {item.estimatedPassages && item.estimatedPassages > 1 && (
+            <span className="ml-0.5 text-[9px] font-medium text-primary">
+              ({item.estimatedPassages} passages)
+            </span>
+          )}
         </span>
         {item.universe && (
           <span className="text-[10px] text-muted-foreground truncate max-w-[100px]">
