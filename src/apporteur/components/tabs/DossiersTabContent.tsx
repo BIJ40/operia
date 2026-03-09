@@ -653,7 +653,8 @@ export default function DossiersTabContent() {
                         STATUS_CONFIG[selectedDossier.status]?.bgColor,
                         STATUS_CONFIG[selectedDossier.status]?.color
                       )}>
-                  getAppo{getApporteurLabel(selectedDossier)                 </Badge>
+                        {getApporteurLabel(selectedDossier)}
+                      </Badge>
                     );
                   })()}
                 </div>
