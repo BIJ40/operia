@@ -3,7 +3,7 @@ import {
   MessageSquare, Network, Users, Database, Settings, LucideIcon,
   PieChart, Coins, Headphones, GraduationCap, Kanban, Activity,
   HelpCircle, Calendar, UserCog, Briefcase, Inbox, Building2, GitCompare,
-  Wrench, Brain, Car, ToggleLeft, LineChart
+  Wrench, Brain, Car, LineChart
 } from 'lucide-react';
 import { ROUTES } from './routes';
 import { ModuleKey } from '@/types/modules';
@@ -310,17 +310,6 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     description: 'Moteur de connaissances IA unifié',
     icon: Brain,
     route: ROUTES.admin.helpi,
-    scopeSlug: SCOPE_SLUGS.ADMIN_SETTINGS,
-    color: 'primary',
-    group: 'admin',
-    requiresAdmin: true,
-  },
-  {
-    id: 'ADMIN_FEATURE_FLAGS',
-    title: 'Feature Flags',
-    description: 'Activation des fonctionnalités',
-    icon: ToggleLeft,
-    route: ROUTES.admin.featureFlags,
     scopeSlug: SCOPE_SLUGS.ADMIN_SETTINGS,
     color: 'primary',
     group: 'admin',

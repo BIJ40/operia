@@ -62,8 +62,8 @@ export function AdminRoutes() {
       
       {/* Plateforme */}
       <Route path="/admin/system-health" element={<Navigate to="/?tab=admin&adminTab=plateforme&adminView=health" replace />} />
-      <Route path="/admin/feature-flags" element={<Navigate to="/?tab=admin&adminTab=plateforme&adminView=modules" replace />} />
-      <Route path="/admin/modules" element={<Navigate to="/?tab=admin&adminTab=plateforme&adminView=modules" replace />} />
+      <Route path="/admin/feature-flags" element={<Navigate to="/?tab=admin&adminTab=gestion&adminView=modules" replace />} />
+      <Route path="/admin/modules" element={<Navigate to="/?tab=admin&adminTab=gestion&adminView=modules" replace />} />
       <Route path="/admin/sitemap" element={<Navigate to="/?tab=admin&adminTab=plateforme&adminView=sitemap" replace />} />
       <Route path="/admin/hidden-features" element={<Navigate to="/?tab=admin&adminTab=plateforme&adminView=lab" replace />} />
       <Route path="/admin/flow" element={<Navigate to="/?tab=admin&adminTab=plateforme&adminView=flow" replace />} />

@@ -11,14 +11,13 @@ import {
   DraggableFolderContentContainer,
   FolderTabConfig 
 } from '@/components/ui/draggable-folder-tabs';
-import { Activity, Map, GitBranch, ToggleRight, Brain, Bell, Loader2 } from 'lucide-react';
+import { Activity, Map, GitBranch, Brain, Bell, Loader2 } from 'lucide-react';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { MaintenanceModeCard } from '@/components/admin/MaintenanceModeCard';
 import { useSessionState } from '@/hooks/useSessionState';
 import { usePersistedTab } from '@/hooks/usePersistedState';
 
 const AdminSystemHealth = lazy(() => import('@/pages/AdminSystemHealth'));
-const AdminFeatureFlags = lazy(() => import('@/pages/admin/AdminFeatureFlags'));
 const AdminSitemap = lazy(() => import('@/pages/admin/AdminSitemap'));
 const AdminFlow = lazy(() => import('@/pages/admin/AdminFlow'));
 const PlanningAugmenteAdmin = lazy(() => import('@/components/planning-augmente/PlanningAugmenteAdmin'));
@@ -26,14 +25,13 @@ const TicketNotificationSettings = lazy(() => import('@/components/admin/TicketN
 
 const SUB_TABS: FolderTabConfig[] = [
   { id: 'health', label: 'Santé', icon: Activity, accent: 'green' },
-  { id: 'modules', label: 'Modules', icon: ToggleRight, accent: 'blue' },
   { id: 'sitemap', label: 'Sitemap', icon: Map, accent: 'purple' },
   { id: 'flow', label: 'Flow', icon: GitBranch, accent: 'orange' },
   { id: 'planning-ia', label: 'Planif. IA', icon: Brain, accent: 'blue' },
   { id: 'notifications', label: 'Notifs', icon: Bell, accent: 'orange' },
 ];
 
-const DEFAULT_TAB_ORDER = ['health', 'modules', 'sitemap', 'flow', 'planning-ia', 'notifications'];
+const DEFAULT_TAB_ORDER = ['health', 'sitemap', 'flow', 'planning-ia', 'notifications'];
 const PLATFORM_TAB_IDS = SUB_TABS.map(tab => tab.id);
 
 function LoadingFallback() {
@@ -113,11 +111,6 @@ export function PlateformeView() {
             </Suspense>
           </TabsContent>
 
-          <TabsContent value="modules" className="mt-0 focus-visible:outline-none">
-            <Suspense fallback={<LoadingFallback />}>
-              <AdminFeatureFlags />
-            </Suspense>
-          </TabsContent>
 
           <TabsContent value="sitemap" className="mt-0 focus-visible:outline-none">
             <Suspense fallback={<LoadingFallback />}>
