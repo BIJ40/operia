@@ -166,10 +166,32 @@ interface DocumentIconsProps {
 export function DocumentIcons({ collaboratorId, agencyId, onDocumentClick, large = false }: DocumentIconsProps) {
   const [previewDoc, setPreviewDoc] = useState<{type: DocumentType; filePath: string; fileName: string} | null>(null);
 
-  // Query to check which document types exist via media_links
+  // Query to check which document types exist via media_links (filtered by collaborator folder)
   const { data: existingDocs = [] } = useQuery({
     queryKey: ['rh-documents-check', collaboratorId],
     queryFn: async () => {
+      // 1. Find the collaborator's folder
+      const { data: folder } = await supabase
+        .from('media_folders')
+        .select('id')
+        .eq('agency_id', agencyId)
+        .eq('slug', `salarie-${collaboratorId}`)
+        .is('deleted_at', null)
+        .maybeSingle();
+
+      if (!folder) return [];
+
+      // 2. Get subfolders too
+      const { data: subFolders } = await supabase
+        .from('media_folders')
+        .select('id')
+        .eq('agency_id', agencyId)
+        .eq('parent_id', folder.id)
+        .is('deleted_at', null);
+
+      const folderIds = [folder.id, ...(subFolders || []).map(f => f.id)];
+
+      // 3. Query links only in collaborator's folders
       const { data, error } = await supabase
         .from('media_links')
         .select(`
@@ -177,7 +199,7 @@ export function DocumentIcons({ collaboratorId, agencyId, onDocumentClick, large
           label,
           asset:media_assets!inner(storage_path, file_name)
         `)
-        .eq('agency_id', agencyId)
+        .in('folder_id', folderIds)
         .is('deleted_at', null);
       
       if (error) throw error;

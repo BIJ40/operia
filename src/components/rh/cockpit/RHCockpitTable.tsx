@@ -25,6 +25,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableHeader, TableBody, TableHead, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { HRDocumentManager } from '@/components/collaborators/documents';
+import { useHasMinLevel } from '@/hooks/useHasGlobalRole';
 
 interface RHCockpitTableProps {
   collaborators: RHCollaborator[];
@@ -54,6 +57,10 @@ export function RHCockpitTable({
     domain: 'contact',
     collaborator: null,
   });
+
+  // État du gestionnaire de documents (dialog plein écran)
+  const [docManagerCollab, setDocManagerCollab] = useState<RHCollaborator | null>(null);
+  const canManage = useHasMinLevel(2);
 
   // Calcul des indicateurs pour tous les collaborateurs
   const indicatorsMap = useRHCockpitIndicatorsBatch(collaborators, epiSummaries);
@@ -97,7 +104,10 @@ export function RHCockpitTable({
       case 'parc':
         return <RHCockpitDrawerParc {...commonProps} />;
       case 'docs':
-        return <RHCockpitDrawerDocs {...commonProps} />;
+        return <RHCockpitDrawerDocs {...commonProps} onOpenFinder={() => {
+          setDocManagerCollab(drawer.collaborator);
+          handleCloseDrawer(false);
+        }} />;
       case 'competences':
         return <RHCockpitDrawerCompetences {...commonProps} />;
       default:
@@ -205,6 +215,26 @@ export function RHCockpitTable({
       >
         {renderDrawerContent()}
       </RHCockpitDrawer>
+      {/* Dialog gestionnaire de documents */}
+      <Dialog open={!!docManagerCollab} onOpenChange={(open) => !open && setDocManagerCollab(null)}>
+        <DialogContent className="max-w-6xl w-[96vw] h-[90vh] p-0 overflow-hidden">
+          <div className="h-full flex flex-col">
+            <div className="px-4 py-3 border-b bg-muted/30">
+              <p className="font-semibold truncate">
+                Documents — {docManagerCollab?.first_name} {docManagerCollab?.last_name}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Gestion complète des documents du collaborateur
+              </p>
+            </div>
+            <div className="flex-1 overflow-auto p-4">
+              {docManagerCollab && (
+                <HRDocumentManager collaboratorId={docManagerCollab.id} canManage={canManage} />
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
