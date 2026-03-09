@@ -31,6 +31,7 @@ export function ApporteurDetailSheet({ apporteur, open, onOpenChange }: Apporteu
   const { data: managers } = useApporteurManagers(apporteur?.id || null);
   const createManager = useCreateApporteurManager();
   const toggleManagerStatus = useToggleApporteurManagerStatus();
+  const deleteManager = useDeleteApporteurManager();
   const updateApogeeId = useUpdateApporteurApogeeId();
   const [showLinkSelector, setShowLinkSelector] = useState(false);
   const [showAddUser, setShowAddUser] = useState(false);
