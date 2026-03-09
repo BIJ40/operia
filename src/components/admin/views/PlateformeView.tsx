@@ -122,11 +122,6 @@ export function PlateformeView() {
             </Suspense>
           </TabsContent>
 
-          <TabsContent value="planning-ia" className="mt-0 focus-visible:outline-none">
-            <Suspense fallback={<LoadingFallback />}>
-              <PlanningAugmenteAdmin />
-            </Suspense>
-          </TabsContent>
 
           <TabsContent value="notifications" className="mt-0 focus-visible:outline-none">
             <Suspense fallback={<LoadingFallback />}>
