@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { startOfWeek, format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
+import { useAuthCore } from "@/contexts/AuthCoreContext";
 import { toast } from "sonner";
 import type {
   Suggestion,
