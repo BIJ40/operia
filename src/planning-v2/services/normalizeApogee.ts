@@ -368,11 +368,27 @@ export function normalizeApogeeData(
     let reason: PlanningUnscheduled["reason"] = "a_planifier";
 
     if (projectIntervs.length > 0) {
-      // Use first non-cancelled intervention for metadata
       const mainInterv = projectIntervs[0];
       const rawType = mainInterv.type2 || mainInterv.type;
       const type = resolveInterventionType(rawType);
-      estimatedDuration = mainInterv.data?.dureeEstimee || DURATION_FALLBACK[type] || DURATION_FALLBACK.default;
+
+      // Priorité durée : 1) chiffrage postes  2) project.nbHeures  3) dureeEstimee  4) fallback type
+      let chiffrageH = 0;
+      for (const itv of projectIntervs) {
+        chiffrageH += extractChiffrageHours(itv);
+      }
+
+      if (chiffrageH > 0) {
+        estimatedDuration = chiffrageH * 60; // heures → minutes
+      } else {
+        const projData = project.data as Record<string, unknown> | undefined;
+        const nbHeures = parseNum(projData?.nbHeures);
+        if (nbHeures > 0) {
+          estimatedDuration = nbHeures * 60;
+        } else {
+          estimatedDuration = mainInterv.data?.dureeEstimee || DURATION_FALLBACK[type] || DURATION_FALLBACK.default;
+        }
+      }
 
       const prioriteN = norm(mainInterv.data?.priorite);
       if (prioriteN === "urgent" || prioriteN === "urgente") priority = "urgent";
@@ -384,12 +400,6 @@ export function normalizeApogeeData(
       else if (motif.includes("client")) reason = "en_attente_client";
       else if (motif.includes("piece") || motif.includes("pièce")) reason = "en_attente_piece";
       else if (motif.includes("devis")) reason = "en_attente_devis";
-    }
-
-    const projData = project.data as Record<string, unknown> | undefined;
-    const nbHeures = projData?.nbHeures as number | undefined;
-    if (nbHeures && nbHeures > 0) {
-      estimatedDuration = nbHeures * 60;
     }
 
     unscheduled.push({
