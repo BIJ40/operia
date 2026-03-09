@@ -297,17 +297,27 @@ export default function DossiersTabContent() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Bulk refuser devis button */}
+          {/* Bulk actions */}
           {selectedRefs.size > 0 && (
-            <Button
-              variant="destructive"
-              size="sm"
-              className="gap-2 rounded-xl"
-              onClick={handleBulkRefus}
-            >
-              <XCircle className="w-4 h-4" />
-              Refuser {selectedRefs.size} devis
-            </Button>
+            <>
+              <Button
+                size="sm"
+                className="gap-2 rounded-xl bg-[hsl(var(--ap-success))] hover:bg-[hsl(var(--ap-success)/.85)] text-white"
+                onClick={handleBulkValidation}
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                Valider {selectedRefs.size} devis
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="gap-2 rounded-xl"
+                onClick={handleBulkRefus}
+              >
+                <XCircle className="w-4 h-4" />
+                Refuser {selectedRefs.size} devis
+              </Button>
+            </>
           )}
           <Button 
             variant="outline" 
