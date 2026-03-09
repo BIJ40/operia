@@ -162,6 +162,12 @@ export default function AdminHubContent() {
                   </Suspense>
                 </TabsContent>
 
+                <TabsContent value="audit-apporteurs" className="mt-0 focus-visible:outline-none">
+                  <Suspense fallback={<LoadingFallback />}>
+                    <ApporteurAuditLogView />
+                  </Suspense>
+                </TabsContent>
+
                 <TabsContent value="agences" className="mt-0 focus-visible:outline-none">
                   <ReseauView />
                 </TabsContent>
