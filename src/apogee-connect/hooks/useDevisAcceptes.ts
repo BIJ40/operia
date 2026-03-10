@@ -119,7 +119,10 @@ export function useDevisAcceptes() {
       statusCounts: { all: 0, to_action: 0, to_action_commander: 0, to_action_fourn: 0, to_action_planifier: 0, planned: 0 } 
     };
 
-    const { devis, projects, clients, interventions } = rawData;
+    const devis = rawData.devis || [];
+    const projects = rawData.projects || [];
+    const clients = rawData.clients || [];
+    const interventions = rawData.interventions || [];
 
     // Maps for enrichment
     const projectMap = new Map(projects.map(p => [String(p.id), p]));
