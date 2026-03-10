@@ -248,6 +248,7 @@ export function useDevisAcceptes() {
         projectState,
         projectStateLabel,
         hasPlannedIntervention,
+        plannedInterventionType,
         clientName: client?.nom || client?.raisonSociale || '—',
         commanditaireName: commanditaire?.nom || commanditaire?.raisonSociale || '',
         ville,
