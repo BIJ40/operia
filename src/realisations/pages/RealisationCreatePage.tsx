@@ -27,6 +27,7 @@ export default function RealisationCreatePage() {
   const dispatchWebhook = useDispatchWebhook();
   const { agencyId } = useEffectiveAuth();
   const [isSaving, setIsSaving] = useState(false);
+  const [webhookDispatched, setWebhookDispatched] = useState(false);
   const [title, setTitle] = useState('');
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
 
@@ -76,8 +77,11 @@ export default function RealisationCreatePage() {
         });
       }
 
-      // Auto-dispatch webhook (fire and forget)
-      dispatchWebhook.mutate(created.id);
+      // Auto-dispatch webhook (fire and forget, once only)
+      if (!webhookDispatched) {
+        setWebhookDispatched(true);
+        dispatchWebhook.mutate(created.id);
+      }
 
       toast.success('Réalisation enregistrée');
       navigate(`/realisations/${created.id}`);
