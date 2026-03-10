@@ -346,6 +346,25 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'admin', path: 'planning_augmente.admin', label: 'Admin', description: 'Configuration pondérations', defaultEnabled: false, routes: [] },
     ],
   },
+  // Module premium Réalisations
+  {
+    key: 'realisations',
+    label: 'Réalisations',
+    description: 'Gestion des réalisations terrain, photos avant/après, SEO',
+    icon: 'Camera',
+    category: 'outils',
+    uiSubTab: 'realisations',
+    defaultForRoles: [],
+    minRole: 'franchisee_user',
+    options: [
+      { key: 'view', path: 'realisations.view', label: 'Consulter', description: 'Voir les réalisations', defaultEnabled: true, routes: ['/realisations'] },
+      { key: 'create', path: 'realisations.create', label: 'Créer', description: 'Créer des réalisations', defaultEnabled: true, routes: ['/realisations/new'] },
+      { key: 'edit', path: 'realisations.edit', label: 'Modifier', description: 'Modifier les réalisations', defaultEnabled: true, routes: ['/realisations'] },
+      { key: 'validate', path: 'realisations.validate', label: 'Valider', description: 'Valider / refuser', defaultEnabled: false, routes: ['/realisations'] },
+      { key: 'publish_prepare', path: 'realisations.publish_prepare', label: 'Publier', description: 'Préparer publication web', defaultEnabled: false, routes: ['/realisations'] },
+      { key: 'export', path: 'realisations.export', label: 'Exporter', description: 'Export des données', defaultEnabled: false, routes: ['/realisations'] },
+    ],
+  },
   // Modules admin (non visibles dans les plans)
   {
     key: 'reseau_franchiseur',

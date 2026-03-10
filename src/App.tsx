@@ -58,6 +58,7 @@ import {
   ProjectsRoutes,
   ApporteurRoutes,
   PublicRoutes,
+  RealisationsRoutes,
 } from "./routes";
 
 // Optimized QueryClient with caching
