@@ -267,7 +267,14 @@ export default function DevisAcceptesView() {
                     onSelectionChange={setUniversFilter}
                   />
                 </TableHead>
-                <TableHead>Statut</TableHead>
+                <TableHead>
+                  <ColumnFilterPopover
+                    label="Statut"
+                    options={allStatuses}
+                    selected={filters.statuses}
+                    onSelectionChange={setStatusesFilter}
+                  />
+                </TableHead>
                 <TableHead className="text-center">Devis</TableHead>
                 <TableHead className="cursor-pointer select-none text-right" onClick={() => setSort('totalHT')}>
                   <span className="flex items-center justify-end">Total HT <SortIcon field="totalHT" current={filters.sortField} dir={filters.sortDir} /></span>
