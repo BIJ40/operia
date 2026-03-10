@@ -169,18 +169,13 @@ function getFilterCount(statusCounts: any, value: DossierStatusFilter): number {
 
 export default function DevisAcceptesView() {
   const {
-    dossiers, totalDossiers, totalHT, allUnivers, allVilles, allApporteurs, statusCounts,
-    isLoading, filters, setSearch, setUniversFilter, setVillesFilter, setApporteursFilter, setStatusFilter, setSort,
+    dossiers, totalDossiers, totalHT, allUnivers, allVilles, allApporteurs, allStatuses,
+    isLoading, filters, setSearch, setUniversFilter, setVillesFilter, setApporteursFilter, setStatusesFilter, setSort,
   } = useDevisAcceptes();
 
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
-  const isInToActionGroup = filters.statusFilter === 'to_action' || 
-    filters.statusFilter === 'to_action_commander' || 
-    filters.statusFilter === 'to_action_fourn' || 
-    filters.statusFilter === 'to_action_planifier';
-
-  const activeFilterCount = (filters.univers.length > 0 ? 1 : 0) + (filters.villes.length > 0 ? 1 : 0) + (filters.apporteurs.length > 0 ? 1 : 0);
+  const activeFilterCount = (filters.univers.length > 0 ? 1 : 0) + (filters.villes.length > 0 ? 1 : 0) + (filters.apporteurs.length > 0 ? 1 : 0) + (filters.statuses.length > 0 ? 1 : 0);
 
   if (isLoading) {
     return (
