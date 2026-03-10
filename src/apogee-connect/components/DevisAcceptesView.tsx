@@ -1,8 +1,8 @@
 /**
  * Vue complète des devis acceptés avec filtres, stats et table triable.
  */
-import { useState, useRef } from 'react';
-import { Search, ArrowUpDown, ArrowUp, ArrowDown, FileCheck, Loader2, CalendarCheck, ShoppingCart, Package, ClipboardList, Filter, X, Check } from 'lucide-react';
+import { useState } from 'react';
+import { Search, ArrowUpDown, ArrowUp, ArrowDown, FileCheck, Loader2, CalendarCheck, Filter, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
