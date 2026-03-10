@@ -150,6 +150,8 @@ export function useDevisAcceptes() {
     }
 
     const universSet = new Set<string>();
+    const villesSet = new Set<string>();
+    const apporteursSet = new Set<string>();
     const result: DossierDevisAccepte[] = [];
     const counts = { all: 0, to_action: 0, to_action_commander: 0, to_action_fourn: 0, to_action_planifier: 0, planned: 0 };
 
