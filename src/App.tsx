@@ -58,6 +58,7 @@ import {
   ProjectsRoutes,
   ApporteurRoutes,
   PublicRoutes,
+  RealisationsRoutes,
 } from "./routes";
 
 // Optimized QueryClient with caching
@@ -158,6 +159,7 @@ function AppContent() {
             {SupportRoutes()}
             {ProjectsRoutes()}
             {ApporteurRoutes()}
+            {RealisationsRoutes()}
             
             {/* ============================================ */}
             {/* DEV PAGES - Admin only (N5/N6) */}

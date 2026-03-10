@@ -23,6 +23,7 @@ export const MODULES = {
   aide: 'aide',                           // Aide
   prospection: 'prospection',             // Prospection Apporteurs
   planning_augmente: 'planning_augmente', // Planification Augmentée (IA)
+  realisations: 'realisations',           // Réalisations terrain (premium)
   // Modules réservés admin/réseau (non visibles dans les plans)
   reseau_franchiseur: 'reseau_franchiseur',
   admin_plateforme: 'admin_plateforme',
@@ -91,6 +92,14 @@ export const MODULE_OPTIONS = {
     suggest: 'planning_augmente.suggest',
     optimize: 'planning_augmente.optimize',
     admin: 'planning_augmente.admin',
+  },
+  realisations: {
+    view: 'realisations.view',
+    create: 'realisations.create',
+    edit: 'realisations.edit',
+    validate: 'realisations.validate',
+    publish_prepare: 'realisations.publish_prepare',
+    export: 'realisations.export',
   },
   reseau_franchiseur: {
     dashboard: 'reseau_franchiseur.dashboard',
@@ -337,6 +346,25 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'admin', path: 'planning_augmente.admin', label: 'Admin', description: 'Configuration pondérations', defaultEnabled: false, routes: [] },
     ],
   },
+  // Module premium Réalisations
+  {
+    key: 'realisations',
+    label: 'Réalisations',
+    description: 'Gestion des réalisations terrain, photos avant/après, SEO',
+    icon: 'Camera',
+    category: 'outils',
+    uiSubTab: 'realisations',
+    defaultForRoles: [],
+    minRole: 'franchisee_user',
+    options: [
+      { key: 'view', path: 'realisations.view', label: 'Consulter', description: 'Voir les réalisations', defaultEnabled: true, routes: ['/realisations'] },
+      { key: 'create', path: 'realisations.create', label: 'Créer', description: 'Créer des réalisations', defaultEnabled: true, routes: ['/realisations/new'] },
+      { key: 'edit', path: 'realisations.edit', label: 'Modifier', description: 'Modifier les réalisations', defaultEnabled: true, routes: ['/realisations'] },
+      { key: 'validate', path: 'realisations.validate', label: 'Valider', description: 'Valider / refuser', defaultEnabled: false, routes: ['/realisations'] },
+      { key: 'publish_prepare', path: 'realisations.publish_prepare', label: 'Publier', description: 'Préparer publication web', defaultEnabled: false, routes: ['/realisations'] },
+      { key: 'export', path: 'realisations.export', label: 'Exporter', description: 'Export des données', defaultEnabled: false, routes: ['/realisations'] },
+    ],
+  },
   // Modules admin (non visibles dans les plans)
   {
     key: 'reseau_franchiseur',
@@ -403,6 +431,7 @@ export interface EnabledModules {
   aide?: boolean | ModuleOptionsState;
   prospection?: boolean | ModuleOptionsState;
   planning_augmente?: boolean | ModuleOptionsState;
+  realisations?: boolean | ModuleOptionsState;
   reseau_franchiseur?: boolean | ModuleOptionsState;
   admin_plateforme?: boolean | ModuleOptionsState;
   unified_search?: boolean | ModuleOptionsState;
@@ -499,6 +528,7 @@ export const MODULE_SHORT_LABELS: Record<ModuleKey, string> = {
   aide: 'Aide',
   prospection: 'Commercial',
   planning_augmente: 'Planif. IA',
+  realisations: 'Réalisations',
   reseau_franchiseur: 'Réseau',
   admin_plateforme: 'Admin',
   unified_search: 'Recherche',
