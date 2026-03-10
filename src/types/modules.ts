@@ -23,6 +23,7 @@ export const MODULES = {
   aide: 'aide',                           // Aide
   prospection: 'prospection',             // Prospection Apporteurs
   planning_augmente: 'planning_augmente', // Planification Augmentée (IA)
+  realisations: 'realisations',           // Réalisations terrain (premium)
   // Modules réservés admin/réseau (non visibles dans les plans)
   reseau_franchiseur: 'reseau_franchiseur',
   admin_plateforme: 'admin_plateforme',
