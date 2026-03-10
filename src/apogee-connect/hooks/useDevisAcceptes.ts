@@ -351,6 +351,7 @@ export function useDevisAcceptes() {
     allUnivers,
     allVilles,
     allApporteurs,
+    allStatuses,
     statusCounts,
     isLoading,
     filters,
@@ -359,6 +360,7 @@ export function useDevisAcceptes() {
     setUniversFilter: (univers: string[]) => setFilters(f => ({ ...f, univers })),
     setVillesFilter: (villes: string[]) => setFilters(f => ({ ...f, villes })),
     setApporteursFilter: (apporteurs: string[]) => setFilters(f => ({ ...f, apporteurs })),
+    setStatusesFilter: (statuses: string[]) => setFilters(f => ({ ...f, statuses })),
     setStatusFilter: (statusFilter: DossierStatusFilter) => setFilters(f => ({ ...f, statusFilter })),
     setSort: (field: SortField) => setFilters(f => ({
       ...f,
