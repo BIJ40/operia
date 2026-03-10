@@ -412,6 +412,7 @@ export interface EnabledModules {
   aide?: boolean | ModuleOptionsState;
   prospection?: boolean | ModuleOptionsState;
   planning_augmente?: boolean | ModuleOptionsState;
+  realisations?: boolean | ModuleOptionsState;
   reseau_franchiseur?: boolean | ModuleOptionsState;
   admin_plateforme?: boolean | ModuleOptionsState;
   unified_search?: boolean | ModuleOptionsState;
