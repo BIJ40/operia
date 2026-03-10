@@ -237,6 +237,8 @@ export function useDevisAcceptes() {
     return { 
       dossiers: result, 
       allUnivers: Array.from(universSet).sort(),
+      allVilles: Array.from(villesSet).sort(),
+      allApporteurs: Array.from(apporteursSet).sort(),
       statusCounts: counts,
     };
   }, [rawData]);
