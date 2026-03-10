@@ -39,6 +39,7 @@ export const MODULE_OPTIONS = {
     indicateurs: 'agence.indicateurs',
     actions_a_mener: 'agence.actions_a_mener',
     diffusion: 'agence.diffusion',
+    devis_acceptes: 'agence.devis_acceptes',
   },
   stats: {
     stats_hub: 'stats.stats_hub',
