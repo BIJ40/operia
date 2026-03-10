@@ -11,7 +11,7 @@
 import { lazy, Suspense, useCallback, useMemo } from 'react';
 import { 
   FileText, Users2, Loader2, Users, CalendarDays, 
-  Car, FolderOpen, Settings, Eye, Activity, Target
+  Car, FolderOpen, Settings, Eye, Activity, Target, FileCheck
 } from 'lucide-react';
 import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
 import { ModuleKey } from '@/types/modules';
@@ -49,9 +49,10 @@ const PerformanceDashboard = lazy(() =>
   import('@/components/performance/PerformanceDashboard').then(m => ({ default: m.PerformanceDashboard }))
 );
 const ProspectionTabContent = lazy(() => import('@/prospection/pages/ProspectionTabContent'));
+const DevisAcceptesView = lazy(() => import('@/apogee-connect/components/DevisAcceptesView'));
 
 // Types pour les niveaux de navigation
-type OutilsMainTab = 'actions' | 'apporteurs' | 'administratif' | 'parc' | 'performance' | 'prospection';
+type OutilsMainTab = 'actions' | 'apporteurs' | 'administratif' | 'parc' | 'performance' | 'prospection' | 'devis-acceptes';
 type ApporteursSubTab = 'espace';
 type AdminSubTab = 'reunions' | 'plannings' | 'documents';
 
@@ -64,6 +65,7 @@ const MAIN_TABS_CONFIG: (PillTabConfig & { requiresModule?: ModuleKey })[] = [
   { id: 'parc', label: 'Parc', icon: Car, accent: 'green', requiresModule: 'parc' },
   { id: 'performance', label: 'Performance', icon: Activity, accent: 'pink', requiresModule: 'agence' },
   { id: 'prospection', label: 'Commercial', icon: Target, accent: 'orange', requiresModule: 'prospection' },
+  { id: 'devis-acceptes', label: 'Devis acceptés', icon: FileCheck, accent: 'teal', requiresModule: 'agence' },
 ];
 
 function LoadingFallback() {
@@ -343,6 +345,12 @@ export default function DiversTabContent() {
         <TabsContent value="prospection" className="mt-6 animate-fade-in">
           <Suspense fallback={<LoadingFallback />}>
             <ProspectionTabContent />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="devis-acceptes" className="mt-6 animate-fade-in">
+          <Suspense fallback={<LoadingFallback />}>
+            <DevisAcceptesView />
           </Suspense>
         </TabsContent>
       </Tabs>
