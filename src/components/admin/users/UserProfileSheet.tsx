@@ -356,9 +356,11 @@ export const UserProfileSheet = memo(function UserProfileSheet({
 
             <Separator />
 
-            {/* ═══ MODULES ACTIFS ═══ */}
-            <Section icon={Zap} title={`Modules actifs (${activeModules.length})`}>
-              {activeModules.length > 0 ? (
+            {/* ═══ MODULES ACTIFS (VÉRITÉ RPC) ═══ */}
+            <Section icon={Zap} title={`Accès réels (${rpcModulesLoading ? '…' : activeModules.length} modules)`}>
+              {rpcModulesLoading ? (
+                <p className="text-sm text-muted-foreground italic">Chargement des droits effectifs…</p>
+              ) : activeModules.length > 0 ? (
                 <div className="space-y-2">
                   {activeModules.map(mod => {
                     const optLabels = getModuleOptionsLabels(mod.key);
@@ -383,7 +385,7 @@ export const UserProfileSheet = memo(function UserProfileSheet({
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground italic">
-                  Aucun module individuel — utilise les modules du plan agence
+                  Aucun module accessible pour cet utilisateur
                 </p>
               )}
             </Section>
