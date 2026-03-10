@@ -205,6 +205,10 @@ export function useDevisAcceptes() {
       const commanditaireNameStr = commanditaire?.nom || commanditaire?.raisonSociale || '';
       if (commanditaireNameStr) apporteursSet.add(commanditaireNameStr);
 
+      // Track status labels
+      if (projectStateLabel && projectStateLabel !== '—') statusesSet.add(projectStateLabel);
+      if (hasPlannedIntervention) statusesSet.add(PLANNED_LABEL);
+
       // Dates
       const dates = devisList
         .map(d => (d as any).dateReelle || d.date)
