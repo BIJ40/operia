@@ -277,7 +277,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     icon: 'BookOpen',
     category: 'guides',
     defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
-    minRole: 'base_user',
+    minRole: 'franchisee_admin',
     options: [
       { key: 'apogee', path: 'guides.apogee', label: 'Apogée', description: 'Guide Apogée', defaultEnabled: true, routes: ['/?tab=guides'] },
       { key: 'apporteurs', path: 'guides.apporteurs', label: 'Apporteurs', description: 'Guide apporteurs', defaultEnabled: true, routes: ['/?tab=guides'] },
