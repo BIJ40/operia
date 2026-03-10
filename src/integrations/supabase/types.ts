@@ -6603,6 +6603,185 @@ export type Database = {
         }
         Relationships: []
       }
+      realisation_activity_log: {
+        Row: {
+          action_payload: Json
+          action_type: string
+          actor_label: string | null
+          actor_type: string
+          actor_user_id: string | null
+          agency_id: string
+          created_at: string
+          id: string
+          realisation_id: string | null
+        }
+        Insert: {
+          action_payload?: Json
+          action_type: string
+          actor_label?: string | null
+          actor_type?: string
+          actor_user_id?: string | null
+          agency_id: string
+          created_at?: string
+          id?: string
+          realisation_id?: string | null
+        }
+        Update: {
+          action_payload?: Json
+          action_type?: string
+          actor_label?: string | null
+          actor_type?: string
+          actor_user_id?: string | null
+          agency_id?: string
+          created_at?: string
+          id?: string
+          realisation_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "realisation_activity_log_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "realisation_activity_log_realisation_id_fkey"
+            columns: ["realisation_id"]
+            isOneToOne: false
+            referencedRelation: "realisations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      realisation_media: {
+        Row: {
+          agency_id: string
+          alt_text: string | null
+          caption: string | null
+          created_at: string
+          file_name: string
+          file_size_bytes: number | null
+          height: number | null
+          id: string
+          media_role: string
+          media_type: string
+          mime_type: string
+          original_file_name: string | null
+          realisation_id: string
+          sequence_order: number
+          storage_path: string
+          updated_at: string
+          width: number | null
+        }
+        Insert: {
+          agency_id: string
+          alt_text?: string | null
+          caption?: string | null
+          created_at?: string
+          file_name: string
+          file_size_bytes?: number | null
+          height?: number | null
+          id?: string
+          media_role?: string
+          media_type?: string
+          mime_type?: string
+          original_file_name?: string | null
+          realisation_id: string
+          sequence_order?: number
+          storage_path: string
+          updated_at?: string
+          width?: number | null
+        }
+        Update: {
+          agency_id?: string
+          alt_text?: string | null
+          caption?: string | null
+          created_at?: string
+          file_name?: string
+          file_size_bytes?: number | null
+          height?: number | null
+          id?: string
+          media_role?: string
+          media_type?: string
+          mime_type?: string
+          original_file_name?: string | null
+          realisation_id?: string
+          sequence_order?: number
+          storage_path?: string
+          updated_at?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "realisation_media_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "realisation_media_realisation_id_fkey"
+            columns: ["realisation_id"]
+            isOneToOne: false
+            referencedRelation: "realisations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      realisations: {
+        Row: {
+          agency_id: string
+          created_at: string
+          created_by: string
+          external_sync_error: string | null
+          external_sync_last_at: string | null
+          external_sync_status: string
+          id: string
+          intervention_date: string
+          published_article_id: string | null
+          published_article_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          created_by: string
+          external_sync_error?: string | null
+          external_sync_last_at?: string | null
+          external_sync_status?: string
+          id?: string
+          intervention_date?: string
+          published_article_id?: string | null
+          published_article_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          created_by?: string
+          external_sync_error?: string | null
+          external_sync_last_at?: string | null
+          external_sync_status?: string
+          id?: string
+          intervention_date?: string
+          published_article_id?: string | null
+          published_article_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "realisations_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_settings: {
         Row: {
           agency_id: string | null

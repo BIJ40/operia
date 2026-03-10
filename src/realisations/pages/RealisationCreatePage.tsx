@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCreateRealisation } from '../hooks/useRealisationMutations';
 import { useUploadMedia } from '../hooks/useRealisationMedia';
+import { useDispatchWebhook } from '../hooks/useDispatchWebhook';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import type { Realisation } from '../types';
 import { toast } from 'sonner';
@@ -23,6 +24,7 @@ export default function RealisationCreatePage() {
   const navigate = useNavigate();
   const createRealisation = useCreateRealisation();
   const uploadMedia = useUploadMedia();
+  const dispatchWebhook = useDispatchWebhook();
   const { agencyId } = useEffectiveAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [title, setTitle] = useState('');
@@ -62,7 +64,6 @@ export default function RealisationCreatePage() {
       const input: Partial<Realisation> = {
         title: title.trim(),
         intervention_date: today,
-        validation_status: 'draft',
       };
       const created = await createRealisation.mutateAsync(input);
 
@@ -74,6 +75,9 @@ export default function RealisationCreatePage() {
           mediaRole: 'before',
         });
       }
+
+      // Auto-dispatch webhook (fire and forget)
+      dispatchWebhook.mutate(created.id);
 
       toast.success('Réalisation enregistrée');
       navigate(`/realisations/${created.id}`);

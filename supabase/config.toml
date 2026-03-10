@@ -201,3 +201,9 @@ verify_jwt = false
 
 [functions.apporteur-dossier-action]
 verify_jwt = false
+
+[functions.content-api]
+verify_jwt = false
+
+[functions.dispatch-realisation-webhook]
+verify_jwt = false
