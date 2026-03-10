@@ -20,11 +20,12 @@ import type { Project, Client, Devis, Intervention } from '@/apogee-connect/type
 // Seuls les devis explicitement acceptés ou commandés (order = accepté + en travaux)
 const ACCEPTED_STATES = ['accepted', 'order'];
 
-/** Filtre par statut de dossier */
+/** @deprecated Kept for type export compat */
 export type DossierStatusFilter = 'all' | 'to_action' | 'to_action_commander' | 'to_action_fourn' | 'to_action_planifier' | 'planned';
 
 /** États projet = "à traiter" */
 const TO_ACTION_STATES = new Set(['devis_to_order', 'wait_fourn', 'to_planify_tvx']);
+const PLANNED_LABEL = 'Planifié';
 
 export interface DossierDevisAccepte {
   projectId: string;
