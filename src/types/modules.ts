@@ -39,6 +39,7 @@ export const MODULE_OPTIONS = {
     indicateurs: 'agence.indicateurs',
     actions_a_mener: 'agence.actions_a_mener',
     diffusion: 'agence.diffusion',
+    devis_acceptes: 'agence.devis_acceptes',
   },
   stats: {
     stats_hub: 'stats.stats_hub',
@@ -166,6 +167,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'indicateurs', path: 'agence.indicateurs', label: 'Indicateurs', description: 'KPIs principaux', defaultEnabled: true, routes: ['/'] },
       { key: 'actions_a_mener', path: 'agence.actions_a_mener', label: 'Actions à mener', description: 'Liste des actions', defaultEnabled: true, routes: ['/'] },
       { key: 'diffusion', path: 'agence.diffusion', label: 'Diffusion', description: 'Écran TV', defaultEnabled: true, routes: ['/diffusion'] },
+      { key: 'devis_acceptes', path: 'agence.devis_acceptes', label: 'Devis acceptés', description: 'Visualisation des dossiers avec devis acceptés', defaultEnabled: true, routes: ['/?tab=outils'] },
     ],
   },
   {
