@@ -253,6 +253,7 @@ export function useDevisAcceptes() {
       allUnivers: Array.from(universSet).sort(),
       allVilles: Array.from(villesSet).sort(),
       allApporteurs: Array.from(apporteursSet).sort(),
+      allStatuses: Array.from(statusesSet).sort(),
       statusCounts: counts,
     };
   }, [rawData]);
