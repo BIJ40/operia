@@ -177,14 +177,23 @@ export function useDevisAcceptes() {
       // Check if has planned interventions (= "planifié")
       const projectInterventions = interventionsByProject.get(pid) || [];
       const now = new Date();
-      const hasPlannedIntervention = projectInterventions.some(itv => {
+      let hasPlannedIntervention = false;
+      let plannedInterventionType: string | null = null;
+      for (const itv of projectInterventions) {
         const dateStr = itv.date || itv.dateIntervention || (itv as any).dateReelle;
-        if (!dateStr) return false;
+        if (!dateStr) continue;
         try {
           const d = new Date(dateStr);
-          return d >= now; // Future or today = planifié
-        } catch { return false; }
-      });
+          if (d >= now) {
+            hasPlannedIntervention = true;
+            const t2 = (itv.type2 || itv.type || '').toUpperCase();
+            if (t2 === 'TH' || t2 === 'RT' || t2 === 'RDV' || t2 === 'RDVTECH') {
+              plannedInterventionType = t2;
+            }
+            break;
+          }
+        } catch { /* ignore */ }
+      }
 
       // Client direct
       const clientId = project?.clientId;
