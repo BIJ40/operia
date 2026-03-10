@@ -5,6 +5,7 @@
  * - devis.state : 'accepted' | 'order' (commandé = accepté + en travaux)
  * - devis.data.totalHT : montant HT du devis
  * - project.ref / project.label : référence et libellé du dossier
+ * - project.state : état du dossier (to_planify_tvx, devis_to_order, wait_fourn, etc.)
  * - project.data.universes : univers métier du projet
  * - project.data.searchFilters.ville : ville du chantier
  * - project.data.commanditaireId : ID du commanditaire (apporteur)
@@ -19,10 +20,21 @@ import type { Project, Client, Devis } from '@/apogee-connect/types';
 // Seuls les devis explicitement acceptés ou commandés (order = accepté + en travaux)
 const ACCEPTED_STATES = ['accepted', 'order'];
 
+/** Filtre par statut de dossier */
+export type DossierStatusFilter = 'all' | 'to_action' | 'planned';
+
+/** États projet = "à traiter" (commander / attente fourn / planifier) */
+const TO_ACTION_STATES = new Set(['devis_to_order', 'wait_fourn', 'to_planify_tvx']);
+
+/** États projet = "planifié" (intervention planifiée, en cours de travaux) */
+const PLANNED_STATES = new Set(['planned', 'planifie_tvx', 'in_progress']);
+
 export interface DossierDevisAccepte {
   projectId: string;
   projectRef: string;
   projectLabel: string;
+  projectState: string;
+  projectStateLabel: string;
   clientName: string;
   commanditaireName: string;
   ville: string;
@@ -38,9 +50,24 @@ export type SortDirection = 'asc' | 'desc';
 interface Filters {
   search: string;
   univers: string[];
+  statusFilter: DossierStatusFilter;
   sortField: SortField;
   sortDir: SortDirection;
 }
+
+/** Labels lisibles pour les états projet */
+const PROJECT_STATE_LABELS: Record<string, string> = {
+  'new': 'Nouveau',
+  'devis_to_order': 'À commander',
+  'wait_fourn': 'Attente fourn.',
+  'to_planify_tvx': 'À planifier',
+  'planned': 'Planifié',
+  'planifie_tvx': 'Planifié TVX',
+  'in_progress': 'En cours',
+  'done': 'Terminé',
+  'canceled': 'Annulé',
+  'invoice': 'Facturé',
+};
 
 /** Extrait le montant HT d'un devis (data.totalHT ou root totalHT) */
 function extractDevisHT(d: Devis): number {
@@ -61,6 +88,7 @@ export function useDevisAcceptes() {
   const [filters, setFilters] = useState<Filters>({
     search: '',
     univers: [],
+    statusFilter: 'all',
     sortField: 'totalHT',
     sortDir: 'desc',
   });
@@ -79,8 +107,8 @@ export function useDevisAcceptes() {
     },
   });
 
-  const { dossiers, allUnivers } = useMemo(() => {
-    if (!rawData) return { dossiers: [], allUnivers: [] as string[] };
+  const { dossiers, allUnivers, statusCounts } = useMemo(() => {
+    if (!rawData) return { dossiers: [], allUnivers: [] as string[], statusCounts: { all: 0, to_action: 0, planned: 0 } };
 
     const { devis, projects, clients } = rawData;
 
@@ -107,11 +135,16 @@ export function useDevisAcceptes() {
 
     const universSet = new Set<string>();
     const result: DossierDevisAccepte[] = [];
+    const counts = { all: 0, to_action: 0, planned: 0 };
 
     for (const [pid, { devisList, totalHT }] of byProject) {
       const project = projectMap.get(pid);
       const projectData = (project as any)?.data || {};
       
+      // Project state
+      const projectState = (project?.state || '').toLowerCase();
+      const projectStateLabel = PROJECT_STATE_LABELS[projectState] || projectState || '—';
+
       // Client direct
       const clientId = project?.clientId;
       const client = clientId ? clientMap.get(String(clientId)) : undefined;
@@ -139,10 +172,17 @@ export function useDevisAcceptes() {
       const projectRef = (project as any)?.ref || `#${pid}`;
       const projectLabel = (project as any)?.label || project?.nom || '';
 
+      // Count by status category
+      counts.all++;
+      if (TO_ACTION_STATES.has(projectState)) counts.to_action++;
+      if (PLANNED_STATES.has(projectState)) counts.planned++;
+
       result.push({
         projectId: pid,
         projectRef,
         projectLabel,
+        projectState,
+        projectStateLabel,
         clientName: client?.nom || client?.raisonSociale || '—',
         commanditaireName: commanditaire?.nom || commanditaire?.raisonSociale || '',
         ville,
@@ -155,13 +195,21 @@ export function useDevisAcceptes() {
 
     return { 
       dossiers: result, 
-      allUnivers: Array.from(universSet).sort() 
+      allUnivers: Array.from(universSet).sort(),
+      statusCounts: counts,
     };
   }, [rawData]);
 
   // Apply filters & sort
   const filteredDossiers = useMemo(() => {
     let list = [...dossiers];
+
+    // Status filter
+    if (filters.statusFilter === 'to_action') {
+      list = list.filter(d => TO_ACTION_STATES.has(d.projectState));
+    } else if (filters.statusFilter === 'planned') {
+      list = list.filter(d => PLANNED_STATES.has(d.projectState));
+    }
 
     // Search
     if (filters.search) {
@@ -212,11 +260,13 @@ export function useDevisAcceptes() {
     totalDossiers: filteredDossiers.length,
     totalHT,
     allUnivers,
+    statusCounts,
     isLoading,
     filters,
     setFilters,
     setSearch: (search: string) => setFilters(f => ({ ...f, search })),
     setUniversFilter: (univers: string[]) => setFilters(f => ({ ...f, univers })),
+    setStatusFilter: (statusFilter: DossierStatusFilter) => setFilters(f => ({ ...f, statusFilter })),
     setSort: (field: SortField) => setFilters(f => ({
       ...f,
       sortField: field,
