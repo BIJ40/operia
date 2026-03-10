@@ -107,6 +107,7 @@ export default function DevisAcceptesView() {
                 <TableHead className="cursor-pointer select-none" onClick={() => setSort('clientName')}>
                   <span className="flex items-center">Client <SortIcon field="clientName" current={filters.sortField} dir={filters.sortDir} /></span>
                 </TableHead>
+                <TableHead className="hidden lg:table-cell">Apporteur</TableHead>
                 <TableHead className="hidden md:table-cell">Ville</TableHead>
                 <TableHead className="hidden lg:table-cell">Univers</TableHead>
                 <TableHead className="text-center">Devis</TableHead>
@@ -121,7 +122,7 @@ export default function DevisAcceptesView() {
             <TableBody>
               {dossiers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
                     <FileCheck className="w-8 h-8 mx-auto mb-2 opacity-40" />
                     Aucun dossier avec devis accepté trouvé
                   </TableCell>
@@ -133,8 +134,14 @@ export default function DevisAcceptesView() {
                     className="cursor-pointer hover:bg-muted/60"
                     onClick={() => setSelectedProjectId(d.projectId)}
                   >
-                    <TableCell className="font-medium">{d.projectRef}</TableCell>
+                    <TableCell className="font-medium">
+                      <div>{d.projectRef}</div>
+                      {d.projectLabel && (
+                        <div className="text-xs text-muted-foreground truncate max-w-[200px]">{d.projectLabel}</div>
+                      )}
+                    </TableCell>
                     <TableCell>{d.clientName}</TableCell>
+                    <TableCell className="hidden lg:table-cell text-muted-foreground">{d.commanditaireName || '—'}</TableCell>
                     <TableCell className="hidden md:table-cell text-muted-foreground">{d.ville}</TableCell>
                     <TableCell className="hidden lg:table-cell">
                       <div className="flex flex-wrap gap-1">
