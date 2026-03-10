@@ -48,6 +48,8 @@ export type SortDirection = 'asc' | 'desc';
 interface Filters {
   search: string;
   univers: string[];
+  villes: string[];
+  apporteurs: string[];
   statusFilter: DossierStatusFilter;
   sortField: SortField;
   sortDir: SortDirection;
