@@ -60,11 +60,19 @@ Deno.serve(async (req) => {
     ));
   }
 
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    })
+
     const results: Array<{ email: string; status: string; error?: string }> = []
 
     for (const testUser of testUsers) {
       console.log(`Creating test user: ${testUser.email}`)
-      
+
       // Check if user already exists
       const { data: existingProfile } = await supabaseAdmin
         .from('profiles')
@@ -74,11 +82,10 @@ Deno.serve(async (req) => {
 
       if (existingProfile) {
         console.log(`User ${testUser.email} already exists, updating global_role...`)
-        
-        // Update existing user's global_role
+
         const { error: updateError } = await supabaseAdmin
           .from('profiles')
-          .update({ 
+          .update({
             global_role: testUser.globalRole,
             agence: testUser.agence
           })
@@ -130,8 +137,8 @@ Deno.serve(async (req) => {
     }
 
     return withCors(req, new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         results,
         credentials: {
           password: 'Test1234!',
