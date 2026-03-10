@@ -62,7 +62,6 @@ export default function RealisationCreatePage() {
       const input: Partial<Realisation> = {
         title: title.trim(),
         intervention_date: today,
-        validation_status: 'draft',
       };
       const created = await createRealisation.mutateAsync(input);
 
