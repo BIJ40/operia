@@ -50,6 +50,7 @@ const PerformanceDashboard = lazy(() =>
 );
 const ProspectionTabContent = lazy(() => import('@/prospection/pages/ProspectionTabContent'));
 const DevisAcceptesView = lazy(() => import('@/apogee-connect/components/DevisAcceptesView'));
+const AnomaliesDevisDossierView = lazy(() => import('@/apogee-connect/components/AnomaliesDevisDossierView'));
 
 // Types pour les niveaux de navigation
 type OutilsMainTab = 'actions' | 'apporteurs' | 'administratif' | 'parc' | 'performance' | 'prospection' | 'devis-acceptes';
