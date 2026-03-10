@@ -1,10 +1,14 @@
 /**
  * Hook — List & filter realisations
+ * Note: Uses 'any' cast because realisations table is not yet in generated types
  */
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import type { Realisation, RealisationFilters, RealisationWithMeta } from '../types';
+
+// Helper to bypass strict typing for new tables
+const db = supabase as any;
 
 export function useRealisations(filters: RealisationFilters = {}) {
   const { agencyId } = useEffectiveAuth();
@@ -14,7 +18,7 @@ export function useRealisations(filters: RealisationFilters = {}) {
     queryFn: async (): Promise<RealisationWithMeta[]> => {
       if (!agencyId) return [];
 
-      let query = supabase
+      let query = db
         .from('realisations')
         .select('*')
         .eq('agency_id', agencyId)
@@ -40,17 +44,17 @@ export function useRealisations(filters: RealisationFilters = {}) {
       const { data, error } = await query;
       if (error) throw error;
 
-      // Fetch media counts in parallel
-      const ids = (data || []).map((r: any) => r.id);
+      const items = (data || []) as Realisation[];
+      const ids = items.map(r => r.id);
       if (ids.length === 0) return [];
 
-      const { data: mediaStats } = await supabase
+      const { data: mediaStats } = await db
         .from('realisation_media')
         .select('realisation_id, media_role')
         .in('realisation_id', ids);
 
       const mediaMap = new Map<string, { count: number; hasBefore: boolean; hasAfter: boolean }>();
-      (mediaStats || []).forEach((m: any) => {
+      ((mediaStats || []) as any[]).forEach((m) => {
         const existing = mediaMap.get(m.realisation_id) || { count: 0, hasBefore: false, hasAfter: false };
         existing.count++;
         if (m.media_role === 'before') existing.hasBefore = true;
@@ -58,7 +62,7 @@ export function useRealisations(filters: RealisationFilters = {}) {
         mediaMap.set(m.realisation_id, existing);
       });
 
-      return (data || []).map((r: any) => {
+      return items.map((r) => {
         const stats = mediaMap.get(r.id);
         return {
           ...r,
@@ -78,13 +82,13 @@ export function useRealisation(id: string | undefined) {
     queryKey: ['realisation', id],
     queryFn: async (): Promise<Realisation | null> => {
       if (!id) return null;
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('realisations')
         .select('*')
         .eq('id', id)
         .single();
       if (error) throw error;
-      return data as unknown as Realisation;
+      return data as Realisation;
     },
     enabled: !!id,
   });

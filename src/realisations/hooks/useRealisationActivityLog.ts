@@ -5,19 +5,21 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { RealisationActivityLog } from '../types';
 
+const db = supabase as any;
+
 export function useRealisationActivityLog(realisationId: string | undefined) {
   return useQuery({
     queryKey: ['realisation-activity-log', realisationId],
     queryFn: async (): Promise<RealisationActivityLog[]> => {
       if (!realisationId) return [];
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('realisation_activity_log')
         .select('*')
         .eq('realisation_id', realisationId)
         .order('created_at', { ascending: false })
         .limit(100);
       if (error) throw error;
-      return (data || []) as unknown as RealisationActivityLog[];
+      return (data || []) as RealisationActivityLog[];
     },
     enabled: !!realisationId,
   });
