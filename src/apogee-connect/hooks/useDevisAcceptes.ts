@@ -113,12 +113,13 @@ export function useDevisAcceptes() {
     },
   });
 
-  const { dossiers, allUnivers, allVilles, allApporteurs, statusCounts } = useMemo(() => {
+  const { dossiers, allUnivers, allVilles, allApporteurs, allStatuses, statusCounts } = useMemo(() => {
     if (!rawData) return { 
       dossiers: [], 
       allUnivers: [] as string[], 
       allVilles: [] as string[],
       allApporteurs: [] as string[],
+      allStatuses: [] as string[],
       statusCounts: { all: 0, to_action: 0, to_action_commander: 0, to_action_fourn: 0, to_action_planifier: 0, planned: 0 } 
     };
 
