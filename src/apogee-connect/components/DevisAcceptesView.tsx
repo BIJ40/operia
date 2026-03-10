@@ -207,59 +207,6 @@ export default function DevisAcceptesView() {
         </Card>
       </div>
 
-      {/* Status filter tabs */}
-      <div className="space-y-2">
-        <div className="flex gap-2">
-          {STATUS_FILTER_OPTIONS.map(opt => (
-            <Button
-              key={opt.value}
-              variant={
-                (opt.value === 'to_action' && isInToActionGroup) || filters.statusFilter === opt.value
-                  ? 'default' 
-                  : 'outline'
-              }
-              size="sm"
-              onClick={() => setStatusFilter(opt.value)}
-              className="h-8 text-xs gap-1.5"
-            >
-              {opt.icon}
-              {opt.label}
-              <span className={cn(
-                "ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
-                (opt.value === 'to_action' && isInToActionGroup) || filters.statusFilter === opt.value
-                  ? "bg-primary-foreground/20 text-primary-foreground" 
-                  : "bg-muted text-muted-foreground"
-              )}>
-                {getFilterCount(statusCounts, opt.value)}
-              </span>
-            </Button>
-          ))}
-        </div>
-
-        {/* Sub-filters for "À traiter" */}
-        {isInToActionGroup && (
-          <div className="flex gap-1.5 pl-2">
-            {SUB_FILTER_OPTIONS.map(opt => (
-              <Button
-                key={opt.value}
-                variant={filters.statusFilter === opt.value ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => setStatusFilter(
-                  filters.statusFilter === opt.value ? 'to_action' : opt.value
-                )}
-                className="h-7 text-[11px] gap-1"
-              >
-                {opt.icon}
-                {opt.label}
-                <span className="ml-1 text-[10px] text-muted-foreground">
-                  {getSubFilterCount(statusCounts, opt.value)}
-                </span>
-              </Button>
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* Search + active filters summary */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
