@@ -363,6 +363,16 @@ export default function DiversTabContent() {
             <AnomaliesDevisDossierView />
           </Suspense>
         </TabsContent>
+
+        <TabsContent value="realisations" className="mt-6 animate-fade-in">
+          <Suspense fallback={<LoadingFallback />}>
+            <RealisationsPage />
+          </Suspense>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
       </Tabs>
     </div>
   );
