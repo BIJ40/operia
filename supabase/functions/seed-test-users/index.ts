@@ -41,65 +41,38 @@ Deno.serve(async (req) => {
   const corsResult = handleCorsPreflightOrReject(req);
   if (corsResult) return corsResult;
 
-  // ⚠️ Production guard: block this function in production
-  const env = Deno.env.get('DENO_ENV') || Deno.env.get('ENVIRONMENT') || 'production';
-  if (env !== 'development' && env !== 'local') {
-    console.warn(`[SEED-TEST-USERS] Blocked: ENV=${env} is not development`);
+  // 🔐 Secret-based auth: require E2E_SEED_SECRET via header
+  const expectedSecret = Deno.env.get('E2E_SEED_SECRET');
+  if (!expectedSecret) {
+    console.error('[SEED-TEST-USERS] E2E_SEED_SECRET not configured');
     return withCors(req, new Response(
-      JSON.stringify({ error: 'This function is disabled in production' }),
-      { status: 403, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: 'Seeder not configured (missing secret)' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     ));
   }
 
-  // P2 FIX: Role guard — require N6 (superadmin) even in dev environments
-  const authHeader = req.headers.get('Authorization');
-  if (!authHeader?.startsWith('Bearer ')) {
+  const providedSecret = req.headers.get('X-Seed-Secret');
+  if (!providedSecret || providedSecret !== expectedSecret) {
+    console.warn('[SEED-TEST-USERS] Invalid or missing X-Seed-Secret header');
     return withCors(req, new Response(
-      JSON.stringify({ error: 'Authentication required' }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: 'Unauthorized' }),
+      { status: 403, headers: { 'Content-Type': 'application/json' } }
     ));
   }
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    
+
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false }
     })
-
-    // Verify caller identity and role
-    const { data: { user }, error: authErr } = await supabaseAdmin.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
-
-    if (authErr || !user) {
-      return withCors(req, new Response(
-        JSON.stringify({ error: 'Invalid authentication' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      ));
-    }
-
-    const { data: callerProfile } = await supabaseAdmin
-      .from('profiles')
-      .select('global_role')
-      .eq('id', user.id)
-      .single();
-
-    const callerRole = callerProfile?.global_role ?? 'base_user';
-    if (callerRole !== 'superadmin') {
-      console.warn(`[SEED-TEST-USERS] Role blocked: user ${user.id} has role ${callerRole}, superadmin required`);
-      return withCors(req, new Response(
-        JSON.stringify({ error: 'Superadmin role required to seed test users' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
-      ));
-    }
 
     const results: Array<{ email: string; status: string; error?: string }> = []
 
     for (const testUser of testUsers) {
       console.log(`Creating test user: ${testUser.email}`)
-      
+
       // Check if user already exists
       const { data: existingProfile } = await supabaseAdmin
         .from('profiles')
@@ -109,11 +82,10 @@ Deno.serve(async (req) => {
 
       if (existingProfile) {
         console.log(`User ${testUser.email} already exists, updating global_role...`)
-        
-        // Update existing user's global_role
+
         const { error: updateError } = await supabaseAdmin
           .from('profiles')
-          .update({ 
+          .update({
             global_role: testUser.globalRole,
             agence: testUser.agence
           })
@@ -165,8 +137,8 @@ Deno.serve(async (req) => {
     }
 
     return withCors(req, new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         results,
         credentials: {
           password: 'Test1234!',
