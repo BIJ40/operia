@@ -61,16 +61,19 @@ interface Filters {
 /** Labels lisibles pour les états projet */
 const PROJECT_STATE_LABELS: Record<string, string> = {
   'new': 'Nouveau',
+  'devis_sent': 'Devis envoyé',
   'devis_to_order': 'À commander',
+  'devis_a_faire': 'Devis à faire',
   'wait_fourn': 'Attente fourn.',
   'to_planify_tvx': 'À planifier',
   'planified_tvx': 'À planifier',
   'planifie_rt': 'Planifié RT',
   'rt_fait': 'RT fait',
-  'devis_a_faire': 'Devis à faire',
+  'to_be_invoiced': 'À facturer',
+  'invoiced': 'Facturé',
+  'invoice': 'Facturé',
   'done': 'Terminé',
   'canceled': 'Annulé',
-  'invoice': 'Facturé',
   'stand_by': 'En attente',
 };
 
