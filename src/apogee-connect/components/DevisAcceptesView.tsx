@@ -2,7 +2,7 @@
  * Vue complète des devis acceptés avec filtres, stats et table triable.
  */
 import { useState } from 'react';
-import { Search, ArrowUpDown, ArrowUp, ArrowDown, FileCheck, Loader2 } from 'lucide-react';
+import { Search, ArrowUpDown, ArrowUp, ArrowDown, FileCheck, Loader2, CalendarCheck, ShoppingCart, Package, ClipboardList } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -22,22 +22,44 @@ function SortIcon({ field, current, dir }: { field: SortField; current: SortFiel
     : <ArrowDown className="w-3.5 h-3.5 ml-1 text-primary" />;
 }
 
-const STATUS_FILTER_OPTIONS: { value: DossierStatusFilter; label: string; description: string }[] = [
-  { value: 'all', label: 'Tous', description: 'Tous les devis acceptés' },
-  { value: 'to_action', label: 'À traiter', description: 'À commander / Attente fourn. / À planifier' },
-  { value: 'planned', label: 'Planifié', description: 'Dossier planifié ou en cours' },
+const STATUS_FILTER_OPTIONS: { value: DossierStatusFilter; label: string; icon?: React.ReactNode }[] = [
+  { value: 'all', label: 'Tous' },
+  { value: 'to_action', label: 'À traiter' },
+  { value: 'planned', label: 'Planifié', icon: <CalendarCheck className="w-3.5 h-3.5" /> },
+];
+
+const SUB_FILTER_OPTIONS: { value: DossierStatusFilter; label: string; icon: React.ReactNode }[] = [
+  { value: 'to_action_commander', label: 'À commander', icon: <ShoppingCart className="w-3.5 h-3.5" /> },
+  { value: 'to_action_fourn', label: 'Attente fourn.', icon: <Package className="w-3.5 h-3.5" /> },
+  { value: 'to_action_planifier', label: 'À planifier', icon: <ClipboardList className="w-3.5 h-3.5" /> },
 ];
 
 const STATE_BADGE_COLORS: Record<string, string> = {
   'devis_to_order': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
   'wait_fourn': 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
   'to_planify_tvx': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-  'planned': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-  'planifie_tvx': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-  'in_progress': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
+  'planifie_rt': 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300',
   'done': 'bg-muted text-muted-foreground',
   'canceled': 'bg-destructive/10 text-destructive',
 };
+
+function getSubFilterCount(statusCounts: any, value: DossierStatusFilter): number {
+  switch (value) {
+    case 'to_action_commander': return statusCounts.to_action_commander;
+    case 'to_action_fourn': return statusCounts.to_action_fourn;
+    case 'to_action_planifier': return statusCounts.to_action_planifier;
+    default: return 0;
+  }
+}
+
+function getFilterCount(statusCounts: any, value: DossierStatusFilter): number {
+  switch (value) {
+    case 'all': return statusCounts.all;
+    case 'to_action': return statusCounts.to_action;
+    case 'planned': return statusCounts.planned;
+    default: return 0;
+  }
+}
 
 export default function DevisAcceptesView() {
   const {
@@ -46,6 +68,11 @@ export default function DevisAcceptesView() {
   } = useDevisAcceptes();
 
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+
+  const isInToActionGroup = filters.statusFilter === 'to_action' || 
+    filters.statusFilter === 'to_action_commander' || 
+    filters.statusFilter === 'to_action_fourn' || 
+    filters.statusFilter === 'to_action_planifier';
 
   const toggleUnivers = (u: string) => {
     const current = filters.univers;
@@ -85,27 +112,56 @@ export default function DevisAcceptesView() {
       </div>
 
       {/* Status filter tabs */}
-      <div className="flex gap-2">
-        {STATUS_FILTER_OPTIONS.map(opt => (
-          <Button
-            key={opt.value}
-            variant={filters.statusFilter === opt.value ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setStatusFilter(opt.value)}
-            className="h-8 text-xs"
-            title={opt.description}
-          >
-            {opt.label}
-            <span className={cn(
-              "ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
-              filters.statusFilter === opt.value 
-                ? "bg-primary-foreground/20 text-primary-foreground" 
-                : "bg-muted text-muted-foreground"
-            )}>
-              {opt.value === 'all' ? statusCounts.all : opt.value === 'to_action' ? statusCounts.to_action : statusCounts.planned}
-            </span>
-          </Button>
-        ))}
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          {STATUS_FILTER_OPTIONS.map(opt => (
+            <Button
+              key={opt.value}
+              variant={
+                (opt.value === 'to_action' && isInToActionGroup) || filters.statusFilter === opt.value
+                  ? 'default' 
+                  : 'outline'
+              }
+              size="sm"
+              onClick={() => setStatusFilter(opt.value)}
+              className="h-8 text-xs gap-1.5"
+            >
+              {opt.icon}
+              {opt.label}
+              <span className={cn(
+                "ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+                (opt.value === 'to_action' && isInToActionGroup) || filters.statusFilter === opt.value
+                  ? "bg-primary-foreground/20 text-primary-foreground" 
+                  : "bg-muted text-muted-foreground"
+              )}>
+                {getFilterCount(statusCounts, opt.value)}
+              </span>
+            </Button>
+          ))}
+        </div>
+
+        {/* Sub-filters for "À traiter" */}
+        {isInToActionGroup && (
+          <div className="flex gap-1.5 pl-2">
+            {SUB_FILTER_OPTIONS.map(opt => (
+              <Button
+                key={opt.value}
+                variant={filters.statusFilter === opt.value ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setStatusFilter(
+                  filters.statusFilter === opt.value ? 'to_action' : opt.value
+                )}
+                className="h-7 text-[11px] gap-1"
+              >
+                {opt.icon}
+                {opt.label}
+                <span className="ml-1 text-[10px] text-muted-foreground">
+                  {getSubFilterCount(statusCounts, opt.value)}
+                </span>
+              </Button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Filters */}
@@ -151,7 +207,7 @@ export default function DevisAcceptesView() {
                 <TableHead className="hidden lg:table-cell">Apporteur</TableHead>
                 <TableHead className="hidden md:table-cell">Ville</TableHead>
                 <TableHead className="hidden lg:table-cell">Univers</TableHead>
-                <TableHead>Statut dossier</TableHead>
+                <TableHead>Statut</TableHead>
                 <TableHead className="text-center">Devis</TableHead>
                 <TableHead className="cursor-pointer select-none text-right" onClick={() => setSort('totalHT')}>
                   <span className="flex items-center justify-end">Total HT <SortIcon field="totalHT" current={filters.sortField} dir={filters.sortDir} /></span>
@@ -166,7 +222,7 @@ export default function DevisAcceptesView() {
                 <TableRow>
                   <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
                     <FileCheck className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                    Aucun dossier avec devis accepté trouvé
+                    Aucun dossier trouvé pour ce filtre
                   </TableCell>
                 </TableRow>
               ) : (
@@ -193,12 +249,20 @@ export default function DevisAcceptesView() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className={cn(
-                        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
-                        STATE_BADGE_COLORS[d.projectState] || "bg-muted text-muted-foreground"
-                      )}>
-                        {d.projectStateLabel}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        <span className={cn(
+                          "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium whitespace-nowrap",
+                          STATE_BADGE_COLORS[d.projectState] || "bg-muted text-muted-foreground"
+                        )}>
+                          {d.projectStateLabel}
+                        </span>
+                        {d.hasPlannedIntervention && (
+                          <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400">
+                            <CalendarCheck className="w-3 h-3" />
+                            Planifié
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-center">{d.nbDevis}</TableCell>
                     <TableCell className="text-right font-semibold">{formatCurrency(d.totalHT)}</TableCell>
