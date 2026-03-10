@@ -51,6 +51,7 @@ interface Filters {
   univers: string[];
   villes: string[];
   apporteurs: string[];
+  statuses: string[];
   statusFilter: DossierStatusFilter;
   sortField: SortField;
   sortDir: SortDirection;
