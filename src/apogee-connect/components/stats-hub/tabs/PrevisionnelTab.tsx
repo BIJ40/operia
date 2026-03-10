@@ -104,7 +104,7 @@ const UNIVERS_COLORS: Record<string, string> = {
   'Vitrerie': 'hsl(270, 60%, 65%)',       // warm-purple
   'Multiservice': 'hsl(340, 70%, 65%)',   // warm-pink
   'Rénovation': 'hsl(175, 60%, 50%)',     // warm-teal
-  'PMR': 'hsl(100, 55%, 55%)',            // soft lime
+  'Aménagement PMR': 'hsl(100, 55%, 55%)',            // soft lime
   'Recherche de fuite': 'hsl(350, 65%, 60%)', // coral
   'Non classé': 'hsl(210, 10%, 60%)',     // neutral gray
 };
