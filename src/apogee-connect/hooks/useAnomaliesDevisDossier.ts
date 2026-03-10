@@ -47,7 +47,7 @@ const STATE_LABELS: Record<string, string> = {
   'canceled': 'Annulé',
   'stand_by': 'En attente',
   'accepted': 'Accepté',
-  'order': 'Commandé',
+  'order': 'Validé',
   'refused': 'Refusé',
   'draft': 'Brouillon',
   'sent': 'Envoyé',
