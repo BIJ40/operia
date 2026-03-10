@@ -34,6 +34,7 @@ export interface DossierDevisAccepte {
   projectState: string;
   projectStateLabel: string;
   hasPlannedIntervention: boolean;
+  plannedInterventionType: string | null; // 'TH', 'depannage', etc.
   clientName: string;
   commanditaireName: string;
   ville: string;
