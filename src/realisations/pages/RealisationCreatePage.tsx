@@ -247,7 +247,7 @@ export default function RealisationCreatePage() {
                 <div><Label>Type de chantier</Label><Input className="mt-1" value={form.chantier_type || ''} onChange={e => updateField('chantier_type', e.target.value)} /></div>
                 <div>
                   <Label>Type de client</Label>
-                  <select className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background mt-1" value={form.client_type || ''} onChange={e => updateField('client_type', e.target.value || null)}>
+                  <select className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background mt-1" value={form.client_type || ''} onChange={e => updateField('client_type', (e.target.value || null) as any)}>
                     <option value="">Sélectionner</option>
                     {Object.entries(CLIENT_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                   </select>
