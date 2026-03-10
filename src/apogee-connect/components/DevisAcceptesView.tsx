@@ -1,8 +1,8 @@
 /**
  * Vue complète des devis acceptés avec filtres, stats et table triable.
  */
-import { useState, useRef } from 'react';
-import { Search, ArrowUpDown, ArrowUp, ArrowDown, FileCheck, Loader2, CalendarCheck, ShoppingCart, Package, ClipboardList, Filter, X, Check } from 'lucide-react';
+import { useState } from 'react';
+import { Search, ArrowUpDown, ArrowUp, ArrowDown, FileCheck, Loader2, CalendarCheck, Filter, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +16,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DossierDetailDialog } from '@/apogee-connect/components/DossierDetailDialog';
-import { useDevisAcceptes, SortField, DossierStatusFilter } from '@/apogee-connect/hooks/useDevisAcceptes';
+import { useDevisAcceptes, SortField } from '@/apogee-connect/hooks/useDevisAcceptes';
 import { formatCurrency } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 
@@ -128,18 +128,6 @@ function ColumnFilterPopover({
   );
 }
 
-const STATUS_FILTER_OPTIONS: { value: DossierStatusFilter; label: string; icon?: React.ReactNode }[] = [
-  { value: 'all', label: 'Tous' },
-  { value: 'to_action', label: 'À traiter' },
-  { value: 'planned', label: 'Planifié', icon: <CalendarCheck className="w-3.5 h-3.5" /> },
-];
-
-const SUB_FILTER_OPTIONS: { value: DossierStatusFilter; label: string; icon: React.ReactNode }[] = [
-  { value: 'to_action_commander', label: 'À commander', icon: <ShoppingCart className="w-3.5 h-3.5" /> },
-  { value: 'to_action_fourn', label: 'Attente fourn.', icon: <Package className="w-3.5 h-3.5" /> },
-  { value: 'to_action_planifier', label: 'À planifier', icon: <ClipboardList className="w-3.5 h-3.5" /> },
-];
-
 const STATE_BADGE_COLORS: Record<string, string> = {
   'devis_to_order': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
   'wait_fourn': 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
@@ -149,38 +137,15 @@ const STATE_BADGE_COLORS: Record<string, string> = {
   'canceled': 'bg-destructive/10 text-destructive',
 };
 
-function getSubFilterCount(statusCounts: any, value: DossierStatusFilter): number {
-  switch (value) {
-    case 'to_action_commander': return statusCounts.to_action_commander;
-    case 'to_action_fourn': return statusCounts.to_action_fourn;
-    case 'to_action_planifier': return statusCounts.to_action_planifier;
-    default: return 0;
-  }
-}
-
-function getFilterCount(statusCounts: any, value: DossierStatusFilter): number {
-  switch (value) {
-    case 'all': return statusCounts.all;
-    case 'to_action': return statusCounts.to_action;
-    case 'planned': return statusCounts.planned;
-    default: return 0;
-  }
-}
-
 export default function DevisAcceptesView() {
   const {
-    dossiers, totalDossiers, totalHT, allUnivers, allVilles, allApporteurs, statusCounts,
-    isLoading, filters, setSearch, setUniversFilter, setVillesFilter, setApporteursFilter, setStatusFilter, setSort,
+    dossiers, totalDossiers, totalHT, allUnivers, allVilles, allApporteurs, allStatuses,
+    isLoading, filters, setSearch, setUniversFilter, setVillesFilter, setApporteursFilter, setStatusesFilter, setSort,
   } = useDevisAcceptes();
 
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
-  const isInToActionGroup = filters.statusFilter === 'to_action' || 
-    filters.statusFilter === 'to_action_commander' || 
-    filters.statusFilter === 'to_action_fourn' || 
-    filters.statusFilter === 'to_action_planifier';
-
-  const activeFilterCount = (filters.univers.length > 0 ? 1 : 0) + (filters.villes.length > 0 ? 1 : 0) + (filters.apporteurs.length > 0 ? 1 : 0);
+  const activeFilterCount = (filters.univers.length > 0 ? 1 : 0) + (filters.villes.length > 0 ? 1 : 0) + (filters.apporteurs.length > 0 ? 1 : 0) + (filters.statuses.length > 0 ? 1 : 0);
 
   if (isLoading) {
     return (
@@ -212,59 +177,6 @@ export default function DevisAcceptesView() {
         </Card>
       </div>
 
-      {/* Status filter tabs */}
-      <div className="space-y-2">
-        <div className="flex gap-2">
-          {STATUS_FILTER_OPTIONS.map(opt => (
-            <Button
-              key={opt.value}
-              variant={
-                (opt.value === 'to_action' && isInToActionGroup) || filters.statusFilter === opt.value
-                  ? 'default' 
-                  : 'outline'
-              }
-              size="sm"
-              onClick={() => setStatusFilter(opt.value)}
-              className="h-8 text-xs gap-1.5"
-            >
-              {opt.icon}
-              {opt.label}
-              <span className={cn(
-                "ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
-                (opt.value === 'to_action' && isInToActionGroup) || filters.statusFilter === opt.value
-                  ? "bg-primary-foreground/20 text-primary-foreground" 
-                  : "bg-muted text-muted-foreground"
-              )}>
-                {getFilterCount(statusCounts, opt.value)}
-              </span>
-            </Button>
-          ))}
-        </div>
-
-        {/* Sub-filters for "À traiter" */}
-        {isInToActionGroup && (
-          <div className="flex gap-1.5 pl-2">
-            {SUB_FILTER_OPTIONS.map(opt => (
-              <Button
-                key={opt.value}
-                variant={filters.statusFilter === opt.value ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => setStatusFilter(
-                  filters.statusFilter === opt.value ? 'to_action' : opt.value
-                )}
-                className="h-7 text-[11px] gap-1"
-              >
-                {opt.icon}
-                {opt.label}
-                <span className="ml-1 text-[10px] text-muted-foreground">
-                  {getSubFilterCount(statusCounts, opt.value)}
-                </span>
-              </Button>
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* Search + active filters summary */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
@@ -280,7 +192,7 @@ export default function DevisAcceptesView() {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => { setUniversFilter([]); setVillesFilter([]); setApporteursFilter([]); }} 
+            onClick={() => { setUniversFilter([]); setVillesFilter([]); setApporteursFilter([]); setStatusesFilter([]); }} 
             className="h-7 text-xs"
           >
             <X className="w-3 h-3 mr-1" />
@@ -325,7 +237,14 @@ export default function DevisAcceptesView() {
                     onSelectionChange={setUniversFilter}
                   />
                 </TableHead>
-                <TableHead>Statut</TableHead>
+                <TableHead>
+                  <ColumnFilterPopover
+                    label="Statut"
+                    options={allStatuses}
+                    selected={filters.statuses}
+                    onSelectionChange={setStatusesFilter}
+                  />
+                </TableHead>
                 <TableHead className="text-center">Devis</TableHead>
                 <TableHead className="cursor-pointer select-none text-right" onClick={() => setSort('totalHT')}>
                   <span className="flex items-center justify-end">Total HT <SortIcon field="totalHT" current={filters.sortField} dir={filters.sortDir} /></span>

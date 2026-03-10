@@ -20,11 +20,12 @@ import type { Project, Client, Devis, Intervention } from '@/apogee-connect/type
 // Seuls les devis explicitement acceptés ou commandés (order = accepté + en travaux)
 const ACCEPTED_STATES = ['accepted', 'order'];
 
-/** Filtre par statut de dossier */
+/** @deprecated Kept for type export compat */
 export type DossierStatusFilter = 'all' | 'to_action' | 'to_action_commander' | 'to_action_fourn' | 'to_action_planifier' | 'planned';
 
 /** États projet = "à traiter" */
 const TO_ACTION_STATES = new Set(['devis_to_order', 'wait_fourn', 'to_planify_tvx']);
+const PLANNED_LABEL = 'Planifié';
 
 export interface DossierDevisAccepte {
   projectId: string;
@@ -50,6 +51,7 @@ interface Filters {
   univers: string[];
   villes: string[];
   apporteurs: string[];
+  statuses: string[];
   statusFilter: DossierStatusFilter;
   sortField: SortField;
   sortDir: SortDirection;
@@ -90,6 +92,7 @@ export function useDevisAcceptes() {
     univers: [],
     villes: [],
     apporteurs: [],
+    statuses: [],
     statusFilter: 'all',
     sortField: 'totalHT',
     sortDir: 'desc',
@@ -110,12 +113,13 @@ export function useDevisAcceptes() {
     },
   });
 
-  const { dossiers, allUnivers, allVilles, allApporteurs, statusCounts } = useMemo(() => {
+  const { dossiers, allUnivers, allVilles, allApporteurs, allStatuses, statusCounts } = useMemo(() => {
     if (!rawData) return { 
       dossiers: [], 
       allUnivers: [] as string[], 
       allVilles: [] as string[],
       allApporteurs: [] as string[],
+      allStatuses: [] as string[],
       statusCounts: { all: 0, to_action: 0, to_action_commander: 0, to_action_fourn: 0, to_action_planifier: 0, planned: 0 } 
     };
 
@@ -157,6 +161,7 @@ export function useDevisAcceptes() {
     const universSet = new Set<string>();
     const villesSet = new Set<string>();
     const apporteursSet = new Set<string>();
+    const statusesSet = new Set<string>();
     const result: DossierDevisAccepte[] = [];
     const counts = { all: 0, to_action: 0, to_action_commander: 0, to_action_fourn: 0, to_action_planifier: 0, planned: 0 };
 
@@ -199,6 +204,10 @@ export function useDevisAcceptes() {
       // Track apporteur name
       const commanditaireNameStr = commanditaire?.nom || commanditaire?.raisonSociale || '';
       if (commanditaireNameStr) apporteursSet.add(commanditaireNameStr);
+
+      // Track status labels
+      if (projectStateLabel && projectStateLabel !== '—') statusesSet.add(projectStateLabel);
+      if (hasPlannedIntervention) statusesSet.add(PLANNED_LABEL);
 
       // Dates
       const dates = devisList
@@ -244,6 +253,7 @@ export function useDevisAcceptes() {
       allUnivers: Array.from(universSet).sort(),
       allVilles: Array.from(villesSet).sort(),
       allApporteurs: Array.from(apporteursSet).sort(),
+      allStatuses: Array.from(statusesSet).sort(),
       statusCounts: counts,
     };
   }, [rawData]);
@@ -252,7 +262,16 @@ export function useDevisAcceptes() {
   const filteredDossiers = useMemo(() => {
     let list = [...dossiers];
 
-    // Status filter
+    // Status filter (column-based multi-select on labels)
+    if (filters.statuses.length > 0) {
+      list = list.filter(d => {
+        const labels: string[] = [d.projectStateLabel];
+        if (d.hasPlannedIntervention) labels.push(PLANNED_LABEL);
+        return labels.some(l => filters.statuses.includes(l));
+      });
+    }
+
+    // Legacy status filter (kept for compat)
     switch (filters.statusFilter) {
       case 'to_action':
         list = list.filter(d => TO_ACTION_STATES.has(d.projectState));
@@ -332,6 +351,7 @@ export function useDevisAcceptes() {
     allUnivers,
     allVilles,
     allApporteurs,
+    allStatuses,
     statusCounts,
     isLoading,
     filters,
@@ -340,6 +360,7 @@ export function useDevisAcceptes() {
     setUniversFilter: (univers: string[]) => setFilters(f => ({ ...f, univers })),
     setVillesFilter: (villes: string[]) => setFilters(f => ({ ...f, villes })),
     setApporteursFilter: (apporteurs: string[]) => setFilters(f => ({ ...f, apporteurs })),
+    setStatusesFilter: (statuses: string[]) => setFilters(f => ({ ...f, statuses })),
     setStatusFilter: (statusFilter: DossierStatusFilter) => setFilters(f => ({ ...f, statusFilter })),
     setSort: (field: SortField) => setFilters(f => ({
       ...f,
