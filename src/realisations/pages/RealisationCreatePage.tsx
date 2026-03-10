@@ -27,6 +27,7 @@ export default function RealisationCreatePage() {
   const dispatchWebhook = useDispatchWebhook();
   const { agencyId } = useEffectiveAuth();
   const [isSaving, setIsSaving] = useState(false);
+  const [webhookDispatched, setWebhookDispatched] = useState(false);
   const [title, setTitle] = useState('');
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
 
