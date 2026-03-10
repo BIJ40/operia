@@ -13,7 +13,7 @@ import { FranchiseurPageHeader } from "../components/layout/FranchiseurPageHeade
 import { FranchiseurPageContainer } from "../components/layout/FranchiseurPageContainer";
 
 const UNIVERSES = [
-  { slug: "pmr", label: "PMR", colorHex: "#2B15E0" },
+  { slug: "pmr", label: "Aménagement PMR", colorHex: "#2B15E0" },
   { slug: "volet_roulant", label: "Volets roulants", colorHex: "#9817F0" },
   { slug: "renovation", label: "Rénovation", colorHex: "#A38D77" },
   { slug: "electricite", label: "Électricité", colorHex: "#FD9A2C" },
