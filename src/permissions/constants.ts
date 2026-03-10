@@ -125,10 +125,10 @@ export const MODULE_OPTION_MIN_ROLES: Record<string, GlobalRole> = {
   'ticketing.import': 'platform_admin',
   
   // Prospection
-  'prospection.dashboard': 'franchisee_admin',
-  'prospection.comparateur': 'franchisee_admin',
-  'prospection.veille': 'franchisee_admin',
-  'prospection.prospects': 'franchisee_admin',
+  'prospection.dashboard': 'franchisee_user',
+  'prospection.comparateur': 'franchisee_user',
+  'prospection.veille': 'franchisee_user',
+  'prospection.prospects': 'franchisee_user',
   
   // Planification Augmentée
   'planning_augmente.suggest': 'franchisee_admin',
