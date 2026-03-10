@@ -64,12 +64,14 @@ const PROJECT_STATE_LABELS: Record<string, string> = {
   'devis_to_order': 'À commander',
   'wait_fourn': 'Attente fourn.',
   'to_planify_tvx': 'À planifier',
+  'planified_tvx': 'À planifier',
   'planifie_rt': 'Planifié RT',
   'rt_fait': 'RT fait',
   'devis_a_faire': 'Devis à faire',
   'done': 'Terminé',
   'canceled': 'Annulé',
   'invoice': 'Facturé',
+  'stand_by': 'En attente',
 };
 
 /** Extrait le montant HT d'un devis (data.totalHT ou root totalHT) */
