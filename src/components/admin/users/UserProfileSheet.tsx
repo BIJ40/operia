@@ -81,9 +81,37 @@ export const UserProfileSheet = memo(function UserProfileSheet({
   onOpenChange,
   user,
   effectiveRole,
-  effectiveModules,
+  effectiveModules: _legacyModules,
   agencyLabel,
 }: UserProfileSheetProps) {
+  // ═══ TRUTH: Fetch real effective modules via the SAME RPC that controls runtime access ═══
+  const { data: rpcModules, isLoading: rpcModulesLoading } = useQuery({
+    queryKey: ['user-profile-sheet-effective-modules', user.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_user_effective_modules', {
+        p_user_id: user.id,
+      });
+      if (error) throw error;
+      const result: EnabledModules = {};
+      if (Array.isArray(data)) {
+        for (const row of data as Array<{ module_key: string; enabled: boolean; options: unknown }>) {
+          result[row.module_key as ModuleKey] = {
+            enabled: row.enabled === true,
+            options: (typeof row.options === 'object' && row.options !== null && !Array.isArray(row.options))
+              ? row.options as Record<string, boolean>
+              : {},
+          } as any;
+        }
+      }
+      return result;
+    },
+    enabled: open,
+    staleTime: 15_000,
+  });
+
+  // Use RPC truth when available, fallback to legacy prop
+  const effectiveModules = rpcModules ?? _legacyModules;
+
   // Fetch collaborator data linked to this user
   const { data: collaborator, isLoading: collabLoading } = useQuery({
     queryKey: ['user-profile-sheet-collab', user.id],
@@ -135,7 +163,7 @@ export const UserProfileSheet = memo(function UserProfileSheet({
     staleTime: 30_000,
   });
 
-  // Active modules count and list
+  // Active modules count and list — uses RPC truth
   const activeModules = useMemo(() => {
     return MODULE_DEFINITIONS.filter(def => {
       const state = effectiveModules[def.key];
