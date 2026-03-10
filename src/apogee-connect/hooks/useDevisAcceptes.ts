@@ -88,6 +88,8 @@ export function useDevisAcceptes() {
   const [filters, setFilters] = useState<Filters>({
     search: '',
     univers: [],
+    villes: [],
+    apporteurs: [],
     statusFilter: 'all',
     sortField: 'totalHT',
     sortDir: 'desc',
