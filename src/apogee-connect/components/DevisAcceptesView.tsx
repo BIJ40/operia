@@ -296,7 +296,7 @@ export default function DevisAcceptesView() {
                         {d.hasPlannedIntervention && (
                           <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400">
                             <CalendarCheck className="w-3 h-3" />
-                            Planifié
+                            Planifié{d.plannedInterventionType ? ` ${d.plannedInterventionType}` : ''}
                           </span>
                         )}
                       </div>
