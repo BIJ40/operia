@@ -29,7 +29,7 @@ const TAB_OPTION_MAP: Record<string, string> = {
 };
 
 /** Tabs nécessitant un module spécifique (hors prospection options) */
-const TAB_MODULE_MAP: Record<string, string> = {
+const TAB_MODULE_MAP: Record<string, ModuleKey> = {
   realisations: 'realisations',
 };
 
