@@ -222,7 +222,7 @@ export default function DevisAcceptesView() {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => { setUniversFilter([]); setVillesFilter([]); setApporteursFilter([]); }} 
+            onClick={() => { setUniversFilter([]); setVillesFilter([]); setApporteursFilter([]); setStatusesFilter([]); }} 
             className="h-7 text-xs"
           >
             <X className="w-3 h-3 mr-1" />
