@@ -11,7 +11,7 @@
 import { lazy, Suspense, useCallback, useMemo } from 'react';
 import { 
   FileText, Users2, Loader2, Users, CalendarDays, 
-  Car, FolderOpen, Settings, Eye, Activity, Target
+  Car, FolderOpen, Settings, Eye, Activity, Target, FileCheck
 } from 'lucide-react';
 import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
 import { ModuleKey } from '@/types/modules';
