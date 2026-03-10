@@ -207,9 +207,9 @@ function parseNumericValue(value: any): number {
  */
 function normalizeUnivers(univers: string): string {
   const mapping: Record<string, string> = {
-    'ame_logement': 'PMR',
-    'amelioration_logement': 'PMR',
-    'pmr': 'PMR',
+    'ame_logement': 'Aménagement PMR',
+    'amelioration_logement': 'Aménagement PMR',
+    'pmr': 'Aménagement PMR',
     'renovation': 'Rénovation',
     'plomberie': 'Plomberie',
     'electricite': 'Électricité',
