@@ -509,6 +509,7 @@ export const MODULE_SHORT_LABELS: Record<ModuleKey, string> = {
   aide: 'Aide',
   prospection: 'Commercial',
   planning_augmente: 'Planif. IA',
+  realisations: 'Réalisations',
   reseau_franchiseur: 'Réseau',
   admin_plateforme: 'Admin',
   unified_search: 'Recherche',
