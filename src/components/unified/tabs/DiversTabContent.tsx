@@ -11,7 +11,7 @@
 import { lazy, Suspense, useCallback, useMemo } from 'react';
 import { 
   FileText, Users2, Loader2, Users, CalendarDays, 
-  Car, FolderOpen, Settings, Eye, Activity, Target, FileCheck
+  Car, FolderOpen, Settings, Eye, Activity, Target, FileCheck, AlertTriangle
 } from 'lucide-react';
 import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
 import { ModuleKey } from '@/types/modules';
@@ -50,9 +50,10 @@ const PerformanceDashboard = lazy(() =>
 );
 const ProspectionTabContent = lazy(() => import('@/prospection/pages/ProspectionTabContent'));
 const DevisAcceptesView = lazy(() => import('@/apogee-connect/components/DevisAcceptesView'));
+const AnomaliesDevisDossierView = lazy(() => import('@/apogee-connect/components/AnomaliesDevisDossierView'));
 
 // Types pour les niveaux de navigation
-type OutilsMainTab = 'actions' | 'apporteurs' | 'administratif' | 'parc' | 'performance' | 'prospection' | 'devis-acceptes';
+type OutilsMainTab = 'actions' | 'apporteurs' | 'administratif' | 'parc' | 'performance' | 'prospection' | 'devis-acceptes' | 'anomalies';
 type ApporteursSubTab = 'espace';
 type AdminSubTab = 'reunions' | 'plannings' | 'documents';
 
@@ -66,6 +67,7 @@ const MAIN_TABS_CONFIG: (PillTabConfig & { requiresModule?: ModuleKey })[] = [
   { id: 'performance', label: 'Performance', icon: Activity, accent: 'pink', requiresModule: 'agence' },
   { id: 'prospection', label: 'Commercial', icon: Target, accent: 'orange', requiresModule: 'prospection' },
   { id: 'devis-acceptes', label: 'Devis acceptés', icon: FileCheck, accent: 'teal', requiresModule: 'agence' },
+  { id: 'anomalies', label: 'Incohérences', icon: AlertTriangle, accent: 'pink', requiresModule: 'agence' },
 ];
 
 function LoadingFallback() {
@@ -351,6 +353,12 @@ export default function DiversTabContent() {
         <TabsContent value="devis-acceptes" className="mt-6 animate-fade-in">
           <Suspense fallback={<LoadingFallback />}>
             <DevisAcceptesView />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="anomalies" className="mt-6 animate-fade-in">
+          <Suspense fallback={<LoadingFallback />}>
+            <AnomaliesDevisDossierView />
           </Suspense>
         </TabsContent>
       </Tabs>
