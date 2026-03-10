@@ -15,19 +15,16 @@ import { useMemo, useState } from 'react';
 import { DataService } from '@/apogee-connect/services/dataService';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useAgency } from '@/apogee-connect/contexts/AgencyContext';
-import type { Project, Client, Devis } from '@/apogee-connect/types';
+import type { Project, Client, Devis, Intervention } from '@/apogee-connect/types';
 
 // Seuls les devis explicitement acceptés ou commandés (order = accepté + en travaux)
 const ACCEPTED_STATES = ['accepted', 'order'];
 
 /** Filtre par statut de dossier */
-export type DossierStatusFilter = 'all' | 'to_action' | 'planned';
+export type DossierStatusFilter = 'all' | 'to_action' | 'to_action_commander' | 'to_action_fourn' | 'to_action_planifier' | 'planned';
 
-/** États projet = "à traiter" (commander / attente fourn / planifier) */
+/** États projet = "à traiter" */
 const TO_ACTION_STATES = new Set(['devis_to_order', 'wait_fourn', 'to_planify_tvx']);
-
-/** États projet = "planifié" (intervention planifiée, en cours de travaux) */
-const PLANNED_STATES = new Set(['planned', 'planifie_tvx', 'in_progress']);
 
 export interface DossierDevisAccepte {
   projectId: string;
@@ -35,6 +32,7 @@ export interface DossierDevisAccepte {
   projectLabel: string;
   projectState: string;
   projectStateLabel: string;
+  hasPlannedIntervention: boolean;
   clientName: string;
   commanditaireName: string;
   ville: string;
@@ -61,9 +59,9 @@ const PROJECT_STATE_LABELS: Record<string, string> = {
   'devis_to_order': 'À commander',
   'wait_fourn': 'Attente fourn.',
   'to_planify_tvx': 'À planifier',
-  'planned': 'Planifié',
-  'planifie_tvx': 'Planifié TVX',
-  'in_progress': 'En cours',
+  'planifie_rt': 'Planifié RT',
+  'rt_fait': 'RT fait',
+  'devis_a_faire': 'Devis à faire',
   'done': 'Terminé',
   'canceled': 'Annulé',
   'invoice': 'Facturé',
@@ -103,18 +101,32 @@ export function useDevisAcceptes() {
         devis: (apiData.devis || []) as Devis[],
         projects: (apiData.projects || []) as Project[],
         clients: (apiData.clients || []) as Client[],
+        interventions: (apiData.interventions || []) as Intervention[],
       };
     },
   });
 
   const { dossiers, allUnivers, statusCounts } = useMemo(() => {
-    if (!rawData) return { dossiers: [], allUnivers: [] as string[], statusCounts: { all: 0, to_action: 0, planned: 0 } };
+    if (!rawData) return { 
+      dossiers: [], 
+      allUnivers: [] as string[], 
+      statusCounts: { all: 0, to_action: 0, to_action_commander: 0, to_action_fourn: 0, to_action_planifier: 0, planned: 0 } 
+    };
 
-    const { devis, projects, clients } = rawData;
+    const { devis, projects, clients, interventions } = rawData;
 
     // Maps for enrichment
     const projectMap = new Map(projects.map(p => [String(p.id), p]));
     const clientMap = new Map(clients.map(c => [String(c.id), c]));
+    
+    // Build intervention index by projectId to detect "planifié"
+    const interventionsByProject = new Map<string, Intervention[]>();
+    for (const itv of interventions) {
+      const pid = String(itv.projectId);
+      const list = interventionsByProject.get(pid) || [];
+      list.push(itv);
+      interventionsByProject.set(pid, list);
+    }
 
     // Filter accepted devis only (accepted + order)
     const acceptedDevis = devis.filter(d => {
@@ -135,7 +147,7 @@ export function useDevisAcceptes() {
 
     const universSet = new Set<string>();
     const result: DossierDevisAccepte[] = [];
-    const counts = { all: 0, to_action: 0, planned: 0 };
+    const counts = { all: 0, to_action: 0, to_action_commander: 0, to_action_fourn: 0, to_action_planifier: 0, planned: 0 };
 
     for (const [pid, { devisList, totalHT }] of byProject) {
       const project = projectMap.get(pid);
@@ -144,6 +156,18 @@ export function useDevisAcceptes() {
       // Project state
       const projectState = (project?.state || '').toLowerCase();
       const projectStateLabel = PROJECT_STATE_LABELS[projectState] || projectState || '—';
+      
+      // Check if has planned interventions (= "planifié")
+      const projectInterventions = interventionsByProject.get(pid) || [];
+      const now = new Date();
+      const hasPlannedIntervention = projectInterventions.some(itv => {
+        const dateStr = itv.date || itv.dateIntervention || (itv as any).dateReelle;
+        if (!dateStr) return false;
+        try {
+          const d = new Date(dateStr);
+          return d >= now; // Future or today = planifié
+        } catch { return false; }
+      });
 
       // Client direct
       const clientId = project?.clientId;
@@ -174,8 +198,13 @@ export function useDevisAcceptes() {
 
       // Count by status category
       counts.all++;
-      if (TO_ACTION_STATES.has(projectState)) counts.to_action++;
-      if (PLANNED_STATES.has(projectState)) counts.planned++;
+      if (TO_ACTION_STATES.has(projectState)) {
+        counts.to_action++;
+        if (projectState === 'devis_to_order') counts.to_action_commander++;
+        if (projectState === 'wait_fourn') counts.to_action_fourn++;
+        if (projectState === 'to_planify_tvx') counts.to_action_planifier++;
+      }
+      if (hasPlannedIntervention) counts.planned++;
 
       result.push({
         projectId: pid,
@@ -183,6 +212,7 @@ export function useDevisAcceptes() {
         projectLabel,
         projectState,
         projectStateLabel,
+        hasPlannedIntervention,
         clientName: client?.nom || client?.raisonSociale || '—',
         commanditaireName: commanditaire?.nom || commanditaire?.raisonSociale || '',
         ville,
@@ -205,10 +235,22 @@ export function useDevisAcceptes() {
     let list = [...dossiers];
 
     // Status filter
-    if (filters.statusFilter === 'to_action') {
-      list = list.filter(d => TO_ACTION_STATES.has(d.projectState));
-    } else if (filters.statusFilter === 'planned') {
-      list = list.filter(d => PLANNED_STATES.has(d.projectState));
+    switch (filters.statusFilter) {
+      case 'to_action':
+        list = list.filter(d => TO_ACTION_STATES.has(d.projectState));
+        break;
+      case 'to_action_commander':
+        list = list.filter(d => d.projectState === 'devis_to_order');
+        break;
+      case 'to_action_fourn':
+        list = list.filter(d => d.projectState === 'wait_fourn');
+        break;
+      case 'to_action_planifier':
+        list = list.filter(d => d.projectState === 'to_planify_tvx');
+        break;
+      case 'planned':
+        list = list.filter(d => d.hasPlannedIntervention);
+        break;
     }
 
     // Search
