@@ -277,7 +277,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     icon: 'BookOpen',
     category: 'guides',
     defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
-    minRole: 'base_user',
+    minRole: 'franchisee_admin',
     options: [
       { key: 'apogee', path: 'guides.apogee', label: 'Apogée', description: 'Guide Apogée', defaultEnabled: true, routes: ['/?tab=guides'] },
       { key: 'apporteurs', path: 'guides.apporteurs', label: 'Apporteurs', description: 'Guide apporteurs', defaultEnabled: true, routes: ['/?tab=guides'] },
@@ -320,9 +320,9 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     icon: 'Target',
     category: 'outils',
     uiSubTab: 'prospection',
-    deployed: false, // Pas encore déployé officiellement
+    deployed: true,
     defaultForRoles: [],
-    minRole: 'franchisee_admin',
+    minRole: 'franchisee_user',
     options: [
       { key: 'dashboard', path: 'prospection.dashboard', label: 'Suivi client', description: 'Fiche apporteur', defaultEnabled: true, routes: ['/?tab=prospection'] },
       { key: 'comparateur', path: 'prospection.comparateur', label: 'Comparateur', description: 'Comparer apporteurs', defaultEnabled: true, routes: ['/?tab=prospection'] },
