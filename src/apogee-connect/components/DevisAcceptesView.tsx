@@ -1,8 +1,8 @@
 /**
  * Vue complète des devis acceptés avec filtres, stats et table triable.
  */
-import { useState } from 'react';
-import { Search, ArrowUpDown, ArrowUp, ArrowDown, FileCheck, Loader2, CalendarCheck, ShoppingCart, Package, ClipboardList } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Search, ArrowUpDown, ArrowUp, ArrowDown, FileCheck, Loader2, CalendarCheck, ShoppingCart, Package, ClipboardList, Filter, X, Check } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,11 @@ import { Button } from '@/components/ui/button';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { DossierDetailDialog } from '@/apogee-connect/components/DossierDetailDialog';
 import { useDevisAcceptes, SortField, DossierStatusFilter } from '@/apogee-connect/hooks/useDevisAcceptes';
 import { formatCurrency } from '@/lib/formatters';
@@ -20,6 +25,107 @@ function SortIcon({ field, current, dir }: { field: SortField; current: SortFiel
   return dir === 'asc' 
     ? <ArrowUp className="w-3.5 h-3.5 ml-1 text-primary" /> 
     : <ArrowDown className="w-3.5 h-3.5 ml-1 text-primary" />;
+}
+
+/** Column header filter popover with search + multi-select */
+function ColumnFilterPopover({
+  label,
+  options,
+  selected,
+  onSelectionChange,
+  sortField,
+  currentSortField,
+  sortDir,
+  onSort,
+}: {
+  label: string;
+  options: string[];
+  selected: string[];
+  onSelectionChange: (values: string[]) => void;
+  sortField?: SortField;
+  currentSortField?: SortField;
+  sortDir?: 'asc' | 'desc';
+  onSort?: () => void;
+}) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const filtered = searchTerm
+    ? options.filter(o => o.toLowerCase().includes(searchTerm.toLowerCase()))
+    : options;
+  const hasFilter = selected.length > 0;
+
+  const toggle = (value: string) => {
+    onSelectionChange(
+      selected.includes(value) ? selected.filter(v => v !== value) : [...selected, value]
+    );
+  };
+
+  return (
+    <div className="flex items-center gap-0.5">
+      {onSort && sortField && (
+        <button onClick={onSort} className="flex items-center hover:text-foreground">
+          {label}
+          <SortIcon field={sortField} current={currentSortField!} dir={sortDir!} />
+        </button>
+      )}
+      {!onSort && <span>{label}</span>}
+      <Popover>
+        <PopoverTrigger asChild>
+          <button className={cn(
+            "ml-1 p-0.5 rounded hover:bg-muted/80 transition-colors",
+            hasFilter && "text-primary"
+          )}>
+            <Filter className={cn("w-3.5 h-3.5", hasFilter ? "fill-primary/20" : "opacity-50")} />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-56 p-0" align="start">
+          <div className="p-2 border-b">
+            <Input
+              placeholder={`Filtrer ${label.toLowerCase()}...`}
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="h-7 text-xs"
+            />
+          </div>
+          <ScrollArea className="max-h-48">
+            <div className="p-1">
+              {filtered.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-2">Aucun résultat</p>
+              ) : (
+                filtered.map(opt => (
+                  <label
+                    key={opt}
+                    className="flex items-center gap-2 px-2 py-1.5 rounded text-xs hover:bg-muted/60 cursor-pointer"
+                  >
+                    <Checkbox
+                      checked={selected.includes(opt)}
+                      onCheckedChange={() => toggle(opt)}
+                      className="h-3.5 w-3.5"
+                    />
+                    <span className="truncate capitalize">{opt}</span>
+                  </label>
+                ))
+              )}
+            </div>
+          </ScrollArea>
+          {hasFilter && (
+            <div className="p-1 border-t">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onSelectionChange([])}
+                className="w-full h-7 text-xs"
+              >
+                <X className="w-3 h-3 mr-1" /> Effacer le filtre
+              </Button>
+            </div>
+          )}
+        </PopoverContent>
+      </Popover>
+      {hasFilter && (
+        <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-0.5">{selected.length}</Badge>
+      )}
+    </div>
+  );
 }
 
 const STATUS_FILTER_OPTIONS: { value: DossierStatusFilter; label: string; icon?: React.ReactNode }[] = [
@@ -63,8 +169,8 @@ function getFilterCount(statusCounts: any, value: DossierStatusFilter): number {
 
 export default function DevisAcceptesView() {
   const {
-    dossiers, totalDossiers, totalHT, allUnivers, statusCounts,
-    isLoading, filters, setSearch, setUniversFilter, setStatusFilter, setSort,
+    dossiers, totalDossiers, totalHT, allUnivers, allVilles, allApporteurs, statusCounts,
+    isLoading, filters, setSearch, setUniversFilter, setVillesFilter, setApporteursFilter, setStatusFilter, setSort,
   } = useDevisAcceptes();
 
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
@@ -74,12 +180,7 @@ export default function DevisAcceptesView() {
     filters.statusFilter === 'to_action_fourn' || 
     filters.statusFilter === 'to_action_planifier';
 
-  const toggleUnivers = (u: string) => {
-    const current = filters.univers;
-    setUniversFilter(
-      current.includes(u) ? current.filter(x => x !== u) : [...current, u]
-    );
-  };
+  const activeFilterCount = (filters.univers.length > 0 ? 1 : 0) + (filters.villes.length > 0 ? 1 : 0) + (filters.apporteurs.length > 0 ? 1 : 0);
 
   if (isLoading) {
     return (
@@ -164,30 +265,26 @@ export default function DevisAcceptesView() {
         )}
       </div>
 
-      {/* Filters */}
+      {/* Search + active filters summary */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Rechercher dossier, client, ville..."
+            placeholder="Rechercher dossier, client..."
             value={filters.search}
             onChange={e => setSearch(e.target.value)}
             className="pl-9 h-9 text-sm"
           />
         </div>
-        {allUnivers.map(u => (
-          <Badge
-            key={u}
-            variant={filters.univers.includes(u) ? 'default' : 'outline'}
-            className="cursor-pointer select-none capitalize"
-            onClick={() => toggleUnivers(u)}
+        {activeFilterCount > 0 && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => { setUniversFilter([]); setVillesFilter([]); setApporteursFilter([]); }} 
+            className="h-7 text-xs"
           >
-            {u}
-          </Badge>
-        ))}
-        {filters.univers.length > 0 && (
-          <Button variant="ghost" size="sm" onClick={() => setUniversFilter([])} className="h-7 text-xs">
-            Réinitialiser
+            <X className="w-3 h-3 mr-1" />
+            Effacer {activeFilterCount} filtre{activeFilterCount > 1 ? 's' : ''}
           </Button>
         )}
       </div>
@@ -204,9 +301,30 @@ export default function DevisAcceptesView() {
                 <TableHead className="cursor-pointer select-none" onClick={() => setSort('clientName')}>
                   <span className="flex items-center">Client <SortIcon field="clientName" current={filters.sortField} dir={filters.sortDir} /></span>
                 </TableHead>
-                <TableHead className="hidden lg:table-cell">Apporteur</TableHead>
-                <TableHead className="hidden md:table-cell">Ville</TableHead>
-                <TableHead className="hidden lg:table-cell">Univers</TableHead>
+                <TableHead className="hidden lg:table-cell">
+                  <ColumnFilterPopover
+                    label="Apporteur"
+                    options={allApporteurs}
+                    selected={filters.apporteurs}
+                    onSelectionChange={setApporteursFilter}
+                  />
+                </TableHead>
+                <TableHead className="hidden md:table-cell">
+                  <ColumnFilterPopover
+                    label="Ville"
+                    options={allVilles}
+                    selected={filters.villes}
+                    onSelectionChange={setVillesFilter}
+                  />
+                </TableHead>
+                <TableHead className="hidden lg:table-cell">
+                  <ColumnFilterPopover
+                    label="Univers"
+                    options={allUnivers}
+                    selected={filters.univers}
+                    onSelectionChange={setUniversFilter}
+                  />
+                </TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead className="text-center">Devis</TableHead>
                 <TableHead className="cursor-pointer select-none text-right" onClick={() => setSort('totalHT')}>

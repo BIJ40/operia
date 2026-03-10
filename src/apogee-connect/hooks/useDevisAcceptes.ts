@@ -48,6 +48,8 @@ export type SortDirection = 'asc' | 'desc';
 interface Filters {
   search: string;
   univers: string[];
+  villes: string[];
+  apporteurs: string[];
   statusFilter: DossierStatusFilter;
   sortField: SortField;
   sortDir: SortDirection;
@@ -86,6 +88,8 @@ export function useDevisAcceptes() {
   const [filters, setFilters] = useState<Filters>({
     search: '',
     univers: [],
+    villes: [],
+    apporteurs: [],
     statusFilter: 'all',
     sortField: 'totalHT',
     sortDir: 'desc',
@@ -106,10 +110,12 @@ export function useDevisAcceptes() {
     },
   });
 
-  const { dossiers, allUnivers, statusCounts } = useMemo(() => {
+  const { dossiers, allUnivers, allVilles, allApporteurs, statusCounts } = useMemo(() => {
     if (!rawData) return { 
       dossiers: [], 
       allUnivers: [] as string[], 
+      allVilles: [] as string[],
+      allApporteurs: [] as string[],
       statusCounts: { all: 0, to_action: 0, to_action_commander: 0, to_action_fourn: 0, to_action_planifier: 0, planned: 0 } 
     };
 
@@ -146,6 +152,8 @@ export function useDevisAcceptes() {
     }
 
     const universSet = new Set<string>();
+    const villesSet = new Set<string>();
+    const apporteursSet = new Set<string>();
     const result: DossierDevisAccepte[] = [];
     const counts = { all: 0, to_action: 0, to_action_commander: 0, to_action_fourn: 0, to_action_planifier: 0, planned: 0 };
 
@@ -183,6 +191,11 @@ export function useDevisAcceptes() {
 
       // Ville from project.data.searchFilters.ville or project.ville
       const ville = projectData.searchFilters?.ville || project?.ville || '—';
+      if (ville && ville !== '—') villesSet.add(ville);
+
+      // Track apporteur name
+      const commanditaireNameStr = commanditaire?.nom || commanditaire?.raisonSociale || '';
+      if (commanditaireNameStr) apporteursSet.add(commanditaireNameStr);
 
       // Dates
       const dates = devisList
@@ -226,6 +239,8 @@ export function useDevisAcceptes() {
     return { 
       dossiers: result, 
       allUnivers: Array.from(universSet).sort(),
+      allVilles: Array.from(villesSet).sort(),
+      allApporteurs: Array.from(apporteursSet).sort(),
       statusCounts: counts,
     };
   }, [rawData]);
@@ -272,6 +287,16 @@ export function useDevisAcceptes() {
       );
     }
 
+    // Ville filter
+    if (filters.villes.length > 0) {
+      list = list.filter(d => filters.villes.includes(d.ville));
+    }
+
+    // Apporteur filter
+    if (filters.apporteurs.length > 0) {
+      list = list.filter(d => filters.apporteurs.includes(d.commanditaireName));
+    }
+
     // Sort
     const dir = filters.sortDir === 'asc' ? 1 : -1;
     list.sort((a, b) => {
@@ -302,12 +327,16 @@ export function useDevisAcceptes() {
     totalDossiers: filteredDossiers.length,
     totalHT,
     allUnivers,
+    allVilles,
+    allApporteurs,
     statusCounts,
     isLoading,
     filters,
     setFilters,
     setSearch: (search: string) => setFilters(f => ({ ...f, search })),
     setUniversFilter: (univers: string[]) => setFilters(f => ({ ...f, univers })),
+    setVillesFilter: (villes: string[]) => setFilters(f => ({ ...f, villes })),
+    setApporteursFilter: (apporteurs: string[]) => setFilters(f => ({ ...f, apporteurs })),
     setStatusFilter: (statusFilter: DossierStatusFilter) => setFilters(f => ({ ...f, statusFilter })),
     setSort: (field: SortField) => setFilters(f => ({
       ...f,
