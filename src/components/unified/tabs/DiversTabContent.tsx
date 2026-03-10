@@ -49,9 +49,10 @@ const PerformanceDashboard = lazy(() =>
   import('@/components/performance/PerformanceDashboard').then(m => ({ default: m.PerformanceDashboard }))
 );
 const ProspectionTabContent = lazy(() => import('@/prospection/pages/ProspectionTabContent'));
+const DevisAcceptesView = lazy(() => import('@/apogee-connect/components/DevisAcceptesView'));
 
 // Types pour les niveaux de navigation
-type OutilsMainTab = 'actions' | 'apporteurs' | 'administratif' | 'parc' | 'performance' | 'prospection';
+type OutilsMainTab = 'actions' | 'apporteurs' | 'administratif' | 'parc' | 'performance' | 'prospection' | 'devis-acceptes';
 type ApporteursSubTab = 'espace';
 type AdminSubTab = 'reunions' | 'plannings' | 'documents';
 
