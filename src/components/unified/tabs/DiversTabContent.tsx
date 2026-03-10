@@ -355,6 +355,12 @@ export default function DiversTabContent() {
             <DevisAcceptesView />
           </Suspense>
         </TabsContent>
+
+        <TabsContent value="anomalies" className="mt-6 animate-fade-in">
+          <Suspense fallback={<LoadingFallback />}>
+            <AnomaliesDevisDossierView />
+          </Suspense>
+        </TabsContent>
       </Tabs>
     </div>
   );
