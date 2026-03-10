@@ -16,7 +16,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DossierDetailDialog } from '@/apogee-connect/components/DossierDetailDialog';
-import { useDevisAcceptes, SortField, DossierStatusFilter } from '@/apogee-connect/hooks/useDevisAcceptes';
+import { useDevisAcceptes, SortField } from '@/apogee-connect/hooks/useDevisAcceptes';
 import { formatCurrency } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 
