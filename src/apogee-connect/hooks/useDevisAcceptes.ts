@@ -285,6 +285,16 @@ export function useDevisAcceptes() {
       );
     }
 
+    // Ville filter
+    if (filters.villes.length > 0) {
+      list = list.filter(d => filters.villes.includes(d.ville));
+    }
+
+    // Apporteur filter
+    if (filters.apporteurs.length > 0) {
+      list = list.filter(d => filters.apporteurs.includes(d.commanditaireName));
+    }
+
     // Sort
     const dir = filters.sortDir === 'asc' ? 1 : -1;
     list.sort((a, b) => {
