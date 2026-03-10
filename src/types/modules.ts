@@ -93,6 +93,14 @@ export const MODULE_OPTIONS = {
     optimize: 'planning_augmente.optimize',
     admin: 'planning_augmente.admin',
   },
+  realisations: {
+    view: 'realisations.view',
+    create: 'realisations.create',
+    edit: 'realisations.edit',
+    validate: 'realisations.validate',
+    publish_prepare: 'realisations.publish_prepare',
+    export: 'realisations.export',
+  },
   reseau_franchiseur: {
     dashboard: 'reseau_franchiseur.dashboard',
     stats: 'reseau_franchiseur.stats',
