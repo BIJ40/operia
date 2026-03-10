@@ -373,7 +373,3 @@ export default function DiversTabContent() {
     </div>
   );
 }
-      </Tabs>
-    </div>
-  );
-}
