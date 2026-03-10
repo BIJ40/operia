@@ -189,6 +189,11 @@ export function useDevisAcceptes() {
 
       // Ville from project.data.searchFilters.ville or project.ville
       const ville = projectData.searchFilters?.ville || project?.ville || '—';
+      if (ville && ville !== '—') villesSet.add(ville);
+
+      // Track apporteur name
+      const commanditaireNameStr = commanditaire?.nom || commanditaire?.raisonSociale || '';
+      if (commanditaireNameStr) apporteursSet.add(commanditaireNameStr);
 
       // Dates
       const dates = devisList
