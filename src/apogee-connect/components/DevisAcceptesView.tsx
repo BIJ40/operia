@@ -128,18 +128,6 @@ function ColumnFilterPopover({
   );
 }
 
-const STATUS_FILTER_OPTIONS: { value: DossierStatusFilter; label: string; icon?: React.ReactNode }[] = [
-  { value: 'all', label: 'Tous' },
-  { value: 'to_action', label: 'À traiter' },
-  { value: 'planned', label: 'Planifié', icon: <CalendarCheck className="w-3.5 h-3.5" /> },
-];
-
-const SUB_FILTER_OPTIONS: { value: DossierStatusFilter; label: string; icon: React.ReactNode }[] = [
-  { value: 'to_action_commander', label: 'À commander', icon: <ShoppingCart className="w-3.5 h-3.5" /> },
-  { value: 'to_action_fourn', label: 'Attente fourn.', icon: <Package className="w-3.5 h-3.5" /> },
-  { value: 'to_action_planifier', label: 'À planifier', icon: <ClipboardList className="w-3.5 h-3.5" /> },
-];
-
 const STATE_BADGE_COLORS: Record<string, string> = {
   'devis_to_order': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
   'wait_fourn': 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
@@ -148,24 +136,6 @@ const STATE_BADGE_COLORS: Record<string, string> = {
   'done': 'bg-muted text-muted-foreground',
   'canceled': 'bg-destructive/10 text-destructive',
 };
-
-function getSubFilterCount(statusCounts: any, value: DossierStatusFilter): number {
-  switch (value) {
-    case 'to_action_commander': return statusCounts.to_action_commander;
-    case 'to_action_fourn': return statusCounts.to_action_fourn;
-    case 'to_action_planifier': return statusCounts.to_action_planifier;
-    default: return 0;
-  }
-}
-
-function getFilterCount(statusCounts: any, value: DossierStatusFilter): number {
-  switch (value) {
-    case 'all': return statusCounts.all;
-    case 'to_action': return statusCounts.to_action;
-    case 'planned': return statusCounts.planned;
-    default: return 0;
-  }
-}
 
 export default function DevisAcceptesView() {
   const {
