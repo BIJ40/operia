@@ -77,8 +77,11 @@ export default function RealisationCreatePage() {
         });
       }
 
-      // Auto-dispatch webhook (fire and forget)
-      dispatchWebhook.mutate(created.id);
+      // Auto-dispatch webhook (fire and forget, once only)
+      if (!webhookDispatched) {
+        setWebhookDispatched(true);
+        dispatchWebhook.mutate(created.id);
+      }
 
       toast.success('Réalisation enregistrée');
       navigate(`/realisations/${created.id}`);
