@@ -92,6 +92,7 @@ export function useDevisAcceptes() {
     univers: [],
     villes: [],
     apporteurs: [],
+    statuses: [],
     statusFilter: 'all',
     sortField: 'totalHT',
     sortDir: 'desc',
