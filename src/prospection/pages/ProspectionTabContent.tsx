@@ -8,6 +8,7 @@ import { lazy, Suspense, useState, useCallback, useMemo } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, type PillTabConfig } from '@/components/ui/pill-tabs';
 import { Building2, GitCompare, UserSearch, Radar, Camera, Loader2 } from 'lucide-react';
+import { ModuleKey } from '@/types/modules';
 import { ApporteurTabsProvider, useApporteurTabs } from '../browser-tabs/ApporteurTabsContext';
 import { ApporteurTabsBar } from '../browser-tabs/ApporteurTabsBar';
 import { ApporteurTabsContent } from '../browser-tabs/ApporteurTabsContent';
