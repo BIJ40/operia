@@ -1,6 +1,8 @@
 /**
  * Badges inline pour les modules utilisateur - V3 aligné avec les plans
  * Affiche les modules activés pour un utilisateur sous forme de badges cliquables
+ * 
+ * Auto-dérivé de MODULE_DEFINITIONS pour rester synchronisé.
  */
 
 import { memo, useState } from 'react';
@@ -12,13 +14,14 @@ import { Separator } from '@/components/ui/separator';
 import { 
   Building2, BarChart3, Users, Truck, Handshake, Calendar, 
   Video, FileText, BookOpen, Kanban, HelpCircle, Plus, Crown,
+  Target, Camera, Brain,
   LucideIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { EnabledModules, ModuleKey } from '@/types/modules';
 import { PLAN_VISIBLE_MODULES, MODULE_SHORT_LABELS } from '@/types/modules';
 
-// Icônes pour chaque module (uniquement les modules de plan)
+// Icônes pour chaque module — doit inclure TOUS les modules visibles
 const MODULE_ICONS: Partial<Record<ModuleKey, LucideIcon>> = {
   agence: Building2,
   stats: BarChart3,
@@ -31,6 +34,9 @@ const MODULE_ICONS: Partial<Record<ModuleKey, LucideIcon>> = {
   guides: BookOpen,
   ticketing: Kanban,
   aide: HelpCircle,
+  prospection: Target,
+  realisations: Camera,
+  planning_augmente: Brain,
   reseau_franchiseur: Crown,
   admin_plateforme: Crown,
 };
@@ -48,6 +54,9 @@ const MODULE_COLORS: Partial<Record<ModuleKey, string>> = {
   guides: 'bg-teal-500 text-white hover:bg-teal-600',
   ticketing: 'bg-purple-500 text-white hover:bg-purple-600',
   aide: 'bg-rose-500 text-white hover:bg-rose-600',
+  prospection: 'bg-orange-600 text-white hover:bg-orange-700',
+  realisations: 'bg-sky-500 text-white hover:bg-sky-600',
+  planning_augmente: 'bg-fuchsia-500 text-white hover:bg-fuchsia-600',
   reseau_franchiseur: 'bg-slate-700 text-white hover:bg-slate-800',
   admin_plateforme: 'bg-slate-800 text-white hover:bg-slate-900',
 };

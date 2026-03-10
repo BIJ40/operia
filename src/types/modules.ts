@@ -320,9 +320,9 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     icon: 'Target',
     category: 'outils',
     uiSubTab: 'prospection',
-    deployed: false, // Pas encore déployé officiellement
+    deployed: true,
     defaultForRoles: [],
-    minRole: 'franchisee_admin',
+    minRole: 'franchisee_user',
     options: [
       { key: 'dashboard', path: 'prospection.dashboard', label: 'Suivi client', description: 'Fiche apporteur', defaultEnabled: true, routes: ['/?tab=prospection'] },
       { key: 'comparateur', path: 'prospection.comparateur', label: 'Comparateur', description: 'Comparer apporteurs', defaultEnabled: true, routes: ['/?tab=prospection'] },
