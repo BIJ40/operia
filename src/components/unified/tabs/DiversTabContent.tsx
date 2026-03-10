@@ -54,7 +54,7 @@ const AnomaliesDevisDossierView = lazy(() => import('@/apogee-connect/components
 
 
 // Types pour les niveaux de navigation
-type OutilsMainTab = 'actions' | 'apporteurs' | 'administratif' | 'parc' | 'performance' | 'prospection' | 'devis-acceptes' | 'anomalies' | 'realisations';
+type OutilsMainTab = 'actions' | 'apporteurs' | 'administratif' | 'parc' | 'performance' | 'prospection' | 'devis-acceptes' | 'anomalies';
 type ApporteursSubTab = 'espace';
 type AdminSubTab = 'reunions' | 'plannings' | 'documents';
 
