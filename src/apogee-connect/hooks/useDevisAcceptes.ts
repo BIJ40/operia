@@ -262,7 +262,16 @@ export function useDevisAcceptes() {
   const filteredDossiers = useMemo(() => {
     let list = [...dossiers];
 
-    // Status filter
+    // Status filter (column-based multi-select on labels)
+    if (filters.statuses.length > 0) {
+      list = list.filter(d => {
+        const labels: string[] = [d.projectStateLabel];
+        if (d.hasPlannedIntervention) labels.push(PLANNED_LABEL);
+        return labels.some(l => filters.statuses.includes(l));
+      });
+    }
+
+    // Legacy status filter (kept for compat)
     switch (filters.statusFilter) {
       case 'to_action':
         list = list.filter(d => TO_ACTION_STATES.has(d.projectState));
