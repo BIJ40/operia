@@ -45,9 +45,9 @@ export function PilotageRoutes() {
       {/* ============================================ */}
       {/* REDIRECTIONS VERS INTERFACE UNIFIEE */}
       {/* ============================================ */}
-      <Route path="/agency" element={<Navigate to="/?tab=agence" replace />} />
-      <Route path="/agency/stats-hub" element={<Navigate to="/?tab=stats" replace />} />
-      <Route path="/agency/statistiques" element={<Navigate to="/?tab=stats" replace />} />
+      <Route path="/agency" element={<Navigate to="/?tab=pilotage" replace />} />
+      <Route path="/agency/stats-hub" element={<Navigate to="/?tab=pilotage" replace />} />
+      <Route path="/agency/statistiques" element={<Navigate to="/?tab=pilotage" replace />} />
       
       {/* Indicateurs détaillés */}
       <Route path="/agency/indicateurs" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="agence" requiredOption="indicateurs"><IndicateursLayout /></ModuleGuard></RoleGuard></AgencyLayout>}>
@@ -60,7 +60,7 @@ export function PilotageRoutes() {
       <Route path="/agency/indicateurs/sav" element={<Navigate to="/agency/stats-hub" replace />} />
       
       {/* Veille Apporteurs - Redirige vers sous-onglet Divers */}
-      <Route path="/agency/veille-apporteurs" element={<Navigate to="/?tab=divers" replace />} />
+      <Route path="/agency/veille-apporteurs" element={<Navigate to="/?tab=organisation" replace />} />
       
       {/* Actions à Mener */}
       <Route path="/agency/actions" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="agence" requiredOption="actions_a_mener"><ActionsAMener /></ModuleGuard></RoleGuard></AgencyLayout>} />
@@ -120,12 +120,12 @@ export function PilotageRoutes() {
       {/* Planning V2 Dispatch Board */}
       <Route path="/planning-v2" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="agence"><Suspense fallback={<PageLoader />}><PlanningV2Shell /></Suspense></ModuleGuard></RoleGuard></AgencyLayout>} />
       {/* Legacy /hc-agency redirects */}
-      <Route path="/hc-agency" element={<Navigate to="/?tab=agence" replace />} />
-      <Route path="/hc-agency/*" element={<Navigate to="/?tab=agence" replace />} />
+      <Route path="/hc-agency" element={<Navigate to="/?tab=pilotage" replace />} />
+      <Route path="/hc-agency/*" element={<Navigate to="/?tab=pilotage" replace />} />
       
       {/* Legacy redirects */}
       <Route path="/agency/statia-builder" element={<Navigate to="/?tab=admin&adminTab=ia&adminView=statia" replace />} />
-      <Route path="/agency/maintenance" element={<Navigate to="/?tab=parc" replace />} />
+      <Route path="/agency/maintenance" element={<Navigate to="/?tab=organisation" replace />} />
     </>
   );
 }

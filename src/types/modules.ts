@@ -124,15 +124,14 @@ export type ModuleOptionPath = typeof MODULE_OPTIONS[ModuleKey][keyof typeof MOD
 // Métadonnées des modules pour l'UI
 // Les catégories correspondent EXACTEMENT aux onglets de niveau 1 du workspace
 export type ModuleCategory = 
-  | 'stats'       // Onglet "Stats"
-  | 'salaries'    // Onglet "Salariés"
-  | 'outils'      // Onglet "Outils" (Actions, Apporteurs, Administratif, Parc, Performance, Commercial)
-  | 'documents'   // Onglet "Documents" (Médiathèque)
-  | 'guides'      // Onglet "Guides" (Apogée, Apporteurs, HelpConfort, FAQ)
-  | 'ticketing'   // Onglet "Ticketing" (Liste, Kanban, Revue, Historique)
-  | 'aide'        // Onglet "Aide" (Support)
-  | 'reseau'      // Onglet "Franchiseur" (visible N3+)
-  | 'admin';      // Onglet "Admin" (visible N5+)
+  | 'pilotage'      // Onglet "Pilotage" (Stats, Performance, Actions)
+  | 'commercial'    // Onglet "Commercial" (Prospection, Devis acceptés, Incohérences)
+  | 'organisation'  // Onglet "Organisation" (Collaborateurs, Apporteurs, Plannings, Réunions, Parc, Conformité)
+  | 'documents'     // Onglet "Documents" (Médiathèque)
+  | 'ticketing'     // Onglet "Ticketing" (Liste, Kanban, Revue, Historique)
+  | 'aide'          // Onglet "Aide" (Support, Guides, FAQ)
+  | 'reseau'        // Onglet "Franchiseur" (visible N3+)
+  | 'admin';        // Onglet "Admin" (visible N5+)
 
 export interface ModuleDefinition {
   key: ModuleKey;
@@ -168,7 +167,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Mon agence',
     description: 'Tableau de bord, KPIs et actions',
     icon: 'Building2',
-    category: 'outils',
+    category: 'pilotage',
     uiSubTab: 'actions',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
@@ -176,7 +175,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'indicateurs', path: 'agence.indicateurs', label: 'Indicateurs', description: 'KPIs principaux', defaultEnabled: true, routes: ['/'] },
       { key: 'actions_a_mener', path: 'agence.actions_a_mener', label: 'Actions à mener', description: 'Liste des actions', defaultEnabled: true, routes: ['/'] },
       { key: 'diffusion', path: 'agence.diffusion', label: 'Diffusion', description: 'Écran TV', defaultEnabled: true, routes: ['/diffusion'] },
-      { key: 'devis_acceptes', path: 'agence.devis_acceptes', label: 'Devis acceptés', description: 'Visualisation des dossiers avec devis acceptés', defaultEnabled: true, routes: ['/?tab=outils'] },
+      { key: 'devis_acceptes', path: 'agence.devis_acceptes', label: 'Devis acceptés', description: 'Visualisation des dossiers avec devis acceptés', defaultEnabled: true, routes: ['/?tab=commercial'] },
     ],
   },
   {
@@ -184,12 +183,12 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Stats',
     description: 'Statistiques et tableaux de bord',
     icon: 'BarChart3',
-    category: 'stats',
+    category: 'pilotage',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
-      { key: 'stats_hub', path: 'stats.stats_hub', label: 'Stats Hub', description: 'Tableaux avancés', defaultEnabled: true, routes: ['/?tab=stats'] },
-      { key: 'exports', path: 'stats.exports', label: 'Exports', description: 'Export des données', defaultEnabled: false, routes: ['/?tab=stats'] },
+      { key: 'stats_hub', path: 'stats.stats_hub', label: 'Stats Hub', description: 'Tableaux avancés', defaultEnabled: true, routes: ['/?tab=pilotage'] },
+      { key: 'exports', path: 'stats.exports', label: 'Exports', description: 'Export des données', defaultEnabled: false, routes: ['/?tab=pilotage'] },
     ],
   },
   {
@@ -197,12 +196,12 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Salariés',
     description: 'Gestion des ressources humaines',
     icon: 'Users',
-    category: 'salaries',
+    category: 'organisation',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
-      { key: 'rh_viewer', path: 'rh.rh_viewer', label: 'Gestionnaire', description: 'Vue équipe', defaultEnabled: true, routes: ['/?tab=rh'] },
-      { key: 'rh_admin', path: 'rh.rh_admin', label: 'Admin RH', description: 'Gestion complète', defaultEnabled: false, routes: ['/?tab=rh'] },
+      { key: 'rh_viewer', path: 'rh.rh_viewer', label: 'Gestionnaire', description: 'Vue équipe', defaultEnabled: true, routes: ['/?tab=organisation'] },
+      { key: 'rh_admin', path: 'rh.rh_admin', label: 'Admin RH', description: 'Gestion complète', defaultEnabled: false, routes: ['/?tab=organisation'] },
     ],
   },
   {
@@ -210,14 +209,14 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Parc',
     description: 'Véhicules et équipements',
     icon: 'Truck',
-    category: 'outils',
+    category: 'organisation',
     uiSubTab: 'parc',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
-      { key: 'vehicules', path: 'parc.vehicules', label: 'Véhicules', description: 'Flotte véhicules', defaultEnabled: true, routes: ['/?tab=parc'] },
-      { key: 'epi', path: 'parc.epi', label: 'EPI', description: 'Équipements protection', defaultEnabled: true, routes: ['/?tab=parc'] },
-      { key: 'equipements', path: 'parc.equipements', label: 'Équipements', description: 'Autres équipements', defaultEnabled: true, routes: ['/?tab=parc'] },
+      { key: 'vehicules', path: 'parc.vehicules', label: 'Véhicules', description: 'Flotte véhicules', defaultEnabled: true, routes: ['/?tab=organisation'] },
+      { key: 'epi', path: 'parc.epi', label: 'EPI', description: 'Équipements protection', defaultEnabled: true, routes: ['/?tab=organisation'] },
+      { key: 'equipements', path: 'parc.equipements', label: 'Équipements', description: 'Autres équipements', defaultEnabled: true, routes: ['/?tab=organisation'] },
     ],
   },
   {
@@ -225,13 +224,13 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Apporteurs',
     description: 'Gestion des apporteurs',
     icon: 'Handshake',
-    category: 'outils',
+    category: 'organisation',
     uiSubTab: 'apporteurs',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
-      { key: 'consulter', path: 'divers_apporteurs.consulter', label: 'Consulter', description: 'Voir les apporteurs', defaultEnabled: true, routes: ['/?tab=divers'] },
-      { key: 'gerer', path: 'divers_apporteurs.gerer', label: 'Gérer', description: 'Créer/modifier', defaultEnabled: true, routes: ['/?tab=divers'] },
+      { key: 'consulter', path: 'divers_apporteurs.consulter', label: 'Consulter', description: 'Voir les apporteurs', defaultEnabled: true, routes: ['/?tab=organisation'] },
+      { key: 'gerer', path: 'divers_apporteurs.gerer', label: 'Gérer', description: 'Créer/modifier', defaultEnabled: true, routes: ['/?tab=organisation'] },
     ],
   },
   {
@@ -239,7 +238,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Plannings',
     description: 'Gestion des plannings',
     icon: 'Calendar',
-    category: 'outils',
+    category: 'organisation',
     uiSubTab: 'administratif',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
@@ -250,7 +249,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Réunions',
     description: 'Gestion des réunions',
     icon: 'Video',
-    category: 'outils',
+    category: 'organisation',
     uiSubTab: 'administratif',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
@@ -275,14 +274,14 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Guides',
     description: 'Documentation et guides',
     icon: 'BookOpen',
-    category: 'guides',
+    category: 'aide',
     defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
-      { key: 'apogee', path: 'guides.apogee', label: 'Apogée', description: 'Guide Apogée', defaultEnabled: true, routes: ['/?tab=guides'] },
-      { key: 'apporteurs', path: 'guides.apporteurs', label: 'Apporteurs', description: 'Guide apporteurs', defaultEnabled: true, routes: ['/?tab=guides'] },
-      { key: 'helpconfort', path: 'guides.helpconfort', label: 'HelpConfort', description: 'Guide HelpConfort', defaultEnabled: true, routes: ['/?tab=guides'] },
-      { key: 'faq', path: 'guides.faq', label: 'FAQ', description: 'Questions fréquentes', defaultEnabled: true, routes: ['/?tab=guides'] },
+      { key: 'apogee', path: 'guides.apogee', label: 'Apogée', description: 'Guide Apogée', defaultEnabled: true, routes: ['/?tab=aide'] },
+      { key: 'apporteurs', path: 'guides.apporteurs', label: 'Apporteurs', description: 'Guide apporteurs', defaultEnabled: true, routes: ['/?tab=aide'] },
+      { key: 'helpconfort', path: 'guides.helpconfort', label: 'HelpConfort', description: 'Guide HelpConfort', defaultEnabled: true, routes: ['/?tab=aide'] },
+      { key: 'faq', path: 'guides.faq', label: 'FAQ', description: 'Questions fréquentes', defaultEnabled: true, routes: ['/?tab=aide'] },
     ],
   },
   {
@@ -318,16 +317,16 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Commercial',
     description: 'Suivi commercial et prospection',
     icon: 'Target',
-    category: 'outils',
+    category: 'commercial',
     uiSubTab: 'prospection',
     deployed: true,
     defaultForRoles: [],
     minRole: 'franchisee_user',
     options: [
-      { key: 'dashboard', path: 'prospection.dashboard', label: 'Suivi client', description: 'Fiche apporteur', defaultEnabled: true, routes: ['/?tab=prospection'] },
-      { key: 'comparateur', path: 'prospection.comparateur', label: 'Comparateur', description: 'Comparer apporteurs', defaultEnabled: true, routes: ['/?tab=prospection'] },
-      { key: 'veille', path: 'prospection.veille', label: 'Veille', description: 'Monitoring apporteurs', defaultEnabled: true, routes: ['/?tab=prospection'] },
-      { key: 'prospects', path: 'prospection.prospects', label: 'Prospects', description: 'Gestion prospects', defaultEnabled: true, routes: ['/?tab=prospection'] },
+      { key: 'dashboard', path: 'prospection.dashboard', label: 'Suivi client', description: 'Fiche apporteur', defaultEnabled: true, routes: ['/?tab=commercial'] },
+      { key: 'comparateur', path: 'prospection.comparateur', label: 'Comparateur', description: 'Comparer apporteurs', defaultEnabled: true, routes: ['/?tab=commercial'] },
+      { key: 'veille', path: 'prospection.veille', label: 'Veille', description: 'Monitoring apporteurs', defaultEnabled: true, routes: ['/?tab=commercial'] },
+      { key: 'prospects', path: 'prospection.prospects', label: 'Prospects', description: 'Gestion prospects', defaultEnabled: true, routes: ['/?tab=commercial'] },
     ],
   },
   {
@@ -335,7 +334,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Planification Augmentée',
     description: 'Optimisation intelligente du planning techniciens',
     icon: 'Brain',
-    category: 'outils',
+    category: 'organisation',
     deployed: false, // En cours de développement, pas dans les permissions/plans
     defaultForRoles: [],
     minRole: 'franchisee_admin',
@@ -352,7 +351,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Réalisations',
     description: 'Gestion des réalisations terrain, photos avant/après, SEO',
     icon: 'Camera',
-    category: 'outils',
+    category: 'commercial',
     uiSubTab: 'realisations',
     defaultForRoles: [],
     minRole: 'franchisee_user',

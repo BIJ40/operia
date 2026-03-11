@@ -27,12 +27,11 @@ import type { TabConfig, UnifiedTab } from './types';
 // Couleurs par onglet
 const TAB_ACCENTS: Record<UnifiedTab, AccentThemeKey> = {
   accueil: 'blue',
-  stats: 'pink',
-  salaries: 'green',
-  outils: 'purple',
+  pilotage: 'pink',
+  commercial: 'orange',
+  organisation: 'green',
   documents: 'red',
-  guides: 'teal',
-  ticketing: 'orange',
+  ticketing: 'purple',
   aide: 'cyan',
   admin: 'neutral',
   test: 'teal',

@@ -195,7 +195,7 @@ export function PerformanceDashboard() {
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          navigate(`/?tab=stats&subtab=sav&technicien=${encodeURIComponent(selectedTech.id)}`);
+                          navigate(`/?tab=pilotage&subtab=sav&technicien=${encodeURIComponent(selectedTech.id)}`);
                         }}
                         className="text-xs text-muted-foreground hover:text-primary hover:underline text-left cursor-pointer"
                       >

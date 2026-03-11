@@ -300,8 +300,8 @@ function OverridesPopover({
 // Route mapping for module keys → app routes
 const MODULE_ROUTES: Record<string, string> = {
   planning_v2: '/planning-v2',
-  agence: '/?tab=agence',
-  statistiques: '/?tab=stats',
+  agence: '/?tab=pilotage',
+  statistiques: '/?tab=pilotage',
   commercial: '/commercial',
   rh: '/rh',
   parc: '/parc',
