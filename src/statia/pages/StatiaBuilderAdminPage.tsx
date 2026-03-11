@@ -8,14 +8,16 @@
  * interférer avec les params de navigation admin.
  */
 
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { AllMetricsViewer } from '../components/AllMetricsViewer';
 import { MetricValidatorHub } from '../components/MetricValidatorHub';
 import { LocalErrorBoundary } from '@/components/system/LocalErrorBoundary';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertTriangle, LayoutGrid, CheckSquare } from 'lucide-react';
+import { AlertTriangle, LayoutGrid, CheckSquare, FileSearch, Loader2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+
+const ApogeeDocumentsExplorer = lazy(() => import('@/apogee-connect/components/ApogeeDocumentsExplorer'));
 
 function StatiaErrorFallback({ error }: { error: Error }) {
   return (
@@ -67,6 +69,10 @@ export default function StatiaBuilderAdminPage() {
               <CheckSquare className="h-4 w-4" />
               Validator Hub
             </TabsTrigger>
+            <TabsTrigger value="documents" className="flex items-center gap-2">
+              <FileSearch className="h-4 w-4" />
+              Documents API
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="viewer" className="mt-6">
@@ -75,6 +81,12 @@ export default function StatiaBuilderAdminPage() {
 
           <TabsContent value="validator" className="mt-6">
             <MetricValidatorHub mode="admin" />
+          </TabsContent>
+
+          <TabsContent value="documents" className="mt-6">
+            <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
+              <ApogeeDocumentsExplorer />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </div>
