@@ -223,9 +223,26 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
       await new Promise(resolve => setTimeout(resolve, 300))
     }
 
+    // Fallback robuste: si le trigger auth->profiles est absent/en erreur,
+    // créer le profil manuellement pour éviter un compte auth orphelin.
     if (!profileExists) {
-      console.error('[create-user] Profil non créé par le trigger après timeout')
-      throw new Error('Le profil utilisateur n\'a pas été créé. Veuillez réessayer.')
+      console.warn('[create-user] Profil non créé par trigger, fallback en création manuelle')
+      const { error: insertProfileError } = await supabaseAdmin
+        .from('profiles')
+        .upsert({
+          id: newUser.user.id,
+          first_name: firstName,
+          last_name: lastName,
+          email,
+        }, { onConflict: 'id' })
+
+      if (insertProfileError) {
+        console.error('[create-user] Erreur fallback création profil:', insertProfileError)
+        throw new Error('Le profil utilisateur n\'a pas pu être initialisé. Veuillez contacter le support.')
+      }
+
+      profileExists = true
+      console.log('[create-user] Profil créé manuellement avec succès')
     }
 
     // Mettre à jour le profil
