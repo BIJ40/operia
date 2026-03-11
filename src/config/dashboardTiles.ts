@@ -38,7 +38,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: 'apogee',
     color: 'primary',
     group: 'guides',
-    requiresModule: 'guides',
+    requiresModule: 'support.guides',
   },
   {
     id: 'GUIDE_APPORTEURS',
