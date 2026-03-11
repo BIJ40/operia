@@ -61,6 +61,7 @@ export const MODULES = {
   'mediatheque.consulter': 'mediatheque.consulter',
   'mediatheque.gerer': 'mediatheque.gerer',
   'mediatheque.corbeille': 'mediatheque.corbeille',
+  'mediatheque.documents': 'mediatheque.documents',
   // Support
   'support.aide_en_ligne': 'support.aide_en_ligne',
   'support.guides': 'support.guides',
