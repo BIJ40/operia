@@ -32,7 +32,7 @@ Vérifier que chaque clé fonctionnelle Phase 3 possède un mapping dans le COMP
 | `organisation.plannings` | ✅ | `divers_plannings` | — |
 | `organisation.reunions` | ✅ | `divers_reunions` | — |
 | `organisation.parc` | ✅ | `parc` | — |
-| `organisation.documents_legaux` | ✅ | `divers_documents` | — |
+| `organisation.documents_legaux` | ❌ | — | — |
 | `mediatheque.consulter` | ✅ | `divers_documents` | `divers_documents.consulter` |
 | `mediatheque.gerer` | ✅ | `divers_documents` | `divers_documents.gerer` |
 | `mediatheque.corbeille` | ✅ | `divers_documents` | `divers_documents.corbeille_vider` |
@@ -52,10 +52,14 @@ Vérifier que chaque clé fonctionnelle Phase 3 possède un mapping dans le COMP
 | Métrique | Valeur |
 |---|---|
 | Total clés fonctionnelles | 36 |
-| Avec compat | 35 |
-| Sans compat (création pure) | 1 (`support.faq`) |
-| **Couverture** | **97.2%** |
+| Avec compat | 34 |
+| Sans compat (création pure) | 2 (`support.faq`, `organisation.documents_legaux`) |
+| **Couverture** | **94.4%** |
 
 ## Note sur `support.faq`
 
 `support.faq` est une création pure Phase 3 — il n'existe aucun module legacy correspondant. Ce module nécessitera une entrée native dans `user_modules` / `plan_tier_modules` lors de la Phase 4. Pas de compat nécessaire.
+
+## Note sur `organisation.documents_legaux`
+
+`organisation.documents_legaux` est une création pure Phase 4 — il n'existe aucun module legacy correspondant. `divers_documents` ne doit **pas** être utilisé pour couvrir cette clé : il reste cantonné exclusivement au périmètre `mediatheque.*` dans cette migration. Ce module nécessitera une entrée native dans `user_modules` / `plan_tier_modules` lors de la Phase 4.
