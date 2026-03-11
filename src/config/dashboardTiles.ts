@@ -170,7 +170,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     description: 'Interventions et relevés techniques',
     icon: Wrench,
     route: ROUTES.agency.techInterventions,
-    scopeSlug: SCOPE_SLUGS.RH_TECH,
+    scopeSlug: 'rh_tech',
     color: 'accent',
     group: 'technicien',
     requiresModule: 'agence', // P2: Filtre module pour cacher aux N0 sans module
