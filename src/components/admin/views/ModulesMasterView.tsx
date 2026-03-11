@@ -329,19 +329,36 @@ interface ModuleRowProps {
   onToggleDeploy: (node: RegistryNode) => void;
   onTogglePlan: (node: RegistryNode) => void;
   onChangeRole: (node: RegistryNode, newRole: number) => void;
+  onRenameLabel: (node: RegistryNode, newLabel: string) => void;
   isUpdating: boolean;
-  isCollapsed?: boolean;
-  onToggleCollapse?: () => void;
   canDeploy: boolean;
   isDevSection?: boolean;
 }
 
-function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole, isUpdating, isCollapsed, onToggleCollapse, canDeploy, isDevSection }: ModuleRowProps) {
+function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole, onRenameLabel, isUpdating, canDeploy, isDevSection }: ModuleRowProps) {
   const navigate = useNavigate();
   const route = getModuleRoute(node.key);
   const isNeutralized = !node.effectiveDeployed && node.is_deployed;
   const depthColors = ['text-primary', 'text-blue-500', 'text-violet-500', 'text-emerald-500'];
   const branchColor = depthColors[Math.min(node.depth, depthColors.length - 1)];
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftLabel, setDraftLabel] = useState(node.label);
+
+  useEffect(() => {
+    setDraftLabel(node.label);
+  }, [node.label]);
+
+  const commitRename = () => {
+    const trimmed = draftLabel.trim();
+    setIsEditing(false);
+
+    if (!trimmed || trimmed === node.label) {
+      setDraftLabel(node.label);
+      return;
+    }
+
+    onRenameLabel(node, trimmed);
+  };
 
   return (
     <div
@@ -356,26 +373,47 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
     >
       {/* Name */}
       <div
-        className={cn('flex items-center min-w-0', node.depth === 0 && !isDevSection && 'cursor-pointer select-none')}
+        className="flex items-center min-w-0"
         style={{ paddingLeft: `${(isDevSection ? 0 : node.depth) * 16}px` }}
-        onClick={node.depth === 0 && !isDevSection ? onToggleCollapse : undefined}
       >
         {node.depth > 0 && !isDevSection && <CornerDownRight className={cn('w-3.5 h-3.5 mr-1.5 shrink-0', branchColor)} />}
-        {node.depth === 0 && !isDevSection && (
-          <ChevronRight className={cn('w-4 h-4 mr-1.5 shrink-0 transition-transform duration-200', branchColor, !isCollapsed && 'rotate-90')} />
-        )}
         {isDevSection && (
           <Construction className="w-3.5 h-3.5 mr-1.5 shrink-0 text-amber-500" />
         )}
-        <span className={cn(
-          'truncate',
-          isDevSection && 'text-amber-700 dark:text-amber-400 font-medium',
-          !isDevSection && node.depth === 0 && 'font-semibold text-foreground uppercase tracking-wide',
-          !isDevSection && node.depth === 1 && 'font-medium text-blue-600 dark:text-blue-400',
-          !isDevSection && node.depth >= 2 && 'text-violet-600 dark:text-violet-400'
-        )}>
-          {node.label}
-        </span>
+
+        {isEditing ? (
+          <Input
+            value={draftLabel}
+            onChange={(e) => setDraftLabel(e.target.value)}
+            onBlur={commitRename}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commitRename();
+              if (e.key === 'Escape') {
+                setDraftLabel(node.label);
+                setIsEditing(false);
+              }
+            }}
+            autoFocus
+            className="h-7 text-xs"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => !isUpdating && setIsEditing(true)}
+            className={cn(
+              'truncate text-left hover:underline underline-offset-2',
+              isUpdating && 'cursor-not-allowed opacity-70',
+              isDevSection && 'text-amber-700 dark:text-amber-400 font-medium',
+              !isDevSection && node.depth === 0 && 'font-semibold text-foreground uppercase tracking-wide',
+              !isDevSection && node.depth === 1 && 'font-medium text-blue-600 dark:text-blue-400',
+              !isDevSection && node.depth >= 2 && 'text-violet-600 dark:text-violet-400'
+            )}
+            title="Cliquer pour renommer"
+          >
+            {node.label}
+          </button>
+        )}
+
         {isDevSection && node.parent_key && (
           <span className="ml-2 text-[10px] text-muted-foreground">
             ({node.parent_key})
@@ -428,6 +466,39 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
           <span className="text-muted-foreground/30 text-xs">—</span>
         )}
       </div>
+    </div>
+  );
+}
+
+function CategoryHeaderRow({
+  category,
+  collapsed,
+  onToggle,
+  moduleCount,
+}: {
+  category: RightsCategory;
+  collapsed: boolean;
+  onToggle: () => void;
+  moduleCount: number;
+}) {
+  return (
+    <div className={cn(`grid ${GRID_COLS} gap-2 items-center py-2.5 px-3 border-b border-border bg-muted/20`)}>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex items-center gap-2 min-w-0 text-left"
+      >
+        <ChevronRight className={cn('w-4 h-4 shrink-0 transition-transform text-primary', !collapsed && 'rotate-90')} />
+        <span className="font-semibold uppercase tracking-wide text-foreground truncate">{category.label}</span>
+        <Badge variant="secondary" className="text-[10px]">{moduleCount}</Badge>
+      </button>
+      <div className="text-center text-muted-foreground/30">—</div>
+      <div className="text-center text-muted-foreground/30">—</div>
+      <div className="text-center text-muted-foreground/30">—</div>
+      <div className="text-center text-muted-foreground/30">—</div>
+      <div className="text-center text-muted-foreground/30">—</div>
+      <div className="text-center text-muted-foreground/30">—</div>
+      <div className="text-center text-muted-foreground/30">—</div>
     </div>
   );
 }
