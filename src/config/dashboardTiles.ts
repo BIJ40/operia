@@ -117,7 +117,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     description: 'Validation des plannings hebdomadaires',
     icon: Calendar,
     route: ROUTES.agency.rhTech,
-    scopeSlug: SCOPE_SLUGS.RH_TECH,
+    scopeSlug: 'rh_tech',
     color: 'accent',
     group: 'rh',
     requiresModule: 'rh',
