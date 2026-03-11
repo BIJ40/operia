@@ -158,7 +158,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     description: 'Kanban et suivi des tickets développement',
     icon: Kanban,
     route: ROUTES.projects.index,
-    scopeSlug: SCOPE_SLUGS.APOGEE_TICKETS,
+    scopeSlug: 'apogee_tickets',
     color: 'accent',
     group: 'projects',
     requiresModule: 'ticketing',
