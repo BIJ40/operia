@@ -50,7 +50,7 @@ export function PilotageRoutes() {
       <Route path="/agency/statistiques" element={<Navigate to="/?tab=pilotage" replace />} />
       
       {/* Indicateurs détaillés */}
-      <Route path="/agency/indicateurs" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="agence" requiredOption="indicateurs"><IndicateursLayout /></ModuleGuard></RoleGuard></AgencyLayout>}>
+      <Route path="/agency/indicateurs" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage.agence" requiredOption="indicateurs"><IndicateursLayout /></ModuleGuard></RoleGuard></AgencyLayout>}>
         <Route index element={<IndicateursAccueil />} />
       </Route>
       {/* Legacy routes - redirect to StatsHub */}
