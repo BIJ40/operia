@@ -60,7 +60,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: 'helpconfort',
     color: 'primary',
     group: 'guides',
-    requiresModule: 'guides',
+    requiresModule: 'support.guides',
   },
   // Pilotage Agence
   {
