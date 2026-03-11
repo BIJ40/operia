@@ -9,26 +9,68 @@ import { GlobalRole, GLOBAL_ROLES } from './globalRoles';
 
 // Définition des modules alignés avec les onglets UI
 export const MODULES = {
-  // Nouveaux modules V3 alignés avec les onglets
-  agence: 'agence',                       // Mon agence
-  stats: 'stats',                         // Stats
-  rh: 'rh',                               // Salariés (RH)
-  parc: 'parc',                           // Parc
-  divers_apporteurs: 'divers_apporteurs', // Divers > Apporteurs
-  divers_plannings: 'divers_plannings',   // Divers > Plannings
-  divers_reunions: 'divers_reunions',     // Divers > Réunions
-  divers_documents: 'divers_documents',   // Divers > Documents
-  guides: 'guides',                       // Guides
-  ticketing: 'ticketing',                 // Ticketing
-  aide: 'aide',                           // Aide
-  prospection: 'prospection',             // Prospection Apporteurs
-  planning_augmente: 'planning_augmente', // Planification Augmentée (IA)
-  realisations: 'realisations',           // Réalisations terrain (premium)
-  // Modules réservés admin/réseau (non visibles dans les plans)
+  // Modules V3 legacy (onglets existants)
+  agence: 'agence',
+  stats: 'stats',
+  rh: 'rh',
+  parc: 'parc',
+  divers_apporteurs: 'divers_apporteurs',
+  divers_plannings: 'divers_plannings',
+  divers_reunions: 'divers_reunions',
+  divers_documents: 'divers_documents',
+  guides: 'guides',
+  ticketing: 'ticketing',
+  aide: 'aide',
+  prospection: 'prospection',
+  planning_augmente: 'planning_augmente',
+  realisations: 'realisations',
   reseau_franchiseur: 'reseau_franchiseur',
   admin_plateforme: 'admin_plateforme',
-  // Module utilitaire
   unified_search: 'unified_search',
+
+  // ── Phase 3 — Nouvelles clés fonctionnelles (sans racines) ──
+  // Pilotage
+  'pilotage.statistiques': 'pilotage.statistiques',
+  'pilotage.statistiques.general': 'pilotage.statistiques.general',
+  'pilotage.statistiques.apporteurs': 'pilotage.statistiques.apporteurs',
+  'pilotage.statistiques.techniciens': 'pilotage.statistiques.techniciens',
+  'pilotage.statistiques.univers': 'pilotage.statistiques.univers',
+  'pilotage.statistiques.sav': 'pilotage.statistiques.sav',
+  'pilotage.statistiques.previsionnel': 'pilotage.statistiques.previsionnel',
+  'pilotage.statistiques.exports': 'pilotage.statistiques.exports',
+  'pilotage.performance': 'pilotage.performance',
+  'pilotage.actions_a_mener': 'pilotage.actions_a_mener',
+  'pilotage.devis_acceptes': 'pilotage.devis_acceptes',
+  'pilotage.incoherences': 'pilotage.incoherences',
+  // Commercial
+  'commercial.suivi_client': 'commercial.suivi_client',
+  'commercial.comparateur': 'commercial.comparateur',
+  'commercial.veille': 'commercial.veille',
+  'commercial.prospects': 'commercial.prospects',
+  'commercial.realisations': 'commercial.realisations',
+  // Organisation
+  'organisation.salaries': 'organisation.salaries',
+  'organisation.apporteurs': 'organisation.apporteurs',
+  'organisation.plannings': 'organisation.plannings',
+  'organisation.reunions': 'organisation.reunions',
+  'organisation.parc': 'organisation.parc',
+  'organisation.documents_legaux': 'organisation.documents_legaux',
+  // Médiathèque
+  'mediatheque.consulter': 'mediatheque.consulter',
+  'mediatheque.gerer': 'mediatheque.gerer',
+  'mediatheque.corbeille': 'mediatheque.corbeille',
+  // Support
+  'support.aide_en_ligne': 'support.aide_en_ligne',
+  'support.guides': 'support.guides',
+  'support.faq': 'support.faq',
+  'support.ticketing': 'support.ticketing',
+  // Admin
+  'admin.gestion': 'admin.gestion',
+  'admin.franchiseur': 'admin.franchiseur',
+  'admin.ia': 'admin.ia',
+  'admin.contenu': 'admin.contenu',
+  'admin.ops': 'admin.ops',
+  'admin.plateforme': 'admin.plateforme',
 } as const;
 
 export type ModuleKey = keyof typeof MODULES;
