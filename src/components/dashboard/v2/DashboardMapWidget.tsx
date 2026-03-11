@@ -142,35 +142,45 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
     const container = mapContainerRef.current;
     if (!container || !mapboxToken || mapRef.current) return;
 
-    console.log('[MAP] Init. Container:', container.offsetWidth, 'x', container.offsetHeight);
+    let ro: ResizeObserver | null = null;
 
-    mapboxgl.accessToken = mapboxToken;
+    // Delay init to let Framer Motion animation finish
+    const initTimer = setTimeout(() => {
+      console.log('[MAP] Init. Container:', container.offsetWidth, 'x', container.offsetHeight);
 
-    const map = new mapboxgl.Map({
-      container,
-      style: PRIMARY_MAPBOX_STYLE,
-      center: [2.3522, 48.8566],
-      zoom: 10,
-      attributionControl: true,
-    });
+      mapboxgl.accessToken = mapboxToken;
 
-    map.on('load', () => {
-      console.log('[MAP] Style loaded');
-      map.resize();
-    });
+      const map = new mapboxgl.Map({
+        container,
+        style: PRIMARY_MAPBOX_STYLE,
+        center: [2.3522, 48.8566],
+        zoom: 10,
+        attributionControl: true,
+      });
 
-    enableStyleFallback(map);
+      map.on('load', () => {
+        console.log('[MAP] Style loaded');
+        map.resize();
+      });
 
-    mapRef.current = map;
-    setMapReady(true);
+      enableStyleFallback(map);
+      ro = attachResizeObserver(container, map);
+
+      mapRef.current = map;
+      setMapReady(true);
+    }, 150);
 
     return () => {
+      clearTimeout(initTimer);
       console.log('[MAP] Cleanup');
       setMapReady(false);
+      ro?.disconnect();
       markersRef.current.forEach(m => m.remove());
       markersRef.current = [];
-      map.remove();
-      mapRef.current = null;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
     };
   }, [mapboxToken]);
 
