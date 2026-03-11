@@ -84,7 +84,7 @@ function buildTree(rows: RegistryRow[]): RegistryNode[] {
   }
 
   const roots = (childrenMap.get('__root__') ?? [])
-    .sort((a, b) => a.sort_order - b.sort_order);
+    .sort((a, b) => a.sort_order - b.sort_order || a.key.localeCompare(b.key));
 
   return roots.map(r => buildNode(r, 0, true, 'STARTER'));
 }
