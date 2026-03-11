@@ -477,6 +477,8 @@ export interface EnabledModules {
   reseau_franchiseur?: boolean | ModuleOptionsState;
   admin_plateforme?: boolean | ModuleOptionsState;
   unified_search?: boolean | ModuleOptionsState;
+  /** Index signature for new dotted keys and dynamic access */
+  [key: string]: boolean | ModuleOptionsState | undefined;
 }
 
 export interface ModuleOptionsState {
