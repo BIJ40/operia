@@ -66,7 +66,7 @@ function buildTree(rows: RegistryRow[]): RegistryNode[] {
     const effectivePlan: PlanLevel = row.required_plan;
 
     const rawChildren = childrenMap.get(row.key) ?? [];
-    rawChildren.sort((a, b) => a.sort_order - b.sort_order);
+    rawChildren.sort((a, b) => a.sort_order - b.sort_order || a.key.localeCompare(b.key));
 
     const children = rawChildren.map(child =>
       buildNode(child, depth + 1, effectiveDeployed, effectivePlan)
@@ -84,7 +84,7 @@ function buildTree(rows: RegistryRow[]): RegistryNode[] {
   }
 
   const roots = (childrenMap.get('__root__') ?? [])
-    .sort((a, b) => a.sort_order - b.sort_order);
+    .sort((a, b) => a.sort_order - b.sort_order || a.key.localeCompare(b.key));
 
   return roots.map(r => buildNode(r, 0, true, 'STARTER'));
 }
@@ -126,7 +126,8 @@ export function useModuleRegistry() {
       const { data, error } = await supabase
         .from('module_registry' as any)
         .select('*')
-        .order('sort_order');
+        .order('sort_order')
+        .order('key');
 
       if (error) throw error;
       return buildTree((data as unknown as RegistryRow[]) ?? []);
