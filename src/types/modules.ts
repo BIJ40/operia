@@ -124,15 +124,14 @@ export type ModuleOptionPath = typeof MODULE_OPTIONS[ModuleKey][keyof typeof MOD
 // Métadonnées des modules pour l'UI
 // Les catégories correspondent EXACTEMENT aux onglets de niveau 1 du workspace
 export type ModuleCategory = 
-  | 'stats'       // Onglet "Stats"
-  | 'salaries'    // Onglet "Salariés"
-  | 'outils'      // Onglet "Outils" (Actions, Apporteurs, Administratif, Parc, Performance, Commercial)
-  | 'documents'   // Onglet "Documents" (Médiathèque)
-  | 'guides'      // Onglet "Guides" (Apogée, Apporteurs, HelpConfort, FAQ)
-  | 'ticketing'   // Onglet "Ticketing" (Liste, Kanban, Revue, Historique)
-  | 'aide'        // Onglet "Aide" (Support)
-  | 'reseau'      // Onglet "Franchiseur" (visible N3+)
-  | 'admin';      // Onglet "Admin" (visible N5+)
+  | 'pilotage'      // Onglet "Pilotage" (Stats, Performance, Actions)
+  | 'commercial'    // Onglet "Commercial" (Prospection, Devis acceptés, Incohérences)
+  | 'organisation'  // Onglet "Organisation" (Collaborateurs, Apporteurs, Plannings, Réunions, Parc, Conformité)
+  | 'documents'     // Onglet "Documents" (Médiathèque)
+  | 'ticketing'     // Onglet "Ticketing" (Liste, Kanban, Revue, Historique)
+  | 'aide'          // Onglet "Aide" (Support, Guides, FAQ)
+  | 'reseau'        // Onglet "Franchiseur" (visible N3+)
+  | 'admin';        // Onglet "Admin" (visible N5+)
 
 export interface ModuleDefinition {
   key: ModuleKey;
