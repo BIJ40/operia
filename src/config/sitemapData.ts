@@ -346,7 +346,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'agence', requiredOption: 'carte_rdv' },
+      moduleGuard: { moduleKey: 'pilotage.agence', requiredOption: 'carte_rdv' },
     },
   },
   {
