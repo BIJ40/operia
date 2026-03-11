@@ -128,8 +128,7 @@ export type ModuleCategory =
   | 'commercial'    // Onglet "Commercial" (Prospection, Devis acceptés, Incohérences)
   | 'organisation'  // Onglet "Organisation" (Collaborateurs, Apporteurs, Plannings, Réunions, Parc, Conformité)
   | 'documents'     // Onglet "Documents" (Médiathèque)
-  | 'ticketing'     // Onglet "Ticketing" (Liste, Kanban, Revue, Historique)
-  | 'aide'          // Onglet "Aide" (Support, Guides, FAQ)
+  | 'support'       // Onglet "Support" (Aide en ligne, Guides, FAQ, Ticketing)
   | 'reseau'        // Onglet "Franchiseur" (visible N3+)
   | 'admin';        // Onglet "Admin" (visible N5+)
 
