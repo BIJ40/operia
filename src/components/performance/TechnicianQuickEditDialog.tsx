@@ -325,7 +325,7 @@ export function TechnicianQuickEditDialog({ technician, open, onOpenChange }: Pr
             {/* Lien vers fiche complète */}
             <div className="pt-2 border-t">
               <Button variant="ghost" size="sm" className="text-xs" asChild>
-                <Link to={`/?tab=rh&collab=${collaborator.id}`}>
+                <Link to={`/?tab=organisation&collab=${collaborator.id}`}>
                   <ExternalLink className="w-3 h-3 mr-1" />
                   Voir la fiche complète
                 </Link>

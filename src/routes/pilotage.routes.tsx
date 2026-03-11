@@ -120,8 +120,8 @@ export function PilotageRoutes() {
       {/* Planning V2 Dispatch Board */}
       <Route path="/planning-v2" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="agence"><Suspense fallback={<PageLoader />}><PlanningV2Shell /></Suspense></ModuleGuard></RoleGuard></AgencyLayout>} />
       {/* Legacy /hc-agency redirects */}
-      <Route path="/hc-agency" element={<Navigate to="/?tab=agence" replace />} />
-      <Route path="/hc-agency/*" element={<Navigate to="/?tab=agence" replace />} />
+      <Route path="/hc-agency" element={<Navigate to="/?tab=pilotage" replace />} />
+      <Route path="/hc-agency/*" element={<Navigate to="/?tab=pilotage" replace />} />
       
       {/* Legacy redirects */}
       <Route path="/agency/statia-builder" element={<Navigate to="/?tab=admin&adminTab=ia&adminView=statia" replace />} />
