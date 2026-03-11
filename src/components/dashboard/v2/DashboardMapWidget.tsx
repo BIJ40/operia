@@ -131,7 +131,7 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
 
     const map = new mapboxgl.Map({
       container,
-      style: MAPBOX_STYLE,
+      style: PRIMARY_MAPBOX_STYLE,
       center: [2.3522, 48.8566],
       zoom: 10,
       attributionControl: true,
@@ -142,9 +142,7 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
       map.resize();
     });
 
-    map.on('error', (e: any) => {
-      console.error('[MAP] Error:', e.error?.message || e);
-    });
+    enableStyleFallback(map);
 
     mapRef.current = map;
     setMapReady(true);
