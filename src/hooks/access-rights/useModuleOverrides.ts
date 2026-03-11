@@ -13,6 +13,8 @@ export interface UserOverride {
   firstName: string | null;
   lastName: string | null;
   email: string | null;
+  globalRole: string | null;
+  agencyTierKey: string | null;
 }
 
 export type OverridesMap = Map<string, UserOverride[]>;
