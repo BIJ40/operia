@@ -65,6 +65,7 @@ const TEST_CASES: TestCase[] = [
     assertions: [
       { label: 'hasModule("pilotage.performance")',     key: 'pilotage.performance',     expected: true },
       { label: 'hasModule("pilotage.actions_a_mener")', key: 'pilotage.actions_a_mener', expected: true },
+      { label: 'hasModule("pilotage.agence")',          key: 'pilotage.agence',          expected: true },
     ],
   },
   {
