@@ -389,6 +389,13 @@ export const apogeeProxy: ApogeeProxy = {
   getDevis: (options = {}) => proxyRequest('apiGetDevis', options),
   getInterventionsCreneaux: (options = {}) => proxyRequest('getInterventionsCreneaux', options),
   getPlanningCreneaux: (options = {}) => proxyRequest('apiGetPlanningCreneaux', { ...options, filters: { refType: 'all' } }),
+  getProjectByHash: (options) => {
+    const filters = {
+      ...options.filters,
+      zipcode: options.filters.zipCode, // doublon lowercase pour compatibilité API
+    };
+    return proxyRequest('apiGetProjectByHashZipCode', { ...options, filters, skipCache: true });
+  },
   
   clearCache: clearApogeeCache,
   getCacheInfo: getApogeeCacheInfo,

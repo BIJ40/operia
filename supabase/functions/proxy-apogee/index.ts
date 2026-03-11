@@ -107,6 +107,7 @@ const ALLOWED_ENDPOINTS = [
   'getInterventions',
   'getFactures',
   'getDevis',
+  'apiGetProjectByHashZipCode',
 ];
 
 interface ProxyRequest {
