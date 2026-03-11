@@ -53,8 +53,8 @@ export const MODULES_DOCS: ModuleDoc[] = [
     edgeFunctions: ['chat-guide', 'search-embeddings'],
   },
   {
-    id: 'support',
-    name: 'Support',
+    id: 'aide',
+    name: 'Aide (ex-Support)',
     description: 'Système de support intégré via Gestion de Projet',
     routes: ['/support', '/support/mes-demandes'],
     permissions: 'N0+ (création)',
