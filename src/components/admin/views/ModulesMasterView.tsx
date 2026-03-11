@@ -685,7 +685,7 @@ export function ModulesMasterView() {
   }, [deployedNodes, toDisplayNode]);
 
   const [dialog, setDialog] = useState<PropagateDialogState>({
-    open: false, node: null, field: 'is_deployed', newValue: false, descendantCount: 0,
+    open: false, node: null, field: 'is_deployed', newValue: false, descendantCount: 0, nonDeployedCount: 0,
   });
 
   const handleToggleDeploy = useCallback((node: RegistryNode) => {
