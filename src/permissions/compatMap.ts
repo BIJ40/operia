@@ -37,11 +37,13 @@ export const COMPAT_MAP: Record<string, CompatEntry> = {
   'pilotage.statistiques.sav':          { keys: ['stats'] },
   'pilotage.statistiques.previsionnel': { keys: ['stats'] },
   'pilotage.statistiques.exports':      { keys: ['stats'], optionCheck: { moduleKey: 'stats', optionKey: 'exports' } },
+  'pilotage.dashboard':                 { keys: ['stats'] },
   // Pilotage ← agence
   'pilotage.performance':     { keys: ['agence'] },
   'pilotage.actions_a_mener': { keys: ['agence'] },
   'pilotage.devis_acceptes':  { keys: ['agence'] },
   'pilotage.incoherences':    { keys: ['agence'] },
+  'pilotage.agence':          { keys: ['agence'] },
   // Commercial ← prospection + options
   'commercial.suivi_client': { keys: ['prospection'], optionCheck: { moduleKey: 'prospection', optionKey: 'dashboard' } },
   'commercial.comparateur':  { keys: ['prospection'], optionCheck: { moduleKey: 'prospection', optionKey: 'comparateur' } },
@@ -61,6 +63,7 @@ export const COMPAT_MAP: Record<string, CompatEntry> = {
   'mediatheque.consulter': { keys: ['divers_documents'], optionCheck: { moduleKey: 'divers_documents', optionKey: 'consulter' } },
   'mediatheque.gerer':     { keys: ['divers_documents'], optionCheck: { moduleKey: 'divers_documents', optionKey: 'gerer' } },
   'mediatheque.corbeille':  { keys: ['divers_documents'], optionCheck: { moduleKey: 'divers_documents', optionKey: 'corbeille_vider' } },
+  'mediatheque.documents': { keys: ['divers_documents'] },
   // Support ← legacy keys
   'support.aide_en_ligne': { keys: ['aide'] },
   'support.guides':        { keys: ['guides'] },
