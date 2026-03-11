@@ -320,7 +320,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     description: 'Visualisations graphiques du réseau',
     icon: LineChart,
     route: ROUTES.reseau.graphiques,
-    scopeSlug: SCOPE_SLUGS.FRANCHISEUR_KPI,
+    scopeSlug: 'franchiseur_kpi',
     color: 'accent',
     group: 'franchiseur',
   },

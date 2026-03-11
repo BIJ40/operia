@@ -395,20 +395,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isAdmin) return true;
 
     switch (scope) {
+      // Pilotage Agence — module canonique: agence
       case 'mes_indicateurs':
         return hasModuleGuard('agence' as ModuleKey);
+      // Sous-onglets Guides — module parent: guides + option spécifique
       case 'apporteurs':
-        return hasModuleGuard('apporteurs' as ModuleKey);
+        return hasModuleOptionGuard('guides' as ModuleKey, 'apporteurs');
       case 'helpconfort':
-        return hasModuleGuard('helpconfort' as ModuleKey);
+        return hasModuleOptionGuard('guides' as ModuleKey, 'helpconfort');
       case 'apogee':
-        return hasModuleGuard('guide_apogee' as ModuleKey);
+        return hasModuleOptionGuard('guides' as ModuleKey, 'apogee');
       default:
         // Unknown scope = deny by default (secure)
         logAuth.warn(`hasAccessToScope: unknown scope "${scope}", denying access`);
         return false;
     }
-  }, [isAdmin, hasModuleGuard]);
+  }, [isAdmin, hasModuleGuard, hasModuleOptionGuard]);
 
   // ============================================================================
   // Sub-context values (memoized independently to prevent cascading re-renders)

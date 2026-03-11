@@ -73,8 +73,8 @@ export const MODULES_DOCS: ModuleDoc[] = [
     edgeFunctions: ['proxy-apogee', 'get-kpis', 'unified-search'],
   },
   {
-    id: 'apogee_tickets',
-    name: 'Gestion de Projet',
+    id: 'ticketing',
+    name: 'Gestion de Projet (ex-Apogée Tickets)',
     description: 'Suivi du développement Apogée (Kanban)',
     routes: ['/projects', '/projects/kanban', '/projects/list'],
     permissions: 'N0+ avec module activé',
