@@ -80,7 +80,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     description: 'Suivi des actions et tâches en cours',
     icon: ListTodo,
     route: ROUTES.agency.actions,
-    scopeSlug: SCOPE_SLUGS.ACTIONS_A_MENER,
+    scopeSlug: 'actions_a_mener',
     color: 'accent',
     group: 'pilotage',
     requiresModule: 'agence',
