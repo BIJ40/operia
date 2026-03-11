@@ -166,6 +166,9 @@ function AppContent() {
             {/* DEV PAGES - Admin only (N5/N6) */}
             {/* ============================================ */}
             <Route path="/dev/unified-search-animations" element={<RoleGuard minRole="platform_admin"><UnifiedSearchAnimationPlayground /></RoleGuard>} />
+            {import.meta.env.DEV && (
+              <Route path="/dev/permissions-proof" element={<PermissionsProofPage />} />
+            )}
             
             {/* ============================================ */}
             {/* PUBLIC PAGES */}
