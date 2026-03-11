@@ -126,7 +126,8 @@ export function useModuleRegistry() {
       const { data, error } = await supabase
         .from('module_registry' as any)
         .select('*')
-        .order('sort_order');
+        .order('sort_order')
+        .order('key');
 
       if (error) throw error;
       return buildTree((data as unknown as RegistryRow[]) ?? []);
