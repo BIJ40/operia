@@ -196,7 +196,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Salariés',
     description: 'Gestion des ressources humaines',
     icon: 'Users',
-    category: 'salaries',
+    category: 'organisation',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
