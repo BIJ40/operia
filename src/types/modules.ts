@@ -556,7 +556,7 @@ export function canAccessModule(role: GlobalRole | null, moduleKey: ModuleKey): 
 /**
  * Labels courts pour les modules (utilisés dans les badges)
  */
-export const MODULE_SHORT_LABELS: Record<ModuleKey, string> = {
+export const MODULE_SHORT_LABELS: Partial<Record<ModuleKey, string>> = {
   agence: 'Agence',
   stats: 'Stats',
   rh: 'RH',
@@ -574,4 +574,34 @@ export const MODULE_SHORT_LABELS: Record<ModuleKey, string> = {
   reseau_franchiseur: 'Réseau',
   admin_plateforme: 'Admin',
   unified_search: 'Recherche',
+  // Phase 3 keys
+  'pilotage.statistiques': 'Statistiques',
+  'pilotage.performance': 'Performance',
+  'pilotage.actions_a_mener': 'Actions',
+  'pilotage.devis_acceptes': 'Devis',
+  'pilotage.incoherences': 'Incohérences',
+  'commercial.suivi_client': 'Suivi client',
+  'commercial.comparateur': 'Comparateur',
+  'commercial.veille': 'Veille',
+  'commercial.prospects': 'Prospects',
+  'commercial.realisations': 'Réalisations',
+  'organisation.salaries': 'Salariés',
+  'organisation.apporteurs': 'Apporteurs',
+  'organisation.plannings': 'Plannings',
+  'organisation.reunions': 'Réunions',
+  'organisation.parc': 'Parc',
+  'organisation.documents_legaux': 'Documents',
+  'mediatheque.consulter': 'Consulter',
+  'mediatheque.gerer': 'Gérer',
+  'mediatheque.corbeille': 'Corbeille',
+  'support.aide_en_ligne': 'Aide',
+  'support.guides': 'Guides',
+  'support.faq': 'FAQ',
+  'support.ticketing': 'Ticketing',
+  'admin.gestion': 'Gestion',
+  'admin.franchiseur': 'Franchiseur',
+  'admin.ia': 'IA',
+  'admin.contenu': 'Contenu',
+  'admin.ops': 'Ops',
+  'admin.plateforme': 'Plateforme',
 };
