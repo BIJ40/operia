@@ -173,7 +173,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: 'rh_tech',
     color: 'accent',
     group: 'technicien',
-    requiresModule: 'agence', // P2: Filtre module pour cacher aux N0 sans module
+    requiresModule: 'pilotage.agence', // P5: Migré de 'agence' vers clé hiérarchique
   },
   // Franchiseur
   {
