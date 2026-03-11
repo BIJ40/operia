@@ -7,7 +7,8 @@ import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
-import { hasAccess, MODULE_LABELS } from '@/permissions';
+import { hasAccess, isBypassRole, MODULE_LABELS } from '@/permissions';
+import { resolveModuleViaCompat, resolveModuleOptionViaCompat } from '@/permissions/compatMap';
 import { ModuleKey } from '@/types/modules';
 import { Loader2, Lock } from 'lucide-react';
 
