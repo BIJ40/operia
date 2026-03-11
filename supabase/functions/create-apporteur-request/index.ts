@@ -69,26 +69,34 @@ Deno.serve(async (req) => {
     }
 
     // Insert the request using service role (bypasses RLS)
+    const insertPayload: Record<string, unknown> = {
+      agency_id: auth.agencyId,
+      apporteur_id: auth.apporteurId,
+      request_type,
+      urgency: urgency || 'normal',
+      tenant_name,
+      tenant_phone: tenant_phone || null,
+      tenant_email: tenant_email || null,
+      owner_name: owner_name || null,
+      address,
+      postal_code: postal_code || null,
+      city: city || null,
+      description,
+      availability: availability || null,
+      comments: comments || null,
+      status: 'pending',
+    };
+
+    if (apporteurUserId) {
+      insertPayload.apporteur_user_id = apporteurUserId;
+    }
+    if (apporteurManagerId) {
+      insertPayload.apporteur_manager_id = apporteurManagerId;
+    }
+
     const { data, error } = await supabaseAdmin
       .from('apporteur_intervention_requests')
-      .insert({
-        agency_id: auth.agencyId,
-        apporteur_id: auth.apporteurId,
-        apporteur_user_id: apporteurUserId,
-        request_type,
-        urgency: urgency || 'normal',
-        tenant_name,
-        tenant_phone: tenant_phone || null,
-        tenant_email: tenant_email || null,
-        owner_name: owner_name || null,
-        address,
-        postal_code: postal_code || null,
-        city: city || null,
-        description,
-        availability: availability || null,
-        comments: comments || null,
-        status: 'pending',
-      })
+      .insert(insertPayload)
       .select('id, reference')
       .single();
 
