@@ -239,8 +239,8 @@ function ApporteursSection() {
 
 // Sous-onglets Administratif avec module requis
 const ADMIN_TABS_CONFIG: (FolderTabConfig & { requiresModule?: ModuleKey })[] = [
-  { id: 'reunions', label: 'Réunions', icon: Users2, requiresModule: 'divers_reunions' },
-  { id: 'plannings', label: 'Plannings', icon: CalendarDays, requiresModule: 'divers_plannings' },
+  { id: 'reunions', label: 'Réunions', icon: Users2, requiresModule: 'organisation.reunions' },
+  { id: 'plannings', label: 'Plannings', icon: CalendarDays, requiresModule: 'organisation.plannings' },
   { id: 'documents', label: 'Documents', icon: FileText, requiresModule: 'divers_documents' },
 ];
 
