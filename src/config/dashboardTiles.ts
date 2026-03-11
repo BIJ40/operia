@@ -254,7 +254,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     description: 'Gestion des comptes utilisateurs',
     icon: Users,
     route: ROUTES.admin.users,
-    scopeSlug: SCOPE_SLUGS.ADMIN_USERS,
+    scopeSlug: 'admin_users',
     color: 'primary',
     group: 'admin',
     requiresFranchisor: true, // N3+ can manage users
