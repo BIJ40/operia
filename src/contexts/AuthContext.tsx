@@ -11,9 +11,10 @@ import { setSentryUser, clearSentryUser } from '@/lib/sentry';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { EnabledModules, ModuleKey, isModuleEnabled as checkModuleEnabled } from '@/types/modules';
 import { 
-  hasAccess, hasMinRole, 
+  hasAccess, hasMinRole, isBypassRole,
   type PermissionContext,
 } from '@/permissions';
+import { resolveModuleViaCompat, resolveModuleOptionViaCompat } from '@/permissions/compatMap';
 import { userModulesToEnabledModules } from '@/lib/userModulesUtils';
 
 // Sub-contexts (Phase 1 split)
@@ -110,12 +111,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [globalRole]);
 
   const hasModuleGuard = useCallback((moduleKey: ModuleKey): boolean => {
-    return hasAccess({ ...accessContext, moduleId: moduleKey });
-  }, [accessContext]);
+    // 1. Legacy check via permissionsEngine (clés historiques)
+    if (hasAccess({ ...accessContext, moduleId: moduleKey })) return true;
+    // 2. COMPAT_MAP fallback (Phase 3 — nouvelles clés fonctionnelles)
+    if (isBypassRole(globalRole)) return true;
+    return resolveModuleViaCompat(enabledModules, moduleKey);
+  }, [accessContext, globalRole, enabledModules]);
 
   const hasModuleOptionGuard = useCallback((moduleKey: ModuleKey, optionKey: string): boolean => {
-    return hasAccess({ ...accessContext, moduleId: moduleKey, optionId: optionKey });
-  }, [accessContext]);
+    // 1. Legacy check via permissionsEngine
+    if (hasAccess({ ...accessContext, moduleId: moduleKey, optionId: optionKey })) return true;
+    // 2. COMPAT_MAP fallback (Phase 3 — ex: mediatheque.gerer → divers_documents.gerer)
+    if (isBypassRole(globalRole)) return true;
+    return resolveModuleOptionViaCompat(enabledModules, moduleKey, optionKey);
+  }, [accessContext, globalRole, enabledModules]);
 
   // ============================================================================
   // Chargement des données utilisateur

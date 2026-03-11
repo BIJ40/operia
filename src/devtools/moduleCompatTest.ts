@@ -1,63 +1,20 @@
 /**
- * Module Compatibility Test — Phase 3 Validation
+ * Module Compatibility Test — Phase 3 + 3.5 Validation
  * 
  * Script pur TypeScript, sans dépendance React.
- * Simule la logique hasModule de useEffectiveModules avec le COMPAT_MAP.
+ * Teste la logique COMPAT_MAP via la fonction resolveModuleViaCompat partagée
+ * ET simule le comportement de hasModule dans useEffectiveModules.
  * 
- * Usage: import depuis la console dev ou un composant debug:
+ * Usage:
  *   import { runModuleCompatTest } from '@/devtools/moduleCompatTest';
  *   runModuleCompatTest();
  */
 
-// ============================================================================
-// COMPAT_MAP — copie fidèle de useEffectiveModules.ts
-// ============================================================================
-
-interface CompatEntry {
-  keys: string[];
-  optionCheck?: { moduleKey: string; optionKey: string };
-}
-
-const COMPAT_MAP: Record<string, CompatEntry> = {
-  'pilotage.statistiques':              { keys: ['stats'] },
-  'pilotage.statistiques.general':      { keys: ['stats'] },
-  'pilotage.statistiques.apporteurs':   { keys: ['stats'] },
-  'pilotage.statistiques.techniciens':  { keys: ['stats'] },
-  'pilotage.statistiques.univers':      { keys: ['stats'] },
-  'pilotage.statistiques.sav':          { keys: ['stats'] },
-  'pilotage.statistiques.previsionnel': { keys: ['stats'] },
-  'pilotage.statistiques.exports':      { keys: ['stats'], optionCheck: { moduleKey: 'stats', optionKey: 'exports' } },
-  'pilotage.performance':     { keys: ['agence'] },
-  'pilotage.actions_a_mener': { keys: ['agence'] },
-  'pilotage.devis_acceptes':  { keys: ['agence'] },
-  'pilotage.incoherences':    { keys: ['agence'] },
-  'commercial.suivi_client': { keys: ['prospection'], optionCheck: { moduleKey: 'prospection', optionKey: 'dashboard' } },
-  'commercial.comparateur':  { keys: ['prospection'], optionCheck: { moduleKey: 'prospection', optionKey: 'comparateur' } },
-  'commercial.veille':       { keys: ['prospection'], optionCheck: { moduleKey: 'prospection', optionKey: 'veille' } },
-  'commercial.prospects':    { keys: ['prospection'], optionCheck: { moduleKey: 'prospection', optionKey: 'prospects' } },
-  'commercial.realisations': { keys: ['realisations'] },
-  'organisation.salaries':         { keys: ['rh'] },
-  'organisation.apporteurs':       { keys: ['divers_apporteurs'] },
-  'organisation.plannings':        { keys: ['divers_plannings'] },
-  'organisation.reunions':         { keys: ['divers_reunions'] },
-  'organisation.parc':             { keys: ['parc'] },
-  'organisation.documents_legaux': { keys: ['divers_documents'] },
-  'mediatheque.consulter': { keys: ['divers_documents'], optionCheck: { moduleKey: 'divers_documents', optionKey: 'consulter' } },
-  'mediatheque.gerer':     { keys: ['divers_documents'], optionCheck: { moduleKey: 'divers_documents', optionKey: 'gerer' } },
-  'mediatheque.corbeille':  { keys: ['divers_documents'], optionCheck: { moduleKey: 'divers_documents', optionKey: 'corbeille_vider' } },
-  'support.aide_en_ligne': { keys: ['aide'] },
-  'support.guides':        { keys: ['guides'] },
-  'support.ticketing':     { keys: ['ticketing'] },
-  'admin.gestion':    { keys: ['admin_plateforme'] },
-  'admin.franchiseur': { keys: ['reseau_franchiseur'] },
-  'admin.ia':         { keys: ['admin_plateforme'] },
-  'admin.contenu':    { keys: ['admin_plateforme'] },
-  'admin.ops':        { keys: ['admin_plateforme'] },
-  'admin.plateforme': { keys: ['admin_plateforme'] },
-};
+import { COMPAT_MAP, resolveModuleViaCompat, resolveModuleOptionViaCompat } from '@/permissions/compatMap';
+import type { EnabledModules } from '@/types/modules';
 
 // ============================================================================
-// SIMULATE hasModule — reproduit la logique exacte
+// SIMULATE hasModule — reproduit la logique exacte de useEffectiveModules
 // ============================================================================
 
 type ModulesMap = Record<string, { enabled: boolean; options: Record<string, boolean> }>;
@@ -66,15 +23,13 @@ function simulateHasModule(modules: ModulesMap, moduleKey: string, isAdminBypass
   if (isAdminBypass) return true;
   // 1. Direct check
   if (modules[moduleKey]?.enabled) return true;
-  // 2. Compat fallback
+  // 2. Compat fallback (shared COMPAT_MAP)
   const compat = COMPAT_MAP[moduleKey];
   if (!compat) return false;
-  // 3. Option-based check
   if (compat.optionCheck) {
     const { moduleKey: mk, optionKey: ok } = compat.optionCheck;
     return !!(modules[mk]?.enabled && modules[mk]?.options?.[ok]);
   }
-  // 4. Key-based fallback (OR)
   return compat.keys.some(k => modules[k]?.enabled);
 }
 
@@ -96,10 +51,8 @@ interface TestCase {
 
 const TEST_CASES: TestCase[] = [
   {
-    name: 'Cas 1 — ticketing',
-    modules: {
-      ticketing: { enabled: true, options: {} },
-    },
+    name: 'Cas 1 — ticketing (Chemin A: useEffectiveModules)',
+    modules: { ticketing: { enabled: true, options: {} } },
     assertions: [
       { label: 'hasModule("ticketing")',          key: 'ticketing',          expected: true },
       { label: 'hasModule("support.ticketing")',   key: 'support.ticketing',  expected: true },
@@ -108,9 +61,7 @@ const TEST_CASES: TestCase[] = [
   },
   {
     name: 'Cas 2 — agence',
-    modules: {
-      agence: { enabled: true, options: {} },
-    },
+    modules: { agence: { enabled: true, options: {} } },
     assertions: [
       { label: 'hasModule("pilotage.performance")',     key: 'pilotage.performance',     expected: true },
       { label: 'hasModule("pilotage.actions_a_mener")', key: 'pilotage.actions_a_mener', expected: true },
@@ -118,12 +69,49 @@ const TEST_CASES: TestCase[] = [
   },
   {
     name: 'Cas 3 — prospection avec option dashboard',
-    modules: {
-      prospection: { enabled: true, options: { dashboard: true } },
-    },
+    modules: { prospection: { enabled: true, options: { dashboard: true } } },
     assertions: [
       { label: 'hasModule("commercial.suivi_client")', key: 'commercial.suivi_client', expected: true },
       { label: 'hasModule("commercial.comparateur")',  key: 'commercial.comparateur',  expected: false },
+    ],
+  },
+];
+
+// ============================================================================
+// CHEMIN B TESTS — resolveModuleViaCompat (used by AuthContext + ModuleGuard)
+// ============================================================================
+
+interface CheminBTest {
+  name: string;
+  enabledModules: EnabledModules;
+  assertions: { label: string; key: string; expected: boolean }[];
+}
+
+const CHEMIN_B_TESTS: CheminBTest[] = [
+  {
+    name: 'Chemin B — ticketing compat',
+    enabledModules: { ticketing: { enabled: true, options: {} } },
+    assertions: [
+      { label: 'resolveModuleViaCompat("support.ticketing")', key: 'support.ticketing', expected: true },
+      { label: 'resolveModuleViaCompat("support.guides")',    key: 'support.guides',    expected: false },
+      { label: 'resolveModuleViaCompat("ticketing")',         key: 'ticketing',          expected: false }, // not in COMPAT_MAP, direct only
+    ],
+  },
+  {
+    name: 'Chemin B — mediatheque compat',
+    enabledModules: { divers_documents: { enabled: true, options: { consulter: true, gerer: true, corbeille_vider: false } } },
+    assertions: [
+      { label: 'resolveModuleViaCompat("mediatheque.consulter")', key: 'mediatheque.consulter', expected: true },
+      { label: 'resolveModuleViaCompat("mediatheque.gerer")',     key: 'mediatheque.gerer',     expected: true },
+      { label: 'resolveModuleViaCompat("mediatheque.corbeille")', key: 'mediatheque.corbeille',  expected: false },
+    ],
+  },
+  {
+    name: 'Chemin B — resolveModuleOptionViaCompat',
+    enabledModules: { divers_documents: { enabled: true, options: { gerer: true, corbeille_vider: false } } },
+    assertions: [
+      { label: 'resolveModuleOptionViaCompat("mediatheque", "gerer")',     key: 'mediatheque|gerer',     expected: true },
+      { label: 'resolveModuleOptionViaCompat("mediatheque", "corbeille")', key: 'mediatheque|corbeille', expected: false },
     ],
   },
 ];
@@ -136,17 +124,35 @@ export function runModuleCompatTest(): { passed: number; failed: number; total: 
   let passed = 0;
   let failed = 0;
 
+  const assert = (label: string, actual: boolean, expected: boolean) => {
+    if (actual === expected) {
+      passed++;
+      console.log(`  ✅ PASS  ${label} → ${actual}`);
+    } else {
+      failed++;
+      console.error(`  ❌ FAIL  ${label} → got ${actual}, expected ${expected}`);
+    }
+  };
+
+  // Chemin A tests
   for (const tc of TEST_CASES) {
     console.group(`[ModuleCompatTest] ${tc.name}`);
     for (const a of tc.assertions) {
-      const result = simulateHasModule(tc.modules, a.key);
-      const ok = result === a.expected;
-      if (ok) {
-        passed++;
-        console.log(`  ✅ PASS  ${a.label} → ${result}`);
+      assert(a.label, simulateHasModule(tc.modules, a.key), a.expected);
+    }
+    console.groupEnd();
+  }
+
+  // Chemin B tests
+  for (const tc of CHEMIN_B_TESTS) {
+    console.group(`[ModuleCompatTest] ${tc.name}`);
+    for (const a of tc.assertions) {
+      if (a.key.includes('|')) {
+        // resolveModuleOptionViaCompat test
+        const [mod, opt] = a.key.split('|');
+        assert(a.label, resolveModuleOptionViaCompat(tc.enabledModules, mod, opt), a.expected);
       } else {
-        failed++;
-        console.error(`  ❌ FAIL  ${a.label} → got ${result}, expected ${a.expected}`);
+        assert(a.label, resolveModuleViaCompat(tc.enabledModules, a.key), a.expected);
       }
     }
     console.groupEnd();

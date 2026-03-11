@@ -1,18 +1,20 @@
-# Permissions Phase 3 — Validation Report
+# Permissions Phase 3 + 3.5 — Validation Report
 
-Date: 2026-03-11
+Date: 2026-03-11  
+Phase 3.5 exécutée: ✅
 
 ## Résumé exécutif
 
 | Critère | Statut | Détails |
 |---|---|---|
-| Double-lecture (COMPAT_MAP) | ⚠️ PARTIEL | Actif sur Chemin A (`useEffectiveModules`), absent sur Chemin B (`ModuleGuard` / `usePermissions`) |
-| Ticketing compat | ✅ PASS | `ticketing` → `support.ticketing` fonctionne via Chemin A. Prod utilise clé legacy = stable |
-| Guards usage | ✅ OK | Tous les guards prod utilisent des clés legacy — aucun breakage |
+| Double-lecture (COMPAT_MAP) | ✅ UNIFIÉ | Actif sur Chemin A (`useEffectiveModules`) ET Chemin B (`usePermissions` / `ModuleGuard`) via `compatMap.ts` |
+| Ticketing compat | ✅ PASS | `ticketing` → `support.ticketing` fonctionne sur les deux chemins |
+| Guards usage | ✅ OK | Tous les guards utilisent le fallback COMPAT |
 | COMPAT_MAP coverage | ✅ 97.2% | 35/36 clés couvertes. 1 clé création pure (`support.faq`) |
 | Admin bypass | ✅ PASS | N5+ bypass fonctionnel sur les deux chemins |
-| Modules orphelins | ✅ OK | 0 orphelin critique. 1 clé Phase 3 attendue (`support.faq`) |
-| Phase 4 readiness | ⚠️ BLOQUÉ | Unification des deux chemins hasModule requise avant migration |
+| Modules orphelins | ✅ OK | 0 orphelin critique |
+| DocumentsTabContent | ✅ CORRIGÉ | Migré vers `mediatheque.gerer` / `mediatheque.corbeille` via `useEffectiveModules` |
+| Phase 4 readiness | ✅ PRÊT | Unification terminée — les deux chemins utilisent COMPAT_MAP |
 
 ## Diagnostic détaillé
 
@@ -85,11 +87,11 @@ Chemin B — usePermissions().hasModule / ModuleGuard
 
 ```
 ╔══════════════════════════════════════╗
-║  SAFE_FOR_PHASE4 = false            ║
+║  SAFE_FOR_PHASE4 = true  ✅          ║
 ║                                      ║
-║  Raison: double chemin hasModule     ║
-║  Action: unifier avant migration     ║
-║  Prod actuelle: STABLE ✅            ║
+║  Phase 3.5 terminée                  ║
+║  Deux chemins unifiés via compatMap  ║
+║  Prod: STABLE ✅                     ║
 ╚══════════════════════════════════════╝
 ```
 
