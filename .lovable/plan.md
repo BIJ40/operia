@@ -1,218 +1,105 @@
-# Refonte du système de modules/permissions
 
-## Étape 1 : Source unique consolidée ✅ FAIT
-## Étape 2 : Gestion fine des options dans les plans ✅ FAIT
-## Étape 3 : Cascade Plan → Rôle → Override utilisateur ✅ FAIT
-## Étape 4 : Nettoyage legacy ✅ FAIT
 
-## Audit Remédiation — Sprint 1 ✅ FAIT (P0)
-## Audit Remédiation — Sprint 2 ✅ FAIT (P1 + P2-4)
-## Audit Remédiation — Sprint 3 ✅ FAIT (Archi + Perf)
-## Audit Remédiation — Sprint 4 ✅ FAIT (Sécurité + Hygiène)
-## Audit Remédiation — Sprint 5 ✅ FAIT (Qualité code)
+## C1 — Uniformisation nomenclature : Plan d'implémentation
+
+### Résumé des corrections
+
+6 fichiers à modifier, 0 suppression, 0 changement de logique d'accès.
 
 ---
 
-# AUDIT FINAL — Plan de Correction V2
+### 1. `src/contexts/AuthContext.tsx` (L393-411)
 
-## Sprint 6 — Code Hygiene & Dead Code ✅ FAIT
+**Problème** : `hasModuleGuard('apporteurs')`, `hasModuleGuard('helpconfort')`, `hasModuleGuard('guide_apogee')` pointent vers des `ModuleKey` inexistantes → accès toujours refusé sauf admin.
 
-### S6-1: ✅ Supprimé `getAssignableRoles()` et le `require()` ESM
-### S6-2: ✅ Synchronisé permissionsEngine Edge — 16 ModuleKey V3 + MODULE_COMPAT_MAP legacy
-### S6-3: ✅ `vite-plugin-pwa` → 0.21.1 (xlsx reste 0.18.5 — pas de fix publié)
+**Correction** : Utiliser le module parent `guides` + l'option spécifique via `hasModuleOptionGuard` (déjà disponible L116-118) :
 
-## Sprint 7 — Tests & Fiabilité ✅ FAIT
+```typescript
+case 'apporteurs':
+  return hasModuleOptionGuard('guides', 'apporteurs');
+case 'helpconfort':
+  return hasModuleOptionGuard('guides', 'helpconfort');
+case 'apogee':
+  return hasModuleOptionGuard('guides', 'apogee');
+case 'mes_indicateurs':
+  return hasModuleGuard('agence');
+```
 
-### S7-1: ✅ 31 tests unitaires du moteur de permissions (hasAccess, getEffectiveModules, validateUserPermissions, getUserManagementCapabilities)
-### S7-2: ✅ 23 tests unitaires du module registry (validation définitions, options, modules protégés, cross-validation constants ↔ MODULE_DEFINITIONS)
-- **Total: 54 tests — tous verts**
+Cela vérifie `guides` activé **ET** l'option spécifique activée — pas d'élargissement involontaire.
 
-## Sprint 8 — Performance & Scalabilité ✅ FAIT
-
-### S8-1: ✅ 13 index de performance sur les tables les plus sollicitées
-- `apogee_tickets` (kanban_status, created_by, support_initiator)
-- `apogee_ticket_comments`, `apogee_ticket_history`, `apogee_ticket_support_exchanges` (ticket_id + created_at DESC)
-- `user_modules` (user_id)
-- `collaborators` (agency_id + last_name)
-- `activity_log` (agency_id + module + created_at)
-- `profiles` (agency_id partiel)
-- `document_requests` (agency_id + status + created_at)
-- `apporteur_sessions` (expires_at partiel)
-- `rate_limits` (created_at pour purge)
-- `announcement_reads` (user_id + announcement_id)
-
-### S8-2: ✅ Memoisation `usePersonalKpis` (useMemo + Promise.all)
-
-### S8-3: ✅ Purge automatique tables temporaires (cron SQL quotidien)
-
-### S8-4: ✅ Contrainte CHECK sur `profiles.global_role` (intégrité données)
-
-## Sprint 9 — Observabilité & DevOps ✅ FAIT
-
-### S9-1: ✅ Health check endpoint
-- **Edge function:** `supabase/functions/health-check/index.ts`
-- **Vérifie:** Database, Auth, Storage (latence + disponibilité)
-- **Retourne:** `{ status: "ok" | "degraded" | "down", checks, totalLatencyMs }`
-
-### S9-2: ✅ Centraliser `console.error` → `logError`
-- **Migration effectuée dans 20+ fichiers critiques:**
-  - Contexts: ImpersonationContext, ApporteurAuthContext, HcServicesEditorContext
-  - Hooks: useApogeeSync, usePushNotifications, useRHSuivi, useOnboardingState, useDocInstances, useDocTemplates, useApporteurCheck
-  - Components: LocalErrorBoundary, ApporteurCreateWizard
-  - Services: effectiveModulesResolver (console.warn → logWarn), useCommercialProfile
-  - Pages: Agency.tsx
-  - Stats: productivite.ts
-
-### S9-3: ✅ Wrapper `withSentry` pour Edge Functions
-- **Fichier:** `supabase/functions/_shared/withSentry.ts`
-- **Fonctionnalité:** CORS, timing, capture exceptions vers Sentry, fallback error response
-- **Usage:** `Deno.serve(withSentry({ functionName: 'my-fn' }, handler))`
-
-## Sprint 10 — UX & Polish ✅ FAIT
-
-### S10-1: ✅ Tokens sémantiques pour badges de rôles (bg-muted, bg-primary/10, etc.)
-### S10-2: ✅ Transition CSS sur body pour changement de thème (0.3s ease)
-### S10-3: ✅ Option `faq_admin` ajoutée dans admin_plateforme MODULE_DEFINITIONS
+Ajouter `hasModuleOptionGuard` aux dépendances du `useCallback`.
 
 ---
 
-## Actions manuelles (hors code)
+### 2. `src/config/roleMatrix.ts` (L458-499)
 
-### M-1: Activer Leaked Password Protection
-- **Où:** Supabase Dashboard → Auth → Settings → Leaked Password Protection
-- **Impact:** Bloque la création de comptes avec mots de passe compromis
+**Problème** : `hasModuleActivated('help_academy')` et `hasModuleActivated('pilotage_agence')` — clés legacy inexistantes dans `MODULES`.
 
-### M-2: Partitionnement tables d'audit (>100 orgs)
-- **Tables:** `activity_log`, `apogee_ticket_history`
-- **Quand:** Quand volume > 1M lignes
-- **Action:** Partitionner par mois avec `pg_partman`
+**Statut** : Code mort (`canAccessFeature` n'est importé nulle part en runtime). Correction quand même pour cohérence :
 
-### M-3: Extensions hors `public` schema
-- **Linter:** "Extension in Public" — déplacer pg_trgm etc. vers `extensions` schema
-- **Impact:** Sécurité (reduce attack surface)
-
-### M-4: Audit des RLS policies `USING (true)` sur opérations d'écriture
-- **Linter:** "RLS Policy Always True" — restreindre les INSERT/UPDATE/DELETE overly permissive
+- `'help_academy'` → `'guides'` (3 occurrences L463, 468, 473)
+- `'pilotage_agence'` → `'agence'` (5 occurrences L479, 484, 489, 494, 499)
 
 ---
 
-## PHASE 1 — Corrections critiques (Autopsy) ✅ FAIT
+### 3. `src/config/dashboardTiles.ts` (L10, L39-324)
 
-### P1-1: ✅ Split AuthContext (God Object → 3 sous-contextes)
-- **AuthCoreContext** — session/login/logout uniquement
-- **ProfileContext** — données profil (firstName, agence, agencyId…)
-- **PermissionsContext** — globalRole, enabledModules, guards
-- **`useAuth()`** conservé comme façade backward-compatible (188 fichiers non impactés)
-- **Nouveaux hooks:** `useAuthCore()`, `useProfile()`, `usePermissions()` pour subscriptions granulaires
-- **Impact:** Réduction drastique des re-renders en cascade
+**Problème** : Importe `SCOPE_SLUGS` de `scopeRegistry.ts` pour le champ `scopeSlug`. Ce champ est lu par `AuthenticatedGrid.tsx` pour déterminer les scopes.
 
-### P1-2: ✅ `.limit()` ajouté sur toutes les requêtes listing sans borne
-- **Fichiers corrigés (12 queries):**
-  - `useDocumentRequests.ts` (×2), `useApporteurDemandes.ts`, `useProspectingMeetings.ts`
-  - `useMediaFolders.ts`, `useAgencyList.ts`, `AdminAgencies.tsx` (×2)
-  - `useTechnicianSavDetails.ts`, `useTicketPermissions.ts`
-  - `customMetricsService.ts`, `flowApi.ts` (×2)
-- **Limites:** 200–1000 selon la table
+**Correction** : Remplacer `SCOPE_SLUGS.X` par les strings canoniques en dur. L'import de `scopeRegistry` est supprimé de ce fichier.
 
-### P1-3: ✅ Restriction CORS dans withSentry.ts
-- CORS `'*'` → whitelist `operiav2.lovable.app` + preview domain
-- Headers CORS étendus (x-supabase-client-*)
-- Header `Vary: Origin` ajouté
+Mapping appliqué :
+| Ancien | Nouveau |
+|--------|---------|
+| `SCOPE_SLUGS.APOGEE` | `'apogee'` |
+| `SCOPE_SLUGS.APPORTEURS` | `'apporteurs'` |
+| `SCOPE_SLUGS.BASE_DOCUMENTAIRE` | `'helpconfort'` |
+| `SCOPE_SLUGS.MES_INDICATEURS` | `'mes_indicateurs'` |
+| `SCOPE_SLUGS.ACTIONS_A_MENER` | `'actions_a_mener'` |
+| etc. | (valeurs identiques aux strings actuelles) |
 
-### P1-4: ✅ Audit RLS `USING(true)` — Aucune action nécessaire
-- Toutes les policies `USING(true)` sont sur des tables de référence en lecture seule (plan_tiers, blocks, page_metadata, univers_catalog, media_system_folders, travel_cache)
-- Cohérent avec l'architecture : données partagées, pas de leak multi-tenant
+Note : les valeurs string restent les mêmes — c'est juste le découplage de `scopeRegistry.ts`. Le champ `scopeSlug` lui-même reste inchangé car consommé par `AuthenticatedGrid`.
 
 ---
 
-## PHASE 2 — Simplification architecture ✅ FAIT
+### 4. `src/config/docsData.ts` (L44-80)
 
-### P2-1: ✅ Service Layer Pattern
-- **`src/services/BaseQueryService.ts`** — Fonctions utilitaires `queryList()`, `queryById()`, `queryCount()`
-- Limite automatique (`DEFAULT_LIST_LIMIT = 500`), filtre agence, ordering
-- Pattern établi pour tous les futurs hooks
+**Problème** : `id: 'help_academy'`, `id: 'pilotage_agence'`, `id: 'support'`, `id: 'apogee_tickets'` — noms legacy dans la documentation technique.
 
-### P2-2: ✅ Permissions Engine — Shared Constants
-- **`src/permissions/shared-constants.ts`** — Source canonique des constantes (ROLE_HIERARCHY, MODULE_KEYS, COMPAT_MAP, règles)
-- Edge engine (`supabase/functions/_shared/permissionsEngine.ts`) synchronisé V3.0
-- Documentation de la stratégie de sync frontend ↔ Edge
+**Correction** : Renommer vers les clés canoniques :
+- `help_academy` → `guides`
+- `pilotage_agence` → `agence`
+- `support` → `aide`
+- `apogee_tickets` → `ticketing`
 
-### P2-3: ✅ Column Selection — High-traffic queries
-- `useAgencies.ts` — `select('*')` → sélection explicite de 13 colonnes (×2 queries)
-- Pattern documenté pour migration progressive
-
-### P2-4: ℹ️ KPI SQL RPC — Non applicable
-- Les KPIs (`usePersonalKpis.ts`) consomment l'API Apogée externe, pas Supabase
-- L'optimisation existante (memoisation + Promise.all) est suffisante
+Fichier purement informatif (aucun impact sur les permissions).
 
 ---
 
-## PHASE 3 — Optimisation long terme ✅ FAIT
+### 5. `supabase/functions/unified-search/index.ts` (L925-928)
 
-### P3-1: ✅ Cursor-based pagination
-- **`src/hooks/useCursorPagination.ts`** — Hook générique `useInfiniteQuery` + keyset pagination
-- **`src/hooks/useActivityLogPaginated.ts`** — Drop-in replacement pour activity_log volumineux
-- **Index DB:** `idx_activity_log_cursor` (created_at DESC, id), `idx_ticket_history_cursor`
-- **Pattern:** Remplace offset/limit instable par curseur sur colonne indexée
+**Problème** : Double vérification `['guides', 'help_academy']` dans la requête `user_modules`.
 
-### P3-2: ✅ Tests Edge Functions
-- **`supabase/functions/health-check/index.test.ts`** — 4 tests Deno
-  - Validation shape JSON (status, timestamp, checks, totalLatencyMs)
-  - Validation chaque check (name, status, latencyMs)
-  - CORS preflight → 200
-  - Mapping status ↔ HTTP code (ok→200, degraded→207, down→503)
-- **Tous verts ✅**
-
-### P3-3: ✅ Purge & archive strategy
-- **`purge_old_activity_logs(p_retention_months)`** — Supprime activity_log > N mois (défaut: 6)
-- **`purge_old_ticket_history(p_retention_months)`** — Supprime ticket_history > N mois (défaut: 12)
-- **`purge_expired_apporteur_sessions()`** — Nettoie sessions expirées/révoquées > 7j
-- **Recommandation:** Scheduler via pg_cron mensuel
+**Correction** : Garder les deux dans la requête `.in()` (car des données legacy peuvent exister en base avec `help_academy`), mais ajouter un commentaire `// legacy compat — à supprimer après migration DB`. Aucun changement fonctionnel.
 
 ---
 
-## Priorités d'exécution
+### 6. `src/config/scopeRegistry.ts`
 
-| Sprint | Statut | Risque résolu |
-|--------|--------|---------------|
-| **S6** | ✅ FAIT | Dead code, sync permissions, vulnérabilités |
-| **S7** | ✅ FAIT | 54 tests unitaires permissions + registry |
-| **S8** | ✅ FAIT | 13 index DB, memoisation, purge, contrainte rôle |
-| **S9** | ✅ FAIT | Health check, 20+ fichiers logError, withSentry |
-| **S10** | ✅ FAIT | Polish UX, cohérence design system |
-| **P1** | ✅ FAIT | AuthContext split, .limit() queries, CORS, RLS audit |
-| **P2** | ✅ FAIT | Service layer, shared permissions, column selection |
-| **P3** | ✅ FAIT | Cursor pagination, Edge tests, purge/archive |
-| **P4** | ✅ FAIT | ErrorBoundaries, type safety, Zod, React.memo, retry |
+**Aucune modification**. Le fichier reste en place. Ses dépendants directs (`dashboardTiles.ts`) seront découplés. La suppression sera confirmée dans un second temps après vérification qu'aucun import résiduel ne subsiste.
 
-## PHASE 4 — Polish final ✅ FAIT
+---
 
-### P4-1: ✅ ErrorBoundaries granulaires par module
-- **8 modules protégés** dans UnifiedWorkspace : Stats, Collaborateurs, Outils, Documents, Guides, Ticketing, Support, Admin
-- Chaque module isolé → crash d'un onglet n'impacte plus les autres
-- Fallback UX cohérent avec bouton "Réessayer" + Sentry
+### Fichiers NON modifiés (conservés tels quels)
 
-### P4-2: ✅ Type safety & Zod validation
-- **`src/lib/validation/schemas.ts`** — 5 schemas Zod : userProfile, collaborator, ticket, documentRequest, interventionRequest
-- **`src/types/apogee.ts`** — Types partagés pour données API Apogée (ApogeeUser, ApogeeIntervention, ApogeeFacture, etc.)
-- **`any` → `Record<string, unknown>`** dans `use-user-management.ts` (updateData)
-- **Typed params** dans `usePersonalKpis.ts` (matchesUserId, isTechInIntervention)
+| Fichier | Raison |
+|---------|--------|
+| `src/config/scopeRegistry.ts` | Pas de suppression dans cette passe |
+| `src/permissions/shared-constants.ts` | `SHARED_MODULE_COMPAT_MAP` conservé (données legacy en DB) |
+| `supabase/functions/_shared/permissionsEngine.ts` | `MODULE_COMPAT_MAP` conservé (même raison) |
+| `src/config/changelog.ts` | Texte historique, pas de renommage rétroactif |
 
-### P4-3: ✅ React.memo & QueryClient retry
-- **`React.memo`** sur `CollaborateursTabContent` (évite re-render sur switch d'onglet)
-- **QueryClient retry intelligent** : exponential backoff, skip 401/403/404, max 2 retries
-- Lazy loading déjà en place sur 26+ fichiers (pas de refactoring nécessaire)
+### Risques
 
-## Score après Phase 4
+Aucun changement de logique d'accès. Les corrections transforment des accès **cassés** (toujours refusés) en accès **fonctionnels** (vérification du bon module + option). Les admins N5+ ne sont pas impactés (bypass existant).
 
-| Dimension | Avant | Après P4 | Cible |
-|-----------|-------|----------|-------|
-| Architecture | 7.5 | 9.5 | 9.5 |
-| Sécurité | 7.5 | 9.2 | 9.5 |
-| Performance | 6.5 | 9.4 | 9.5 |
-| Permissions | 8.5 | 9.5 | 10 |
-| Scalabilité | 6.5 | 9.4 | 9.5 |
-| Base de données | 7.0 | 9.3 | 9.5 |
-| DevOps | 7.0 | 9.0 | 9.5 |
-| Maintenabilité | 7.0 | 9.5 | 9.5 |
-| **Global** | **7.0** | **9.4** | **9.5** |
