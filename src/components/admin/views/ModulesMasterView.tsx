@@ -23,7 +23,7 @@ import {
   type RegistryNode,
   type PlanLevel,
 } from '@/hooks/access-rights/useModuleRegistry';
-import { RIGHTS_CATEGORIES, RIGHTS_CATEGORY_ROOT_KEYS, getRightsDisplayLabel, type RightsCategory } from './rightsTaxonomy';
+import { RIGHTS_CATEGORIES, nodeMatchesCategory, nodeMatchesAnyCategory, getRightsDisplayLabel, type RightsCategory } from './rightsTaxonomy';
 import {
   useModuleOverrides,
   useAddOverride,
