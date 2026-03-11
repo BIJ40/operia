@@ -25,10 +25,10 @@ export function AcademyRoutes() {
   return (
     <>
       {/* Section Index - Redirige vers onglet guides unifié */}
-      <Route path="/academy" element={<Navigate to="/?tab=aide" replace />} />
+      <Route path="/academy" element={<Navigate to="/?tab=support" replace />} />
       
       {/* Guide Apogée - Index redirige, détails restent */}
-      <Route path="/academy/apogee" element={<Navigate to="/?tab=aide" replace />} />
+      <Route path="/academy/apogee" element={<Navigate to="/?tab=support" replace />} />
       <Route path="/academy/apogee/category/:slug" element={<GuidesLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="guides"><Category /></ModuleGuard></RoleGuard></GuidesLayout>} />
       
       {/* Guide Apporteurs */}
