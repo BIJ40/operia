@@ -21,7 +21,7 @@ const PlanningHebdo = lazy(() => import("@/pages/PlanningTechniciensSemaine"));
 // Helper pour créer les layouts RH
 function RHLayout({ children }: { children: React.ReactNode }) {
   return (
-    <MinimalLayout backTab="salaries" backLabel="Retour aux Salariés">
+    <MinimalLayout backTab="organisation" backLabel="Retour à Organisation">
       {children}
     </MinimalLayout>
   );
