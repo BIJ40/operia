@@ -209,7 +209,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Parc',
     description: 'Véhicules et équipements',
     icon: 'Truck',
-    category: 'outils',
+    category: 'organisation',
     uiSubTab: 'parc',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
