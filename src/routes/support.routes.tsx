@@ -19,11 +19,11 @@ export function SupportRoutes() {
   return (
     <>
       {/* Support HUB - redirect to unified interface */}
-      <Route path="/support" element={<Navigate to="/?tab=aide" replace />} />
+      <Route path="/support" element={<Navigate to="/?tab=support" replace />} />
       
       {/* Legacy routes */}
-      <Route path="/support/mes-demandes" element={<Navigate to="/?tab=aide" replace />} />
-      <Route path="/mes-demandes" element={<Navigate to="/?tab=aide" replace />} />
+      <Route path="/support/mes-demandes" element={<Navigate to="/?tab=support" replace />} />
+      <Route path="/mes-demandes" element={<Navigate to="/?tab=support" replace />} />
       
       {/* Console Support - Redirected to Gestion de Projet */}
       <Route path="/support/console" element={<Navigate to="/projects/kanban" replace />} />
