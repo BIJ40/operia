@@ -474,6 +474,8 @@ function ExpandedMapContent({
     const container = mapContainerRef.current;
     if (!container || !mapboxToken) return;
 
+    let ro: ResizeObserver | null = null;
+
     // Small delay to let dialog animate open and get dimensions
     const timer = setTimeout(() => {
       mapboxgl.accessToken = mapboxToken;
@@ -490,6 +492,7 @@ function ExpandedMapContent({
 
       map.on('load', () => map.resize());
       enableStyleFallback(map);
+      ro = attachResizeObserver(container, map);
 
       mapRef.current = map;
       setMapReady(true);
@@ -498,6 +501,7 @@ function ExpandedMapContent({
     return () => {
       clearTimeout(timer);
       setMapReady(false);
+      ro?.disconnect();
       markersRef.current.forEach(m => m.remove());
       markersRef.current = [];
       if (mapRef.current) {
