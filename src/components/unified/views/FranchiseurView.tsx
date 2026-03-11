@@ -47,8 +47,7 @@ const FranchiseurRoyalties = lazy(() => import('@/franchiseur/pages/FranchiseurR
 const FranchiseurStats = lazy(() => import('@/franchiseur/pages/FranchiseurStats'));
 const DiversTabContent = lazy(() => import('@/components/unified/tabs/DiversTabContent'));
 const GuidesTabContent = lazy(() => import('@/components/unified/tabs/GuidesTabContent'));
-const TicketingTabContent = lazy(() => import('@/components/unified/tabs/TicketingTabContent'));
-const SupportTabContent = lazy(() => import('@/components/unified/tabs/SupportTabContent'));
+const SupportHubTabContent = lazy(() => import('@/components/unified/tabs/AideTabContent'));
 
 type FranchiseurTab = 
   | 'accueil' 
@@ -58,8 +57,7 @@ type FranchiseurTab =
   | 'statistiques' 
   | 'divers' 
   | 'guides'
-  | 'ticketing' 
-  | 'aide';
+  | 'support';
 
 interface TabConfig {
   id: FranchiseurTab;
