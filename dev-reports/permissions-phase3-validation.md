@@ -1,6 +1,7 @@
-# Permissions Phase 3 — Validation Report
+# Permissions Phase 3 + 3.5 — Validation Report
 
-Date: 2026-03-11
+Date: 2026-03-11  
+Phase 3.5 exécutée: ✅
 
 ## Résumé exécutif
 
