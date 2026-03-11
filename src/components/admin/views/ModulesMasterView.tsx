@@ -14,16 +14,16 @@
  * Seul N6 (superadmin) peut changer le statut is_deployed.
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   useModuleRegistry,
   useUpdateModuleNode,
   usePropagateToChildren,
-  flattenTree,
   getDescendantKeys,
   type RegistryNode,
   type PlanLevel,
 } from '@/hooks/access-rights/useModuleRegistry';
+import { RIGHTS_CATEGORIES, RIGHTS_CATEGORY_ROOT_KEYS, getRightsDisplayLabel, type RightsCategory } from './rightsTaxonomy';
 import {
   useModuleOverrides,
   useAddOverride,
@@ -299,18 +299,22 @@ function OverridesPopover({
 
 // Route mapping for module keys → app routes
 const MODULE_ROUTES: Record<string, string> = {
-  planning_v2: '/planning-v2',
   agence: '/?tab=pilotage',
-  statistiques: '/?tab=pilotage',
-  commercial: '/commercial',
-  rh: '/rh',
-  parc: '/parc',
-  mediatheque: '/mediatheque',
-  apporteurs: '/apporteurs',
-  aide: '/aide',
-  ticketing: '/tickets',
-  apogee_tickets: '/tickets',
-  reseau_franchiseur: '/franchiseur',
+  stats: '/?tab=pilotage',
+  prospection: '/?tab=commercial',
+  realisations: '/?tab=commercial',
+  rh: '/?tab=organisation',
+  divers_apporteurs: '/?tab=organisation',
+  divers_plannings: '/?tab=organisation',
+  divers_reunions: '/?tab=organisation',
+  parc: '/?tab=organisation',
+  divers_documents: '/?tab=documents',
+  documents: '/?tab=documents',
+  aide: '/?tab=support',
+  guides: '/?tab=support',
+  ticketing: '/?tab=support',
+  reseau_franchiseur: '/?tab=franchiseur',
+  admin_plateforme: '/?tab=admin',
 };
 
 function getModuleRoute(key: string): string | null {
@@ -329,19 +333,36 @@ interface ModuleRowProps {
   onToggleDeploy: (node: RegistryNode) => void;
   onTogglePlan: (node: RegistryNode) => void;
   onChangeRole: (node: RegistryNode, newRole: number) => void;
+  onRenameLabel: (node: RegistryNode, newLabel: string) => void;
   isUpdating: boolean;
-  isCollapsed?: boolean;
-  onToggleCollapse?: () => void;
   canDeploy: boolean;
   isDevSection?: boolean;
 }
 
-function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole, isUpdating, isCollapsed, onToggleCollapse, canDeploy, isDevSection }: ModuleRowProps) {
+function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole, onRenameLabel, isUpdating, canDeploy, isDevSection }: ModuleRowProps) {
   const navigate = useNavigate();
   const route = getModuleRoute(node.key);
   const isNeutralized = !node.effectiveDeployed && node.is_deployed;
   const depthColors = ['text-primary', 'text-blue-500', 'text-violet-500', 'text-emerald-500'];
   const branchColor = depthColors[Math.min(node.depth, depthColors.length - 1)];
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftLabel, setDraftLabel] = useState(node.label);
+
+  useEffect(() => {
+    setDraftLabel(node.label);
+  }, [node.label]);
+
+  const commitRename = () => {
+    const trimmed = draftLabel.trim();
+    setIsEditing(false);
+
+    if (!trimmed || trimmed === node.label) {
+      setDraftLabel(node.label);
+      return;
+    }
+
+    onRenameLabel(node, trimmed);
+  };
 
   return (
     <div
@@ -356,26 +377,47 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
     >
       {/* Name */}
       <div
-        className={cn('flex items-center min-w-0', node.depth === 0 && !isDevSection && 'cursor-pointer select-none')}
+        className="flex items-center min-w-0"
         style={{ paddingLeft: `${(isDevSection ? 0 : node.depth) * 16}px` }}
-        onClick={node.depth === 0 && !isDevSection ? onToggleCollapse : undefined}
       >
         {node.depth > 0 && !isDevSection && <CornerDownRight className={cn('w-3.5 h-3.5 mr-1.5 shrink-0', branchColor)} />}
-        {node.depth === 0 && !isDevSection && (
-          <ChevronRight className={cn('w-4 h-4 mr-1.5 shrink-0 transition-transform duration-200', branchColor, !isCollapsed && 'rotate-90')} />
-        )}
         {isDevSection && (
           <Construction className="w-3.5 h-3.5 mr-1.5 shrink-0 text-amber-500" />
         )}
-        <span className={cn(
-          'truncate',
-          isDevSection && 'text-amber-700 dark:text-amber-400 font-medium',
-          !isDevSection && node.depth === 0 && 'font-semibold text-foreground uppercase tracking-wide',
-          !isDevSection && node.depth === 1 && 'font-medium text-blue-600 dark:text-blue-400',
-          !isDevSection && node.depth >= 2 && 'text-violet-600 dark:text-violet-400'
-        )}>
-          {node.label}
-        </span>
+
+        {isEditing ? (
+          <Input
+            value={draftLabel}
+            onChange={(e) => setDraftLabel(e.target.value)}
+            onBlur={commitRename}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commitRename();
+              if (e.key === 'Escape') {
+                setDraftLabel(node.label);
+                setIsEditing(false);
+              }
+            }}
+            autoFocus
+            className="h-7 text-xs"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => !isUpdating && setIsEditing(true)}
+            className={cn(
+              'truncate text-left hover:underline underline-offset-2',
+              isUpdating && 'cursor-not-allowed opacity-70',
+              isDevSection && 'text-amber-700 dark:text-amber-400 font-medium',
+              !isDevSection && node.depth === 0 && 'font-semibold text-foreground uppercase tracking-wide',
+              !isDevSection && node.depth === 1 && 'font-medium text-blue-600 dark:text-blue-400',
+              !isDevSection && node.depth >= 2 && 'text-violet-600 dark:text-violet-400'
+            )}
+            title="Cliquer pour renommer"
+          >
+            {node.label}
+          </button>
+        )}
+
         {isDevSection && node.parent_key && (
           <span className="ml-2 text-[10px] text-muted-foreground">
             ({node.parent_key})
@@ -432,6 +474,39 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
   );
 }
 
+function CategoryHeaderRow({
+  category,
+  collapsed,
+  onToggle,
+  moduleCount,
+}: {
+  category: RightsCategory;
+  collapsed: boolean;
+  onToggle: () => void;
+  moduleCount: number;
+}) {
+  return (
+    <div className={cn(`grid ${GRID_COLS} gap-2 items-center py-2.5 px-3 border-b border-border bg-muted/20`)}>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex items-center gap-2 min-w-0 text-left"
+      >
+        <ChevronRight className={cn('w-4 h-4 shrink-0 transition-transform text-primary', !collapsed && 'rotate-90')} />
+        <span className="font-semibold uppercase tracking-wide text-foreground truncate">{category.label}</span>
+        <Badge variant="secondary" className="text-[10px]">{moduleCount}</Badge>
+      </button>
+      <div className="text-center text-muted-foreground/30">—</div>
+      <div className="text-center text-muted-foreground/30">—</div>
+      <div className="text-center text-muted-foreground/30">—</div>
+      <div className="text-center text-muted-foreground/30">—</div>
+      <div className="text-center text-muted-foreground/30">—</div>
+      <div className="text-center text-muted-foreground/30">—</div>
+      <div className="text-center text-muted-foreground/30">—</div>
+    </div>
+  );
+}
+
 // ============================================================================
 // Main view
 // ============================================================================
@@ -445,10 +520,11 @@ interface PropagateDialogState {
 }
 
 export function ModulesMasterView() {
-  const { tree, flatNodes, isLoading } = useModuleRegistry();
+  const { flatNodes, isLoading } = useModuleRegistry();
   const { overrides } = useModuleOverrides();
   const { hasGlobalRole } = usePermissions();
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+  const [showLegacy, setShowLegacy] = useState(false);
   const updateNode = useUpdateModuleNode();
   const propagate = usePropagateToChildren();
 
@@ -481,6 +557,29 @@ export function ModulesMasterView() {
     return { deployedNodes: deployed, devNodes: dev };
   }, [flatNodes]);
 
+  const toDisplayNode = useCallback((node: RegistryNode): RegistryNode => {
+    return {
+      ...node,
+      depth: node.depth + 1,
+      label: getRightsDisplayLabel(node.key, node.label),
+    };
+  }, []);
+
+  const groupedCategories = useMemo(() => {
+    return RIGHTS_CATEGORIES.map((category) => ({
+      category,
+      nodes: deployedNodes
+        .filter((node) => category.moduleKeys.includes(node.key.split('.')[0]))
+        .map(toDisplayNode),
+    }));
+  }, [deployedNodes, toDisplayNode]);
+
+  const legacyNodes = useMemo(() => {
+    return deployedNodes
+      .filter((node) => !RIGHTS_CATEGORY_ROOT_KEYS.has(node.key.split('.')[0]))
+      .map(toDisplayNode);
+  }, [deployedNodes, toDisplayNode]);
+
   const [dialog, setDialog] = useState<PropagateDialogState>({
     open: false, node: null, field: 'is_deployed', newValue: false, descendantCount: 0,
   });
@@ -512,6 +611,19 @@ export function ModulesMasterView() {
       setDialog({ open: true, node, field: 'min_role', newValue: newRole, descendantCount: descendants.length });
     }
   }, [updateNode]);
+
+  const handleRenameLabel = useCallback((node: RegistryNode, newLabel: string) => {
+    updateNode.mutate({ key: node.key, updates: { label: newLabel } });
+  }, [updateNode]);
+
+  const toggleCategory = useCallback((categoryId: string) => {
+    setCollapsedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) next.delete(categoryId);
+      else next.add(categoryId);
+      return next;
+    });
+  }, []);
 
   const handlePropagate = useCallback(() => {
     if (!dialog.node) return;
@@ -578,33 +690,74 @@ export function ModulesMasterView() {
         <CardContent className="p-0">
           {headerRow}
 
-          {deployedNodes
-            .filter(node => {
-              if (node.depth === 0) return true;
-              const rootKey = node.key.split('.')[0];
-              return !collapsed.has(rootKey);
-            })
-            .map(node => (
-            <ModuleRow
-              key={node.key}
-              node={node}
-              overrides={overrides.get(node.key) ?? []}
-              onToggleDeploy={handleToggleDeploy}
-              onTogglePlan={handleTogglePlan}
-              onChangeRole={handleChangeRole}
-              isUpdating={updateNode.isPending || propagate.isPending}
-              canDeploy={canDeploy}
-              isCollapsed={node.depth === 0 ? collapsed.has(node.key) : undefined}
-              onToggleCollapse={node.depth === 0 ? () => setCollapsed(prev => {
-                const next = new Set(prev);
-                if (next.has(node.key)) next.delete(node.key);
-                else next.add(node.key);
-                return next;
-              }) : undefined}
-            />
-          ))}
+          {groupedCategories.map(({ category, nodes }) => {
+            if (nodes.length === 0) return null;
+            const isCategoryCollapsed = collapsedCategories.has(category.id);
 
-          {deployedNodes.length === 0 && (
+            return (
+              <div key={category.id}>
+                <CategoryHeaderRow
+                  category={category}
+                  collapsed={isCategoryCollapsed}
+                  onToggle={() => toggleCategory(category.id)}
+                  moduleCount={nodes.filter((node) => node.depth === 1).length}
+                />
+
+                {!isCategoryCollapsed && nodes.map((node) => (
+                  <ModuleRow
+                    key={node.key}
+                    node={node}
+                    overrides={overrides.get(node.key) ?? []}
+                    onToggleDeploy={handleToggleDeploy}
+                    onTogglePlan={handleTogglePlan}
+                    onChangeRole={handleChangeRole}
+                    onRenameLabel={handleRenameLabel}
+                    isUpdating={updateNode.isPending || propagate.isPending}
+                    canDeploy={canDeploy}
+                  />
+                ))}
+              </div>
+            );
+          })}
+
+          {legacyNodes.length > 0 && (
+            <>
+              <div className={cn(`grid ${GRID_COLS} gap-2 items-center py-2 px-3 border-b border-border bg-muted/10`)}>
+                <button
+                  type="button"
+                  onClick={() => setShowLegacy((prev) => !prev)}
+                  className="flex items-center gap-2 min-w-0 text-left"
+                >
+                  <ChevronRight className={cn('w-4 h-4 shrink-0 transition-transform text-muted-foreground', showLegacy && 'rotate-90')} />
+                  <span className="font-medium text-muted-foreground truncate">Legacy / non classé</span>
+                  <Badge variant="outline" className="text-[10px]">{legacyNodes.filter((node) => node.depth === 1).length}</Badge>
+                </button>
+                <div className="text-center text-muted-foreground/30">—</div>
+                <div className="text-center text-muted-foreground/30">—</div>
+                <div className="text-center text-muted-foreground/30">—</div>
+                <div className="text-center text-muted-foreground/30">—</div>
+                <div className="text-center text-muted-foreground/30">—</div>
+                <div className="text-center text-muted-foreground/30">—</div>
+                <div className="text-center text-muted-foreground/30">—</div>
+              </div>
+
+              {showLegacy && legacyNodes.map((node) => (
+                <ModuleRow
+                  key={node.key}
+                  node={node}
+                  overrides={overrides.get(node.key) ?? []}
+                  onToggleDeploy={handleToggleDeploy}
+                  onTogglePlan={handleTogglePlan}
+                  onChangeRole={handleChangeRole}
+                  onRenameLabel={handleRenameLabel}
+                  isUpdating={updateNode.isPending || propagate.isPending}
+                  canDeploy={canDeploy}
+                />
+              ))}
+            </>
+          )}
+
+          {groupedCategories.every((group) => group.nodes.length === 0) && legacyNodes.length === 0 && (
             <div className="py-12 text-center text-muted-foreground">
               Aucun module déployé dans le registre.
             </div>
@@ -644,6 +797,7 @@ export function ModulesMasterView() {
                 onToggleDeploy={handleToggleDeploy}
                 onTogglePlan={handleTogglePlan}
                 onChangeRole={handleChangeRole}
+                onRenameLabel={handleRenameLabel}
                 isUpdating={updateNode.isPending || propagate.isPending}
                 canDeploy={canDeploy}
                 isDevSection
