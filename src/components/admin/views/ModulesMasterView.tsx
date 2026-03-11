@@ -612,6 +612,19 @@ export function ModulesMasterView() {
     }
   }, [updateNode]);
 
+  const handleRenameLabel = useCallback((node: RegistryNode, newLabel: string) => {
+    updateNode.mutate({ key: node.key, updates: { label: newLabel } });
+  }, [updateNode]);
+
+  const toggleCategory = useCallback((categoryId: string) => {
+    setCollapsedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) next.delete(categoryId);
+      else next.add(categoryId);
+      return next;
+    });
+  }, []);
+
   const handlePropagate = useCallback(() => {
     if (!dialog.node) return;
     const keys = getDescendantKeys(dialog.node);
