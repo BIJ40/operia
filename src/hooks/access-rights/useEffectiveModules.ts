@@ -105,9 +105,10 @@ export function useEffectiveModules(): EffectiveModulesResult & { isLoading: boo
       if (isRealUserImpersonation && impersonatedUser?.enabledModules) {
         const result: Record<string, { enabled: boolean; options: Record<string, boolean> }> = {};
         for (const [key, value] of Object.entries(impersonatedUser.enabledModules)) {
+          const isObj = typeof value === 'object' && value !== null;
           result[key] = {
-            enabled: value?.enabled ?? false,
-            options: value?.options ?? {},
+            enabled: isObj ? ((value as any).enabled ?? false) : (value === true),
+            options: isObj ? ((value as any).options ?? {}) : {},
           };
         }
         return result as Record<ModuleKey, { enabled: boolean; options: Record<string, boolean> }>;
