@@ -272,7 +272,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'agence', requiredOption: 'veille_apporteurs' },
+      moduleGuard: { moduleKey: 'pilotage.agence', requiredOption: 'veille_apporteurs' },
     },
   },
   {
