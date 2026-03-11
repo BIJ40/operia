@@ -167,7 +167,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Mon agence',
     description: 'Tableau de bord, KPIs et actions',
     icon: 'Building2',
-    category: 'outils',
+    category: 'pilotage',
     uiSubTab: 'actions',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
