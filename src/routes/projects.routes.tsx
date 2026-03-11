@@ -16,7 +16,7 @@ const ApogeeTicketsAdmin = lazy(() => import("@/apogee-tickets/pages/ApogeeTicke
 // Helper pour créer les layouts Projects
 function ProjectsLayout({ children }: { children: React.ReactNode }) {
   return (
-    <MinimalLayout backTab="ticketing" backLabel="Ticketing">
+    <MinimalLayout backTab="support" backLabel="Support">
       {children}
     </MinimalLayout>
   );
