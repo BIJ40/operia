@@ -50,7 +50,7 @@ Date : 2026-03-11
 | 6 | `src/components/unified/tabs/OrganisationTabContent.tsx` | tab visibility | 1× `requiresModule: 'agence'` → `'pilotage.agence'` |
 | 7 | `src/components/unified/tabs/DiversTabContent.tsx` | tab visibility | 4× `requiresModule: 'agence'` → `'pilotage.agence'`, 1× `requiresModule: 'divers_documents'` → `'mediatheque.documents'` |
 | 8 | `src/contexts/AuthContext.tsx` | helper/config | 1× `hasModuleGuard('agence')` → `hasModuleGuard('pilotage.agence')` |
-| 9 | `src/types/modules.ts` | type system | Ajout de `pilotage.dashboard`, `pilotage.agence`, `mediatheque.documents` au MODULES const (nécessaire pour que ModuleKey accepte les nouvelles clés) |
+| 9 | `src/types/modules.ts` | type system | Ajout de 3 clés au `MODULES` const : `pilotage.dashboard`, `pilotage.agence`, `mediatheque.documents`. **Justification** : les guards migrés utilisent ces clés comme `ModuleKey` ; sans cet ajout, TypeScript produit 27 erreurs de compilation (`Type '"pilotage.agence"' is not assignable to type 'ModuleKey'`). Aucune autre entrée du fichier n'a été modifiée — les legacy keys `agence`, `stats`, `divers_documents` et toutes les `MODULE_DEFINITIONS` / `MODULE_OPTIONS` restent intactes. |
 
 ## 4. Fichiers analysés mais non modifiés
 
