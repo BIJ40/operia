@@ -26,7 +26,7 @@ export default function IndicateursLayout() {
   }, [agence, toast]);
 
   // Redirect if no agency, no permission, or module not enabled
-  if (!agence || !hasAccessToScope('mes_indicateurs') || !hasModule('agence')) {
+  if (!agence || !hasAccessToScope('mes_indicateurs') || !hasModule('pilotage.agence' as ModuleKey)) {
     return <Navigate to="/" replace />;
   }
 
