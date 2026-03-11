@@ -240,7 +240,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'pilotage',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'agence' },
+      moduleGuard: { moduleKey: 'pilotage.agence' },
     },
   },
   {
@@ -251,7 +251,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'stats', requiredOption: 'stats_hub' },
+      moduleGuard: { moduleKey: 'pilotage.dashboard', requiredOption: 'stats_hub' },
     },
   },
   {
@@ -261,7 +261,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'pilotage',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'agence', requiredOption: 'indicateurs' },
+      moduleGuard: { moduleKey: 'pilotage.agence', requiredOption: 'indicateurs' },
     },
   },
   {
@@ -272,7 +272,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'agence', requiredOption: 'veille_apporteurs' },
+      moduleGuard: { moduleKey: 'pilotage.agence', requiredOption: 'veille_apporteurs' },
     },
   },
   {
@@ -282,7 +282,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'pilotage',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'agence', requiredOption: 'actions_a_mener' },
+      moduleGuard: { moduleKey: 'pilotage.agence', requiredOption: 'actions_a_mener' },
     },
   },
   {
@@ -292,7 +292,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'pilotage',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'agence', requiredOption: 'actions_a_mener' },
+      moduleGuard: { moduleKey: 'pilotage.agence', requiredOption: 'actions_a_mener' },
     },
     isDynamic: true,
   },
@@ -304,7 +304,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'agence', requiredOption: 'diffusion' },
+      moduleGuard: { moduleKey: 'pilotage.agence', requiredOption: 'diffusion' },
     },
   },
   {
@@ -314,7 +314,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'pilotage',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'agence' },
+      moduleGuard: { moduleKey: 'pilotage.agence' },
     },
   },
   {
@@ -324,7 +324,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'pilotage',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'agence' },
+      moduleGuard: { moduleKey: 'pilotage.agence' },
     },
   },
   {
@@ -335,7 +335,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'agence', requiredOption: 'mes_apporteurs' },
+      moduleGuard: { moduleKey: 'pilotage.agence', requiredOption: 'mes_apporteurs' },
     },
   },
   {
@@ -346,7 +346,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'agence', requiredOption: 'carte_rdv' },
+      moduleGuard: { moduleKey: 'pilotage.agence', requiredOption: 'carte_rdv' },
     },
   },
   {
@@ -356,7 +356,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'pilotage',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'agence' },
+      moduleGuard: { moduleKey: 'pilotage.agence' },
     },
   },
   {
@@ -366,7 +366,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'pilotage',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'agence' },
+      moduleGuard: { moduleKey: 'pilotage.agence' },
     },
   },
   // Legacy /hc-agency redirect

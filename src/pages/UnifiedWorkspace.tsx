@@ -106,10 +106,10 @@ function UnifiedWorkspaceContent() {
   // Configuration des onglets avec permissions
   const allTabs: TabConfig[] = useMemo(() => [
     { id: 'accueil', label: 'Accueil', icon: Home },
-    { id: 'pilotage', label: 'Pilotage', icon: BarChart3, requiresOption: { module: 'stats' }, altModules: ['agence'] },
-    { id: 'commercial', label: 'Commercial', icon: ShoppingCart, requiresOption: { module: 'prospection' }, altModules: ['agence', 'commercial.realisations'] },
-    { id: 'organisation', label: 'Organisation', icon: Users, requiresOption: { module: 'organisation.salaries' }, altModules: ['organisation.parc', 'organisation.apporteurs', 'organisation.plannings', 'organisation.reunions', 'agence'] },
-    { id: 'documents', label: 'Documents', icon: FolderOpen, requiresOption: { module: 'divers_documents' } },
+    { id: 'pilotage', label: 'Pilotage', icon: BarChart3, requiresOption: { module: 'pilotage.dashboard' }, altModules: ['pilotage.agence'] },
+    { id: 'commercial', label: 'Commercial', icon: ShoppingCart, requiresOption: { module: 'prospection' }, altModules: ['pilotage.agence', 'commercial.realisations'] },
+    { id: 'organisation', label: 'Organisation', icon: Users, requiresOption: { module: 'organisation.salaries' }, altModules: ['organisation.parc', 'organisation.apporteurs', 'organisation.plannings', 'organisation.reunions', 'pilotage.agence'] },
+    { id: 'documents', label: 'Documents', icon: FolderOpen, requiresOption: { module: 'mediatheque.documents' } },
     { id: 'support', label: 'Support', icon: Headphones, requiresOption: { module: 'support.aide_en_ligne' }, altModules: ['support.guides', 'ticketing'] },
     { id: 'admin', label: 'Admin', icon: Shield, requiresOption: { module: 'admin_plateforme' } },
   ], []);

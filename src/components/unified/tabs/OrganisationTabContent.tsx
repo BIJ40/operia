@@ -27,7 +27,7 @@ const ALL_ORGANISATION_TABS: (PillTabConfig & { requiresModule?: ModuleKey })[] 
   { id: 'plannings', label: 'Plannings', icon: CalendarDays, accent: 'green', requiresModule: 'organisation.plannings' },
   { id: 'reunions', label: 'Réunions', icon: Users2, accent: 'orange', requiresModule: 'organisation.reunions' },
   { id: 'parc', label: 'Parc', icon: Car, accent: 'pink', requiresModule: 'organisation.parc' },
-  { id: 'conformite', label: 'Documents légaux', icon: FileText, accent: 'teal', requiresModule: 'agence' },
+  { id: 'conformite', label: 'Documents légaux', icon: FileText, accent: 'teal', requiresModule: 'pilotage.agence' },
 ];
 
 function LoadingFallback() {

@@ -42,6 +42,8 @@ export const MODULES = {
   'pilotage.actions_a_mener': 'pilotage.actions_a_mener',
   'pilotage.devis_acceptes': 'pilotage.devis_acceptes',
   'pilotage.incoherences': 'pilotage.incoherences',
+  'pilotage.dashboard': 'pilotage.dashboard',
+  'pilotage.agence': 'pilotage.agence',
   // Commercial
   'commercial.suivi_client': 'commercial.suivi_client',
   'commercial.comparateur': 'commercial.comparateur',
@@ -59,6 +61,7 @@ export const MODULES = {
   'mediatheque.consulter': 'mediatheque.consulter',
   'mediatheque.gerer': 'mediatheque.gerer',
   'mediatheque.corbeille': 'mediatheque.corbeille',
+  'mediatheque.documents': 'mediatheque.documents',
   // Support
   'support.aide_en_ligne': 'support.aide_en_ligne',
   'support.guides': 'support.guides',
