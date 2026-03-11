@@ -161,7 +161,9 @@ export const MODULE_OPTIONS = {
   },
 } as const;
 
-export type ModuleOptionPath = typeof MODULE_OPTIONS[ModuleKey][keyof typeof MODULE_OPTIONS[ModuleKey]];
+/** Legacy module keys (those with entries in MODULE_OPTIONS) */
+type LegacyModuleKey = keyof typeof MODULE_OPTIONS;
+export type ModuleOptionPath = typeof MODULE_OPTIONS[LegacyModuleKey][keyof typeof MODULE_OPTIONS[LegacyModuleKey]];
 
 // Métadonnées des modules pour l'UI
 // Les catégories correspondent EXACTEMENT aux onglets de niveau 1 du workspace
