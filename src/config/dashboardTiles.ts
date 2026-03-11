@@ -57,7 +57,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     description: 'Documents et ressources HelpConfort',
     icon: FolderOpen,
     route: ROUTES.academy.documents,
-    scopeSlug: SCOPE_SLUGS.BASE_DOCUMENTAIRE,
+    scopeSlug: 'helpconfort',
     color: 'primary',
     group: 'guides',
     requiresModule: 'guides',
