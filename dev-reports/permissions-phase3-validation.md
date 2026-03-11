@@ -87,11 +87,11 @@ Chemin B — usePermissions().hasModule / ModuleGuard
 
 ```
 ╔══════════════════════════════════════╗
-║  SAFE_FOR_PHASE4 = false            ║
+║  SAFE_FOR_PHASE4 = true  ✅          ║
 ║                                      ║
-║  Raison: double chemin hasModule     ║
-║  Action: unifier avant migration     ║
-║  Prod actuelle: STABLE ✅            ║
+║  Phase 3.5 terminée                  ║
+║  Deux chemins unifiés via compatMap  ║
+║  Prod: STABLE ✅                     ║
 ╚══════════════════════════════════════╝
 ```
 
