@@ -66,7 +66,7 @@ function buildTree(rows: RegistryRow[]): RegistryNode[] {
     const effectivePlan: PlanLevel = row.required_plan;
 
     const rawChildren = childrenMap.get(row.key) ?? [];
-    rawChildren.sort((a, b) => a.sort_order - b.sort_order);
+    rawChildren.sort((a, b) => a.sort_order - b.sort_order || a.key.localeCompare(b.key));
 
     const children = rawChildren.map(child =>
       buildNode(child, depth + 1, effectiveDeployed, effectivePlan)
