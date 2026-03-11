@@ -40,11 +40,11 @@ export function AcademyRoutes() {
       <Route path="/academy/hc-services" element={<Navigate to="/?tab=aide" replace />} />
       <Route path="/academy/hc-services/category/:slug" element={<GuidesLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="guides"><HcServicesEditorProvider><CategoryHcServices /></HcServicesEditorProvider></ModuleGuard></RoleGuard></GuidesLayout>} />
       {/* Legacy OPERIA redirects */}
-      <Route path="/academy/operia" element={<Navigate to="/?tab=guides" replace />} />
-      <Route path="/academy/operia/category/:slug" element={<Navigate to="/?tab=guides" replace />} />
+      <Route path="/academy/operia" element={<Navigate to="/?tab=aide" replace />} />
+      <Route path="/academy/operia/category/:slug" element={<Navigate to="/?tab=aide" replace />} />
       
       {/* Base Documentaire */}
-      <Route path="/academy/hc-base" element={<Navigate to="/?tab=guides" replace />} />
+      <Route path="/academy/hc-base" element={<Navigate to="/?tab=aide" replace />} />
       <Route path="/academy/hc-base/category/:slug" element={<GuidesLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="guides"><CategoryHelpConfort /></ModuleGuard></RoleGuard></GuidesLayout>} />
     </>
   );
