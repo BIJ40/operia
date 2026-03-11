@@ -49,7 +49,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: 'apporteurs',
     color: 'primary',
     group: 'guides',
-    requiresModule: 'guides',
+    requiresModule: 'support.guides',
   },
   {
     id: 'BASE_DOCUMENTAIRE',
