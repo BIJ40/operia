@@ -299,18 +299,22 @@ function OverridesPopover({
 
 // Route mapping for module keys → app routes
 const MODULE_ROUTES: Record<string, string> = {
-  planning_v2: '/planning-v2',
   agence: '/?tab=pilotage',
-  statistiques: '/?tab=pilotage',
-  commercial: '/commercial',
-  rh: '/rh',
-  parc: '/parc',
-  mediatheque: '/mediatheque',
-  apporteurs: '/apporteurs',
-  aide: '/aide',
-  ticketing: '/tickets',
-  apogee_tickets: '/tickets',
-  reseau_franchiseur: '/franchiseur',
+  stats: '/?tab=pilotage',
+  prospection: '/?tab=commercial',
+  realisations: '/?tab=commercial',
+  rh: '/?tab=organisation',
+  divers_apporteurs: '/?tab=organisation',
+  divers_plannings: '/?tab=organisation',
+  divers_reunions: '/?tab=organisation',
+  parc: '/?tab=organisation',
+  divers_documents: '/?tab=documents',
+  documents: '/?tab=documents',
+  aide: '/?tab=support',
+  guides: '/?tab=support',
+  ticketing: '/?tab=support',
+  reseau_franchiseur: '/?tab=franchiseur',
+  admin_plateforme: '/?tab=admin',
 };
 
 function getModuleRoute(key: string): string | null {
