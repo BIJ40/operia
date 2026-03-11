@@ -242,7 +242,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     description: 'Calcul et suivi mensuel des redevances',
     icon: Coins,
     route: ROUTES.reseau.redevances,
-    scopeSlug: SCOPE_SLUGS.FRANCHISEUR_ROYALTIES,
+    scopeSlug: 'franchiseur_royalties',
     color: 'accent',
     group: 'franchiseur',
     badge: 'En cours',
