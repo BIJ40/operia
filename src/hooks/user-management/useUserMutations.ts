@@ -96,8 +96,10 @@ export function useUserMutations({
           body: { ...userData, globalRole: effectiveGlobalRole } 
         })
       );
-      if (error) throw error;
+      // Edge function returns {error: "message"} in body with non-2xx status
+      // SDK puts body in data and generic message in error for non-2xx
       if (data?.error) throw new Error(data.error);
+      if (error) throw error;
       return data;
     },
     onSuccess: async () => {
