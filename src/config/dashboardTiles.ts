@@ -93,7 +93,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     description: 'Véhicules, matériel et EPI',
     icon: Car,
     route: ROUTES.rh.parc,
-    scopeSlug: SCOPE_SLUGS.ACTIONS_A_MENER,
+    scopeSlug: 'actions_a_mener',
     color: 'accent',
     group: 'rh',
     requiresModule: 'rh',
