@@ -35,7 +35,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     description: 'Guide complet pour maîtriser le logiciel Apogée',
     icon: BookOpen,
     route: ROUTES.academy.apogee,
-    scopeSlug: SCOPE_SLUGS.APOGEE,
+    scopeSlug: 'apogee',
     color: 'primary',
     group: 'guides',
     requiresModule: 'guides',
