@@ -453,7 +453,7 @@ function ExpandedMapContent({
 
       const map = new mapboxgl.Map({
         container,
-        style: MAPBOX_STYLE,
+        style: PRIMARY_MAPBOX_STYLE,
         center: [2.3522, 48.8566],
         zoom: 10,
         attributionControl: true,
@@ -462,6 +462,7 @@ function ExpandedMapContent({
       map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
 
       map.on('load', () => map.resize());
+      enableStyleFallback(map);
 
       mapRef.current = map;
       setMapReady(true);
