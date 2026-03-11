@@ -69,6 +69,10 @@ export default function StatiaBuilderAdminPage() {
               <CheckSquare className="h-4 w-4" />
               Validator Hub
             </TabsTrigger>
+            <TabsTrigger value="documents" className="flex items-center gap-2">
+              <FileSearch className="h-4 w-4" />
+              Documents API
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="viewer" className="mt-6">
@@ -77,6 +81,12 @@ export default function StatiaBuilderAdminPage() {
 
           <TabsContent value="validator" className="mt-6">
             <MetricValidatorHub mode="admin" />
+          </TabsContent>
+
+          <TabsContent value="documents" className="mt-6">
+            <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
+              <ApogeeDocumentsExplorer />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </div>
