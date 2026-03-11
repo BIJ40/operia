@@ -69,7 +69,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     description: 'Accès aux indicateurs et KPI de votre agence',
     icon: PieChart,
     route: ROUTES.agency.statsHub,
-    scopeSlug: SCOPE_SLUGS.MES_INDICATEURS,
+    scopeSlug: 'mes_indicateurs',
     color: 'accent',
     group: 'pilotage',
     requiresModule: 'agence',
