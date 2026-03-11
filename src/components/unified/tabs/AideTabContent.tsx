@@ -21,7 +21,7 @@ type SupportSubTab = 'aide-en-ligne' | 'guides' | 'faq' | 'ticketing';
 
 const ALL_SUPPORT_TABS: (PillTabConfig & { requiresModule?: ModuleKey })[] = [
   { id: 'aide-en-ligne', label: 'Aide en ligne', icon: Headphones, accent: 'blue', requiresModule: 'support.aide_en_ligne' },
-  { id: 'guides', label: 'Guides', icon: BookOpen, accent: 'purple', requiresModule: 'guides' },
+  { id: 'guides', label: 'Guides', icon: BookOpen, accent: 'purple', requiresModule: 'support.guides' },
   { id: 'faq', label: 'FAQ', icon: HelpCircle, accent: 'green' },
   { id: 'ticketing', label: 'Ticketing', icon: Ticket, accent: 'orange', requiresModule: 'ticketing' },
 ];

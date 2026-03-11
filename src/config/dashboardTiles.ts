@@ -120,7 +120,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: 'rh_tech',
     color: 'accent',
     group: 'rh',
-    requiresModule: 'rh',
+    requiresModule: 'organisation.salaries',
     requiresModuleOptions: ['rh_viewer', 'rh_admin'],
     featureFlagKey: 'rh.validation-plannings',
     badge: 'Bientôt',

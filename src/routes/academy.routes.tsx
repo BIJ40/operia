@@ -45,7 +45,7 @@ export function AcademyRoutes() {
       
       {/* Base Documentaire */}
       <Route path="/academy/hc-base" element={<Navigate to="/?tab=support" replace />} />
-      <Route path="/academy/hc-base/category/:slug" element={<GuidesLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="guides"><CategoryHelpConfort /></ModuleGuard></RoleGuard></GuidesLayout>} />
+      <Route path="/academy/hc-base/category/:slug" element={<GuidesLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="support.guides"><CategoryHelpConfort /></ModuleGuard></RoleGuard></GuidesLayout>} />
     </>
   );
 }

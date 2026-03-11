@@ -79,7 +79,7 @@ export function RHRoutes() {
         element={
           <RHLayout>
             <RoleGuard minRole="franchisee_admin">
-              <ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}>
+              <ModuleGuard moduleKey="organisation.salaries" requiredOptions={['rh_viewer', 'rh_admin']}>
                 <RHMeetingsPage />
               </ModuleGuard>
             </RoleGuard>
