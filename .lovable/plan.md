@@ -216,3 +216,43 @@
 | DevOps | 7.0 | 9.0 | 9.5 |
 | Maintenabilité | 7.0 | 9.5 | 9.5 |
 | **Global** | **7.0** | **9.4** | **9.5** |
+
+---
+
+## C2 — Refonte Permissions Fines (en cours)
+
+### Phase 2 — 42 nœuds granulaires créés dans module_registry
+
+6 modules racines (`pilotage`, `commercial`, `organisation`, `mediatheque`, `support`, `admin`) avec node_type `module`.
+36 nœuds enfants (sections, screens, features).
+Aucun nœud legacy modifié. Les anciennes clés restent intactes.
+
+### CONTRAINTE CRITIQUE — Module Ticketing en production
+
+La plateforme est déjà utilisée en production pour le module Ticketing.
+Les utilisateurs actuels doivent conserver leur accès sans interruption pendant toute la migration.
+
+La clé historique `ticketing` doit rester fonctionnelle jusqu'à la phase finale de nettoyage (Phase 7).
+
+**Compatibilité obligatoire :**
+
+```
+support.ticketing ← ticketing
+```
+
+Cette compatibilité doit être active dans :
+- Le moteur frontend (`hasModule` via `COMPAT_MAP`)
+- La RPC `get_user_effective_modules`
+- Tous les guards UI utilisant le module ticketing
+
+**Pré-requis avant migration des guards Ticketing :**
+
+Avant toute modification de guard passant de `ticketing` à `support.ticketing`, un test doit confirmer :
+
+```
+hasModule("support.ticketing") === true
+```
+
+pour un utilisateur possédant **uniquement** la clé `ticketing` dans `user_modules`.
+
+**Règle absolue :** Aucune modification des guards Ticketing ne doit être faite tant que cette compatibilité n'est pas active et vérifiée.

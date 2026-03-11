@@ -13,12 +13,12 @@ export interface RightsCategory {
 }
 
 export const RIGHTS_CATEGORIES: RightsCategory[] = [
-  { id: 'pilotage', label: 'Pilotage', moduleKeys: ['stats', 'agence'] },
-  { id: 'commercial', label: 'Commercial', moduleKeys: ['prospection', 'realisations'] },
-  { id: 'organisation', label: 'Organisation', moduleKeys: ['rh', 'divers_apporteurs', 'divers_plannings', 'divers_reunions', 'parc', 'divers_documents'] },
-  { id: 'documents', label: 'Documents', moduleKeys: ['documents'] },
-  { id: 'support', label: 'Support', moduleKeys: ['aide', 'guides', 'ticketing'] },
-  { id: 'admin', label: 'Admin', moduleKeys: ['admin_plateforme', 'reseau_franchiseur'] },
+  { id: 'pilotage', label: 'Pilotage', moduleKeys: ['pilotage', 'stats', 'agence'] },
+  { id: 'commercial', label: 'Commercial', moduleKeys: ['commercial', 'prospection', 'realisations'] },
+  { id: 'organisation', label: 'Organisation', moduleKeys: ['organisation', 'rh', 'divers_apporteurs', 'divers_plannings', 'divers_reunions', 'parc', 'divers_documents'] },
+  { id: 'documents', label: 'Documents', moduleKeys: ['mediatheque', 'documents'] },
+  { id: 'support', label: 'Support', moduleKeys: ['support', 'aide', 'guides', 'ticketing'] },
+  { id: 'admin', label: 'Admin', moduleKeys: ['admin', 'admin_plateforme', 'reseau_franchiseur'] },
 ];
 
 /**
