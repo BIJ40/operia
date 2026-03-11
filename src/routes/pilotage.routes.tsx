@@ -63,8 +63,8 @@ export function PilotageRoutes() {
       <Route path="/agency/veille-apporteurs" element={<Navigate to="/?tab=organisation" replace />} />
       
       {/* Actions à Mener */}
-      <Route path="/agency/actions" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="agence" requiredOption="actions_a_mener"><ActionsAMener /></ModuleGuard></RoleGuard></AgencyLayout>} />
-      <Route path="/agency/actions/category/:slug" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="agence" requiredOption="actions_a_mener"><CategoryActionsAMener /></ModuleGuard></RoleGuard></AgencyLayout>} />
+      <Route path="/agency/actions" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage.agence" requiredOption="actions_a_mener"><ActionsAMener /></ModuleGuard></RoleGuard></AgencyLayout>} />
+      <Route path="/agency/actions/category/:slug" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage.agence" requiredOption="actions_a_mener"><CategoryActionsAMener /></ModuleGuard></RoleGuard></AgencyLayout>} />
       
       {/* Diffusion */}
       <Route
