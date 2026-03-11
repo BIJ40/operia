@@ -123,7 +123,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'guides' },
+      moduleGuard: { moduleKey: 'support.guides' },
     },
   },
   {
