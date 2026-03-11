@@ -16,7 +16,7 @@ import { lazy, Suspense, useMemo, useState, useCallback, useEffect } from 'react
 import { useSearchParams } from 'react-router-dom';
 import { 
   Home, BarChart3, ShoppingCart, 
-  Users, Ticket, HelpCircle,
+  Users, Headphones,
   Loader2, Shield, FolderOpen,
 } from 'lucide-react';
 import { TooltipProvider } from '@/components/ui/tooltip';
