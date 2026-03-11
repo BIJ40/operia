@@ -152,7 +152,7 @@ export function useUpdateModuleNode() {
   return useMutation({
     mutationFn: async (params: {
       key: string;
-      updates: { is_deployed?: boolean; required_plan?: PlanLevel; min_role?: number };
+      updates: { is_deployed?: boolean; required_plan?: PlanLevel; min_role?: number; label?: string };
     }) => {
       const { error } = await supabase
         .from('module_registry' as any)
