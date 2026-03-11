@@ -113,7 +113,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'guides' },
+      moduleGuard: { moduleKey: 'support.guides' },
     },
   },
   {
@@ -123,7 +123,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'guides' },
+      moduleGuard: { moduleKey: 'support.guides' },
     },
   },
   {
@@ -133,7 +133,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'guides' },
+      moduleGuard: { moduleKey: 'support.guides' },
     },
     isDynamic: true,
   },
@@ -144,7 +144,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'guides' },
+      moduleGuard: { moduleKey: 'support.guides' },
     },
   },
   {
@@ -154,7 +154,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'guides' },
+      moduleGuard: { moduleKey: 'support.guides' },
     },
     isDynamic: true,
   },
@@ -165,7 +165,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'guides' },
+      moduleGuard: { moduleKey: 'support.guides' },
     },
     isDynamic: true,
   },
@@ -176,7 +176,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'guides' },
+      moduleGuard: { moduleKey: 'support.guides' },
     },
   },
   {
@@ -186,7 +186,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'guides' },
+      moduleGuard: { moduleKey: 'support.guides' },
     },
     isDynamic: true,
   },
@@ -217,7 +217,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'guides' },
+      moduleGuard: { moduleKey: 'support.guides' },
     },
   },
   {
@@ -227,7 +227,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'guides' },
+      moduleGuard: { moduleKey: 'support.guides' },
     },
     isDynamic: true,
   },
@@ -453,7 +453,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'rh' },
+      moduleGuard: { moduleKey: 'organisation.salaries' },
     },
   },
   {
@@ -464,7 +464,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'rh', requiredOptions: ['rh_viewer', 'rh_admin'] },
+      moduleGuard: { moduleKey: 'organisation.salaries', requiredOptions: ['rh_viewer', 'rh_admin'] },
     },
   },
   {
@@ -475,7 +475,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'rh', requiredOptions: ['rh_viewer', 'rh_admin'] },
+      moduleGuard: { moduleKey: 'organisation.salaries', requiredOptions: ['rh_viewer', 'rh_admin'] },
     },
     isDynamic: true,
   },
@@ -487,7 +487,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'rh' },
+      moduleGuard: { moduleKey: 'organisation.salaries' },
     },
   },
   // Legacy N1 routes supprimées (heures, timesheets) - portail salarié N1 désactivé v0.8.3
@@ -499,7 +499,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'rh' },
+      moduleGuard: { moduleKey: 'organisation.salaries' },
     },
   },
   {
@@ -510,7 +510,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'rh' },
+      moduleGuard: { moduleKey: 'organisation.salaries' },
     },
   },
   {
@@ -521,7 +521,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'rh' },
+      moduleGuard: { moduleKey: 'organisation.salaries' },
     },
   },
   {
@@ -532,7 +532,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'rh' },
+      moduleGuard: { moduleKey: 'organisation.salaries' },
     },
   },
   // RH Redirects

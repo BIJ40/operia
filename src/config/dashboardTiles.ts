@@ -38,7 +38,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: 'apogee',
     color: 'primary',
     group: 'guides',
-    requiresModule: 'guides',
+    requiresModule: 'support.guides',
   },
   {
     id: 'GUIDE_APPORTEURS',
@@ -49,7 +49,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: 'apporteurs',
     color: 'primary',
     group: 'guides',
-    requiresModule: 'guides',
+    requiresModule: 'support.guides',
   },
   {
     id: 'BASE_DOCUMENTAIRE',
@@ -60,7 +60,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: 'helpconfort',
     color: 'primary',
     group: 'guides',
-    requiresModule: 'guides',
+    requiresModule: 'support.guides',
   },
   // Pilotage Agence
   {
@@ -96,7 +96,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: 'actions_a_mener',
     color: 'accent',
     group: 'rh',
-    requiresModule: 'rh',
+    requiresModule: 'organisation.salaries',
   },
   {
     id: 'DIFFUSION',
@@ -120,7 +120,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: 'rh_tech',
     color: 'accent',
     group: 'rh',
-    requiresModule: 'rh',
+    requiresModule: 'organisation.salaries',
     requiresModuleOptions: ['rh_viewer', 'rh_admin'],
     featureFlagKey: 'rh.validation-plannings',
     badge: 'Bientôt',
