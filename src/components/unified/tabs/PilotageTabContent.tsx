@@ -1,14 +1,13 @@
 /**
  * PilotageTabContent - Onglet "Pilotage"
- * Sous-onglets : Stats, Performance, Actions à mener
+ * Sous-onglets : Stats, Performance, Actions à mener, Devis acceptés, Incohérences
  */
 
 import { lazy, Suspense, useMemo } from 'react';
-import { BarChart3, Activity, Settings, Loader2 } from 'lucide-react';
+import { BarChart3, Activity, Settings, FileCheck, AlertTriangle, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
-import { useStatsHub } from '@/apogee-connect/components/stats-hub/StatsHubContext';
 import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
 import { ModuleKey } from '@/types/modules';
 
@@ -20,13 +19,17 @@ const PerformanceDashboard = lazy(() =>
 const ActionsAMenerTab = lazy(() => 
   import('@/components/pilotage/ActionsAMenerTab').then(m => ({ default: m.ActionsAMenerTab }))
 );
+const DevisAcceptesView = lazy(() => import('@/apogee-connect/components/DevisAcceptesView'));
+const AnomaliesDevisDossierView = lazy(() => import('@/apogee-connect/components/AnomaliesDevisDossierView'));
 
-type PilotageSubTab = 'stats' | 'performance' | 'actions';
+type PilotageSubTab = 'stats' | 'performance' | 'actions' | 'devis-acceptes' | 'anomalies';
 
 const ALL_PILOTAGE_TABS: (PillTabConfig & { requiresModule?: ModuleKey })[] = [
   { id: 'stats', label: 'Statistiques', icon: BarChart3, accent: 'blue', requiresModule: 'stats' },
   { id: 'performance', label: 'Performance', icon: Activity, accent: 'pink', requiresModule: 'agence' },
   { id: 'actions', label: 'Actions à mener', icon: Settings, accent: 'orange', requiresModule: 'agence' },
+  { id: 'devis-acceptes', label: 'Devis acceptés', icon: FileCheck, accent: 'teal', requiresModule: 'agence' },
+  { id: 'anomalies', label: 'Incohérences', icon: AlertTriangle, accent: 'pink', requiresModule: 'agence' },
 ];
 
 function LoadingFallback() {
@@ -71,6 +74,18 @@ export default function PilotageTabContent() {
         <TabsContent value="actions" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
             <ActionsAMenerTab />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="devis-acceptes" className="mt-4">
+          <Suspense fallback={<LoadingFallback />}>
+            <DevisAcceptesView />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="anomalies" className="mt-4">
+          <Suspense fallback={<LoadingFallback />}>
+            <AnomaliesDevisDossierView />
           </Suspense>
         </TabsContent>
       </Tabs>
