@@ -46,9 +46,49 @@ interface DashboardMapWidgetProps {
   agencySlug?: string;
 }
 
-const MAPBOX_STYLE = 'mapbox://styles/bij40/cmjbi8grj000t01s3ajxo3amm';
+const PRIMARY_MAPBOX_STYLE = 'mapbox://styles/bij40/cmjbi8grj000t01s3ajxo3amm';
+const FALLBACK_MAPBOX_STYLE = 'mapbox://styles/mapbox/streets-v12';
 
 type MapTimeFilter = 'jour' | 'actuel';
+
+function enableStyleFallback(map: mapboxgl.Map) {
+  let fallbackApplied = false;
+
+  const applyFallback = () => {
+    if (fallbackApplied) return;
+    fallbackApplied = true;
+    console.warn('[MAP] Style principal indisponible, fallback activé');
+    map.setStyle(FALLBACK_MAPBOX_STYLE);
+  };
+
+  map.on('error', (event: any) => {
+    const message = String(event?.error?.message ?? '').toLowerCase();
+    const status = event?.error?.status ?? event?.error?.statusCode;
+    const isStyleError =
+      message.includes('style') ||
+      message.includes('sprite') ||
+      message.includes('source') ||
+      status === 401 ||
+      status === 403 ||
+      status === 404;
+
+    if (isStyleError) {
+      applyFallback();
+    }
+  });
+
+  map.on('styledata', () => {
+    if (!map.isStyleLoaded()) return;
+
+    const style = map.getStyle();
+    const sourceCount = Object.keys(style?.sources ?? {}).length;
+    const hasRenderableLayer = (style?.layers ?? []).some(layer => layer.type !== 'background');
+
+    if (sourceCount === 0 || !hasRenderableLayer) {
+      applyFallback();
+    }
+  });
+}
 
 export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidgetProps) {
   const today = new Date();
@@ -91,7 +131,7 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
 
     const map = new mapboxgl.Map({
       container,
-      style: MAPBOX_STYLE,
+      style: PRIMARY_MAPBOX_STYLE,
       center: [2.3522, 48.8566],
       zoom: 10,
       attributionControl: true,
@@ -102,9 +142,7 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
       map.resize();
     });
 
-    map.on('error', (e: any) => {
-      console.error('[MAP] Error:', e.error?.message || e);
-    });
+    enableStyleFallback(map);
 
     mapRef.current = map;
     setMapReady(true);
@@ -415,7 +453,7 @@ function ExpandedMapContent({
 
       const map = new mapboxgl.Map({
         container,
-        style: MAPBOX_STYLE,
+        style: PRIMARY_MAPBOX_STYLE,
         center: [2.3522, 48.8566],
         zoom: 10,
         attributionControl: true,
@@ -424,6 +462,7 @@ function ExpandedMapContent({
       map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
 
       map.on('load', () => map.resize());
+      enableStyleFallback(map);
 
       mapRef.current = map;
       setMapReady(true);
