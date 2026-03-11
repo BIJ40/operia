@@ -2,7 +2,7 @@
  * WorkspaceTabContent - All tab content panels with lazy loading and error boundaries
  */
 import { lazy, Suspense } from 'react';
-import { Loader2, FlaskConical } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { TabsContent } from '@/components/ui/tabs';
 import { LocalErrorBoundary } from '@/components/system/LocalErrorBoundary';
 import { StatsHubProvider } from '@/apogee-connect/components/stats-hub/StatsHubContext';
