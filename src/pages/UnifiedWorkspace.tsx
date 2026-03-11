@@ -15,9 +15,9 @@
 import { lazy, Suspense, useMemo, useState, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
-  Home, BarChart3, ClipboardList, 
-  MoreHorizontal, Ticket, HelpCircle,
-  Loader2, BookOpen, Shield, FolderOpen, FlaskConical,
+  Home, BarChart3, ShoppingCart, 
+  Users, Ticket, HelpCircle,
+  Loader2, Shield, FolderOpen, FlaskConical,
 } from 'lucide-react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Tabs } from '@/components/ui/tabs';
