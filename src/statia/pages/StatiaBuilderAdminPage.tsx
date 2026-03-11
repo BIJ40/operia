@@ -8,14 +8,16 @@
  * interférer avec les params de navigation admin.
  */
 
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { AllMetricsViewer } from '../components/AllMetricsViewer';
 import { MetricValidatorHub } from '../components/MetricValidatorHub';
 import { LocalErrorBoundary } from '@/components/system/LocalErrorBoundary';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertTriangle, LayoutGrid, CheckSquare } from 'lucide-react';
+import { AlertTriangle, LayoutGrid, CheckSquare, FileSearch, Loader2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+
+const ApogeeDocumentsExplorer = lazy(() => import('@/apogee-connect/components/ApogeeDocumentsExplorer'));
 
 function StatiaErrorFallback({ error }: { error: Error }) {
   return (
