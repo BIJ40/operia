@@ -487,7 +487,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'rh' },
+      moduleGuard: { moduleKey: 'organisation.salaries' },
     },
   },
   // Legacy N1 routes supprimées (heures, timesheets) - portail salarié N1 désactivé v0.8.3
