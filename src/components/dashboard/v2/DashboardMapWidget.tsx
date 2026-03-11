@@ -59,6 +59,10 @@ function enableStyleFallback(map: mapboxgl.Map) {
     fallbackApplied = true;
     console.warn('[MAP] Style principal indisponible, fallback activé');
     map.setStyle(FALLBACK_MAPBOX_STYLE);
+    map.once('style.load', () => {
+      console.log('[MAP] Fallback style loaded, forcing resize');
+      map.resize();
+    });
   };
 
   map.on('error', (event: any) => {
@@ -88,6 +92,19 @@ function enableStyleFallback(map: mapboxgl.Map) {
       applyFallback();
     }
   });
+}
+
+/**
+ * Attach a ResizeObserver to auto-resize the map when container dimensions change
+ */
+function attachResizeObserver(container: HTMLElement, map: mapboxgl.Map): ResizeObserver {
+  const ro = new ResizeObserver(() => {
+    if (map && !((map as any)._removed)) {
+      map.resize();
+    }
+  });
+  ro.observe(container);
+  return ro;
 }
 
 export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidgetProps) {
