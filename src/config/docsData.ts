@@ -63,8 +63,8 @@ export const MODULES_DOCS: ModuleDoc[] = [
     edgeFunctions: ['qualify-ticket'],
   },
   {
-    id: 'pilotage_agence',
-    name: 'Pilotage Agence',
+    id: 'agence',
+    name: 'Mon Agence (ex-Pilotage Agence)',
     description: 'Tableaux de bord et statistiques métier (StatIA)',
     routes: ['/agency', '/agency/indicateurs/*', '/diffusion'],
     permissions: 'N1+ (franchisee_user)',
