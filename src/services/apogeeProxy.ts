@@ -359,6 +359,9 @@ export interface ApogeeProxy {
   getDevis: <T = any[]>(options?: ApogeeProxyOptions) => Promise<T>;
   getInterventionsCreneaux: <T = any[]>(options?: ApogeeProxyOptions) => Promise<T>;
   getPlanningCreneaux: <T = any[]>(options?: ApogeeProxyOptions) => Promise<T>;
+  getProjectByHash: <T = unknown>(options: ApogeeProxyOptions & {
+    filters: { ref: string; hash: string; zipCode: string };
+  }) => Promise<T>;
   
   // Utility methods
   clearCache: (agencySlug?: string) => void;
