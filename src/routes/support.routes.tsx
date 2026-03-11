@@ -9,7 +9,7 @@ const Faq = lazy(() => import("@/pages/Faq"));
 // Helper pour créer les layouts Support
 function SupportLayout({ children }: { children: React.ReactNode }) {
   return (
-    <MinimalLayout backTab="aide" backLabel="Retour à l'Aide">
+    <MinimalLayout backTab="support" backLabel="Retour au Support">
       {children}
     </MinimalLayout>
   );

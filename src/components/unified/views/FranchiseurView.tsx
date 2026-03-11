@@ -297,12 +297,8 @@ function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
               <GuidesTabContent />
             </TabsContent>
             
-            <TabsContent value="ticketing" className="mt-0">
-              <TicketingTabContent />
-            </TabsContent>
-            
-            <TabsContent value="aide" className="mt-0">
-              <SupportTabContent />
+            <TabsContent value="support" className="mt-0">
+              <SupportHubTabContent />
             </TabsContent>
           </Suspense>
         </main>

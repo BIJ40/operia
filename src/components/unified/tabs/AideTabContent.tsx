@@ -1,11 +1,12 @@
 /**
- * AideTabContent - Onglet "Aide"
- * Sous-onglets : Support, Guides, FAQ
+ * SupportHubTabContent - Onglet unifié "Support"
+ * Sous-onglets : Aide en ligne, Guides, FAQ, Ticketing (conditionnel)
+ * 
  * Guides contient des sous-catégories (Apogée, et futures : Apporteurs, HelpConfort)
  */
 
 import { lazy, Suspense, useMemo, useState } from 'react';
-import { Headphones, BookOpen, HelpCircle, Loader2 } from 'lucide-react';
+import { Headphones, BookOpen, HelpCircle, Ticket, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
@@ -14,13 +15,15 @@ import { ModuleKey } from '@/types/modules';
 import { InternalApogeeLayout } from '@/components/guides/apogee/InternalApogeeLayout';
 
 const SupportTabContent = lazy(() => import('@/components/unified/tabs/SupportTabContent'));
+const TicketingTabContent = lazy(() => import('@/components/unified/tabs/TicketingTabContent'));
 
-type AideSubTab = 'support' | 'guides' | 'faq';
+type SupportSubTab = 'aide-en-ligne' | 'guides' | 'faq' | 'ticketing';
 
-const ALL_AIDE_TABS: (PillTabConfig & { requiresModule?: ModuleKey })[] = [
-  { id: 'support', label: 'Support', icon: Headphones, accent: 'blue', requiresModule: 'aide' },
+const ALL_SUPPORT_TABS: (PillTabConfig & { requiresModule?: ModuleKey })[] = [
+  { id: 'aide-en-ligne', label: 'Aide en ligne', icon: Headphones, accent: 'blue', requiresModule: 'aide' },
   { id: 'guides', label: 'Guides', icon: BookOpen, accent: 'purple', requiresModule: 'guides' },
   { id: 'faq', label: 'FAQ', icon: HelpCircle, accent: 'green' },
+  { id: 'ticketing', label: 'Ticketing', icon: Ticket, accent: 'orange', requiresModule: 'ticketing' },
 ];
 
 /** Configuration des guides disponibles (extensible) */
@@ -82,26 +85,26 @@ function GuidesSection() {
   );
 }
 
-export default function AideTabContent() {
+export default function SupportHubTabContent() {
   const { hasModule } = useEffectiveModules();
 
   const visibleTabs = useMemo(() => {
-    return ALL_AIDE_TABS.filter(tab => {
+    return ALL_SUPPORT_TABS.filter(tab => {
       if (!tab.requiresModule) return true;
       return hasModule(tab.requiresModule);
     });
   }, [hasModule]);
 
-  const defaultTab = visibleTabs[0]?.id as AideSubTab ?? 'support';
-  const [activeTab, setActiveTab] = useSessionState<AideSubTab>('aide_sub_tab', defaultTab);
+  const defaultTab = visibleTabs[0]?.id as SupportSubTab ?? 'aide-en-ligne';
+  const [activeTab, setActiveTab] = useSessionState<SupportSubTab>('support_sub_tab', defaultTab);
   const effectiveTab = visibleTabs.some(t => t.id === activeTab) ? activeTab : defaultTab;
 
   return (
     <div className="py-6 px-2 sm:px-4 space-y-4">
-      <Tabs value={effectiveTab} onValueChange={(v) => setActiveTab(v as AideSubTab)}>
+      <Tabs value={effectiveTab} onValueChange={(v) => setActiveTab(v as SupportSubTab)}>
         <PillTabsList tabs={visibleTabs} />
 
-        <TabsContent value="support" className="mt-4">
+        <TabsContent value="aide-en-ligne" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
             <SupportTabContent />
           </Suspense>
@@ -117,6 +120,12 @@ export default function AideTabContent() {
             <p className="text-lg font-medium">FAQ</p>
             <p className="text-sm">Questions fréquentes (à venir)</p>
           </div>
+        </TabsContent>
+
+        <TabsContent value="ticketing" className="mt-4">
+          <Suspense fallback={<LoadingFallback />}>
+            <TicketingTabContent />
+          </Suspense>
         </TabsContent>
       </Tabs>
     </div>

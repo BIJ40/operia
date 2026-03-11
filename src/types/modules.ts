@@ -303,12 +303,12 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Aide',
     description: 'Support et assistance',
     icon: 'HelpCircle',
-    category: 'aide',
+    category: 'support',
     defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
     minRole: 'base_user',
     options: [
-      { key: 'user', path: 'aide.user', label: 'Utilisateur', description: 'Créer demandes', defaultEnabled: true, routes: ['/?tab=aide'] },
-      { key: 'agent', path: 'aide.agent', label: 'Agent', description: 'Répondre demandes', defaultEnabled: false, routes: ['/?tab=aide'] },
+      { key: 'user', path: 'aide.user', label: 'Utilisateur', description: 'Créer demandes', defaultEnabled: true, routes: ['/?tab=support'] },
+      { key: 'agent', path: 'aide.agent', label: 'Agent', description: 'Répondre demandes', defaultEnabled: false, routes: ['/?tab=support'] },
     ],
   },
   {
