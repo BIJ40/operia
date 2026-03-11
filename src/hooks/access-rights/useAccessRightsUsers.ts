@@ -174,8 +174,9 @@ export function useAccessRightsUsers() {
       const { data, error } = await supabase.functions.invoke('create-user', {
         body: { ...userData, globalRole: effectiveGlobalRole } 
       });
-      if (error) throw error;
+      // Check body error first (contains the explicit message from edge function)
       if (data?.error) throw new Error(data.error);
+      if (error) throw error;
       return data;
     },
     onSuccess: () => {
