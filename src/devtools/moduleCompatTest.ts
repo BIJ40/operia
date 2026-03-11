@@ -98,12 +98,14 @@ const CHEMIN_B_TESTS: CheminBTest[] = [
     ],
   },
   {
-    name: 'Chemin B — mediatheque compat',
+    name: 'Chemin B — mediatheque compat (isolation)',
     enabledModules: { divers_documents: { enabled: true, options: { consulter: true, gerer: true, corbeille_vider: false } } },
     assertions: [
       { label: 'resolveModuleViaCompat("mediatheque.consulter")', key: 'mediatheque.consulter', expected: true },
       { label: 'resolveModuleViaCompat("mediatheque.gerer")',     key: 'mediatheque.gerer',     expected: true },
       { label: 'resolveModuleViaCompat("mediatheque.corbeille")', key: 'mediatheque.corbeille',  expected: false },
+      // CRITICAL: organisation.documents_legaux must NOT resolve via divers_documents
+      { label: 'resolveModuleViaCompat("organisation.documents_legaux") → false (no legacy)', key: 'organisation.documents_legaux', expected: false },
     ],
   },
   {

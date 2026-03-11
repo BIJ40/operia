@@ -55,8 +55,9 @@ export const COMPAT_MAP: Record<string, CompatEntry> = {
   'organisation.plannings':        { keys: ['divers_plannings'] },
   'organisation.reunions':         { keys: ['divers_reunions'] },
   'organisation.parc':             { keys: ['parc'] },
-  'organisation.documents_legaux': { keys: ['divers_documents'] },
-  // Médiathèque ← divers_documents options
+  // organisation.documents_legaux — PAS de legacy, clé pure Phase 4
+  // NE PAS mapper vers divers_documents (qui est la Médiathèque)
+  // Médiathèque ← divers_documents (source de vérité unique)
   'mediatheque.consulter': { keys: ['divers_documents'], optionCheck: { moduleKey: 'divers_documents', optionKey: 'consulter' } },
   'mediatheque.gerer':     { keys: ['divers_documents'], optionCheck: { moduleKey: 'divers_documents', optionKey: 'gerer' } },
   'mediatheque.corbeille':  { keys: ['divers_documents'], optionCheck: { moduleKey: 'divers_documents', optionKey: 'corbeille_vider' } },
