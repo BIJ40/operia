@@ -38,7 +38,7 @@ export function AcademyRoutes() {
       
       {/* Guide HC Services (ex-OPERIA) */}
       <Route path="/academy/hc-services" element={<Navigate to="/?tab=support" replace />} />
-      <Route path="/academy/hc-services/category/:slug" element={<GuidesLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="guides"><HcServicesEditorProvider><CategoryHcServices /></HcServicesEditorProvider></ModuleGuard></RoleGuard></GuidesLayout>} />
+      <Route path="/academy/hc-services/category/:slug" element={<GuidesLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="support.guides"><HcServicesEditorProvider><CategoryHcServices /></HcServicesEditorProvider></ModuleGuard></RoleGuard></GuidesLayout>} />
       {/* Legacy OPERIA redirects */}
       <Route path="/academy/operia" element={<Navigate to="/?tab=support" replace />} />
       <Route path="/academy/operia/category/:slug" element={<Navigate to="/?tab=support" replace />} />
