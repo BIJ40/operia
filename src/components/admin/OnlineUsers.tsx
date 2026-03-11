@@ -3,14 +3,21 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Circle } from 'lucide-react';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { logError } from '@/lib/logger';
+import { cn } from '@/lib/utils';
+
+/** Seuils de présence */
+const ACTIVE_THRESHOLD_MS = 60_000;   // < 1 min → vert "En ligne"
+const IDLE_THRESHOLD_MS = 120_000;    // 1-2 min → orange "Inactif"
+// > 2 min → filtré, pas affiché
+
+type PresenceStatus = 'active' | 'idle';
 
 interface UserPresence {
   user_id: string;
   status: string;
   last_seen: string;
+  presenceStatus: PresenceStatus;
   profile?: {
     email: string | null;
     first_name: string | null;
@@ -25,7 +32,6 @@ export function OnlineUsers() {
   useEffect(() => {
     loadOnlineUsers();
 
-    // Subscribe to realtime changes
     const channel = supabase
       .channel('user_presence_changes')
       .on(
@@ -41,8 +47,8 @@ export function OnlineUsers() {
       )
       .subscribe();
 
-    // Refresh every 30 seconds
-    const interval = setInterval(loadOnlineUsers, 30000);
+    // Refresh every 15 seconds for more accurate status
+    const interval = setInterval(loadOnlineUsers, 15_000);
 
     return () => {
       channel.unsubscribe();
@@ -52,9 +58,7 @@ export function OnlineUsers() {
 
   const loadOnlineUsers = async () => {
     try {
-      // Récupérer les présences
-      // Ne garder que les présences récentes (< 2 min) pour éviter les fantômes
-      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+      const twoMinutesAgo = new Date(Date.now() - IDLE_THRESHOLD_MS).toISOString();
       const { data: presences, error } = await supabase
         .from('user_presence')
         .select('*')
@@ -64,7 +68,6 @@ export function OnlineUsers() {
 
       if (error) throw error;
 
-      // Récupérer les profils associés
       if (presences && presences.length > 0) {
         const userIds = presences.map(p => p.user_id);
         const { data: profiles } = await supabase
@@ -73,16 +76,22 @@ export function OnlineUsers() {
           .in('id', userIds);
 
         const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
+        const now = Date.now();
 
         const enrichedPresences = presences
           .filter(presence => {
             const profile = profilesMap.get(presence.user_id);
             return profile && (profile.first_name || profile.last_name || profile.email);
           })
-          .map(presence => ({
-            ...presence,
-            profile: profilesMap.get(presence.user_id)
-          }));
+          .map(presence => {
+            const diffMs = now - new Date(presence.last_seen).getTime();
+            const presenceStatus: PresenceStatus = diffMs < ACTIVE_THRESHOLD_MS ? 'active' : 'idle';
+            return {
+              ...presence,
+              presenceStatus,
+              profile: profilesMap.get(presence.user_id)
+            };
+          });
 
         setOnlineUsers(enrichedPresences);
       } else {
@@ -104,63 +113,73 @@ export function OnlineUsers() {
     return name || profile.email || 'Utilisateur inconnu';
   };
 
-  const getTimeSince = (lastSeen: string) => {
-    const now = new Date();
-    const last = new Date(lastSeen);
-    const diffMs = now.getTime() - last.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return 'À l\'instant';
-    if (diffMins === 1) return 'Il y a 1 minute';
-    if (diffMins < 60) return `Il y a ${diffMins} minutes`;
-    if (diffHours === 1) return 'Il y a 1 heure';
-    if (diffHours < 24) return `Il y a ${diffHours} heures`;
-    if (diffDays === 1) return 'Hier à ' + format(last, 'HH:mm', { locale: fr });
-    
-    return format(last, 'dd/MM/yyyy à HH:mm', { locale: fr });
-  };
+  const activeCount = onlineUsers.filter(u => u.presenceStatus === 'active').length;
+  const idleCount = onlineUsers.filter(u => u.presenceStatus === 'idle').length;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Circle className="w-4 h-4 text-green-500 fill-green-500" />
-          Utilisateurs connectés
+          Utilisateurs en ligne
         </CardTitle>
-        <CardDescription>
-          {onlineUsers.length} utilisateur{onlineUsers.length > 1 ? 's' : ''} en ligne
+        <CardDescription className="flex items-center gap-3">
+          <span className="flex items-center gap-1">
+            <Circle className="w-2 h-2 text-green-500 fill-green-500" />
+            {activeCount} actif{activeCount > 1 ? 's' : ''}
+          </span>
+          {idleCount > 0 && (
+            <span className="flex items-center gap-1">
+              <Circle className="w-2 h-2 text-amber-500 fill-amber-500" />
+              {idleCount} inactif{idleCount > 1 ? 's' : ''}
+            </span>
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent>
         {onlineUsers.length > 0 ? (
           <div className="space-y-2">
-            {onlineUsers.map((presence) => (
-              <div 
-                key={presence.user_id} 
-                className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <Circle className="w-2 h-2 text-green-500 fill-green-500 animate-pulse" />
-                  <div>
-                    <p className="font-medium">{getDisplayName(presence)}</p>
-                    {presence.profile?.agence && (
-                      <p className="text-xs text-muted-foreground">
-                        {presence.profile.agence}
-                      </p>
-                    )}
+            {onlineUsers.map((presence) => {
+              const isActive = presence.presenceStatus === 'active';
+              return (
+                <div 
+                  key={presence.user_id} 
+                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Circle className={cn(
+                      "w-2 h-2",
+                      isActive 
+                        ? "text-green-500 fill-green-500 animate-pulse" 
+                        : "text-amber-500 fill-amber-500"
+                    )} />
+                    <div>
+                      <p className="font-medium">{getDisplayName(presence)}</p>
+                      {presence.profile?.agence && (
+                        <p className="text-xs text-muted-foreground">
+                          {presence.profile.agence}
+                        </p>
+                      )}
+                    </div>
                   </div>
+                  <Badge 
+                    variant="outline" 
+                    className={cn(
+                      "text-xs",
+                      isActive 
+                        ? "border-green-500/30 text-green-600" 
+                        : "border-amber-500/30 text-amber-600"
+                    )}
+                  >
+                    {isActive ? 'En ligne' : 'Inactif'}
+                  </Badge>
                 </div>
-                <Badge variant="outline" className="text-xs">
-                  {getTimeSince(presence.last_seen)}
-                </Badge>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <p className="text-center text-muted-foreground py-4">
-            Aucun utilisateur connecté
+            Aucun utilisateur en ligne
           </p>
         )}
       </CardContent>
