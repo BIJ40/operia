@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import { ROUTES } from './routes';
 import { ModuleKey } from '@/types/modules';
-import { SCOPE_SLUGS } from './scopeRegistry';
 
 export interface DashboardTile {
   id: string;
