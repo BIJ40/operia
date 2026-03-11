@@ -46,7 +46,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     description: 'Ressources pour les apporteurs d\'affaires',
     icon: FileText,
     route: ROUTES.academy.apporteurs,
-    scopeSlug: SCOPE_SLUGS.APPORTEURS,
+    scopeSlug: 'apporteurs',
     color: 'primary',
     group: 'guides',
     requiresModule: 'guides',
