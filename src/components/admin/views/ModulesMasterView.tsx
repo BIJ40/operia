@@ -520,10 +520,11 @@ interface PropagateDialogState {
 }
 
 export function ModulesMasterView() {
-  const { tree, flatNodes, isLoading } = useModuleRegistry();
+  const { flatNodes, isLoading } = useModuleRegistry();
   const { overrides } = useModuleOverrides();
   const { hasGlobalRole } = usePermissions();
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+  const [showLegacy, setShowLegacy] = useState(false);
   const updateNode = useUpdateModuleNode();
   const propagate = usePropagateToChildren();
 
@@ -555,6 +556,29 @@ export function ModulesMasterView() {
 
     return { deployedNodes: deployed, devNodes: dev };
   }, [flatNodes]);
+
+  const toDisplayNode = useCallback((node: RegistryNode): RegistryNode => {
+    return {
+      ...node,
+      depth: node.depth + 1,
+      label: getRightsDisplayLabel(node.key, node.label),
+    };
+  }, []);
+
+  const groupedCategories = useMemo(() => {
+    return RIGHTS_CATEGORIES.map((category) => ({
+      category,
+      nodes: deployedNodes
+        .filter((node) => category.moduleKeys.includes(node.key.split('.')[0]))
+        .map(toDisplayNode),
+    }));
+  }, [deployedNodes, toDisplayNode]);
+
+  const legacyNodes = useMemo(() => {
+    return deployedNodes
+      .filter((node) => !RIGHTS_CATEGORY_ROOT_KEYS.has(node.key.split('.')[0]))
+      .map(toDisplayNode);
+  }, [deployedNodes, toDisplayNode]);
 
   const [dialog, setDialog] = useState<PropagateDialogState>({
     open: false, node: null, field: 'is_deployed', newValue: false, descendantCount: 0,
