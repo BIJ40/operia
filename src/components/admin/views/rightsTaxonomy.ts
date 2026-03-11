@@ -4,8 +4,7 @@ export type RightsCategoryId =
   | 'organisation'
   | 'documents'
   | 'support'
-  | 'admin'
-  | 'franchiseur';
+  | 'admin';
 
 export interface RightsCategory {
   id: RightsCategoryId;
@@ -16,20 +15,44 @@ export interface RightsCategory {
 export const RIGHTS_CATEGORIES: RightsCategory[] = [
   { id: 'pilotage', label: 'Pilotage', moduleKeys: ['stats', 'agence'] },
   { id: 'commercial', label: 'Commercial', moduleKeys: ['prospection', 'realisations'] },
-  { id: 'organisation', label: 'Organisation', moduleKeys: ['rh', 'divers_apporteurs', 'divers_plannings', 'divers_reunions', 'parc'] },
-  { id: 'documents', label: 'Documents', moduleKeys: ['divers_documents', 'documents'] },
+  { id: 'organisation', label: 'Organisation', moduleKeys: ['rh', 'divers_apporteurs', 'divers_plannings', 'divers_reunions', 'parc', 'divers_documents'] },
+  { id: 'documents', label: 'Documents', moduleKeys: ['documents'] },
   { id: 'support', label: 'Support', moduleKeys: ['aide', 'guides', 'ticketing'] },
-  { id: 'admin', label: 'Admin', moduleKeys: ['admin_plateforme'] },
-  { id: 'franchiseur', label: 'Franchiseur', moduleKeys: ['reseau_franchiseur'] },
+  { id: 'admin', label: 'Admin', moduleKeys: ['admin_plateforme', 'reseau_franchiseur'] },
 ];
 
+/**
+ * All module keys covered by RIGHTS_CATEGORIES (used for legacy detection).
+ */
 export const RIGHTS_CATEGORY_ROOT_KEYS = new Set(RIGHTS_CATEGORIES.flatMap((category) => category.moduleKeys));
+
+/**
+ * Returns true if a registry node key belongs to the given category moduleKeys.
+ * Supports both exact match and prefix (descendant) match.
+ */
+export function nodeMatchesCategory(nodeKey: string, moduleKeys: string[]): boolean {
+  return moduleKeys.some(mk => nodeKey === mk || nodeKey.startsWith(mk + '.'));
+}
+
+/**
+ * Returns true if a node belongs to ANY known category (i.e. is not legacy).
+ */
+export function nodeMatchesAnyCategory(nodeKey: string): boolean {
+  return RIGHTS_CATEGORIES.some(cat => nodeMatchesCategory(nodeKey, cat.moduleKeys));
+}
 
 const NAVIGATION_LABEL_FALLBACKS: Record<string, string> = {
   rh: 'Salariés',
   parc: 'Parc',
   prospection: 'Prospection',
   admin_plateforme: 'Admin',
+  agence: 'Mon agence',
+  divers_documents: 'Documents légaux',
+  divers_apporteurs: 'Apporteurs',
+  divers_plannings: 'Plannings',
+  divers_reunions: 'Réunions',
+  aide: 'Aide en ligne',
+  reseau_franchiseur: 'Franchiseur',
 };
 
 const LEGACY_LABELS: Partial<Record<string, string[]>> = {
@@ -37,6 +60,9 @@ const LEGACY_LABELS: Partial<Record<string, string[]>> = {
   parc: ['Parc véhicules & EPI'],
   prospection: ['Commercial / Prospection'],
   admin_plateforme: ['Administration'],
+  agence: ['Pilotage agence'],
+  reseau_franchiseur: ['Réseau Franchiseur'],
+  aide: ['Aide'],
 };
 
 export function getRightsDisplayLabel(moduleKey: string, label: string): string {

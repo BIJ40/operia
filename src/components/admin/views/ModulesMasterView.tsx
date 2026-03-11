@@ -23,7 +23,7 @@ import {
   type RegistryNode,
   type PlanLevel,
 } from '@/hooks/access-rights/useModuleRegistry';
-import { RIGHTS_CATEGORIES, RIGHTS_CATEGORY_ROOT_KEYS, getRightsDisplayLabel, type RightsCategory } from './rightsTaxonomy';
+import { RIGHTS_CATEGORIES, nodeMatchesCategory, nodeMatchesAnyCategory, getRightsDisplayLabel, type RightsCategory } from './rightsTaxonomy';
 import {
   useModuleOverrides,
   useAddOverride,
@@ -673,14 +673,14 @@ export function ModulesMasterView() {
     return RIGHTS_CATEGORIES.map((category) => ({
       category,
       nodes: deployedNodes
-        .filter((node) => category.moduleKeys.includes(node.key.split('.')[0]))
+        .filter((node) => nodeMatchesCategory(node.key, category.moduleKeys))
         .map(toDisplayNode),
     }));
   }, [deployedNodes, toDisplayNode]);
 
   const legacyNodes = useMemo(() => {
     return deployedNodes
-      .filter((node) => !RIGHTS_CATEGORY_ROOT_KEYS.has(node.key.split('.')[0]))
+      .filter((node) => !nodeMatchesAnyCategory(node.key))
       .map(toDisplayNode);
   }, [deployedNodes, toDisplayNode]);
 
