@@ -9,26 +9,68 @@ import { GlobalRole, GLOBAL_ROLES } from './globalRoles';
 
 // Définition des modules alignés avec les onglets UI
 export const MODULES = {
-  // Nouveaux modules V3 alignés avec les onglets
-  agence: 'agence',                       // Mon agence
-  stats: 'stats',                         // Stats
-  rh: 'rh',                               // Salariés (RH)
-  parc: 'parc',                           // Parc
-  divers_apporteurs: 'divers_apporteurs', // Divers > Apporteurs
-  divers_plannings: 'divers_plannings',   // Divers > Plannings
-  divers_reunions: 'divers_reunions',     // Divers > Réunions
-  divers_documents: 'divers_documents',   // Divers > Documents
-  guides: 'guides',                       // Guides
-  ticketing: 'ticketing',                 // Ticketing
-  aide: 'aide',                           // Aide
-  prospection: 'prospection',             // Prospection Apporteurs
-  planning_augmente: 'planning_augmente', // Planification Augmentée (IA)
-  realisations: 'realisations',           // Réalisations terrain (premium)
-  // Modules réservés admin/réseau (non visibles dans les plans)
+  // Modules V3 legacy (onglets existants)
+  agence: 'agence',
+  stats: 'stats',
+  rh: 'rh',
+  parc: 'parc',
+  divers_apporteurs: 'divers_apporteurs',
+  divers_plannings: 'divers_plannings',
+  divers_reunions: 'divers_reunions',
+  divers_documents: 'divers_documents',
+  guides: 'guides',
+  ticketing: 'ticketing',
+  aide: 'aide',
+  prospection: 'prospection',
+  planning_augmente: 'planning_augmente',
+  realisations: 'realisations',
   reseau_franchiseur: 'reseau_franchiseur',
   admin_plateforme: 'admin_plateforme',
-  // Module utilitaire
   unified_search: 'unified_search',
+
+  // ── Phase 3 — Nouvelles clés fonctionnelles (sans racines) ──
+  // Pilotage
+  'pilotage.statistiques': 'pilotage.statistiques',
+  'pilotage.statistiques.general': 'pilotage.statistiques.general',
+  'pilotage.statistiques.apporteurs': 'pilotage.statistiques.apporteurs',
+  'pilotage.statistiques.techniciens': 'pilotage.statistiques.techniciens',
+  'pilotage.statistiques.univers': 'pilotage.statistiques.univers',
+  'pilotage.statistiques.sav': 'pilotage.statistiques.sav',
+  'pilotage.statistiques.previsionnel': 'pilotage.statistiques.previsionnel',
+  'pilotage.statistiques.exports': 'pilotage.statistiques.exports',
+  'pilotage.performance': 'pilotage.performance',
+  'pilotage.actions_a_mener': 'pilotage.actions_a_mener',
+  'pilotage.devis_acceptes': 'pilotage.devis_acceptes',
+  'pilotage.incoherences': 'pilotage.incoherences',
+  // Commercial
+  'commercial.suivi_client': 'commercial.suivi_client',
+  'commercial.comparateur': 'commercial.comparateur',
+  'commercial.veille': 'commercial.veille',
+  'commercial.prospects': 'commercial.prospects',
+  'commercial.realisations': 'commercial.realisations',
+  // Organisation
+  'organisation.salaries': 'organisation.salaries',
+  'organisation.apporteurs': 'organisation.apporteurs',
+  'organisation.plannings': 'organisation.plannings',
+  'organisation.reunions': 'organisation.reunions',
+  'organisation.parc': 'organisation.parc',
+  'organisation.documents_legaux': 'organisation.documents_legaux',
+  // Médiathèque
+  'mediatheque.consulter': 'mediatheque.consulter',
+  'mediatheque.gerer': 'mediatheque.gerer',
+  'mediatheque.corbeille': 'mediatheque.corbeille',
+  // Support
+  'support.aide_en_ligne': 'support.aide_en_ligne',
+  'support.guides': 'support.guides',
+  'support.faq': 'support.faq',
+  'support.ticketing': 'support.ticketing',
+  // Admin
+  'admin.gestion': 'admin.gestion',
+  'admin.franchiseur': 'admin.franchiseur',
+  'admin.ia': 'admin.ia',
+  'admin.contenu': 'admin.contenu',
+  'admin.ops': 'admin.ops',
+  'admin.plateforme': 'admin.plateforme',
 } as const;
 
 export type ModuleKey = keyof typeof MODULES;
@@ -119,7 +161,9 @@ export const MODULE_OPTIONS = {
   },
 } as const;
 
-export type ModuleOptionPath = typeof MODULE_OPTIONS[ModuleKey][keyof typeof MODULE_OPTIONS[ModuleKey]];
+/** Legacy module keys (those with entries in MODULE_OPTIONS) */
+type LegacyModuleKey = keyof typeof MODULE_OPTIONS;
+export type ModuleOptionPath = typeof MODULE_OPTIONS[LegacyModuleKey][keyof typeof MODULE_OPTIONS[LegacyModuleKey]];
 
 // Métadonnées des modules pour l'UI
 // Les catégories correspondent EXACTEMENT aux onglets de niveau 1 du workspace
@@ -433,6 +477,8 @@ export interface EnabledModules {
   reseau_franchiseur?: boolean | ModuleOptionsState;
   admin_plateforme?: boolean | ModuleOptionsState;
   unified_search?: boolean | ModuleOptionsState;
+  /** Index signature for new dotted keys and dynamic access */
+  [key: string]: boolean | ModuleOptionsState | undefined;
 }
 
 export interface ModuleOptionsState {
@@ -512,7 +558,7 @@ export function canAccessModule(role: GlobalRole | null, moduleKey: ModuleKey): 
 /**
  * Labels courts pour les modules (utilisés dans les badges)
  */
-export const MODULE_SHORT_LABELS: Record<ModuleKey, string> = {
+export const MODULE_SHORT_LABELS: Partial<Record<ModuleKey, string>> = {
   agence: 'Agence',
   stats: 'Stats',
   rh: 'RH',
@@ -530,4 +576,34 @@ export const MODULE_SHORT_LABELS: Record<ModuleKey, string> = {
   reseau_franchiseur: 'Réseau',
   admin_plateforme: 'Admin',
   unified_search: 'Recherche',
+  // Phase 3 keys
+  'pilotage.statistiques': 'Statistiques',
+  'pilotage.performance': 'Performance',
+  'pilotage.actions_a_mener': 'Actions',
+  'pilotage.devis_acceptes': 'Devis',
+  'pilotage.incoherences': 'Incohérences',
+  'commercial.suivi_client': 'Suivi client',
+  'commercial.comparateur': 'Comparateur',
+  'commercial.veille': 'Veille',
+  'commercial.prospects': 'Prospects',
+  'commercial.realisations': 'Réalisations',
+  'organisation.salaries': 'Salariés',
+  'organisation.apporteurs': 'Apporteurs',
+  'organisation.plannings': 'Plannings',
+  'organisation.reunions': 'Réunions',
+  'organisation.parc': 'Parc',
+  'organisation.documents_legaux': 'Documents',
+  'mediatheque.consulter': 'Consulter',
+  'mediatheque.gerer': 'Gérer',
+  'mediatheque.corbeille': 'Corbeille',
+  'support.aide_en_ligne': 'Aide',
+  'support.guides': 'Guides',
+  'support.faq': 'FAQ',
+  'support.ticketing': 'Ticketing',
+  'admin.gestion': 'Gestion',
+  'admin.franchiseur': 'Franchiseur',
+  'admin.ia': 'IA',
+  'admin.contenu': 'Contenu',
+  'admin.ops': 'Ops',
+  'admin.plateforme': 'Plateforme',
 };
