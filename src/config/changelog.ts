@@ -15,6 +15,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.9.6",
+    title: "Phase 4 — Audit & Plan de migration Permissions",
+    date: "2026-03-11",
+    changes: [
+      { type: 'audit', description: 'Inventaire complet des 165 guards de permissions (phase4-guards-inventory.md)' },
+      { type: 'audit', description: 'Plan de migration 4 vagues avec classement par risque (phase4-migration-plan.md)' },
+      { type: 'improvement', description: 'Identification de 15 clés legacy et mapping vers clés hiérarchiques Phase 4' },
+      { type: 'improvement', description: 'Premier lot exécutable identifié : 17 occurrences, 6 fichiers (Vague 1)' },
+    ],
+  },
+  {
     version: "V0.9.5",
     title: "Industrialisation & Observabilité (LOT 2)",
     date: "2026-03-08",

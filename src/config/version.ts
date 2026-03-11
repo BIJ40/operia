@@ -1,5 +1,5 @@
-export const APP_VERSION = '0.9.5';
-export const APP_CODENAME = 'LOT 2 — Industrialisation & Observabilité';
+export const APP_VERSION = '0.9.6';
+export const APP_CODENAME = 'Phase 4 — Audit & Plan de migration Permissions';
 
 /**
  * Changelog v0.8.7 (2026-01-31)
