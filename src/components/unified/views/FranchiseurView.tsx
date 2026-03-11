@@ -76,8 +76,7 @@ const ALL_TABS: TabConfig[] = [
   { id: 'statistiques', label: 'Statistiques', icon: BarChart3 },
   { id: 'divers', label: 'Divers', icon: MoreHorizontal },
   { id: 'guides', label: 'Guides', icon: BookOpen },
-  { id: 'ticketing', label: 'Ticketing', icon: Ticket },
-  { id: 'aide', label: 'Aide', icon: HelpCircle },
+  { id: 'support', label: 'Support', icon: HelpCircle },
 ];
 
 function LoadingFallback() {
