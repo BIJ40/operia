@@ -43,6 +43,7 @@ export const COMPAT_MAP: Record<string, CompatEntry> = {
   'pilotage.actions_a_mener': { keys: ['agence'] },
   'pilotage.devis_acceptes':  { keys: ['agence'] },
   'pilotage.incoherences':    { keys: ['agence'] },
+  'pilotage.agence':          { keys: ['agence'] },
   // Commercial ← prospection + options
   'commercial.suivi_client': { keys: ['prospection'], optionCheck: { moduleKey: 'prospection', optionKey: 'dashboard' } },
   'commercial.comparateur':  { keys: ['prospection'], optionCheck: { moduleKey: 'prospection', optionKey: 'comparateur' } },
