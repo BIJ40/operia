@@ -743,16 +743,20 @@ export function ModulesMasterView() {
     setDialog(prev => ({ ...prev, open: false }));
   }, [dialog, propagate]);
 
+  const nonDeployedHint = dialog.nonDeployedCount > 0
+    ? ` (dont ${dialog.nonDeployedCount} non déployé${dialog.nonDeployedCount > 1 ? 's' : ''})`
+    : '';
+
   const getDialogDescription = () => {
     if (dialog.field === 'is_deployed') {
-      return `Appliquer "${dialog.newValue ? 'Déployé' : 'Non déployé'}" aux ${dialog.descendantCount} descendants de "${dialog.node?.label}" ?`;
+      return `Appliquer "${dialog.newValue ? 'Déployé' : 'Non déployé'}" aux ${dialog.descendantCount} descendants${nonDeployedHint} de "${dialog.node?.label}" ?`;
     }
     if (dialog.field === 'required_plan') {
       const planLabel = dialog.newValue === 'STARTER' ? 'Basique' : dialog.newValue === 'PRO' ? 'Pro' : 'Individuel';
-      return `Appliquer le plan "${planLabel}" aux ${dialog.descendantCount} descendants de "${dialog.node?.label}" ?`;
+      return `Appliquer le plan "${planLabel}" aux ${dialog.descendantCount} descendants${nonDeployedHint} de "${dialog.node?.label}" ?`;
     }
     const roleConfig = getRoleConfig(dialog.newValue as number);
-    return `Appliquer le rôle minimum "${roleConfig.label}" aux ${dialog.descendantCount} descendants de "${dialog.node?.label}" ?`;
+    return `Appliquer le rôle minimum "${roleConfig.label}" aux ${dialog.descendantCount} descendants${nonDeployedHint} de "${dialog.node?.label}" ?`;
   };
 
   if (isLoading) {
