@@ -28,6 +28,7 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 
 // Dev pages
 const UnifiedSearchAnimationPlayground = lazy(() => import("./pages/dev/UnifiedSearchAnimationPlayground"));
+const PermissionsProofPage = lazy(() => import("./pages/dev/PermissionsProofPage"));
 
 // Providers
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
