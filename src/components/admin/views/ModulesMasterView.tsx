@@ -797,6 +797,7 @@ export function ModulesMasterView() {
                 onToggleDeploy={handleToggleDeploy}
                 onTogglePlan={handleTogglePlan}
                 onChangeRole={handleChangeRole}
+                onRenameLabel={handleRenameLabel}
                 isUpdating={updateNode.isPending || propagate.isPending}
                 canDeploy={canDeploy}
                 isDevSection
