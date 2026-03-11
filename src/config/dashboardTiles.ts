@@ -146,7 +146,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     description: 'Gestion des tickets et demandes utilisateurs',
     icon: Headphones,
     route: ROUTES.support.console,
-    scopeSlug: SCOPE_SLUGS.APOGEE_TICKETS,
+    scopeSlug: 'apogee_tickets',
     color: 'accent',
     group: 'support',
     // F-NAV-1: requiresSupport supprimé - filtrage via canAccessSupportConsoleUI uniquement
