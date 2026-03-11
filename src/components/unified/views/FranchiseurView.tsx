@@ -181,8 +181,7 @@ function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
     statistiques: 'pink',
     divers: 'neutral',
     guides: 'teal',
-    ticketing: 'orange',
-    aide: 'blue',
+    support: 'cyan',
   };
   
   const tabButtonClass = (_tabId: FranchiseurTab, isActive: boolean) => `
