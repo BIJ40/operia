@@ -17,7 +17,7 @@ import { useSearchParams } from 'react-router-dom';
 import { 
   Home, BarChart3, ShoppingCart, 
   Users, Ticket, HelpCircle,
-  Loader2, Shield, FolderOpen, FlaskConical,
+  Loader2, Shield, FolderOpen,
 } from 'lucide-react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Tabs } from '@/components/ui/tabs';
@@ -113,7 +113,6 @@ function UnifiedWorkspaceContent() {
     { id: 'ticketing', label: 'Ticketing', icon: Ticket, requiresOption: { module: 'ticketing' } },
     { id: 'aide', label: 'Aide', icon: HelpCircle, requiresOption: { module: 'aide' }, altModules: ['guides'] },
     { id: 'admin', label: 'Admin', icon: Shield, requiresOption: { module: 'admin_plateforme' } },
-    ...(import.meta.env.DEV ? [{ id: 'test' as const, label: 'TEST', icon: FlaskConical }] : []),
   ], []);
   
   // Tab accessibility checks

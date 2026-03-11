@@ -22,12 +22,12 @@ const AgencyAdminDocuments = lazy(() => import('@/components/outils/AgencyAdminD
 type OrganisationSubTab = 'collaborateurs' | 'apporteurs' | 'plannings' | 'reunions' | 'parc' | 'conformite';
 
 const ALL_ORGANISATION_TABS: (PillTabConfig & { requiresModule?: ModuleKey })[] = [
-  { id: 'collaborateurs', label: 'Collaborateurs', icon: Users, accent: 'blue', requiresModule: 'rh' },
+  { id: 'collaborateurs', label: 'Salariés', icon: Users, accent: 'blue', requiresModule: 'rh' },
   { id: 'apporteurs', label: 'Apporteurs', icon: Handshake, accent: 'purple', requiresModule: 'divers_apporteurs' },
   { id: 'plannings', label: 'Plannings', icon: CalendarDays, accent: 'green', requiresModule: 'divers_plannings' },
   { id: 'reunions', label: 'Réunions', icon: Users2, accent: 'orange', requiresModule: 'divers_reunions' },
   { id: 'parc', label: 'Parc', icon: Car, accent: 'pink', requiresModule: 'parc' },
-  { id: 'conformite', label: 'Conformité', icon: FileText, accent: 'teal', requiresModule: 'agence' },
+  { id: 'conformite', label: 'Documents légaux', icon: FileText, accent: 'teal', requiresModule: 'agence' },
 ];
 
 function LoadingFallback() {
