@@ -182,7 +182,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     description: 'Pilotage multi-agences et KPIs réseau',
     icon: Network,
     route: ROUTES.reseau.dashboard,
-    scopeSlug: SCOPE_SLUGS.FRANCHISEUR_DASHBOARD,
+    scopeSlug: 'franchiseur_dashboard',
     color: 'accent',
     group: 'franchiseur',
   },
