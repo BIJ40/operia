@@ -1571,7 +1571,8 @@ export type Database = {
           agency_id: string
           apogee_project_id: number | null
           apporteur_id: string
-          apporteur_user_id: string
+          apporteur_manager_id: string | null
+          apporteur_user_id: string | null
           availability: string | null
           city: string | null
           comments: string | null
@@ -1595,7 +1596,8 @@ export type Database = {
           agency_id: string
           apogee_project_id?: number | null
           apporteur_id: string
-          apporteur_user_id: string
+          apporteur_manager_id?: string | null
+          apporteur_user_id?: string | null
           availability?: string | null
           city?: string | null
           comments?: string | null
@@ -1619,7 +1621,8 @@ export type Database = {
           agency_id?: string
           apogee_project_id?: number | null
           apporteur_id?: string
-          apporteur_user_id?: string
+          apporteur_manager_id?: string | null
+          apporteur_user_id?: string | null
           availability?: string | null
           city?: string | null
           comments?: string | null
@@ -1651,6 +1654,13 @@ export type Database = {
             columns: ["apporteur_id"]
             isOneToOne: false
             referencedRelation: "apporteurs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apporteur_intervention_requests_apporteur_manager_id_fkey"
+            columns: ["apporteur_manager_id"]
+            isOneToOne: false
+            referencedRelation: "apporteur_managers"
             referencedColumns: ["id"]
           },
           {
