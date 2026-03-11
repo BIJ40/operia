@@ -60,7 +60,7 @@ export function PilotageRoutes() {
       <Route path="/agency/indicateurs/sav" element={<Navigate to="/agency/stats-hub" replace />} />
       
       {/* Veille Apporteurs - Redirige vers sous-onglet Divers */}
-      <Route path="/agency/veille-apporteurs" element={<Navigate to="/?tab=divers" replace />} />
+      <Route path="/agency/veille-apporteurs" element={<Navigate to="/?tab=organisation" replace />} />
       
       {/* Actions à Mener */}
       <Route path="/agency/actions" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="agence" requiredOption="actions_a_mener"><ActionsAMener /></ModuleGuard></RoleGuard></AgencyLayout>} />
