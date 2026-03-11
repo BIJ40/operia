@@ -250,7 +250,7 @@ export function TechnicianQuickEditDialog({ technician, open, onOpenChange }: Pr
                 )}
               </Button>
               <Button variant="outline" size="sm" asChild>
-                <Link to="/?tab=rh">
+                <Link to="/?tab=organisation">
                   <ExternalLink className="w-4 h-4 mr-2" />
                   Ouvrir le module Salariés
                 </Link>
