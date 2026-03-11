@@ -690,33 +690,74 @@ export function ModulesMasterView() {
         <CardContent className="p-0">
           {headerRow}
 
-          {deployedNodes
-            .filter(node => {
-              if (node.depth === 0) return true;
-              const rootKey = node.key.split('.')[0];
-              return !collapsed.has(rootKey);
-            })
-            .map(node => (
-            <ModuleRow
-              key={node.key}
-              node={node}
-              overrides={overrides.get(node.key) ?? []}
-              onToggleDeploy={handleToggleDeploy}
-              onTogglePlan={handleTogglePlan}
-              onChangeRole={handleChangeRole}
-              isUpdating={updateNode.isPending || propagate.isPending}
-              canDeploy={canDeploy}
-              isCollapsed={node.depth === 0 ? collapsed.has(node.key) : undefined}
-              onToggleCollapse={node.depth === 0 ? () => setCollapsed(prev => {
-                const next = new Set(prev);
-                if (next.has(node.key)) next.delete(node.key);
-                else next.add(node.key);
-                return next;
-              }) : undefined}
-            />
-          ))}
+          {groupedCategories.map(({ category, nodes }) => {
+            if (nodes.length === 0) return null;
+            const isCategoryCollapsed = collapsedCategories.has(category.id);
 
-          {deployedNodes.length === 0 && (
+            return (
+              <div key={category.id}>
+                <CategoryHeaderRow
+                  category={category}
+                  collapsed={isCategoryCollapsed}
+                  onToggle={() => toggleCategory(category.id)}
+                  moduleCount={nodes.filter((node) => node.depth === 1).length}
+                />
+
+                {!isCategoryCollapsed && nodes.map((node) => (
+                  <ModuleRow
+                    key={node.key}
+                    node={node}
+                    overrides={overrides.get(node.key) ?? []}
+                    onToggleDeploy={handleToggleDeploy}
+                    onTogglePlan={handleTogglePlan}
+                    onChangeRole={handleChangeRole}
+                    onRenameLabel={handleRenameLabel}
+                    isUpdating={updateNode.isPending || propagate.isPending}
+                    canDeploy={canDeploy}
+                  />
+                ))}
+              </div>
+            );
+          })}
+
+          {legacyNodes.length > 0 && (
+            <>
+              <div className={cn(`grid ${GRID_COLS} gap-2 items-center py-2 px-3 border-b border-border bg-muted/10`)}>
+                <button
+                  type="button"
+                  onClick={() => setShowLegacy((prev) => !prev)}
+                  className="flex items-center gap-2 min-w-0 text-left"
+                >
+                  <ChevronRight className={cn('w-4 h-4 shrink-0 transition-transform text-muted-foreground', showLegacy && 'rotate-90')} />
+                  <span className="font-medium text-muted-foreground truncate">Legacy / non classé</span>
+                  <Badge variant="outline" className="text-[10px]">{legacyNodes.filter((node) => node.depth === 1).length}</Badge>
+                </button>
+                <div className="text-center text-muted-foreground/30">—</div>
+                <div className="text-center text-muted-foreground/30">—</div>
+                <div className="text-center text-muted-foreground/30">—</div>
+                <div className="text-center text-muted-foreground/30">—</div>
+                <div className="text-center text-muted-foreground/30">—</div>
+                <div className="text-center text-muted-foreground/30">—</div>
+                <div className="text-center text-muted-foreground/30">—</div>
+              </div>
+
+              {showLegacy && legacyNodes.map((node) => (
+                <ModuleRow
+                  key={node.key}
+                  node={node}
+                  overrides={overrides.get(node.key) ?? []}
+                  onToggleDeploy={handleToggleDeploy}
+                  onTogglePlan={handleTogglePlan}
+                  onChangeRole={handleChangeRole}
+                  onRenameLabel={handleRenameLabel}
+                  isUpdating={updateNode.isPending || propagate.isPending}
+                  canDeploy={canDeploy}
+                />
+              ))}
+            </>
+          )}
+
+          {groupedCategories.every((group) => group.nodes.length === 0) && legacyNodes.length === 0 && (
             <div className="py-12 text-center text-muted-foreground">
               Aucun module déployé dans le registre.
             </div>
