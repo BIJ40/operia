@@ -14,16 +14,16 @@
  * Seul N6 (superadmin) peut changer le statut is_deployed.
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   useModuleRegistry,
   useUpdateModuleNode,
   usePropagateToChildren,
-  flattenTree,
   getDescendantKeys,
   type RegistryNode,
   type PlanLevel,
 } from '@/hooks/access-rights/useModuleRegistry';
+import { RIGHTS_CATEGORIES, RIGHTS_CATEGORY_ROOT_KEYS, getRightsDisplayLabel, type RightsCategory } from './rightsTaxonomy';
 import {
   useModuleOverrides,
   useAddOverride,
