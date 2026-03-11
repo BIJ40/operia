@@ -104,7 +104,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     description: 'Mode affichage TV agence',
     icon: Tv,
     route: ROUTES.agency.diffusion,
-    scopeSlug: SCOPE_SLUGS.DIFFUSION,
+    scopeSlug: 'diffusion',
     color: 'accent',
     group: 'pilotage',
     requiresModule: 'agence',
