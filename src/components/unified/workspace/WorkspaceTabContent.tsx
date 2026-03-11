@@ -10,12 +10,11 @@ import { StatsHubProvider } from '@/apogee-connect/components/stats-hub/StatsHub
 // Lazy loaded tab contents
 const DashboardContent = lazy(() => import('@/pages/DashboardStatic'));
 const DemoAccueilContent = lazy(() => import('@/components/home/DemoAccueilContent').then(m => ({ default: m.DemoAccueilContent })));
-const StatsTabContent = lazy(() => import('@/components/unified/tabs/StatsTabContent'));
-const CollaborateursTabContent = lazy(() => import('@/components/unified/tabs/CollaborateursTabContent'));
-const DiversTabContent = lazy(() => import('@/components/unified/tabs/DiversTabContent'));
-const GuidesTabContent = lazy(() => import('@/components/unified/tabs/GuidesTabContent'));
+const PilotageTabContent = lazy(() => import('@/components/unified/tabs/PilotageTabContent'));
+const CommercialTabContent = lazy(() => import('@/components/unified/tabs/CommercialTabContent'));
+const OrganisationTabContent = lazy(() => import('@/components/unified/tabs/OrganisationTabContent'));
+const AideTabContent = lazy(() => import('@/components/unified/tabs/AideTabContent'));
 const TicketingTabContent = lazy(() => import('@/components/unified/tabs/TicketingTabContent'));
-const SupportTabContent = lazy(() => import('@/components/unified/tabs/SupportTabContent'));
 const AdminTabContent = lazy(() => import('@/components/unified/tabs/AdminTabContent'));
 const DocumentsTabContent = lazy(() => import('@/components/unified/tabs/DocumentsTabContent'));
 
@@ -39,35 +38,29 @@ export function WorkspaceTabContent({ isN0User }: WorkspaceTabContentProps) {
           {isN0User ? <DemoAccueilContent /> : <DashboardContent />}
         </TabsContent>
 
-        <TabsContent value="stats" className="mt-0">
-          <LocalErrorBoundary componentName="Statistiques">
+        <TabsContent value="pilotage" className="mt-0">
+          <LocalErrorBoundary componentName="Pilotage">
             <StatsHubProvider>
-              <StatsTabContent />
+              <PilotageTabContent />
             </StatsHubProvider>
           </LocalErrorBoundary>
         </TabsContent>
 
-        <TabsContent value="salaries" className="mt-0">
-          <LocalErrorBoundary componentName="Collaborateurs">
-            <CollaborateursTabContent />
+        <TabsContent value="commercial" className="mt-0">
+          <LocalErrorBoundary componentName="Commercial">
+            <CommercialTabContent />
           </LocalErrorBoundary>
         </TabsContent>
 
-        <TabsContent value="outils" className="mt-0">
-          <LocalErrorBoundary componentName="Outils">
-            <DiversTabContent />
+        <TabsContent value="organisation" className="mt-0">
+          <LocalErrorBoundary componentName="Organisation">
+            <OrganisationTabContent />
           </LocalErrorBoundary>
         </TabsContent>
 
         <TabsContent value="documents" className="mt-0">
           <LocalErrorBoundary componentName="Documents">
             <DocumentsTabContent />
-          </LocalErrorBoundary>
-        </TabsContent>
-
-        <TabsContent value="guides" className="mt-0">
-          <LocalErrorBoundary componentName="Guides">
-            <GuidesTabContent />
           </LocalErrorBoundary>
         </TabsContent>
 
@@ -78,8 +71,8 @@ export function WorkspaceTabContent({ isN0User }: WorkspaceTabContentProps) {
         </TabsContent>
 
         <TabsContent value="aide" className="mt-0">
-          <LocalErrorBoundary componentName="Support">
-            <SupportTabContent />
+          <LocalErrorBoundary componentName="Aide">
+            <AideTabContent />
           </LocalErrorBoundary>
         </TabsContent>
 

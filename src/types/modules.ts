@@ -351,7 +351,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Réalisations',
     description: 'Gestion des réalisations terrain, photos avant/après, SEO',
     icon: 'Camera',
-    category: 'outils',
+    category: 'commercial',
     uiSubTab: 'realisations',
     defaultForRoles: [],
     minRole: 'franchisee_user',

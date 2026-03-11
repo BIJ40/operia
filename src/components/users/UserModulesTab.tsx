@@ -55,25 +55,25 @@ const CATEGORY_CONFIG: Record<ModuleCategory, {
   color: string;
   order: number;
 }> = {
-  stats: { 
-    label: 'Statistiques', 
-    icon: <BarChart3 className="w-5 h-5 text-emerald-500" />,
-    description: 'Tableaux de bord et KPIs',
-    color: 'text-emerald-500',
+  pilotage: { 
+    label: 'Pilotage', 
+    icon: <BarChart3 className="w-5 h-5 text-warm-pink" />,
+    description: 'Statistiques, performance, actions à mener',
+    color: 'text-warm-pink',
     order: 1,
   },
-  salaries: { 
-    label: 'Salariés', 
-    icon: <Briefcase className="w-5 h-5 text-helpconfort-blue" />,
-    description: 'Gestion des collaborateurs',
-    color: 'text-helpconfort-blue',
+  commercial: { 
+    label: 'Commercial', 
+    icon: <Target className="w-5 h-5 text-warm-orange" />,
+    description: 'Prospection, devis acceptés, incohérences',
+    color: 'text-warm-orange',
     order: 2,
   },
-  outils: { 
-    label: 'Outils', 
-    icon: <Wrench className="w-5 h-5 text-amber-500" />,
-    description: 'Actions, apporteurs, parc, plannings, réunions, prospection',
-    color: 'text-amber-500',
+  organisation: { 
+    label: 'Organisation', 
+    icon: <Users className="w-5 h-5 text-warm-green" />,
+    description: 'Collaborateurs, apporteurs, plannings, réunions, parc, conformité',
+    color: 'text-warm-green',
     order: 3,
   },
   documents: { 
@@ -83,40 +83,33 @@ const CATEGORY_CONFIG: Record<ModuleCategory, {
     color: 'text-cyan-500',
     order: 4,
   },
-  guides: { 
-    label: 'Guides', 
-    icon: <BookOpen className="w-5 h-5 text-primary" />,
-    description: 'Apogée, Apporteurs, HelpConfort, FAQ',
-    color: 'text-primary',
-    order: 5,
-  },
   ticketing: { 
     label: 'Ticketing', 
     icon: <Kanban className="w-5 h-5 text-indigo-500" />,
     description: 'Liste, Kanban, Revue, Historique',
     color: 'text-indigo-500',
-    order: 6,
+    order: 5,
   },
   aide: { 
     label: 'Aide & Support', 
     icon: <Headphones className="w-5 h-5 text-violet-500" />,
-    description: 'Assistance et tickets support',
+    description: 'Support, guides, FAQ',
     color: 'text-violet-500',
-    order: 7,
+    order: 6,
   },
   reseau: { 
     label: 'Réseau Franchiseur', 
     icon: <Network className="w-5 h-5 text-purple-500" />,
     description: 'Pilotage multi-agences et redevances',
     color: 'text-purple-500',
-    order: 8,
+    order: 7,
   },
   admin: { 
     label: 'Administration', 
     icon: <Settings className="w-5 h-5 text-slate-500" />,
     description: 'Configuration système',
     color: 'text-slate-500',
-    order: 9,
+    order: 8,
   },
 };
 

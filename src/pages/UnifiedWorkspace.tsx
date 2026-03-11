@@ -106,13 +106,12 @@ function UnifiedWorkspaceContent() {
   // Configuration des onglets avec permissions
   const allTabs: TabConfig[] = useMemo(() => [
     { id: 'accueil', label: 'Accueil', icon: Home },
-    { id: 'stats', label: 'Stats', icon: BarChart3, requiresOption: { module: 'stats' } },
-    { id: 'salaries', label: 'Salariés', icon: ClipboardList, requiresOption: { module: 'rh' } },
-    { id: 'outils', label: 'Outils', icon: MoreHorizontal, requiresOption: { module: 'agence' }, altModules: ['prospection', 'parc', 'divers_apporteurs', 'divers_plannings', 'divers_reunions'] },
+    { id: 'pilotage', label: 'Pilotage', icon: BarChart3, requiresOption: { module: 'stats' }, altModules: ['agence'] },
+    { id: 'commercial', label: 'Commercial', icon: ShoppingCart, requiresOption: { module: 'prospection' }, altModules: ['agence', 'realisations'] },
+    { id: 'organisation', label: 'Organisation', icon: Users, requiresOption: { module: 'rh' }, altModules: ['parc', 'divers_apporteurs', 'divers_plannings', 'divers_reunions', 'agence'] },
     { id: 'documents', label: 'Documents', icon: FolderOpen, requiresOption: { module: 'divers_documents' } },
-    { id: 'guides', label: 'Guides', icon: BookOpen, requiresOption: { module: 'guides' } },
     { id: 'ticketing', label: 'Ticketing', icon: Ticket, requiresOption: { module: 'ticketing' } },
-    { id: 'aide', label: 'Aide', icon: HelpCircle, requiresOption: { module: 'aide' } },
+    { id: 'aide', label: 'Aide', icon: HelpCircle, requiresOption: { module: 'aide' }, altModules: ['guides'] },
     { id: 'admin', label: 'Admin', icon: Shield, requiresOption: { module: 'admin_plateforme' } },
     ...(import.meta.env.DEV ? [{ id: 'test' as const, label: 'TEST', icon: FlaskConical }] : []),
   ], []);
