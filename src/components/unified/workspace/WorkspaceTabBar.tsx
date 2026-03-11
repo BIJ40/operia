@@ -31,8 +31,7 @@ const TAB_ACCENTS: Record<UnifiedTab, AccentThemeKey> = {
   commercial: 'orange',
   organisation: 'green',
   documents: 'red',
-  ticketing: 'purple',
-  aide: 'cyan',
+  support: 'cyan',
   admin: 'neutral',
 };
 

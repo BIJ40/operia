@@ -16,7 +16,7 @@ const ApogeeTicketsAdmin = lazy(() => import("@/apogee-tickets/pages/ApogeeTicke
 // Helper pour créer les layouts Projects
 function ProjectsLayout({ children }: { children: React.ReactNode }) {
   return (
-    <MinimalLayout backTab="ticketing" backLabel="Ticketing">
+    <MinimalLayout backTab="support" backLabel="Support">
       {children}
     </MinimalLayout>
   );
@@ -26,7 +26,7 @@ export function ProjectsRoutes() {
   return (
     <>
       {/* Index - redirect to ticketing tab */}
-      <Route path="/projects" element={<Navigate to="/?tab=ticketing" replace />} />
+      <Route path="/projects" element={<Navigate to="/?tab=support" replace />} />
       
       {/* Detail pages keep their routes */}
       <Route path="/projects/kanban" element={<ProjectsLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="ticketing"><ApogeeTicketsKanban /></ModuleGuard></RoleGuard></ProjectsLayout>} />

@@ -128,8 +128,7 @@ export type ModuleCategory =
   | 'commercial'    // Onglet "Commercial" (Prospection, Devis acceptés, Incohérences)
   | 'organisation'  // Onglet "Organisation" (Collaborateurs, Apporteurs, Plannings, Réunions, Parc, Conformité)
   | 'documents'     // Onglet "Documents" (Médiathèque)
-  | 'ticketing'     // Onglet "Ticketing" (Liste, Kanban, Revue, Historique)
-  | 'aide'          // Onglet "Aide" (Support, Guides, FAQ)
+  | 'support'       // Onglet "Support" (Aide en ligne, Guides, FAQ, Ticketing)
   | 'reseau'        // Onglet "Franchiseur" (visible N3+)
   | 'admin';        // Onglet "Admin" (visible N5+)
 
@@ -274,14 +273,14 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Guides',
     description: 'Documentation et guides',
     icon: 'BookOpen',
-    category: 'aide',
+    category: 'support',
     defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
-      { key: 'apogee', path: 'guides.apogee', label: 'Apogée', description: 'Guide Apogée', defaultEnabled: true, routes: ['/?tab=aide'] },
-      { key: 'apporteurs', path: 'guides.apporteurs', label: 'Apporteurs', description: 'Guide apporteurs', defaultEnabled: true, routes: ['/?tab=aide'] },
-      { key: 'helpconfort', path: 'guides.helpconfort', label: 'HelpConfort', description: 'Guide HelpConfort', defaultEnabled: true, routes: ['/?tab=aide'] },
-      { key: 'faq', path: 'guides.faq', label: 'FAQ', description: 'Questions fréquentes', defaultEnabled: true, routes: ['/?tab=aide'] },
+      { key: 'apogee', path: 'guides.apogee', label: 'Apogée', description: 'Guide Apogée', defaultEnabled: true, routes: ['/?tab=support'] },
+      { key: 'apporteurs', path: 'guides.apporteurs', label: 'Apporteurs', description: 'Guide apporteurs', defaultEnabled: true, routes: ['/?tab=support'] },
+      { key: 'helpconfort', path: 'guides.helpconfort', label: 'HelpConfort', description: 'Guide HelpConfort', defaultEnabled: true, routes: ['/?tab=support'] },
+      { key: 'faq', path: 'guides.faq', label: 'FAQ', description: 'Questions fréquentes', defaultEnabled: true, routes: ['/?tab=support'] },
     ],
   },
   {
@@ -289,14 +288,14 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Ticketing',
     description: 'Suivi des développements',
     icon: 'Kanban',
-    category: 'ticketing',
+    category: 'support',
     defaultForRoles: ['platform_admin', 'superadmin'],
     minRole: 'base_user',
     options: [
-      { key: 'kanban', path: 'ticketing.kanban', label: 'Kanban', description: 'Vue tableau', defaultEnabled: true, routes: ['/?tab=ticketing'] },
-      { key: 'create', path: 'ticketing.create', label: 'Créer', description: 'Créer tickets', defaultEnabled: true, routes: ['/?tab=ticketing'] },
-      { key: 'manage', path: 'ticketing.manage', label: 'Gérer', description: 'Modifier tickets', defaultEnabled: true, routes: ['/?tab=ticketing'] },
-      { key: 'import', path: 'ticketing.import', label: 'Import', description: 'Import Excel', defaultEnabled: false, routes: ['/?tab=ticketing'] },
+      { key: 'kanban', path: 'ticketing.kanban', label: 'Kanban', description: 'Vue tableau', defaultEnabled: true, routes: ['/?tab=support'] },
+      { key: 'create', path: 'ticketing.create', label: 'Créer', description: 'Créer tickets', defaultEnabled: true, routes: ['/?tab=support'] },
+      { key: 'manage', path: 'ticketing.manage', label: 'Gérer', description: 'Modifier tickets', defaultEnabled: true, routes: ['/?tab=support'] },
+      { key: 'import', path: 'ticketing.import', label: 'Import', description: 'Import Excel', defaultEnabled: false, routes: ['/?tab=support'] },
     ],
   },
   {
@@ -304,12 +303,12 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Aide',
     description: 'Support et assistance',
     icon: 'HelpCircle',
-    category: 'aide',
+    category: 'support',
     defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
     minRole: 'base_user',
     options: [
-      { key: 'user', path: 'aide.user', label: 'Utilisateur', description: 'Créer demandes', defaultEnabled: true, routes: ['/?tab=aide'] },
-      { key: 'agent', path: 'aide.agent', label: 'Agent', description: 'Répondre demandes', defaultEnabled: false, routes: ['/?tab=aide'] },
+      { key: 'user', path: 'aide.user', label: 'Utilisateur', description: 'Créer demandes', defaultEnabled: true, routes: ['/?tab=support'] },
+      { key: 'agent', path: 'aide.agent', label: 'Agent', description: 'Répondre demandes', defaultEnabled: false, routes: ['/?tab=support'] },
     ],
   },
   {

@@ -16,7 +16,7 @@ import { lazy, Suspense, useMemo, useState, useCallback, useEffect } from 'react
 import { useSearchParams } from 'react-router-dom';
 import { 
   Home, BarChart3, ShoppingCart, 
-  Users, Ticket, HelpCircle,
+  Users, Headphones,
   Loader2, Shield, FolderOpen,
 } from 'lucide-react';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -110,8 +110,7 @@ function UnifiedWorkspaceContent() {
     { id: 'commercial', label: 'Commercial', icon: ShoppingCart, requiresOption: { module: 'prospection' }, altModules: ['agence', 'realisations'] },
     { id: 'organisation', label: 'Organisation', icon: Users, requiresOption: { module: 'rh' }, altModules: ['parc', 'divers_apporteurs', 'divers_plannings', 'divers_reunions', 'agence'] },
     { id: 'documents', label: 'Documents', icon: FolderOpen, requiresOption: { module: 'divers_documents' } },
-    { id: 'ticketing', label: 'Ticketing', icon: Ticket, requiresOption: { module: 'ticketing' } },
-    { id: 'aide', label: 'Aide', icon: HelpCircle, requiresOption: { module: 'aide' }, altModules: ['guides'] },
+    { id: 'support', label: 'Support', icon: Headphones, requiresOption: { module: 'aide' }, altModules: ['guides', 'ticketing'] },
     { id: 'admin', label: 'Admin', icon: Shield, requiresOption: { module: 'admin_plateforme' } },
   ], []);
   

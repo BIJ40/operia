@@ -13,10 +13,9 @@ const DemoAccueilContent = lazy(() => import('@/components/home/DemoAccueilConte
 const PilotageTabContent = lazy(() => import('@/components/unified/tabs/PilotageTabContent'));
 const CommercialTabContent = lazy(() => import('@/components/unified/tabs/CommercialTabContent'));
 const OrganisationTabContent = lazy(() => import('@/components/unified/tabs/OrganisationTabContent'));
-const AideTabContent = lazy(() => import('@/components/unified/tabs/AideTabContent'));
-const TicketingTabContent = lazy(() => import('@/components/unified/tabs/TicketingTabContent'));
 const AdminTabContent = lazy(() => import('@/components/unified/tabs/AdminTabContent'));
 const DocumentsTabContent = lazy(() => import('@/components/unified/tabs/DocumentsTabContent'));
+const SupportHubTabContent = lazy(() => import('@/components/unified/tabs/AideTabContent'));
 
 function LoadingFallback() {
   return (
@@ -64,15 +63,9 @@ export function WorkspaceTabContent({ isN0User }: WorkspaceTabContentProps) {
           </LocalErrorBoundary>
         </TabsContent>
 
-        <TabsContent value="ticketing" className="mt-0">
-          <LocalErrorBoundary componentName="Ticketing">
-            <TicketingTabContent />
-          </LocalErrorBoundary>
-        </TabsContent>
-
-        <TabsContent value="aide" className="mt-0">
-          <LocalErrorBoundary componentName="Aide">
-            <AideTabContent />
+        <TabsContent value="support" className="mt-0">
+          <LocalErrorBoundary componentName="Support">
+            <SupportHubTabContent />
           </LocalErrorBoundary>
         </TabsContent>
 

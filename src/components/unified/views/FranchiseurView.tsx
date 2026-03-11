@@ -47,8 +47,7 @@ const FranchiseurRoyalties = lazy(() => import('@/franchiseur/pages/FranchiseurR
 const FranchiseurStats = lazy(() => import('@/franchiseur/pages/FranchiseurStats'));
 const DiversTabContent = lazy(() => import('@/components/unified/tabs/DiversTabContent'));
 const GuidesTabContent = lazy(() => import('@/components/unified/tabs/GuidesTabContent'));
-const TicketingTabContent = lazy(() => import('@/components/unified/tabs/TicketingTabContent'));
-const SupportTabContent = lazy(() => import('@/components/unified/tabs/SupportTabContent'));
+const SupportHubTabContent = lazy(() => import('@/components/unified/tabs/AideTabContent'));
 
 type FranchiseurTab = 
   | 'accueil' 
@@ -58,8 +57,7 @@ type FranchiseurTab =
   | 'statistiques' 
   | 'divers' 
   | 'guides'
-  | 'ticketing' 
-  | 'aide';
+  | 'support';
 
 interface TabConfig {
   id: FranchiseurTab;
@@ -68,7 +66,7 @@ interface TabConfig {
 }
 
 // Ordre par défaut des onglets (hors Accueil qui est toujours premier)
-const DEFAULT_TAB_ORDER: FranchiseurTab[] = ['periode', 'agences', 'redevances', 'statistiques', 'divers', 'guides', 'ticketing', 'aide'];
+const DEFAULT_TAB_ORDER: FranchiseurTab[] = ['periode', 'agences', 'redevances', 'statistiques', 'divers', 'guides', 'support'];
 
 const ALL_TABS: TabConfig[] = [
   { id: 'accueil', label: 'Accueil', icon: Home },
@@ -78,8 +76,7 @@ const ALL_TABS: TabConfig[] = [
   { id: 'statistiques', label: 'Statistiques', icon: BarChart3 },
   { id: 'divers', label: 'Divers', icon: MoreHorizontal },
   { id: 'guides', label: 'Guides', icon: BookOpen },
-  { id: 'ticketing', label: 'Ticketing', icon: Ticket },
-  { id: 'aide', label: 'Aide', icon: HelpCircle },
+  { id: 'support', label: 'Support', icon: HelpCircle },
 ];
 
 function LoadingFallback() {
@@ -184,8 +181,7 @@ function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
     statistiques: 'pink',
     divers: 'neutral',
     guides: 'teal',
-    ticketing: 'orange',
-    aide: 'blue',
+    support: 'cyan',
   };
   
   const tabButtonClass = (_tabId: FranchiseurTab, isActive: boolean) => `
@@ -301,12 +297,8 @@ function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
               <GuidesTabContent />
             </TabsContent>
             
-            <TabsContent value="ticketing" className="mt-0">
-              <TicketingTabContent />
-            </TabsContent>
-            
-            <TabsContent value="aide" className="mt-0">
-              <SupportTabContent />
+            <TabsContent value="support" className="mt-0">
+              <SupportHubTabContent />
             </TabsContent>
           </Suspense>
         </main>
