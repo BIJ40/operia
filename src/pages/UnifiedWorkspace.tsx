@@ -107,10 +107,10 @@ function UnifiedWorkspaceContent() {
   const allTabs: TabConfig[] = useMemo(() => [
     { id: 'accueil', label: 'Accueil', icon: Home },
     { id: 'pilotage', label: 'Pilotage', icon: BarChart3, requiresOption: { module: 'stats' }, altModules: ['agence'] },
-    { id: 'commercial', label: 'Commercial', icon: ShoppingCart, requiresOption: { module: 'prospection' }, altModules: ['agence', 'realisations'] },
-    { id: 'organisation', label: 'Organisation', icon: Users, requiresOption: { module: 'rh' }, altModules: ['parc', 'divers_apporteurs', 'divers_plannings', 'divers_reunions', 'agence'] },
+    { id: 'commercial', label: 'Commercial', icon: ShoppingCart, requiresOption: { module: 'prospection' }, altModules: ['agence', 'commercial.realisations'] },
+    { id: 'organisation', label: 'Organisation', icon: Users, requiresOption: { module: 'rh' }, altModules: ['organisation.parc', 'organisation.apporteurs', 'organisation.plannings', 'organisation.reunions', 'agence'] },
     { id: 'documents', label: 'Documents', icon: FolderOpen, requiresOption: { module: 'divers_documents' } },
-    { id: 'support', label: 'Support', icon: Headphones, requiresOption: { module: 'aide' }, altModules: ['guides', 'ticketing'] },
+    { id: 'support', label: 'Support', icon: Headphones, requiresOption: { module: 'support.aide_en_ligne' }, altModules: ['guides', 'ticketing'] },
     { id: 'admin', label: 'Admin', icon: Shield, requiresOption: { module: 'admin_plateforme' } },
   ], []);
   

@@ -43,7 +43,7 @@ export function RealisationsRoutes() {
         element={
           <MinimalLayout backTab="outils" backLabel="Retour aux réalisations">
             <RoleGuard minRole="franchisee_user">
-              <ModuleGuard moduleKey="realisations" showError>
+              <ModuleGuard moduleKey="commercial.realisations" showError>
                 <RealisationDetailPage />
               </ModuleGuard>
             </RoleGuard>
