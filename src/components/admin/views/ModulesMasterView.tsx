@@ -59,7 +59,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { Layers, Monitor, Zap, TreePine, ChevronRight, CornerDownRight, X, Search, Users, Construction, ExternalLink } from 'lucide-react';
+import { Layers, Monitor, Zap, TreePine, ChevronRight, CornerDownRight, X, Search, Users, Construction, ExternalLink, AlertTriangle, Trash2 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+import { GLOBAL_ROLES } from '@/types/globalRoles';
 import { useNavigate } from 'react-router-dom';
 
 // ============================================================================
