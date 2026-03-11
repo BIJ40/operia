@@ -317,7 +317,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Commercial',
     description: 'Suivi commercial et prospection',
     icon: 'Target',
-    category: 'outils',
+    category: 'commercial',
     uiSubTab: 'prospection',
     deployed: true,
     defaultForRoles: [],
