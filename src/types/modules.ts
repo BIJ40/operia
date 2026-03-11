@@ -334,7 +334,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Planification Augmentée',
     description: 'Optimisation intelligente du planning techniciens',
     icon: 'Brain',
-    category: 'outils',
+    category: 'organisation',
     deployed: false, // En cours de développement, pas dans les permissions/plans
     defaultForRoles: [],
     minRole: 'franchisee_admin',
