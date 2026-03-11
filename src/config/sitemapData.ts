@@ -453,7 +453,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'rh' },
+      moduleGuard: { moduleKey: 'organisation.salaries' },
     },
   },
   {
