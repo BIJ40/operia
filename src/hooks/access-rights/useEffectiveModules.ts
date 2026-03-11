@@ -159,15 +159,30 @@ export function useEffectiveModules(): EffectiveModulesResult & { isLoading: boo
     gcTime: 1000 * 60 * 2,
   });
   
-  const rawModules = query.data || {} as Record<ModuleKey, { enabled: boolean; options: Record<string, boolean> }>;
+  const rawModules = query.data || {} as Record<string, { enabled: boolean; options: Record<string, boolean> }>;
   
   // N5+ bypass handled server-side in the RPC
   const isAdminBypass = effectiveAuth.realGlobalRole === 'platform_admin' || effectiveAuth.realGlobalRole === 'superadmin';
   const modules = rawModules;
-  
+
+  /**
+   * Resolve a module key — checks direct data first, then COMPAT_MAP fallback.
+   * No `as ModuleKey` cast on compat keys to avoid masking runtime mismatches (point #6).
+   */
   const hasModule = (moduleKey: ModuleKey): boolean => {
     if (isAdminBypass) return true;
-    return !!modules[moduleKey]?.enabled;
+    // Direct check (key already in user's resolved modules)
+    if (modules[moduleKey]?.enabled) return true;
+    // Compat fallback (Phase 3)
+    const compat = COMPAT_MAP[moduleKey as string];
+    if (!compat) return false;
+    // Option-based check (e.g. prospection.dashboard → commercial.suivi_client)
+    if (compat.optionCheck) {
+      const { moduleKey: mk, optionKey: ok } = compat.optionCheck;
+      return !!(modules[mk]?.enabled && modules[mk]?.options?.[ok]);
+    }
+    // Key-based fallback (OR logic across legacy keys)
+    return compat.keys.some(k => modules[k]?.enabled);
   };
   
   const hasModuleOption = (moduleKey: ModuleKey, optionKey: string): boolean => {
