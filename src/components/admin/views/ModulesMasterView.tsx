@@ -693,7 +693,8 @@ export function ModulesMasterView() {
     const descendants = getDescendantKeys(node);
     updateNode.mutate({ key: node.key, updates: { is_deployed: newValue } });
     if (descendants.length > 0) {
-      setDialog({ open: true, node, field: 'is_deployed', newValue, descendantCount: descendants.length });
+      const nonDeployed = countNonDeployedDescendants(node);
+      setDialog({ open: true, node, field: 'is_deployed', newValue, descendantCount: descendants.length, nonDeployedCount: nonDeployed });
     }
   }, [updateNode]);
 
@@ -704,7 +705,8 @@ export function ModulesMasterView() {
     const descendants = getDescendantKeys(node);
     updateNode.mutate({ key: node.key, updates: { required_plan: newValue } });
     if (descendants.length > 0) {
-      setDialog({ open: true, node, field: 'required_plan', newValue, descendantCount: descendants.length });
+      const nonDeployed = countNonDeployedDescendants(node);
+      setDialog({ open: true, node, field: 'required_plan', newValue, descendantCount: descendants.length, nonDeployedCount: nonDeployed });
     }
   }, [updateNode]);
 
@@ -712,7 +714,8 @@ export function ModulesMasterView() {
     const descendants = getDescendantKeys(node);
     updateNode.mutate({ key: node.key, updates: { min_role: newRole } });
     if (descendants.length > 0) {
-      setDialog({ open: true, node, field: 'min_role', newValue: newRole, descendantCount: descendants.length });
+      const nonDeployed = countNonDeployedDescendants(node);
+      setDialog({ open: true, node, field: 'min_role', newValue: newRole, descendantCount: descendants.length, nonDeployedCount: nonDeployed });
     }
   }, [updateNode]);
 
