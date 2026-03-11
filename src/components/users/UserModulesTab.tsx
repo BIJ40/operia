@@ -83,19 +83,12 @@ const CATEGORY_CONFIG: Record<ModuleCategory, {
     color: 'text-cyan-500',
     order: 4,
   },
-  ticketing: { 
-    label: 'Ticketing', 
-    icon: <Kanban className="w-5 h-5 text-indigo-500" />,
-    description: 'Liste, Kanban, Revue, Historique',
-    color: 'text-indigo-500',
-    order: 5,
-  },
-  aide: { 
-    label: 'Aide & Support', 
+  support: { 
+    label: 'Support', 
     icon: <Headphones className="w-5 h-5 text-violet-500" />,
-    description: 'Support, guides, FAQ',
+    description: 'Aide en ligne, guides, FAQ, ticketing',
     color: 'text-violet-500',
-    order: 6,
+    order: 5,
   },
   reseau: { 
     label: 'Réseau Franchiseur', 
