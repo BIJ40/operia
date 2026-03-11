@@ -460,43 +460,43 @@ export function canAccessFeature(
     case 'GUIDE_APOGEE':
     case 'apogee':
     case 'academy_apogee':
-      return caps.canAccessHelpAcademy && hasModuleActivated('help_academy');
+      return caps.canAccessHelpAcademy && hasModuleActivated('guides');
       
     case 'GUIDE_APPORTEURS':
     case 'apporteurs':
     case 'academy_apporteurs':
-      return caps.canAccessHelpAcademy && hasModuleActivated('help_academy');
+      return caps.canAccessHelpAcademy && hasModuleActivated('guides');
       
     case 'BASE_DOCUMENTAIRE':
     case 'helpconfort':
     case 'academy_documents':
-      return caps.canAccessHelpAcademy && hasModuleActivated('help_academy');
+      return caps.canAccessHelpAcademy && hasModuleActivated('guides');
     
-    // Pilotage Agence - VÉRIFIE RÔLE ET MODULE
+    // Pilotage Agence - VÉRIFIE RÔLE ET MODULE (canonique: agence)
     case 'STATISTIQUES_HUB':
     case 'mes_indicateurs':
       if (caps.requiresAgencyForPilotage && !agence) return false;
-      return caps.canAccessPilotageAgence && hasModuleActivated('pilotage_agence');
+      return caps.canAccessPilotageAgence && hasModuleActivated('agence');
       
     case 'ACTIONS_A_MENER':
     case 'actions_a_mener':
       if (caps.requiresAgencyForPilotage && !agence) return false;
-      return caps.canAccessPilotageAgence && hasModuleActivated('pilotage_agence');
+      return caps.canAccessPilotageAgence && hasModuleActivated('agence');
       
     case 'DIFFUSION':
     case 'diffusion':
       if (caps.requiresAgencyForPilotage && !agence) return false;
-      return caps.canAccessPilotageAgence && hasModuleActivated('pilotage_agence');
+      return caps.canAccessPilotageAgence && hasModuleActivated('agence');
       
     case 'RH_TECH':
     case 'rh_tech':
       if (caps.requiresAgencyForPilotage && !agence) return false;
-      return caps.canAccessPilotageAgence && hasModuleActivated('pilotage_agence');
+      return caps.canAccessPilotageAgence && hasModuleActivated('agence');
       
     case 'MON_EQUIPE':
     case 'mon_equipe':
       if (caps.requiresAgencyForPilotage && !agence) return false;
-      return caps.canAccessPilotageAgence && hasModuleActivated('pilotage_agence');
+      return caps.canAccessPilotageAgence && hasModuleActivated('agence');
     
     // Support
     case 'CENTRE_AIDE':

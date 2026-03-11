@@ -43,8 +43,8 @@ export interface TableDoc {
 
 export const MODULES_DOCS: ModuleDoc[] = [
   {
-    id: 'help_academy',
-    name: 'Help Academy',
+    id: 'guides',
+    name: 'Guides (ex-Help Academy)',
     description: 'Centre de formation et documentation HelpConfort & Apogée',
     routes: ['/academy', '/academy/helpconfort', '/academy/apogee'],
     permissions: 'N0+ (base_user)',
@@ -53,8 +53,8 @@ export const MODULES_DOCS: ModuleDoc[] = [
     edgeFunctions: ['chat-guide', 'search-embeddings'],
   },
   {
-    id: 'support',
-    name: 'Support',
+    id: 'aide',
+    name: 'Aide (ex-Support)',
     description: 'Système de support intégré via Gestion de Projet',
     routes: ['/support', '/support/mes-demandes'],
     permissions: 'N0+ (création)',
@@ -63,8 +63,8 @@ export const MODULES_DOCS: ModuleDoc[] = [
     edgeFunctions: ['qualify-ticket'],
   },
   {
-    id: 'pilotage_agence',
-    name: 'Pilotage Agence',
+    id: 'agence',
+    name: 'Mon Agence (ex-Pilotage Agence)',
     description: 'Tableaux de bord et statistiques métier (StatIA)',
     routes: ['/agency', '/agency/indicateurs/*', '/diffusion'],
     permissions: 'N1+ (franchisee_user)',
@@ -73,8 +73,8 @@ export const MODULES_DOCS: ModuleDoc[] = [
     edgeFunctions: ['proxy-apogee', 'get-kpis', 'unified-search'],
   },
   {
-    id: 'apogee_tickets',
-    name: 'Gestion de Projet',
+    id: 'ticketing',
+    name: 'Gestion de Projet (ex-Apogée Tickets)',
     description: 'Suivi du développement Apogée (Kanban)',
     routes: ['/projects', '/projects/kanban', '/projects/list'],
     permissions: 'N0+ avec module activé',
