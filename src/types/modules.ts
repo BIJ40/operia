@@ -187,8 +187,8 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
-      { key: 'stats_hub', path: 'stats.stats_hub', label: 'Stats Hub', description: 'Tableaux avancés', defaultEnabled: true, routes: ['/?tab=stats'] },
-      { key: 'exports', path: 'stats.exports', label: 'Exports', description: 'Export des données', defaultEnabled: false, routes: ['/?tab=stats'] },
+      { key: 'stats_hub', path: 'stats.stats_hub', label: 'Stats Hub', description: 'Tableaux avancés', defaultEnabled: true, routes: ['/?tab=pilotage'] },
+      { key: 'exports', path: 'stats.exports', label: 'Exports', description: 'Export des données', defaultEnabled: false, routes: ['/?tab=pilotage'] },
     ],
   },
   {
