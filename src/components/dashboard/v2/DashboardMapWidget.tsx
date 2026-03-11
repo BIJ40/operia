@@ -59,6 +59,10 @@ function enableStyleFallback(map: mapboxgl.Map) {
     fallbackApplied = true;
     console.warn('[MAP] Style principal indisponible, fallback activé');
     map.setStyle(FALLBACK_MAPBOX_STYLE);
+    map.once('style.load', () => {
+      console.log('[MAP] Fallback style loaded, forcing resize');
+      map.resize();
+    });
   };
 
   map.on('error', (event: any) => {
@@ -88,6 +92,19 @@ function enableStyleFallback(map: mapboxgl.Map) {
       applyFallback();
     }
   });
+}
+
+/**
+ * Attach a ResizeObserver to auto-resize the map when container dimensions change
+ */
+function attachResizeObserver(container: HTMLElement, map: mapboxgl.Map): ResizeObserver {
+  const ro = new ResizeObserver(() => {
+    if (map && !((map as any)._removed)) {
+      map.resize();
+    }
+  });
+  ro.observe(container);
+  return ro;
 }
 
 export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidgetProps) {
@@ -125,35 +142,45 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
     const container = mapContainerRef.current;
     if (!container || !mapboxToken || mapRef.current) return;
 
-    console.log('[MAP] Init. Container:', container.offsetWidth, 'x', container.offsetHeight);
+    let ro: ResizeObserver | null = null;
 
-    mapboxgl.accessToken = mapboxToken;
+    // Delay init to let Framer Motion animation finish
+    const initTimer = setTimeout(() => {
+      console.log('[MAP] Init. Container:', container.offsetWidth, 'x', container.offsetHeight);
 
-    const map = new mapboxgl.Map({
-      container,
-      style: PRIMARY_MAPBOX_STYLE,
-      center: [2.3522, 48.8566],
-      zoom: 10,
-      attributionControl: true,
-    });
+      mapboxgl.accessToken = mapboxToken;
 
-    map.on('load', () => {
-      console.log('[MAP] Style loaded');
-      map.resize();
-    });
+      const map = new mapboxgl.Map({
+        container,
+        style: PRIMARY_MAPBOX_STYLE,
+        center: [2.3522, 48.8566],
+        zoom: 10,
+        attributionControl: true,
+      });
 
-    enableStyleFallback(map);
+      map.on('load', () => {
+        console.log('[MAP] Style loaded');
+        map.resize();
+      });
 
-    mapRef.current = map;
-    setMapReady(true);
+      enableStyleFallback(map);
+      ro = attachResizeObserver(container, map);
+
+      mapRef.current = map;
+      setMapReady(true);
+    }, 150);
 
     return () => {
+      clearTimeout(initTimer);
       console.log('[MAP] Cleanup');
       setMapReady(false);
+      ro?.disconnect();
       markersRef.current.forEach(m => m.remove());
       markersRef.current = [];
-      map.remove();
-      mapRef.current = null;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
     };
   }, [mapboxToken]);
 
@@ -447,6 +474,8 @@ function ExpandedMapContent({
     const container = mapContainerRef.current;
     if (!container || !mapboxToken) return;
 
+    let ro: ResizeObserver | null = null;
+
     // Small delay to let dialog animate open and get dimensions
     const timer = setTimeout(() => {
       mapboxgl.accessToken = mapboxToken;
@@ -463,6 +492,7 @@ function ExpandedMapContent({
 
       map.on('load', () => map.resize());
       enableStyleFallback(map);
+      ro = attachResizeObserver(container, map);
 
       mapRef.current = map;
       setMapReady(true);
@@ -471,6 +501,7 @@ function ExpandedMapContent({
     return () => {
       clearTimeout(timer);
       setMapReady(false);
+      ro?.disconnect();
       markersRef.current.forEach(m => m.remove());
       markersRef.current = [];
       if (mapRef.current) {
