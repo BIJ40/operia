@@ -37,6 +37,7 @@ export const COMPAT_MAP: Record<string, CompatEntry> = {
   'pilotage.statistiques.sav':          { keys: ['stats'] },
   'pilotage.statistiques.previsionnel': { keys: ['stats'] },
   'pilotage.statistiques.exports':      { keys: ['stats'], optionCheck: { moduleKey: 'stats', optionKey: 'exports' } },
+  'pilotage.dashboard':                 { keys: ['stats'] },
   // Pilotage ← agence
   'pilotage.performance':     { keys: ['agence'] },
   'pilotage.actions_a_mener': { keys: ['agence'] },
