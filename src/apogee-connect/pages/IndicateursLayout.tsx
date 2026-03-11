@@ -5,6 +5,7 @@ import { FiltersProvider } from "@/apogee-connect/contexts/FiltersContext";
 import { SecondaryFiltersProvider } from "@/apogee-connect/contexts/SecondaryFiltersContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { usePermissions } from "@/contexts/PermissionsContext";
+import type { ModuleKey } from "@/types/modules";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 
