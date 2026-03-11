@@ -108,7 +108,7 @@ export function PilotageRoutes() {
       <Route path="/agency/rh-tech/planning" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage.agence"><PlanningHebdo /></ModuleGuard></RoleGuard></AgencyLayout>} />
       
       {/* Mes Apporteurs */}
-      <Route path="/agency/apporteurs" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="agence" requiredOption="mes_apporteurs"><Suspense fallback={<PageLoader />}><MesApporteursPage /></Suspense></ModuleGuard></RoleGuard></AgencyLayout>} />
+      <Route path="/agency/apporteurs" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage.agence" requiredOption="mes_apporteurs"><Suspense fallback={<PageLoader />}><MesApporteursPage /></Suspense></ModuleGuard></RoleGuard></AgencyLayout>} />
       
       {/* Carte des RDV */}
       <Route path="/agency/carte" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="agence" requiredOption="carte_rdv"><Suspense fallback={<PageLoader />}><RdvMapPage /></Suspense></ModuleGuard></RoleGuard></AgencyLayout>} />
