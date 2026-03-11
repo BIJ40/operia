@@ -555,7 +555,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'support',
     guards: {
       roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'aide' },
+      moduleGuard: { moduleKey: 'support.aide_en_ligne' },
     },
   },
   {
@@ -565,7 +565,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'support',
     guards: {
       roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'aide' },
+      moduleGuard: { moduleKey: 'support.aide_en_ligne' },
     },
   },
   {
@@ -575,7 +575,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'support',
     guards: {
       roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'aide' },
+      moduleGuard: { moduleKey: 'support.aide_en_ligne' },
     },
   },
   {
