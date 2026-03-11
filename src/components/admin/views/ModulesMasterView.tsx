@@ -608,6 +608,19 @@ interface PropagateDialogState {
   field: 'is_deployed' | 'required_plan' | 'min_role';
   newValue: boolean | PlanLevel | number;
   descendantCount: number;
+  nonDeployedCount: number;
+}
+
+function countNonDeployedDescendants(node: RegistryNode): number {
+  let count = 0;
+  function walk(n: RegistryNode) {
+    for (const child of n.children) {
+      if (!child.is_deployed) count++;
+      walk(child);
+    }
+  }
+  walk(node);
+  return count;
 }
 
 export function ModulesMasterView() {
