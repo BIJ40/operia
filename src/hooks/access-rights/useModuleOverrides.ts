@@ -25,21 +25,45 @@ export function useModuleOverrides() {
   const query = useQuery({
     queryKey: QUERY_KEY,
     queryFn: async (): Promise<OverridesMap> => {
+      // Fetch overrides with profile info
       const { data, error } = await supabase
         .from('user_modules')
-        .select('module_key, user_id, profiles!user_modules_user_id_fkey(first_name, last_name, email)')
+        .select('module_key, user_id, profiles!user_modules_user_id_fkey(first_name, last_name, email, global_role, agency_id)')
         ;
 
       if (error) throw error;
 
+      // Collect unique agency_ids to fetch tier_keys
+      const agencyIds = new Set<string>();
+      for (const row of (data ?? []) as any[]) {
+        const agencyId = row.profiles?.agency_id;
+        if (agencyId) agencyIds.add(agencyId);
+      }
+
+      // Fetch active subscriptions for all agencies
+      const tierMap = new Map<string, string>();
+      if (agencyIds.size > 0) {
+        const { data: subs } = await supabase
+          .from('agency_subscription')
+          .select('agency_id, tier_key')
+          .in('agency_id', [...agencyIds])
+          .eq('status', 'active');
+        for (const sub of subs ?? []) {
+          tierMap.set(sub.agency_id, sub.tier_key?.toUpperCase() ?? 'STARTER');
+        }
+      }
+
       const map = new Map<string, UserOverride[]>();
       for (const row of (data ?? []) as any[]) {
         const profile = row.profiles;
+        const agencyId = profile?.agency_id;
         const entry: UserOverride = {
           userId: row.user_id,
           firstName: profile?.first_name ?? null,
           lastName: profile?.last_name ?? null,
           email: profile?.email ?? null,
+          globalRole: profile?.global_role ?? null,
+          agencyTierKey: agencyId ? (tierMap.get(agencyId) ?? 'STARTER') : null,
         };
         const existing = map.get(row.module_key) ?? [];
         existing.push(entry);
