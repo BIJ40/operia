@@ -173,24 +173,17 @@ Deno.serve(async (req) => {
     const isCommanditaire = (client: Record<string, unknown>): boolean => {
       const clientId = Number(client.id);
       
+      // 1. Client used as commanditaire in at least one project
       if (usedCommanditaireIds.has(clientId)) return true;
+      
+      // 2. Explicit flag from Apogée
       if (client.isCommanditaire === true || client.is_commanditaire === true) return true;
       
+      // 3. Type matches known apporteur/commanditaire types
       const type = String(client.type || '').toLowerCase();
       const typeClient = String(client.typeClient || '').toLowerCase();
       
       if (commanditaireTypes.some(ct => type.includes(ct) || typeClient.includes(ct))) return true;
-      
-      const raisonSociale = String(client.raisonSociale || '').trim();
-      if (raisonSociale.length > 2 && (!client.prenom || String(client.prenom).trim().length === 0)) {
-        return true;
-      }
-
-      // Detect company names: all uppercase with 3+ chars (e.g. NESTENN, FONCIA)
-      const nom = String(client.nom || client.name || '').trim();
-      if (nom.length >= 3 && nom === nom.toUpperCase() && /[A-Z]/.test(nom)) {
-        return true;
-      }
       
       return false;
     };
