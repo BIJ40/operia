@@ -63,6 +63,7 @@ export const COMPAT_MAP: Record<string, CompatEntry> = {
   'mediatheque.consulter': { keys: ['divers_documents'], optionCheck: { moduleKey: 'divers_documents', optionKey: 'consulter' } },
   'mediatheque.gerer':     { keys: ['divers_documents'], optionCheck: { moduleKey: 'divers_documents', optionKey: 'gerer' } },
   'mediatheque.corbeille':  { keys: ['divers_documents'], optionCheck: { moduleKey: 'divers_documents', optionKey: 'corbeille_vider' } },
+  'mediatheque.documents': { keys: ['divers_documents'] },
   // Support ← legacy keys
   'support.aide_en_ligne': { keys: ['aide'] },
   'support.guides':        { keys: ['guides'] },

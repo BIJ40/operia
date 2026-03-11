@@ -76,6 +76,22 @@ const TEST_CASES: TestCase[] = [
       { label: 'hasModule("commercial.comparateur")',  key: 'commercial.comparateur',  expected: false },
     ],
   },
+  {
+    name: 'Cas 4 — stats → pilotage.dashboard',
+    modules: { stats: { enabled: true, options: {} } },
+    assertions: [
+      { label: 'hasModule("pilotage.dashboard")',    key: 'pilotage.dashboard',    expected: true },
+      { label: 'hasModule("pilotage.statistiques")', key: 'pilotage.statistiques', expected: true },
+    ],
+  },
+  {
+    name: 'Cas 5 — divers_documents → mediatheque.documents',
+    modules: { divers_documents: { enabled: true, options: {} } },
+    assertions: [
+      { label: 'hasModule("mediatheque.documents")', key: 'mediatheque.documents', expected: true },
+      { label: 'hasModule("mediatheque.consulter")', key: 'mediatheque.consulter', expected: false },
+    ],
+  },
 ];
 
 // ============================================================================
