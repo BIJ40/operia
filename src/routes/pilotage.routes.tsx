@@ -114,8 +114,8 @@ export function PilotageRoutes() {
       <Route path="/agency/carte" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage.agence" requiredOption="carte_rdv"><Suspense fallback={<PageLoader />}><RdvMapPage /></Suspense></ModuleGuard></RoleGuard></AgencyLayout>} />
       
       {/* Commercial */}
-      <Route path="/agency/commercial" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="agence"><CommercialPage /></ModuleGuard></RoleGuard></AgencyLayout>} />
-      <Route path="/agency/commercial/support-pptx" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="agence"><CommercialSupportPptx /></ModuleGuard></RoleGuard></AgencyLayout>} />
+      <Route path="/agency/commercial" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage.agence"><CommercialPage /></ModuleGuard></RoleGuard></AgencyLayout>} />
+      <Route path="/agency/commercial/support-pptx" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage.agence"><CommercialSupportPptx /></ModuleGuard></RoleGuard></AgencyLayout>} />
       
       {/* Planning V2 Dispatch Board */}
       <Route path="/planning-v2" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="agence"><Suspense fallback={<PageLoader />}><PlanningV2Shell /></Suspense></ModuleGuard></RoleGuard></AgencyLayout>} />
