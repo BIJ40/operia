@@ -96,7 +96,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: 'actions_a_mener',
     color: 'accent',
     group: 'rh',
-    requiresModule: 'rh',
+    requiresModule: 'organisation.salaries',
   },
   {
     id: 'DIFFUSION',
