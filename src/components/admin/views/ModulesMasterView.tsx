@@ -174,6 +174,35 @@ function RoleBadge({
 }
 
 // ============================================================================
+// Redundancy check helper
+// ============================================================================
+
+const ROLE_LEVEL_MAP: Record<string, number> = {
+  base_user: 0, franchisee_user: 1, franchisee_admin: 2,
+  franchisor_user: 3, franchisor_admin: 4, platform_admin: 5, superadmin: 6,
+};
+
+function isOverrideRedundant(
+  override: UserOverride,
+  moduleMinRole: number,
+  moduleRequiredPlan: PlanLevel,
+): boolean {
+  // If module plan is NONE, override is the ONLY way to grant access → never redundant
+  if (moduleRequiredPlan === 'NONE') return false;
+
+  const userRoleLevel = override.globalRole ? (ROLE_LEVEL_MAP[override.globalRole] ?? 0) : 0;
+  const userTier = override.agencyTierKey ?? 'STARTER';
+
+  // Check role requirement
+  const meetsRole = userRoleLevel >= moduleMinRole || userRoleLevel >= 5;
+
+  // Check plan requirement
+  const meetsPlan = userTier === 'PRO' || moduleRequiredPlan === 'STARTER';
+
+  return meetsRole && meetsPlan;
+}
+
+// ============================================================================
 // Overrides Popover
 // ============================================================================
 
@@ -181,10 +210,14 @@ function OverridesPopover({
   moduleKey,
   overrides,
   dimmed,
+  moduleMinRole,
+  moduleRequiredPlan,
 }: {
   moduleKey: string;
   overrides: UserOverride[];
   dimmed: boolean;
+  moduleMinRole: number;
+  moduleRequiredPlan: PlanLevel;
 }) {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search, 300);
@@ -196,54 +229,110 @@ function OverridesPopover({
   const existingIds = new Set(overrides.map(o => o.userId));
   const filteredResults = (searchResults ?? []).filter(p => !existingIds.has(p.id));
 
+  const redundantOverrides = useMemo(() => 
+    overrides.filter(o => isOverrideRedundant(o, moduleMinRole, moduleRequiredPlan)),
+    [overrides, moduleMinRole, moduleRequiredPlan]
+  );
+  const redundantCount = redundantOverrides.length;
+
+  const handleCleanRedundant = () => {
+    for (const o of redundantOverrides) {
+      removeOverride.mutate({ userId: o.userId, moduleKey });
+    }
+  };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
         <button
           type="button"
           className={cn(
-            'inline-flex items-center rounded-full border text-[11px] cursor-pointer select-none transition-opacity font-medium px-2 py-0.5',
+            'inline-flex items-center gap-1 rounded-full border text-[11px] cursor-pointer select-none transition-opacity font-medium px-2 py-0.5',
             'hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1',
             dimmed && 'opacity-40',
             count > 0
-              ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700'
+              ? redundantCount === count
+                ? 'bg-muted text-muted-foreground border-border'
+                : 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700'
               : 'bg-muted text-muted-foreground border-border'
           )}
         >
           {count > 0 ? count : '—'}
+          {redundantCount > 0 && (
+            <AlertTriangle className="w-3 h-3 text-muted-foreground" />
+          )}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-0 z-50" align="end" sideOffset={5}>
+      <PopoverContent className="w-80 p-0 z-50" align="end" sideOffset={5}>
         <div className="p-3 pb-2">
           <p className="text-xs font-medium text-foreground mb-2">
             Privilèges — <span className="text-muted-foreground font-normal">{moduleKey}</span>
           </p>
 
+          {/* Cleanup button */}
+          {redundantCount > 0 && (
+            <div className="mb-2 p-2 rounded bg-muted/50 border border-border">
+              <p className="text-[10px] text-muted-foreground mb-1.5">
+                {redundantCount} privilège{redundantCount > 1 ? 's' : ''} redondant{redundantCount > 1 ? 's' : ''} — ces utilisateurs ont déjà accès via leur rôle et plan.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-6 text-[10px] gap-1"
+                onClick={handleCleanRedundant}
+                disabled={removeOverride.isPending}
+              >
+                <Trash2 className="w-3 h-3" />
+                Nettoyer {redundantCount} redondant{redundantCount > 1 ? 's' : ''}
+              </Button>
+            </div>
+          )}
+
           {/* Current overrides */}
           {count > 0 && (
             <ScrollArea className="max-h-48 overflow-y-auto mb-2">
               <div className="space-y-1">
-                {overrides.map(o => (
-                  <div key={o.userId} className="group flex items-center justify-between gap-2 text-xs py-1.5 px-2 rounded hover:bg-muted/50">
-                    <div className="min-w-0 flex-1">
-                      <span className="font-medium truncate block">
-                        {[o.firstName, o.lastName].filter(Boolean).join(' ') || 'Inconnu'}
-                      </span>
-                      {o.email && (
-                        <span className="text-muted-foreground text-[10px] truncate block">{o.email}</span>
-                      )}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                      title="Retirer ce privilège"
-                      onClick={() => removeOverride.mutate({ userId: o.userId, moduleKey })}
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-                ))}
+                <TooltipProvider delayDuration={200}>
+                  {overrides.map(o => {
+                    const redundant = isOverrideRedundant(o, moduleMinRole, moduleRequiredPlan);
+                    return (
+                      <div key={o.userId} className={cn(
+                        'group flex items-center justify-between gap-2 text-xs py-1.5 px-2 rounded hover:bg-muted/50',
+                        redundant && 'opacity-50'
+                      )}>
+                        <div className="min-w-0 flex-1">
+                          <span className="font-medium truncate block">
+                            {[o.firstName, o.lastName].filter(Boolean).join(' ') || 'Inconnu'}
+                          </span>
+                          {o.email && (
+                            <span className="text-muted-foreground text-[10px] truncate block">{o.email}</span>
+                          )}
+                        </div>
+                        {redundant && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge variant="outline" className="text-[9px] px-1 py-0 bg-muted text-muted-foreground border-border shrink-0">
+                                Redondant
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent side="left" className="text-xs max-w-[200px]">
+                              Accès déjà garanti par le rôle ({o.globalRole}) et le plan ({o.agencyTierKey})
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          title="Retirer ce privilège"
+                          onClick={() => removeOverride.mutate({ userId: o.userId, moduleKey })}
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </TooltipProvider>
               </div>
             </ScrollArea>
           )}
