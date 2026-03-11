@@ -240,7 +240,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'pilotage',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'agence' },
+      moduleGuard: { moduleKey: 'pilotage.agence' },
     },
   },
   {
@@ -251,7 +251,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     planRequired: 'PRO',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
-      moduleGuard: { moduleKey: 'stats', requiredOption: 'stats_hub' },
+      moduleGuard: { moduleKey: 'pilotage.dashboard', requiredOption: 'stats_hub' },
     },
   },
   {
