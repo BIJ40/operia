@@ -135,7 +135,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     description: 'Chat IA et assistance en ligne',
     icon: HelpCircle,
     route: ROUTES.support.index,
-    scopeSlug: SCOPE_SLUGS.MES_DEMANDES,
+    scopeSlug: 'mes_demandes',
     color: 'primary',
     group: 'support',
   },
