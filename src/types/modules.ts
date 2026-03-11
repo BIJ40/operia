@@ -183,7 +183,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Stats',
     description: 'Statistiques et tableaux de bord',
     icon: 'BarChart3',
-    category: 'stats',
+    category: 'pilotage',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
