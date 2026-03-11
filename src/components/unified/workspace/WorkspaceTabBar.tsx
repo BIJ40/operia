@@ -32,7 +32,7 @@ const TAB_ACCENTS: Record<UnifiedTab, AccentThemeKey> = {
   organisation: 'green',
   documents: 'red',
   support: 'cyan',
-  admin: 'neutral',
+  admin: 'purple',
 };
 
 interface WorkspaceTabBarProps {
