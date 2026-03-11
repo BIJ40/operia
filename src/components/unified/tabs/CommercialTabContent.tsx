@@ -1,26 +1,44 @@
 /**
  * CommercialTabContent - Onglet "Commercial"
- * Sous-onglets : Suivi client (Prospection), Devis acceptés, Incohérences
+ * Sous-onglets : Suivi client, Comparateur, Veille, Prospects, Réalisations
  */
 
-import { lazy, Suspense, useMemo } from 'react';
-import { Target, FileCheck, AlertTriangle, Loader2 } from 'lucide-react';
+import { lazy, Suspense, useState, useCallback, useMemo } from 'react';
+import { Building2, GitCompare, UserSearch, Radar, Camera, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
+import { PillTabsList, type PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
-import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { ModuleKey } from '@/types/modules';
+import { ApporteurTabsProvider, useApporteurTabs } from '@/prospection/browser-tabs/ApporteurTabsContext';
+import { ApporteurTabsBar } from '@/prospection/browser-tabs/ApporteurTabsBar';
+import { ApporteurTabsContent } from '@/prospection/browser-tabs/ApporteurTabsContent';
+import { ApporteurListPage } from '@/prospection/pages/ApporteurListPage';
+import { ApporteurComparisonPage } from '@/prospection/pages/ApporteurComparisonPage';
+import { ProspectsUnifiedPage } from '@/prospection/pages/ProspectsUnifiedPage';
+import { VeilleApporteursTab } from '@/prospection/pages/VeilleApporteursTab';
 
-const ProspectionTabContent = lazy(() => import('@/prospection/pages/ProspectionTabContent'));
-const DevisAcceptesView = lazy(() => import('@/apogee-connect/components/DevisAcceptesView'));
-const AnomaliesDevisDossierView = lazy(() => import('@/apogee-connect/components/AnomaliesDevisDossierView'));
+const RealisationsPage = lazy(() => import('@/realisations/pages/RealisationsPage'));
 
-type CommercialSubTab = 'prospection' | 'devis-acceptes' | 'anomalies';
+/** Mapping tab id → clé d'option du module prospection */
+const TAB_OPTION_MAP: Record<string, string> = {
+  apporteurs: 'dashboard',
+  comparateur: 'comparateur',
+  veille: 'veille',
+  prospects: 'prospects',
+};
 
-const ALL_COMMERCIAL_TABS: (PillTabConfig & { requiresModule?: ModuleKey })[] = [
-  { id: 'prospection', label: 'Suivi client', icon: Target, accent: 'orange', requiresModule: 'prospection' },
-  { id: 'devis-acceptes', label: 'Devis acceptés', icon: FileCheck, accent: 'teal', requiresModule: 'agence' },
-  { id: 'anomalies', label: 'Incohérences', icon: AlertTriangle, accent: 'pink', requiresModule: 'agence' },
+/** Tabs nécessitant un module spécifique (hors prospection options) */
+const TAB_MODULE_MAP: Record<string, ModuleKey> = {
+  realisations: 'realisations',
+};
+
+const ALL_TABS: PillTabConfig[] = [
+  { id: 'apporteurs', label: 'Suivi client', icon: Building2 },
+  { id: 'comparateur', label: 'Comparateur', icon: GitCompare },
+  { id: 'veille', label: 'Veille', icon: Radar },
+  { id: 'prospects', label: 'Prospects', icon: UserSearch },
+  { id: 'realisations', label: 'Réalisations', icon: Camera },
 ];
 
 function LoadingFallback() {
@@ -31,43 +49,86 @@ function LoadingFallback() {
   );
 }
 
-export default function CommercialTabContent() {
-  const { hasModule } = useEffectiveModules();
+function ApporteursTabInner() {
+  const { openApporteur } = useApporteurTabs();
+
+  const handleSelectApporteur = useCallback((id: string, name?: string) => {
+    openApporteur(id, name || `Apporteur #${id}`);
+  }, [openApporteur]);
+
+  return (
+    <div className="flex flex-col h-full">
+      <ApporteurTabsBar />
+      <ApporteurTabsContent
+        overviewContent={
+          <ApporteurListPage onSelectApporteur={handleSelectApporteur} />
+        }
+      />
+    </div>
+  );
+}
+
+function CommercialInner() {
+  const { hasModuleOption, hasModule } = usePermissions();
+  const { openApporteur } = useApporteurTabs();
 
   const visibleTabs = useMemo(() => {
-    return ALL_COMMERCIAL_TABS.filter(tab => {
-      if (!tab.requiresModule) return true;
-      return hasModule(tab.requiresModule);
+    return ALL_TABS.filter(tab => {
+      const moduleKey = TAB_MODULE_MAP[tab.id];
+      if (moduleKey) return hasModule(moduleKey);
+      const optionKey = TAB_OPTION_MAP[tab.id];
+      return optionKey ? hasModuleOption('prospection', optionKey) : true;
     });
-  }, [hasModule]);
+  }, [hasModuleOption, hasModule]);
 
-  const defaultTab = visibleTabs[0]?.id as CommercialSubTab ?? 'prospection';
-  const [activeTab, setActiveTab] = useSessionState<CommercialSubTab>('commercial_sub_tab', defaultTab);
+  const defaultTab = visibleTabs[0]?.id ?? 'apporteurs';
+  const [activeTab, setActiveTab] = useSessionState<string>('commercial_sub_tab', defaultTab);
   const effectiveTab = visibleTabs.some(t => t.id === activeTab) ? activeTab : defaultTab;
+
+  const handleVeilleSelectApporteur = useCallback((id: string, name: string) => {
+    openApporteur(id, name);
+    setActiveTab('apporteurs');
+  }, [openApporteur, setActiveTab]);
+
+  if (visibleTabs.length === 0) {
+    return <div className="py-6 px-4 text-muted-foreground text-sm">Aucun onglet accessible.</div>;
+  }
 
   return (
     <div className="py-6 px-2 sm:px-4 space-y-4">
-      <Tabs value={effectiveTab} onValueChange={(v) => setActiveTab(v as CommercialSubTab)}>
+      <Tabs value={effectiveTab} onValueChange={setActiveTab}>
         <PillTabsList tabs={visibleTabs} />
 
-        <TabsContent value="prospection" className="mt-4">
-          <Suspense fallback={<LoadingFallback />}>
-            <ProspectionTabContent />
-          </Suspense>
+        <TabsContent value="apporteurs" className="mt-4">
+          <ApporteursTabInner />
         </TabsContent>
 
-        <TabsContent value="devis-acceptes" className="mt-4">
-          <Suspense fallback={<LoadingFallback />}>
-            <DevisAcceptesView />
-          </Suspense>
+        <TabsContent value="comparateur" className="mt-4">
+          <ApporteurComparisonPage />
         </TabsContent>
 
-        <TabsContent value="anomalies" className="mt-4">
+        <TabsContent value="veille" className="mt-4">
+          <VeilleApporteursTab onSelectApporteur={handleVeilleSelectApporteur} />
+        </TabsContent>
+
+        <TabsContent value="prospects" className="mt-4">
+          <ProspectsUnifiedPage />
+        </TabsContent>
+
+        <TabsContent value="realisations" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
-            <AnomaliesDevisDossierView />
+            <RealisationsPage />
           </Suspense>
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+export default function CommercialTabContent() {
+  return (
+    <ApporteurTabsProvider>
+      <CommercialInner />
+    </ApporteurTabsProvider>
   );
 }
