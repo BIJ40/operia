@@ -25,11 +25,11 @@ const AnomaliesDevisDossierView = lazy(() => import('@/apogee-connect/components
 type PilotageSubTab = 'stats' | 'performance' | 'actions' | 'devis-acceptes' | 'anomalies';
 
 const ALL_PILOTAGE_TABS: (PillTabConfig & { requiresModule?: ModuleKey })[] = [
-  { id: 'stats', label: 'Statistiques', icon: BarChart3, accent: 'blue', requiresModule: 'stats' },
-  { id: 'performance', label: 'Performance', icon: Activity, accent: 'pink', requiresModule: 'agence' },
-  { id: 'actions', label: 'Actions à mener', icon: Settings, accent: 'orange', requiresModule: 'agence' },
-  { id: 'devis-acceptes', label: 'Devis acceptés', icon: FileCheck, accent: 'teal', requiresModule: 'agence' },
-  { id: 'anomalies', label: 'Incohérences', icon: AlertTriangle, accent: 'pink', requiresModule: 'agence' },
+  { id: 'stats', label: 'Statistiques', icon: BarChart3, accent: 'blue', requiresModule: 'pilotage.dashboard' },
+  { id: 'performance', label: 'Performance', icon: Activity, accent: 'pink', requiresModule: 'pilotage.agence' },
+  { id: 'actions', label: 'Actions à mener', icon: Settings, accent: 'orange', requiresModule: 'pilotage.agence' },
+  { id: 'devis-acceptes', label: 'Devis acceptés', icon: FileCheck, accent: 'teal', requiresModule: 'pilotage.agence' },
+  { id: 'anomalies', label: 'Incohérences', icon: AlertTriangle, accent: 'pink', requiresModule: 'pilotage.agence' },
 ];
 
 function LoadingFallback() {

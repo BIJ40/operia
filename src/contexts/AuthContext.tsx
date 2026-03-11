@@ -404,9 +404,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isAdmin) return true;
 
     switch (scope) {
-      // Pilotage Agence — module canonique: agence
+      // Pilotage Agence — module canonique: pilotage.agence
       case 'mes_indicateurs':
-        return hasModuleGuard('agence' as ModuleKey);
+        return hasModuleGuard('pilotage.agence' as ModuleKey);
       // Sous-onglets Guides — module parent: guides + option spécifique
       case 'apporteurs':
         return hasModuleOptionGuard('guides' as ModuleKey, 'apporteurs');

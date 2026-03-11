@@ -241,7 +241,7 @@ function ApporteursSection() {
 const ADMIN_TABS_CONFIG: (FolderTabConfig & { requiresModule?: ModuleKey })[] = [
   { id: 'reunions', label: 'Réunions', icon: Users2, requiresModule: 'organisation.reunions' },
   { id: 'plannings', label: 'Plannings', icon: CalendarDays, requiresModule: 'organisation.plannings' },
-  { id: 'documents', label: 'Documents', icon: FileText, requiresModule: 'divers_documents' },
+  { id: 'documents', label: 'Documents', icon: FileText, requiresModule: 'mediatheque.documents' },
 ];
 
 function AdministratifSection() {
