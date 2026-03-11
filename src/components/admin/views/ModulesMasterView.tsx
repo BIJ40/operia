@@ -542,7 +542,7 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
 
       {/* Privilèges */}
       <div className="flex justify-center relative z-10">
-        <OverridesPopover moduleKey={node.key} overrides={overrides} dimmed={!node.effectiveDeployed} />
+        <OverridesPopover moduleKey={node.key} overrides={overrides} dimmed={!node.effectiveDeployed} moduleMinRole={node.min_role} moduleRequiredPlan={node.required_plan} />
       </div>
 
       {/* Lien */}
