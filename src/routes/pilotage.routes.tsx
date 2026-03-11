@@ -125,7 +125,7 @@ export function PilotageRoutes() {
       
       {/* Legacy redirects */}
       <Route path="/agency/statia-builder" element={<Navigate to="/?tab=admin&adminTab=ia&adminView=statia" replace />} />
-      <Route path="/agency/maintenance" element={<Navigate to="/?tab=parc" replace />} />
+      <Route path="/agency/maintenance" element={<Navigate to="/?tab=organisation" replace />} />
     </>
   );
 }
