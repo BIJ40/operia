@@ -6,17 +6,17 @@ import { useState, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FolderOpen, Star, Trash2 } from 'lucide-react';
 import { MediaLibraryManager } from '@/components/media-library/MediaLibraryManager';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
 
 type DocumentsSubTab = 'library' | 'shortcuts' | 'trash';
 
 export default function DocumentsTabContent() {
   const [activeSubTab, setActiveSubTab] = useState<DocumentsSubTab>('library');
-  const { hasModule } = usePermissions();
+  const { hasModule } = useEffectiveModules();
   
-  // Vérifier les permissions granulaires — clés DB sous "documents.*"
-  const canManage = hasModule('documents.gerer' as any);
-  const canEmptyTrash = hasModule('documents.corbeille_vider' as any);
+  // Clés COMPAT_MAP : mediatheque.gerer → divers_documents.gerer, mediatheque.corbeille → divers_documents.corbeille_vider
+  const canManage = hasModule('mediatheque.gerer' as any);
+  const canEmptyTrash = hasModule('mediatheque.corbeille' as any);
 
   return (
     <div className="container mx-auto max-w-7xl px-4 py-6">

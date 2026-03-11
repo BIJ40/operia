@@ -73,13 +73,16 @@ export function ModuleGuard({
     agencyId,
   };
 
-  // Vérifier l'accès au module via le Permissions Engine
+  // Vérifier l'accès au module via le Permissions Engine + COMPAT_MAP fallback
+  const isBypass = isBypassRole(globalRole);
   let canAccessModule = false;
 
   if (requiredOptions && requiredOptions.length > 0) {
     // Logique OR : au moins une des options doit être accessible
     canAccessModule = requiredOptions.some(opt => 
       hasAccess({ ...permissionContext, moduleId: moduleKey, optionId: opt })
+      || isBypass
+      || resolveModuleOptionViaCompat(enabledModules, moduleKey, opt)
     );
   } else if (requiredOption) {
     // Option unique requise
@@ -87,13 +90,13 @@ export function ModuleGuard({
       ...permissionContext, 
       moduleId: moduleKey, 
       optionId: requiredOption 
-    });
+    }) || isBypass || resolveModuleOptionViaCompat(enabledModules, moduleKey, requiredOption);
   } else {
-    // Juste le module
+    // Juste le module — legacy d'abord, COMPAT en fallback
     canAccessModule = hasAccess({ 
       ...permissionContext, 
       moduleId: moduleKey 
-    });
+    }) || isBypass || resolveModuleViaCompat(enabledModules, moduleKey);
   }
 
   if (!canAccessModule) {
