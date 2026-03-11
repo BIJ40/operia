@@ -274,7 +274,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Guides',
     description: 'Documentation et guides',
     icon: 'BookOpen',
-    category: 'guides',
+    category: 'aide',
     defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
