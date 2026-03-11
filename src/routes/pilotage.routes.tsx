@@ -45,9 +45,9 @@ export function PilotageRoutes() {
       {/* ============================================ */}
       {/* REDIRECTIONS VERS INTERFACE UNIFIEE */}
       {/* ============================================ */}
-      <Route path="/agency" element={<Navigate to="/?tab=agence" replace />} />
-      <Route path="/agency/stats-hub" element={<Navigate to="/?tab=stats" replace />} />
-      <Route path="/agency/statistiques" element={<Navigate to="/?tab=stats" replace />} />
+      <Route path="/agency" element={<Navigate to="/?tab=pilotage" replace />} />
+      <Route path="/agency/stats-hub" element={<Navigate to="/?tab=pilotage" replace />} />
+      <Route path="/agency/statistiques" element={<Navigate to="/?tab=pilotage" replace />} />
       
       {/* Indicateurs détaillés */}
       <Route path="/agency/indicateurs" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="agence" requiredOption="indicateurs"><IndicateursLayout /></ModuleGuard></RoleGuard></AgencyLayout>}>

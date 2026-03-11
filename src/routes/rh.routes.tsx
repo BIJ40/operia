@@ -57,7 +57,7 @@ export function RHRoutes() {
       />
 
       {/* Route /rh/epi supprimée - redirection vers onglet parc */}
-      <Route path="/rh/epi" element={<Navigate to="/?tab=parc" replace />} />
+      <Route path="/rh/epi" element={<Navigate to="/?tab=organisation" replace />} />
 
       {/* ============================================ */}
       {/* OUTILS RH (N2) */}
