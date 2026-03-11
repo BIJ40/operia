@@ -43,8 +43,8 @@ export interface TableDoc {
 
 export const MODULES_DOCS: ModuleDoc[] = [
   {
-    id: 'help_academy',
-    name: 'Help Academy',
+    id: 'guides',
+    name: 'Guides (ex-Help Academy)',
     description: 'Centre de formation et documentation HelpConfort & Apogée',
     routes: ['/academy', '/academy/helpconfort', '/academy/apogee'],
     permissions: 'N0+ (base_user)',
