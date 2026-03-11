@@ -33,8 +33,8 @@ export function AcademyRoutes() {
       
       {/* Guide Apporteurs */}
       <Route path="/academy/apporteurs" element={<Navigate to="/?tab=support" replace />} />
-      <Route path="/academy/apporteurs/category/:slug" element={<GuidesLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="guides"><ApporteurSubcategories /></ModuleGuard></RoleGuard></GuidesLayout>} />
-      <Route path="/academy/apporteurs/category/:slug/sub/:subslug" element={<GuidesLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="guides"><CategoryApporteur /></ModuleGuard></RoleGuard></GuidesLayout>} />
+      <Route path="/academy/apporteurs/category/:slug" element={<GuidesLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="support.guides"><ApporteurSubcategories /></ModuleGuard></RoleGuard></GuidesLayout>} />
+      <Route path="/academy/apporteurs/category/:slug/sub/:subslug" element={<GuidesLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="support.guides"><CategoryApporteur /></ModuleGuard></RoleGuard></GuidesLayout>} />
       
       {/* Guide HC Services (ex-OPERIA) */}
       <Route path="/academy/hc-services" element={<Navigate to="/?tab=support" replace />} />
