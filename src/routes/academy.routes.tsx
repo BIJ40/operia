@@ -29,7 +29,7 @@ export function AcademyRoutes() {
       
       {/* Guide Apogée - Index redirige, détails restent */}
       <Route path="/academy/apogee" element={<Navigate to="/?tab=support" replace />} />
-      <Route path="/academy/apogee/category/:slug" element={<GuidesLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="guides"><Category /></ModuleGuard></RoleGuard></GuidesLayout>} />
+      <Route path="/academy/apogee/category/:slug" element={<GuidesLayout><RoleGuard minRole="franchisee_user"><ModuleGuard moduleKey="support.guides"><Category /></ModuleGuard></RoleGuard></GuidesLayout>} />
       
       {/* Guide Apporteurs */}
       <Route path="/academy/apporteurs" element={<Navigate to="/?tab=support" replace />} />
