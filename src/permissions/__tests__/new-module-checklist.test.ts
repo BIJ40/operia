@@ -1,19 +1,19 @@
 /**
  * NEW MODULE CHECKLIST — CI guard
  * 
- * Ensures every new module follows the complete chain:
- * 1. MODULE_DEFINITIONS keys ⊆ MODULES
- * 2. Deployed, non-adminOnly MODULE_DEFINITIONS keys should have plan_tier_modules coverage
- *    (verified structurally — actual DB check is in coherence-audit)
- * 3. MODULE_OPTION_MIN_ROLES paths reference valid MODULES keys
- * 4. SHARED_MODULE_KEYS ⊆ MODULES
- * 5. No structural root keys in MODULE_DEFINITIONS
- * 6. Deployed=false modules not in DEFAULT_MODULES_BY_ROLE
- * 7. pilotage.statistiques is in MODULES but NOT in MODULE_DEFINITIONS (documented exception)
- * 8. organisation.documents_legaux is in MODULES but NOT in MODULE_DEFINITIONS (documented exception)
+ * Ensures every new module follows the complete chain.
+ * See docs/PERMISSIONS-REFERENCE.md §6 for the full checklist.
  */
 
 import { describe, it, expect } from 'vitest';
+import { 
+  MODULES, 
+  MODULE_DEFINITIONS, 
+  ModuleKey, 
+  PLAN_VISIBLE_MODULES,
+  isModuleEnabled,
+  isModuleOptionEnabled,
+} from '@/types/modules';
 import { 
   MODULES, 
   MODULE_DEFINITIONS, 
