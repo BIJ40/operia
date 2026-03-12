@@ -103,16 +103,19 @@ export default function AdminAgencies() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [agenciesResult, usersResult] = await Promise.all([
+      const [agenciesResult, usersResult, collabsResult] = await Promise.all([
         supabase.from('apogee_agencies').select('*').order('label').limit(500),
         supabase.from('profiles').select('id, first_name, last_name, email, agence, agency_id, role_agence').order('first_name').limit(1000),
+        supabase.from('collaborators').select('id, user_id, first_name, last_name, email, role, type, agency_id, leaving_date, is_registered_user').order('last_name').limit(2000),
       ]);
 
       if (agenciesResult.error) throw agenciesResult.error;
       if (usersResult.error) throw usersResult.error;
+      if (collabsResult.error) throw collabsResult.error;
 
       setAgencies(agenciesResult.data || []);
       setUsers(usersResult.data || []);
+      setCollaborators(collabsResult.data || []);
     } catch (error) {
       logError('ADMIN_AGENCIES', 'Error loading data:', error);
       toast({
