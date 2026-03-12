@@ -11,7 +11,7 @@
 
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Maximize2, Users, Calendar, AlertCircle, Clock } from 'lucide-react';
+import { MapPin, Maximize2, Users, Calendar, AlertCircle, Clock, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
