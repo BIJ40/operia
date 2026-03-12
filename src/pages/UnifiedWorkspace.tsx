@@ -26,7 +26,7 @@ import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
-import { filterWorkspaceTabs } from '@/lib/filterNavigationByPermissions';
+import { filterWorkspaceTabs, isWorkspaceTabVisible } from '@/lib/filterNavigationByPermissions';
 
 import { useStorageQuota } from '@/hooks/use-storage-quota';
 import { useUserPresence } from '@/hooks/use-user-presence';
