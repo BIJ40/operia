@@ -262,7 +262,7 @@ export function GeneralTab() {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted/50" />
                   <XAxis dataKey="mois" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip 
+                  <RechartsTooltip 
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--card))', 
                       border: '1px solid hsl(var(--border))',
