@@ -19,6 +19,8 @@ import {
   Users, Headphones,
   Loader2, Shield, FolderOpen, Kanban,
 } from 'lucide-react';
+import { useNavigationMode } from '@/hooks/useNavigationMode';
+import { MainHeader } from '@/components/navigation/MainHeader';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Tabs } from '@/components/ui/tabs';
 import { useSessionState } from '@/hooks/useSessionState';
@@ -205,6 +207,8 @@ function UnifiedWorkspaceContent() {
     data-[state=active]:z-20 data-[state=active]:-mb-[2px] data-[state=active]:pb-[calc(0.75rem+2px)] data-[state=active]:scale-[1.02]
   `;
   
+  const { mode: navMode } = useNavigationMode();
+  
   const topPadding = (isImpersonating || isRealUserImpersonation) ? 'pt-10' : '';
   
   // Vue Franchiseur
@@ -223,16 +227,25 @@ function UnifiedWorkspaceContent() {
         
         <div className={`min-h-screen bg-background ${topPadding}`}>
           <Tabs value={validActiveTab} onValueChange={(v) => setActiveTab(v as UnifiedTab)} className="flex flex-col h-screen">
-            <WorkspaceTabBar
-              sortedTabs={sortedTabs}
-              sortableIds={sortableIds}
-              activeTab={validActiveTab}
-              tabButtonClass={tabButtonClass}
-              isTabAccessible={isTabAccessible}
-              isTabVisuallyDisabled={isTabVisuallyDisabled}
-              setActiveTab={setActiveTab}
-              setTabOrder={setTabOrder}
-            />
+            {navMode === 'header' ? (
+              <MainHeader
+                activeTab={validActiveTab}
+                setActiveTab={setActiveTab}
+                visibleTabs={visibleTabs}
+                tabButtonClass={tabButtonClass}
+              />
+            ) : (
+              <WorkspaceTabBar
+                sortedTabs={sortedTabs}
+                sortableIds={sortableIds}
+                activeTab={validActiveTab}
+                tabButtonClass={tabButtonClass}
+                isTabAccessible={isTabAccessible}
+                isTabVisuallyDisabled={isTabVisuallyDisabled}
+                setActiveTab={setActiveTab}
+                setTabOrder={setTabOrder}
+              />
+            )}
             
             <WorkspaceTabContent isN0User={isN0User} />
           </Tabs>
