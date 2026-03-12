@@ -73,9 +73,9 @@ export function usePermissionsRuntimeProof() {
       label: 'support.guides via hasModule (Path B)',
       path: 'usePermissions().hasModule',
       key: 'support.guides',
-      result: hasModule('support.guides' as ModuleKey),
+      result: hasModule('support.guides'),
       expected: hasGuidesLegacy,
-      pass: hasModule('support.guides' as ModuleKey) === hasGuidesLegacy,
+      pass: hasModule('support.guides') === hasGuidesLegacy,
     });
 
     // ── Médiathèque isolation tests ──
