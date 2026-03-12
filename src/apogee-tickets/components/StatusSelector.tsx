@@ -30,7 +30,7 @@ export function StatusSelector({
   }, [status]);
   
   // Statuts réservés à l'IA (pas de transition manuelle vers ces statuts)
-  const AI_ONLY_STATUSES = ['SUPPORT_RESOLU'];
+  const AI_ONLY_STATUSES = ['SUPPORT_RESOLU', 'IA_ESCALADE'];
   
   const currentStatus = availableStatuses.find(s => s.id === localStatus);
   const statusColor = currentStatus?.color || '#6b7280';
