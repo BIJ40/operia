@@ -662,9 +662,11 @@ export function ModulesMasterView() {
   }, [flatNodes]);
 
   const toDisplayNode = useCallback((node: RegistryNode): RegistryNode => {
+    // Subtract 1 from depth since root container nodes are hidden
+    // (e.g., pilotage.statistiques is depth=1 in tree → display as depth=0)
     return {
       ...node,
-      depth: node.depth + 1,
+      depth: Math.max(0, node.depth),
       label: getRightsDisplayLabel(node.key, node.label),
     };
   }, []);
