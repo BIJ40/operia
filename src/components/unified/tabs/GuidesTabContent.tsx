@@ -35,6 +35,7 @@ export default function GuidesTabContent() {
   const { mode: navMode } = useNavigationMode();
 
   return (
+    <DomainAccentProvider accent="purple">
     <div className={navMode === 'header' ? 'pt-1 px-2 sm:px-4 space-y-3' : 'py-3 px-2 sm:px-4 space-y-4'}>
       <Tabs value={activeGuide} onValueChange={(v) => setActiveGuide(v as GuideTab)}>
         <PillTabsList tabs={GUIDE_TABS} variant={navMode === 'header' ? 'switcher' : 'pill'} />
