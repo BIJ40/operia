@@ -193,9 +193,9 @@ export function DataPreloadProvider({ children }: { children: ReactNode }) {
     if (globalRole === 'platform_admin' || globalRole === 'superadmin') {
       return true;
     }
-    // Vérifier les modules stats
-    return hasModuleOption('stats', 'stats_hub');
-  }, [globalRole, hasModuleOption]);
+    // Vérifier les modules stats — clé canonique G3
+    return hasModule('pilotage.statistiques' as any);
+  }, [globalRole, hasModule]);
   
   // Fonction de mise à jour de progression throttlée
   const updateProgress = useCallback((newProgress: number) => {

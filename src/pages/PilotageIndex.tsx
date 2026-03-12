@@ -105,14 +105,14 @@ function StatsHubContent() {
 
 function PilotageContent() {
   const { globalRole } = usePermissions();
-  const { hasModuleOption } = useEffectiveModules();
+  const { hasModule, hasModuleOption } = useEffectiveModules();
   const [activeTab, setActiveTab] = useSessionState<MainTab>('pilotage_active_tab', 'agence');
   
   const isPlatformAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
 
-  // Vérifier les permissions pour chaque onglet
-  const hasStatsAccess = isPlatformAdmin || hasModuleOption('agence', 'stats_hub');
-  const hasApporteursAccess = isPlatformAdmin || hasModuleOption('agence', 'mes_apporteurs');
+  // Vérifier les permissions pour chaque onglet — clés canoniques G3
+  const hasStatsAccess = isPlatformAdmin || hasModule('pilotage.statistiques' as any);
+  const hasApporteursAccess = isPlatformAdmin || hasModule('organisation.apporteurs' as any);
 
   return (
     <div className="container mx-auto py-4 px-4 space-y-4">
