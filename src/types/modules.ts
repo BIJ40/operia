@@ -563,11 +563,7 @@ export const MODULE_SHORT_LABELS: Partial<Record<ModuleKey, string>> = {
   'pilotage.actions_a_mener': 'Actions',
   'pilotage.devis_acceptes': 'Devis',
   'pilotage.incoherences': 'Incohérences',
-  // Commercial
-  'commercial.suivi_client': 'Suivi client',
-  'commercial.comparateur': 'Comparateur',
-  'commercial.veille': 'Veille',
-  'commercial.prospects': 'Prospects',
+  // Commercial (ghost keys removed — gated by prospection module options)
   'commercial.realisations': 'Réalisations',
   // Organisation
   'organisation.salaries': 'Salariés',
