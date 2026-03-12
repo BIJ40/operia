@@ -162,7 +162,7 @@ function InlineFaq() {
 // ─── Main component ─────────────────────────────────────────────
 export default function SupportHubTabContent() {
   const queryClient = useQueryClient();
-  const { hasModule } = usePermissions();
+  const { hasModule, hasModuleOption } = usePermissions();
   const { tickets: combinedTickets, isLoading: combinedLoading } = useCombinedUserTickets();
   const { unreadCount: totalUnreadCount } = useUserProjectUnreadCount();
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
