@@ -177,6 +177,12 @@ export default function AdminHubContent() {
                   <ModulesMasterView />
                 </TabsContent>
 
+                <TabsContent value="notes" className="mt-0 focus-visible:outline-none">
+                  <Suspense fallback={<LoadingFallback />}>
+                    <AdminNotesView />
+                  </Suspense>
+                </TabsContent>
+
                 <TabsContent value="activity" className="mt-0 focus-visible:outline-none">
                   <Suspense fallback={<LoadingFallback />}>
                     <AdminUserActivity />
