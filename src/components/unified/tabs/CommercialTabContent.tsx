@@ -66,6 +66,7 @@ function CommercialInner() {
   const { hasModuleOption, hasModule } = usePermissions();
   const { openApporteur } = useApporteurTabs();
   const { getShortLabel } = useModuleLabels();
+  const { mode: navMode } = useNavigationMode();
 
   // B: 'Suivi client', 'Comparateur', 'Veille', 'Prospects' = option labels of prospection module, not standalone modules
   // A: 'Réalisations' = module commercial.realisations → use resolver
