@@ -14,8 +14,7 @@ export interface RightsCategory {
 
 export const RIGHTS_CATEGORIES: RightsCategory[] = [
   { id: 'pilotage', label: 'Pilotage', moduleKeys: [
-    'pilotage', 'pilotage.dashboard', 'pilotage.agence',
-    'stats', 'agence',
+    'pilotage', 'pilotage.statistiques', 'pilotage.agence',
   ]},
   { id: 'commercial', label: 'Commercial', moduleKeys: [
     'commercial', 'prospection', 'commercial.realisations',

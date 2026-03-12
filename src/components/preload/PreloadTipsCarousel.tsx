@@ -56,8 +56,8 @@ export function PreloadTipsCarousel({
     const contextualTips: string[] = [];
     
     // Ajouter les tips des modules actifs (clés hiérarchiques)
-    if (hasModuleOption('pilotage.dashboard', 'stats_hub') || hasModuleOption('pilotage.agence', 'indicateurs')) {
-      contextualTips.push(...(TIPS_BY_MODULE['pilotage.dashboard'] || []));
+    if (hasModule('pilotage.statistiques') || hasModuleOption('pilotage.agence', 'indicateurs')) {
+      contextualTips.push(...(TIPS_BY_MODULE['pilotage.statistiques'] || []));
     }
     
     if (hasModuleOption('organisation.salaries', 'rh_viewer')) {

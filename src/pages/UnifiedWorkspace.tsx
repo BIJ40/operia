@@ -106,7 +106,7 @@ function UnifiedWorkspaceContent() {
   // Configuration des onglets avec permissions
   const allTabs: TabConfig[] = useMemo(() => [
     { id: 'accueil', label: 'Accueil', icon: Home },
-    { id: 'pilotage', label: 'Pilotage', icon: BarChart3, requiresOption: { module: 'pilotage.dashboard' }, altModules: ['pilotage.agence'] },
+    { id: 'pilotage', label: 'Pilotage', icon: BarChart3, requiresOption: { module: 'pilotage.statistiques' }, altModules: ['pilotage.agence'] },
     { id: 'commercial', label: 'Commercial', icon: ShoppingCart, requiresOption: { module: 'prospection' }, altModules: ['pilotage.agence', 'commercial.realisations'] },
     { id: 'organisation', label: 'Organisation', icon: Users, requiresOption: { module: 'organisation.salaries' }, altModules: ['organisation.parc', 'organisation.apporteurs', 'organisation.plannings', 'organisation.reunions', 'pilotage.agence'] },
     { id: 'documents', label: 'Documents', icon: FolderOpen, requiresOption: { module: 'mediatheque.documents' } },
