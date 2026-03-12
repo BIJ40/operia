@@ -86,8 +86,9 @@ export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClas
                 isActive={group.children.some(c => c.tab === activeTab)}
                 onSelect={setActiveTab}
                 pillBase={pillBase}
-                pillActive={pillActive}
+                pillActive={ACCENT_ACTIVE[group.accent || 'blue']}
                 pillInactive={pillInactive}
+                accentDropdown={ACCENT_DROPDOWN[group.accent || 'blue']}
               />
             ))}
           </nav>
