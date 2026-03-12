@@ -346,12 +346,12 @@ export function UnifiedPeriodSelector({
   // Styles selon la variante
   const buttonStyles = {
     default: {
-      active: "bg-gradient-to-r from-warm-teal/90 to-warm-blue/80 text-white shadow-sm",
-      inactive: "bg-warm-teal/10 hover:bg-warm-teal/20 border-warm-teal/30 text-foreground"
+      active: "bg-warm-blue text-white shadow-sm border-warm-blue hover:bg-warm-blue/90",
+      inactive: "bg-transparent border-border text-foreground hover:bg-warm-orange hover:text-white hover:border-warm-orange"
     },
     compact: {
-      active: "bg-background text-foreground shadow-sm border-border/50",
-      inactive: "bg-transparent hover:bg-muted/50 border-transparent text-muted-foreground hover:text-foreground"
+      active: "bg-warm-blue text-white shadow-sm border-warm-blue hover:bg-warm-blue/90",
+      inactive: "bg-transparent border-border text-foreground hover:bg-warm-orange hover:text-white hover:border-warm-orange"
     },
     franchiseur: {
       active: "bg-gradient-to-r from-helpconfort-blue to-warm-blue/80 text-white shadow-sm",
@@ -364,8 +364,7 @@ export function UnifiedPeriodSelector({
 
   return (
     <div className={cn(
-      "flex flex-wrap gap-2 justify-center items-center",
-      isCompact && "inline-flex gap-0.5 bg-muted/30 rounded-xl border border-border/60 p-1",
+      "flex flex-wrap gap-1.5 justify-center items-center",
       className
     )}>
       {periods.filter(p => p.value !== 'custom' && p.value !== 'specific-month').map((period) => {
@@ -373,11 +372,11 @@ export function UnifiedPeriodSelector({
         return (
           <Button
             key={period.value}
-            variant={isActive ? "default" : "outline"}
+            variant="outline"
             size="sm"
             onClick={() => handlePeriodClick(period)}
             className={cn(
-              "text-xs font-medium px-3 py-1.5 transition-all rounded-lg",
+              "text-xs font-medium px-3.5 py-1.5 rounded-full transition-all border",
               isActive ? styles.active : styles.inactive
             )}
           >
