@@ -25,6 +25,7 @@ import { lazy, Suspense, useCallback, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useSessionState } from '@/hooks/useSessionState';
 import { usePersistedTab } from '@/hooks/usePersistedState';
+import { useNavigationMode } from '@/hooks/useNavigationMode';
 
 // Lazy load des composants directs
 const TDRUsersPage = lazy(() => import('@/pages/TDRUsersPage'));
@@ -68,6 +69,7 @@ const ADMIN_MAIN_TAB_IDS = ADMIN_MAIN_TABS.map(tab => tab.id);
 const DEFAULT_GESTION_ORDER = ['users', 'inscriptions', 'apporteurs', 'audit-apporteurs', 'agences', 'modules', 'notes', 'activity'];
 
 export default function AdminHubContent() {
+  const { mode: navMode } = useNavigationMode();
   const [searchParams, setSearchParams] = useSearchParams();
   const [persistedMainTab, setPersistedMainTab] = usePersistedTab('admin_main_tab', 'gestion', ADMIN_MAIN_TAB_IDS);
   const activeTabParam = searchParams.get('adminTab');
@@ -119,10 +121,10 @@ export default function AdminHubContent() {
   const activeGestionAccent = activeGestionTab?.accent ? accentColors[activeGestionTab.accent] : undefined;
 
   return (
-    <div className="py-6 space-y-6">
+    <div className={navMode === 'header' ? 'pt-1 space-y-3' : 'py-6 space-y-6'}>
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        {/* Main Tabs - Style Pill */}
-        <PillTabsList tabs={ADMIN_MAIN_TABS} />
+        {/* Main Tabs - Style Pill or Switcher */}
+        <PillTabsList tabs={ADMIN_MAIN_TABS} variant={navMode === 'header' ? 'switcher' : 'pill'} />
 
         {/* Content Container */}
         <motion.div 

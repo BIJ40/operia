@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useMemo } from 'react';
+import { useNavigationMode } from '@/hooks/useNavigationMode';
 import { Tv, LayoutDashboard, Building2, Users, Layers, AlertTriangle, CalendarClock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -33,6 +34,7 @@ export default function StatsTabContent() {
   const { activeTab, setActiveTab } = useStatsHub();
   const { hasModule } = usePermissions();
   const { getShortLabel } = useModuleLabels();
+  const { mode: navMode } = useNavigationMode();
 
   // A: All stats sub-tabs map to real modules (pilotage.statistiques.*) → dynamic labels
   const statsTabs: (PillTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
@@ -70,9 +72,9 @@ export default function StatsTabContent() {
   };
 
   return (
-    <div className="py-6 px-2 sm:px-4 space-y-4">
+    <div className={navMode === 'header' ? 'pt-1 px-2 sm:px-4 space-y-3' : 'py-6 px-2 sm:px-4 space-y-4'}>
       <Tabs value={effectiveTab} onValueChange={(v) => setActiveTab(v as TabId)}>
-        <PillTabsList tabs={visibleTabs} />
+        <PillTabsList tabs={visibleTabs} variant={navMode === 'header' ? 'switcher' : 'pill'} />
 
         <div className="flex items-center justify-between mt-4 gap-3">
           <Button 
