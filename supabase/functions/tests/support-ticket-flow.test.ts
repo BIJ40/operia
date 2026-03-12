@@ -21,7 +21,8 @@ const TEST_N5_EMAIL = "test-n5@helpconfort.test";
 const TEST_N5_PASSWORD = "Test1234!";
 
 // State shared between sequential tests
-let supabase: ReturnType<typeof createClient>;
+// deno-lint-ignore no-explicit-any
+let supabase: any;
 let userId: string;
 const createdTicketIds: string[] = [];
 
