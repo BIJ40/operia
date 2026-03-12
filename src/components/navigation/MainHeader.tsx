@@ -14,7 +14,6 @@ interface MainHeaderProps {
 }
 
 export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClass }: MainHeaderProps) {
-  // Filter groups based on visible tabs
   const visibleGroups = useMemo(() => {
     const visibleIds = new Set(visibleTabs.map(t => t.id));
     return HEADER_NAV_GROUPS
@@ -25,38 +24,55 @@ export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClas
       .filter(group => group.children.length > 0);
   }, [visibleTabs]);
 
+  const pillBase = 'flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all duration-200 cursor-pointer';
+  const pillActive = 'bg-primary/8 border-primary/25 text-primary shadow-sm';
+  const pillInactive = 'bg-card border-border text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-primary/5 hover:shadow-sm';
+
   return (
-    <header className="sticky top-0 z-50 h-16 bg-background/95 backdrop-blur-md border-b border-border shadow-sm print:hidden">
-      <div className="container mx-auto max-w-7xl h-full px-4 flex items-center gap-4">
-        {/* Mobile hamburger */}
-        <MobileNavMenu groups={visibleGroups} activeTab={activeTab} onSelect={setActiveTab} />
+    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border print:hidden">
+      <div className="container mx-auto max-w-7xl px-4">
+        {/* Top row: logo + profile */}
+        <div className="h-14 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* Mobile hamburger */}
+            <MobileNavMenu groups={visibleGroups} activeTab={activeTab} onSelect={setActiveTab} />
+            {/* Logo */}
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-sm">
+                <span className="text-primary-foreground font-bold text-sm">HC</span>
+              </div>
+              <span className="text-base font-bold tracking-tight text-foreground hidden sm:inline">HC Services</span>
+            </div>
+          </div>
 
-        {/* Logo / Home */}
-        <button
-          type="button"
-          onClick={() => setActiveTab('accueil')}
-          className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-150 shrink-0
-            ${activeTab === 'accueil' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
-        >
-          <Home className="w-5 h-5" />
-          <span className="text-sm font-bold tracking-tight hidden sm:inline">Accueil</span>
-        </button>
+          {/* Desktop nav pills */}
+          <nav className="hidden md:flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setActiveTab('accueil')}
+              className={`${pillBase} ${activeTab === 'accueil' ? pillActive : pillInactive}`}
+            >
+              <Home className="w-4 h-4" />
+              <span>Accueil</span>
+            </button>
 
-        {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-1 flex-1 min-w-0">
-          {visibleGroups.map((group) => (
-            <HeaderNavDropdown
-              key={group.label}
-              group={group}
-              isActive={group.children.some(c => c.tab === activeTab)}
-              onSelect={setActiveTab}
-            />
-          ))}
-        </nav>
+            {visibleGroups.map((group) => (
+              <HeaderNavDropdown
+                key={group.label}
+                group={group}
+                isActive={group.children.some(c => c.tab === activeTab)}
+                onSelect={setActiveTab}
+                pillBase={pillBase}
+                pillActive={pillActive}
+                pillInactive={pillInactive}
+              />
+            ))}
+          </nav>
 
-        {/* Profile */}
-        <div className="ml-auto shrink-0">
-          <ProfileMenu tabButtonClass={tabButtonClass} />
+          {/* Profile */}
+          <div className="shrink-0">
+            <ProfileMenu tabButtonClass={tabButtonClass} />
+          </div>
         </div>
       </div>
     </header>
