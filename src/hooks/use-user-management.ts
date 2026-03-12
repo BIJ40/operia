@@ -100,7 +100,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
   const queryClient = useQueryClient();
   const { globalRole, suggestedGlobalRole, isAdmin } = usePermissions();
   const { user } = useAuthCore();
-  const { agence: currentUserAgency } = useProfile();
+  const { agence: currentUserAgency, agencyId: currentUserAgencyId } = useProfile();
   
   // ✅ SOURCE DE VÉRITÉ : Permissions depuis roleMatrix.ts
   const effectiveUserRole = globalRole ?? suggestedGlobalRole;
