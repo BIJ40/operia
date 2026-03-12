@@ -506,10 +506,9 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
   };
 
   return (
-    <div
+    <tr
       className={cn(
-        `grid ${GRID_COLS} gap-x-4 gap-y-0 items-center py-2 px-3 border-b border-border/50 text-sm`,
-        'hover:bg-muted/30 transition-colors',
+        'border-b border-border/50 hover:bg-muted/30 transition-colors text-sm',
         !node.effectiveDeployed && !isDevSection && 'opacity-50',
         isNeutralized && 'bg-destructive/5',
         node.depth === 0 && !isDevSection && 'bg-muted/20',
@@ -517,68 +516,70 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
       )}
     >
       {/* Name */}
-      <div
-        className="flex items-center min-w-0"
-        style={{ paddingLeft: `${(isDevSection ? 0 : node.depth) * 16}px` }}
-      >
-        {node.depth > 0 && !isDevSection && <CornerDownRight className={cn('w-3.5 h-3.5 mr-1.5 shrink-0', branchColor)} />}
-        {isDevSection && (
-          <Construction className="w-3.5 h-3.5 mr-1.5 shrink-0 text-amber-500" />
-        )}
+      <td className={TD_CLASS_NAME}>
+        <div
+          className="flex items-center min-w-0"
+          style={{ paddingLeft: `${(isDevSection ? 0 : node.depth) * 16}px` }}
+        >
+          {node.depth > 0 && !isDevSection && <CornerDownRight className={cn('w-3.5 h-3.5 mr-1.5 shrink-0', branchColor)} />}
+          {isDevSection && (
+            <Construction className="w-3.5 h-3.5 mr-1.5 shrink-0 text-amber-500" />
+          )}
 
-        {isEditing ? (
-          <div className="flex flex-col gap-0.5">
-            <Input
-              value={draftLabel}
-              onChange={(e) => setDraftLabel(e.target.value)}
-              onBlur={commitRename}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') commitRename();
-                if (e.key === 'Escape') {
-                  setDraftLabel(node.label);
-                  setIsEditing(false);
-                }
-              }}
-              autoFocus
-              className="h-7 text-xs"
-            />
-            <span className="text-[9px] text-muted-foreground">
-              Renommage visuel uniquement — ne modifie pas la clé technique ni les permissions.
-            </span>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => !isUpdating && setIsEditing(true)}
-            className={cn(
-              'truncate text-left hover:underline underline-offset-2',
-              isUpdating && 'cursor-not-allowed opacity-70',
-              isDevSection && 'text-amber-700 dark:text-amber-400 font-medium',
-              !isDevSection && node.depth === 0 && 'font-semibold text-foreground uppercase tracking-wide',
-              !isDevSection && node.depth === 1 && 'font-medium text-blue-600 dark:text-blue-400',
-              !isDevSection && node.depth >= 2 && 'text-violet-600 dark:text-violet-400'
-            )}
-            title="Cliquer pour renommer le libellé (visuel uniquement)"
-          >
-            {node.label}
-          </button>
-        )}
+          {isEditing ? (
+            <div className="flex flex-col gap-0.5">
+              <Input
+                value={draftLabel}
+                onChange={(e) => setDraftLabel(e.target.value)}
+                onBlur={commitRename}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') commitRename();
+                  if (e.key === 'Escape') {
+                    setDraftLabel(node.label);
+                    setIsEditing(false);
+                  }
+                }}
+                autoFocus
+                className="h-7 text-xs"
+              />
+              <span className="text-[9px] text-muted-foreground">
+                Renommage visuel uniquement — ne modifie pas la clé technique ni les permissions.
+              </span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => !isUpdating && setIsEditing(true)}
+              className={cn(
+                'truncate text-left hover:underline underline-offset-2',
+                isUpdating && 'cursor-not-allowed opacity-70',
+                isDevSection && 'text-amber-700 dark:text-amber-400 font-medium',
+                !isDevSection && node.depth === 0 && 'font-semibold text-foreground uppercase tracking-wide',
+                !isDevSection && node.depth === 1 && 'font-medium text-blue-600 dark:text-blue-400',
+                !isDevSection && node.depth >= 2 && 'text-violet-600 dark:text-violet-400'
+              )}
+              title="Cliquer pour renommer le libellé (visuel uniquement)"
+            >
+              {node.label}
+            </button>
+          )}
 
-        {/* Clé technique (lecture seule) */}
-        <span className="ml-2 text-[10px] text-muted-foreground font-mono select-all" title="Clé technique (immuable)">
-          {node.key}
-        </span>
-
-        {isDevSection && node.parent_key && (
-          <span className="ml-2 text-[10px] text-muted-foreground">
-            ({node.parent_key})
+          {/* Clé technique (lecture seule) */}
+          <span className="ml-2 text-[10px] text-muted-foreground font-mono select-all whitespace-nowrap" title="Clé technique (immuable)">
+            {node.key}
           </span>
-        )}
-      </div>
 
-      <div><NodeTypeBadge nodeType={node.node_type} /></div>
+          {isDevSection && node.parent_key && (
+            <span className="ml-2 text-[10px] text-muted-foreground whitespace-nowrap">
+              ({node.parent_key})
+            </span>
+          )}
+        </div>
+      </td>
 
-      <div className="flex justify-center">
+      <td className={TD_CLASS}><NodeTypeBadge nodeType={node.node_type} /></td>
+
+      <td className={TD_CLASS}>
         <Switch
           checked={node.is_deployed}
           onCheckedChange={() => onToggleDeploy(node)}
@@ -586,27 +587,25 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
           className="scale-90"
           title={!canDeploy ? 'Seul un superadmin (N6) peut déployer' : undefined}
         />
-      </div>
+      </td>
 
-      <div className="flex justify-center">
+      <td className={TD_CLASS}>
         <PlanBadge plan={node.required_plan} onClick={() => onTogglePlan(node)} dimmed={!node.effectiveDeployed} />
-      </div>
+      </td>
 
-      <div className="flex justify-center">
+      <td className={TD_CLASS}>
         <PlanBadge plan={node.effectivePlan} readOnly dimmed={!node.effectiveDeployed} />
-      </div>
+      </td>
 
-      <div className="flex justify-center">
+      <td className={TD_CLASS}>
         <RoleBadge minRole={node.min_role} onChangeRole={(r) => onChangeRole(node, r)} dimmed={!node.effectiveDeployed} disabled={isUpdating} />
-      </div>
+      </td>
 
-      {/* Privilèges */}
-      <div className="flex justify-center relative z-10">
+      <td className={cn(TD_CLASS, 'relative z-10')}>
         <OverridesPopover moduleKey={node.key} overrides={overrides} dimmed={!node.effectiveDeployed} moduleMinRole={node.min_role} moduleRequiredPlan={node.required_plan} />
-      </div>
+      </td>
 
-      {/* Lien */}
-      <div className="flex justify-center">
+      <td className={TD_CLASS}>
         {route ? (
           <Button
             variant="ghost"
@@ -620,10 +619,9 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
         ) : (
           <span className="text-muted-foreground/30 text-xs">—</span>
         )}
-      </div>
-    </div>
+      </td>
+    </tr>
   );
-}
 
 function CategoryHeaderRow({
   category,
