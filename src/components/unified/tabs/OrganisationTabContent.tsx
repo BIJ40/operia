@@ -60,7 +60,7 @@ export default function OrganisationTabContent() {
   return (
     <div className="py-6 px-2 sm:px-4 space-y-4">
       <Tabs value={effectiveTab} onValueChange={(v) => setActiveTab(v as OrganisationSubTab)}>
-        <PillTabsList tabs={visibleTabs} />
+        {navMode === 'tabs' && <PillTabsList tabs={visibleTabs} />}
 
         <TabsContent value="collaborateurs" className="mt-4">
           <MfaGuard>

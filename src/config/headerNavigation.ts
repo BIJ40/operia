@@ -60,11 +60,12 @@ export const HEADER_NAV_GROUPS: HeaderNavGroup[] = [
     icon: Users,
     tab: 'organisation',
     children: [
-      { label: 'Salariés', icon: Users, tab: 'organisation', description: 'Gestion des équipes', scope: 'organisation.salaries' },
-      { label: 'Véhicules', icon: Car, tab: 'organisation', description: 'Parc automobile', scope: 'organisation.parc' },
-      { label: 'Apporteurs', icon: Handshake, tab: 'organisation', description: "Réseau d'apporteurs", scope: 'organisation.apporteurs' },
-      { label: 'Plannings', icon: CalendarDays, tab: 'organisation', description: 'Calendrier équipe', scope: 'organisation.plannings' },
-      { label: 'Réunions', icon: MessagesSquare, tab: 'organisation', description: 'Comptes rendus', scope: 'organisation.reunions' },
+      { label: 'Salariés', icon: Users, tab: 'organisation', description: 'Gestion des équipes', scope: 'organisation.salaries', subTabKey: 'organisation_sub_tab', subTabValue: 'collaborateurs' },
+      { label: 'Véhicules', icon: Car, tab: 'organisation', description: 'Parc automobile', scope: 'organisation.parc', subTabKey: 'organisation_sub_tab', subTabValue: 'parc' },
+      { label: 'Apporteurs', icon: Handshake, tab: 'organisation', description: "Réseau d'apporteurs", scope: 'organisation.apporteurs', subTabKey: 'organisation_sub_tab', subTabValue: 'apporteurs' },
+      { label: 'Plannings', icon: CalendarDays, tab: 'organisation', description: 'Calendrier équipe', scope: 'organisation.plannings', subTabKey: 'organisation_sub_tab', subTabValue: 'plannings' },
+      { label: 'Réunions', icon: MessagesSquare, tab: 'organisation', description: 'Comptes rendus', scope: 'organisation.reunions', subTabKey: 'organisation_sub_tab', subTabValue: 'reunions' },
+      { label: 'Documents légaux', icon: FolderOpen, tab: 'organisation', description: 'Kbis, RC Pro…', subTabKey: 'organisation_sub_tab', subTabValue: 'conformite' },
     ],
   },
   {
