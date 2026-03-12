@@ -707,8 +707,8 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
   // Ticketing = overwrite-only module (user_modules), not activated by plan or role
   {
     path: '/projects',
-    label: 'Projects Index',
-    component: 'ProjectsIndex',
+    label: 'Projects (redirect)',
+    component: 'Navigate → /?tab=ticketing',
     section: 'projects',
     guards: {
       roleGuard: { minRole: 'base_user' },
