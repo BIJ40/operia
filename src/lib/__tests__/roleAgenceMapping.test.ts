@@ -54,7 +54,8 @@ describe('roleAgenceMapping', () => {
 
     // BUG ORIGINAL: tete_de_reseau + franchisee_admin = incohérent
     it('tete_de_reseau avec franchisee_admin → avertissement', () => {
-      const warning = validateRoleAgenceCoherence('tete_de_reseau', 'franchisee_admin', null);
+      // With agency so rule 1 doesn't fire first
+      const warning = validateRoleAgenceCoherence('tete_de_reseau', 'franchisee_admin', 'agence-test');
       expect(warning).not.toBeNull();
       expect(warning).toContain('N3');
     });
