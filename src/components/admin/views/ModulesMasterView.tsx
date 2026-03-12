@@ -503,11 +503,16 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
               !isDevSection && node.depth === 1 && 'font-medium text-blue-600 dark:text-blue-400',
               !isDevSection && node.depth >= 2 && 'text-violet-600 dark:text-violet-400'
             )}
-            title="Cliquer pour renommer"
+            title="Cliquer pour renommer le libellé (visuel uniquement)"
           >
             {node.label}
           </button>
         )}
+
+        {/* Clé technique (lecture seule) */}
+        <span className="ml-2 text-[10px] text-muted-foreground font-mono select-all" title="Clé technique (immuable)">
+          {node.key}
+        </span>
 
         {isDevSection && node.parent_key && (
           <span className="ml-2 text-[10px] text-muted-foreground">
