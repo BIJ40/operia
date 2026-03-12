@@ -96,6 +96,8 @@ export const NAVIGATION_STRUCTURE: NavigationDomain[] = [
     icon: FolderOpen,
     entries: [
       { label: 'Médiathèque', guard: { moduleKey: 'mediatheque.documents' } },
+      { label: 'Raccourcis', guard: { moduleKey: 'mediatheque.gerer' } },
+      { label: 'Corbeille', guard: { moduleKey: 'mediatheque.gerer' } },
     ],
   },
   {
@@ -115,10 +117,14 @@ export const NAVIGATION_STRUCTURE: NavigationDomain[] = [
     icon: Network,
     roleGated: FRANCHISEUR_ROLES,
     entries: [
-      { label: 'Dashboard réseau', guard: { minRoles: FRANCHISEUR_ROLES } },
-      { label: 'Statistiques réseau', guard: { minRoles: FRANCHISEUR_ROLES } },
-      { label: 'Gestion agences', guard: { minRoles: FRANCHISEUR_ROLES } },
-      { label: 'Comparatifs', guard: { minRoles: FRANCHISEUR_ROLES } },
+      { label: 'Accueil', guard: { minRoles: FRANCHISEUR_ROLES } },
+      { label: 'Période', guard: { minRoles: FRANCHISEUR_ROLES } },
+      { label: 'Agences', guard: { minRoles: FRANCHISEUR_ROLES } },
+      { label: 'Redevances', guard: { minRoles: FRANCHISEUR_ROLES } },
+      { label: 'Statistiques', guard: { minRoles: FRANCHISEUR_ROLES } },
+      { label: 'Divers', guard: { minRoles: FRANCHISEUR_ROLES } },
+      { label: 'Guides', guard: { minRoles: FRANCHISEUR_ROLES } },
+      { label: 'Support', guard: { minRoles: FRANCHISEUR_ROLES } },
     ],
   },
   {
@@ -127,10 +133,20 @@ export const NAVIGATION_STRUCTURE: NavigationDomain[] = [
     icon: ShieldCheck,
     roleGated: ADMIN_ROLES,
     entries: [
+      // Gestion sub-tabs
       { label: 'Utilisateurs', guard: { minRoles: ADMIN_ROLES } },
+      { label: 'Inscriptions', guard: { minRoles: ADMIN_ROLES } },
+      { label: 'Apporteurs', guard: { minRoles: ADMIN_ROLES } },
+      { label: 'Audit Apporteurs', guard: { minRoles: ADMIN_ROLES } },
       { label: 'Agences', guard: { minRoles: ADMIN_ROLES } },
-      { label: 'Droits & Modules', guard: { minRoles: ADMIN_ROLES } },
-      { label: 'FAQ Admin', guard: { minRoles: ADMIN_ROLES } },
+      { label: 'Droits', guard: { minRoles: ADMIN_ROLES } },
+      { label: 'Activité', guard: { minRoles: ADMIN_ROLES } },
+      // Other pill tabs
+      { label: 'Franchiseur', guard: { minRoles: ADMIN_ROLES } },
+      { label: 'IA', guard: { minRoles: ADMIN_ROLES } },
+      { label: 'Contenu', guard: { minRoles: ADMIN_ROLES } },
+      { label: 'Ops', guard: { minRoles: ADMIN_ROLES } },
+      { label: 'Plateforme', guard: { minRoles: ADMIN_ROLES } },
     ],
   },
 ];
