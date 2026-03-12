@@ -1242,42 +1242,9 @@ body[data-read-only] [draggable="true"] {
 }
 
 /* ============================================
-   MAPBOX — Hide logo & attribution, show ByBij
+   MAPBOX — Hide logo & attribution
    ============================================ */
-.mapboxgl-ctrl-logo {
-  display: none !important;
-}
-
+.mapboxgl-ctrl-logo,
 .mapboxgl-ctrl-attrib {
-  background: black !important;
-  border-radius: 50% !important;
-  width: 20px !important;
-  height: 20px !important;
-  min-height: unset !important;
-  overflow: hidden !important;
-  pointer-events: none !important;
-  padding: 0 !important;
-}
-
-.mapboxgl-ctrl-attrib-inner,
-.mapboxgl-ctrl-attrib a,
-.mapboxgl-ctrl-attrib-button {
   display: none !important;
-}
-
-.mapboxgl-map::after {
-  content: 'ByBij';
-  position: absolute;
-  bottom: 6px;
-  left: 6px;
-  z-index: 3;
-  background: white;
-  color: hsl(var(--foreground));
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  padding: 2px 8px;
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-  pointer-events: none;
 }
