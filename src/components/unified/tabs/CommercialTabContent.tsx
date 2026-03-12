@@ -11,6 +11,7 @@ import { useSessionState } from '@/hooks/useSessionState';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { ModuleKey } from '@/types/modules';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
+import { useNavigationMode } from '@/hooks/useNavigationMode';
 import { ApporteurTabsProvider, useApporteurTabs } from '@/prospection/browser-tabs/ApporteurTabsContext';
 import { ApporteurTabsBar } from '@/prospection/browser-tabs/ApporteurTabsBar';
 import { ApporteurTabsContent } from '@/prospection/browser-tabs/ApporteurTabsContent';
@@ -65,6 +66,7 @@ function CommercialInner() {
   const { hasModuleOption, hasModule } = usePermissions();
   const { openApporteur } = useApporteurTabs();
   const { getShortLabel } = useModuleLabels();
+  const { mode: navMode } = useNavigationMode();
 
   // B: 'Suivi client', 'Comparateur', 'Veille', 'Prospects' = option labels of prospection module, not standalone modules
   // A: 'Réalisations' = module commercial.realisations → use resolver
@@ -102,7 +104,7 @@ function CommercialInner() {
   return (
     <div className="py-6 px-2 sm:px-4 space-y-4">
       <Tabs value={effectiveTab} onValueChange={setActiveTab}>
-        <PillTabsList tabs={visibleTabs} />
+        {navMode === 'tabs' && <PillTabsList tabs={visibleTabs} />}
 
         <TabsContent value="apporteurs" className="mt-4">
           <ApporteursTabInner />

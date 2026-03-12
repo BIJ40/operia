@@ -11,6 +11,7 @@ import { useSessionState } from '@/hooks/useSessionState';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { ModuleKey } from '@/types/modules';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
+import { useNavigationMode } from '@/hooks/useNavigationMode';
 
 // Lazy loaded
 const StatsTabContent = lazy(() => import('@/components/unified/tabs/StatsTabContent'));
@@ -36,6 +37,7 @@ function LoadingFallback() {
 export default function PilotageTabContent() {
   const { hasModule } = usePermissions();
   const { getShortLabel } = useModuleLabels();
+  const { mode: navMode } = useNavigationMode();
 
   // All pilotage sub-tabs are real modules → dynamic labels from registry
   const allTabs: (PillTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
@@ -60,7 +62,7 @@ export default function PilotageTabContent() {
   return (
     <div className="py-6 px-2 sm:px-4 space-y-4">
       <Tabs value={effectiveTab} onValueChange={(v) => setActiveTab(v as PilotageSubTab)}>
-        <PillTabsList tabs={visibleTabs} />
+        {navMode === 'tabs' && <PillTabsList tabs={visibleTabs} />}
 
         <TabsContent value="stats" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>

@@ -12,6 +12,7 @@ import { usePermissions } from '@/contexts/PermissionsContext';
 import { MfaGuard } from '@/components/auth/MfaGuard';
 import { ModuleKey } from '@/types/modules';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
+import { useNavigationMode } from '@/hooks/useNavigationMode';
 
 const RHSuiviContent = lazy(() => import('@/components/rh/RHSuiviContent').then(m => ({ default: m.RHSuiviContent })));
 const MesApporteursTab = lazy(() => import('@/components/pilotage/MesApporteursTab').then(m => ({ default: m.MesApporteursTab })));
@@ -33,6 +34,7 @@ function LoadingFallback() {
 export default function OrganisationTabContent() {
   const { hasModule } = usePermissions();
   const { getShortLabel } = useModuleLabels();
+  const { mode: navMode } = useNavigationMode();
 
   const allTabs: (PillTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
     { id: 'collaborateurs', label: getShortLabel('organisation.salaries', 'Salariés'), icon: Users, accent: 'blue', requiresModule: 'organisation.salaries' },
@@ -58,7 +60,7 @@ export default function OrganisationTabContent() {
   return (
     <div className="py-6 px-2 sm:px-4 space-y-4">
       <Tabs value={effectiveTab} onValueChange={(v) => setActiveTab(v as OrganisationSubTab)}>
-        <PillTabsList tabs={visibleTabs} />
+        {navMode === 'tabs' && <PillTabsList tabs={visibleTabs} />}
 
         <TabsContent value="collaborateurs" className="mt-4">
           <MfaGuard>
