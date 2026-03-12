@@ -464,7 +464,9 @@ function getModuleRoute(key: string): string | null {
   return null;
 }
 
-const GRID_COLS = 'grid-cols-[minmax(220px,max-content)_auto_auto_auto_auto_auto_auto_auto]';
+// Table-based layout for proper column alignment
+const TD_CLASS = 'py-2 px-3 text-sm whitespace-nowrap';
+const TD_CLASS_NAME = 'py-2 px-3 text-sm'; // name column can wrap
 
 interface ModuleRowProps {
   node: RegistryNode;
