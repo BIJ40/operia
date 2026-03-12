@@ -1,5 +1,5 @@
-export const APP_VERSION = '0.9.6';
-export const APP_CODENAME = 'Phase 4 — Audit & Plan de migration Permissions';
+export const APP_VERSION = '0.9.7';
+export const APP_CODENAME = 'Verrouillage Permissions — Fail-Closed';
 
 /**
  * Changelog v0.8.7 (2026-01-31)
