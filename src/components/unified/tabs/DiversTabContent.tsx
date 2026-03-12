@@ -80,6 +80,7 @@ interface FolderTabConfig {
   id: string;
   label: string;
   icon: React.ElementType;
+  disabled?: boolean;
 }
 
 interface DraggableFolderTabsProps {
