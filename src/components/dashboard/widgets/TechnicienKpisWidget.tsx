@@ -98,7 +98,7 @@ export function TechnicienKpisWidget() {
         return (
           <Card key={kpi.key} className="p-3 border hover:border-primary/50 transition-colors">
             <div className="flex items-center gap-2 mb-2">
-              <div className={`bg-gradient-to-br ${kpi.color} p-1.5 rounded text-white`}>
+              <div className={`${kpi.color} p-1.5 rounded text-white`}>
                 <Icon className="h-3.5 w-3.5" />
               </div>
               <span className="text-[11px] text-muted-foreground truncate">{kpi.label}</span>

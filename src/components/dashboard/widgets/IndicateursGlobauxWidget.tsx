@@ -232,7 +232,7 @@ export function IndicateursGlobauxWidget() {
                   className="bg-card/60 backdrop-blur-sm rounded-xl p-3 border border-border/50 hover:border-primary/30 hover:shadow-sm transition-all cursor-default"
                 >
                   <div className="flex items-center gap-2 mb-1.5">
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-primary-foreground text-xs font-bold shadow-sm bg-gradient-to-br ${accent.gradient}`}>
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-primary-foreground text-xs font-bold shadow-sm ${accent.solidBg}`}>
                       {kpi.icon}
                     </div>
                     <span className="text-[11px] text-muted-foreground font-medium truncate">{kpi.label}</span>
