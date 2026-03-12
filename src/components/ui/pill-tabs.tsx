@@ -59,6 +59,45 @@ interface PillTabsListProps {
   variant?: 'pill' | 'switcher';
 }
 
+function SwitcherTabs({ tabs, className }: { tabs: PillTabConfig[]; className?: string }) {
+  const accent = useDomainAccent();
+  const colors = getAccentColors(accent);
+
+  return (
+    <div className="flex justify-center">
+      <TabsList className={cn(
+        "inline-flex items-center gap-0.5 bg-muted/30 rounded-xl border border-border/60 p-1 h-auto",
+        className
+      )}>
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isDisabled = tab.disabled === true;
+          return (
+            <TabsTrigger
+              key={tab.id}
+              value={tab.id}
+              disabled={isDisabled}
+              className={cn(
+                "flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-medium transition-all",
+                "text-muted-foreground bg-transparent border border-transparent",
+                colors.hoverBg, colors.hoverText,
+                `data-[state=active]:${colors.activeBg.replace('bg-', 'bg-')}`,
+                `data-[state=active]:shadow-sm`,
+                `data-[state=active]:${colors.activeBorder.replace('border-', 'border-')}`,
+                `data-[state=active]:${colors.activeText.replace('text-', 'text-')}`,
+                isDisabled && "opacity-50 cursor-not-allowed hover:bg-transparent hover:text-muted-foreground"
+              )}
+            >
+              <Icon className="w-4 h-4" />
+              <span className="hidden sm:inline">{tab.label}</span>
+            </TabsTrigger>
+          );
+        })}
+      </TabsList>
+    </div>
+  );
+}
+
 export function PillTabsList({ tabs, className, variant = 'pill' }: PillTabsListProps) {
   if (variant === 'switcher') {
     return <SwitcherTabs tabs={tabs} className={className} />;
