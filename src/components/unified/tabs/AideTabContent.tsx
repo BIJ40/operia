@@ -53,6 +53,7 @@ const DOC_SECTIONS = [
     emoji: '📘',
     accentClass: 'border-l-primary',
     bgClass: 'bg-primary/5 hover:bg-primary/10',
+    permissionOption: 'apogee' as const,
   },
   {
     id: 'apporteurs',
@@ -62,6 +63,7 @@ const DOC_SECTIONS = [
     emoji: '🤝',
     accentClass: 'border-l-amber-500',
     bgClass: 'bg-amber-500/5 hover:bg-amber-500/10',
+    permissionOption: 'apporteurs' as const,
   },
   {
     id: 'hc-services',
@@ -71,6 +73,7 @@ const DOC_SECTIONS = [
     emoji: '🏠',
     accentClass: 'border-l-teal-500',
     bgClass: 'bg-teal-500/5 hover:bg-teal-500/10',
+    permissionOption: 'helpconfort' as const,
   },
   {
     id: 'hc-base',
@@ -80,6 +83,7 @@ const DOC_SECTIONS = [
     emoji: '📂',
     accentClass: 'border-l-purple-500',
     bgClass: 'bg-purple-500/5 hover:bg-purple-500/10',
+    permissionOption: null,
   },
 ];
 
