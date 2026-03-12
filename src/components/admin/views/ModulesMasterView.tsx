@@ -750,17 +750,38 @@ export function ModulesMasterView() {
   }, []);
 
   // Root container nodes (node_type='module', parent_key=null) are structural —
-  // they map 1:1 to the category headers, so hide them from the tree rows.
+  // they map 1:1 to the category headers. We keep them for renaming but exclude from child rows.
   const ROOT_CONTAINER_KEYS = new Set(['pilotage', 'commercial', 'organisation', 'mediatheque', 'support', 'admin']);
+
+  // Map category ID → root container node for renaming
+  const CATEGORY_ROOT_KEY: Record<string, string> = {
+    pilotage: 'pilotage',
+    commercial: 'commercial',
+    organisation: 'organisation',
+    documents: 'mediatheque',
+    support: 'support',
+    admin: 'admin',
+  };
+
+  const rootNodesByKey = useMemo(() => {
+    const map = new Map<string, RegistryNode>();
+    for (const node of deployedNodes) {
+      if (ROOT_CONTAINER_KEYS.has(node.key)) {
+        map.set(node.key, node);
+      }
+    }
+    return map;
+  }, [deployedNodes]);
 
   const groupedCategories = useMemo(() => {
     return RIGHTS_CATEGORIES.map((category) => ({
       category,
+      rootNode: rootNodesByKey.get(CATEGORY_ROOT_KEY[category.id]),
       nodes: deployedNodes
         .filter((node) => nodeMatchesCategory(node.key, category.moduleKeys) && !ROOT_CONTAINER_KEYS.has(node.key))
         .map(toDisplayNode),
     }));
-  }, [deployedNodes, toDisplayNode]);
+  }, [deployedNodes, toDisplayNode, rootNodesByKey]);
 
   const legacyNodes = useMemo(() => {
     return deployedNodes
