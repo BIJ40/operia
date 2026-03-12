@@ -14,21 +14,21 @@ const TECH_KPIS = [
     label: 'Mon CA du mois', 
     icon: TrendingUp,
     format: 'currency',
-    color: 'from-green-500 to-green-600'
+    color: 'bg-emerald-400/70'
   },
   { 
     key: 'dossiersTraites', 
     label: 'Dossiers terminés', 
     icon: FolderCheck,
     format: 'number',
-    color: 'from-blue-500 to-blue-600'
+    color: 'bg-blue-400/70'
   },
   { 
     key: 'interventionsRealisees', 
     label: 'Rendez-Vous', 
     icon: Wrench,
     format: 'number',
-    color: 'from-orange-500 to-orange-600'
+    color: 'bg-amber-400/70'
   },
 ];
 
@@ -98,7 +98,7 @@ export function TechnicienKpisWidget() {
         return (
           <Card key={kpi.key} className="p-3 border hover:border-primary/50 transition-colors">
             <div className="flex items-center gap-2 mb-2">
-              <div className={`bg-gradient-to-br ${kpi.color} p-1.5 rounded text-white`}>
+              <div className={`${kpi.color} p-1.5 rounded text-white`}>
                 <Icon className="h-3.5 w-3.5" />
               </div>
               <span className="text-[11px] text-muted-foreground truncate">{kpi.label}</span>

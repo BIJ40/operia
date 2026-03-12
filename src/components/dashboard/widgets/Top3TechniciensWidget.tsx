@@ -94,21 +94,21 @@ export function Top3TechniciensWidget() {
     switch (index) {
       case 0:
         return { 
-          bg: 'bg-gradient-to-br from-yellow-400 to-amber-500', 
+          bg: 'bg-amber-400/80', 
           text: 'text-yellow-50',
           icon: Trophy,
-          ringColor: 'ring-yellow-400/30'
+          ringColor: 'ring-amber-400/30'
         };
       case 1:
         return { 
-          bg: 'bg-gradient-to-br from-slate-300 to-slate-400', 
+          bg: 'bg-slate-400/70', 
           text: 'text-slate-50',
           icon: Medal,
           ringColor: 'ring-slate-400/30'
         };
       case 2:
         return { 
-          bg: 'bg-gradient-to-br from-amber-600 to-orange-700', 
+          bg: 'bg-amber-600/70', 
           text: 'text-amber-50',
           icon: Medal,
           ringColor: 'ring-amber-600/30'

@@ -65,7 +65,7 @@ export function PanierMoyenWidget({ compact = false }: PanierMoyenWidgetProps) {
   return (
     <div className="flex flex-col items-center justify-center h-full gap-2 p-4">
       {/* Icône panier */}
-      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-pink-600 flex items-center justify-center text-white text-xl">
+      <div className="w-12 h-12 rounded-full bg-pink-400/70 flex items-center justify-center text-white text-xl">
         🛒
       </div>
 
