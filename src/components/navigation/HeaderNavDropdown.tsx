@@ -28,6 +28,10 @@ export function HeaderNavDropdown({ group, isActive, onSelect, pillBase, pillAct
   }, []);
 
   const handleSelect = useCallback((child: HeaderNavChild) => {
+    // Write sub-tab to sessionStorage so the tab content picks it up
+    if (child.subTabKey && child.subTabValue) {
+      try { sessionStorage.setItem(child.subTabKey, JSON.stringify(child.subTabValue)); } catch {}
+    }
     if (child.tab) onSelect(child.tab);
     setOpen(false);
   }, [onSelect]);
