@@ -27,28 +27,18 @@ export type GlobalRole =
   | 'superadmin';
 
 // ModuleKey V3 — aligné avec src/types/modules.ts
-// Legacy + hierarchical keys (Phase 7 additive migration)
+// Legacy + hierarchical keys (Phase 10 — legacy removed)
 export type ModuleKey = 
-  // Legacy
-  | 'agence'
-  | 'stats'
-  | 'rh'
-  | 'parc'
-  | 'divers_apporteurs'
-  | 'divers_plannings'
-  | 'divers_reunions'
-  | 'divers_documents'
-  | 'guides'
+  // Non-migrated legacy (still canonical)
   | 'ticketing'
-  | 'aide'
   | 'prospection'
   | 'planning_augmente'
   | 'reseau_franchiseur'
   | 'admin_plateforme'
   | 'unified_search'
-  // Hierarchical (Phase 7)
+  // Hierarchical (Phase 7+10)
   | 'pilotage.agence'
-  | 'pilotage.dashboard'
+  | 'pilotage.statistiques'
   | 'organisation.salaries'
   | 'organisation.parc'
   | 'organisation.apporteurs'
@@ -61,11 +51,11 @@ export type ModuleKey =
 
 // Legacy module keys → V3 mapping (pour rétrocompat des données en base)
 export const MODULE_COMPAT_MAP: Record<string, ModuleKey> = {
-  'help_academy': 'guides',
-  'pilotage_agence': 'agence',
-  'support': 'aide',
+  'help_academy': 'support.guides',
+  'pilotage_agence': 'pilotage.agence',
+  'support': 'support.aide_en_ligne',
   'apogee_tickets': 'ticketing',
-  'messaging': 'aide',
+  'messaging': 'support.aide_en_ligne',
 };
 
 export interface PermissionContext {
@@ -118,25 +108,15 @@ export const ROLE_HIERARCHY: Record<GlobalRole, number> = {
 // Edge functions can't import from src/, so this is a synced copy.
 // Last sync: 2026-03-08
 export const MODULE_MIN_ROLES: Partial<Record<ModuleKey, GlobalRole>> = {
-  // Legacy
-  agence: 'franchisee_admin',
-  stats: 'franchisee_admin',
-  rh: 'franchisee_admin',
-  parc: 'franchisee_admin',
-  divers_apporteurs: 'franchisee_admin',
-  divers_plannings: 'franchisee_admin',
-  divers_reunions: 'franchisee_admin',
-  divers_documents: 'franchisee_admin',
-  guides: 'base_user',
+  // Non-migrated legacy
   ticketing: 'base_user',
-  aide: 'base_user',
   prospection: 'franchisee_admin',
   planning_augmente: 'franchisee_admin',
   reseau_franchiseur: 'franchisor_user',
   admin_plateforme: 'platform_admin',
-  // Hierarchical (Phase 7)
+  // Hierarchical (Phase 7+10)
   'pilotage.agence': 'franchisee_admin',
-  'pilotage.dashboard': 'franchisee_admin',
+  'pilotage.statistiques': 'franchisee_admin',
   'organisation.salaries': 'franchisee_admin',
   'organisation.parc': 'franchisee_admin',
   'organisation.apporteurs': 'franchisee_admin',
@@ -173,13 +153,11 @@ export function isBypassRole(role: GlobalRole | null): boolean {
 export function normalizeModuleKey(key: string): ModuleKey | null {
   // Check all known module keys (MODULE_MIN_ROLES covers all canonical keys)
   const ALL_MODULE_KEYS: ModuleKey[] = [
-    // Legacy
-    'agence', 'stats', 'rh', 'parc', 'divers_apporteurs', 'divers_plannings',
-    'divers_reunions', 'divers_documents', 'guides', 'ticketing', 'aide',
-    'prospection', 'planning_augmente', 'reseau_franchiseur', 'admin_plateforme',
-    'unified_search',
-    // Hierarchical (Phase 7)
-    'pilotage.agence', 'pilotage.dashboard',
+    // Non-migrated legacy
+    'ticketing', 'prospection', 'planning_augmente',
+    'reseau_franchiseur', 'admin_plateforme', 'unified_search',
+    // Hierarchical (Phase 7+10)
+    'pilotage.agence', 'pilotage.statistiques',
     'organisation.salaries', 'organisation.parc', 'organisation.apporteurs',
     'organisation.plannings', 'organisation.reunions',
     'mediatheque.documents',

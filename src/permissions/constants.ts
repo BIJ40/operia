@@ -25,9 +25,7 @@ export const BYPASS_MIN_LEVEL = GLOBAL_ROLES.platform_admin;
 
 /** Modules qui nécessitent que l'utilisateur ait une agence assignée */
 export const AGENCY_REQUIRED_MODULES: ModuleKey[] = [
-  // Legacy (kept for additive safety — Phase 8 Ajustement 1)
-  'agence', 'rh', 'parc',
-  // Hierarchical equivalents
+  // Hierarchical keys only (legacy removed Phase 10)
   'pilotage.agence', 'organisation.salaries', 'organisation.parc',
   // Prospection — unchanged
   'prospection',
@@ -106,9 +104,9 @@ export const MODULE_OPTION_MIN_ROLES: Record<string, GlobalRole> = {
   'pilotage.agence.actions_a_mener': 'franchisee_admin',
   'pilotage.agence.diffusion': 'franchisee_admin',
   
-  // Pilotage — Dashboard (ex-stats)
-  'pilotage.dashboard.stats_hub': 'franchisee_admin',
-  'pilotage.dashboard.exports': 'franchisee_admin',
+  // Pilotage — Statistiques (ex-stats, ex-dashboard)
+  'pilotage.statistiques.general': 'franchisee_admin',
+  'pilotage.statistiques.exports': 'franchisee_admin',
 
   // Médiathèque — Documents (ex-divers_documents)
   'mediatheque.documents.consulter': 'franchisee_admin',

@@ -32,26 +32,16 @@ export type SharedGlobalRole = keyof typeof SHARED_ROLE_HIERARCHY;
 // ============================================================================
 
 export const SHARED_MODULE_KEYS = [
-  // Legacy (kept for backward compat)
-  'agence',
-  'stats',
-  'rh',
-  'parc',
-  'divers_apporteurs',
-  'divers_plannings',
-  'divers_reunions',
-  'divers_documents',
-  'guides',
+  // Non-migrated legacy (still canonical)
   'ticketing',
-  'aide',
   'prospection',
   'planning_augmente',
   'reseau_franchiseur',
   'admin_plateforme',
   'unified_search',
-  // Hierarchical (additive — Phase 7)
+  // Hierarchical (Phase 7+10)
   'pilotage.agence',
-  'pilotage.dashboard',
+  'pilotage.statistiques',
   'organisation.salaries',
   'organisation.parc',
   'organisation.apporteurs',
@@ -70,11 +60,12 @@ export type SharedModuleKey = typeof SHARED_MODULE_KEYS[number];
 // ============================================================================
 
 export const SHARED_MODULE_COMPAT_MAP: Record<string, SharedModuleKey> = {
-  help_academy: 'guides',
-  pilotage_agence: 'agence',
-  support: 'aide',
+  // Legacy keys → canonical hierarchical keys
+  help_academy: 'support.guides',
+  pilotage_agence: 'pilotage.agence',
+  support: 'support.aide_en_ligne',
   apogee_tickets: 'ticketing',
-  messaging: 'aide',
+  messaging: 'support.aide_en_ligne',
 };
 
 // ============================================================================
@@ -84,8 +75,8 @@ export const SHARED_MODULE_COMPAT_MAP: Record<string, SharedModuleKey> = {
 export const SHARED_BYPASS_ROLES: SharedGlobalRole[] = ['superadmin', 'platform_admin'];
 
 export const SHARED_AGENCY_REQUIRED_MODULES: SharedModuleKey[] = [
-  'agence', 'rh', 'parc', 'prospection',
   'pilotage.agence', 'organisation.salaries', 'organisation.parc',
+  'prospection',
 ];
 
 export const SHARED_AGENCY_ROLES: SharedGlobalRole[] = ['franchisee_user', 'franchisee_admin'];
@@ -99,25 +90,15 @@ export const SHARED_NETWORK_MIN_ROLE: SharedGlobalRole = 'franchisor_user';
  * Last sync: 2026-03-08 (aligned rh/parc to franchisee_admin per MODULE_DEFINITIONS)
  */
 export const SHARED_MODULE_MIN_ROLES: Partial<Record<SharedModuleKey, SharedGlobalRole>> = {
-  // Legacy
-  agence: 'franchisee_admin',
-  stats: 'franchisee_admin',
-  rh: 'franchisee_admin',
-  parc: 'franchisee_admin',
-  divers_apporteurs: 'franchisee_admin',
-  divers_plannings: 'franchisee_admin',
-  divers_reunions: 'franchisee_admin',
-  divers_documents: 'franchisee_admin',
-  guides: 'franchisee_admin',
+  // Non-migrated legacy
   ticketing: 'base_user',
-  aide: 'base_user',
   prospection: 'franchisee_user',
   planning_augmente: 'franchisee_admin',
   reseau_franchiseur: 'franchisor_user',
   admin_plateforme: 'platform_admin',
-  // Hierarchical (Phase 7)
+  // Hierarchical (Phase 7+10)
   'pilotage.agence': 'franchisee_admin',
-  'pilotage.dashboard': 'franchisee_admin',
+  'pilotage.statistiques': 'franchisee_admin',
   'organisation.salaries': 'franchisee_admin',
   'organisation.parc': 'franchisee_admin',
   'organisation.apporteurs': 'franchisee_admin',

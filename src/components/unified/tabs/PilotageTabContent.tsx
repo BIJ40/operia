@@ -25,7 +25,7 @@ const AnomaliesDevisDossierView = lazy(() => import('@/apogee-connect/components
 type PilotageSubTab = 'stats' | 'performance' | 'actions' | 'devis-acceptes' | 'anomalies';
 
 const ALL_PILOTAGE_TABS: (PillTabConfig & { requiresModule?: ModuleKey })[] = [
-  { id: 'stats', label: 'Statistiques', icon: BarChart3, accent: 'blue', requiresModule: 'pilotage.dashboard' },
+  { id: 'stats', label: 'Statistiques', icon: BarChart3, accent: 'blue', requiresModule: 'pilotage.statistiques' },
   { id: 'performance', label: 'Performance', icon: Activity, accent: 'pink', requiresModule: 'pilotage.agence' },
   { id: 'actions', label: 'Actions à mener', icon: Settings, accent: 'orange', requiresModule: 'pilotage.agence' },
   { id: 'devis-acceptes', label: 'Devis acceptés', icon: FileCheck, accent: 'teal', requiresModule: 'pilotage.agence' },

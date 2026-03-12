@@ -10,7 +10,7 @@ import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
 
 // Astuces par module (clés hiérarchiques alignées MODULE_DEFINITIONS)
 const TIPS_BY_MODULE: Record<string, string[]> = {
-  'pilotage.dashboard': [
+  'pilotage.statistiques': [
     '💡 Consultez le CA par technicien depuis l\'onglet Stats',
     '📊 Filtrez les données par période pour affiner l\'analyse',
     '📈 Comparez les performances mois par mois',
@@ -47,7 +47,7 @@ export function PreloadTipsCarousel({
   className, 
   intervalMs = 8000 
 }: PreloadTipsCarouselProps) {
-  const { hasModuleOption } = useEffectiveModules();
+  const { hasModule, hasModuleOption } = useEffectiveModules();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [tips, setTips] = useState<string[]>(GENERAL_TIPS);
   
@@ -56,8 +56,8 @@ export function PreloadTipsCarousel({
     const contextualTips: string[] = [];
     
     // Ajouter les tips des modules actifs (clés hiérarchiques)
-    if (hasModuleOption('pilotage.dashboard', 'stats_hub') || hasModuleOption('pilotage.agence', 'indicateurs')) {
-      contextualTips.push(...(TIPS_BY_MODULE['pilotage.dashboard'] || []));
+    if (hasModule('pilotage.statistiques') || hasModuleOption('pilotage.agence', 'indicateurs')) {
+      contextualTips.push(...(TIPS_BY_MODULE['pilotage.statistiques'] || []));
     }
     
     if (hasModuleOption('organisation.salaries', 'rh_viewer')) {

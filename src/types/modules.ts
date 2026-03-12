@@ -9,21 +9,10 @@ import { GlobalRole, GLOBAL_ROLES } from './globalRoles';
 
 // Définition des modules alignés avec les onglets UI
 export const MODULES = {
-  // Modules V3 legacy (onglets existants)
-  agence: 'agence',
-  stats: 'stats',
-  rh: 'rh',
-  parc: 'parc',
-  divers_apporteurs: 'divers_apporteurs',
-  divers_plannings: 'divers_plannings',
-  divers_reunions: 'divers_reunions',
-  divers_documents: 'divers_documents',
-  guides: 'guides',
+  // Non-migrated legacy modules (still canonical)
   ticketing: 'ticketing',
-  aide: 'aide',
   prospection: 'prospection',
   planning_augmente: 'planning_augmente',
-  realisations: 'realisations',
   reseau_franchiseur: 'reseau_franchiseur',
   admin_plateforme: 'admin_plateforme',
   unified_search: 'unified_search',
@@ -42,7 +31,7 @@ export const MODULES = {
   'pilotage.actions_a_mener': 'pilotage.actions_a_mener',
   'pilotage.devis_acceptes': 'pilotage.devis_acceptes',
   'pilotage.incoherences': 'pilotage.incoherences',
-  'pilotage.dashboard': 'pilotage.dashboard',
+  // (pilotage.dashboard removed — merged into pilotage.statistiques)
   'pilotage.agence': 'pilotage.agence',
   // Commercial
   'commercial.suivi_client': 'commercial.suivi_client',
@@ -87,10 +76,7 @@ export const MODULE_OPTIONS = {
     diffusion: 'pilotage.agence.diffusion',
     devis_acceptes: 'pilotage.agence.devis_acceptes',
   },
-  'pilotage.dashboard': {
-    stats_hub: 'pilotage.dashboard.stats_hub',
-    exports: 'pilotage.dashboard.exports',
-  },
+  // pilotage.dashboard options removed — merged into pilotage.statistiques
   'organisation.salaries': {
     rh_viewer: 'organisation.salaries.rh_viewer',
     rh_admin: 'organisation.salaries.rh_admin',
@@ -225,19 +211,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'devis_acceptes', path: 'pilotage.agence.devis_acceptes', label: 'Devis acceptés', description: 'Visualisation des dossiers avec devis acceptés', defaultEnabled: true, routes: ['/?tab=commercial'] },
     ],
   },
-  {
-    key: 'pilotage.dashboard',
-    label: 'Stats',
-    description: 'Statistiques et tableaux de bord',
-    icon: 'BarChart3',
-    category: 'pilotage',
-    defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
-    minRole: 'franchisee_admin',
-    options: [
-      { key: 'stats_hub', path: 'pilotage.dashboard.stats_hub', label: 'Stats Hub', description: 'Tableaux avancés', defaultEnabled: true, routes: ['/?tab=pilotage'] },
-      { key: 'exports', path: 'pilotage.dashboard.exports', label: 'Exports', description: 'Export des données', defaultEnabled: false, routes: ['/?tab=pilotage'] },
-    ],
-  },
+  // pilotage.dashboard definition removed — merged into pilotage.statistiques in module_registry
   {
     key: 'organisation.salaries',
     label: 'Salariés',
@@ -587,7 +561,7 @@ export const MODULE_SHORT_LABELS: Partial<Record<ModuleKey, string>> = {
   unified_search: 'Recherche',
   // Pilotage
   'pilotage.agence': 'Agence',
-  'pilotage.dashboard': 'Stats',
+  // pilotage.dashboard removed
   'pilotage.statistiques': 'Statistiques',
   'pilotage.performance': 'Performance',
   'pilotage.actions_a_mener': 'Actions',

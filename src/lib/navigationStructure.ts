@@ -58,7 +58,7 @@ export const NAVIGATION_STRUCTURE: NavigationDomain[] = [
     label: 'Pilotage',
     icon: BarChart3,
     entries: [
-      { label: 'Statistiques', guard: { moduleKey: 'pilotage.dashboard' } },
+      { label: 'Statistiques', guard: { moduleKey: 'pilotage.statistiques' } },
       { label: 'Performance', guard: { moduleKey: 'pilotage.agence' } },
       { label: 'Actions à mener', guard: { moduleKey: 'pilotage.agence' } },
       { label: 'Devis acceptés', guard: { moduleKey: 'pilotage.agence' } },
