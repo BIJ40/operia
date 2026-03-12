@@ -4,7 +4,7 @@ import { ROUTES } from '@/config/routes';
 import { useMenuLabels } from '@/hooks/use-page-metadata';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 const ROUTE_TO_PAGE_KEY: Record<string, string> = {
   [ROUTES.academy.apogee]: 'academy_apogee',
