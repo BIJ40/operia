@@ -2,7 +2,7 @@ import {
   BarChart3, Activity, ListChecks, FileCheck, AlertTriangle,
   ShoppingCart, Users as UsersIcon, Search, Eye, TrendingUp,
   Users, Car, Handshake, CalendarDays, MessagesSquare,
-  FolderOpen, Headphones, HelpCircle, Kanban, Shield,
+  FolderOpen, Headphones, HelpCircle, Kanban, Shield, Building2,
   type LucideIcon,
 } from 'lucide-react';
 import type { UnifiedTab } from '@/components/unified/workspace/types';
@@ -28,7 +28,7 @@ export interface HeaderNavGroup {
   /** Main tab this group maps to (for active state) */
   tab: UnifiedTab;
   /** Accent color for this domain */
-  accent?: 'blue' | 'orange' | 'green' | 'purple' | 'pink' | 'teal';
+  accent?: 'blue' | 'orange' | 'green' | 'purple' | 'pink' | 'teal' | 'red';
   children: HeaderNavChild[];
 }
 
@@ -96,9 +96,11 @@ export const HEADER_NAV_GROUPS: HeaderNavGroup[] = [
     label: 'Admin',
     icon: Shield,
     tab: 'admin',
-    accent: 'pink',
+    accent: 'red',
     children: [
-      { label: 'Administration', icon: Shield, tab: 'admin', description: 'Paramètres plateforme', scope: 'admin_plateforme' },
+      { label: 'Utilisateurs', icon: UsersIcon, tab: 'admin', description: 'Gestion des comptes', scope: 'admin_plateforme', subTabKey: 'admin_main_tab', subTabValue: 'gestion' },
+      { label: 'Agences', icon: Building2, tab: 'admin', description: 'Réseau d\'agences', scope: 'admin_plateforme', subTabKey: 'admin_main_tab', subTabValue: 'gestion' },
+      { label: 'Droits', icon: Shield, tab: 'admin', description: 'Permissions et modules', scope: 'admin_plateforme', subTabKey: 'admin_main_tab', subTabValue: 'gestion' },
     ],
   },
 ];

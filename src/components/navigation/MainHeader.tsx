@@ -44,6 +44,7 @@ export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClas
     purple: 'bg-warm-purple/10 text-warm-purple',
     pink: 'bg-warm-pink/10 text-warm-pink',
     teal: 'bg-warm-teal/10 text-warm-teal',
+    red: 'bg-warm-red/10 text-warm-red',
   };
 
   const ACCENT_DROPDOWN: Record<string, { bg: string; border: string; text: string; hoverBg: string; hoverBorder: string }> = {
@@ -53,6 +54,7 @@ export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClas
     purple: { bg: 'bg-warm-purple/10', border: 'border-warm-purple/15', text: 'text-warm-purple', hoverBg: 'group-hover:bg-warm-purple/15', hoverBorder: 'group-hover:border-warm-purple/30' },
     pink: { bg: 'bg-warm-pink/10', border: 'border-warm-pink/15', text: 'text-warm-pink', hoverBg: 'group-hover:bg-warm-pink/15', hoverBorder: 'group-hover:border-warm-pink/30' },
     teal: { bg: 'bg-warm-teal/10', border: 'border-warm-teal/15', text: 'text-warm-teal', hoverBg: 'group-hover:bg-warm-teal/15', hoverBorder: 'group-hover:border-warm-teal/30' },
+    red: { bg: 'bg-warm-red/10', border: 'border-warm-red/15', text: 'text-warm-red', hoverBg: 'group-hover:bg-warm-red/15', hoverBorder: 'group-hover:border-warm-red/30' },
   };
 
   return (
