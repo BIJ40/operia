@@ -5,6 +5,7 @@ import { HeaderNavDropdown } from './HeaderNavDropdown';
 import { MobileNavMenu } from './MobileNavMenu';
 import { ProfileMenu } from '@/components/unified/workspace/ProfileMenu';
 import type { UnifiedTab } from '@/components/unified/workspace/types';
+import { useModuleLabels } from '@/hooks/useModuleLabels';
 
 interface MainHeaderProps {
   activeTab: UnifiedTab;
