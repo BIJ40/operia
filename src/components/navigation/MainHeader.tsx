@@ -24,9 +24,9 @@ export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClas
       .filter(group => group.children.length > 0);
   }, [visibleTabs]);
 
-  const pillBase = 'flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-border/50 bg-card/80 backdrop-blur-sm text-sm font-medium transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md';
-  const pillActive = 'bg-gradient-to-br from-primary/15 to-primary/5 border-primary/40 text-primary shadow-md font-semibold';
-  const pillInactive = 'text-muted-foreground hover:text-foreground hover:border-border';
+  const pillBase = 'flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-border/50 bg-card/80 backdrop-blur-sm text-muted-foreground font-medium text-sm shadow-sm hover:shadow-md hover:border-border transition-all duration-200 cursor-pointer';
+  const pillActive = 'bg-gradient-to-br from-primary/15 to-primary/5 border-primary/40 text-primary shadow-lg font-semibold';
+  const pillInactive = '';
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border/50 print:hidden">
@@ -52,7 +52,9 @@ export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClas
               onClick={() => setActiveTab('accueil')}
               className={`${pillBase} ${activeTab === 'accueil' ? pillActive : pillInactive}`}
             >
-              <Home className="w-4 h-4" />
+              <div className={`flex items-center justify-center w-7 h-7 rounded-lg transition-colors duration-200 ${activeTab === 'accueil' ? 'bg-primary/20' : 'bg-muted'}`}>
+                <Home className="w-4 h-4" />
+              </div>
               <span>Accueil</span>
             </button>
 
