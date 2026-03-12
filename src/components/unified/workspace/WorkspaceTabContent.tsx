@@ -32,7 +32,7 @@ interface WorkspaceTabContentProps {
 
 export function WorkspaceTabContent({ isN0User }: WorkspaceTabContentProps) {
   return (
-    <main id="main-content" className="flex-1 overflow-auto" role="main">
+    <main id="main-content" className="flex-1 overflow-auto container mx-auto max-w-7xl px-4" role="main">
       <Suspense fallback={<LoadingFallback />}>
         <TabsContent value="accueil" className="mt-0 h-full">
           {isN0User ? <DemoAccueilContent /> : <DashboardContent />}
