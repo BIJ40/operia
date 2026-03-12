@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ApogeeUserSelect } from '@/components/collaborators/ApogeeUserSelect';
 import { Agency, ROLE_AGENCE_LABELS, UserFormData } from './constants';
+import { getSuggestedGlobalRole, validateRoleAgenceCoherence } from '@/lib/roleAgenceMapping';
 
 interface UserInfoColumnProps {
   editMode: boolean;
