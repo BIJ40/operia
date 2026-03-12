@@ -447,8 +447,8 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
   // ==================== RH ====================
   {
     path: '/rh',
-    label: 'RH Index',
-    component: 'RHIndex',
+    label: 'RH (redirect)',
+    component: 'Navigate → /?tab=organisation',
     section: 'rh',
     planRequired: 'PRO',
     guards: {
