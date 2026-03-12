@@ -591,6 +591,7 @@ export function SimplifiedSupportChat({
             <ArrowLeft className="w-3.5 h-3.5" /> Retour
           </Button>
         </div>
+        <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
