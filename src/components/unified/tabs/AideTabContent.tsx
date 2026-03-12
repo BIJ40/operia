@@ -191,34 +191,32 @@ export default function SupportHubTabContent() {
         </p>
       </div>
 
-      {/* ═══ BLOC PRINCIPAL : Aide en ligne ═══ */}
-      <Card className="rounded-2xl border-2 border-primary/20 bg-card/90 backdrop-blur-sm shadow-lg overflow-hidden">
-        <CardHeader className="pb-2 bg-gradient-to-r from-primary/5 to-accent/5">
-          <CardTitle className="flex items-center gap-3 text-xl">
-            <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
-              <Headphones className="w-6 h-6 text-primary" />
-            </div>
-            Aide en ligne
-            <Badge variant="secondary" className="rounded-full text-xs font-normal">
-              IA Assistant
-            </Badge>
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Décrivez votre problème, l'IA vous guidera vers une solution
-          </p>
-        </CardHeader>
-        <CardContent className="p-0">
-          <SimplifiedSupportChat
-            onTicketCreated={handleTicketCreated}
-            onChatClosed={() => {}}
-            className="min-h-[420px] max-h-[520px]"
-          />
-        </CardContent>
-      </Card>
-
-      {/* ═══ Grille 2 colonnes : Base doc + Mes demandes ═══ */}
+      {/* ═══ Grille 2×2 ═══ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Base documentaire */}
+        
+        {/* ── Haut gauche : Aide en ligne ── */}
+        <Card className="rounded-2xl border-2 border-primary/20 bg-card/90 backdrop-blur-sm shadow-lg overflow-hidden">
+          <CardHeader className="pb-2 bg-gradient-to-r from-primary/5 to-accent/5">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <div className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center">
+                <Headphones className="w-5 h-5 text-primary" />
+              </div>
+              Aide en ligne
+              <Badge variant="secondary" className="rounded-full text-xs font-normal">
+                IA
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <SimplifiedSupportChat
+              onTicketCreated={handleTicketCreated}
+              onChatClosed={() => {}}
+              className="min-h-[340px] max-h-[400px]"
+            />
+          </CardContent>
+        </Card>
+
+        {/* ── Haut droite : Base documentaire ── */}
         <Card className="rounded-2xl border-border/50 bg-card/80 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -230,7 +228,6 @@ export default function SupportHubTabContent() {
           </CardHeader>
           <CardContent className="space-y-2">
             {DOC_SECTIONS.filter(s => {
-              // Hide sections that need module access
               if (s.id === 'apporteurs') return hasModule('organisation.apporteurs');
               return true;
             }).map((section) => (
@@ -254,7 +251,7 @@ export default function SupportHubTabContent() {
           </CardContent>
         </Card>
 
-        {/* Mes demandes */}
+        {/* ── Bas gauche : Mes demandes ── */}
         <Card className="rounded-2xl border-border/50 bg-card/80 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -270,7 +267,7 @@ export default function SupportHubTabContent() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="max-h-[350px] pr-2">
+            <ScrollArea className="max-h-[320px] pr-2">
               {combinedLoading ? (
                 <div className="flex justify-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -281,7 +278,7 @@ export default function SupportHubTabContent() {
                     <FileText className="w-7 h-7 opacity-40" />
                   </div>
                   <p className="text-sm">Aucune demande en cours</p>
-                  <p className="text-xs mt-1">Utilisez l'aide en ligne ci-dessus pour poser une question</p>
+                  <p className="text-xs mt-1">Utilisez l'aide en ligne pour poser une question</p>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -331,22 +328,22 @@ export default function SupportHubTabContent() {
             </ScrollArea>
           </CardContent>
         </Card>
-      </div>
 
-      {/* ═══ FAQ ═══ */}
-      <Card className="rounded-2xl border-border/50 bg-card/80 shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <div className="w-8 h-8 rounded-xl bg-secondary/50 flex items-center justify-center">
-              <HelpCircle className="w-5 h-5 text-foreground/70" />
-            </div>
-            Questions fréquentes
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <InlineFaq />
-        </CardContent>
-      </Card>
+        {/* ── Bas droite : FAQ ── */}
+        <Card className="rounded-2xl border-border/50 bg-card/80 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <div className="w-8 h-8 rounded-xl bg-secondary/50 flex items-center justify-center">
+                <HelpCircle className="w-5 h-5 text-foreground/70" />
+              </div>
+              Questions fréquentes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <InlineFaq />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
