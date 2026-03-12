@@ -178,6 +178,8 @@ export interface ModuleDefinition {
   adminOnly?: boolean;
   /** Si false, ce module est en développement et masqué des permissions/plans */
   deployed?: boolean;
+  /** Si true, ce module n'est activé que par overwrite utilisateur (user_modules), jamais par plan ou rôle */
+  overwriteOnly?: boolean;
 }
 
 export interface ModuleOptionDefinition {

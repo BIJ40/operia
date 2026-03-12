@@ -124,6 +124,7 @@ export const MODULE_TREE: ModuleTreeNode[] = [
     nodeType: 'section',
     requiredPlan: 'STARTER',
     deployed: true,
+    overwriteOnly: true,
     children: [
       { key: 'ticketing.kanban', label: 'Kanban', nodeType: 'screen', requiredPlan: 'STARTER', deployed: true },
       { key: 'ticketing.liste', label: 'Liste', nodeType: 'screen', requiredPlan: 'STARTER', deployed: true },
