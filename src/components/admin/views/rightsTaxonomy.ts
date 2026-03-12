@@ -87,7 +87,7 @@ const LEGACY_LABELS: Partial<Record<string, string[]>> = {
   'organisation.parc': ['Parc véhicules & EPI'],
   prospection: ['Commercial / Prospection'],
   admin_plateforme: ['Administration'],
-  'pilotage.agence': ['Pilotage agence', 'Mon agence'],
+  
   reseau_franchiseur: ['Réseau Franchiseur'],
   'support.aide_en_ligne': ['Aide'],
   // Legacy roots
