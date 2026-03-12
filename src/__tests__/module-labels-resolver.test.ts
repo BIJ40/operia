@@ -1,0 +1,140 @@
+/**
+ * Tests anti-régression pour le résolveur de labels modules
+ * 
+ * Garantit :
+ * 1. Un override DB remonte bien dans le resolver
+ * 2. En absence de DB, le fallback MODULE_DEFINITIONS fonctionne
+ * 3. Les guards dépendent des clés, PAS des labels
+ * 4. Un renommage de label n'impacte pas les permissions
+ * 5. Les fallbacks sécurisés fonctionnent
+ */
+
+import { describe, it, expect } from 'vitest';
+import { resolveModuleLabel, resolveModuleShortLabel } from '@/hooks/useModuleLabels';
+import { hasAccess } from '@/permissions/permissionsEngine';
+import { MODULE_DEFINITIONS, MODULE_SHORT_LABELS } from '@/types/modules';
+
+// ============================================================================
+// 1. Override DB prend la priorité
+// ============================================================================
+
+describe('resolveModuleLabel — DB override priority', () => {
+  it('returns DB label when available', () => {
+    const dbLabels = { 'organisation.salaries': 'Équipe RH' };
+    const result = resolveModuleLabel('organisation.salaries', dbLabels);
+    expect(result).toBe('Équipe RH');
+  });
+
+  it('returns MODULE_DEFINITIONS label when no DB override', () => {
+    const dbLabels = {};
+    const result = resolveModuleLabel('organisation.salaries', dbLabels);
+    const expected = MODULE_DEFINITIONS.find(m => m.key === 'organisation.salaries')?.label;
+    expect(result).toBe(expected);
+  });
+
+  it('returns fallback when no DB and no definition', () => {
+    const dbLabels = {};
+    const result = resolveModuleLabel('unknown.module.xyz', dbLabels, 'Default');
+    expect(result).toBe('Default');
+  });
+
+  it('returns key as last resort', () => {
+    const dbLabels = {};
+    const result = resolveModuleLabel('unknown.module.xyz', dbLabels);
+    expect(result).toBe('unknown.module.xyz');
+  });
+});
+
+// ============================================================================
+// 2. Short labels
+// ============================================================================
+
+describe('resolveModuleShortLabel', () => {
+  it('returns MODULE_SHORT_LABELS entry when available', () => {
+    const dbLabels = { 'organisation.salaries': 'Renamed Full Label' };
+    const result = resolveModuleShortLabel('organisation.salaries', dbLabels);
+    // SHORT_LABELS should take priority over DB full labels for short display
+    expect(result).toBe(MODULE_SHORT_LABELS['organisation.salaries']);
+  });
+
+  it('falls back to DB label when no short label defined', () => {
+    const dbLabels = { 'some.new.module': 'New Module Label' };
+    const result = resolveModuleShortLabel('some.new.module', dbLabels);
+    expect(result).toBe('New Module Label');
+  });
+});
+
+// ============================================================================
+// 3. Guards depend on keys, NOT labels
+// ============================================================================
+
+describe('Guards independence from labels', () => {
+  it('hasAccess uses moduleId (key), never label text', () => {
+    // Even with a renamed label, the permission check uses the key
+    const context = {
+      globalRole: 'franchisee_admin' as const,
+      enabledModules: {
+        'organisation.salaries': { enabled: true, options: {} },
+      },
+      agencyId: 'test-agency',
+    };
+
+    // Access check uses the key, label is irrelevant
+    const result = hasAccess({
+      ...context,
+      moduleId: 'organisation.salaries',
+    });
+    expect(result).toBe(true);
+  });
+
+  it('renaming a label does not affect permission check', () => {
+    // Simulate: label was "Salariés", now "Équipe RH" in DB
+    // The key 'organisation.salaries' hasn't changed
+    const dbLabels = { 'organisation.salaries': 'Équipe RH' };
+    
+    // Label resolves to new name
+    expect(resolveModuleLabel('organisation.salaries', dbLabels)).toBe('Équipe RH');
+    
+    // But permissions still work on the key
+    const context = {
+      globalRole: 'franchisee_admin' as const,
+      enabledModules: {
+        'organisation.salaries': { enabled: true, options: {} },
+      },
+      agencyId: 'test-agency',
+    };
+    expect(hasAccess({ ...context, moduleId: 'organisation.salaries' })).toBe(true);
+  });
+});
+
+// ============================================================================
+// 4. All MODULE_DEFINITIONS have resolvable labels
+// ============================================================================
+
+describe('All defined modules have labels', () => {
+  it('every MODULE_DEFINITIONS entry has a non-empty label', () => {
+    for (const mod of MODULE_DEFINITIONS) {
+      const label = resolveModuleLabel(mod.key, {});
+      expect(label).toBeTruthy();
+      expect(label).not.toBe(mod.key); // Should not fall back to the key
+    }
+  });
+});
+
+// ============================================================================
+// 5. DB override propagates correctly for all resolution paths
+// ============================================================================
+
+describe('DB override propagation', () => {
+  it('DB label overrides definition for every defined module', () => {
+    const dbLabels: Record<string, string> = {};
+    for (const mod of MODULE_DEFINITIONS) {
+      dbLabels[mod.key] = `Renamed_${mod.key}`;
+    }
+
+    for (const mod of MODULE_DEFINITIONS) {
+      const result = resolveModuleLabel(mod.key, dbLabels);
+      expect(result).toBe(`Renamed_${mod.key}`);
+    }
+  });
+});
