@@ -62,7 +62,7 @@ export default function PilotageTabContent() {
   return (
     <div className="py-6 px-2 sm:px-4 space-y-4">
       <Tabs value={effectiveTab} onValueChange={(v) => setActiveTab(v as PilotageSubTab)}>
-        <PillTabsList tabs={visibleTabs} />
+        {navMode === 'tabs' && <PillTabsList tabs={visibleTabs} />}
 
         <TabsContent value="stats" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
