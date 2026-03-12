@@ -12,6 +12,7 @@ import { usePermissions } from '@/contexts/PermissionsContext';
 import { ModuleKey } from '@/types/modules';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
 import { useNavigationMode } from '@/hooks/useNavigationMode';
+import { DomainAccentProvider } from '@/contexts/DomainAccentContext';
 
 // Lazy loaded
 const StatsTabContent = lazy(() => import('@/components/unified/tabs/StatsTabContent'));
@@ -60,6 +61,7 @@ export default function PilotageTabContent() {
   const effectiveTab = (visibleTabs.find(t => t.id === activeTab && !t.disabled)) ? activeTab : defaultTab;
 
   return (
+    <DomainAccentProvider accent="blue">
     <div className={navMode === 'header' ? 'pt-1 px-2 sm:px-4 space-y-3' : 'py-6 px-2 sm:px-4 space-y-4'}>
       <Tabs value={effectiveTab} onValueChange={(v) => setActiveTab(v as PilotageSubTab)}>
         {navMode === 'tabs' && <PillTabsList tabs={visibleTabs} />}
@@ -95,5 +97,6 @@ export default function PilotageTabContent() {
         </TabsContent>
       </Tabs>
     </div>
+    </DomainAccentProvider>
   );
 }

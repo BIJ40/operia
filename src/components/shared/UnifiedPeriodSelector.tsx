@@ -5,6 +5,7 @@ import type { DateRange } from "react-day-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { useDomainAccent, type DomainAccent } from '@/contexts/DomainAccentContext';
 import { 
   format, 
   startOfToday, 
@@ -343,15 +344,38 @@ export function UnifiedPeriodSelector({
     );
   };
 
+  // Domain accent for active/hover colors
+  const accent = useDomainAccent();
+
+  const PERIOD_ACTIVE: Record<DomainAccent, string> = {
+    blue: 'bg-warm-blue text-white shadow-sm border-warm-blue hover:bg-warm-blue/90',
+    orange: 'bg-warm-orange text-white shadow-sm border-warm-orange hover:bg-warm-orange/90',
+    green: 'bg-warm-green text-white shadow-sm border-warm-green hover:bg-warm-green/90',
+    purple: 'bg-warm-purple text-white shadow-sm border-warm-purple hover:bg-warm-purple/90',
+    pink: 'bg-warm-pink text-white shadow-sm border-warm-pink hover:bg-warm-pink/90',
+    teal: 'bg-warm-teal text-white shadow-sm border-warm-teal hover:bg-warm-teal/90',
+    red: 'bg-warm-red text-white shadow-sm border-warm-red hover:bg-warm-red/90',
+  };
+
+  const PERIOD_HOVER: Record<DomainAccent, string> = {
+    blue: 'hover:bg-warm-blue/15 hover:text-warm-blue hover:border-warm-blue/40',
+    orange: 'hover:bg-warm-orange/15 hover:text-warm-orange hover:border-warm-orange/40',
+    green: 'hover:bg-warm-green/15 hover:text-warm-green hover:border-warm-green/40',
+    purple: 'hover:bg-warm-purple/15 hover:text-warm-purple hover:border-warm-purple/40',
+    pink: 'hover:bg-warm-pink/15 hover:text-warm-pink hover:border-warm-pink/40',
+    teal: 'hover:bg-warm-teal/15 hover:text-warm-teal hover:border-warm-teal/40',
+    red: 'hover:bg-warm-red/15 hover:text-warm-red hover:border-warm-red/40',
+  };
+
   // Styles selon la variante
   const buttonStyles = {
     default: {
-      active: "bg-warm-blue text-white shadow-sm border-warm-blue hover:bg-warm-blue/90",
-      inactive: "bg-transparent border-border text-foreground hover:bg-warm-orange hover:text-white hover:border-warm-orange"
+      active: PERIOD_ACTIVE[accent],
+      inactive: `bg-transparent border-border text-foreground ${PERIOD_HOVER[accent]}`
     },
     compact: {
-      active: "bg-warm-blue text-white shadow-sm border-warm-blue hover:bg-warm-blue/90",
-      inactive: "bg-transparent border-border text-foreground hover:bg-warm-orange hover:text-white hover:border-warm-orange"
+      active: PERIOD_ACTIVE[accent],
+      inactive: `bg-transparent border-border text-foreground ${PERIOD_HOVER[accent]}`
     },
     franchiseur: {
       active: "bg-gradient-to-r from-helpconfort-blue to-warm-blue/80 text-white shadow-sm",

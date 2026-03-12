@@ -42,6 +42,7 @@ import { getFaqItems, type FaqItem } from '@/lib/rag-improvement';
 import { useQueryClient } from '@tanstack/react-query';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { Lock } from 'lucide-react';
+import { DomainAccentProvider } from '@/contexts/DomainAccentContext';
 
 // ─── Base documentaire config ───────────────────────────────────
 const DOC_SECTIONS = [
@@ -185,6 +186,7 @@ export default function SupportHubTabContent() {
   }
 
   return (
+    <DomainAccentProvider accent="purple">
     <div className="py-6 px-2 sm:px-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div>
@@ -369,5 +371,6 @@ export default function SupportHubTabContent() {
         </Card>
       </div>
     </div>
+    </DomainAccentProvider>
   );
 }

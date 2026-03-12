@@ -10,6 +10,7 @@ import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
 import { InternalApogeeLayout } from '@/components/guides/apogee/InternalApogeeLayout';
 import { useNavigationMode } from '@/hooks/useNavigationMode';
+import { DomainAccentProvider } from '@/contexts/DomainAccentContext';
 
 const ApporteurGuide = lazy(() => import('@/pages/ApporteurGuide'));
 const HelpConfort = lazy(() => import('@/pages/HelpConfort'));
@@ -34,6 +35,7 @@ export default function GuidesTabContent() {
   const { mode: navMode } = useNavigationMode();
 
   return (
+    <DomainAccentProvider accent="purple">
     <div className={navMode === 'header' ? 'pt-1 px-2 sm:px-4 space-y-3' : 'py-3 px-2 sm:px-4 space-y-4'}>
       <Tabs value={activeGuide} onValueChange={(v) => setActiveGuide(v as GuideTab)}>
         <PillTabsList tabs={GUIDE_TABS} variant={navMode === 'header' ? 'switcher' : 'pill'} />
@@ -62,5 +64,6 @@ export default function GuidesTabContent() {
         </Suspense>
       </Tabs>
     </div>
+    </DomainAccentProvider>
   );
 }

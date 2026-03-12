@@ -12,6 +12,7 @@ import { usePermissions } from '@/contexts/PermissionsContext';
 import { ModuleKey } from '@/types/modules';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
 import { useNavigationMode } from '@/hooks/useNavigationMode';
+import { DomainAccentProvider } from '@/contexts/DomainAccentContext';
 import { ApporteurTabsProvider, useApporteurTabs } from '@/prospection/browser-tabs/ApporteurTabsContext';
 import { ApporteurTabsBar } from '@/prospection/browser-tabs/ApporteurTabsBar';
 import { ApporteurTabsContent } from '@/prospection/browser-tabs/ApporteurTabsContent';
@@ -134,8 +135,10 @@ function CommercialInner() {
 
 export default function CommercialTabContent() {
   return (
-    <ApporteurTabsProvider>
-      <CommercialInner />
-    </ApporteurTabsProvider>
+    <DomainAccentProvider accent="orange">
+      <ApporteurTabsProvider>
+        <CommercialInner />
+      </ApporteurTabsProvider>
+    </DomainAccentProvider>
   );
 }
