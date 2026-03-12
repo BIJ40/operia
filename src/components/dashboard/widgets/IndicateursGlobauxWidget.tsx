@@ -232,7 +232,7 @@ export function IndicateursGlobauxWidget() {
           const formatted = formatValue(value, kpi.format);
           
           return (
-            <Tooltip key={kpi.id} delayDuration={0}>
+            <Tooltip key={kpi.id} delayDuration={300}>
               <TooltipTrigger asChild>
                 <div 
                   className="bg-card/60 backdrop-blur-sm rounded-xl p-3 border border-border/50 hover:border-primary/30 hover:shadow-sm transition-all cursor-default"
@@ -246,9 +246,8 @@ export function IndicateursGlobauxWidget() {
                   <p className={`text-lg font-bold ${accent.text} truncate`}>{formatted}</p>
                 </div>
               </TooltipTrigger>
-              <TooltipContent side="top" className="bg-popover border border-border shadow-lg">
-                <div className="text-sm font-semibold">{kpi.label}</div>
-                <div className={`text-lg font-bold ${accent.text}`}>{formatted}</div>
+              <TooltipContent side="top" className="max-w-[220px] text-xs">
+                {kpi.tooltip}
               </TooltipContent>
             </Tooltip>
           );
