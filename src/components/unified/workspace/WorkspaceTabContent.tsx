@@ -16,7 +16,7 @@ const OrganisationTabContent = lazy(() => import('@/components/unified/tabs/Orga
 const AdminTabContent = lazy(() => import('@/components/unified/tabs/AdminTabContent'));
 const DocumentsTabContent = lazy(() => import('@/components/unified/tabs/DocumentsTabContent'));
 const SupportHubTabContent = lazy(() => import('@/components/unified/tabs/AideTabContent'));
-const TicketingTabContent = lazy(() => import('@/pages/ProjectsIndex'));
+const TicketingTabContent = lazy(() => import('@/components/unified/tabs/TicketingTabContent'));
 
 function LoadingFallback() {
   return (
