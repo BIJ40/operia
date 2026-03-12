@@ -11,6 +11,7 @@ import { useSessionState } from '@/hooks/useSessionState';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { MfaGuard } from '@/components/auth/MfaGuard';
 import { ModuleKey } from '@/types/modules';
+import { useModuleLabels } from '@/hooks/useModuleLabels';
 
 const RHSuiviContent = lazy(() => import('@/components/rh/RHSuiviContent').then(m => ({ default: m.RHSuiviContent })));
 const MesApporteursTab = lazy(() => import('@/components/pilotage/MesApporteursTab').then(m => ({ default: m.MesApporteursTab })));
@@ -20,15 +21,6 @@ const VehiculesTabContent = lazy(() => import('@/components/unified/tabs/Vehicul
 const AgencyAdminDocuments = lazy(() => import('@/components/outils/AgencyAdminDocuments').then(m => ({ default: m.AgencyAdminDocuments })));
 
 type OrganisationSubTab = 'collaborateurs' | 'apporteurs' | 'plannings' | 'reunions' | 'parc' | 'conformite';
-
-const ALL_ORGANISATION_TABS: (PillTabConfig & { requiresModule?: ModuleKey })[] = [
-  { id: 'collaborateurs', label: 'Salariés', icon: Users, accent: 'blue', requiresModule: 'organisation.salaries' },
-  { id: 'apporteurs', label: 'Apporteurs', icon: Handshake, accent: 'purple', requiresModule: 'organisation.apporteurs' },
-  { id: 'plannings', label: 'Plannings', icon: CalendarDays, accent: 'green', requiresModule: 'organisation.plannings' },
-  { id: 'reunions', label: 'Réunions', icon: Users2, accent: 'orange', requiresModule: 'organisation.reunions' },
-  { id: 'parc', label: 'Parc', icon: Car, accent: 'pink', requiresModule: 'organisation.parc' },
-  { id: 'conformite', label: 'Documents légaux', icon: FileText, accent: 'teal', requiresModule: 'pilotage.agence' },
-];
 
 function LoadingFallback() {
   return (
@@ -40,13 +32,24 @@ function LoadingFallback() {
 
 export default function OrganisationTabContent() {
   const { hasModule } = usePermissions();
+  const { getShortLabel } = useModuleLabels();
+
+  const allTabs: (PillTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
+    { id: 'collaborateurs', label: getShortLabel('organisation.salaries', 'Salariés'), icon: Users, accent: 'blue', requiresModule: 'organisation.salaries' },
+    { id: 'apporteurs', label: getShortLabel('organisation.apporteurs', 'Apporteurs'), icon: Handshake, accent: 'purple', requiresModule: 'organisation.apporteurs' },
+    { id: 'plannings', label: getShortLabel('organisation.plannings', 'Plannings'), icon: CalendarDays, accent: 'green', requiresModule: 'organisation.plannings' },
+    { id: 'reunions', label: getShortLabel('organisation.reunions', 'Réunions'), icon: Users2, accent: 'orange', requiresModule: 'organisation.reunions' },
+    { id: 'parc', label: getShortLabel('organisation.parc', 'Parc'), icon: Car, accent: 'pink', requiresModule: 'organisation.parc' },
+    // B: "Documents légaux" is a structural label, not a module name — gated by pilotage.agence
+    { id: 'conformite', label: 'Documents légaux', icon: FileText, accent: 'teal', requiresModule: 'pilotage.agence' },
+  ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {
-    return ALL_ORGANISATION_TABS.filter(tab => {
+    return allTabs.filter(tab => {
       if (!tab.requiresModule) return true;
       return hasModule(tab.requiresModule);
     });
-  }, [hasModule]);
+  }, [hasModule, allTabs]);
 
   const defaultTab = visibleTabs[0]?.id as OrganisationSubTab ?? 'collaborateurs';
   const [activeTab, setActiveTab] = useSessionState<OrganisationSubTab>('organisation_sub_tab', defaultTab);

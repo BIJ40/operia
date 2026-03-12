@@ -10,6 +10,7 @@ import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { ModuleKey } from '@/types/modules';
+import { useModuleLabels } from '@/hooks/useModuleLabels';
 
 // Lazy loaded
 const StatsTabContent = lazy(() => import('@/components/unified/tabs/StatsTabContent'));
@@ -24,14 +25,6 @@ const AnomaliesDevisDossierView = lazy(() => import('@/apogee-connect/components
 
 type PilotageSubTab = 'stats' | 'performance' | 'actions' | 'devis-acceptes' | 'anomalies';
 
-const ALL_PILOTAGE_TABS: (PillTabConfig & { requiresModule?: ModuleKey })[] = [
-  { id: 'stats', label: 'Statistiques', icon: BarChart3, accent: 'blue', requiresModule: 'pilotage.statistiques' },
-  { id: 'performance', label: 'Performance', icon: Activity, accent: 'pink', requiresModule: 'pilotage.agence' },
-  { id: 'actions', label: 'Actions à mener', icon: Settings, accent: 'orange', requiresModule: 'pilotage.agence' },
-  { id: 'devis-acceptes', label: 'Devis acceptés', icon: FileCheck, accent: 'teal', requiresModule: 'pilotage.agence' },
-  { id: 'anomalies', label: 'Incohérences', icon: AlertTriangle, accent: 'pink', requiresModule: 'pilotage.agence' },
-];
-
 function LoadingFallback() {
   return (
     <div className="flex items-center justify-center h-64">
@@ -42,13 +35,25 @@ function LoadingFallback() {
 
 export default function PilotageTabContent() {
   const { hasModule } = usePermissions();
+  const { getShortLabel } = useModuleLabels();
+
+  // A: 'Statistiques' maps to module pilotage.statistiques → use resolver
+  // B: 'Performance', 'Actions à mener', 'Devis acceptés', 'Incohérences' are sub-features
+  //    of pilotage.agence, not standalone modules with their own registry entry → keep hardcoded
+  const allTabs: (PillTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
+    { id: 'stats', label: getShortLabel('pilotage.statistiques', 'Statistiques'), icon: BarChart3, accent: 'blue', requiresModule: 'pilotage.statistiques' },
+    { id: 'performance', label: 'Performance', icon: Activity, accent: 'pink', requiresModule: 'pilotage.agence' },
+    { id: 'actions', label: 'Actions à mener', icon: Settings, accent: 'orange', requiresModule: 'pilotage.agence' },
+    { id: 'devis-acceptes', label: 'Devis acceptés', icon: FileCheck, accent: 'teal', requiresModule: 'pilotage.agence' },
+    { id: 'anomalies', label: 'Incohérences', icon: AlertTriangle, accent: 'pink', requiresModule: 'pilotage.agence' },
+  ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {
-    return ALL_PILOTAGE_TABS.filter(tab => {
+    return allTabs.filter(tab => {
       if (!tab.requiresModule) return true;
       return hasModule(tab.requiresModule);
     });
-  }, [hasModule]);
+  }, [hasModule, allTabs]);
 
   const defaultTab = visibleTabs[0]?.id as PilotageSubTab ?? 'stats';
   const [activeTab, setActiveTab] = useSessionState<PilotageSubTab>('pilotage_sub_tab', defaultTab);
