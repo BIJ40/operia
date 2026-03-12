@@ -40,9 +40,9 @@ describe('getAllModules', () => {
 
 describe('getModule', () => {
   it('returns module for valid key', () => {
-    const mod = getModule('rh');
+    const mod = getModule('organisation.salaries' as any);
     expect(mod).toBeDefined();
-    expect(mod!.key).toBe('rh');
+    expect(mod!.key).toBe('organisation.salaries');
   });
 
   it('returns undefined for invalid key', () => {
