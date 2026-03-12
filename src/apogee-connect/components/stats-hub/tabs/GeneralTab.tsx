@@ -229,7 +229,7 @@ export function GeneralTab() {
           const colors = colorMap[kpi.color] || colorMap.blue;
           return (
             <motion.div key={kpi.title} variants={itemVariants}>
-              <Card className={`border-l-3 ${colors.border} bg-gradient-to-br ${colors.bg} to-background hover:shadow-sm transition-all h-full rounded-xl`}>
+              <Card className={`border-l-3 ${colors.border} ${colors.bg} hover:shadow-sm transition-all h-full rounded-xl`}>
                 <CardContent className="p-3">
                   <div className="flex items-center gap-1.5 mb-1">
                     <kpi.icon className={`w-3.5 h-3.5 ${colors.text}`} />
