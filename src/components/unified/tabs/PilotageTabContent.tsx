@@ -37,6 +37,7 @@ function LoadingFallback() {
 export default function PilotageTabContent() {
   const { hasModule } = usePermissions();
   const { getShortLabel } = useModuleLabels();
+  const { mode: navMode } = useNavigationMode();
 
   // All pilotage sub-tabs are real modules → dynamic labels from registry
   const allTabs: (PillTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
