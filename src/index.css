@@ -1240,3 +1240,28 @@ body[data-read-only] [draggable="true"] {
 .apporteur-theme .bg-gradient-cta {
   background: var(--gradient-cta);
 }
+
+/* ============================================
+   MAPBOX — Hide logo & attribution, show ByBij
+   ============================================ */
+.mapboxgl-ctrl-logo,
+.mapboxgl-ctrl-attrib {
+  display: none !important;
+}
+
+.mapboxgl-map::after {
+  content: 'ByBij';
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  z-index: 3;
+  background: white;
+  color: hsl(var(--foreground));
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  pointer-events: none;
+}
