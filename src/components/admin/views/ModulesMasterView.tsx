@@ -1055,23 +1055,27 @@ export function ModulesMasterView() {
               )}
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-0">
-            {headerRow}
-            {devNodes.map(node => (
-              <ModuleRow
-                key={node.key}
-                node={node}
-                overrides={overrides.get(node.key) ?? []}
-                onToggleDeploy={handleToggleDeploy}
-                onTogglePlan={handleTogglePlan}
-                onChangeRole={handleChangeRole}
-                onRenameLabel={handleRenameLabel}
-                isUpdating={updateNode.isPending || propagate.isPending}
-                canDeploy={canDeploy}
-                isDevSection
-              />
-            ))}
-          </CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full table-auto">
+              {headerRow}
+              <tbody>
+                {devNodes.map(node => (
+                  <ModuleRow
+                    key={node.key}
+                    node={node}
+                    overrides={overrides.get(node.key) ?? []}
+                    onToggleDeploy={handleToggleDeploy}
+                    onTogglePlan={handleTogglePlan}
+                    onChangeRole={handleChangeRole}
+                    onRenameLabel={handleRenameLabel}
+                    isUpdating={updateNode.isPending || propagate.isPending}
+                    canDeploy={canDeploy}
+                    isDevSection
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
         </Card>
       )}
 
