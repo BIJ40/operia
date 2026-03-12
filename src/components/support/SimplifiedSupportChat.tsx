@@ -19,7 +19,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { safeQuery } from '@/lib/safeQuery';
 import { logError, logDebug } from '@/lib/logger';
 import { errorToast, successToast } from '@/lib/toastHelpers';
-import { getApogeeContext, getNoContentResponse } from '@/lib/rag-michu';
+import { searchRAG, getNoContentResponse } from '@/lib/rag-michu';
+import type { RAGContextType } from '@/lib/rag-michu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -60,12 +61,12 @@ interface OrientationStep {
 }
 
 // ─── Domain config ──────────────────────────────────────────────
-const DOMAIN_OPTIONS = [
+const DOMAIN_OPTIONS: { label: string; value: string; emoji: string; chatContext: RAGContextType }[] = [
   { label: 'Apogée', value: 'apogee', emoji: '📘', chatContext: 'apogee' },
   { label: 'HelpConfort', value: 'helpconfort', emoji: '🏠', chatContext: 'helpconfort' },
-  { label: 'HC Services', value: 'hc-services', emoji: '🔧', chatContext: 'apogee' },
-  { label: 'Divers', value: 'divers', emoji: '📋', chatContext: 'autre' },
-] as const;
+  { label: 'HC Services', value: 'hc-services', emoji: '🔧', chatContext: 'helpconfort' },
+  { label: 'Divers', value: 'divers', emoji: '📋', chatContext: 'auto' },
+];
 
 const ORIENTATION_STEPS: OrientationStep[] = [
   {
@@ -202,11 +203,12 @@ export function SimplifiedSupportChat({
       
       if (error) {
         logError('simplified-chat', 'Screenshot upload error', error);
+        errorToast('La capture d\'écran n\'a pas pu être jointe. Votre demande a été créée sans capture.');
         return null;
       }
       
       // Also insert into apogee_ticket_attachments
-      await supabase.from('apogee_ticket_attachments').insert({
+      const { error: attachError } = await supabase.from('apogee_ticket_attachments').insert({
         ticket_id: ticketId,
         file_name: screenshotFile.name,
         file_path: filePath,
@@ -214,10 +216,17 @@ export function SimplifiedSupportChat({
         file_type: screenshotFile.type,
         uploaded_by: user.id,
       });
+
+      if (attachError) {
+        logError('simplified-chat', 'Screenshot attachment record error', attachError);
+        errorToast('La capture a été uploadée mais n\'a pas pu être liée au ticket.');
+        return null;
+      }
       
       return filePath;
     } catch (err) {
       logError('simplified-chat', 'Screenshot upload failed', err);
+      errorToast('Erreur lors de l\'upload de la capture d\'écran. Le ticket a été créé sans capture.');
       return null;
     }
   };
@@ -260,7 +269,7 @@ export function SimplifiedSupportChat({
         heat_priority: heatPriority,
         is_urgent_support: !isResolved,
         impact_tags: problemType === 'bug' ? ['BUG'] : [],
-        reported_by: [profile?.first_name, profile?.last_name].filter(Boolean).join(' ').toUpperCase() || user.email || 'Inconnu',
+        reported_by: 'AGENCE',
       };
 
       const { data: ticket, error } = await supabase
@@ -343,8 +352,10 @@ export function SimplifiedSupportChat({
     setIsLoading(true);
 
     try {
-      const ragResult = await getApogeeContext(userMessage.content);
-      logDebug('simplified-chat', 'RAG result', { hasContent: ragResult.hasContent, chunksCount: ragResult.chunks.length });
+      const selectedDomainConfig = DOMAIN_OPTIONS.find(d => d.value === selectedDomain);
+      const ragContextType: RAGContextType = selectedDomainConfig?.chatContext || 'auto';
+      const ragResult = await searchRAG({ query: userMessage.content, contextType: ragContextType });
+      logDebug('simplified-chat', 'RAG result', { context: ragContextType, hasContent: ragResult.hasContent, chunksCount: ragResult.chunks.length });
 
       if (!ragResult.hasContent) {
         setMessages(prev => [...prev, {
