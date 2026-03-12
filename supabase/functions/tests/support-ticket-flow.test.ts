@@ -27,7 +27,7 @@ let userId: string;
 const createdTicketIds: string[] = [];
 
 // ─── Auth: login as test user ───────────────────────────────────
-Deno.test("Setup: authenticate as test-n5", async () => {
+Deno.test({ name: "Setup: authenticate as test-n5", sanitizeOps: false, sanitizeResources: false, fn: async () => {
   supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -38,7 +38,7 @@ Deno.test("Setup: authenticate as test-n5", async () => {
   assertExists(data.user, `Login failed: ${error?.message}`);
   userId = data.user.id;
   assert(userId.length > 0, "userId should be set");
-});
+}});
 
 // ─── S1: Ticket IA résolu → SUPPORT_RESOLU ──────────────────────
 Deno.test("S1: Create ticket with status SUPPORT_RESOLU (AI resolved)", async () => {
