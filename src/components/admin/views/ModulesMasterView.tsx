@@ -506,7 +506,7 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
   return (
     <div
       className={cn(
-        `grid ${GRID_COLS} gap-2 items-center py-2 px-3 border-b border-border/50 text-sm`,
+        `grid ${GRID_COLS} gap-x-4 gap-y-0 items-center py-2 px-3 border-b border-border/50 text-sm`,
         'hover:bg-muted/30 transition-colors',
         !node.effectiveDeployed && !isDevSection && 'opacity-50',
         isNeutralized && 'bg-destructive/5',
