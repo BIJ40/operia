@@ -669,11 +669,15 @@ export function ModulesMasterView() {
     };
   }, []);
 
+  // Root container nodes (node_type='module', parent_key=null) are structural —
+  // they map 1:1 to the category headers, so hide them from the tree rows.
+  const ROOT_CONTAINER_KEYS = new Set(['pilotage', 'commercial', 'organisation', 'mediatheque', 'support', 'admin']);
+
   const groupedCategories = useMemo(() => {
     return RIGHTS_CATEGORIES.map((category) => ({
       category,
       nodes: deployedNodes
-        .filter((node) => nodeMatchesCategory(node.key, category.moduleKeys))
+        .filter((node) => nodeMatchesCategory(node.key, category.moduleKeys) && !ROOT_CONTAINER_KEYS.has(node.key))
         .map(toDisplayNode),
     }));
   }, [deployedNodes, toDisplayNode]);
