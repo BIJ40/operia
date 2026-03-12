@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import type { HeaderNavGroup, HeaderNavChild } from '@/config/headerNavigation';
 import type { UnifiedTab } from '@/components/unified/workspace/types';
 
@@ -25,7 +24,6 @@ interface HeaderNavDropdownProps {
 export function HeaderNavDropdown({ group, isActive, onSelect, pillBase, pillActive, pillInactive, accentDropdown }: HeaderNavDropdownProps) {
   const [open, setOpen] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
-  const navigate = useNavigate();
   const Icon = group.icon;
   const hasDropdown = group.children.length > 1;
 
@@ -46,17 +44,9 @@ export function HeaderNavDropdown({ group, isActive, onSelect, pillBase, pillAct
         window.dispatchEvent(new CustomEvent('session-state-change', { detail: { key: child.subTabKey, value: child.subTabValue } }));
       } catch {}
     }
-
-    // If path is specified, navigate directly to that URL (preserves query params like adminView)
-    if (child.path) {
-      navigate(child.path);
-      setOpen(false);
-      return;
-    }
-
     if (child.tab) onSelect(child.tab);
     setOpen(false);
-  }, [onSelect, navigate]);
+  }, [onSelect]);
 
   return (
     <div
@@ -88,7 +78,7 @@ export function HeaderNavDropdown({ group, isActive, onSelect, pillBase, pillAct
             const ChildIcon = child.icon;
             return (
               <button
-                key={`${group.tab}-${child.subTabValue ?? child.path ?? child.label}`}
+                key={child.label}
                 type="button"
                 onClick={() => handleSelect(child)}
                 className="flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-left transition-colors duration-150 hover:bg-muted/50 group"
