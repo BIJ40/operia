@@ -18,8 +18,8 @@ export const ROLE_AGENCE_LABELS: Record<string, string> = {
 
 export const SPECIAL_ACCESS_KEYS: { moduleKey: ModuleKey; optionKey?: string; label: string }[] = [
   { moduleKey: 'ticketing', label: 'Gestion de Projet' },
-  { moduleKey: 'support.aide_en_ligne' as ModuleKey, optionKey: 'agent', label: 'Agent Support' },
-  { moduleKey: 'support.guides' as ModuleKey, optionKey: 'edition', label: 'Contributeur FAQ' },
+  { moduleKey: 'support.aide_en_ligne', optionKey: 'agent', label: 'Agent Support' },
+  { moduleKey: 'support.guides', optionKey: 'edition', label: 'Contributeur FAQ' },
 ];
 
 export const VISIBLE_SECTIONS: SitemapSection[] = ['core', 'academy', 'pilotage', 'rh', 'support', 'reseau', 'projects', 'admin'];

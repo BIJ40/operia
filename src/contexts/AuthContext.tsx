@@ -179,7 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let resolvedModules: EnabledModules = {};
       if (effectiveModules && Array.isArray(effectiveModules) && effectiveModules.length > 0) {
         for (const row of effectiveModules) {
-          const moduleKey = row.module_key as ModuleKey;
+          const moduleKey = row.module_key;
           resolvedModules[moduleKey] = {
             enabled: row.enabled === true,
             options: (typeof row.options === 'object' && row.options !== null) 
