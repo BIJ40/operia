@@ -477,20 +477,25 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
         )}
 
         {isEditing ? (
-          <Input
-            value={draftLabel}
-            onChange={(e) => setDraftLabel(e.target.value)}
-            onBlur={commitRename}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') commitRename();
-              if (e.key === 'Escape') {
-                setDraftLabel(node.label);
-                setIsEditing(false);
-              }
-            }}
-            autoFocus
-            className="h-7 text-xs"
-          />
+          <div className="flex flex-col gap-0.5">
+            <Input
+              value={draftLabel}
+              onChange={(e) => setDraftLabel(e.target.value)}
+              onBlur={commitRename}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') commitRename();
+                if (e.key === 'Escape') {
+                  setDraftLabel(node.label);
+                  setIsEditing(false);
+                }
+              }}
+              autoFocus
+              className="h-7 text-xs"
+            />
+            <span className="text-[9px] text-muted-foreground">
+              Renommage visuel uniquement — ne modifie pas la clé technique ni les permissions.
+            </span>
+          </div>
         ) : (
           <button
             type="button"
