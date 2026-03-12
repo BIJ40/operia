@@ -110,20 +110,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [globalRole]);
 
   const hasModuleGuard = useCallback((moduleKey: ModuleKey): boolean => {
-    // 1. Legacy check via permissionsEngine (clés historiques)
-    if (hasAccess({ ...accessContext, moduleId: moduleKey })) return true;
-    // 2. COMPAT_MAP fallback (Phase 3 — nouvelles clés fonctionnelles)
-    if (isBypassRole(globalRole)) return true;
-    return resolveModuleViaCompat(enabledModules, moduleKey);
-  }, [accessContext, globalRole, enabledModules]);
+    return hasAccess({ ...accessContext, moduleId: moduleKey });
+  }, [accessContext]);
 
   const hasModuleOptionGuard = useCallback((moduleKey: ModuleKey, optionKey: string): boolean => {
-    // 1. Legacy check via permissionsEngine
-    if (hasAccess({ ...accessContext, moduleId: moduleKey, optionId: optionKey })) return true;
-    // 2. COMPAT_MAP fallback (Phase 3 — ex: mediatheque.gerer → divers_documents.gerer)
-    if (isBypassRole(globalRole)) return true;
-    return resolveModuleOptionViaCompat(enabledModules, moduleKey, optionKey);
-  }, [accessContext, globalRole, enabledModules]);
+    return hasAccess({ ...accessContext, moduleId: moduleKey, optionId: optionKey });
+  }, [accessContext]);
 
   // ============================================================================
   // Chargement des données utilisateur
