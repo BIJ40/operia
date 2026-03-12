@@ -28,7 +28,7 @@ export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClas
           .filter(child => !child.tab || visibleIds.has(child.tab))
           .map(child => ({
             ...child,
-            label: child.scope ? getLabel(child.scope, child.label) : child.label,
+            label: child.scope && child.scope !== 'admin_plateforme' ? getLabel(child.scope, child.label) : child.label,
           })),
       }))
       .filter(group => group.children.length > 0);

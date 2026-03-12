@@ -67,9 +67,13 @@ export function MobileNavMenu({ groups, activeTab, onSelect }: MobileNavMenuProp
                     const ChildIcon = child.icon;
                     return (
                       <button
-                        key={child.label}
+                        key={`${group.tab}-${child.subTabValue ?? child.path ?? child.label}`}
                         type="button"
-                        onClick={() => { if (child.tab) onSelect(child.tab); setOpen(false); }}
+                        onClick={() => {
+                          if (child.path) navigate(child.path);
+                          else if (child.tab) onSelect(child.tab);
+                          setOpen(false);
+                        }}
                         className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors
                           ${child.tab === activeTab ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
                       >
