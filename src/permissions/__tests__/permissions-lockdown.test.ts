@@ -327,13 +327,15 @@ describe('User management escalation prevention', () => {
 // ============================================================================
 
 describe('Module option min roles', () => {
-  it('all option min role keys reference valid modules', () => {
-    const validModuleKeys = new Set(MODULE_DEFINITIONS.map(m => m.key));
+  it('all option min role keys reference valid MODULES keys', () => {
+    // MODULE_OPTION_MIN_ROLES keys must reference valid MODULES entries (not just MODULE_DEFINITIONS)
+    // because some keys like pilotage.statistiques exist in MODULES but not in MODULE_DEFINITIONS
+    const validModuleKeys = new Set(Object.keys(MODULES));
     for (const key of Object.keys(MODULE_OPTION_MIN_ROLES)) {
       // Support multi-dot keys: use lastIndexOf to extract moduleKey
       const lastDot = key.lastIndexOf('.');
       const moduleKey = key.substring(0, lastDot);
-      expect(validModuleKeys.has(moduleKey as ModuleKey)).toBe(true);
+      expect(validModuleKeys.has(moduleKey)).toBe(true);
     }
   });
 

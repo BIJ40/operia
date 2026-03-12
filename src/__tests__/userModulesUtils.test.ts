@@ -218,10 +218,10 @@ describe('enabledModulesToRows', () => {
     expect(rows[0].module_key).toBe('ticketing');
   });
 
-  it('Phase 9: normalizes all 11 hierarchical keys', () => {
+  it('Phase 9: normalizes all 10 hierarchical keys (pilotage.dashboard removed)', () => {
     const modules: Record<string, { enabled: boolean }> = {
       'pilotage.agence': { enabled: true },
-      'pilotage.dashboard': { enabled: true },
+      // pilotage.dashboard removed — merged into pilotage.statistiques
       'organisation.salaries': { enabled: true },
       'organisation.parc': { enabled: true },
       'organisation.apporteurs': { enabled: true },
@@ -237,7 +237,7 @@ describe('enabledModulesToRows', () => {
     expect(keys).toEqual([
       'agence', 'aide', 'divers_apporteurs', 'divers_documents',
       'divers_plannings', 'divers_reunions', 'guides',
-      'parc', 'realisations', 'rh', 'stats',
+      'parc', 'realisations', 'rh',
     ]);
   });
 });

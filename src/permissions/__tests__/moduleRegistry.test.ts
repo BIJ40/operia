@@ -169,7 +169,8 @@ describe('Constants ↔ MODULE_DEFINITIONS consistency', () => {
 
 describe('validateModuleDefinitions', () => {
   it('returns no issues for valid keys', () => {
-    const issues = validateModuleDefinitions({ rh: true, agence: true }, 'test');
+    // Use current valid module keys (legacy keys rh/agence removed in Phase 10)
+    const issues = validateModuleDefinitions({ ticketing: true, prospection: true }, 'test');
     expect(issues.length).toBe(0);
   });
 
