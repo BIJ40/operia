@@ -7,8 +7,9 @@ import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
-import { hasAccess, isBypassRole, MODULE_LABELS } from '@/permissions';
+import { hasAccess, isBypassRole } from '@/permissions';
 import { ModuleKey } from '@/types/modules';
+import { useModuleLabels } from '@/hooks/useModuleLabels';
 import { Loader2, Lock } from 'lucide-react';
 
 interface ModuleGuardProps {
@@ -121,6 +122,7 @@ function ModuleAccessDeniedPage({
   moduleKey: ModuleKey;
   message?: string;
 }) {
+  const { getLabel } = useModuleLabels();
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-8">
       <div className="flex items-center justify-center w-20 h-20 rounded-full bg-destructive/10 mb-6">
@@ -134,7 +136,7 @@ function ModuleAccessDeniedPage({
       </p>
       <p className="text-sm text-muted-foreground">
         Module requis : <span className="font-semibold text-foreground">
-          {MODULE_LABELS[moduleKey] || moduleKey}
+          {getLabel(moduleKey)}
         </span>
       </p>
     </div>

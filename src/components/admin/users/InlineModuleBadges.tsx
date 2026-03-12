@@ -19,7 +19,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { EnabledModules, ModuleKey } from '@/types/modules';
-import { PLAN_VISIBLE_MODULES, MODULE_SHORT_LABELS } from '@/types/modules';
+import { PLAN_VISIBLE_MODULES } from '@/types/modules';
+import { useModuleLabels } from '@/hooks/useModuleLabels';
 
 // Icônes pour chaque module — doit inclure TOUS les modules visibles
 const MODULE_ICONS: Partial<Record<ModuleKey, LucideIcon>> = {
@@ -87,6 +88,7 @@ export const InlineModuleBadges = memo(function InlineModuleBadges({
   planModules = [],
 }: InlineModuleBadgesProps) {
   const [open, setOpen] = useState(false);
+  const { getShortLabel } = useModuleLabels();
   
   // Modules activés pour cet utilisateur
   const activeModules = PLAN_VISIBLE_MODULES.filter(key => 
@@ -114,7 +116,7 @@ export const InlineModuleBadges = memo(function InlineModuleBadges({
           return (
             <Badge key={key} className={cn("text-xs", MODULE_COLORS[key])}>
               <Icon className="w-3 h-3 mr-1" />
-              {MODULE_SHORT_LABELS[key]}
+              {getShortLabel(key)}
             </Badge>
           );
         })}
@@ -152,7 +154,7 @@ export const InlineModuleBadges = memo(function InlineModuleBadges({
                     title={isFromPlan ? "Inclus dans le plan" : "Override utilisateur"}
                   >
                     <Icon className="w-3 h-3 mr-1" />
-                    {MODULE_SHORT_LABELS[key]}
+                    {getShortLabel(key)}
                   </Badge>
                 );
               })}
@@ -204,7 +206,7 @@ export const InlineModuleBadges = memo(function InlineModuleBadges({
                       isEnabled ? "text-primary" : "text-muted-foreground"
                     )} />
                     <span className={cn(!isEnabled && "text-muted-foreground")}>
-                      {MODULE_SHORT_LABELS[key]}
+                      {getShortLabel(key)}
                     </span>
                     {isFromPlan && isEnabled && (
                       <span className="text-[10px] text-muted-foreground bg-muted px-1 rounded">

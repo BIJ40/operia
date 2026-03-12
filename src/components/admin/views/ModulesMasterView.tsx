@@ -477,20 +477,25 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
         )}
 
         {isEditing ? (
-          <Input
-            value={draftLabel}
-            onChange={(e) => setDraftLabel(e.target.value)}
-            onBlur={commitRename}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') commitRename();
-              if (e.key === 'Escape') {
-                setDraftLabel(node.label);
-                setIsEditing(false);
-              }
-            }}
-            autoFocus
-            className="h-7 text-xs"
-          />
+          <div className="flex flex-col gap-0.5">
+            <Input
+              value={draftLabel}
+              onChange={(e) => setDraftLabel(e.target.value)}
+              onBlur={commitRename}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') commitRename();
+                if (e.key === 'Escape') {
+                  setDraftLabel(node.label);
+                  setIsEditing(false);
+                }
+              }}
+              autoFocus
+              className="h-7 text-xs"
+            />
+            <span className="text-[9px] text-muted-foreground">
+              Renommage visuel uniquement — ne modifie pas la clé technique ni les permissions.
+            </span>
+          </div>
         ) : (
           <button
             type="button"
@@ -503,11 +508,16 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
               !isDevSection && node.depth === 1 && 'font-medium text-blue-600 dark:text-blue-400',
               !isDevSection && node.depth >= 2 && 'text-violet-600 dark:text-violet-400'
             )}
-            title="Cliquer pour renommer"
+            title="Cliquer pour renommer le libellé (visuel uniquement)"
           >
             {node.label}
           </button>
         )}
+
+        {/* Clé technique (lecture seule) */}
+        <span className="ml-2 text-[10px] text-muted-foreground font-mono select-all" title="Clé technique (immuable)">
+          {node.key}
+        </span>
 
         {isDevSection && node.parent_key && (
           <span className="ml-2 text-[10px] text-muted-foreground">
