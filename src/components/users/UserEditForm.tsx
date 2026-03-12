@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { GlobalRole } from '@/types/globalRoles';
 import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
+import { getSuggestedGlobalRole, validateRoleAgenceCoherence } from '@/lib/roleAgenceMapping';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
