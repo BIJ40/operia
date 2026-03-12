@@ -121,10 +121,10 @@ export default function AdminHubContent() {
   const activeGestionAccent = activeGestionTab?.accent ? accentColors[activeGestionTab.accent] : undefined;
 
   return (
-    <div className="py-6 space-y-6">
+    <div className={navMode === 'header' ? 'pt-1 space-y-3' : 'py-6 space-y-6'}>
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        {/* Main Tabs - Style Pill */}
-        <PillTabsList tabs={ADMIN_MAIN_TABS} />
+        {/* Main Tabs - Style Pill or Switcher */}
+        <PillTabsList tabs={ADMIN_MAIN_TABS} variant={navMode === 'header' ? 'switcher' : 'pill'} />
 
         {/* Content Container */}
         <motion.div 

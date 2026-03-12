@@ -31,11 +31,12 @@ function LoadingFallback() {
 
 export default function GuidesTabContent() {
   const [activeGuide, setActiveGuide] = useSessionState<GuideTab>('guides_sub_tab', 'apogee');
+  const { mode: navMode } = useNavigationMode();
 
   return (
-    <div className="py-3 px-2 sm:px-4 space-y-4">
+    <div className={navMode === 'header' ? 'pt-1 px-2 sm:px-4 space-y-3' : 'py-3 px-2 sm:px-4 space-y-4'}>
       <Tabs value={activeGuide} onValueChange={(v) => setActiveGuide(v as GuideTab)}>
-        <PillTabsList tabs={GUIDE_TABS} />
+        <PillTabsList tabs={GUIDE_TABS} variant={navMode === 'header' ? 'switcher' : 'pill'} />
 
         {/* Apogée - Layout avec sidebar intégré (pas de Suspense car pas lazy) */}
         <TabsContent value="apogee" className="mt-4">
