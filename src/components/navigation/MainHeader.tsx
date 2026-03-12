@@ -15,15 +15,24 @@ interface MainHeaderProps {
 }
 
 export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClass }: MainHeaderProps) {
+  const { getLabel } = useModuleLabels();
+
   const visibleGroups = useMemo(() => {
     const visibleIds = new Set(visibleTabs.map(t => t.id));
     return HEADER_NAV_GROUPS
       .map(group => ({
         ...group,
-        children: group.children.filter(child => !child.tab || visibleIds.has(child.tab)),
+        // Resolve group label from registry (key = group.tab, e.g. 'pilotage', 'organisation')
+        label: getLabel(group.tab, group.label),
+        children: group.children
+          .filter(child => !child.tab || visibleIds.has(child.tab))
+          .map(child => ({
+            ...child,
+            label: child.scope ? getLabel(child.scope, child.label) : child.label,
+          })),
       }))
       .filter(group => group.children.length > 0);
-  }, [visibleTabs]);
+  }, [visibleTabs, getLabel]);
 
   const pillBase = 'flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 cursor-pointer';
   const pillActive = 'bg-primary/10 text-primary';
