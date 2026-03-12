@@ -133,7 +133,7 @@ function ActionsAMenerContent() {
 
   return (
     <>
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="container mx-auto px-4 py-8 max-w-[1536px]">
         <div className="space-y-6">
           {/* En-tête avec PageHeader */}
           <div className="flex items-center justify-between">
