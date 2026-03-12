@@ -25,6 +25,7 @@ import { lazy, Suspense, useCallback, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useSessionState } from '@/hooks/useSessionState';
 import { usePersistedTab } from '@/hooks/usePersistedState';
+import { useNavigationMode } from '@/hooks/useNavigationMode';
 
 // Lazy load des composants directs
 const TDRUsersPage = lazy(() => import('@/pages/TDRUsersPage'));
