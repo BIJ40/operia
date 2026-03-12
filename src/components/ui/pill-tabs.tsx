@@ -8,6 +8,7 @@ import { TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { LucideIcon } from 'lucide-react';
+import { useDomainAccent, getAccentColors } from '@/contexts/DomainAccentContext';
 
 export interface PillTabConfig {
   id: string;
