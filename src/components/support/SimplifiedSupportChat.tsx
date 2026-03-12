@@ -35,6 +35,7 @@ import {
   HelpCircle,
   Sparkles,
   X,
+  AlertTriangle,
   ArrowLeft,
   Camera,
   Upload,
