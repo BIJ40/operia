@@ -751,10 +751,11 @@ export function ModulesMasterView() {
 
   // Root container nodes (node_type='module', parent_key=null) are structural —
   // they map 1:1 to the category headers. We keep them for renaming but exclude from child rows.
-  const ROOT_CONTAINER_KEYS = new Set(['pilotage', 'commercial', 'organisation', 'mediatheque', 'support', 'admin']);
+  const ROOT_CONTAINER_KEYS = new Set(['accueil', 'pilotage', 'commercial', 'organisation', 'mediatheque', 'support', 'admin']);
 
   // Map category ID → root container node for renaming
   const CATEGORY_ROOT_KEY: Record<string, string> = {
+    accueil: 'accueil',
     pilotage: 'pilotage',
     commercial: 'commercial',
     organisation: 'organisation',
