@@ -207,13 +207,13 @@ export function GeneralTab() {
 
   // Palette de couleurs adoucie pour les tiles
   const colorMap: Record<string, { border: string; bg: string; text: string }> = {
-    blue: { border: 'border-l-[hsl(210,60%,55%)]', bg: 'from-[hsl(210,60%,55%)]/8', text: 'text-[hsl(210,60%,55%)]' },
-    teal: { border: 'border-l-[hsl(175,50%,45%)]', bg: 'from-[hsl(175,50%,45%)]/8', text: 'text-[hsl(175,50%,45%)]' },
-    green: { border: 'border-l-[hsl(155,50%,45%)]', bg: 'from-[hsl(155,50%,45%)]/8', text: 'text-[hsl(155,50%,45%)]' },
-    purple: { border: 'border-l-[hsl(270,50%,55%)]', bg: 'from-[hsl(270,50%,55%)]/8', text: 'text-[hsl(270,50%,55%)]' },
-    orange: { border: 'border-l-[hsl(35,70%,50%)]', bg: 'from-[hsl(35,70%,50%)]/8', text: 'text-[hsl(35,70%,50%)]' },
-    rose: { border: 'border-l-[hsl(345,55%,55%)]', bg: 'from-[hsl(345,55%,55%)]/8', text: 'text-[hsl(345,55%,55%)]' },
-    cyan: { border: 'border-l-[hsl(195,55%,50%)]', bg: 'from-[hsl(195,55%,50%)]/8', text: 'text-[hsl(195,55%,50%)]' },
+    blue: { border: 'border-l-[hsl(210,60%,55%)]', bg: 'bg-[hsl(210,60%,55%)]/5', text: 'text-[hsl(210,60%,55%)]' },
+    teal: { border: 'border-l-[hsl(175,50%,45%)]', bg: 'bg-[hsl(175,50%,45%)]/5', text: 'text-[hsl(175,50%,45%)]' },
+    green: { border: 'border-l-[hsl(155,50%,45%)]', bg: 'bg-[hsl(155,50%,45%)]/5', text: 'text-[hsl(155,50%,45%)]' },
+    purple: { border: 'border-l-[hsl(270,50%,55%)]', bg: 'bg-[hsl(270,50%,55%)]/5', text: 'text-[hsl(270,50%,55%)]' },
+    orange: { border: 'border-l-[hsl(35,70%,50%)]', bg: 'bg-[hsl(35,70%,50%)]/5', text: 'text-[hsl(35,70%,50%)]' },
+    rose: { border: 'border-l-[hsl(345,55%,55%)]', bg: 'bg-[hsl(345,55%,55%)]/5', text: 'text-[hsl(345,55%,55%)]' },
+    cyan: { border: 'border-l-[hsl(195,55%,50%)]', bg: 'bg-[hsl(195,55%,50%)]/5', text: 'text-[hsl(195,55%,50%)]' },
   };
 
   return (
