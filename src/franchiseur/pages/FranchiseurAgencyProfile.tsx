@@ -236,62 +236,16 @@ function FranchiseurAgencyProfileContent() {
                   Équipe ({teamMembers.length})
                 </CardTitle>
                 <CardDescription>
-                  Utilisateurs de l'agence
+                  Membres de l'agence — inscrits et salariés
                 </CardDescription>
               </div>
             </CardHeader>
             <CardContent>
-              {usersLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : teamMembers.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Users className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                  <p>Aucun utilisateur dans l'équipe</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {teamMembers.map((member) => (
-                    <div
-                      key={member.id}
-                      className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarFallback className="bg-primary/10">
-                            {member.first_name?.[0]}
-                            {member.last_name?.[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">
-                            {member.first_name} {member.last_name}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {member.email || "Pas d'email"}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">{member.role}</Badge>
-                        <Badge variant="default" className="bg-green-600">
-                          Compte actif
-                        </Badge>
-                        {member.globalRole && (
-                          <Badge variant="secondary">
-                            {VISIBLE_ROLE_LABELS[member.globalRole as keyof typeof VISIBLE_ROLE_LABELS] || member.globalRole}
-                          </Badge>
-                        )}
-                        {member.isActive === false && (
-                          <Badge variant="destructive">Inactif</Badge>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <AgencyTeamList
+                members={teamMembers}
+                isLoading={usersLoading}
+                onCreateUser={canManage ? handleCreateUser : undefined}
+              />
             </CardContent>
           </Card>
         </TabsContent>
