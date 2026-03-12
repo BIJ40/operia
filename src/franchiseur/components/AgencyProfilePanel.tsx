@@ -222,39 +222,12 @@ function AgencyProfilePanelContent({ agencyId, onClose }: { agencyId: string; on
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {usersLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : teamMembers.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Users className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                    <p className="text-sm">Aucun utilisateur</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {teamMembers.map((member) => (
-                      <motion.div
-                        key={member.id}
-                        whileHover={{ x: 4 }}
-                        className="flex items-center justify-between p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-all"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-9 w-9">
-                            <AvatarFallback className="bg-gradient-to-br from-violet-500 to-purple-500 text-white text-xs">
-                              {member.first_name?.[0]}{member.last_name?.[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="text-sm font-medium">{member.first_name} {member.last_name}</p>
-                            <p className="text-xs text-muted-foreground">{member.email}</p>
-                          </div>
-                        </div>
-                        <Badge variant="outline" className="text-xs">{member.role}</Badge>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
+                <AgencyTeamList
+                  members={teamMembers}
+                  isLoading={usersLoading}
+                  compact
+                  onCreateUser={canManage ? handleCreateUser : undefined}
+                />
               </CardContent>
             </Card>
           </TabsContent>
