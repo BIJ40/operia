@@ -102,19 +102,41 @@ Deno.serve(async (req) => {
       ));
     }
 
-    // 5. Vérifier l'accès à l'agence
+    // 5. Résoudre l'agence cible par slug → UUID pour contrôle d'accès
+    //    DOCTRINE: agency_id (UUID) = source unique de vérité d'autorisation
+    //    Le slug est conservé uniquement pour construire l'URL Apogée
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const { data: targetAgency, error: agencyError } = await supabaseAdmin
+      .from('apogee_agencies')
+      .select('id')
+      .eq('slug', agencySlug)
+      .maybeSingle();
+
+    if (agencyError || !targetAgency) {
+      console.warn(`[GET-CLIENT-CONTACT] Agence non trouvée pour slug: ${agencySlug}`);
+      return withCors(req, new Response(
+        JSON.stringify({ success: false, error: 'Agence non trouvée' }),
+        { status: 404, headers: { 'Content-Type': 'application/json' } }
+      ));
+    }
+
+    // 5b. Contrôle d'accès basé sur agency_id (UUID), pas sur le slug
     const isFranchiseurRole = ['franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(profile.global_role || '');
-    const hasAgencyAccess = isFranchiseurRole || profile.agence === agencySlug;
+    const hasAgencyAccess = isFranchiseurRole || profile.agency_id === targetAgency.id;
 
     if (!hasAgencyAccess) {
-      console.warn(`[GET-CLIENT-CONTACT] Accès refusé: user ${user.id} agence ${agencySlug}`);
+      console.warn(`[GET-CLIENT-CONTACT] Accès refusé: user ${user.id} agency_id ${profile.agency_id} !== ${targetAgency.id}`);
       return withCors(req, new Response(
         JSON.stringify({ success: false, error: 'Accès non autorisé à cette agence' }),
         { status: 403, headers: { 'Content-Type': 'application/json' } }
       ));
     }
 
-    // 6. Appeler l'API Apogée pour récupérer le client complet
+    // 6. Appeler l'API Apogée pour récupérer le client complet (slug utilisé ici pour l'URL uniquement)
     const apiKey = Deno.env.get('APOGEE_API_KEY');
     if (!apiKey) {
       console.error('[GET-CLIENT-CONTACT] APOGEE_API_KEY non configurée');

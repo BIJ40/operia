@@ -106,26 +106,47 @@ export function assertRoleAtLeast(
 
 /**
  * Vérifie que l'utilisateur peut accéder aux données d'une agence
- * - N0-N2: Uniquement leur propre agence
+ * - N0-N2: Uniquement leur propre agence (via agency_id UUID)
  * - N3+: Accès à toutes les agences
+ * 
+ * DOCTRINE: agency_id (UUID) est la source unique de vérité pour le rattachement agence.
+ * Le slug `agence` ne doit PAS être utilisé comme critère d'autorisation.
  */
 export function assertAgencyAccess(
   context: UserContext, 
-  targetAgencySlug: string
+  targetAgencyId: string
 ): { allowed: boolean; error?: string } {
   // N3+ (franchisor_user+) = accès global
   if (context.globalRoleLevel >= GLOBAL_ROLES.franchisor_user) {
     return { allowed: true };
   }
   
-  // N0-N2: uniquement leur propre agence
-  if (context.agencySlug !== targetAgencySlug) {
+  // N0-N2: uniquement leur propre agence (comparaison UUID)
+  if (context.agencyId !== targetAgencyId) {
     return { 
       allowed: false, 
       error: 'Accès non autorisé à cette agence' 
     };
   }
   
+  return { allowed: true };
+}
+
+/**
+ * @deprecated Utiliser assertAgencyAccess avec un UUID agency_id.
+ * Conservé temporairement pour compatibilité, mais NE DOIT PAS être utilisé
+ * pour de nouveaux contrôles d'accès.
+ */
+export function assertAgencyAccessBySlug(
+  context: UserContext, 
+  targetAgencySlug: string
+): { allowed: boolean; error?: string } {
+  if (context.globalRoleLevel >= GLOBAL_ROLES.franchisor_user) {
+    return { allowed: true };
+  }
+  if (context.agencySlug !== targetAgencySlug) {
+    return { allowed: false, error: 'Accès non autorisé à cette agence' };
+  }
   return { allowed: true };
 }
 
