@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lightbulb } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 // Astuces par module (clés hiérarchiques alignées MODULE_DEFINITIONS)
 const TIPS_BY_MODULE: Record<string, string[]> = {
@@ -47,7 +47,7 @@ export function PreloadTipsCarousel({
   className, 
   intervalMs = 8000 
 }: PreloadTipsCarouselProps) {
-  const { hasModule, hasModuleOption } = useEffectiveModules();
+  const { hasModule, hasModuleOption } = usePermissions();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [tips, setTips] = useState<string[]>(GENERAL_TIPS);
   

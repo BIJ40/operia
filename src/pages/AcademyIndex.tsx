@@ -4,7 +4,7 @@ import { ROUTES } from '@/config/routes';
 import { useMenuLabels } from '@/hooks/use-page-metadata';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 const ROUTE_TO_PAGE_KEY: Record<string, string> = {
   [ROUTES.academy.apogee]: 'academy_apogee',
@@ -43,7 +43,7 @@ const faqModule = {
 
 export default function AcademyIndex() {
   const menuLabels = useMenuLabels();
-  const { hasModuleOption } = useEffectiveModules();
+  const { hasModuleOption } = usePermissions();
   const showFaq = hasModuleOption('support.guides' as any, 'faq');
 
   const getModuleTitle = (module: typeof academyModules[0]): string => {

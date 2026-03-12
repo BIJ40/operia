@@ -8,7 +8,7 @@ import { Users, Handshake, CalendarDays, Users2, Car, FileText, Loader2 } from '
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
-import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { MfaGuard } from '@/components/auth/MfaGuard';
 import { ModuleKey } from '@/types/modules';
 
@@ -39,7 +39,7 @@ function LoadingFallback() {
 }
 
 export default function OrganisationTabContent() {
-  const { hasModule } = useEffectiveModules();
+  const { hasModule } = usePermissions();
 
   const visibleTabs = useMemo(() => {
     return ALL_ORGANISATION_TABS.filter(tab => {

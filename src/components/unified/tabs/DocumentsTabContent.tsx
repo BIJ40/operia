@@ -6,13 +6,13 @@ import { useState, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FolderOpen, Star, Trash2 } from 'lucide-react';
 import { MediaLibraryManager } from '@/components/media-library/MediaLibraryManager';
-import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 type DocumentsSubTab = 'library' | 'shortcuts' | 'trash';
 
 export default function DocumentsTabContent() {
   const [activeSubTab, setActiveSubTab] = useState<DocumentsSubTab>('library');
-  const { hasModule } = useEffectiveModules();
+  const { hasModule } = usePermissions();
   
   // Clés COMPAT_MAP : mediatheque.gerer → divers_documents.gerer, mediatheque.corbeille → divers_documents.corbeille_vider
   const canManage = hasModule('mediatheque.gerer' as any);

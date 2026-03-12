@@ -13,7 +13,7 @@ import {
   FileText, Users2, Loader2, Users, CalendarDays, 
   Car, FolderOpen, Settings, Eye, Activity, Target, FileCheck, AlertTriangle
 } from 'lucide-react';
-import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { ModuleKey } from '@/types/modules';
 
 import {
@@ -245,7 +245,7 @@ const ADMIN_TABS_CONFIG: (FolderTabConfig & { requiresModule?: ModuleKey })[] = 
 ];
 
 function AdministratifSection() {
-  const { hasModule } = useEffectiveModules();
+  const { hasModule } = usePermissions();
   
   const visibleAdminTabs = useMemo(() => {
     return ADMIN_TABS_CONFIG.filter(tab => {
@@ -307,7 +307,7 @@ function AdministratifSection() {
 
 export default function DiversTabContent() {
   const [activeMainTab, setActiveMainTab] = useSessionState<OutilsMainTab>('outils_main_tab', 'actions');
-  const { hasModule } = useEffectiveModules();
+  const { hasModule } = usePermissions();
 
   const visibleTabs = useMemo(() => {
     return MAIN_TABS_CONFIG.filter(tab => {

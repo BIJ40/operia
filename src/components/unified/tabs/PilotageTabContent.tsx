@@ -8,7 +8,7 @@ import { BarChart3, Activity, Settings, FileCheck, AlertTriangle, Loader2 } from
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
-import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { ModuleKey } from '@/types/modules';
 
 // Lazy loaded
@@ -41,16 +41,14 @@ function LoadingFallback() {
 }
 
 export default function PilotageTabContent() {
-  const { hasModule, modules, isLoading } = useEffectiveModules();
+  const { hasModule } = usePermissions();
 
   const visibleTabs = useMemo(() => {
     return ALL_PILOTAGE_TABS.filter(tab => {
       if (!tab.requiresModule) return true;
-      // Check both via hasModule AND direct key lookup for robustness
-      const moduleKey = tab.requiresModule;
-      return hasModule(moduleKey) || !!(modules as any)[moduleKey]?.enabled;
+      return hasModule(tab.requiresModule);
     });
-  }, [hasModule, modules]);
+  }, [hasModule]);
 
   const defaultTab = visibleTabs[0]?.id as PilotageSubTab ?? 'stats';
   const [activeTab, setActiveTab] = useSessionState<PilotageSubTab>('pilotage_sub_tab', defaultTab);

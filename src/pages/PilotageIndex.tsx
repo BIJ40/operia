@@ -5,7 +5,6 @@ import { AgencyInfoCompact } from '@/components/pilotage/AgencyInfoCompact';
 import { ActionsAMenerTab } from '@/components/pilotage/ActionsAMenerTab';
 import { MesApporteursTab } from '@/components/pilotage/MesApporteursTab';
 import { usePermissions } from '@/contexts/PermissionsContext';
-import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
 import { useSessionState } from '@/hooks/useSessionState';
 import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
 import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
@@ -104,8 +103,7 @@ function StatsHubContent() {
 }
 
 function PilotageContent() {
-  const { globalRole } = usePermissions();
-  const { hasModule, hasModuleOption } = useEffectiveModules();
+  const { globalRole, hasModule } = usePermissions();
   const [activeTab, setActiveTab] = useSessionState<MainTab>('pilotage_active_tab', 'agence');
   
   const isPlatformAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';

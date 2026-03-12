@@ -10,7 +10,7 @@ import { Headphones, BookOpen, HelpCircle, Ticket, Loader2 } from 'lucide-react'
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
-import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { ModuleKey } from '@/types/modules';
 import { InternalApogeeLayout } from '@/components/guides/apogee/InternalApogeeLayout';
 
@@ -50,7 +50,7 @@ function LoadingFallback() {
 
 /** Sous-composant Guides avec navigation par catégorie */
 function GuidesSection() {
-  const { hasModule } = useEffectiveModules();
+  const { hasModule } = usePermissions();
   
   const visibleGuides = useMemo(() => {
     return GUIDE_SECTIONS.filter(g => {
@@ -86,7 +86,7 @@ function GuidesSection() {
 }
 
 export default function SupportHubTabContent() {
-  const { hasModule } = useEffectiveModules();
+  const { hasModule } = usePermissions();
 
   const visibleTabs = useMemo(() => {
     const tabs = ALL_SUPPORT_TABS.filter(tab => {

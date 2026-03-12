@@ -27,7 +27,6 @@ import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
 import { GlobalRole } from '@/types/globalRoles';
 import { VISIBLE_ROLE_LABELS, VISIBLE_ROLE_COLORS } from '@/lib/visibleRoleLabels';
 import { MODULE_DEFINITIONS } from '@/types/modules';
-import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
 import { ALL_USER_QUERY_PATTERNS } from '@/lib/queryKeys';
 import { WarmPageContainer } from '@/components/ui/warm-page-container';
 import { WarmCard } from '@/components/ui/warm-card';
@@ -67,8 +66,7 @@ const ROLE_AGENCE_LABELS: Record<string, string> = {
 
 export default function Profile() {
   const { user, isAuthenticated } = useAuthCore();
-  const { globalRole } = usePermissions();
-  const { modules: effectiveModulesData } = useEffectiveModules();
+  const { globalRole, enabledModules: rawEnabledModules } = usePermissions();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -207,10 +205,16 @@ export default function Profile() {
   };
 
   const getEnabledModulesList = (): string[] => {
-    return MODULE_DEFINITIONS.filter(mod => {
-      const state = effectiveModulesData[mod.key];
-      return state?.enabled === true;
-    }).map(mod => mod.label);
+    if (!rawEnabledModules) return [];
+    return Object.entries(rawEnabledModules)
+      .filter(([, value]) => {
+        if (!value) return false;
+        return typeof value === 'boolean' ? value : (value as any).enabled === true;
+      })
+      .map(([key]) => {
+        const def = MODULE_DEFINITIONS.find(m => m.key === key);
+        return def?.label || key;
+      });
   };
 
   if (!isAuthenticated) {

@@ -14,7 +14,7 @@ import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { useProfile } from '@/contexts/ProfileContext';
 import { usePermissions as usePermissionsCtx } from '@/contexts/PermissionsContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
-import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
+
 import { apogeeProxy } from '@/services/apogeeProxy';
 import { logApogee } from '@/lib/logger';
 
@@ -162,7 +162,7 @@ export function DataPreloadProvider({ children }: { children: ReactNode }) {
   const { agence } = useProfile();
   const { globalRole } = usePermissionsCtx();
   const { isRealUserImpersonation, impersonatedUser } = useImpersonation();
-  const { hasModule, hasModuleOption, isLoading: isModulesLoading } = useEffectiveModules();
+  const { hasModule, hasModuleOption } = usePermissionsCtx();
   
   // État
   const [isPreloading, setIsPreloading] = useState(false);
@@ -233,8 +233,8 @@ export function DataPreloadProvider({ children }: { children: ReactNode }) {
   // Vérifier si le préchargement doit être déclenché
   const shouldTriggerPreload = useCallback((): boolean => {
     // 1. Conditions de base
-    if (!user || isAuthLoading || isModulesLoading) {
-      logApogee.debug('[PRELOAD] Skip: auth or modules loading');
+    if (!user || isAuthLoading) {
+      logApogee.debug('[PRELOAD] Skip: auth loading');
       return false;
     }
     
@@ -270,7 +270,7 @@ export function DataPreloadProvider({ children }: { children: ReactNode }) {
     }
     
     return true;
-  }, [user, isAuthLoading, isModulesLoading, effectiveAgence, hasStatsAccess]);
+  }, [user, isAuthLoading, effectiveAgence, hasStatsAccess]);
   
   // Fonction de préchargement principale
   const executePreload = useCallback(async (opts?: { showUI?: boolean }) => {
@@ -416,7 +416,7 @@ export function DataPreloadProvider({ children }: { children: ReactNode }) {
     if (isPreloading || hasTriggeredRef.current) return;
     
     // Attendre que tout soit chargé
-    if (isAuthLoading || isModulesLoading) return;
+    if (isAuthLoading) return;
     
     // Vérifier les conditions
     if (shouldTriggerPreload()) {
@@ -431,7 +431,7 @@ export function DataPreloadProvider({ children }: { children: ReactNode }) {
       })();
       executePreload({ showUI });
     }
-  }, [isAuthLoading, isModulesLoading, isPreloading, shouldTriggerPreload, executePreload, user, effectiveAgence]);
+  }, [isAuthLoading, isPreloading, shouldTriggerPreload, executePreload, user, effectiveAgence]);
   
   // Effet d'invalidation sur changement d'agence
   useEffect(() => {
