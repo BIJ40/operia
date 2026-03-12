@@ -203,7 +203,7 @@ export function DemoAccueilContent() {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div className="container mx-auto py-6 px-4 max-w-7xl">
+      <div className="container mx-auto py-6 px-4 max-w-[1536px]">
         {/* Bandeau d'information démo */}
         <Alert className="mb-6 bg-warning/10 border-warning/30">
           <AlertTriangle className="h-4 w-4 text-warning" />

@@ -261,7 +261,7 @@ function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
             </div>
           </div>
           {/* Ligne de bordure qui se connecte aux onglets */}
-          <div className="container mx-auto max-w-7xl px-4">
+          <div className="container mx-auto max-w-[1536px] px-4">
             <div className="border-t-2 border-primary/50 bg-background"></div>
           </div>
         </div>
