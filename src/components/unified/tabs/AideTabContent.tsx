@@ -42,6 +42,7 @@ import { getFaqItems, type FaqItem } from '@/lib/rag-improvement';
 import { useQueryClient } from '@tanstack/react-query';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { Lock } from 'lucide-react';
+import { DomainAccentProvider } from '@/contexts/DomainAccentContext';
 
 // ─── Base documentaire config ───────────────────────────────────
 const DOC_SECTIONS = [
