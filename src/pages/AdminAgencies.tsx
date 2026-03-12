@@ -142,6 +142,27 @@ export default function AdminAgencies() {
     return users.filter((user) => user.agency_id === agencyId);
   };
 
+  /** Get non-registered collaborators for an agency (not linked to any profile) */
+  const getUnregisteredCollaborators = (agencyId: string) => {
+    const registeredUserIds = new Set(users.filter(u => u.agency_id === agencyId).map(u => u.id));
+    return collaborators.filter(c => 
+      c.agency_id === agencyId && 
+      (!c.user_id || !registeredUserIds.has(c.user_id)) &&
+      !c.is_registered_user
+    );
+  };
+
+  const handleCreateUserFromCollab = (collab: CollaboratorRow, agencySlug: string) => {
+    const params = new URLSearchParams({
+      action: 'create',
+      firstName: collab.first_name,
+      lastName: collab.last_name,
+      email: collab.email || '',
+      agence: agencySlug,
+    });
+    navigate(`${ROUTES.admin.users}?${params.toString()}`);
+  };
+
   const getUsersWithoutAgency = () => {
     return users.filter((user) => !user.agency_id && user.role_agence === 'dirigeant');
   };
