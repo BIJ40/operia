@@ -188,21 +188,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
         }
 
-        // PRO plan auto-enrichment
-        const parcModule = resolvedModules.parc as any;
+        // PRO plan auto-enrichment (check both hierarchical + legacy keys for safety)
+        const parcModule = (resolvedModules['organisation.parc'] || resolvedModules.parc) as any;
         const reseauModule = resolvedModules.reseau_franchiseur as any;
         const isProAgency = !!(
           (parcModule && typeof parcModule === 'object' && parcModule.enabled) ||
           (reseauModule && typeof reseauModule === 'object' && reseauModule.enabled)
         );
 
-        const agenceModule = resolvedModules.agence as any;
+        const agenceModule = (resolvedModules['pilotage.agence'] || resolvedModules.agence) as any;
         if (isProAgency && agenceModule && typeof agenceModule === 'object' && agenceModule.enabled) {
           const agenceOptions = (agenceModule.options && typeof agenceModule.options === 'object')
             ? agenceModule.options as Record<string, boolean>
             : {};
 
-          resolvedModules.agence = {
+          resolvedModules['pilotage.agence'] = {
             enabled: true,
             options: { ...agenceOptions, stats_hub: true },
           } as any;
