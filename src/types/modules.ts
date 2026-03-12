@@ -209,7 +209,7 @@ export interface ModuleOptionDefinition {
 // Configuration complète des modules
 export const MODULE_DEFINITIONS: ModuleDefinition[] = [
   {
-    key: 'agence',
+    key: 'pilotage.agence',
     label: 'Mon agence',
     description: 'Tableau de bord, KPIs et actions',
     icon: 'Building2',
@@ -218,14 +218,14 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
-      { key: 'indicateurs', path: 'agence.indicateurs', label: 'Indicateurs', description: 'KPIs principaux', defaultEnabled: true, routes: ['/'] },
-      { key: 'actions_a_mener', path: 'agence.actions_a_mener', label: 'Actions à mener', description: 'Liste des actions', defaultEnabled: true, routes: ['/'] },
-      { key: 'diffusion', path: 'agence.diffusion', label: 'Diffusion', description: 'Écran TV', defaultEnabled: true, routes: ['/diffusion'] },
-      { key: 'devis_acceptes', path: 'agence.devis_acceptes', label: 'Devis acceptés', description: 'Visualisation des dossiers avec devis acceptés', defaultEnabled: true, routes: ['/?tab=commercial'] },
+      { key: 'indicateurs', path: 'pilotage.agence.indicateurs', label: 'Indicateurs', description: 'KPIs principaux', defaultEnabled: true, routes: ['/'] },
+      { key: 'actions_a_mener', path: 'pilotage.agence.actions_a_mener', label: 'Actions à mener', description: 'Liste des actions', defaultEnabled: true, routes: ['/'] },
+      { key: 'diffusion', path: 'pilotage.agence.diffusion', label: 'Diffusion', description: 'Écran TV', defaultEnabled: true, routes: ['/diffusion'] },
+      { key: 'devis_acceptes', path: 'pilotage.agence.devis_acceptes', label: 'Devis acceptés', description: 'Visualisation des dossiers avec devis acceptés', defaultEnabled: true, routes: ['/?tab=commercial'] },
     ],
   },
   {
-    key: 'stats',
+    key: 'pilotage.dashboard',
     label: 'Stats',
     description: 'Statistiques et tableaux de bord',
     icon: 'BarChart3',
@@ -233,12 +233,12 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
-      { key: 'stats_hub', path: 'stats.stats_hub', label: 'Stats Hub', description: 'Tableaux avancés', defaultEnabled: true, routes: ['/?tab=pilotage'] },
-      { key: 'exports', path: 'stats.exports', label: 'Exports', description: 'Export des données', defaultEnabled: false, routes: ['/?tab=pilotage'] },
+      { key: 'stats_hub', path: 'pilotage.dashboard.stats_hub', label: 'Stats Hub', description: 'Tableaux avancés', defaultEnabled: true, routes: ['/?tab=pilotage'] },
+      { key: 'exports', path: 'pilotage.dashboard.exports', label: 'Exports', description: 'Export des données', defaultEnabled: false, routes: ['/?tab=pilotage'] },
     ],
   },
   {
-    key: 'rh',
+    key: 'organisation.salaries',
     label: 'Salariés',
     description: 'Gestion des ressources humaines',
     icon: 'Users',
@@ -246,12 +246,12 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
-      { key: 'rh_viewer', path: 'rh.rh_viewer', label: 'Gestionnaire', description: 'Vue équipe', defaultEnabled: true, routes: ['/?tab=organisation'] },
-      { key: 'rh_admin', path: 'rh.rh_admin', label: 'Admin RH', description: 'Gestion complète', defaultEnabled: false, routes: ['/?tab=organisation'] },
+      { key: 'rh_viewer', path: 'organisation.salaries.rh_viewer', label: 'Gestionnaire', description: 'Vue équipe', defaultEnabled: true, routes: ['/?tab=organisation'] },
+      { key: 'rh_admin', path: 'organisation.salaries.rh_admin', label: 'Admin RH', description: 'Gestion complète', defaultEnabled: false, routes: ['/?tab=organisation'] },
     ],
   },
   {
-    key: 'parc',
+    key: 'organisation.parc',
     label: 'Parc',
     description: 'Véhicules et équipements',
     icon: 'Truck',
@@ -260,13 +260,13 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
-      { key: 'vehicules', path: 'parc.vehicules', label: 'Véhicules', description: 'Flotte véhicules', defaultEnabled: true, routes: ['/?tab=organisation'] },
-      { key: 'epi', path: 'parc.epi', label: 'EPI', description: 'Équipements protection', defaultEnabled: true, routes: ['/?tab=organisation'] },
-      { key: 'equipements', path: 'parc.equipements', label: 'Équipements', description: 'Autres équipements', defaultEnabled: true, routes: ['/?tab=organisation'] },
+      { key: 'vehicules', path: 'organisation.parc.vehicules', label: 'Véhicules', description: 'Flotte véhicules', defaultEnabled: true, routes: ['/?tab=organisation'] },
+      { key: 'epi', path: 'organisation.parc.epi', label: 'EPI', description: 'Équipements protection', defaultEnabled: true, routes: ['/?tab=organisation'] },
+      { key: 'equipements', path: 'organisation.parc.equipements', label: 'Équipements', description: 'Autres équipements', defaultEnabled: true, routes: ['/?tab=organisation'] },
     ],
   },
   {
-    key: 'divers_apporteurs',
+    key: 'organisation.apporteurs',
     label: 'Apporteurs',
     description: 'Gestion des apporteurs',
     icon: 'Handshake',
@@ -275,12 +275,12 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
-      { key: 'consulter', path: 'divers_apporteurs.consulter', label: 'Consulter', description: 'Voir les apporteurs', defaultEnabled: true, routes: ['/?tab=organisation'] },
-      { key: 'gerer', path: 'divers_apporteurs.gerer', label: 'Gérer', description: 'Créer/modifier', defaultEnabled: true, routes: ['/?tab=organisation'] },
+      { key: 'consulter', path: 'organisation.apporteurs.consulter', label: 'Consulter', description: 'Voir les apporteurs', defaultEnabled: true, routes: ['/?tab=organisation'] },
+      { key: 'gerer', path: 'organisation.apporteurs.gerer', label: 'Gérer', description: 'Créer/modifier', defaultEnabled: true, routes: ['/?tab=organisation'] },
     ],
   },
   {
-    key: 'divers_plannings',
+    key: 'organisation.plannings',
     label: 'Plannings',
     description: 'Gestion des plannings',
     icon: 'Calendar',
@@ -291,7 +291,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     options: [],
   },
   {
-    key: 'divers_reunions',
+    key: 'organisation.reunions',
     label: 'Réunions',
     description: 'Gestion des réunions',
     icon: 'Video',
@@ -302,7 +302,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     options: [],
   },
   {
-    key: 'divers_documents',
+    key: 'mediatheque.documents',
     label: 'Documents',
     description: 'Médiathèque centralisée style Finder',
     icon: 'FolderOpen',
@@ -310,13 +310,13 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
-      { key: 'consulter', path: 'divers_documents.consulter', label: 'Consulter', description: 'Voir les documents', defaultEnabled: true, routes: ['/?tab=documents'] },
-      { key: 'gerer', path: 'divers_documents.gerer', label: 'Gérer', description: 'Créer, modifier, déplacer', defaultEnabled: true, routes: ['/?tab=documents'] },
-      { key: 'corbeille_vider', path: 'divers_documents.corbeille_vider', label: 'Vider corbeille', description: 'Suppression définitive', defaultEnabled: false, routes: ['/?tab=documents'] },
+      { key: 'consulter', path: 'mediatheque.documents.consulter', label: 'Consulter', description: 'Voir les documents', defaultEnabled: true, routes: ['/?tab=documents'] },
+      { key: 'gerer', path: 'mediatheque.documents.gerer', label: 'Gérer', description: 'Créer, modifier, déplacer', defaultEnabled: true, routes: ['/?tab=documents'] },
+      { key: 'corbeille_vider', path: 'mediatheque.documents.corbeille_vider', label: 'Vider corbeille', description: 'Suppression définitive', defaultEnabled: false, routes: ['/?tab=documents'] },
     ],
   },
   {
-    key: 'guides',
+    key: 'support.guides',
     label: 'Guides',
     description: 'Documentation et guides',
     icon: 'BookOpen',
@@ -324,10 +324,10 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
-      { key: 'apogee', path: 'guides.apogee', label: 'Apogée', description: 'Guide Apogée', defaultEnabled: true, routes: ['/?tab=support'] },
-      { key: 'apporteurs', path: 'guides.apporteurs', label: 'Apporteurs', description: 'Guide apporteurs', defaultEnabled: true, routes: ['/?tab=support'] },
-      { key: 'helpconfort', path: 'guides.helpconfort', label: 'HelpConfort', description: 'Guide HelpConfort', defaultEnabled: true, routes: ['/?tab=support'] },
-      { key: 'faq', path: 'guides.faq', label: 'FAQ', description: 'Questions fréquentes', defaultEnabled: true, routes: ['/?tab=support'] },
+      { key: 'apogee', path: 'support.guides.apogee', label: 'Apogée', description: 'Guide Apogée', defaultEnabled: true, routes: ['/?tab=support'] },
+      { key: 'apporteurs', path: 'support.guides.apporteurs', label: 'Apporteurs', description: 'Guide apporteurs', defaultEnabled: true, routes: ['/?tab=support'] },
+      { key: 'helpconfort', path: 'support.guides.helpconfort', label: 'HelpConfort', description: 'Guide HelpConfort', defaultEnabled: true, routes: ['/?tab=support'] },
+      { key: 'faq', path: 'support.guides.faq', label: 'FAQ', description: 'Questions fréquentes', defaultEnabled: true, routes: ['/?tab=support'] },
     ],
   },
   {
@@ -346,7 +346,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     ],
   },
   {
-    key: 'aide',
+    key: 'support.aide_en_ligne',
     label: 'Aide',
     description: 'Support et assistance',
     icon: 'HelpCircle',
@@ -354,8 +354,8 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
     minRole: 'base_user',
     options: [
-      { key: 'user', path: 'aide.user', label: 'Utilisateur', description: 'Créer demandes', defaultEnabled: true, routes: ['/?tab=support'] },
-      { key: 'agent', path: 'aide.agent', label: 'Agent', description: 'Répondre demandes', defaultEnabled: false, routes: ['/?tab=support'] },
+      { key: 'user', path: 'support.aide_en_ligne.user', label: 'Utilisateur', description: 'Créer demandes', defaultEnabled: true, routes: ['/?tab=support'] },
+      { key: 'agent', path: 'support.aide_en_ligne.agent', label: 'Agent', description: 'Répondre demandes', defaultEnabled: false, routes: ['/?tab=support'] },
     ],
   },
   {
@@ -381,7 +381,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     description: 'Optimisation intelligente du planning techniciens',
     icon: 'Brain',
     category: 'organisation',
-    deployed: false, // En cours de développement, pas dans les permissions/plans
+    deployed: false,
     defaultForRoles: [],
     minRole: 'franchisee_admin',
     adminOnly: true,
@@ -393,7 +393,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
   },
   // Module premium Réalisations
   {
-    key: 'realisations',
+    key: 'commercial.realisations',
     label: 'Réalisations',
     description: 'Gestion des réalisations terrain, photos avant/après, SEO',
     icon: 'Camera',
@@ -402,12 +402,12 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: [],
     minRole: 'franchisee_user',
     options: [
-      { key: 'view', path: 'realisations.view', label: 'Consulter', description: 'Voir les réalisations', defaultEnabled: true, routes: ['/realisations'] },
-      { key: 'create', path: 'realisations.create', label: 'Créer', description: 'Créer des réalisations', defaultEnabled: true, routes: ['/realisations/new'] },
-      { key: 'edit', path: 'realisations.edit', label: 'Modifier', description: 'Modifier les réalisations', defaultEnabled: true, routes: ['/realisations'] },
-      { key: 'validate', path: 'realisations.validate', label: 'Valider', description: 'Valider / refuser', defaultEnabled: false, routes: ['/realisations'] },
-      { key: 'publish_prepare', path: 'realisations.publish_prepare', label: 'Publier', description: 'Préparer publication web', defaultEnabled: false, routes: ['/realisations'] },
-      { key: 'export', path: 'realisations.export', label: 'Exporter', description: 'Export des données', defaultEnabled: false, routes: ['/realisations'] },
+      { key: 'view', path: 'commercial.realisations.view', label: 'Consulter', description: 'Voir les réalisations', defaultEnabled: true, routes: ['/realisations'] },
+      { key: 'create', path: 'commercial.realisations.create', label: 'Créer', description: 'Créer des réalisations', defaultEnabled: true, routes: ['/realisations/new'] },
+      { key: 'edit', path: 'commercial.realisations.edit', label: 'Modifier', description: 'Modifier les réalisations', defaultEnabled: true, routes: ['/realisations'] },
+      { key: 'validate', path: 'commercial.realisations.validate', label: 'Valider', description: 'Valider / refuser', defaultEnabled: false, routes: ['/realisations'] },
+      { key: 'publish_prepare', path: 'commercial.realisations.publish_prepare', label: 'Publier', description: 'Préparer publication web', defaultEnabled: false, routes: ['/realisations'] },
+      { key: 'export', path: 'commercial.realisations.export', label: 'Exporter', description: 'Export des données', defaultEnabled: false, routes: ['/realisations'] },
     ],
   },
   // Modules admin (non visibles dans les plans)
