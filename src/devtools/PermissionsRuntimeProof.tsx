@@ -55,27 +55,27 @@ export function usePermissionsRuntimeProof() {
       label: 'support.ticketing via hasModule (Path B)',
       path: 'usePermissions().hasModule',
       key: 'support.ticketing',
-      result: hasModule('support.ticketing' as ModuleKey),
+      result: hasModule('support.ticketing'),
       expected: hasTicketingLegacy,
-      pass: hasModule('support.ticketing' as ModuleKey) === hasTicketingLegacy,
+      pass: hasModule('support.ticketing') === hasTicketingLegacy,
     });
 
     tests.push({
       label: 'ticketing (legacy) via hasModule',
       path: 'usePermissions().hasModule',
       key: 'ticketing',
-      result: hasModule('ticketing' as ModuleKey),
+      result: hasModule('ticketing'),
       expected: hasTicketingLegacy,
-      pass: hasModule('ticketing' as ModuleKey) === hasTicketingLegacy,
+      pass: hasModule('ticketing') === hasTicketingLegacy,
     });
 
     tests.push({
       label: 'support.guides via hasModule (Path B)',
       path: 'usePermissions().hasModule',
       key: 'support.guides',
-      result: hasModule('support.guides' as ModuleKey),
+      result: hasModule('support.guides'),
       expected: hasGuidesLegacy,
-      pass: hasModule('support.guides' as ModuleKey) === hasGuidesLegacy,
+      pass: hasModule('support.guides') === hasGuidesLegacy,
     });
 
     // ── Médiathèque isolation tests ──
@@ -96,19 +96,19 @@ export function usePermissionsRuntimeProof() {
       label: 'mediatheque.gerer via hasModule',
       path: 'usePermissions().hasModule',
       key: 'mediatheque.gerer',
-      result: hasModule('mediatheque.gerer' as ModuleKey),
+      result: hasModule('mediatheque.gerer'),
       expected: hasDiversDocsGerer,
-      pass: hasModule('mediatheque.gerer' as ModuleKey) === hasDiversDocsGerer,
+      pass: hasModule('mediatheque.gerer') === hasDiversDocsGerer,
     });
 
     tests.push({
       label: 'organisation.documents_legaux via hasModule (should be false — no legacy)',
       path: 'usePermissions().hasModule',
       key: 'organisation.documents_legaux',
-      result: hasModule('organisation.documents_legaux' as ModuleKey),
+      result: hasModule('organisation.documents_legaux'),
       // No legacy key exists for this, so it should be false unless explicitly granted
       expected: false,
-      pass: !hasModule('organisation.documents_legaux' as ModuleKey),
+      pass: !hasModule('organisation.documents_legaux'),
     });
 
     return tests;

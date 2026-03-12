@@ -131,7 +131,7 @@ export function userModulesToEnabledModules(
   }
   
   for (const row of rows) {
-    const moduleKey = row.module_key as ModuleKey;
+    const moduleKey = row.module_key;
     const options = normalizeOptions(row.options);
 
     // Skip modules where all options are false (legacy inconsistency)
@@ -149,14 +149,14 @@ export function userModulesToEnabledModules(
     if (hierarchicalKey) {
       // Legacy key in DB → also set hierarchical, unless DB already has explicit hierarchical row
       if (!explicitHierarchicalKeys.has(hierarchicalKey)) {
-        result[hierarchicalKey as ModuleKey] = value;
+        result[hierarchicalKey] = value;
       }
     }
     // If this IS a hierarchical key, also set the legacy counterpart
     const legacyKey = HIERARCHICAL_TO_LEGACY[row.module_key];
     if (legacyKey) {
       // Hierarchical key in DB → also set legacy (hierarchical takes precedence)
-      result[legacyKey as ModuleKey] = value;
+      result[legacyKey] = value;
     }
   }
   

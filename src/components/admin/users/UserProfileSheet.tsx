@@ -97,12 +97,13 @@ export const UserProfileSheet = memo(function UserProfileSheet({
       const result: EnabledModules = {};
       if (Array.isArray(data)) {
         for (const row of data as Array<{ module_key: string; enabled: boolean; options: unknown }>) {
-          result[row.module_key as ModuleKey] = {
-            enabled: row.enabled === true,
-            options: (typeof row.options === 'object' && row.options !== null && !Array.isArray(row.options))
-              ? row.options as Record<string, boolean>
-              : {},
-          } as any;
+          const opts: Record<string, boolean> = {};
+          if (typeof row.options === 'object' && row.options !== null && !Array.isArray(row.options)) {
+            for (const [k, v] of Object.entries(row.options as Record<string, unknown>)) {
+              opts[k] = v === true;
+            }
+          }
+          result[row.module_key] = { enabled: row.enabled === true, options: opts };
         }
       }
       return result;

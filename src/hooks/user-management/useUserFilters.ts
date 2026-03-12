@@ -17,7 +17,7 @@ export function useUserFilters({ users, modifiedUsers, showDeactivated }: UseUse
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [moduleFilter, setModuleFilter] = useState<string>('all');
 
-  const isModuleEnabledForUser = (modules: EnabledModules, moduleKey: ModuleKey): boolean => {
+  const isModuleEnabledForUser = (modules: EnabledModules, moduleKey: string): boolean => {
     const state = modules[moduleKey];
     if (typeof state === 'boolean') return state;
     if (typeof state === 'object') return state.enabled;
@@ -57,7 +57,7 @@ export function useUserFilters({ users, modifiedUsers, showDeactivated }: UseUse
 
       if (moduleFilter !== 'all') {
         const effectiveModules = modifiedUsers[user.id]?.enabled_modules ?? user.enabled_modules ?? {};
-        if (!isModuleEnabledForUser(effectiveModules, moduleFilter as ModuleKey)) return false;
+        if (!isModuleEnabledForUser(effectiveModules, moduleFilter)) return false;
       }
       
       return true;

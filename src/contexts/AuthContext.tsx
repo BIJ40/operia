@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const globalRoleLevel = globalRole ? GLOBAL_ROLES[globalRole] : 0;
   const isAdmin = globalRoleLevel >= GLOBAL_ROLES.platform_admin;
   const isFranchiseur = globalRoleLevel >= GLOBAL_ROLES.franchisor_user;
-  const isSupport = checkModuleEnabled(enabledModules, 'support.aide_en_ligne' as ModuleKey);
+  const isSupport = checkModuleEnabled(enabledModules, 'support.aide_en_ligne');
 
   // Support module
   const supportModuleConfig = enabledModules?.['support.aide_en_ligne'];
@@ -179,7 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let resolvedModules: EnabledModules = {};
       if (effectiveModules && Array.isArray(effectiveModules) && effectiveModules.length > 0) {
         for (const row of effectiveModules) {
-          const moduleKey = row.module_key as ModuleKey;
+          const moduleKey = row.module_key;
           resolvedModules[moduleKey] = {
             enabled: row.enabled === true,
             options: (typeof row.options === 'object' && row.options !== null) 
@@ -387,29 +387,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   /**
    * Scope-to-module mapping for legacy hasAccessToScope checks.
-   * Each scope maps to a module (and optionally a required role/option).
+   * Single source of truth — delegates to module/option guards.
    */
   const hasAccessToScope = useCallback((scope: string): boolean => {
     // Bypass for platform_admin and above
     if (isAdmin) return true;
 
     switch (scope) {
-      // Pilotage Agence — module canonique: pilotage.agence
       case 'mes_indicateurs':
-        return hasModuleGuard('pilotage.agence' as ModuleKey);
-      // Sous-onglets Guides — module parent: support.guides + option spécifique
+        return hasModuleGuard('pilotage.agence');
       case 'apporteurs':
-        return hasModuleOptionGuard('support.guides' as ModuleKey, 'apporteurs');
+        return hasModuleOptionGuard('support.guides', 'apporteurs');
       case 'helpconfort':
-        return hasModuleOptionGuard('support.guides' as ModuleKey, 'helpconfort');
+        return hasModuleOptionGuard('support.guides', 'helpconfort');
       case 'apogee':
-        return hasModuleOptionGuard('support.guides' as ModuleKey, 'apogee');
-      // Ticketing — overwrite-only module
+        return hasModuleOptionGuard('support.guides', 'apogee');
       case 'ticketing':
       case 'apogee_tickets':
-        return hasModuleGuard('ticketing' as ModuleKey);
+        return hasModuleGuard('ticketing');
       default:
-        // Unknown scope = deny by default (secure)
         logAuth.warn(`hasAccessToScope: unknown scope "${scope}", denying access`);
         return false;
     }
