@@ -10,7 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency, formatPercent } from '@/lib/formatters';
 import { motion } from 'framer-motion';
 import { FolderOpen, FileText, Euro, ShoppingCart, AlertTriangle, Percent, Clock, Wrench, TrendingUp, Users, Target, Receipt } from 'lucide-react';
-import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell } from 'recharts';
+import { XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell } from 'recharts';
+import { Tooltip as UiTooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -177,19 +178,19 @@ export function GeneralTab() {
   // 12 KPIs réorganisés avec vraies données
   const kpis = [
     // Ligne 1
-    { icon: FolderOpen, title: 'Dossiers', value: data?.nbDossiers ?? 0, format: 'number', color: 'blue' },
-    { icon: FileText, title: 'Devis émis', value: data?.nbDevis ?? 0, format: 'number', color: 'teal' },
-    { icon: Receipt, title: 'Factures', value: data?.nbFactures ?? 0, format: 'number', color: 'green' },
-    { icon: Euro, title: 'CA HT', value: data?.caHT ?? 0, format: 'currency', color: 'blue' },
-    { icon: ShoppingCart, title: 'Panier', value: data?.panierMoyen ?? 0, format: 'currency', color: 'purple' },
-    { icon: Wrench, title: 'Interventions', value: data?.nbInterventions ?? 0, format: 'number', color: 'orange' },
+    { icon: FolderOpen, title: 'Dossiers', value: data?.nbDossiers ?? 0, format: 'number', color: 'blue', tooltip: 'Nombre de dossiers créés sur la période' },
+    { icon: FileText, title: 'Devis émis', value: data?.nbDevis ?? 0, format: 'number', color: 'teal', tooltip: 'Nombre total de devis émis' },
+    { icon: Receipt, title: 'Factures', value: data?.nbFactures ?? 0, format: 'number', color: 'green', tooltip: 'Nombre de factures émises sur la période' },
+    { icon: Euro, title: 'CA HT', value: data?.caHT ?? 0, format: 'currency', color: 'blue', tooltip: 'Chiffre d\'affaires HT (somme des factures)' },
+    { icon: ShoppingCart, title: 'Panier', value: data?.panierMoyen ?? 0, format: 'currency', color: 'purple', tooltip: 'Montant moyen HT par dossier (CA / nb factures)' },
+    { icon: Wrench, title: 'Interventions', value: data?.nbInterventions ?? 0, format: 'number', color: 'orange', tooltip: 'Nombre total d\'interventions réalisées' },
     // Ligne 2
-    { icon: AlertTriangle, title: 'Taux SAV', value: savData?.tauxSavGlobal ?? 0, format: 'percent', color: 'rose' },
-    { icon: Percent, title: 'Transfo', value: data?.tauxTransfo ?? 0, format: 'percent', color: 'teal' },
-    { icon: Clock, title: 'Délai', value: data?.delaiMoyen ?? 0, format: 'days', color: 'cyan' },
-    { icon: Target, title: 'RT', value: data?.nbRT ?? 0, format: 'number', color: 'purple' },
-    { icon: TrendingUp, title: 'Évolution', value: data?.evolutionCA ?? 0, format: 'evolution', color: 'green' },
-    { icon: Users, title: 'Techniciens', value: data?.nbTechsActifs ?? 0, format: 'number', color: 'blue' },
+    { icon: AlertTriangle, title: 'Taux SAV', value: savData?.tauxSavGlobal ?? 0, format: 'percent', color: 'rose', tooltip: 'Pourcentage de dossiers ayant un SAV' },
+    { icon: Percent, title: 'Transfo', value: data?.tauxTransfo ?? 0, format: 'percent', color: 'teal', tooltip: 'Taux de transformation devis → factures (en nombre)' },
+    { icon: Clock, title: 'Délai', value: data?.delaiMoyen ?? 0, format: 'days', color: 'cyan', tooltip: 'Durée moyenne d\'un dossier (création → clôture)' },
+    { icon: Target, title: 'RT', value: data?.nbRT ?? 0, format: 'number', color: 'purple', tooltip: 'Nombre de relevés techniques réalisés' },
+    { icon: TrendingUp, title: 'Évolution', value: data?.evolutionCA ?? 0, format: 'evolution', color: 'green', tooltip: 'Évolution du CA vs même période N-1' },
+    { icon: Users, title: 'Techniciens', value: data?.nbTechsActifs ?? 0, format: 'number', color: 'blue', tooltip: 'Nombre de techniciens actifs sur la période' },
   ];
 
   const formatValue = (value: number, format: string) => {
@@ -229,19 +230,26 @@ export function GeneralTab() {
           const colors = colorMap[kpi.color] || colorMap.blue;
           return (
             <motion.div key={kpi.title} variants={itemVariants}>
-              <Card className={`border-l-3 ${colors.border} ${colors.bg} hover:shadow-sm transition-all h-full rounded-xl`}>
-                <CardContent className="p-3">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <kpi.icon className={`w-3.5 h-3.5 ${colors.text}`} />
-                    <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide truncate">
-                      {kpi.title}
-                    </span>
-                  </div>
-                  <p className={`text-base sm:text-lg font-bold ${colors.text} truncate`}>
-                    {formatValue(kpi.value, kpi.format)}
-                  </p>
-                </CardContent>
-              </Card>
+              <UiTooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <Card className={`border-l-3 ${colors.border} ${colors.bg} hover:shadow-sm transition-all h-full rounded-xl cursor-default`}>
+                    <CardContent className="p-3">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <kpi.icon className={`w-3.5 h-3.5 ${colors.text}`} />
+                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide truncate">
+                          {kpi.title}
+                        </span>
+                      </div>
+                      <p className={`text-base sm:text-lg font-bold ${colors.text} truncate`}>
+                        {formatValue(kpi.value, kpi.format)}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[220px] text-xs">
+                  {kpi.tooltip}
+                </TooltipContent>
+              </UiTooltip>
             </motion.div>
           );
         })}
@@ -261,7 +269,7 @@ export function GeneralTab() {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted/50" />
                   <XAxis dataKey="mois" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip 
+                  <RechartsTooltip 
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--card))', 
                       border: '1px solid hsl(var(--border))',
@@ -308,7 +316,7 @@ export function GeneralTab() {
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted/50" horizontal={false} />
                     <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => formatCurrency(v)} />
                     <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={65} />
-                    <Tooltip 
+                    <RechartsTooltip 
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--card))', 
                         border: '1px solid hsl(var(--border))',

@@ -6,6 +6,7 @@ import { usePersonalKpis } from '@/hooks/usePersonalKpis';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FileText, Receipt, FolderPlus, Calendar, Users, FolderOpen, AlertCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const ASSISTANTE_KPIS = [
   { 
@@ -13,42 +14,48 @@ const ASSISTANTE_KPIS = [
     label: 'Devis créés', 
     icon: FileText,
     format: 'number',
-    color: 'bg-blue-400/70'
+    color: 'bg-blue-400/70',
+    tooltip: 'Nombre de devis que vous avez créés ce mois'
   },
   { 
     key: 'facturesCrees', 
     label: 'Factures créées', 
     icon: Receipt,
     format: 'number',
-    color: 'bg-emerald-400/70'
+    color: 'bg-emerald-400/70',
+    tooltip: 'Nombre de factures émises par vous ce mois'
   },
   { 
     key: 'dossiersCrees', 
     label: 'Dossiers créés', 
     icon: FolderPlus,
     format: 'number',
-    color: 'bg-violet-400/70'
+    color: 'bg-violet-400/70',
+    tooltip: 'Nombre de nouveaux dossiers créés ce mois'
   },
   { 
     key: 'rdvPlanifies', 
     label: 'RDV planifiés', 
     icon: Calendar,
     format: 'number',
-    color: 'bg-amber-400/70'
+    color: 'bg-amber-400/70',
+    tooltip: 'Nombre de rendez-vous que vous avez planifiés'
   },
   { 
     key: 'dossiersEnCours', 
     label: 'Dossiers en cours', 
     icon: FolderOpen,
     format: 'number',
-    color: 'bg-cyan-400/70'
+    color: 'bg-cyan-400/70',
+    tooltip: 'Dossiers actuellement ouverts et en cours de traitement'
   },
   { 
     key: 'clientsContactes', 
     label: 'Clients contactés', 
     icon: Users,
     format: 'number',
-    color: 'bg-pink-400/70'
+    color: 'bg-pink-400/70',
+    tooltip: 'Nombre de clients distincts contactés ce mois'
   },
 ];
 
@@ -105,15 +112,22 @@ export function AssistanteKpisWidget() {
         const value = kpis[kpi.key as keyof typeof kpis];
         
         return (
-          <Card key={kpi.key} className="p-3 border hover:border-primary/50 transition-colors">
-            <div className="flex items-center gap-2 mb-2">
-              <div className={`${kpi.color} p-1.5 rounded text-white`}>
-                <Icon className="h-3.5 w-3.5" />
-              </div>
-              <span className="text-[11px] text-muted-foreground truncate">{kpi.label}</span>
-            </div>
-            <p className="text-lg font-bold">{formatValue(value)}</p>
-          </Card>
+          <Tooltip key={kpi.key} delayDuration={300}>
+            <TooltipTrigger asChild>
+              <Card className="p-3 border hover:border-primary/50 transition-colors cursor-default">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className={`${kpi.color} p-1.5 rounded text-white`}>
+                    <Icon className="h-3.5 w-3.5" />
+                  </div>
+                  <span className="text-[11px] text-muted-foreground truncate">{kpi.label}</span>
+                </div>
+                <p className="text-lg font-bold">{formatValue(value)}</p>
+              </Card>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-[200px] text-xs">
+              {kpi.tooltip}
+            </TooltipContent>
+          </Tooltip>
         );
       })}
     </div>
