@@ -36,6 +36,7 @@ import {
   Sparkles,
   X,
   AlertTriangle,
+  ArrowLeft,
   Camera,
   Upload,
   Monitor,
@@ -493,6 +494,39 @@ export function SimplifiedSupportChat({
     }
   };
 
+  // ─── Go back ──────────────────────────────────────────────────
+  const handleGoBack = () => {
+    if (showScreenshotStep) {
+      setShowScreenshotStep(false);
+      setScreenshotFile(null);
+      return;
+    }
+    if (aiHasResponded || messages.length > 1) {
+      // Back from chat to orientation
+      setOrientationComplete(false);
+      setOrientationStep(0);
+      setOrientationAnswers({});
+      setMessages([]);
+      setInput('');
+      setAiHasResponded(false);
+      setTicketCreated(false);
+      return;
+    }
+    if (orientationComplete) {
+      setOrientationComplete(false);
+      setMessages([]);
+      return;
+    }
+    if (orientationStep > 0) {
+      setOrientationStep(orientationStep - 1);
+      return;
+    }
+    // Back to domain selection
+    setSelectedDomain(null);
+    setOrientationStep(0);
+    setOrientationAnswers({});
+  };
+
   // ─── Reset ────────────────────────────────────────────────────
   const handleNewChat = () => {
     setSelectedDomain(null);
@@ -552,6 +586,11 @@ export function SimplifiedSupportChat({
     const currentStep = ORIENTATION_STEPS[orientationStep];
     return (
       <div className={cn("flex flex-col h-full", className)}>
+        <div className="px-3 pt-2">
+          <Button variant="ghost" size="sm" onClick={handleGoBack} className="gap-1 text-xs text-muted-foreground hover:text-foreground h-7 px-2">
+            <ArrowLeft className="w-3.5 h-3.5" /> Retour
+          </Button>
+        </div>
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
             <div className="flex items-start gap-3">
@@ -587,8 +626,13 @@ export function SimplifiedSupportChat({
   // Screenshot step
   if (showScreenshotStep) {
     return (
-      <div className={cn("flex flex-col h-full items-center justify-center p-6", className)}>
-        <div className="w-full max-w-md space-y-5">
+      <div className={cn("flex flex-col h-full p-6", className)}>
+        <div className="mb-2">
+          <Button variant="ghost" size="sm" onClick={handleGoBack} className="gap-1 text-xs text-muted-foreground hover:text-foreground h-7 px-2">
+            <ArrowLeft className="w-3.5 h-3.5" /> Retour
+          </Button>
+        </div>
+        <div className="w-full max-w-md mx-auto space-y-5 flex-1 flex flex-col justify-center">
           <div className="text-center">
             <div className="w-14 h-14 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center mb-3">
               <Camera className="w-7 h-7 text-primary" />
@@ -691,8 +735,11 @@ export function SimplifiedSupportChat({
   // Main chat
   return (
     <div className={cn("flex flex-col h-full", className)}>
-      {/* Domain indicator */}
+      {/* Domain indicator + back */}
       <div className="px-4 pt-2 pb-1 flex items-center gap-2">
+        <Button variant="ghost" size="sm" onClick={handleGoBack} className="gap-1 text-xs text-muted-foreground hover:text-foreground h-7 px-2">
+          <ArrowLeft className="w-3.5 h-3.5" /> Retour
+        </Button>
         <Badge variant="outline" className="rounded-full text-xs">
           {DOMAIN_OPTIONS.find(d => d.value === selectedDomain)?.emoji}{' '}
           {DOMAIN_OPTIONS.find(d => d.value === selectedDomain)?.label}
