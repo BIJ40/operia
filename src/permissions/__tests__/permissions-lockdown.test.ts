@@ -201,8 +201,14 @@ describe('N5/N6 bypass access', () => {
 // ============================================================================
 
 describe('Agency-required module enforcement', () => {
+  // Filter to legacy keys only — hierarchical keys are resolved at the guard/COMPAT_MAP layer,
+  // not by the hasAccess engine which iterates MODULE_DEFINITIONS (flat keys only).
+  const engineAgencyModules = AGENCY_REQUIRED_MODULES.filter(
+    m => MODULE_DEFINITIONS.some(d => d.key === m)
+  );
+
   it('denies agency modules when no agencyId (for non-bypass roles)', () => {
-    for (const moduleId of AGENCY_REQUIRED_MODULES) {
+    for (const moduleId of engineAgencyModules) {
       const params: HasAccessParams = {
         globalRole: 'franchisee_admin',
         enabledModules: { [moduleId]: { enabled: true, options: {} } },
@@ -214,7 +220,7 @@ describe('Agency-required module enforcement', () => {
   });
 
   it('allows agency modules with agencyId', () => {
-    for (const moduleId of AGENCY_REQUIRED_MODULES) {
+    for (const moduleId of engineAgencyModules) {
       const params: HasAccessParams = {
         globalRole: 'franchisee_admin',
         enabledModules: { [moduleId]: { enabled: true, options: {} } },
