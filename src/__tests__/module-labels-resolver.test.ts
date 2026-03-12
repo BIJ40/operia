@@ -50,11 +50,11 @@ describe('resolveModuleLabel — DB override priority', () => {
 // ============================================================================
 
 describe('resolveModuleShortLabel', () => {
-  it('returns MODULE_SHORT_LABELS entry when available', () => {
+  it('returns DB label when available (DB always wins)', () => {
     const dbLabels = { 'organisation.salaries': 'Renamed Full Label' };
     const result = resolveModuleShortLabel('organisation.salaries', dbLabels);
-    // SHORT_LABELS should take priority over DB full labels for short display
-    expect(result).toBe(MODULE_SHORT_LABELS['organisation.salaries']);
+    // DB label (admin rename) always takes priority over SHORT_LABELS
+    expect(result).toBe('Renamed Full Label');
   });
 
   it('falls back to DB label when no short label defined', () => {
