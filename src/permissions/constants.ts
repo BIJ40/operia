@@ -104,9 +104,9 @@ export const MODULE_OPTION_MIN_ROLES: Record<string, GlobalRole> = {
   'pilotage.agence.actions_a_mener': 'franchisee_admin',
   'pilotage.agence.diffusion': 'franchisee_admin',
   
-  // Pilotage — Dashboard (ex-stats)
-  'pilotage.dashboard.stats_hub': 'franchisee_admin',
-  'pilotage.dashboard.exports': 'franchisee_admin',
+  // Pilotage — Statistiques (ex-stats, ex-dashboard)
+  'pilotage.statistiques.general': 'franchisee_admin',
+  'pilotage.statistiques.exports': 'franchisee_admin',
 
   // Médiathèque — Documents (ex-divers_documents)
   'mediatheque.documents.consulter': 'franchisee_admin',

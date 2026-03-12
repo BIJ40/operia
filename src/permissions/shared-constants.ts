@@ -90,25 +90,15 @@ export const SHARED_NETWORK_MIN_ROLE: SharedGlobalRole = 'franchisor_user';
  * Last sync: 2026-03-08 (aligned rh/parc to franchisee_admin per MODULE_DEFINITIONS)
  */
 export const SHARED_MODULE_MIN_ROLES: Partial<Record<SharedModuleKey, SharedGlobalRole>> = {
-  // Legacy
-  agence: 'franchisee_admin',
-  stats: 'franchisee_admin',
-  rh: 'franchisee_admin',
-  parc: 'franchisee_admin',
-  divers_apporteurs: 'franchisee_admin',
-  divers_plannings: 'franchisee_admin',
-  divers_reunions: 'franchisee_admin',
-  divers_documents: 'franchisee_admin',
-  guides: 'franchisee_admin',
+  // Non-migrated legacy
   ticketing: 'base_user',
-  aide: 'base_user',
   prospection: 'franchisee_user',
   planning_augmente: 'franchisee_admin',
   reseau_franchiseur: 'franchisor_user',
   admin_plateforme: 'platform_admin',
-  // Hierarchical (Phase 7)
+  // Hierarchical (Phase 7+10)
   'pilotage.agence': 'franchisee_admin',
-  'pilotage.dashboard': 'franchisee_admin',
+  'pilotage.statistiques': 'franchisee_admin',
   'organisation.salaries': 'franchisee_admin',
   'organisation.parc': 'franchisee_admin',
   'organisation.apporteurs': 'franchisee_admin',

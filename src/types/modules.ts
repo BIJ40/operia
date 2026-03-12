@@ -561,7 +561,7 @@ export const MODULE_SHORT_LABELS: Partial<Record<ModuleKey, string>> = {
   unified_search: 'Recherche',
   // Pilotage
   'pilotage.agence': 'Agence',
-  'pilotage.dashboard': 'Stats',
+  // pilotage.dashboard removed
   'pilotage.statistiques': 'Statistiques',
   'pilotage.performance': 'Performance',
   'pilotage.actions_a_mener': 'Actions',

@@ -42,7 +42,7 @@ import type { EnabledModules, ModuleKey } from '@/types/modules';
  */
 const LEGACY_TO_HIERARCHICAL: Record<string, string> = {
   agence: 'pilotage.agence',
-  stats: 'pilotage.dashboard',
+  stats: 'pilotage.statistiques',
   rh: 'organisation.salaries',
   parc: 'organisation.parc',
   divers_apporteurs: 'organisation.apporteurs',

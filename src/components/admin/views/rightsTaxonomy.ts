@@ -24,11 +24,11 @@ export const RIGHTS_CATEGORIES: RightsCategory[] = [
     'organisation.plannings', 'organisation.reunions', 'organisation.parc',
   ]},
   { id: 'documents', label: 'Documents', moduleKeys: [
-    'mediatheque', 'mediatheque.documents', 'documents',
+    'mediatheque', 'mediatheque.documents',
   ]},
   { id: 'support', label: 'Support', moduleKeys: [
     'support', 'support.aide_en_ligne', 'support.guides',
-    'ticketing', 'guides', 'aide',
+    'ticketing',
   ]},
   { id: 'admin', label: 'Admin', moduleKeys: [
     'admin', 'admin_plateforme', 'reseau_franchiseur',
