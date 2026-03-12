@@ -60,9 +60,10 @@ export function nodeMatchesAnyCategory(nodeKey: string): boolean {
 const NAVIGATION_LABEL_FALLBACKS: Record<string, string> = {
   'organisation.salaries': 'Salariés',
   'organisation.parc': 'Parc',
+  'organisation.docgen': 'DocGen',
   prospection: 'Prospection',
   admin_plateforme: 'Admin plateforme',
-  'pilotage.agence': 'Pilotage agence',
+  planning_augmente: 'Planification Augmentée',
   'mediatheque.documents': 'Documents',
   'organisation.apporteurs': 'Apporteurs',
   'organisation.plannings': 'Plannings',
