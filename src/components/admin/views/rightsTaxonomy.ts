@@ -24,6 +24,7 @@ export const RIGHTS_CATEGORIES: RightsCategory[] = [
   { id: 'organisation', label: 'Organisation', moduleKeys: [
     'organisation', 'organisation.salaries', 'organisation.apporteurs',
     'organisation.plannings', 'organisation.reunions', 'organisation.parc',
+    'organisation.docgen',
   ]},
   { id: 'documents', label: 'Documents', moduleKeys: [
     'mediatheque', 'mediatheque.documents',
