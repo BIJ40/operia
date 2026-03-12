@@ -61,7 +61,30 @@ interface PillTabsListProps {
 
 function SwitcherTabs({ tabs, className }: { tabs: PillTabConfig[]; className?: string }) {
   const accent = useDomainAccent();
-  const colors = getAccentColors(accent);
+
+  // Pre-built class maps for data-[state=active] — Tailwind needs static strings
+  const SWITCHER_ACTIVE: Record<string, string> = {
+    blue: 'data-[state=active]:bg-warm-blue/15 data-[state=active]:border-warm-blue/40 data-[state=active]:text-warm-blue',
+    orange: 'data-[state=active]:bg-warm-orange/15 data-[state=active]:border-warm-orange/40 data-[state=active]:text-warm-orange',
+    green: 'data-[state=active]:bg-warm-green/15 data-[state=active]:border-warm-green/40 data-[state=active]:text-warm-green',
+    purple: 'data-[state=active]:bg-warm-purple/15 data-[state=active]:border-warm-purple/40 data-[state=active]:text-warm-purple',
+    pink: 'data-[state=active]:bg-warm-pink/15 data-[state=active]:border-warm-pink/40 data-[state=active]:text-warm-pink',
+    teal: 'data-[state=active]:bg-warm-teal/15 data-[state=active]:border-warm-teal/40 data-[state=active]:text-warm-teal',
+    red: 'data-[state=active]:bg-warm-red/15 data-[state=active]:border-warm-red/40 data-[state=active]:text-warm-red',
+  };
+
+  const SWITCHER_HOVER: Record<string, string> = {
+    blue: 'hover:bg-warm-blue/10 hover:text-warm-blue',
+    orange: 'hover:bg-warm-orange/10 hover:text-warm-orange',
+    green: 'hover:bg-warm-green/10 hover:text-warm-green',
+    purple: 'hover:bg-warm-purple/10 hover:text-warm-purple',
+    pink: 'hover:bg-warm-pink/10 hover:text-warm-pink',
+    teal: 'hover:bg-warm-teal/10 hover:text-warm-teal',
+    red: 'hover:bg-warm-red/10 hover:text-warm-red',
+  };
+
+  const activeClasses = SWITCHER_ACTIVE[accent] || SWITCHER_ACTIVE.blue;
+  const hoverClasses = SWITCHER_HOVER[accent] || SWITCHER_HOVER.blue;
 
   return (
     <div className="flex justify-center">
@@ -80,11 +103,9 @@ function SwitcherTabs({ tabs, className }: { tabs: PillTabConfig[]; className?: 
               className={cn(
                 "flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-medium transition-all",
                 "text-muted-foreground bg-transparent border border-transparent",
-                colors.hoverBg, colors.hoverText,
-                `data-[state=active]:${colors.activeBg.replace('bg-', 'bg-')}`,
-                `data-[state=active]:shadow-sm`,
-                `data-[state=active]:${colors.activeBorder.replace('border-', 'border-')}`,
-                `data-[state=active]:${colors.activeText.replace('text-', 'text-')}`,
+                hoverClasses,
+                activeClasses,
+                "data-[state=active]:shadow-sm",
                 isDisabled && "opacity-50 cursor-not-allowed hover:bg-transparent hover:text-muted-foreground"
               )}
             >
