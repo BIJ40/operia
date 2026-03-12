@@ -214,12 +214,14 @@ export function PrevisionnelTab() {
           return (
             <motion.div key={etatStats.etat} variants={itemVariants}>
               <Card className={`border-l-4 ${config.bgClass}`} style={{ borderLeftColor: config.color }}>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">{etatStats.etatLabel}</CardTitle>
-                  <Icon className="h-5 w-5" style={{ color: config.color }} />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold" style={{ color: config.color }}>{etatStats.nbDossiers}</div>
+                {/* Header */}
+                <div className="flex items-start justify-between p-4 pb-2">
+                  <h4 className="text-sm font-medium text-muted-foreground">{etatStats.etatLabel}</h4>
+                  <Icon className="h-4 w-4" style={{ color: config.color }} />
+                </div>
+                {/* Content */}
+                <div className="px-4 pb-4">
+                  <div className="text-2xl font-bold" style={{ color: config.color }}>{etatStats.nbDossiers}</div>
                   <p className="text-sm text-muted-foreground mt-1">dossiers</p>
                   <div className="flex gap-4 mt-3 text-xs">
                     <div className="flex items-center gap-1">
@@ -232,7 +234,7 @@ export function PrevisionnelTab() {
                       <span className="font-medium">{formatCurrency(etatStats.devisHT)}</span>
                     </div>
                   </div>
-                </CardContent>
+                </div>
               </Card>
             </motion.div>
           );
