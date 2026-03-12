@@ -55,14 +55,14 @@ export function resolveModuleLabel(
 /**
  * Résout le label court d'un module.
  * Priorité : dbLabel > SHORT_LABELS > definitionLabel > fallback > key
+ * Le label DB (renommage admin) a TOUJOURS priorité.
  */
 export function resolveModuleShortLabel(
   key: string,
   dbLabels: Record<string, string>,
   fallback?: string
 ): string {
-  // For short labels, prefer explicit short labels over DB full labels
-  return SHORT_LABELS[key] ?? dbLabels[key] ?? DEFINITION_LABELS[key] ?? fallback ?? key;
+  return dbLabels[key] ?? SHORT_LABELS[key] ?? DEFINITION_LABELS[key] ?? fallback ?? key;
 }
 
 // ============================================================================
