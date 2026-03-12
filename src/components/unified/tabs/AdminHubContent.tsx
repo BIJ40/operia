@@ -6,7 +6,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Shield, Network, UserCheck, UserPlus, ScrollText } from 'lucide-react';
+import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Shield, Network, UserCheck, UserPlus, ScrollText, StickyNote } from 'lucide-react';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { 
   DraggableFolderTabsList, 
@@ -33,7 +33,7 @@ const FranchiseurView = lazy(() => import('@/components/unified/views/Franchiseu
 const ApporteurManagersAdminView = lazy(() => import('@/components/admin/views/ApporteurManagersAdminView'));
 const PendingRegistrationsList = lazy(() => import('@/components/admin/registrations/PendingRegistrationsList'));
 const ApporteurAuditLogView = lazy(() => import('@/components/admin/views/ApporteurAuditLogView'));
-
+const AdminNotesView = lazy(() => import('@/components/admin/views/AdminNotesView'));
 function LoadingFallback() {
   return (
     <div className="flex items-center justify-center h-64">
@@ -60,11 +60,12 @@ const GESTION_SUB_TABS: FolderTabConfig[] = [
   { id: 'audit-apporteurs', label: 'Audit Apporteurs', icon: ScrollText, accent: 'green' },
   { id: 'agences', label: 'Agences', icon: Building2, accent: 'purple' },
   { id: 'modules', label: 'Droits', icon: Shield, accent: 'orange' },
+  { id: 'notes', label: 'Notes', icon: StickyNote, accent: 'orange' },
   { id: 'activity', label: 'Activité', icon: Activity, accent: 'green' },
 ];
 
 const ADMIN_MAIN_TAB_IDS = ADMIN_MAIN_TABS.map(tab => tab.id);
-const DEFAULT_GESTION_ORDER = ['users', 'inscriptions', 'apporteurs', 'audit-apporteurs', 'agences', 'modules', 'activity'];
+const DEFAULT_GESTION_ORDER = ['users', 'inscriptions', 'apporteurs', 'audit-apporteurs', 'agences', 'modules', 'notes', 'activity'];
 
 export default function AdminHubContent() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -174,6 +175,12 @@ export default function AdminHubContent() {
 
                 <TabsContent value="modules" className="mt-0 focus-visible:outline-none">
                   <ModulesMasterView />
+                </TabsContent>
+
+                <TabsContent value="notes" className="mt-0 focus-visible:outline-none">
+                  <Suspense fallback={<LoadingFallback />}>
+                    <AdminNotesView />
+                  </Suspense>
                 </TabsContent>
 
                 <TabsContent value="activity" className="mt-0 focus-visible:outline-none">
