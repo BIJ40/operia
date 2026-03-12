@@ -96,9 +96,11 @@ export const HEADER_NAV_GROUPS: HeaderNavGroup[] = [
     label: 'Admin',
     icon: Shield,
     tab: 'admin',
-    accent: 'pink',
+    accent: 'red',
     children: [
-      { label: 'Administration', icon: Shield, tab: 'admin', description: 'Paramètres plateforme', scope: 'admin_plateforme' },
+      { label: 'Utilisateurs', icon: UsersIcon, tab: 'admin', description: 'Gestion des comptes', scope: 'admin_plateforme', subTabKey: 'admin_main_tab', subTabValue: 'gestion' },
+      { label: 'Agences', icon: Building2, tab: 'admin', description: 'Réseau d\'agences', scope: 'admin_plateforme', subTabKey: 'admin_main_tab', subTabValue: 'gestion' },
+      { label: 'Droits', icon: Shield, tab: 'admin', description: 'Permissions et modules', scope: 'admin_plateforme', subTabKey: 'admin_main_tab', subTabValue: 'gestion' },
     ],
   },
 ];
