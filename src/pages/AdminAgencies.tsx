@@ -57,6 +57,7 @@ interface UserProfile {
   last_name: string | null;
   email: string | null;
   agence: string | null;
+  agency_id: string | null;
   role_agence: string | null;
 }
 
