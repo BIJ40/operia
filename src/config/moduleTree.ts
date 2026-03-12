@@ -15,6 +15,8 @@ export interface ModuleTreeNode {
   nodeType: 'section' | 'screen' | 'feature';
   requiredPlan: 'STARTER' | 'PRO';
   deployed: boolean;
+  /** Si true, ce module n'est activé que par overwrite utilisateur */
+  overwriteOnly?: boolean;
   children?: ModuleTreeNode[];
 }
 

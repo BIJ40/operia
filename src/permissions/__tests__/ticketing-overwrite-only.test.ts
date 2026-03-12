@@ -11,6 +11,14 @@ import { DEFAULT_MODULES_BY_ROLE } from '@/config/modulesByRole';
 import { isModuleEnabled } from '@/permissions/permissionsEngine';
 import { OVERWRITE_ONLY_MODULES, isOverwriteOnlyModule } from '@/permissions/moduleRegistry';
 import { GlobalRole } from '@/types/globalRoles';
+import type { PermissionContext } from '@/permissions/types';
+
+const makeCtx = (overrides: Partial<PermissionContext> = {}): PermissionContext => ({
+  globalRole: 'base_user',
+  enabledModules: null,
+  agencyId: null,
+  ...overrides,
+});
 
 describe('Ticketing: overwrite-only module', () => {
   // ========================================
@@ -64,33 +72,33 @@ describe('Ticketing: overwrite-only module', () => {
   // ========================================
 
   it('STARTER user → ticketing = false', () => {
-    const result = isModuleEnabled({}, 'ticketing');
-    expect(result).toBe(false);
+    const ctx = makeCtx({ globalRole: 'franchisee_user', enabledModules: {} });
+    expect(isModuleEnabled(ctx, 'ticketing')).toBe(false);
   });
 
   it('PRO user → ticketing = false', () => {
-    const result = isModuleEnabled({}, 'ticketing');
-    expect(result).toBe(false);
+    const ctx = makeCtx({ globalRole: 'franchisee_admin', enabledModules: {} });
+    expect(isModuleEnabled(ctx, 'ticketing')).toBe(false);
   });
 
   it('null enabledModules → ticketing = false', () => {
-    const result = isModuleEnabled(null, 'ticketing');
-    expect(result).toBe(false);
+    const ctx = makeCtx({ globalRole: 'base_user', enabledModules: null });
+    expect(isModuleEnabled(ctx, 'ticketing')).toBe(false);
   });
 
   it('user with overwrite → ticketing = true', () => {
-    const result = isModuleEnabled(
-      { ticketing: { enabled: true, options: { kanban: true } } },
-      'ticketing'
-    );
-    expect(result).toBe(true);
+    const ctx = makeCtx({
+      globalRole: 'franchisee_user',
+      enabledModules: { ticketing: { enabled: true, options: { kanban: true } } },
+    });
+    expect(isModuleEnabled(ctx, 'ticketing')).toBe(true);
   });
 
   it('superadmin with ticketing in enabledModules → ticketing = true', () => {
-    const result = isModuleEnabled(
-      { ticketing: { enabled: true, options: { kanban: true, manage: true, import: true } } },
-      'ticketing'
-    );
-    expect(result).toBe(true);
+    const ctx = makeCtx({
+      globalRole: 'superadmin',
+      enabledModules: { ticketing: { enabled: true, options: { kanban: true, manage: true, import: true } } },
+    });
+    expect(isModuleEnabled(ctx, 'ticketing')).toBe(true);
   });
 });
