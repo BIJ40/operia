@@ -2,7 +2,7 @@ import {
   BarChart3, Activity, ListChecks, FileCheck, AlertTriangle,
   ShoppingCart, Users as UsersIcon, Search, Eye, TrendingUp,
   Users, Car, Handshake, CalendarDays, MessagesSquare,
-  FolderOpen, Headphones, HelpCircle, Kanban, Shield,
+  FolderOpen, Headphones, HelpCircle, Kanban, Shield, Building2,
   type LucideIcon,
 } from 'lucide-react';
 import type { UnifiedTab } from '@/components/unified/workspace/types';
