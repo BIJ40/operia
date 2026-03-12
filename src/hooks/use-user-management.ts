@@ -280,7 +280,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
   }, [agencies, manageableAgencyIds]);
 
   // Module check helper
-  const isModuleEnabledForUser = (modules: EnabledModules, moduleKey: ModuleKey): boolean => {
+  const isModuleEnabledForUser = (modules: EnabledModules, moduleKey: string): boolean => {
     const state = modules[moduleKey];
     if (typeof state === 'boolean') return state;
     if (typeof state === 'object') return state.enabled;
