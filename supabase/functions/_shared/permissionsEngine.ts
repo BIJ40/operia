@@ -108,25 +108,15 @@ export const ROLE_HIERARCHY: Record<GlobalRole, number> = {
 // Edge functions can't import from src/, so this is a synced copy.
 // Last sync: 2026-03-08
 export const MODULE_MIN_ROLES: Partial<Record<ModuleKey, GlobalRole>> = {
-  // Legacy
-  agence: 'franchisee_admin',
-  stats: 'franchisee_admin',
-  rh: 'franchisee_admin',
-  parc: 'franchisee_admin',
-  divers_apporteurs: 'franchisee_admin',
-  divers_plannings: 'franchisee_admin',
-  divers_reunions: 'franchisee_admin',
-  divers_documents: 'franchisee_admin',
-  guides: 'base_user',
+  // Non-migrated legacy
   ticketing: 'base_user',
-  aide: 'base_user',
   prospection: 'franchisee_admin',
   planning_augmente: 'franchisee_admin',
   reseau_franchiseur: 'franchisor_user',
   admin_plateforme: 'platform_admin',
-  // Hierarchical (Phase 7)
+  // Hierarchical (Phase 7+10)
   'pilotage.agence': 'franchisee_admin',
-  'pilotage.dashboard': 'franchisee_admin',
+  'pilotage.statistiques': 'franchisee_admin',
   'organisation.salaries': 'franchisee_admin',
   'organisation.parc': 'franchisee_admin',
   'organisation.apporteurs': 'franchisee_admin',
