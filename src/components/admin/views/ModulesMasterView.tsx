@@ -14,7 +14,7 @@
  * Seul N6 (superadmin) peut changer le statut is_deployed.
  */
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, Fragment } from 'react';
 import {
   useModuleRegistry,
   useUpdateModuleNode,
@@ -464,7 +464,9 @@ function getModuleRoute(key: string): string | null {
   return null;
 }
 
-const GRID_COLS = 'grid-cols-[minmax(220px,max-content)_auto_auto_auto_auto_auto_auto_auto]';
+// Table-based layout for proper column alignment
+const TD_CLASS = 'py-2 px-3 text-sm whitespace-nowrap';
+const TD_CLASS_NAME = 'py-2 px-3 text-sm'; // name column can wrap
 
 interface ModuleRowProps {
   node: RegistryNode;
@@ -504,10 +506,9 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
   };
 
   return (
-    <div
+    <tr
       className={cn(
-        `grid ${GRID_COLS} gap-x-4 gap-y-0 items-center py-2 px-3 border-b border-border/50 text-sm`,
-        'hover:bg-muted/30 transition-colors',
+        'border-b border-border/50 hover:bg-muted/30 transition-colors text-sm',
         !node.effectiveDeployed && !isDevSection && 'opacity-50',
         isNeutralized && 'bg-destructive/5',
         node.depth === 0 && !isDevSection && 'bg-muted/20',
@@ -515,68 +516,70 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
       )}
     >
       {/* Name */}
-      <div
-        className="flex items-center min-w-0"
-        style={{ paddingLeft: `${(isDevSection ? 0 : node.depth) * 16}px` }}
-      >
-        {node.depth > 0 && !isDevSection && <CornerDownRight className={cn('w-3.5 h-3.5 mr-1.5 shrink-0', branchColor)} />}
-        {isDevSection && (
-          <Construction className="w-3.5 h-3.5 mr-1.5 shrink-0 text-amber-500" />
-        )}
+      <td className={TD_CLASS_NAME}>
+        <div
+          className="flex items-center min-w-0"
+          style={{ paddingLeft: `${(isDevSection ? 0 : node.depth) * 16}px` }}
+        >
+          {node.depth > 0 && !isDevSection && <CornerDownRight className={cn('w-3.5 h-3.5 mr-1.5 shrink-0', branchColor)} />}
+          {isDevSection && (
+            <Construction className="w-3.5 h-3.5 mr-1.5 shrink-0 text-amber-500" />
+          )}
 
-        {isEditing ? (
-          <div className="flex flex-col gap-0.5">
-            <Input
-              value={draftLabel}
-              onChange={(e) => setDraftLabel(e.target.value)}
-              onBlur={commitRename}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') commitRename();
-                if (e.key === 'Escape') {
-                  setDraftLabel(node.label);
-                  setIsEditing(false);
-                }
-              }}
-              autoFocus
-              className="h-7 text-xs"
-            />
-            <span className="text-[9px] text-muted-foreground">
-              Renommage visuel uniquement — ne modifie pas la clé technique ni les permissions.
-            </span>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => !isUpdating && setIsEditing(true)}
-            className={cn(
-              'truncate text-left hover:underline underline-offset-2',
-              isUpdating && 'cursor-not-allowed opacity-70',
-              isDevSection && 'text-amber-700 dark:text-amber-400 font-medium',
-              !isDevSection && node.depth === 0 && 'font-semibold text-foreground uppercase tracking-wide',
-              !isDevSection && node.depth === 1 && 'font-medium text-blue-600 dark:text-blue-400',
-              !isDevSection && node.depth >= 2 && 'text-violet-600 dark:text-violet-400'
-            )}
-            title="Cliquer pour renommer le libellé (visuel uniquement)"
-          >
-            {node.label}
-          </button>
-        )}
+          {isEditing ? (
+            <div className="flex flex-col gap-0.5">
+              <Input
+                value={draftLabel}
+                onChange={(e) => setDraftLabel(e.target.value)}
+                onBlur={commitRename}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') commitRename();
+                  if (e.key === 'Escape') {
+                    setDraftLabel(node.label);
+                    setIsEditing(false);
+                  }
+                }}
+                autoFocus
+                className="h-7 text-xs"
+              />
+              <span className="text-[9px] text-muted-foreground">
+                Renommage visuel uniquement — ne modifie pas la clé technique ni les permissions.
+              </span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => !isUpdating && setIsEditing(true)}
+              className={cn(
+                'truncate text-left hover:underline underline-offset-2',
+                isUpdating && 'cursor-not-allowed opacity-70',
+                isDevSection && 'text-amber-700 dark:text-amber-400 font-medium',
+                !isDevSection && node.depth === 0 && 'font-semibold text-foreground uppercase tracking-wide',
+                !isDevSection && node.depth === 1 && 'font-medium text-blue-600 dark:text-blue-400',
+                !isDevSection && node.depth >= 2 && 'text-violet-600 dark:text-violet-400'
+              )}
+              title="Cliquer pour renommer le libellé (visuel uniquement)"
+            >
+              {node.label}
+            </button>
+          )}
 
-        {/* Clé technique (lecture seule) */}
-        <span className="ml-2 text-[10px] text-muted-foreground font-mono select-all" title="Clé technique (immuable)">
-          {node.key}
-        </span>
-
-        {isDevSection && node.parent_key && (
-          <span className="ml-2 text-[10px] text-muted-foreground">
-            ({node.parent_key})
+          {/* Clé technique (lecture seule) */}
+          <span className="ml-2 text-[10px] text-muted-foreground font-mono select-all whitespace-nowrap" title="Clé technique (immuable)">
+            {node.key}
           </span>
-        )}
-      </div>
 
-      <div><NodeTypeBadge nodeType={node.node_type} /></div>
+          {isDevSection && node.parent_key && (
+            <span className="ml-2 text-[10px] text-muted-foreground whitespace-nowrap">
+              ({node.parent_key})
+            </span>
+          )}
+        </div>
+      </td>
 
-      <div className="flex justify-center">
+      <td className={TD_CLASS}><NodeTypeBadge nodeType={node.node_type} /></td>
+
+      <td className={TD_CLASS}>
         <Switch
           checked={node.is_deployed}
           onCheckedChange={() => onToggleDeploy(node)}
@@ -584,27 +587,25 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
           className="scale-90"
           title={!canDeploy ? 'Seul un superadmin (N6) peut déployer' : undefined}
         />
-      </div>
+      </td>
 
-      <div className="flex justify-center">
+      <td className={TD_CLASS}>
         <PlanBadge plan={node.required_plan} onClick={() => onTogglePlan(node)} dimmed={!node.effectiveDeployed} />
-      </div>
+      </td>
 
-      <div className="flex justify-center">
+      <td className={TD_CLASS}>
         <PlanBadge plan={node.effectivePlan} readOnly dimmed={!node.effectiveDeployed} />
-      </div>
+      </td>
 
-      <div className="flex justify-center">
+      <td className={TD_CLASS}>
         <RoleBadge minRole={node.min_role} onChangeRole={(r) => onChangeRole(node, r)} dimmed={!node.effectiveDeployed} disabled={isUpdating} />
-      </div>
+      </td>
 
-      {/* Privilèges */}
-      <div className="flex justify-center relative z-10">
+      <td className={cn(TD_CLASS, 'relative z-10')}>
         <OverridesPopover moduleKey={node.key} overrides={overrides} dimmed={!node.effectiveDeployed} moduleMinRole={node.min_role} moduleRequiredPlan={node.required_plan} />
-      </div>
+      </td>
 
-      {/* Lien */}
-      <div className="flex justify-center">
+      <td className={TD_CLASS}>
         {route ? (
           <Button
             variant="ghost"
@@ -618,8 +619,8 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
         ) : (
           <span className="text-muted-foreground/30 text-xs">—</span>
         )}
-      </div>
-    </div>
+      </td>
+    </tr>
   );
 }
 
@@ -661,66 +662,64 @@ function CategoryHeaderRow({
   };
 
   return (
-    <div className={cn(`grid ${GRID_COLS} gap-x-4 gap-y-0 items-center py-2.5 px-3 border-b border-border bg-muted/20`)}>
-      <div className="flex items-center gap-2 min-w-0">
-        <button
-          type="button"
-          onClick={onToggle}
-          className="shrink-0"
-        >
-          <ChevronRight className={cn('w-4 h-4 transition-transform text-primary', !collapsed && 'rotate-90')} />
-        </button>
-
-        {isEditing && rootNode ? (
-          <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-            <Input
-              value={draftLabel}
-              onChange={(e) => setDraftLabel(e.target.value)}
-              onBlur={commitRename}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') commitRename();
-                if (e.key === 'Escape') {
-                  setDraftLabel(displayLabel);
-                  setIsEditing(false);
-                }
-              }}
-              autoFocus
-              className="h-7 text-xs font-semibold uppercase"
-            />
-            <span className="text-[9px] text-muted-foreground">
-              Renommage visuel uniquement — ne modifie pas la clé technique.
-            </span>
-          </div>
-        ) : (
+    <tr className="border-b border-border bg-muted/20">
+      <td className="py-2.5 px-3">
+        <div className="flex items-center gap-2 min-w-0">
           <button
             type="button"
-            onClick={() => rootNode && !isUpdating && setIsEditing(true)}
-            className={cn(
-              'font-semibold uppercase tracking-wide text-foreground truncate text-left',
-              rootNode && 'hover:underline underline-offset-2 cursor-pointer',
-              !rootNode && 'cursor-default'
-            )}
-            title={rootNode ? 'Cliquer pour renommer le libellé (visuel uniquement)' : undefined}
+            onClick={onToggle}
+            className="shrink-0"
           >
-            {displayLabel}
+            <ChevronRight className={cn('w-4 h-4 transition-transform text-primary', !collapsed && 'rotate-90')} />
           </button>
-        )}
 
-        <Badge variant="secondary" className="text-[10px] shrink-0">{moduleCount}</Badge>
-        {rootNode && (
-          <span className="ml-1 text-[10px] text-muted-foreground font-mono select-all shrink-0" title="Clé technique (immuable)">
-            {rootNode.key}
-          </span>
-        )}
-      </div>
-      <div className="text-muted-foreground/30">—</div>
-      <div className="text-muted-foreground/30">—</div>
-      <div className="text-muted-foreground/30">—</div>
-      <div className="text-muted-foreground/30">—</div>
-      <div className="text-muted-foreground/30">—</div>
-      <div className="text-muted-foreground/30">—</div>
-      <div className="text-muted-foreground/30">—</div>
-    </div>
+          {isEditing && rootNode ? (
+            <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+              <Input
+                value={draftLabel}
+                onChange={(e) => setDraftLabel(e.target.value)}
+                onBlur={commitRename}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') commitRename();
+                  if (e.key === 'Escape') {
+                    setDraftLabel(displayLabel);
+                    setIsEditing(false);
+                  }
+                }}
+                autoFocus
+                className="h-7 text-xs font-semibold uppercase"
+              />
+              <span className="text-[9px] text-muted-foreground">
+                Renommage visuel uniquement — ne modifie pas la clé technique.
+              </span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => rootNode && !isUpdating && setIsEditing(true)}
+              className={cn(
+                'font-semibold uppercase tracking-wide text-foreground truncate text-left',
+                rootNode && 'hover:underline underline-offset-2 cursor-pointer',
+                !rootNode && 'cursor-default'
+              )}
+              title={rootNode ? 'Cliquer pour renommer le libellé (visuel uniquement)' : undefined}
+            >
+              {displayLabel}
+            </button>
+          )}
+
+          <Badge variant="secondary" className="text-[10px] shrink-0">{moduleCount}</Badge>
+          {rootNode && (
+            <span className="ml-1 text-[10px] text-muted-foreground font-mono select-all shrink-0" title="Clé technique (immuable)">
+              {rootNode.key}
+            </span>
+          )}
+        </div>
+      </td>
+      {Array.from({ length: 7 }).map((_, i) => (
+        <td key={i} className={cn(TD_CLASS, 'text-muted-foreground/30')}>—</td>
+      ))}
+    </tr>
   );
 }
 
@@ -925,18 +924,18 @@ export function ModulesMasterView() {
   }
 
   const headerRow = (
-    <div className={cn(
-      `grid ${GRID_COLS} gap-x-4 gap-y-0 items-center py-2 px-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide`
-    )}>
-      <div>Nom</div>
-      <div className="whitespace-nowrap">Type</div>
-      <div className="whitespace-nowrap">Déployé</div>
-      <div className="whitespace-nowrap">Plan min.</div>
-      <div className="whitespace-nowrap">Effectif</div>
-      <div className="whitespace-nowrap">Rôle min.</div>
-      <div className="whitespace-nowrap">Privil.</div>
-      <div className="whitespace-nowrap">Lien</div>
-    </div>
+    <thead>
+      <tr className="bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <th className="py-2 px-3 text-left font-medium">Nom</th>
+        <th className="py-2 px-3 text-left font-medium whitespace-nowrap">Type</th>
+        <th className="py-2 px-3 text-left font-medium whitespace-nowrap">Déployé</th>
+        <th className="py-2 px-3 text-left font-medium whitespace-nowrap">Plan min.</th>
+        <th className="py-2 px-3 text-left font-medium whitespace-nowrap">Effectif</th>
+        <th className="py-2 px-3 text-left font-medium whitespace-nowrap">Rôle min.</th>
+        <th className="py-2 px-3 text-left font-medium whitespace-nowrap">Privil.</th>
+        <th className="py-2 px-3 text-left font-medium whitespace-nowrap">Lien</th>
+      </tr>
+    </thead>
   );
 
   return (
@@ -952,85 +951,86 @@ export function ModulesMasterView() {
             Source de vérité unique. Déploiement, plans, rôles et privilèges individuels sur chaque nœud.
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-0">
-          {headerRow}
+        <div className="overflow-x-auto">
+          <table className="w-full table-auto">
+            {headerRow}
+            <tbody>
+              {groupedCategories.map(({ category, rootNode, nodes }) => {
+                if (nodes.length === 0 && !rootNode) return null;
+                const isCategoryCollapsed = collapsedCategories.has(category.id);
 
-          {groupedCategories.map(({ category, rootNode, nodes }) => {
-            if (nodes.length === 0 && !rootNode) return null;
-            const isCategoryCollapsed = collapsedCategories.has(category.id);
+                return (
+                  <Fragment key={category.id}>
+                    <CategoryHeaderRow
+                      category={category}
+                      collapsed={isCategoryCollapsed}
+                      onToggle={() => toggleCategory(category.id)}
+                      moduleCount={nodes.filter((node) => node.depth === 1).length}
+                      rootNode={rootNode}
+                      onRenameRoot={handleRenameLabel}
+                      isUpdating={updateNode.isPending || propagate.isPending}
+                    />
 
-            return (
-              <div key={category.id}>
-                <CategoryHeaderRow
-                  category={category}
-                  collapsed={isCategoryCollapsed}
-                  onToggle={() => toggleCategory(category.id)}
-                  moduleCount={nodes.filter((node) => node.depth === 1).length}
-                  rootNode={rootNode}
-                  onRenameRoot={handleRenameLabel}
-                  isUpdating={updateNode.isPending || propagate.isPending}
-                />
+                    {!isCategoryCollapsed && nodes.map((node) => (
+                      <ModuleRow
+                        key={node.key}
+                        node={node}
+                        overrides={overrides.get(node.key) ?? []}
+                        onToggleDeploy={handleToggleDeploy}
+                        onTogglePlan={handleTogglePlan}
+                        onChangeRole={handleChangeRole}
+                        onRenameLabel={handleRenameLabel}
+                        isUpdating={updateNode.isPending || propagate.isPending}
+                        canDeploy={canDeploy}
+                      />
+                    ))}
+                  </Fragment>
+                );
+              })}
 
-                {!isCategoryCollapsed && nodes.map((node) => (
-                  <ModuleRow
-                    key={node.key}
-                    node={node}
-                    overrides={overrides.get(node.key) ?? []}
-                    onToggleDeploy={handleToggleDeploy}
-                    onTogglePlan={handleTogglePlan}
-                    onChangeRole={handleChangeRole}
-                    onRenameLabel={handleRenameLabel}
-                    isUpdating={updateNode.isPending || propagate.isPending}
-                    canDeploy={canDeploy}
-                  />
-                ))}
-              </div>
-            );
-          })}
+              {legacyNodes.length > 0 && (
+                <>
+                  <tr className="border-b border-border bg-muted/10">
+                    <td className="py-2 px-3">
+                      <button
+                        type="button"
+                        onClick={() => setShowLegacy((prev) => !prev)}
+                        className="flex items-center gap-2 min-w-0 text-left"
+                      >
+                        <ChevronRight className={cn('w-4 h-4 shrink-0 transition-transform text-muted-foreground', showLegacy && 'rotate-90')} />
+                        <span className="font-medium text-muted-foreground truncate">Legacy / non classé</span>
+                        <Badge variant="outline" className="text-[10px]">{legacyNodes.filter((node) => node.depth === 1).length}</Badge>
+                      </button>
+                    </td>
+                    {Array.from({ length: 7 }).map((_, i) => (
+                      <td key={i} className={cn(TD_CLASS, 'text-muted-foreground/30')}>—</td>
+                    ))}
+                  </tr>
 
-          {legacyNodes.length > 0 && (
-            <>
-              <div className={cn(`grid ${GRID_COLS} gap-2 items-center py-2 px-3 border-b border-border bg-muted/10`)}>
-                <button
-                  type="button"
-                  onClick={() => setShowLegacy((prev) => !prev)}
-                  className="flex items-center gap-2 min-w-0 text-left"
-                >
-                  <ChevronRight className={cn('w-4 h-4 shrink-0 transition-transform text-muted-foreground', showLegacy && 'rotate-90')} />
-                  <span className="font-medium text-muted-foreground truncate">Legacy / non classé</span>
-                  <Badge variant="outline" className="text-[10px]">{legacyNodes.filter((node) => node.depth === 1).length}</Badge>
-                </button>
-                <div className="text-center text-muted-foreground/30">—</div>
-                <div className="text-center text-muted-foreground/30">—</div>
-                <div className="text-center text-muted-foreground/30">—</div>
-                <div className="text-center text-muted-foreground/30">—</div>
-                <div className="text-center text-muted-foreground/30">—</div>
-                <div className="text-center text-muted-foreground/30">—</div>
-                <div className="text-center text-muted-foreground/30">—</div>
-              </div>
-
-              {showLegacy && legacyNodes.map((node) => (
-                <ModuleRow
-                  key={node.key}
-                  node={node}
-                  overrides={overrides.get(node.key) ?? []}
-                  onToggleDeploy={handleToggleDeploy}
-                  onTogglePlan={handleTogglePlan}
-                  onChangeRole={handleChangeRole}
-                  onRenameLabel={handleRenameLabel}
-                  isUpdating={updateNode.isPending || propagate.isPending}
-                  canDeploy={canDeploy}
-                />
-              ))}
-            </>
-          )}
+                  {showLegacy && legacyNodes.map((node) => (
+                    <ModuleRow
+                      key={node.key}
+                      node={node}
+                      overrides={overrides.get(node.key) ?? []}
+                      onToggleDeploy={handleToggleDeploy}
+                      onTogglePlan={handleTogglePlan}
+                      onChangeRole={handleChangeRole}
+                      onRenameLabel={handleRenameLabel}
+                      isUpdating={updateNode.isPending || propagate.isPending}
+                      canDeploy={canDeploy}
+                    />
+                  ))}
+                </>
+              )}
+            </tbody>
+          </table>
 
           {groupedCategories.every((group) => group.nodes.length === 0) && legacyNodes.length === 0 && (
             <div className="py-12 text-center text-muted-foreground">
               Aucun module déployé dans le registre.
             </div>
           )}
-        </CardContent>
+        </div>
       </Card>
 
       {/* Dev section — non-deployed modules */}
@@ -1055,23 +1055,27 @@ export function ModulesMasterView() {
               )}
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-0">
-            {headerRow}
-            {devNodes.map(node => (
-              <ModuleRow
-                key={node.key}
-                node={node}
-                overrides={overrides.get(node.key) ?? []}
-                onToggleDeploy={handleToggleDeploy}
-                onTogglePlan={handleTogglePlan}
-                onChangeRole={handleChangeRole}
-                onRenameLabel={handleRenameLabel}
-                isUpdating={updateNode.isPending || propagate.isPending}
-                canDeploy={canDeploy}
-                isDevSection
-              />
-            ))}
-          </CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full table-auto">
+              {headerRow}
+              <tbody>
+                {devNodes.map(node => (
+                  <ModuleRow
+                    key={node.key}
+                    node={node}
+                    overrides={overrides.get(node.key) ?? []}
+                    onToggleDeploy={handleToggleDeploy}
+                    onTogglePlan={handleTogglePlan}
+                    onChangeRole={handleChangeRole}
+                    onRenameLabel={handleRenameLabel}
+                    isUpdating={updateNode.isPending || propagate.isPending}
+                    canDeploy={canDeploy}
+                    isDevSection
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
         </Card>
       )}
 
