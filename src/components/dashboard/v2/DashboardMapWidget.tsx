@@ -291,6 +291,11 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
         </div>
       )}
 
+      {/* Edge gradients — bottom + sides */}
+      <div className="absolute bottom-0 left-0 right-0 h-16 z-[2] pointer-events-none bg-gradient-to-t from-white/90 to-white/0 dark:from-background/90 dark:to-background/0" />
+      <div className="absolute top-0 bottom-0 left-0 w-10 z-[2] pointer-events-none bg-gradient-to-r from-white/70 to-white/0 dark:from-background/70 dark:to-background/0" />
+      <div className="absolute top-0 bottom-0 right-0 w-10 z-[2] pointer-events-none bg-gradient-to-l from-white/70 to-white/0 dark:from-background/70 dark:to-background/0" />
+
       {/* Header */}
       {!isLoading && !tokenLoading && (
         <div className="absolute top-0 left-0 right-0 z-10 px-4 py-3 bg-gradient-to-b from-white/90 to-white/0 dark:from-background/90 dark:to-background/0">

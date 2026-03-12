@@ -228,6 +228,12 @@ export function MapPlanningView({ technicians, selectedDate }: MapPlanningViewPr
       {/* Map container */}
       <div ref={mapContainer} className="absolute inset-0" style={{ minHeight: "400px" }} />
 
+      {/* Edge gradients */}
+      <div className="absolute top-0 left-0 right-0 h-16 z-[2] pointer-events-none bg-gradient-to-b from-white/90 to-white/0 dark:from-background/90 dark:to-background/0" />
+      <div className="absolute bottom-0 left-0 right-0 h-16 z-[2] pointer-events-none bg-gradient-to-t from-white/90 to-white/0 dark:from-background/90 dark:to-background/0" />
+      <div className="absolute top-0 bottom-0 left-0 w-10 z-[2] pointer-events-none bg-gradient-to-r from-white/70 to-white/0 dark:from-background/70 dark:to-background/0" />
+      <div className="absolute top-0 bottom-0 right-0 w-10 z-[2] pointer-events-none bg-gradient-to-l from-white/70 to-white/0 dark:from-background/70 dark:to-background/0" />
+
       {/* Loading overlay */}
       {(!mapReady || rdvsLoading) && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/60 z-10">
