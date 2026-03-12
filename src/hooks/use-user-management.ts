@@ -485,6 +485,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
         first_name?: string; 
         last_name?: string; 
         agence?: string; 
+        agency_id?: string | null;
         role_agence?: string; 
         support_level?: number; 
         global_role?: GlobalRole;
@@ -503,6 +504,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
         first_name: data.first_name,
         last_name: data.last_name,
         agence: data.agence,
+        agency_id: data.agency_id ?? null,
         role_agence: data.role_agence,
         global_role: effectiveGlobalRole,
         apogee_user_id: data.apogee_user_id,
