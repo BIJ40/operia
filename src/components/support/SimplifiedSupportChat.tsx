@@ -261,7 +261,7 @@ export function SimplifiedSupportChat({
         heat_priority: heatPriority,
         is_urgent_support: !isResolved,
         impact_tags: problemType === 'bug' ? ['BUG'] : [],
-        reported_by: [profile?.first_name, profile?.last_name].filter(Boolean).join(' ').toUpperCase() || user.email || 'Inconnu',
+        reported_by: 'AGENCE',
       };
 
       const { data: ticket, error } = await supabase
