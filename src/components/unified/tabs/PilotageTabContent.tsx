@@ -41,14 +41,18 @@ function LoadingFallback() {
 }
 
 export default function PilotageTabContent() {
-  const { hasModule } = useEffectiveModules();
+  const { hasModule, modules, isLoading } = useEffectiveModules();
 
   const visibleTabs = useMemo(() => {
-    return ALL_PILOTAGE_TABS.filter(tab => {
+    const result = ALL_PILOTAGE_TABS.filter(tab => {
       if (!tab.requiresModule) return true;
-      return hasModule(tab.requiresModule);
+      const has = hasModule(tab.requiresModule);
+      console.log(`[PilotageTab] ${tab.id} requiresModule=${tab.requiresModule} → hasModule=${has}`);
+      return has;
     });
-  }, [hasModule]);
+    console.log(`[PilotageTab] visibleTabs=${result.map(t => t.id).join(',')}, isLoading=${isLoading}, moduleKeys=${Object.keys(modules).filter(k => k.startsWith('pilotage')).join(',')}`);
+    return result;
+  }, [hasModule, modules, isLoading]);
 
   const defaultTab = visibleTabs[0]?.id as PilotageSubTab ?? 'stats';
   const [activeTab, setActiveTab] = useSessionState<PilotageSubTab>('pilotage_sub_tab', defaultTab);
