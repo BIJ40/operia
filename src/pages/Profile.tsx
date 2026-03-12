@@ -66,8 +66,7 @@ const ROLE_AGENCE_LABELS: Record<string, string> = {
 
 export default function Profile() {
   const { user, isAuthenticated } = useAuthCore();
-  const { globalRole } = usePermissions();
-  const { modules: effectiveModulesData } = useEffectiveModules();
+  const { globalRole, enabledModules } = usePermissions();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
