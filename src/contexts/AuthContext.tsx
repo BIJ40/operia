@@ -398,13 +398,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Pilotage Agence — module canonique: pilotage.agence
       case 'mes_indicateurs':
         return hasModuleGuard('pilotage.agence' as ModuleKey);
-      // Sous-onglets Guides — module parent: guides + option spécifique
+      // Sous-onglets Guides — module parent: support.guides + option spécifique
       case 'apporteurs':
-        return hasModuleOptionGuard('guides' as ModuleKey, 'apporteurs');
+        return hasModuleOptionGuard('support.guides' as ModuleKey, 'apporteurs');
       case 'helpconfort':
-        return hasModuleOptionGuard('guides' as ModuleKey, 'helpconfort');
+        return hasModuleOptionGuard('support.guides' as ModuleKey, 'helpconfort');
       case 'apogee':
-        return hasModuleOptionGuard('guides' as ModuleKey, 'apogee');
+        return hasModuleOptionGuard('support.guides' as ModuleKey, 'apogee');
       default:
         // Unknown scope = deny by default (secure)
         logAuth.warn(`hasAccessToScope: unknown scope "${scope}", denying access`);

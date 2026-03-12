@@ -88,73 +88,72 @@ export const MODULE_MIN_ROLES: Partial<Record<ModuleKey, GlobalRole>> = Object.f
  * Format: "moduleKey.optionKey" -> GlobalRole
  */
 export const MODULE_OPTION_MIN_ROLES: Record<string, GlobalRole> = {
-  // RH
-  'rh.rh_viewer': 'franchisee_admin',
-  'rh.rh_admin': 'franchisee_admin',
+  // Organisation — Salariés (ex-RH)
+  'organisation.salaries.rh_viewer': 'franchisee_admin',
+  'organisation.salaries.rh_admin': 'franchisee_admin',
   
-  // Aide (ex-support)
-  'aide.agent': 'base_user',
-  'aide.user': 'base_user',
+  // Support — Aide en ligne (ex-aide)
+  'support.aide_en_ligne.agent': 'base_user',
+  'support.aide_en_ligne.user': 'base_user',
   
-  // Parc
-  'parc.vehicules': 'franchisee_user',
-  'parc.epi': 'franchisee_user',
-  'parc.equipements': 'franchisee_user',
+  // Organisation — Parc (ex-parc)
+  'organisation.parc.vehicules': 'franchisee_user',
+  'organisation.parc.epi': 'franchisee_user',
+  'organisation.parc.equipements': 'franchisee_user',
   
-  // Agence
-  'agence.indicateurs': 'franchisee_admin',
-  'agence.actions_a_mener': 'franchisee_admin',
-  'agence.diffusion': 'franchisee_admin',
+  // Pilotage — Agence (ex-agence)
+  'pilotage.agence.indicateurs': 'franchisee_admin',
+  'pilotage.agence.actions_a_mener': 'franchisee_admin',
+  'pilotage.agence.diffusion': 'franchisee_admin',
   
-  // Stats
-  'stats.stats_hub': 'franchisee_admin',
-  'stats.exports': 'franchisee_admin',
+  // Pilotage — Dashboard (ex-stats)
+  'pilotage.dashboard.stats_hub': 'franchisee_admin',
+  'pilotage.dashboard.exports': 'franchisee_admin',
 
-  // Documents
-  'divers_documents.consulter': 'franchisee_admin',
-  'divers_documents.gerer': 'franchisee_admin',
-  'divers_documents.corbeille_vider': 'franchisee_admin',
+  // Médiathèque — Documents (ex-divers_documents)
+  'mediatheque.documents.consulter': 'franchisee_admin',
+  'mediatheque.documents.gerer': 'franchisee_admin',
+  'mediatheque.documents.corbeille_vider': 'franchisee_admin',
   
-  // Apporteurs
-  'divers_apporteurs.consulter': 'franchisee_admin',
-  'divers_apporteurs.gerer': 'franchisee_admin',
+  // Organisation — Apporteurs (ex-divers_apporteurs)
+  'organisation.apporteurs.consulter': 'franchisee_admin',
+  'organisation.apporteurs.gerer': 'franchisee_admin',
   
-  // Guides
-  'guides.apogee': 'base_user',
-  'guides.apporteurs': 'base_user',
-  'guides.helpconfort': 'base_user',
-  'guides.faq': 'base_user',
+  // Support — Guides (ex-guides)
+  'support.guides.apogee': 'base_user',
+  'support.guides.apporteurs': 'base_user',
+  'support.guides.helpconfort': 'base_user',
+  'support.guides.faq': 'base_user',
 
-  // Ticketing
+  // Ticketing — unchanged
   'ticketing.kanban': 'base_user',
   'ticketing.create': 'base_user',
   'ticketing.manage': 'base_user',
   'ticketing.import': 'platform_admin',
   
-  // Prospection
+  // Prospection — unchanged
   'prospection.dashboard': 'franchisee_user',
   'prospection.comparateur': 'franchisee_user',
   'prospection.veille': 'franchisee_user',
   'prospection.prospects': 'franchisee_user',
   
-  // Planification Augmentée
+  // Planification Augmentée — unchanged
   'planning_augmente.suggest': 'franchisee_admin',
   'planning_augmente.optimize': 'franchisee_admin',
   'planning_augmente.admin': 'platform_admin',
   
-  // Admin
+  // Admin — unchanged
   'admin_plateforme.users': 'platform_admin',
   'admin_plateforme.agencies': 'platform_admin',
   'admin_plateforme.permissions': 'platform_admin',
   'admin_plateforme.faq_admin': 'platform_admin',
   
-  // Réseau
+  // Réseau — unchanged
   'reseau_franchiseur.dashboard': 'franchisor_user',
   'reseau_franchiseur.stats': 'franchisor_user',
   'reseau_franchiseur.agences': 'franchisor_user',
   'reseau_franchiseur.redevances': 'franchisor_admin',
   'reseau_franchiseur.comparatifs': 'franchisor_user',
-
 };
 
 // ============================================================================

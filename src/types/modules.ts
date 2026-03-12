@@ -576,47 +576,45 @@ export function canAccessModule(role: GlobalRole | null, moduleKey: ModuleKey): 
  * Labels courts pour les modules (utilisés dans les badges)
  */
 export const MODULE_SHORT_LABELS: Partial<Record<ModuleKey, string>> = {
-  agence: 'Agence',
-  stats: 'Stats',
-  rh: 'RH',
-  parc: 'Parc',
-  divers_apporteurs: 'Apporteurs',
-  divers_plannings: 'Plannings',
-  divers_reunions: 'Réunions',
-  divers_documents: 'Documents',
-  guides: 'Guides',
+  // Non-migrated legacy modules
   ticketing: 'Ticketing',
-  aide: 'Aide',
   prospection: 'Commercial',
   planning_augmente: 'Planif. IA',
-  realisations: 'Réalisations',
   reseau_franchiseur: 'Réseau',
   admin_plateforme: 'Admin',
   unified_search: 'Recherche',
-  // Phase 3 keys
+  // Pilotage
+  'pilotage.agence': 'Agence',
+  'pilotage.dashboard': 'Stats',
   'pilotage.statistiques': 'Statistiques',
   'pilotage.performance': 'Performance',
   'pilotage.actions_a_mener': 'Actions',
   'pilotage.devis_acceptes': 'Devis',
   'pilotage.incoherences': 'Incohérences',
+  // Commercial
   'commercial.suivi_client': 'Suivi client',
   'commercial.comparateur': 'Comparateur',
   'commercial.veille': 'Veille',
   'commercial.prospects': 'Prospects',
   'commercial.realisations': 'Réalisations',
+  // Organisation
   'organisation.salaries': 'Salariés',
   'organisation.apporteurs': 'Apporteurs',
   'organisation.plannings': 'Plannings',
   'organisation.reunions': 'Réunions',
   'organisation.parc': 'Parc',
-  'organisation.documents_legaux': 'Documents',
+  'organisation.documents_legaux': 'Documents légaux',
+  // Médiathèque
+  'mediatheque.documents': 'Documents',
   'mediatheque.consulter': 'Consulter',
   'mediatheque.gerer': 'Gérer',
   'mediatheque.corbeille': 'Corbeille',
+  // Support
   'support.aide_en_ligne': 'Aide',
   'support.guides': 'Guides',
   'support.faq': 'FAQ',
   'support.ticketing': 'Ticketing',
+  // Admin
   'admin.gestion': 'Gestion',
   'admin.franchiseur': 'Franchiseur',
   'admin.ia': 'IA',

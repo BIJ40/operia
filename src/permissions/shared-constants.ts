@@ -125,6 +125,6 @@ export const SHARED_MODULE_MIN_ROLES: Partial<Record<SharedModuleKey, SharedGlob
   'organisation.reunions': 'franchisee_admin',
   'mediatheque.documents': 'franchisee_admin',
   'support.aide_en_ligne': 'base_user',
-  'support.guides': 'base_user',
-  'commercial.realisations': 'franchisee_admin',
+  'support.guides': 'franchisee_admin',
+  'commercial.realisations': 'franchisee_user',
 };
