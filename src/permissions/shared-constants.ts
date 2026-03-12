@@ -32,6 +32,7 @@ export type SharedGlobalRole = keyof typeof SHARED_ROLE_HIERARCHY;
 // ============================================================================
 
 export const SHARED_MODULE_KEYS = [
+  // Legacy (kept for backward compat)
   'agence',
   'stats',
   'rh',
@@ -48,6 +49,18 @@ export const SHARED_MODULE_KEYS = [
   'reseau_franchiseur',
   'admin_plateforme',
   'unified_search',
+  // Hierarchical (additive — Phase 7)
+  'pilotage.agence',
+  'pilotage.dashboard',
+  'organisation.salaries',
+  'organisation.parc',
+  'organisation.apporteurs',
+  'organisation.plannings',
+  'organisation.reunions',
+  'mediatheque.documents',
+  'support.aide_en_ligne',
+  'support.guides',
+  'commercial.realisations',
 ] as const;
 
 export type SharedModuleKey = typeof SHARED_MODULE_KEYS[number];
