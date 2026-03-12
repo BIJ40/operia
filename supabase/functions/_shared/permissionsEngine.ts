@@ -90,7 +90,8 @@ export const AGENCY_REQUIRED_MODULES: ModuleKey[] = [
 
 export const AGENCY_ROLES: GlobalRole[] = ['franchisee_user', 'franchisee_admin'];
 
-export const NETWORK_MODULES: ModuleKey[] = ['reseau_franchiseur'];
+// reseau_franchiseur retiré — interface de rôle (N3+), pas un module standard
+export const NETWORK_MODULES: ModuleKey[] = [];
 
 export const NETWORK_MIN_ROLE: GlobalRole = 'franchisor_user';
 

@@ -58,19 +58,19 @@ const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
   franchisor_user: {
     guides: { enabled: true, options: {} },
     aide: { enabled: true, options: { agent: false } },
-    reseau_franchiseur: { enabled: true, options: {} },
+    // reseau_franchiseur retiré — interface de rôle (N3+), pas un module standard
   },
   franchisor_admin: {
     guides: { enabled: true, options: {} },
     aide: { enabled: true, options: { agent: false } },
-    reseau_franchiseur: { enabled: true, options: {} },
+    // reseau_franchiseur retiré — interface de rôle (N3+), pas un module standard
     admin_plateforme: { enabled: true, options: {} },
   },
   platform_admin: {
     guides: { enabled: true, options: {} },
     aide: { enabled: true, options: { agent: true } },
     agence: { enabled: true, options: {} },
-    reseau_franchiseur: { enabled: true, options: {} },
+    // reseau_franchiseur retiré — interface de rôle (N3+), pas un module standard
     admin_plateforme: { enabled: true, options: {} },
     rh: { enabled: true, options: { coffre: true, rh_viewer: true, rh_admin: true } },
     parc: { enabled: true, options: {} },
@@ -79,7 +79,7 @@ const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
     guides: { enabled: true, options: {} },
     aide: { enabled: true, options: { agent: true } },
     agence: { enabled: true, options: {} },
-    reseau_franchiseur: { enabled: true, options: {} },
+    // reseau_franchiseur retiré — interface de rôle (N3+), pas un module standard
     admin_plateforme: { enabled: true, options: {} },
     rh: { enabled: true, options: { coffre: true, rh_viewer: true, rh_admin: true } },
     parc: { enabled: true, options: {} },
