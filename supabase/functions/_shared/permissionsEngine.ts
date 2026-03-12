@@ -51,11 +51,11 @@ export type ModuleKey =
 
 // Legacy module keys → V3 mapping (pour rétrocompat des données en base)
 export const MODULE_COMPAT_MAP: Record<string, ModuleKey> = {
-  'help_academy': 'guides',
-  'pilotage_agence': 'agence',
-  'support': 'aide',
+  'help_academy': 'support.guides',
+  'pilotage_agence': 'pilotage.agence',
+  'support': 'support.aide_en_ligne',
   'apogee_tickets': 'ticketing',
-  'messaging': 'aide',
+  'messaging': 'support.aide_en_ligne',
 };
 
 export interface PermissionContext {
