@@ -323,7 +323,7 @@ export default function AdminAgencies() {
           ) : (
             <div className="space-y-4">
               {agencies.map((agency) => {
-                const agencyUsers = getUsersForAgency(agency.slug);
+                const agencyUsers = getUsersForAgency(agency.id);
                 const isExpanded = expandedAgencies.has(agency.id);
 
                 return (
