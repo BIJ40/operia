@@ -30,6 +30,18 @@ export function useSessionState<T>(
     }
   }, [key, state]);
 
+  // Listen for external session-state-change events (e.g. from header nav dropdown)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.key === key) {
+        setState(detail.value);
+      }
+    };
+    window.addEventListener('session-state-change', handler);
+    return () => window.removeEventListener('session-state-change', handler);
+  }, [key]);
+
   // Wrapper to handle functional updates
   const setPersistedState = useCallback((value: T | ((prev: T) => T)) => {
     setState(prev => {
