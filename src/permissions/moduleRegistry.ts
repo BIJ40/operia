@@ -183,3 +183,9 @@ export function isProtectedModule(moduleKey: ModuleKey): boolean {
   return PROTECTED_MODULES.includes(moduleKey);
 }
 
+/**
+ * Vérifie si un module est une interface de rôle (pas administrable)
+ */
+export function isRoleInterfaceModule(moduleKey: ModuleKey): boolean {
+  return ROLE_INTERFACE_MODULES.includes(moduleKey);
+}
