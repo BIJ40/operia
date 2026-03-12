@@ -119,7 +119,7 @@ export function SimplifiedSupportChat({
   // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, orientationStep, selectedDomain]);
+  }, [messages]);
 
   // Dropzone for screenshot
   const onDrop = useCallback((acceptedFiles: File[]) => {
