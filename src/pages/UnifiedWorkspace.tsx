@@ -114,43 +114,29 @@ function UnifiedWorkspaceContent() {
     { id: 'admin', label: 'Admin', icon: Shield, requiresOption: { module: 'admin_plateforme' } },
   ], []);
   
-  // Tab accessibility checks
-  const isTabAccessibleForEffectiveUser = useCallback((tab: TabConfig): boolean => {
-    if (!tab.requiresOption) return true;
-    if (effectiveIsPlatformAdmin) return true;
-    
-    const { module, option } = tab.requiresOption;
-    if (option) {
-      if (hasModuleOption(module as any, option)) return true;
-    } else {
-      if (hasModule(module as any)) return true;
-    }
-    if (tab.altModules) {
-      for (const altModule of tab.altModules) {
-        if (hasModule(altModule as any)) return true;
-      }
-    }
-    return false;
-  }, [effectiveIsPlatformAdmin, hasModule, hasModuleOption]);
-  
+  // Tab accessibility checks — centralized via filterNavigationByPermissions
+  const permCheckers = useMemo(() => ({
+    hasModule: hasModule as (key: any) => boolean,
+    hasModuleOption: hasModuleOption as (key: any, opt: string) => boolean,
+    isPlatformAdmin: effectiveIsPlatformAdmin,
+  }), [hasModule, hasModuleOption, effectiveIsPlatformAdmin]);
+
   const isTabAccessible = useCallback((tab: TabConfig): boolean => {
     if (!tab.requiresOption) return true;
     if (realIsPlatformAdmin) return true;
-    return isTabAccessibleForEffectiveUser(tab);
-  }, [realIsPlatformAdmin, isTabAccessibleForEffectiveUser]);
-  
-  const isTabHidden = useCallback((tab: TabConfig): boolean => {
-    if (tab.id === 'admin' && !realIsPlatformAdmin) return true;
-    return false;
-  }, [realIsPlatformAdmin]);
+    return isWorkspaceTabVisible(tab, permCheckers);
+  }, [realIsPlatformAdmin, permCheckers]);
   
   const isTabVisuallyDisabled = useCallback((tab: TabConfig): boolean => {
-    if (isRealUserImpersonation) return !isTabAccessibleForEffectiveUser(tab);
+    if (isRealUserImpersonation) return !isWorkspaceTabVisible(tab, permCheckers);
     return !isTabAccessible(tab);
-  }, [isRealUserImpersonation, isTabAccessibleForEffectiveUser, isTabAccessible]);
+  }, [isRealUserImpersonation, permCheckers, isTabAccessible]);
   
-  // Filtrer les onglets masqués
-  const visibleTabs = useMemo(() => allTabs.filter(tab => !isTabHidden(tab)), [allTabs, isTabHidden]);
+  // Filter tabs: hide inaccessible tabs entirely (not greyed out)
+  const visibleTabs = useMemo(() => 
+    filterWorkspaceTabs(allTabs, permCheckers, realIsPlatformAdmin),
+    [allTabs, permCheckers, realIsPlatformAdmin]
+  );
 
   // Auto-repair tab order
   useEffect(() => {
