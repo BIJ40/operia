@@ -72,10 +72,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const globalRoleLevel = globalRole ? GLOBAL_ROLES[globalRole] : 0;
   const isAdmin = globalRoleLevel >= GLOBAL_ROLES.platform_admin;
   const isFranchiseur = globalRoleLevel >= GLOBAL_ROLES.franchisor_user;
-  const isSupport = checkModuleEnabled(enabledModules, 'aide');
+  const isSupport = checkModuleEnabled(enabledModules, 'support.aide_en_ligne' as ModuleKey);
 
   // Support module
-  const supportModuleConfig = enabledModules?.aide;
+  const supportModuleConfig = enabledModules?.['support.aide_en_ligne'];
   const supportOptions: SupportModuleOptions = 
     (typeof supportModuleConfig === 'object' && supportModuleConfig !== null && 'options' in supportModuleConfig)
       ? (supportModuleConfig.options as SupportModuleOptions)
