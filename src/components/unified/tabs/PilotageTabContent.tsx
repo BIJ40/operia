@@ -37,15 +37,13 @@ export default function PilotageTabContent() {
   const { hasModule } = usePermissions();
   const { getShortLabel } = useModuleLabels();
 
-  // A: 'Statistiques' maps to module pilotage.statistiques → use resolver
-  // B: 'Performance', 'Actions à mener', 'Devis acceptés', 'Incohérences' are sub-features
-  //    of pilotage.agence, not standalone modules with their own registry entry → keep hardcoded
+  // All pilotage sub-tabs are real modules → dynamic labels from registry
   const allTabs: (PillTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
     { id: 'stats', label: getShortLabel('pilotage.statistiques', 'Statistiques'), icon: BarChart3, accent: 'blue', requiresModule: 'pilotage.statistiques' },
-    { id: 'performance', label: 'Performance', icon: Activity, accent: 'pink', requiresModule: 'pilotage.agence' },
-    { id: 'actions', label: 'Actions à mener', icon: Settings, accent: 'orange', requiresModule: 'pilotage.agence' },
-    { id: 'devis-acceptes', label: 'Devis acceptés', icon: FileCheck, accent: 'teal', requiresModule: 'pilotage.agence' },
-    { id: 'anomalies', label: 'Incohérences', icon: AlertTriangle, accent: 'pink', requiresModule: 'pilotage.agence' },
+    { id: 'performance', label: getShortLabel('pilotage.performance', 'Performance'), icon: Activity, accent: 'pink', requiresModule: 'pilotage.performance' },
+    { id: 'actions', label: getShortLabel('pilotage.actions_a_mener', 'Actions à mener'), icon: Settings, accent: 'orange', requiresModule: 'pilotage.actions_a_mener' },
+    { id: 'devis-acceptes', label: getShortLabel('pilotage.devis_acceptes', 'Devis acceptés'), icon: FileCheck, accent: 'teal', requiresModule: 'pilotage.devis_acceptes' },
+    { id: 'anomalies', label: getShortLabel('pilotage.incoherences', 'Incohérences'), icon: AlertTriangle, accent: 'pink', requiresModule: 'pilotage.incoherences' },
   ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {
