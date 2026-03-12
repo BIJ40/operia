@@ -220,5 +220,6 @@ export default function AdminHubContent() {
         </motion.div>
       </Tabs>
     </div>
+    </DomainAccentProvider>
   );
 }
