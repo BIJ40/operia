@@ -312,6 +312,23 @@ export function ActionsConfigDialog({
     const toDelete = existingIds.filter(id => !currentIds.includes(id));
     
     if (toDelete.length > 0) {
+      // Check if any tickets still use these statuses
+      const { count, error: countError } = await supabase
+        .from('apogee_tickets')
+        .select('id', { count: 'exact', head: true })
+        .in('kanban_status', toDelete);
+      
+      if (countError) {
+        logError('apogee-config', 'Error checking ticket references', countError);
+        errorToast('Erreur lors de la vérification des tickets liés');
+        return;
+      }
+      
+      if (count && count > 0) {
+        errorToast(`Impossible de supprimer : ${count} ticket(s) utilisent encore ce(s) statut(s). Déplacez-les d'abord vers un autre statut.`);
+        return;
+      }
+
       // First delete transitions that reference these statuses (FK constraint)
       const deleteTransitionsResult = await safeMutation(
         supabase.from('apogee_ticket_transitions')
