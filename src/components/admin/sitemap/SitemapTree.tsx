@@ -32,7 +32,7 @@ import {
 } from "@/config/sitemapData";
 import { type GlobalRole } from "@/types/globalRoles";
 import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
-import { MODULE_LABELS } from "@/permissions/constants";
+import { useModuleLabels } from "@/hooks/useModuleLabels";
 import { getPlanLabel } from "@/config/planTiers";
 import { toast } from "sonner";
 

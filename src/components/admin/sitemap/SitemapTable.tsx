@@ -32,13 +32,7 @@ import {
   type RouteMetadata,
 } from "@/config/sitemapData";
 import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
-import { MODULE_DEFINITIONS } from "@/types/modules";
-
-// Build MODULE_LABELS from definitions
-const MODULE_LABELS = MODULE_DEFINITIONS.reduce((acc, def) => {
-  acc[def.key] = def.label;
-  return acc;
-}, {} as Record<string, string>);
+import { useModuleLabels } from "@/hooks/useModuleLabels";
 import { toast } from "sonner";
 
 interface SitemapTableProps {

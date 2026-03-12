@@ -14,7 +14,7 @@ import { SECTION_LABELS, type SitemapSection } from "@/config/sitemapData";
 import { type GlobalRole } from "@/types/globalRoles";
 import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 import { MODULE_DEFINITIONS, type ModuleKey } from "@/types/modules";
-import { MODULE_LABELS } from "@/permissions/constants";
+import { useModuleLabels } from "@/hooks/useModuleLabels";
 import { PlanKey, PLAN_LABELS } from "@/config/planTiers";
 import {
   Popover,
