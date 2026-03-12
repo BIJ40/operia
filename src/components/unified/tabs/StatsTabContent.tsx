@@ -32,13 +32,24 @@ const TAB_COMPONENTS: Record<TabId, React.ComponentType> = {
 export default function StatsTabContent() {
   const { activeTab, setActiveTab } = useStatsHub();
   const { hasModule } = usePermissions();
+  const { getShortLabel } = useModuleLabels();
+
+  // A: All stats sub-tabs map to real modules (pilotage.statistiques.*) → dynamic labels
+  const statsTabs: (PillTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
+    { id: 'general', label: getShortLabel('pilotage.statistiques.general', 'Général'), icon: LayoutDashboard, requiresModule: 'pilotage.statistiques.general' },
+    { id: 'apporteurs', label: getShortLabel('pilotage.statistiques.apporteurs', 'Apporteurs'), icon: Building2, requiresModule: 'pilotage.statistiques.apporteurs' },
+    { id: 'techniciens', label: getShortLabel('pilotage.statistiques.techniciens', 'Techniciens'), icon: Users, requiresModule: 'pilotage.statistiques.techniciens' },
+    { id: 'univers', label: getShortLabel('pilotage.statistiques.univers', 'Univers'), icon: Layers, requiresModule: 'pilotage.statistiques.univers' },
+    { id: 'sav', label: getShortLabel('pilotage.statistiques.sav', 'SAV'), icon: AlertTriangle, requiresModule: 'pilotage.statistiques.sav' },
+    { id: 'previsionnel', label: getShortLabel('pilotage.statistiques.previsionnel', 'Prévisionnel'), icon: CalendarClock, requiresModule: 'pilotage.statistiques.previsionnel' },
+  ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {
-    return STATS_TABS.filter(tab => {
+    return statsTabs.filter(tab => {
       if (!tab.requiresModule) return true;
       return hasModule(tab.requiresModule);
     });
-  }, [hasModule]);
+  }, [hasModule, statsTabs]);
 
   const effectiveTab = visibleTabs.some(t => t.id === activeTab) ? activeTab : (visibleTabs[0]?.id as TabId ?? 'general');
 
