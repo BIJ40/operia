@@ -348,13 +348,13 @@ export function UnifiedPeriodSelector({
   const accent = useDomainAccent();
 
   const PERIOD_ACTIVE: Record<DomainAccent, string> = {
-    blue: 'bg-warm-blue text-white shadow-sm border-warm-blue hover:bg-warm-blue/90',
-    orange: 'bg-warm-orange text-white shadow-sm border-warm-orange hover:bg-warm-orange/90',
-    green: 'bg-warm-green text-white shadow-sm border-warm-green hover:bg-warm-green/90',
-    purple: 'bg-warm-purple text-white shadow-sm border-warm-purple hover:bg-warm-purple/90',
-    pink: 'bg-warm-pink text-white shadow-sm border-warm-pink hover:bg-warm-pink/90',
-    teal: 'bg-warm-teal text-white shadow-sm border-warm-teal hover:bg-warm-teal/90',
-    red: 'bg-warm-red text-white shadow-sm border-warm-red hover:bg-warm-red/90',
+    blue: 'bg-muted text-foreground shadow-sm border-border hover:bg-muted/80',
+    orange: 'bg-muted text-foreground shadow-sm border-border hover:bg-muted/80',
+    green: 'bg-muted text-foreground shadow-sm border-border hover:bg-muted/80',
+    purple: 'bg-muted text-foreground shadow-sm border-border hover:bg-muted/80',
+    pink: 'bg-muted text-foreground shadow-sm border-border hover:bg-muted/80',
+    teal: 'bg-muted text-foreground shadow-sm border-border hover:bg-muted/80',
+    red: 'bg-muted text-foreground shadow-sm border-border hover:bg-muted/80',
   };
 
   const PERIOD_HOVER: Record<DomainAccent, string> = {
