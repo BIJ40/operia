@@ -513,6 +513,7 @@ export function ActionsConfigDialog({
       color: 'gray',
       created_at: new Date().toISOString(),
     }]);
+    setNewStatusIds((prev) => [...prev, newId]);
   };
 
   const addModule = () => {
