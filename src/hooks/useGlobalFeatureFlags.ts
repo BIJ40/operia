@@ -2,7 +2,7 @@
  * Hook pour combiner les Feature Flags globaux avec les modules utilisateur
  * 
  * NOTE: Les feature flags sont un outil de DEV TRACKING (admin).
- * Les permissions réelles sont gérées par MODULE_DEFINITIONS + useEffectiveModules.
+ * Les permissions réelles sont gérées par MODULE_DEFINITIONS + usePermissions().
  * Ce hook sert uniquement à vérifier si une fonctionnalité est globalement désactivée.
  */
 
