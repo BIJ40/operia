@@ -153,6 +153,21 @@ export function logValidationIssues(issues: ValidationIssue[]): void {
 export const PROTECTED_MODULES: ModuleKey[] = ['ticketing'];
 
 /**
+ * Modules activables UNIQUEMENT par overwrite utilisateur (user_modules).
+ * Jamais activés par plan (plan_tier_modules) ni par rôle (DEFAULT_MODULES_BY_ROLE).
+ */
+export const OVERWRITE_ONLY_MODULES: ModuleKey[] = MODULE_DEFINITIONS
+  .filter(m => m.overwriteOnly === true)
+  .map(m => m.key);
+
+/**
+ * Vérifie si un module est overwrite-only (opt-in individuel uniquement)
+ */
+export function isOverwriteOnlyModule(moduleKey: ModuleKey): boolean {
+  return OVERWRITE_ONLY_MODULES.includes(moduleKey);
+}
+
+/**
  * Vérifie si un module est protégé
  */
 export function isProtectedModule(moduleKey: ModuleKey): boolean {

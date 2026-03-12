@@ -178,6 +178,8 @@ export interface ModuleDefinition {
   adminOnly?: boolean;
   /** Si false, ce module est en développement et masqué des permissions/plans */
   deployed?: boolean;
+  /** Si true, ce module n'est activé que par overwrite utilisateur (user_modules), jamais par plan ou rôle */
+  overwriteOnly?: boolean;
 }
 
 export interface ModuleOptionDefinition {
@@ -308,8 +310,9 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     description: 'Suivi des développements',
     icon: 'Kanban',
     category: 'support',
-    defaultForRoles: ['platform_admin', 'superadmin'],
+    defaultForRoles: [],
     minRole: 'base_user',
+    overwriteOnly: true,
     options: [
       { key: 'kanban', path: 'ticketing.kanban', label: 'Kanban', description: 'Vue tableau', defaultEnabled: true, routes: ['/?tab=support'] },
       { key: 'create', path: 'ticketing.create', label: 'Créer', description: 'Créer tickets', defaultEnabled: true, routes: ['/?tab=support'] },

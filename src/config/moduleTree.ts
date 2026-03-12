@@ -15,6 +15,8 @@ export interface ModuleTreeNode {
   nodeType: 'section' | 'screen' | 'feature';
   requiredPlan: 'STARTER' | 'PRO';
   deployed: boolean;
+  /** Si true, ce module n'est activé que par overwrite utilisateur */
+  overwriteOnly?: boolean;
   children?: ModuleTreeNode[];
 }
 
@@ -124,6 +126,7 @@ export const MODULE_TREE: ModuleTreeNode[] = [
     nodeType: 'section',
     requiredPlan: 'STARTER',
     deployed: true,
+    overwriteOnly: true,
     children: [
       { key: 'ticketing.kanban', label: 'Kanban', nodeType: 'screen', requiredPlan: 'STARTER', deployed: true },
       { key: 'ticketing.liste', label: 'Liste', nodeType: 'screen', requiredPlan: 'STARTER', deployed: true },
