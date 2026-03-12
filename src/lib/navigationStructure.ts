@@ -46,7 +46,7 @@ export interface NavigationDomain {
 // ────────────────────────────────────────────────
 
 export const ADMIN_ROLES: GlobalRole[] = ['platform_admin', 'superadmin'];
-export const FRANCHISEUR_ROLES: GlobalRole[] = ['platform_admin', 'superadmin', 'franchisee_admin'];
+export const FRANCHISEUR_ROLES: GlobalRole[] = ['franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'];
 
 // ────────────────────────────────────────────────
 // Navigation Structure
