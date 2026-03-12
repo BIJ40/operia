@@ -10,6 +10,7 @@ import { PillTabsList, type PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { ModuleKey } from '@/types/modules';
+import { useModuleLabels } from '@/hooks/useModuleLabels';
 import { ApporteurTabsProvider, useApporteurTabs } from '@/prospection/browser-tabs/ApporteurTabsContext';
 import { ApporteurTabsBar } from '@/prospection/browser-tabs/ApporteurTabsBar';
 import { ApporteurTabsContent } from '@/prospection/browser-tabs/ApporteurTabsContent';
@@ -32,14 +33,6 @@ const TAB_OPTION_MAP: Record<string, string> = {
 const TAB_MODULE_MAP: Record<string, ModuleKey> = {
   realisations: 'commercial.realisations',
 };
-
-const ALL_TABS: PillTabConfig[] = [
-  { id: 'apporteurs', label: 'Suivi client', icon: Building2 },
-  { id: 'comparateur', label: 'Comparateur', icon: GitCompare },
-  { id: 'veille', label: 'Veille', icon: Radar },
-  { id: 'prospects', label: 'Prospects', icon: UserSearch },
-  { id: 'realisations', label: 'Réalisations', icon: Camera },
-];
 
 function LoadingFallback() {
   return (
@@ -71,15 +64,26 @@ function ApporteursTabInner() {
 function CommercialInner() {
   const { hasModuleOption, hasModule } = usePermissions();
   const { openApporteur } = useApporteurTabs();
+  const { getShortLabel } = useModuleLabels();
+
+  // B: 'Suivi client', 'Comparateur', 'Veille', 'Prospects' = option labels of prospection module, not standalone modules
+  // A: 'Réalisations' = module commercial.realisations → use resolver
+  const allTabs: PillTabConfig[] = useMemo(() => [
+    { id: 'apporteurs', label: 'Suivi client', icon: Building2 },
+    { id: 'comparateur', label: 'Comparateur', icon: GitCompare },
+    { id: 'veille', label: 'Veille', icon: Radar },
+    { id: 'prospects', label: 'Prospects', icon: UserSearch },
+    { id: 'realisations', label: getShortLabel('commercial.realisations', 'Réalisations'), icon: Camera },
+  ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {
-    return ALL_TABS.filter(tab => {
+    return allTabs.filter(tab => {
       const moduleKey = TAB_MODULE_MAP[tab.id];
       if (moduleKey) return hasModule(moduleKey);
       const optionKey = TAB_OPTION_MAP[tab.id];
       return optionKey ? hasModuleOption('prospection', optionKey) : true;
     });
-  }, [hasModuleOption, hasModule]);
+  }, [hasModuleOption, hasModule, allTabs]);
 
   const defaultTab = visibleTabs[0]?.id ?? 'apporteurs';
   const [activeTab, setActiveTab] = useSessionState<string>('commercial_sub_tab', defaultTab);

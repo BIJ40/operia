@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { ModuleKey } from '@/types/modules';
+import { useModuleLabels } from '@/hooks/useModuleLabels';
 
 import {
   DndContext,
@@ -60,16 +61,9 @@ type AdminSubTab = 'reunions' | 'plannings' | 'documents';
 
 // Configuration des onglets principaux (niveau 1)
 // Configuration des onglets principaux avec module requis
-const MAIN_TABS_CONFIG: (PillTabConfig & { requiresModule?: ModuleKey })[] = [
-  { id: 'actions', label: 'Actions', icon: Settings, accent: 'blue' }, // toujours visible
-  { id: 'apporteurs', label: 'Apporteurs', icon: Users, accent: 'purple', requiresModule: 'organisation.apporteurs' },
-  { id: 'administratif', label: 'Administratif', icon: FolderOpen, accent: 'orange', requiresModule: 'pilotage.agence' },
-  { id: 'parc', label: 'Parc', icon: Car, accent: 'green', requiresModule: 'organisation.parc' },
-  { id: 'performance', label: 'Performance', icon: Activity, accent: 'pink', requiresModule: 'pilotage.agence' },
-  { id: 'prospection', label: 'Commercial', icon: Target, accent: 'orange', requiresModule: 'prospection' },
-  { id: 'devis-acceptes', label: 'Devis acceptés', icon: FileCheck, accent: 'teal', requiresModule: 'pilotage.agence' },
-  { id: 'anomalies', label: 'Incohérences', icon: AlertTriangle, accent: 'pink', requiresModule: 'pilotage.agence' },
-];
+// Note: MAIN_TABS_CONFIG moved inside DiversTabContent to use useModuleLabels hook
+// A: 'Apporteurs' (organisation.apporteurs), 'Parc' (organisation.parc), 'Commercial' (prospection) → resolver
+// B: 'Actions', 'Administratif', 'Performance', 'Devis acceptés', 'Incohérences' → structural/sub-feature labels
 
 function LoadingFallback() {
   return (
@@ -237,22 +231,24 @@ function ApporteursSection() {
   );
 }
 
-// Sous-onglets Administratif avec module requis
-const ADMIN_TABS_CONFIG: (FolderTabConfig & { requiresModule?: ModuleKey })[] = [
-  { id: 'reunions', label: 'Réunions', icon: Users2, requiresModule: 'organisation.reunions' },
-  { id: 'plannings', label: 'Plannings', icon: CalendarDays, requiresModule: 'organisation.plannings' },
-  { id: 'documents', label: 'Documents', icon: FileText, requiresModule: 'mediatheque.documents' },
-];
+// Note: ADMIN_TABS_CONFIG moved inside AdministratifSection to use useModuleLabels hook
 
 function AdministratifSection() {
   const { hasModule } = usePermissions();
-  
+  const { getShortLabel } = useModuleLabels();
+
+  const adminTabsConfig: (FolderTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
+    { id: 'reunions', label: getShortLabel('organisation.reunions', 'Réunions'), icon: Users2, requiresModule: 'organisation.reunions' },
+    { id: 'plannings', label: getShortLabel('organisation.plannings', 'Plannings'), icon: CalendarDays, requiresModule: 'organisation.plannings' },
+    { id: 'documents', label: getShortLabel('mediatheque.documents', 'Documents'), icon: FileText, requiresModule: 'mediatheque.documents' },
+  ], [getShortLabel]);
+
   const visibleAdminTabs = useMemo(() => {
-    return ADMIN_TABS_CONFIG.filter(tab => {
+    return adminTabsConfig.filter(tab => {
       if (!tab.requiresModule) return true;
       return hasModule(tab.requiresModule);
     });
-  }, [hasModule]);
+  }, [hasModule, adminTabsConfig]);
 
   const defaultTab = visibleAdminTabs[0]?.id as AdminSubTab ?? 'reunions';
   const [subTab, setSubTab] = useSessionState<AdminSubTab>('outils_admin_sub', defaultTab);
@@ -308,13 +304,25 @@ function AdministratifSection() {
 export default function DiversTabContent() {
   const [activeMainTab, setActiveMainTab] = useSessionState<OutilsMainTab>('outils_main_tab', 'actions');
   const { hasModule } = usePermissions();
+  const { getShortLabel } = useModuleLabels();
+
+  const mainTabsConfig: (PillTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
+    { id: 'actions', label: 'Actions', icon: Settings, accent: 'blue' },
+    { id: 'apporteurs', label: getShortLabel('organisation.apporteurs', 'Apporteurs'), icon: Users, accent: 'purple', requiresModule: 'organisation.apporteurs' },
+    { id: 'administratif', label: 'Administratif', icon: FolderOpen, accent: 'orange', requiresModule: 'pilotage.agence' },
+    { id: 'parc', label: getShortLabel('organisation.parc', 'Parc'), icon: Car, accent: 'green', requiresModule: 'organisation.parc' },
+    { id: 'performance', label: 'Performance', icon: Activity, accent: 'pink', requiresModule: 'pilotage.agence' },
+    { id: 'prospection', label: getShortLabel('prospection', 'Commercial'), icon: Target, accent: 'orange', requiresModule: 'prospection' },
+    { id: 'devis-acceptes', label: 'Devis acceptés', icon: FileCheck, accent: 'teal', requiresModule: 'pilotage.agence' },
+    { id: 'anomalies', label: 'Incohérences', icon: AlertTriangle, accent: 'pink', requiresModule: 'pilotage.agence' },
+  ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {
-    return MAIN_TABS_CONFIG.filter(tab => {
+    return mainTabsConfig.filter(tab => {
       if (!tab.requiresModule) return true;
       return hasModule(tab.requiresModule);
     });
-  }, [hasModule]);
+  }, [hasModule, mainTabsConfig]);
 
   return (
     <div className="py-6 px-2 sm:px-4 space-y-6">
