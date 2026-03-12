@@ -46,7 +46,7 @@ export interface NavigationDomain {
 // ────────────────────────────────────────────────
 
 export const ADMIN_ROLES: GlobalRole[] = ['platform_admin', 'superadmin'];
-export const FRANCHISEUR_ROLES: GlobalRole[] = ['platform_admin', 'superadmin', 'franchisee_admin'];
+export const FRANCHISEUR_ROLES: GlobalRole[] = ['franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'];
 
 // ────────────────────────────────────────────────
 // Navigation Structure
@@ -113,7 +113,7 @@ export const NAVIGATION_STRUCTURE: NavigationDomain[] = [
   },
   {
     id: 'franchiseur',
-    label: 'Réseau',
+    label: 'Franchiseur',
     icon: Network,
     roleGated: FRANCHISEUR_ROLES,
     entries: [
