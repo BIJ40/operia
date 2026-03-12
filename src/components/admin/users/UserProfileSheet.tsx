@@ -14,8 +14,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   User, Mail, Phone, Building2, Shield, Zap, Calendar,
   MapPin, Briefcase, Clock, AlertCircle, UserX, CheckCircle2,
-  Hash, KeyRound, FileText,
+  Hash, KeyRound, FileText, ChevronRight, Navigation,
 } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { NavigationAccessView } from './user-profile-sheet/NavigationAccessView';
 import { GlobalRole } from '@/types/globalRoles';
 import { EnabledModules, MODULE_DEFINITIONS, ModuleKey } from '@/types/modules';
 import { getVisibleRoleLabel, getVisibleRoleColor, VISIBLE_ROLE_DESCRIPTIONS } from '@/lib/visibleRoleLabels';
