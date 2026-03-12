@@ -55,8 +55,8 @@ describe('getModule', () => {
 // ============================================================================
 
 describe('getModuleOptions', () => {
-  it('returns options for rh module', () => {
-    const opts = getModuleOptions('rh');
+  it('returns options for organisation.salaries module', () => {
+    const opts = getModuleOptions('organisation.salaries' as any);
     expect(opts.length).toBeGreaterThan(0);
     expect(opts.some(o => o.key === 'rh_viewer' || o.key === 'rh_admin')).toBe(true);
   });
