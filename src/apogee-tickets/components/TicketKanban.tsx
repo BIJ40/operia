@@ -640,7 +640,7 @@ export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusC
   // ============================================
   // COLONNES PROTÉGÉES - Drop manuel interdit
   // ============================================
-  const PROTECTED_DROP_TARGETS = ['USER', 'SUPPORT_RESOLU'];
+  const PROTECTED_DROP_TARGETS = ['USER', 'SUPPORT_RESOLU', 'IA_ESCALADE'];
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
