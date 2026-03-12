@@ -76,10 +76,7 @@ export const MODULE_OPTIONS = {
     diffusion: 'pilotage.agence.diffusion',
     devis_acceptes: 'pilotage.agence.devis_acceptes',
   },
-  'pilotage.dashboard': {
-    stats_hub: 'pilotage.dashboard.stats_hub',
-    exports: 'pilotage.dashboard.exports',
-  },
+  // pilotage.dashboard options removed — merged into pilotage.statistiques
   'organisation.salaries': {
     rh_viewer: 'organisation.salaries.rh_viewer',
     rh_admin: 'organisation.salaries.rh_admin',
