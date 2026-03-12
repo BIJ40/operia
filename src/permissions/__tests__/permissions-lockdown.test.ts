@@ -14,7 +14,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { GLOBAL_ROLES, GlobalRole, getAllRolesSorted, hasMinimumRole } from '@/types/globalRoles';
-import { MODULE_DEFINITIONS, ModuleKey } from '@/types/modules';
+import { MODULE_DEFINITIONS, ModuleKey, MODULES } from '@/types/modules';
 import { 
   ROLE_HIERARCHY, 
   MODULE_MIN_ROLES,
