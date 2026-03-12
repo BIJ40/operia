@@ -83,7 +83,10 @@ export const SHARED_MODULE_COMPAT_MAP: Record<string, SharedModuleKey> = {
 
 export const SHARED_BYPASS_ROLES: SharedGlobalRole[] = ['superadmin', 'platform_admin'];
 
-export const SHARED_AGENCY_REQUIRED_MODULES: SharedModuleKey[] = ['agence', 'rh', 'parc', 'prospection'];
+export const SHARED_AGENCY_REQUIRED_MODULES: SharedModuleKey[] = [
+  'agence', 'rh', 'parc', 'prospection',
+  'pilotage.agence', 'organisation.salaries', 'organisation.parc',
+];
 
 export const SHARED_AGENCY_ROLES: SharedGlobalRole[] = ['franchisee_user', 'franchisee_admin'];
 
