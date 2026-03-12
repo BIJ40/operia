@@ -73,8 +73,8 @@ describe('getModuleOptions', () => {
 
 describe('isValidModuleKey', () => {
   it('returns true for known keys', () => {
-    expect(isValidModuleKey('agence')).toBe(true);
-    expect(isValidModuleKey('rh')).toBe(true);
+    expect(isValidModuleKey('pilotage.agence')).toBe(true);
+    expect(isValidModuleKey('organisation.salaries')).toBe(true);
     expect(isValidModuleKey('ticketing')).toBe(true);
   });
 
