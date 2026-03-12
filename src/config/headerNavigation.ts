@@ -1,5 +1,6 @@
 import {
-  BarChart3, Building2, ShoppingCart, TrendingUp,
+  BarChart3, Activity, ListChecks, FileCheck, AlertTriangle,
+  ShoppingCart, Users as UsersIcon, Search, Eye, TrendingUp,
   Users, Car, Handshake, CalendarDays, MessagesSquare,
   FolderOpen, Headphones, HelpCircle, Kanban, Shield,
   type LucideIcon,
@@ -32,8 +33,11 @@ export const HEADER_NAV_GROUPS: HeaderNavGroup[] = [
     icon: BarChart3,
     tab: 'pilotage',
     children: [
-      { label: 'Statistiques', icon: BarChart3, tab: 'pilotage', subView: 'statistiques', description: 'Tableaux de bord et KPIs', scope: 'pilotage.statistiques' },
-      { label: 'Mon Agence', icon: Building2, tab: 'pilotage', subView: 'agence', description: 'Informations agence', scope: 'pilotage.agence' },
+      { label: 'Statistiques', icon: BarChart3, tab: 'pilotage', description: 'Tableaux de bord et KPIs', scope: 'pilotage.statistiques' },
+      { label: 'Performance', icon: Activity, tab: 'pilotage', description: 'Indicateurs de performance' },
+      { label: 'Actions à mener', icon: ListChecks, tab: 'pilotage', description: 'Suivi des actions' },
+      { label: 'Devis acceptés', icon: FileCheck, tab: 'pilotage', description: 'Suivi des devis signés' },
+      { label: 'Incohérences', icon: AlertTriangle, tab: 'pilotage', description: 'Alertes et anomalies' },
     ],
   },
   {
@@ -41,8 +45,11 @@ export const HEADER_NAV_GROUPS: HeaderNavGroup[] = [
     icon: ShoppingCart,
     tab: 'commercial',
     children: [
-      { label: 'Prospection', icon: ShoppingCart, tab: 'commercial', subView: 'prospection', description: 'Suivi des prospects', scope: 'prospection' },
-      { label: 'Réalisations', icon: TrendingUp, tab: 'commercial', subView: 'realisations', description: 'Chiffres et bilans', scope: 'commercial.realisations' },
+      { label: 'Suivi client', icon: UsersIcon, tab: 'commercial', description: 'Gestion des apporteurs' },
+      { label: 'Comparateur', icon: Search, tab: 'commercial', description: 'Benchmark et comparaison' },
+      { label: 'Veille', icon: Eye, tab: 'commercial', description: 'Veille concurrentielle' },
+      { label: 'Prospects', icon: ShoppingCart, tab: 'commercial', description: 'Suivi des prospects', scope: 'prospection' },
+      { label: 'Réalisations', icon: TrendingUp, tab: 'commercial', description: 'Chiffres et bilans', scope: 'commercial.realisations' },
     ],
   },
   {
@@ -50,11 +57,11 @@ export const HEADER_NAV_GROUPS: HeaderNavGroup[] = [
     icon: Users,
     tab: 'organisation',
     children: [
-      { label: 'Salariés', icon: Users, tab: 'organisation', subView: 'salaries', description: 'Gestion des équipes', scope: 'organisation.salaries' },
-      { label: 'Véhicules', icon: Car, tab: 'organisation', subView: 'parc', description: 'Parc automobile', scope: 'organisation.parc' },
-      { label: 'Apporteurs', icon: Handshake, tab: 'organisation', subView: 'apporteurs', description: "Réseau d'apporteurs", scope: 'organisation.apporteurs' },
-      { label: 'Plannings', icon: CalendarDays, tab: 'organisation', subView: 'plannings', description: 'Calendrier équipe', scope: 'organisation.plannings' },
-      { label: 'Réunions', icon: MessagesSquare, tab: 'organisation', subView: 'reunions', description: 'Comptes rendus', scope: 'organisation.reunions' },
+      { label: 'Salariés', icon: Users, tab: 'organisation', description: 'Gestion des équipes', scope: 'organisation.salaries' },
+      { label: 'Véhicules', icon: Car, tab: 'organisation', description: 'Parc automobile', scope: 'organisation.parc' },
+      { label: 'Apporteurs', icon: Handshake, tab: 'organisation', description: "Réseau d'apporteurs", scope: 'organisation.apporteurs' },
+      { label: 'Plannings', icon: CalendarDays, tab: 'organisation', description: 'Calendrier équipe', scope: 'organisation.plannings' },
+      { label: 'Réunions', icon: MessagesSquare, tab: 'organisation', description: 'Comptes rendus', scope: 'organisation.reunions' },
     ],
   },
   {
