@@ -317,7 +317,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
 
       if (moduleFilter !== 'all') {
         const effectiveModules = modifiedUsers[user.id]?.enabled_modules ?? user.enabled_modules ?? {};
-        if (!isModuleEnabledForUser(effectiveModules, moduleFilter as ModuleKey)) return false;
+        if (!isModuleEnabledForUser(effectiveModules, moduleFilter)) return false;
       }
       
       return true;
