@@ -11,7 +11,7 @@
 
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Maximize2, Users, Calendar, AlertCircle, Clock } from 'lucide-react';
+import { MapPin, Maximize2, Users, Calendar, AlertCircle, Clock, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -411,17 +411,26 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
                   </span>
                 </div>
               </div>
-              <div className="flex -space-x-1">
-                {selectedRdv.users.slice(0, 3).map(user => (
-                  <div
-                    key={user.id}
-                    className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold text-white"
-                    style={{ backgroundColor: user.color }}
-                    title={user.name}
-                  >
-                    {user.name.charAt(0)}
-                  </div>
-                ))}
+              <div className="flex items-center gap-2">
+                <div className="flex -space-x-1">
+                  {selectedRdv.users.slice(0, 3).map(user => (
+                    <div
+                      key={user.id}
+                      className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold text-white"
+                      style={{ backgroundColor: user.color }}
+                      title={user.name}
+                    >
+                      {user.name.charAt(0)}
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setSelectedRdv(null); }}
+                  className="p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Fermer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
             </div>
           </div>
