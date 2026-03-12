@@ -34,7 +34,8 @@ export const RIGHTS_CATEGORIES: RightsCategory[] = [
     'ticketing',
   ]},
   { id: 'admin', label: 'Admin', moduleKeys: [
-    'admin', 'admin_plateforme', 'reseau_franchiseur',
+    'admin', 'admin_plateforme',
+    // reseau_franchiseur retiré — interface de rôle, pas un module administrable
   ]},
 ];
 
