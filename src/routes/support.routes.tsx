@@ -3,7 +3,6 @@ import { Route, Navigate } from "react-router-dom";
 import { MinimalLayout } from "@/components/layout";
 
 // Lazy loaded pages
-const SupportIndex = lazy(() => import("@/pages/SupportIndex"));
 const Faq = lazy(() => import("@/pages/Faq"));
 
 // Helper pour créer les layouts Support

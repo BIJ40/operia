@@ -26,7 +26,7 @@ export function ProjectsRoutes() {
   return (
     <>
       {/* Index - redirect to ticketing tab */}
-      <Route path="/projects" element={<Navigate to="/?tab=support" replace />} />
+      <Route path="/projects" element={<Navigate to="/?tab=ticketing" replace />} />
       
       {/* Detail pages — Ticketing strictement protégé par module overwrite-only */}
       <Route path="/projects/kanban" element={<ProjectsLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="ticketing"><ApogeeTicketsKanban /></ModuleGuard></RoleGuard></ProjectsLayout>} />
