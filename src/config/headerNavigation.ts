@@ -36,11 +36,11 @@ export const HEADER_NAV_GROUPS: HeaderNavGroup[] = [
     icon: BarChart3,
     tab: 'pilotage',
     children: [
-      { label: 'Statistiques', icon: BarChart3, tab: 'pilotage', description: 'Tableaux de bord et KPIs', scope: 'pilotage.statistiques' },
-      { label: 'Performance', icon: Activity, tab: 'pilotage', description: 'Indicateurs de performance' },
-      { label: 'Actions à mener', icon: ListChecks, tab: 'pilotage', description: 'Suivi des actions' },
-      { label: 'Devis acceptés', icon: FileCheck, tab: 'pilotage', description: 'Suivi des devis signés' },
-      { label: 'Incohérences', icon: AlertTriangle, tab: 'pilotage', description: 'Alertes et anomalies' },
+      { label: 'Statistiques', icon: BarChart3, tab: 'pilotage', description: 'Tableaux de bord et KPIs', scope: 'pilotage.statistiques', subTabKey: 'pilotage_sub_tab', subTabValue: 'stats' },
+      { label: 'Performance', icon: Activity, tab: 'pilotage', description: 'Indicateurs de performance', subTabKey: 'pilotage_sub_tab', subTabValue: 'performance' },
+      { label: 'Actions à mener', icon: ListChecks, tab: 'pilotage', description: 'Suivi des actions', subTabKey: 'pilotage_sub_tab', subTabValue: 'actions' },
+      { label: 'Devis acceptés', icon: FileCheck, tab: 'pilotage', description: 'Suivi des devis signés', subTabKey: 'pilotage_sub_tab', subTabValue: 'devis-acceptes' },
+      { label: 'Incohérences', icon: AlertTriangle, tab: 'pilotage', description: 'Alertes et anomalies', subTabKey: 'pilotage_sub_tab', subTabValue: 'anomalies' },
     ],
   },
   {
