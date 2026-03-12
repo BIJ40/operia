@@ -445,9 +445,9 @@ export default function AdminAgencies() {
 
                     <Collapsible open={isExpanded}>
                       <CollapsibleContent>
-                        {agencyUsers.length === 0 ? (
+                        {totalCount === 0 ? (
                           <div className="p-4 text-center text-muted-foreground">
-                            Aucun utilisateur assigné à cette agence
+                            Aucun membre dans cette agence
                           </div>
                         ) : (
                           <Table>
@@ -456,10 +456,12 @@ export default function AdminAgencies() {
                                 <TableHead>Nom</TableHead>
                                 <TableHead>Email</TableHead>
                                 <TableHead>Rôle</TableHead>
+                                <TableHead>Statut</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
+                              {/* Registered users */}
                               {agencyUsers.map((user) => (
                                 <TableRow key={user.id}>
                                   <TableCell className="font-medium">
@@ -472,6 +474,11 @@ export default function AdminAgencies() {
                                     {user.role_agence && (
                                       <Badge variant="outline">{user.role_agence}</Badge>
                                     )}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge className="bg-emerald-600 hover:bg-emerald-700 text-xs">
+                                      Inscrit
+                                    </Badge>
                                   </TableCell>
                                   <TableCell className="text-right">
                                     <div className="flex gap-2 justify-end">
@@ -491,6 +498,38 @@ export default function AdminAgencies() {
                                         Retirer
                                       </Button>
                                     </div>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                              {/* Non-registered collaborators */}
+                              {unregistered.map((collab) => (
+                                <TableRow key={`collab-${collab.id}`} className="bg-muted/30">
+                                  <TableCell className="font-medium">
+                                    {collab.first_name} {collab.last_name}
+                                  </TableCell>
+                                  <TableCell className="text-sm text-muted-foreground">
+                                    {collab.email || '—'}
+                                  </TableCell>
+                                  <TableCell>
+                                    {(collab.role || collab.type) && (
+                                      <Badge variant="outline">{collab.role || collab.type}</Badge>
+                                    )}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge variant="secondary" className="text-xs text-amber-700 bg-amber-100">
+                                      Non inscrit
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="gap-1 text-primary"
+                                      onClick={() => handleCreateUserFromCollab(collab, agency.slug)}
+                                    >
+                                      <UserPlus className="h-4 w-4" />
+                                      Créer le compte
+                                    </Button>
                                   </TableCell>
                                 </TableRow>
                               ))}
