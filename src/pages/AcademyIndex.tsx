@@ -44,7 +44,7 @@ const faqModule = {
 export default function AcademyIndex() {
   const menuLabels = useMenuLabels();
   const { hasModuleOption } = useEffectiveModules();
-  const showFaq = hasModuleOption('guides' as any, 'faq');
+  const showFaq = hasModuleOption('support.guides' as any, 'faq');
 
   const getModuleTitle = (module: typeof academyModules[0]): string => {
     const pageKey = ROUTE_TO_PAGE_KEY[module.href];

@@ -8,23 +8,23 @@ import { Lightbulb } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
 
-// Astuces par module
+// Astuces par module (clés hiérarchiques alignées MODULE_DEFINITIONS)
 const TIPS_BY_MODULE: Record<string, string[]> = {
-  stats: [
+  'pilotage.dashboard': [
     '💡 Consultez le CA par technicien depuis l\'onglet Stats',
     '📊 Filtrez les données par période pour affiner l\'analyse',
     '📈 Comparez les performances mois par mois',
   ],
-  agence: [
+  'pilotage.agence': [
     '🎯 Les indicateurs clés sont visibles sur le tableau de bord',
     '📈 Suivez l\'évolution du CA mensuel en temps réel',
     '🔍 Cliquez sur un graphique pour voir les détails',
   ],
-  rh: [
+  'organisation.salaries': [
     '👥 Gérez vos collaborateurs depuis l\'espace RH',
     '📅 Planifiez les congés et absences facilement',
   ],
-  guides: [
+  'support.guides': [
     '🎓 Accédez aux formations depuis les Guides',
     '📚 Consultez les guides et ressources disponibles',
   ],
@@ -55,17 +55,17 @@ export function PreloadTipsCarousel({
   useEffect(() => {
     const contextualTips: string[] = [];
     
-    // Ajouter les tips des modules actifs
-    if (hasModuleOption('stats', 'stats_hub') || hasModuleOption('agence', 'stats_hub')) {
-      contextualTips.push(...(TIPS_BY_MODULE.stats || []));
+    // Ajouter les tips des modules actifs (clés hiérarchiques)
+    if (hasModuleOption('pilotage.dashboard', 'stats_hub') || hasModuleOption('pilotage.agence', 'indicateurs')) {
+      contextualTips.push(...(TIPS_BY_MODULE['pilotage.dashboard'] || []));
     }
     
-    if (hasModuleOption('rh', 'collaborateurs')) {
-      contextualTips.push(...(TIPS_BY_MODULE.rh || []));
+    if (hasModuleOption('organisation.salaries', 'rh_viewer')) {
+      contextualTips.push(...(TIPS_BY_MODULE['organisation.salaries'] || []));
     }
     
-    if (hasModuleOption('guides', 'formations')) {
-      contextualTips.push(...(TIPS_BY_MODULE.academy || []));
+    if (hasModuleOption('support.guides', 'apogee')) {
+      contextualTips.push(...(TIPS_BY_MODULE['support.guides'] || []));
     }
     
     // Fallback sur les tips générales si aucune contextuelle

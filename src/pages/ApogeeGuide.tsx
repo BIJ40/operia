@@ -45,7 +45,7 @@ export default function ApogeeGuide() {
   const { isAuthenticated } = useAuthCore();
   const { hasGlobalRole, hasModuleOption } = usePermissions();
   
-  const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('guides', 'edition');
+  const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('support.guides', 'edition');
   const canDelete = hasGlobalRole('platform_admin');
   const { toast } = useToast();
   const [editingId, setEditingId] = useState<string | null>(null);

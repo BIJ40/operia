@@ -113,7 +113,7 @@ export function UserAccessSimple({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Zap className="h-4 w-4" />
-              Modules activés
+              Modules configurés
             </div>
             <Badge variant="outline">{activeModules.length}</Badge>
           </div>

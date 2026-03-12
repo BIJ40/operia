@@ -65,7 +65,7 @@ export default function SupportSettings() {
       const { data: aideModules, error: modError } = await supabase
         .from('user_modules')
         .select('user_id, options')
-        .eq('module_key', 'aide');
+        .in('module_key', ['aide', 'support.aide_en_ligne']);
       
       if (modError) throw modError;
 

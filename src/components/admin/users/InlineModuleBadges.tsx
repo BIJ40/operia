@@ -175,9 +175,9 @@ export const InlineModuleBadges = memo(function InlineModuleBadges({
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="start">
         <div className="p-3 border-b">
-          <p className="text-sm font-medium">Modules utilisateur</p>
+          <p className="text-sm font-medium">Modules configurés</p>
           <p className="text-xs text-muted-foreground">
-            Cochez les modules accessibles pour cet utilisateur
+            Configuration individuelle — cochez les modules pour cet utilisateur
           </p>
         </div>
         <div className="p-3 max-h-[400px] overflow-y-auto">

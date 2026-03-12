@@ -23,7 +23,7 @@ export function useSupportUsers() {
       const { data: agentModules, error: modulesError } = await supabase
         .from('user_modules')
         .select('user_id, options')
-        .eq('module_key', 'aide');
+        .in('module_key', ['aide', 'support.aide_en_ligne']);
       
       if (modulesError) {
         logError('[ADMIN-TICKETS] Error loading support modules', modulesError);

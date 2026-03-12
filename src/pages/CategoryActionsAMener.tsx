@@ -140,7 +140,7 @@ export default function CategoryActionsAMener() {
   const { isAuthenticated } = useAuthCore();
   const { hasGlobalRole, hasModuleOption } = usePermissions();
   // P0: Utiliser V2 pour permissions d'édition
-  const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('guides', 'edition');
+  const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('support.guides', 'edition');
   const { toast } = useToast();
   
   if (!isAuthenticated) {
