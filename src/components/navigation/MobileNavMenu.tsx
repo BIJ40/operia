@@ -38,7 +38,11 @@ export function MobileNavMenu({ groups, activeTab, onSelect }: MobileNavMenuProp
                 <button
                   key={group.label}
                   type="button"
-                  onClick={() => { if (child.tab) onSelect(child.tab); setOpen(false); }}
+                  onClick={() => {
+                    if (child.path) navigate(child.path);
+                    else if (child.tab) onSelect(child.tab);
+                    setOpen(false);
+                  }}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
                     ${isGroupActive ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'}`}
                 >
