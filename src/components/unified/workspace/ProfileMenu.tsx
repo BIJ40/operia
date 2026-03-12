@@ -2,7 +2,7 @@
  * ProfileMenu - Dropdown menu for user profile, appearance, and logout
  */
 import { Link } from 'react-router-dom';
-import { User, Building2, Settings, LogOut, Palette, Leaf, Droplets, Moon, Monitor } from 'lucide-react';
+import { User, Building2, Settings, LogOut, Palette, Leaf, Droplets, Moon, Monitor, PanelTop, Columns } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
