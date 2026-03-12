@@ -63,7 +63,7 @@ const NAVIGATION_LABEL_FALLBACKS: Record<string, string> = {
   'organisation.salaries': 'Salariés',
   'organisation.parc': 'Parc',
   prospection: 'Prospection',
-  admin_plateforme: 'Admin',
+  admin_plateforme: 'Admin plateforme',
   'pilotage.agence': 'Mon agence',
   'mediatheque.documents': 'Documents',
   'organisation.apporteurs': 'Apporteurs',
@@ -71,6 +71,16 @@ const NAVIGATION_LABEL_FALLBACKS: Record<string, string> = {
   'organisation.reunions': 'Réunions',
   'support.aide_en_ligne': 'Aide en ligne',
   reseau_franchiseur: 'Franchiseur',
+  // Legacy roots → business labels
+  agence: 'Mon agence',
+  rh: 'Salariés',
+  parc: 'Parc',
+  realisations: 'Réalisations',
+  divers_apporteurs: 'Apporteurs',
+  divers_plannings: 'Plannings',
+  divers_reunions: 'Réunions',
+  divers_documents: 'Documents légaux',
+  outils: 'Outils',
 };
 
 const LEGACY_LABELS: Partial<Record<string, string[]>> = {
@@ -81,6 +91,10 @@ const LEGACY_LABELS: Partial<Record<string, string[]>> = {
   'pilotage.agence': ['Pilotage agence'],
   reseau_franchiseur: ['Réseau Franchiseur'],
   'support.aide_en_ligne': ['Aide'],
+  // Legacy roots
+  agence: ['Pilotage agence'],
+  rh: ['Ressources humaines'],
+  parc: ['Parc véhicules & EPI'],
 };
 
 export function getRightsDisplayLabel(moduleKey: string, label: string): string {
