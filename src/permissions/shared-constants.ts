@@ -60,11 +60,12 @@ export type SharedModuleKey = typeof SHARED_MODULE_KEYS[number];
 // ============================================================================
 
 export const SHARED_MODULE_COMPAT_MAP: Record<string, SharedModuleKey> = {
-  help_academy: 'guides',
-  pilotage_agence: 'agence',
-  support: 'aide',
+  // Legacy keys → canonical hierarchical keys
+  help_academy: 'support.guides',
+  pilotage_agence: 'pilotage.agence',
+  support: 'support.aide_en_ligne',
   apogee_tickets: 'ticketing',
-  messaging: 'aide',
+  messaging: 'support.aide_en_ligne',
 };
 
 // ============================================================================
