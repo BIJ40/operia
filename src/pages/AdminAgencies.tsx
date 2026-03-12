@@ -61,6 +61,19 @@ interface UserProfile {
   role_agence: string | null;
 }
 
+interface CollaboratorRow {
+  id: string;
+  user_id: string | null;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  role: string | null;
+  type: string | null;
+  agency_id: string;
+  leaving_date: string | null;
+  is_registered_user: boolean;
+}
+
 // Route protégée par RoleGuard dans App.tsx
 export default function AdminAgencies() {
   const { toast } = useToast();
