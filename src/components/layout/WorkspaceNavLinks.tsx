@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
+import { useModuleLabels } from '@/hooks/useModuleLabels';
 import { filterWorkspaceTabs } from '@/lib/filterNavigationByPermissions';
 import { ACCENT_THEMES, type AccentThemeKey } from '@/lib/accentThemes';
 import { ProfileMenu } from '@/components/unified/workspace/ProfileMenu';
@@ -24,16 +25,6 @@ const TAB_ACCENTS: Record<UnifiedTab, AccentThemeKey> = {
   support: 'cyan',
   admin: 'purple',
 };
-
-const ALL_TABS: TabConfig[] = [
-  { id: 'accueil', label: 'Accueil', icon: Home },
-  { id: 'pilotage', label: 'Pilotage', icon: BarChart3, requiresOption: { module: 'pilotage.statistiques' }, altModules: ['pilotage.agence'] },
-  { id: 'commercial', label: 'Commercial', icon: ShoppingCart, requiresOption: { module: 'prospection' }, altModules: ['pilotage.agence', 'commercial.realisations'] },
-  { id: 'organisation', label: 'Organisation', icon: Users, requiresOption: { module: 'organisation.salaries' }, altModules: ['organisation.parc', 'organisation.apporteurs', 'organisation.plannings', 'organisation.reunions', 'pilotage.agence'] },
-  { id: 'documents', label: 'Documents', icon: FolderOpen, requiresOption: { module: 'mediatheque.documents' } },
-  { id: 'support', label: 'Support', icon: Headphones },
-  { id: 'admin', label: 'Admin', icon: Shield, requiresOption: { module: 'admin_plateforme' } },
-];
 
 interface WorkspaceNavLinksProps {
   /** Onglet actif à mettre en surbrillance */
