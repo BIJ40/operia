@@ -27,6 +27,8 @@ export interface HeaderNavGroup {
   icon: LucideIcon;
   /** Main tab this group maps to (for active state) */
   tab: UnifiedTab;
+  /** Accent color for this domain */
+  accent?: 'blue' | 'orange' | 'green' | 'purple' | 'pink' | 'teal';
   children: HeaderNavChild[];
 }
 
