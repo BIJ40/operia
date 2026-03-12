@@ -99,6 +99,13 @@ export function ProfileMenu({ tabButtonClass }: ProfileMenuProps) {
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
+          <DropdownMenuItem
+            onClick={toggleNavMode}
+            className="flex items-center gap-2 cursor-pointer"
+          >
+            {navMode === 'tabs' ? <PanelTop className="w-4 h-4" /> : <Columns className="w-4 h-4" />}
+            {navMode === 'tabs' ? 'Navigation Header' : 'Navigation Onglets'}
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={logout}

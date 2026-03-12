@@ -227,16 +227,25 @@ function UnifiedWorkspaceContent() {
         
         <div className={`min-h-screen bg-background ${topPadding}`}>
           <Tabs value={validActiveTab} onValueChange={(v) => setActiveTab(v as UnifiedTab)} className="flex flex-col h-screen">
-            <WorkspaceTabBar
-              sortedTabs={sortedTabs}
-              sortableIds={sortableIds}
-              activeTab={validActiveTab}
-              tabButtonClass={tabButtonClass}
-              isTabAccessible={isTabAccessible}
-              isTabVisuallyDisabled={isTabVisuallyDisabled}
-              setActiveTab={setActiveTab}
-              setTabOrder={setTabOrder}
-            />
+            {navMode === 'header' ? (
+              <MainHeader
+                activeTab={validActiveTab}
+                setActiveTab={setActiveTab}
+                visibleTabs={visibleTabs}
+                tabButtonClass={tabButtonClass}
+              />
+            ) : (
+              <WorkspaceTabBar
+                sortedTabs={sortedTabs}
+                sortableIds={sortableIds}
+                activeTab={validActiveTab}
+                tabButtonClass={tabButtonClass}
+                isTabAccessible={isTabAccessible}
+                isTabVisuallyDisabled={isTabVisuallyDisabled}
+                setActiveTab={setActiveTab}
+                setTabOrder={setTabOrder}
+              />
+            )}
             
             <WorkspaceTabContent isN0User={isN0User} />
           </Tabs>
