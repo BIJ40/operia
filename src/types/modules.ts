@@ -385,16 +385,20 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'export', path: 'commercial.realisations.export', label: 'Exporter', description: 'Export des données', defaultEnabled: false, routes: ['/realisations'] },
     ],
   },
-  // Modules admin (non visibles dans les plans)
+  // reseau_franchiseur — INTERFACE DE RÔLE (N3+), pas un module standard.
+  // Conservé dans MODULE_DEFINITIONS pour compatibilité technique (EnabledModules, user_modules legacy)
+  // mais l'accès réel est piloté par src/permissions/franchisorAccess.ts
   {
     key: 'reseau_franchiseur',
     label: 'Réseau Franchiseur',
-    description: 'Vision multi-agences',
+    description: 'Interface de rôle — accès piloté par rôle global N3+, pas par module',
     icon: 'Network',
     category: 'reseau',
-    defaultForRoles: ['franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
+    defaultForRoles: [], // VIDÉ — l'accès n'est plus piloté par module
     minRole: 'franchisor_user',
     adminOnly: true,
+    /** Interface de rôle, pas un module administrable */
+    roleInterface: true,
     options: [
       { key: 'dashboard', path: 'reseau_franchiseur.dashboard', label: 'Dashboard', description: 'Vue réseau', defaultEnabled: true, routes: ['/?tab=hc-reseau'] },
       { key: 'stats', path: 'reseau_franchiseur.stats', label: 'Stats', description: 'KPIs réseau', defaultEnabled: true, routes: ['/?tab=hc-reseau'] },
