@@ -29,7 +29,7 @@ export const RIGHTS_CATEGORIES: RightsCategory[] = [
     'mediatheque', 'mediatheque.documents',
   ]},
   { id: 'support', label: 'Support', moduleKeys: [
-    'support', 'support.aide_en_ligne', 'support.guides',
+    'support', 'support.aide_en_ligne', 'support.guides', 'support.faq',
     'ticketing',
   ]},
   { id: 'admin', label: 'Admin', moduleKeys: [
