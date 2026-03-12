@@ -14,7 +14,9 @@ export interface RightsCategory {
 
 export const RIGHTS_CATEGORIES: RightsCategory[] = [
   { id: 'pilotage', label: 'Pilotage', moduleKeys: [
-    'pilotage', 'pilotage.statistiques',
+    'pilotage', 'pilotage.statistiques', 'pilotage.actions_a_mener',
+    'pilotage.devis_acceptes', 'pilotage.incoherences', 'pilotage.performance',
+    'planning_augmente',
   ]},
   { id: 'commercial', label: 'Commercial', moduleKeys: [
     'commercial', 'prospection', 'commercial.realisations',
@@ -22,12 +24,13 @@ export const RIGHTS_CATEGORIES: RightsCategory[] = [
   { id: 'organisation', label: 'Organisation', moduleKeys: [
     'organisation', 'organisation.salaries', 'organisation.apporteurs',
     'organisation.plannings', 'organisation.reunions', 'organisation.parc',
+    'organisation.docgen',
   ]},
   { id: 'documents', label: 'Documents', moduleKeys: [
     'mediatheque', 'mediatheque.documents',
   ]},
   { id: 'support', label: 'Support', moduleKeys: [
-    'support', 'support.aide_en_ligne', 'support.guides',
+    'support', 'support.aide_en_ligne', 'support.guides', 'support.faq',
     'ticketing',
   ]},
   { id: 'admin', label: 'Admin', moduleKeys: [
@@ -58,9 +61,10 @@ export function nodeMatchesAnyCategory(nodeKey: string): boolean {
 const NAVIGATION_LABEL_FALLBACKS: Record<string, string> = {
   'organisation.salaries': 'Salariés',
   'organisation.parc': 'Parc',
+  'organisation.docgen': 'DocGen',
   prospection: 'Prospection',
   admin_plateforme: 'Admin plateforme',
-  'pilotage.agence': 'Pilotage agence',
+  planning_augmente: 'Planification Augmentée',
   'mediatheque.documents': 'Documents',
   'organisation.apporteurs': 'Apporteurs',
   'organisation.plannings': 'Plannings',
@@ -84,7 +88,7 @@ const LEGACY_LABELS: Partial<Record<string, string[]>> = {
   'organisation.parc': ['Parc véhicules & EPI'],
   prospection: ['Commercial / Prospection'],
   admin_plateforme: ['Administration'],
-  'pilotage.agence': ['Pilotage agence', 'Mon agence'],
+  
   reseau_franchiseur: ['Réseau Franchiseur'],
   'support.aide_en_ligne': ['Aide'],
   // Legacy roots
