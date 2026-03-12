@@ -98,9 +98,9 @@ export const HEADER_NAV_GROUPS: HeaderNavGroup[] = [
     tab: 'admin',
     accent: 'red',
     children: [
-      { label: 'Utilisateurs', icon: UsersIcon, tab: 'admin', description: 'Gestion des comptes', scope: 'admin_plateforme', subTabKey: 'admin_main_tab', subTabValue: 'gestion' },
-      { label: 'Agences', icon: Building2, tab: 'admin', description: 'Réseau d\'agences', scope: 'admin_plateforme', subTabKey: 'admin_main_tab', subTabValue: 'gestion' },
-      { label: 'Droits', icon: Shield, tab: 'admin', description: 'Permissions et modules', scope: 'admin_plateforme', subTabKey: 'admin_main_tab', subTabValue: 'gestion' },
+      { label: 'Utilisateurs', icon: UsersIcon, tab: 'admin', description: 'Gestion des comptes', scope: 'admin_plateforme', subTabKey: 'admin_main_tab', subTabValue: 'gestion', path: '/?tab=admin&adminTab=gestion&adminView=users' },
+      { label: 'Agences', icon: Building2, tab: 'admin', description: 'Réseau d\'agences', scope: 'admin_plateforme', subTabKey: 'admin_main_tab', subTabValue: 'gestion', path: '/?tab=admin&adminTab=gestion&adminView=agences' },
+      { label: 'Droits', icon: Shield, tab: 'admin', description: 'Permissions et modules', scope: 'admin_plateforme', subTabKey: 'admin_main_tab', subTabValue: 'gestion', path: '/?tab=admin&adminTab=gestion&adminView=modules' },
     ],
   },
 ];
