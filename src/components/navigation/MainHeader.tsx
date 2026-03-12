@@ -29,7 +29,7 @@ export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClas
   const pillInactive = 'text-muted-foreground hover:text-foreground hover:border-border';
 
   return (
-    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border print:hidden">
+    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border/50 print:hidden">
       <div className="container mx-auto max-w-7xl px-4">
         {/* Top row: logo + profile */}
         <div className="h-14 flex items-center justify-between">
