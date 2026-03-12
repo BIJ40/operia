@@ -362,6 +362,8 @@ export default function AdminAgencies() {
             <div className="space-y-4">
               {agencies.map((agency) => {
                 const agencyUsers = getUsersForAgency(agency.id);
+                const unregistered = getUnregisteredCollaborators(agency.id);
+                const totalCount = agencyUsers.length + unregistered.length;
                 const isExpanded = expandedAgencies.has(agency.id);
 
                 return (
