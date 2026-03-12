@@ -244,25 +244,25 @@ function AdministratifSection() {
   ], [getShortLabel]);
 
   const visibleAdminTabs = useMemo(() => {
-    return adminTabsConfig.filter(tab => {
-      if (!tab.requiresModule) return true;
-      return hasModule(tab.requiresModule);
+    return adminTabsConfig.map(tab => {
+      if (!tab.requiresModule) return tab;
+      return { ...tab, disabled: !hasModule(tab.requiresModule) };
     });
   }, [hasModule, adminTabsConfig]);
 
-  const defaultTab = visibleAdminTabs[0]?.id as AdminSubTab ?? 'reunions';
+  const defaultTab = (visibleAdminTabs.find(t => !t.disabled)?.id as AdminSubTab) ?? 'reunions';
   const [subTab, setSubTab] = useSessionState<AdminSubTab>('outils_admin_sub', defaultTab);
   const defaultOrder = visibleAdminTabs.map(t => t.id);
   const [tabOrder, setTabOrder] = useSessionState<string[]>('outils_admin_order', defaultOrder);
   
-  // Ensure active tab is still visible
-  const effectiveSubTab = visibleAdminTabs.some(t => t.id === subTab) ? subTab : defaultTab;
+  // Ensure active tab is still enabled
+  const effectiveSubTab = (visibleAdminTabs.find(t => t.id === subTab && !t.disabled)) ? subTab : defaultTab;
 
   const handleReorder = useCallback((newOrder: string[]) => {
     setTabOrder(newOrder);
   }, [setTabOrder]);
 
-  if (visibleAdminTabs.length === 0) {
+  if (visibleAdminTabs.every(t => t.disabled)) {
     return (
       <div className="flex items-center justify-center py-16 text-muted-foreground">
         Aucun outil administratif activé.
