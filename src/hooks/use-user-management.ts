@@ -38,6 +38,7 @@ export interface UserProfile {
   first_name: string | null;
   last_name: string | null;
   agence: string | null;
+  agency_id: string | null;
   global_role: GlobalRole | null;
   enabled_modules: EnabledModules | null;
   role_agence: string | null;
@@ -99,7 +100,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
   const queryClient = useQueryClient();
   const { globalRole, suggestedGlobalRole, isAdmin } = usePermissions();
   const { user } = useAuthCore();
-  const { agence: currentUserAgency } = useProfile();
+  const { agence: currentUserAgency, agencyId: currentUserAgencyId } = useProfile();
   
   // ✅ SOURCE DE VÉRITÉ : Permissions depuis roleMatrix.ts
   const effectiveUserRole = globalRole ?? suggestedGlobalRole;
@@ -179,16 +180,16 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       case 'self':
         return []; // Pas de gestion d'autres utilisateurs
       case 'ownAgency':
-        return currentUserAgency ? [currentUserAgency] : [];
+        return currentUserAgencyId ? [currentUserAgencyId] : [];
       case 'assignedAgencies':
-        // Utiliser les agences assignées, ou vide si aucune
+        // Utiliser les agences assignées (UUIDs), ou vide si aucune
         return assignedAgenciesRaw?.length ? assignedAgenciesRaw : [];
       case 'allAgencies':
         return null; // null = pas de filtre agence
       default:
         return [];
     }
-  }, [effectiveScope, restrictToAgencyId, currentUserAgency, assignedAgenciesRaw]);
+  }, [effectiveScope, restrictToAgencyId, currentUserAgencyId, assignedAgenciesRaw]);
 
   // ✅ Fetch users avec sélection explicite de colonnes + modules depuis user_modules
   const { data: users, isLoading: usersLoading } = useQuery({
@@ -201,7 +202,8 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
           email, 
           first_name, 
           last_name, 
-          agence, 
+          agence,
+          agency_id,
           global_role, 
           role_agence, 
           is_active, 
@@ -212,9 +214,9 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
           apogee_user_id
         `);
       
-      // Filtre agences
+      // Filtre agences — agency_id est la source unique de vérité
       if (manageableAgencyIds !== null) {
-        query = query.in('agence', manageableAgencyIds);
+        query = query.in('agency_id', manageableAgencyIds);
       }
       
       // Filtre statut
@@ -302,8 +304,10 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       }
       
       if (agencyFilter !== 'all') {
-        if (agencyFilter === 'none' && user.agence) return false;
-        if (agencyFilter !== 'none' && user.agence !== agencyFilter) return false;
+        const userAgencyId = user.agency_id;
+        const userAgenceSlug = user.agence;
+        if (agencyFilter === 'none' && (userAgencyId || userAgenceSlug)) return false;
+        if (agencyFilter !== 'none' && userAgenceSlug !== agencyFilter) return false;
       }
       
       if (roleFilter !== 'all') {

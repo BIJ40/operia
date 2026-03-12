@@ -57,6 +57,7 @@ interface UserProfile {
   last_name: string | null;
   email: string | null;
   agence: string | null;
+  agency_id: string | null;
   role_agence: string | null;
 }
 
@@ -90,7 +91,7 @@ export default function AdminAgencies() {
     try {
       const [agenciesResult, usersResult] = await Promise.all([
         supabase.from('apogee_agencies').select('*').order('label').limit(500),
-        supabase.from('profiles').select('id, first_name, last_name, email, agence, role_agence').order('first_name').limit(1000),
+        supabase.from('profiles').select('id, first_name, last_name, email, agence, agency_id, role_agence').order('first_name').limit(1000),
       ]);
 
       if (agenciesResult.error) throw agenciesResult.error;
@@ -120,12 +121,12 @@ export default function AdminAgencies() {
     setExpandedAgencies(newExpanded);
   };
 
-  const getUsersForAgency = (slug: string) => {
-    return users.filter((user) => user.agence === slug);
+  const getUsersForAgency = (agencyId: string) => {
+    return users.filter((user) => user.agency_id === agencyId);
   };
 
   const getUsersWithoutAgency = () => {
-    return users.filter((user) => !user.agence && user.role_agence === 'dirigeant');
+    return users.filter((user) => !user.agency_id && user.role_agence === 'dirigeant');
   };
 
   // Get current plan for an agency
@@ -221,9 +222,14 @@ export default function AdminAgencies() {
 
   const handleAssignUser = async (userId: string, agencySlug: string | null) => {
     try {
+      // Resolve agency_id from slug
+      const targetAgency = agencySlug ? agencies.find(a => a.slug === agencySlug) : null;
       const { error } = await supabase
         .from('profiles')
-        .update({ agence: agencySlug })
+        .update({ 
+          agence: agencySlug,
+          agency_id: targetAgency?.id ?? null,
+        })
         .eq('id', userId);
 
       if (error) throw error;
@@ -317,7 +323,7 @@ export default function AdminAgencies() {
           ) : (
             <div className="space-y-4">
               {agencies.map((agency) => {
-                const agencyUsers = getUsersForAgency(agency.slug);
+                const agencyUsers = getUsersForAgency(agency.id);
                 const isExpanded = expandedAgencies.has(agency.id);
 
                 return (
