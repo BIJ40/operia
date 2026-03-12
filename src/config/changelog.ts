@@ -15,35 +15,40 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.9.8",
+    title: "Centre d'aide — Refonte UX & Permissions documentaires",
+    date: "2026-03-12",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // CENTRE D'AIDE
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Nouvelle page Centre d\'aide unifiée en grille 2×2 : Aide en ligne, Base documentaire, Mes demandes, FAQ' },
+      { type: 'feature', description: 'Bouton « Retour » ajouté à chaque étape du chat IA (orientation, conversation, capture d\'écran)' },
+      { type: 'improvement', description: 'Suppression du scroll automatique parasite lors du changement de domaine/étape dans le chat' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // BASE DOCUMENTAIRE & PERMISSIONS
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Bases documentaires liées aux permissions : sections accessibles cliquables, sections non autorisées grisées avec cadenas' },
+      { type: 'improvement', description: 'Contrôle d\'accès via hasModuleOption(support.guides, apogee|helpconfort|apporteurs)' },
+      { type: 'improvement', description: 'Renommage : HC Services → Operia, Base documentaire → Base documentaire HelpConfort' },
+    ],
+  },
+  {
     version: "V0.9.7",
     title: "Verrouillage Permissions — Fail-Closed & Anti-Régression",
     date: "2026-03-12",
     changes: [
-      // ═══════════════════════════════════════════════════════════════
-      // CORRECTION CRITIQUE
-      // ═══════════════════════════════════════════════════════════════
       { type: 'security', description: 'RPC get_user_effective_modules basculée en fail-closed : COALESCE(ptm.enabled, false) — tout accès non configuré est désormais refusé' },
       { type: 'security', description: 'Isolation STARTER / PRO renforcée : commercial.realisations et organisation.reunions désactivés pour STARTER' },
       { type: 'fix', description: 'Suppression de 4 clés fantômes sans effet runtime (commercial.suivi_client, comparateur, veille, prospects)' },
-
-      // ═══════════════════════════════════════════════════════════════
-      // DONNÉES PLAN_TIER_MODULES
-      // ═══════════════════════════════════════════════════════════════
       { type: 'feature', description: 'Insertion de 8 clés canoniques dans plan_tier_modules (6 sous-onglets statistiques + 2 clés médiathèque)' },
       { type: 'improvement', description: 'Granularité stats par plan : general accessible STARTER, sous-onglets avancés réservés PRO' },
-
-      // ═══════════════════════════════════════════════════════════════
-      // TESTS & GARDE-FOUS CI
-      // ═══════════════════════════════════════════════════════════════
       { type: 'audit', description: 'Suite anti-régression : 434 tests passants couvrant fail-closed, isolation plans, cohérence clés' },
       { type: 'audit', description: 'Test fail-closed-regression : STARTER bloqué sur 8 clés PRO, PRO autorisé, overrides cohérents' },
       { type: 'audit', description: 'Test coherence-audit : aucune clé fantôme, aucun deployed=false activé, alignement types/registry' },
       { type: 'audit', description: 'Test fail-open-prevention : interdiction du pattern COALESCE(..., true) et fallback permissif' },
       { type: 'audit', description: 'Test new-module-checklist : 10 règles structurelles bloquantes pour tout ajout futur de module' },
-
-      // ═══════════════════════════════════════════════════════════════
-      // DOCUMENTATION
-      // ═══════════════════════════════════════════════════════════════
       { type: 'improvement', description: 'Référence technique complète : docs/PERMISSIONS-REFERENCE.md (inventaire clés, cas spéciaux, procédure 9 étapes)' },
       { type: 'improvement', description: 'Rapport de clôture exécutif : docs/PERMISSIONS-CLOSURE-REPORT.md (synthèse dirigeant, avant/après, gouvernance)' },
     ],
