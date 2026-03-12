@@ -201,7 +201,7 @@ export function SitemapTable({ routes }: SitemapTableProps) {
                           <TooltipTrigger>
                             <Badge className="bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300 gap-1">
                               <Box className="w-3 h-3" />
-                              {MODULE_LABELS[route.guards.moduleGuard.moduleKey]?.split(' ')[0] || route.guards.moduleGuard.moduleKey}
+                              {getLabel(route.guards.moduleGuard.moduleKey).split(' ')[0]}
                             </Badge>
                           </TooltipTrigger>
                           <TooltipContent>

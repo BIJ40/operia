@@ -168,7 +168,7 @@ export function SitemapFilters({ filters, onChange }: SitemapFiltersProps) {
                   <SelectItem value="all">Tous les modules</SelectItem>
                   {ALL_MODULES.map((module) => (
                     <SelectItem key={module} value={module}>
-                      {MODULE_LABELS[module] || module}
+                      {getLabel(module, module)}
                     </SelectItem>
                   ))}
                 </SelectContent>
