@@ -231,7 +231,7 @@ export default function SupportHubTabContent() {
           <CardContent className="space-y-2">
             {DOC_SECTIONS.filter(s => {
               // Hide sections that need module access
-              if (s.id === 'apporteurs') return hasModule('divers_apporteurs');
+              if (s.id === 'apporteurs') return hasModule('organisation.apporteurs');
               return true;
             }).map((section) => (
               <Link
