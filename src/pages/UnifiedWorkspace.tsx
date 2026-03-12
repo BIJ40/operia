@@ -27,6 +27,7 @@ import { usePermissions } from '@/contexts/PermissionsContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import { filterWorkspaceTabs, isWorkspaceTabVisible } from '@/lib/filterNavigationByPermissions';
+import { useModuleLabels } from '@/hooks/useModuleLabels';
 
 import { useStorageQuota } from '@/hooks/use-storage-quota';
 import { useUserPresence } from '@/hooks/use-user-presence';
