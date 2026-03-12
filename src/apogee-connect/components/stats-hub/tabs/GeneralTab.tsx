@@ -309,7 +309,7 @@ export function GeneralTab() {
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted/50" horizontal={false} />
                     <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => formatCurrency(v)} />
                     <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={65} />
-                    <Tooltip 
+                    <RechartsTooltip 
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--card))', 
                         border: '1px solid hsl(var(--border))',
