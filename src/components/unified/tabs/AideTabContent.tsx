@@ -371,5 +371,6 @@ export default function SupportHubTabContent() {
         </Card>
       </div>
     </div>
+    </DomainAccentProvider>
   );
 }
