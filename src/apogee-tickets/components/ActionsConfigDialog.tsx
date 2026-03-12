@@ -236,10 +236,14 @@ export function ActionsConfigDialog({
   const [editedModules, setEditedModules] = useState<ApogeeModule[]>([]);
   const [editedPriorities, setEditedPriorities] = useState<ApogeePriority[]>([]);
   const [editedOwnerSides, setEditedOwnerSides] = useState<ApogeeOwnerSide[]>([]);
+  const [newStatusIds, setNewStatusIds] = useState<string[]>([]);
 
   // Sync when data is loaded
   useEffect(() => {
-    if (statuses.length > 0) setEditedStatuses([...statuses]);
+    if (statuses.length > 0) {
+      setEditedStatuses([...statuses]);
+      setNewStatusIds([]);
+    }
   }, [statuses]);
 
   useEffect(() => {
