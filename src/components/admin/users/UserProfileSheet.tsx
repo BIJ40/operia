@@ -358,7 +358,9 @@ export const UserProfileSheet = memo(function UserProfileSheet({
 
             {/* ═══ MODULES ACTIFS (VÉRITÉ RPC) ═══ */}
             <Section icon={Zap} title={`Accès réels (${rpcModulesLoading ? '…' : activeModules.length} modules)`}>
-              {rpcModulesLoading ? (
+              <p className="text-xs text-muted-foreground mb-2">
+                Droits effectifs issus du moteur de permissions — ce que l'utilisateur peut réellement faire.
+              </p>
                 <p className="text-sm text-muted-foreground italic">Chargement des droits effectifs…</p>
               ) : activeModules.length > 0 ? (
                 <div className="space-y-2">
