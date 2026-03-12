@@ -222,11 +222,7 @@ export default function TDRUsersPage() {
                 assignableRoles={assignableRoles}
                 isSaving={saveMutation.isPending}
                 onSaveChanges={() => saveChanges(userItem.id)}
-                onRoleChange={(role) => {
-                  handleRoleChange(userItem.id, role);
-                  // Auto-save immédiatement après changement de rôle
-                  setTimeout(() => saveChanges(userItem.id), 0);
-                }}
+                onRoleChange={(role) => handleRoleChange(userItem.id, role)}
                 onModuleToggle={(moduleKey, enabled) => handleModuleToggle(userItem.id, moduleKey, enabled)}
                 onModuleOptionToggle={(moduleKey, optionKey, enabled) => handleModuleOptionToggle(userItem.id, moduleKey, optionKey, enabled)}
                 onEditUser={() => setEditDialog({ open: true, user: userItem })}
