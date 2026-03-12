@@ -11,10 +11,9 @@ import { setSentryUser, clearSentryUser } from '@/lib/sentry';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { EnabledModules, ModuleKey, isModuleEnabled as checkModuleEnabled } from '@/types/modules';
 import { 
-  hasAccess, hasMinRole, isBypassRole,
+  hasAccess, hasMinRole,
   type PermissionContext,
 } from '@/permissions';
-import { resolveModuleViaCompat, resolveModuleOptionViaCompat } from '@/permissions/compatMap';
 import { userModulesToEnabledModules } from '@/lib/userModulesUtils';
 
 // Sub-contexts (Phase 1 split)
