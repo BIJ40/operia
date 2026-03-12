@@ -164,17 +164,17 @@ describe('Rule 9: Shared min_roles alignment', () => {
 
 describe('Rule 10: No permissive fallbacks in module resolution', () => {
   it('isModuleEnabled returns false for null enabledModules', () => {
-    const { isModuleEnabled } = require('@/types/modules');
+    const { isModuleEnabled } = await import('@/types/modules');
     expect(isModuleEnabled(null, 'ticketing')).toBe(false);
   });
 
   it('isModuleEnabled returns false for unknown key', () => {
-    const { isModuleEnabled } = require('@/types/modules');
+    const { isModuleEnabled } = await import('@/types/modules');
     expect(isModuleEnabled({}, 'ticketing')).toBe(false);
   });
 
   it('isModuleOptionEnabled returns false for null enabledModules', () => {
-    const { isModuleOptionEnabled } = require('@/types/modules');
+    const { isModuleOptionEnabled } = await import('@/types/modules');
     expect(isModuleOptionEnabled(null, 'ticketing', 'kanban')).toBe(false);
   });
 });
