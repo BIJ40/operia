@@ -210,7 +210,7 @@ describe('getEffectiveModules', () => {
     const result = getEffectiveModules({
       globalRole: 'superadmin',
       enabledModules: {
-        'some.unknown.key' as any: { enabled: true, options: { foo: true } },
+        ['some.unknown.key' as any]: { enabled: true, options: { foo: true } },
       },
       agencyId: null,
     });
