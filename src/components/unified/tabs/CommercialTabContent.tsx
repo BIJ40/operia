@@ -10,6 +10,7 @@ import { PillTabsList, type PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { ModuleKey } from '@/types/modules';
+import { useModuleLabels } from '@/hooks/useModuleLabels';
 import { ApporteurTabsProvider, useApporteurTabs } from '@/prospection/browser-tabs/ApporteurTabsContext';
 import { ApporteurTabsBar } from '@/prospection/browser-tabs/ApporteurTabsBar';
 import { ApporteurTabsContent } from '@/prospection/browser-tabs/ApporteurTabsContent';
@@ -32,14 +33,6 @@ const TAB_OPTION_MAP: Record<string, string> = {
 const TAB_MODULE_MAP: Record<string, ModuleKey> = {
   realisations: 'commercial.realisations',
 };
-
-const ALL_TABS: PillTabConfig[] = [
-  { id: 'apporteurs', label: 'Suivi client', icon: Building2 },
-  { id: 'comparateur', label: 'Comparateur', icon: GitCompare },
-  { id: 'veille', label: 'Veille', icon: Radar },
-  { id: 'prospects', label: 'Prospects', icon: UserSearch },
-  { id: 'realisations', label: 'Réalisations', icon: Camera },
-];
 
 function LoadingFallback() {
   return (
