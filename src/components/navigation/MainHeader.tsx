@@ -59,7 +59,7 @@ export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClas
               className={`${pillBase} ${activeTab === 'accueil' ? pillActive : pillInactive}`}
             >
               <Home className="w-4 h-4" />
-              <span>Accueil</span>
+              <span>{getLabel('accueil', 'Accueil')}</span>
             </button>
 
             {visibleGroups.map((group) => (
