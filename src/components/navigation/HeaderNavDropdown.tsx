@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import type { HeaderNavGroup, HeaderNavChild } from '@/config/headerNavigation';
 import type { UnifiedTab } from '@/components/unified/workspace/types';
 
