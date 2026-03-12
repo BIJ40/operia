@@ -586,7 +586,11 @@ export function SimplifiedSupportChat({
     const currentStep = ORIENTATION_STEPS[orientationStep];
     return (
       <div className={cn("flex flex-col h-full", className)}>
-        <ScrollArea className="flex-1 p-4">
+        <div className="px-3 pt-2">
+          <Button variant="ghost" size="sm" onClick={handleGoBack} className="gap-1 text-xs text-muted-foreground hover:text-foreground h-7 px-2">
+            <ArrowLeft className="w-3.5 h-3.5" /> Retour
+          </Button>
+        </div>
           <div className="space-y-4">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
