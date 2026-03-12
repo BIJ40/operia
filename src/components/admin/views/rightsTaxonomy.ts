@@ -1,4 +1,5 @@
 export type RightsCategoryId =
+  | 'accueil'
   | 'pilotage'
   | 'commercial'
   | 'organisation'
@@ -13,6 +14,9 @@ export interface RightsCategory {
 }
 
 export const RIGHTS_CATEGORIES: RightsCategory[] = [
+  { id: 'accueil', label: 'Accueil', moduleKeys: [
+    'accueil',
+  ]},
   { id: 'pilotage', label: 'Pilotage', moduleKeys: [
     'pilotage', 'pilotage.statistiques', 'pilotage.actions_a_mener',
     'pilotage.devis_acceptes', 'pilotage.incoherences', 'pilotage.performance',
