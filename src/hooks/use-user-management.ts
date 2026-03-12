@@ -180,16 +180,16 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       case 'self':
         return []; // Pas de gestion d'autres utilisateurs
       case 'ownAgency':
-        return currentUserAgency ? [currentUserAgency] : [];
+        return currentUserAgencyId ? [currentUserAgencyId] : [];
       case 'assignedAgencies':
-        // Utiliser les agences assignées, ou vide si aucune
+        // Utiliser les agences assignées (UUIDs), ou vide si aucune
         return assignedAgenciesRaw?.length ? assignedAgenciesRaw : [];
       case 'allAgencies':
         return null; // null = pas de filtre agence
       default:
         return [];
     }
-  }, [effectiveScope, restrictToAgencyId, currentUserAgency, assignedAgenciesRaw]);
+  }, [effectiveScope, restrictToAgencyId, currentUserAgencyId, assignedAgenciesRaw]);
 
   // ✅ Fetch users avec sélection explicite de colonnes + modules depuis user_modules
   const { data: users, isLoading: usersLoading } = useQuery({
