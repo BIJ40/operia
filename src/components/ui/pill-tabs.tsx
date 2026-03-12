@@ -61,31 +61,34 @@ interface PillTabsListProps {
 export function PillTabsList({ tabs, className, variant = 'pill' }: PillTabsListProps) {
   if (variant === 'switcher') {
     return (
-      <TabsList className={cn(
-        "inline-flex items-center gap-0.5 bg-muted/30 rounded-lg border border-border/60 p-0.5 h-auto",
-        className
-      )}>
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isDisabled = tab.disabled === true;
-          return (
-            <TabsTrigger
-              key={tab.id}
-              value={tab.id}
-              disabled={isDisabled}
-              className={cn(
-                "flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-sm font-medium transition-all",
-                "text-muted-foreground bg-transparent border border-transparent",
-                "data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:border-border/50 data-[state=active]:text-foreground",
-                isDisabled && "opacity-50 cursor-not-allowed"
-              )}
-            >
-              <Icon className="w-4 h-4" />
-              <span className="hidden sm:inline">{tab.label}</span>
-            </TabsTrigger>
-          );
-        })}
-      </TabsList>
+      <div className="flex justify-center">
+        <TabsList className={cn(
+          "inline-flex items-center gap-0.5 bg-muted/30 rounded-xl border border-border/60 p-1 h-auto",
+          className
+        )}>
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isDisabled = tab.disabled === true;
+            return (
+              <TabsTrigger
+                key={tab.id}
+                value={tab.id}
+                disabled={isDisabled}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-medium transition-all",
+                  "text-muted-foreground bg-transparent border border-transparent",
+                  "hover:text-foreground hover:bg-muted/50",
+                  "data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:border-border/50 data-[state=active]:text-foreground",
+                  isDisabled && "opacity-50 cursor-not-allowed hover:bg-transparent hover:text-muted-foreground"
+                )}
+              >
+                <Icon className="w-4 h-4" />
+                <span className="hidden sm:inline">{tab.label}</span>
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
+      </div>
     );
   }
 
