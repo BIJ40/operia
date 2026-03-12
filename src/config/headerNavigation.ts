@@ -11,6 +11,9 @@ export interface HeaderNavChild {
   label: string;
   tab?: UnifiedTab;
   subView?: string;
+  /** SessionStorage key + value to set when selecting (for sub-tab routing) */
+  subTabKey?: string;
+  subTabValue?: string;
   path?: string;
   icon: LucideIcon;
   description?: string;
@@ -33,11 +36,11 @@ export const HEADER_NAV_GROUPS: HeaderNavGroup[] = [
     icon: BarChart3,
     tab: 'pilotage',
     children: [
-      { label: 'Statistiques', icon: BarChart3, tab: 'pilotage', description: 'Tableaux de bord et KPIs', scope: 'pilotage.statistiques' },
-      { label: 'Performance', icon: Activity, tab: 'pilotage', description: 'Indicateurs de performance' },
-      { label: 'Actions à mener', icon: ListChecks, tab: 'pilotage', description: 'Suivi des actions' },
-      { label: 'Devis acceptés', icon: FileCheck, tab: 'pilotage', description: 'Suivi des devis signés' },
-      { label: 'Incohérences', icon: AlertTriangle, tab: 'pilotage', description: 'Alertes et anomalies' },
+      { label: 'Statistiques', icon: BarChart3, tab: 'pilotage', description: 'Tableaux de bord et KPIs', scope: 'pilotage.statistiques', subTabKey: 'pilotage_sub_tab', subTabValue: 'stats' },
+      { label: 'Performance', icon: Activity, tab: 'pilotage', description: 'Indicateurs de performance', subTabKey: 'pilotage_sub_tab', subTabValue: 'performance' },
+      { label: 'Actions à mener', icon: ListChecks, tab: 'pilotage', description: 'Suivi des actions', subTabKey: 'pilotage_sub_tab', subTabValue: 'actions' },
+      { label: 'Devis acceptés', icon: FileCheck, tab: 'pilotage', description: 'Suivi des devis signés', subTabKey: 'pilotage_sub_tab', subTabValue: 'devis-acceptes' },
+      { label: 'Incohérences', icon: AlertTriangle, tab: 'pilotage', description: 'Alertes et anomalies', subTabKey: 'pilotage_sub_tab', subTabValue: 'anomalies' },
     ],
   },
   {
@@ -45,11 +48,11 @@ export const HEADER_NAV_GROUPS: HeaderNavGroup[] = [
     icon: ShoppingCart,
     tab: 'commercial',
     children: [
-      { label: 'Suivi client', icon: UsersIcon, tab: 'commercial', description: 'Gestion des apporteurs' },
-      { label: 'Comparateur', icon: Search, tab: 'commercial', description: 'Benchmark et comparaison' },
-      { label: 'Veille', icon: Eye, tab: 'commercial', description: 'Veille concurrentielle' },
-      { label: 'Prospects', icon: ShoppingCart, tab: 'commercial', description: 'Suivi des prospects', scope: 'prospection' },
-      { label: 'Réalisations', icon: TrendingUp, tab: 'commercial', description: 'Chiffres et bilans', scope: 'commercial.realisations' },
+      { label: 'Suivi client', icon: UsersIcon, tab: 'commercial', description: 'Gestion des apporteurs', subTabKey: 'commercial_sub_tab', subTabValue: 'apporteurs' },
+      { label: 'Comparateur', icon: Search, tab: 'commercial', description: 'Benchmark et comparaison', subTabKey: 'commercial_sub_tab', subTabValue: 'comparateur' },
+      { label: 'Veille', icon: Eye, tab: 'commercial', description: 'Veille concurrentielle', subTabKey: 'commercial_sub_tab', subTabValue: 'veille' },
+      { label: 'Prospects', icon: ShoppingCart, tab: 'commercial', description: 'Suivi des prospects', scope: 'prospection', subTabKey: 'commercial_sub_tab', subTabValue: 'prospects' },
+      { label: 'Réalisations', icon: TrendingUp, tab: 'commercial', description: 'Chiffres et bilans', scope: 'commercial.realisations', subTabKey: 'commercial_sub_tab', subTabValue: 'realisations' },
     ],
   },
   {
