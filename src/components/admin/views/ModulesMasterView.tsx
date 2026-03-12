@@ -951,85 +951,86 @@ export function ModulesMasterView() {
             Source de vérité unique. Déploiement, plans, rôles et privilèges individuels sur chaque nœud.
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-0">
-          {headerRow}
+        <div className="overflow-x-auto">
+          <table className="w-full table-auto">
+            {headerRow}
+            <tbody>
+              {groupedCategories.map(({ category, rootNode, nodes }) => {
+                if (nodes.length === 0 && !rootNode) return null;
+                const isCategoryCollapsed = collapsedCategories.has(category.id);
 
-          {groupedCategories.map(({ category, rootNode, nodes }) => {
-            if (nodes.length === 0 && !rootNode) return null;
-            const isCategoryCollapsed = collapsedCategories.has(category.id);
+                return (
+                  <React.Fragment key={category.id}>
+                    <CategoryHeaderRow
+                      category={category}
+                      collapsed={isCategoryCollapsed}
+                      onToggle={() => toggleCategory(category.id)}
+                      moduleCount={nodes.filter((node) => node.depth === 1).length}
+                      rootNode={rootNode}
+                      onRenameRoot={handleRenameLabel}
+                      isUpdating={updateNode.isPending || propagate.isPending}
+                    />
 
-            return (
-              <div key={category.id}>
-                <CategoryHeaderRow
-                  category={category}
-                  collapsed={isCategoryCollapsed}
-                  onToggle={() => toggleCategory(category.id)}
-                  moduleCount={nodes.filter((node) => node.depth === 1).length}
-                  rootNode={rootNode}
-                  onRenameRoot={handleRenameLabel}
-                  isUpdating={updateNode.isPending || propagate.isPending}
-                />
+                    {!isCategoryCollapsed && nodes.map((node) => (
+                      <ModuleRow
+                        key={node.key}
+                        node={node}
+                        overrides={overrides.get(node.key) ?? []}
+                        onToggleDeploy={handleToggleDeploy}
+                        onTogglePlan={handleTogglePlan}
+                        onChangeRole={handleChangeRole}
+                        onRenameLabel={handleRenameLabel}
+                        isUpdating={updateNode.isPending || propagate.isPending}
+                        canDeploy={canDeploy}
+                      />
+                    ))}
+                  </React.Fragment>
+                );
+              })}
 
-                {!isCategoryCollapsed && nodes.map((node) => (
-                  <ModuleRow
-                    key={node.key}
-                    node={node}
-                    overrides={overrides.get(node.key) ?? []}
-                    onToggleDeploy={handleToggleDeploy}
-                    onTogglePlan={handleTogglePlan}
-                    onChangeRole={handleChangeRole}
-                    onRenameLabel={handleRenameLabel}
-                    isUpdating={updateNode.isPending || propagate.isPending}
-                    canDeploy={canDeploy}
-                  />
-                ))}
-              </div>
-            );
-          })}
+              {legacyNodes.length > 0 && (
+                <>
+                  <tr className="border-b border-border bg-muted/10">
+                    <td className="py-2 px-3">
+                      <button
+                        type="button"
+                        onClick={() => setShowLegacy((prev) => !prev)}
+                        className="flex items-center gap-2 min-w-0 text-left"
+                      >
+                        <ChevronRight className={cn('w-4 h-4 shrink-0 transition-transform text-muted-foreground', showLegacy && 'rotate-90')} />
+                        <span className="font-medium text-muted-foreground truncate">Legacy / non classé</span>
+                        <Badge variant="outline" className="text-[10px]">{legacyNodes.filter((node) => node.depth === 1).length}</Badge>
+                      </button>
+                    </td>
+                    {Array.from({ length: 7 }).map((_, i) => (
+                      <td key={i} className={cn(TD_CLASS, 'text-muted-foreground/30')}>—</td>
+                    ))}
+                  </tr>
 
-          {legacyNodes.length > 0 && (
-            <>
-              <div className={cn(`grid ${GRID_COLS} gap-2 items-center py-2 px-3 border-b border-border bg-muted/10`)}>
-                <button
-                  type="button"
-                  onClick={() => setShowLegacy((prev) => !prev)}
-                  className="flex items-center gap-2 min-w-0 text-left"
-                >
-                  <ChevronRight className={cn('w-4 h-4 shrink-0 transition-transform text-muted-foreground', showLegacy && 'rotate-90')} />
-                  <span className="font-medium text-muted-foreground truncate">Legacy / non classé</span>
-                  <Badge variant="outline" className="text-[10px]">{legacyNodes.filter((node) => node.depth === 1).length}</Badge>
-                </button>
-                <div className="text-center text-muted-foreground/30">—</div>
-                <div className="text-center text-muted-foreground/30">—</div>
-                <div className="text-center text-muted-foreground/30">—</div>
-                <div className="text-center text-muted-foreground/30">—</div>
-                <div className="text-center text-muted-foreground/30">—</div>
-                <div className="text-center text-muted-foreground/30">—</div>
-                <div className="text-center text-muted-foreground/30">—</div>
-              </div>
-
-              {showLegacy && legacyNodes.map((node) => (
-                <ModuleRow
-                  key={node.key}
-                  node={node}
-                  overrides={overrides.get(node.key) ?? []}
-                  onToggleDeploy={handleToggleDeploy}
-                  onTogglePlan={handleTogglePlan}
-                  onChangeRole={handleChangeRole}
-                  onRenameLabel={handleRenameLabel}
-                  isUpdating={updateNode.isPending || propagate.isPending}
-                  canDeploy={canDeploy}
-                />
-              ))}
-            </>
-          )}
+                  {showLegacy && legacyNodes.map((node) => (
+                    <ModuleRow
+                      key={node.key}
+                      node={node}
+                      overrides={overrides.get(node.key) ?? []}
+                      onToggleDeploy={handleToggleDeploy}
+                      onTogglePlan={handleTogglePlan}
+                      onChangeRole={handleChangeRole}
+                      onRenameLabel={handleRenameLabel}
+                      isUpdating={updateNode.isPending || propagate.isPending}
+                      canDeploy={canDeploy}
+                    />
+                  ))}
+                </>
+              )}
+            </tbody>
+          </table>
 
           {groupedCategories.every((group) => group.nodes.length === 0) && legacyNodes.length === 0 && (
             <div className="py-12 text-center text-muted-foreground">
               Aucun module déployé dans le registre.
             </div>
           )}
-        </CardContent>
+        </div>
       </Card>
 
       {/* Dev section — non-deployed modules */}
