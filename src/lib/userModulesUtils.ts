@@ -131,7 +131,7 @@ export function userModulesToEnabledModules(
   }
   
   for (const row of rows) {
-    const moduleKey = row.module_key as ModuleKey;
+    const moduleKey = row.module_key;
     const options = normalizeOptions(row.options);
 
     // Skip modules where all options are false (legacy inconsistency)
