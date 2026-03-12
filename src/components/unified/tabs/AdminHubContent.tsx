@@ -33,7 +33,7 @@ const FranchiseurView = lazy(() => import('@/components/unified/views/Franchiseu
 const ApporteurManagersAdminView = lazy(() => import('@/components/admin/views/ApporteurManagersAdminView'));
 const PendingRegistrationsList = lazy(() => import('@/components/admin/registrations/PendingRegistrationsList'));
 const ApporteurAuditLogView = lazy(() => import('@/components/admin/views/ApporteurAuditLogView'));
-
+const AdminNotesView = lazy(() => import('@/components/admin/views/AdminNotesView'));
 function LoadingFallback() {
   return (
     <div className="flex items-center justify-center h-64">
