@@ -41,6 +41,7 @@ import { useUserProjectUnreadCount } from '@/hooks/use-project-ticket-notificati
 import { getFaqItems, type FaqItem } from '@/lib/rag-improvement';
 import { useQueryClient } from '@tanstack/react-query';
 import { usePermissions } from '@/contexts/PermissionsContext';
+import { Lock } from 'lucide-react';
 
 // ─── Base documentaire config ───────────────────────────────────
 const DOC_SECTIONS = [
@@ -52,6 +53,7 @@ const DOC_SECTIONS = [
     emoji: '📘',
     accentClass: 'border-l-primary',
     bgClass: 'bg-primary/5 hover:bg-primary/10',
+    permissionOption: 'apogee' as const,
   },
   {
     id: 'apporteurs',
@@ -61,6 +63,7 @@ const DOC_SECTIONS = [
     emoji: '🤝',
     accentClass: 'border-l-amber-500',
     bgClass: 'bg-amber-500/5 hover:bg-amber-500/10',
+    permissionOption: 'apporteurs' as const,
   },
   {
     id: 'hc-services',
@@ -70,6 +73,7 @@ const DOC_SECTIONS = [
     emoji: '🏠',
     accentClass: 'border-l-teal-500',
     bgClass: 'bg-teal-500/5 hover:bg-teal-500/10',
+    permissionOption: 'helpconfort' as const,
   },
   {
     id: 'hc-base',
@@ -79,6 +83,7 @@ const DOC_SECTIONS = [
     emoji: '📂',
     accentClass: 'border-l-purple-500',
     bgClass: 'bg-purple-500/5 hover:bg-purple-500/10',
+    permissionOption: null,
   },
 ];
 
@@ -157,7 +162,7 @@ function InlineFaq() {
 // ─── Main component ─────────────────────────────────────────────
 export default function SupportHubTabContent() {
   const queryClient = useQueryClient();
-  const { hasModule } = usePermissions();
+  const { hasModule, hasModuleOption } = usePermissions();
   const { tickets: combinedTickets, isLoading: combinedLoading } = useCombinedUserTickets();
   const { unreadCount: totalUnreadCount } = useUserProjectUnreadCount();
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
@@ -227,27 +232,46 @@ export default function SupportHubTabContent() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {DOC_SECTIONS.filter(s => {
-              if (s.id === 'apporteurs') return hasModule('organisation.apporteurs');
-              return true;
-            }).map((section) => (
-              <Link
-                key={section.id}
-                to={section.href}
-                className={cn(
-                  'flex items-center gap-3 p-3 rounded-xl border-l-4 transition-all',
-                  section.accentClass,
-                  section.bgClass,
-                )}
-              >
-                <span className="text-xl">{section.emoji}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm">{section.label}</p>
-                  <p className="text-xs text-muted-foreground">{section.description}</p>
+            {DOC_SECTIONS.map((section) => {
+              const hasAccess = section.permissionOption === null
+                ? true
+                : hasModuleOption('support.guides', section.permissionOption);
+
+              if (hasAccess) {
+                return (
+                  <Link
+                    key={section.id}
+                    to={section.href}
+                    className={cn(
+                      'flex items-center gap-3 p-3 rounded-xl border-l-4 transition-all',
+                      section.accentClass,
+                      section.bgClass,
+                    )}
+                  >
+                    <span className="text-xl">{section.emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm">{section.label}</p>
+                      <p className="text-xs text-muted-foreground">{section.description}</p>
+                    </div>
+                    <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0" />
+                  </Link>
+                );
+              }
+
+              return (
+                <div
+                  key={section.id}
+                  className="flex items-center gap-3 p-3 rounded-xl border-l-4 border-l-muted bg-muted/30 opacity-50 cursor-not-allowed"
+                >
+                  <span className="text-xl grayscale">{section.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm text-muted-foreground">{section.label}</p>
+                    <p className="text-xs text-muted-foreground/70">{section.description}</p>
+                  </div>
+                  <Lock className="w-4 h-4 text-muted-foreground/50 shrink-0" />
                 </div>
-                <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0" />
-              </Link>
-            ))}
+              );
+            })}
           </CardContent>
         </Card>
 
