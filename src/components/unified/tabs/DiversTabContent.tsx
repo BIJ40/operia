@@ -235,13 +235,20 @@ function ApporteursSection() {
 
 function AdministratifSection() {
   const { hasModule } = usePermissions();
-  
+  const { getShortLabel } = useModuleLabels();
+
+  const adminTabsConfig: (FolderTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
+    { id: 'reunions', label: getShortLabel('organisation.reunions', 'Réunions'), icon: Users2, requiresModule: 'organisation.reunions' },
+    { id: 'plannings', label: getShortLabel('organisation.plannings', 'Plannings'), icon: CalendarDays, requiresModule: 'organisation.plannings' },
+    { id: 'documents', label: getShortLabel('mediatheque.documents', 'Documents'), icon: FileText, requiresModule: 'mediatheque.documents' },
+  ], [getShortLabel]);
+
   const visibleAdminTabs = useMemo(() => {
-    return ADMIN_TABS_CONFIG.filter(tab => {
+    return adminTabsConfig.filter(tab => {
       if (!tab.requiresModule) return true;
       return hasModule(tab.requiresModule);
     });
-  }, [hasModule]);
+  }, [hasModule, adminTabsConfig]);
 
   const defaultTab = visibleAdminTabs[0]?.id as AdminSubTab ?? 'reunions';
   const [subTab, setSubTab] = useSessionState<AdminSubTab>('outils_admin_sub', defaultTab);
