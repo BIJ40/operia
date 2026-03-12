@@ -5,7 +5,7 @@ import { RoleGuard } from "@/components/auth/RoleGuard";
 import { ModuleGuard } from "@/components/auth/ModuleGuard";
 
 // Lazy loaded pages
-const ProjectsIndex = lazy(() => import("@/pages/ProjectsIndex"));
+
 const ApogeeTicketsKanban = lazy(() => import("@/apogee-tickets/pages/ApogeeTicketsKanban"));
 const ApogeeTicketsHistory = lazy(() => import("@/apogee-tickets/pages/ApogeeTicketsHistory"));
 const ApogeeTicketsList = lazy(() => import("@/apogee-tickets/pages/ApogeeTicketsList"));
