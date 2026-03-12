@@ -25,7 +25,7 @@ export function SupportRoutes() {
       <Route path="/mes-demandes" element={<Navigate to="/?tab=support" replace />} />
       
       {/* Console Support - Redirected to Gestion de Projet */}
-      <Route path="/support/console" element={<Navigate to="/projects/kanban" replace />} />
+      <Route path="/support/console" element={<Navigate to="/?tab=ticketing" replace />} />
       
       {/* FAQ - accessible à tous */}
       <Route path="/support/faq" element={<SupportLayout><Faq /></SupportLayout>} />
