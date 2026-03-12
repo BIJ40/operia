@@ -233,8 +233,8 @@ export function DataPreloadProvider({ children }: { children: ReactNode }) {
   // Vérifier si le préchargement doit être déclenché
   const shouldTriggerPreload = useCallback((): boolean => {
     // 1. Conditions de base
-    if (!user || isAuthLoading || isModulesLoading) {
-      logApogee.debug('[PRELOAD] Skip: auth or modules loading');
+    if (!user || isAuthLoading) {
+      logApogee.debug('[PRELOAD] Skip: auth loading');
       return false;
     }
     
