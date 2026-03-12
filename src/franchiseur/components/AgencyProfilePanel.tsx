@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Building2, Euro, Calendar, Phone, Mail, MapPin, Users, Edit, Loader2, X, TrendingUp, FileText } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +9,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { usePersistedTab } from "@/hooks/usePersistedState";
 import { useAgency } from "../hooks/useAgencies";
 import { useRoyaltyHistory } from "../hooks/useRoyaltyConfig";
-import { useAgencyUsers } from "../hooks/useAgencyUsers";
+import { useAgencyFullTeam, type AgencyTeamMember } from "../hooks/useAgencyFullTeam";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
 import { Separator } from "@/components/ui/separator";
 import { useFranchiseur } from "../contexts/FranchiseurContext";
@@ -18,11 +19,13 @@ import { AgencyMonthlyRoyaltiesTable } from "../components/AgencyMonthlyRoyaltie
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 import { AgencyStatsTab } from "../components/AgencyStatsTab";
+import { AgencyTeamList } from "../components/AgencyTeamList";
 import { ApiToggleProvider } from "@/apogee-connect/contexts/ApiToggleContext";
 import { AgencyProvider } from "@/apogee-connect/contexts/AgencyContext";
 import { FiltersProvider } from "@/apogee-connect/contexts/FiltersContext";
 import { motion } from "framer-motion";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ROUTES } from '@/config/routes';
 
 interface AgencyProfilePanelProps {
   agencyId: string | null;
