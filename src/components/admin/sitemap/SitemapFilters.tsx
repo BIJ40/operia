@@ -53,6 +53,7 @@ const ALL_MODULES: ModuleKey[] = MODULE_DEFINITIONS.map(m => m.key);
 const ALL_PLANS: PlanKey[] = Object.keys(PLAN_LABELS) as PlanKey[];
 
 export function SitemapFilters({ filters, onChange }: SitemapFiltersProps) {
+  const { getLabel } = useModuleLabels();
   const activeFiltersCount = [
     filters.section !== 'all',
     filters.minRole !== 'all',
