@@ -19,7 +19,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { EnabledModules, ModuleKey } from '@/types/modules';
-import { PLAN_VISIBLE_MODULES, MODULE_SHORT_LABELS } from '@/types/modules';
+import { PLAN_VISIBLE_MODULES } from '@/types/modules';
+import { useModuleLabels } from '@/hooks/useModuleLabels';
 
 // Icônes pour chaque module — doit inclure TOUS les modules visibles
 const MODULE_ICONS: Partial<Record<ModuleKey, LucideIcon>> = {
