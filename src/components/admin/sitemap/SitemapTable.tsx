@@ -46,6 +46,7 @@ export function SitemapTable({ routes }: SitemapTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('path');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [copiedPath, setCopiedPath] = useState<string | null>(null);
+  const { getLabel } = useModuleLabels();
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
