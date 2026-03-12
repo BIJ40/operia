@@ -73,6 +73,7 @@ function getGuardColor(route: RouteMetadata): string {
 
 function RouteItem({ route }: { route: RouteMetadata }) {
   const [copied, setCopied] = useState(false);
+  const { getLabel } = useModuleLabels();
   const { roleGuard, moduleGuard, specialGuard } = route.guards;
 
   const copyPath = async () => {
