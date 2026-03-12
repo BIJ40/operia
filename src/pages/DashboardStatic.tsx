@@ -399,12 +399,12 @@ export default function DashboardStatic() {
           {/* Top Techniciens (compact) */}
           <motion.div variants={itemVariants}>
             <WarmCard
-              variant="orange"
+              variant="blue"
               icon={Trophy}
               animate={false}
               className="h-full"
             >
-              <HumanTitle titleKey="top_techniciens" icon={Trophy} iconColor="text-warm-orange" size="sm" />
+              <HumanTitle titleKey="top_techniciens" icon={Trophy} iconColor="text-warm-blue" size="sm" />
               <div className="mt-3">
                 <Top3TechniciensWidget />
               </div>
