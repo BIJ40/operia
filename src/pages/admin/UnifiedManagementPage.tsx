@@ -47,6 +47,7 @@ function userRowToProfile(user: UserRow): UserProfile {
     first_name: user.first_name,
     last_name: user.last_name,
     agence: user.agence,
+    agency_id: user.agency_id,
     global_role: user.global_role,
     enabled_modules: user.enabled_modules,
     role_agence: user.role_agence,
