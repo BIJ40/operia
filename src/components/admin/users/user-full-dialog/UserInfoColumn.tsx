@@ -224,7 +224,14 @@ export function UserInfoColumn({
           {editMode ? (
             <Select
               value={formData.roleAgence || ""}
-              onValueChange={v => setFormData(p => ({ ...p, roleAgence: v }))}
+              onValueChange={v => {
+                const suggested = getSuggestedGlobalRole(v);
+                setFormData(p => ({
+                  ...p,
+                  roleAgence: v,
+                  ...(suggested ? { globalRole: suggested } : {}),
+                }));
+              }}
             >
               <SelectTrigger className="rounded-lg"><SelectValue placeholder="Sélectionner" /></SelectTrigger>
               <SelectContent>
