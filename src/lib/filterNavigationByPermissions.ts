@@ -74,15 +74,36 @@ export function filterWorkspaceTabs(
 }
 
 /**
- * Sub-tab filter for pill-tabs that have a requiresModule field.
+ * Sub-tab filter — marks inaccessible tabs as disabled instead of hiding them.
  * Used by Pilotage, Commercial, Organisation, Support, etc.
  */
-export function filterSubTabs<T extends { id: string; requiresModule?: ModuleKey }>(
+export function filterSubTabs<T extends { id: string; requiresModule?: ModuleKey; disabled?: boolean }>(
   tabs: T[],
   hasModule: (key: ModuleKey) => boolean,
 ): T[] {
-  return tabs.filter(tab => {
-    if (!tab.requiresModule) return true;
-    return hasModule(tab.requiresModule);
+  return tabs.map(tab => {
+    if (!tab.requiresModule) return tab;
+    return { ...tab, disabled: !hasModule(tab.requiresModule) };
   });
+}
+
+/**
+ * Returns the first non-disabled tab id, or fallback.
+ */
+export function firstEnabledTabId<T extends { id: string; disabled?: boolean }>(
+  tabs: T[],
+  fallback: string,
+): string {
+  return tabs.find(t => !t.disabled)?.id ?? fallback;
+}
+
+/**
+ * Returns true if the given tab id is enabled (not disabled) in the list.
+ */
+export function isTabEnabled<T extends { id: string; disabled?: boolean }>(
+  tabs: T[],
+  tabId: string,
+): boolean {
+  const tab = tabs.find(t => t.id === tabId);
+  return tab ? !tab.disabled : false;
 }
