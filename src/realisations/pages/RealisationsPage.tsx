@@ -1,5 +1,5 @@
 /**
- * RealisationsPage — Compact list with photo count and sync status
+ * RealisationsPage — List with hero photo thumbnails
  */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -63,12 +63,17 @@ export default function RealisationsPage() {
               onClick={() => navigate(`/realisations/${r.id}`)}
               className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent/40 transition-colors group"
             >
-              {/* Icon */}
-              <div className="shrink-0 w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
-                {r.media_count > 0 ? (
-                  <Image className="w-4 h-4 text-primary" />
+              {/* Thumbnail */}
+              <div className="shrink-0 w-14 h-10 rounded-md overflow-hidden bg-muted flex items-center justify-center">
+                {r.cover_url ? (
+                  <img
+                    src={r.cover_url}
+                    alt={r.title || 'Photo'}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
                 ) : (
-                  <Camera className="w-4 h-4 text-muted-foreground/50" />
+                  <Camera className="w-4 h-4 text-muted-foreground/40" />
                 )}
               </div>
 
