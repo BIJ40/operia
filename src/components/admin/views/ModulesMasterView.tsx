@@ -580,23 +580,91 @@ function CategoryHeaderRow({
   collapsed,
   onToggle,
   moduleCount,
+  rootNode,
+  onRenameRoot,
+  isUpdating,
 }: {
   category: RightsCategory;
   collapsed: boolean;
   onToggle: () => void;
   moduleCount: number;
+  rootNode?: RegistryNode;
+  onRenameRoot?: (node: RegistryNode, newLabel: string) => void;
+  isUpdating?: boolean;
 }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const displayLabel = rootNode ? getRightsDisplayLabel(rootNode.key, rootNode.label) : category.label;
+  const [draftLabel, setDraftLabel] = useState(displayLabel);
+
+  useEffect(() => {
+    setDraftLabel(displayLabel);
+  }, [displayLabel]);
+
+  const commitRename = () => {
+    const trimmed = draftLabel.trim();
+    setIsEditing(false);
+    if (!trimmed || trimmed === displayLabel) {
+      setDraftLabel(displayLabel);
+      return;
+    }
+    if (rootNode && onRenameRoot) {
+      onRenameRoot(rootNode, trimmed);
+    }
+  };
+
   return (
     <div className={cn(`grid ${GRID_COLS} gap-2 items-center py-2.5 px-3 border-b border-border bg-muted/20`)}>
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex items-center gap-2 min-w-0 text-left"
-      >
-        <ChevronRight className={cn('w-4 h-4 shrink-0 transition-transform text-primary', !collapsed && 'rotate-90')} />
-        <span className="font-semibold uppercase tracking-wide text-foreground truncate">{category.label}</span>
-        <Badge variant="secondary" className="text-[10px]">{moduleCount}</Badge>
-      </button>
+      <div className="flex items-center gap-2 min-w-0">
+        <button
+          type="button"
+          onClick={onToggle}
+          className="shrink-0"
+        >
+          <ChevronRight className={cn('w-4 h-4 transition-transform text-primary', !collapsed && 'rotate-90')} />
+        </button>
+
+        {isEditing && rootNode ? (
+          <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+            <Input
+              value={draftLabel}
+              onChange={(e) => setDraftLabel(e.target.value)}
+              onBlur={commitRename}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') commitRename();
+                if (e.key === 'Escape') {
+                  setDraftLabel(displayLabel);
+                  setIsEditing(false);
+                }
+              }}
+              autoFocus
+              className="h-7 text-xs font-semibold uppercase"
+            />
+            <span className="text-[9px] text-muted-foreground">
+              Renommage visuel uniquement — ne modifie pas la clé technique.
+            </span>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => rootNode && !isUpdating && setIsEditing(true)}
+            className={cn(
+              'font-semibold uppercase tracking-wide text-foreground truncate text-left',
+              rootNode && 'hover:underline underline-offset-2 cursor-pointer',
+              !rootNode && 'cursor-default'
+            )}
+            title={rootNode ? 'Cliquer pour renommer le libellé (visuel uniquement)' : undefined}
+          >
+            {displayLabel}
+          </button>
+        )}
+
+        <Badge variant="secondary" className="text-[10px] shrink-0">{moduleCount}</Badge>
+        {rootNode && (
+          <span className="ml-1 text-[10px] text-muted-foreground font-mono select-all shrink-0" title="Clé technique (immuable)">
+            {rootNode.key}
+          </span>
+        )}
+      </div>
       <div className="text-center text-muted-foreground/30">—</div>
       <div className="text-center text-muted-foreground/30">—</div>
       <div className="text-center text-muted-foreground/30">—</div>
