@@ -116,6 +116,7 @@ export const MODULE_OPTIONS = {
     apporteurs: 'support.guides.apporteurs',
     helpconfort: 'support.guides.helpconfort',
     faq: 'support.guides.faq',
+    edition: 'support.guides.edition',
   },
   ticketing: {
     kanban: 'ticketing.kanban',
