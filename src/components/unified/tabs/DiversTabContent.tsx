@@ -304,13 +304,25 @@ function AdministratifSection() {
 export default function DiversTabContent() {
   const [activeMainTab, setActiveMainTab] = useSessionState<OutilsMainTab>('outils_main_tab', 'actions');
   const { hasModule } = usePermissions();
+  const { getShortLabel } = useModuleLabels();
+
+  const mainTabsConfig: (PillTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
+    { id: 'actions', label: 'Actions', icon: Settings, accent: 'blue' },
+    { id: 'apporteurs', label: getShortLabel('organisation.apporteurs', 'Apporteurs'), icon: Users, accent: 'purple', requiresModule: 'organisation.apporteurs' },
+    { id: 'administratif', label: 'Administratif', icon: FolderOpen, accent: 'orange', requiresModule: 'pilotage.agence' },
+    { id: 'parc', label: getShortLabel('organisation.parc', 'Parc'), icon: Car, accent: 'green', requiresModule: 'organisation.parc' },
+    { id: 'performance', label: 'Performance', icon: Activity, accent: 'pink', requiresModule: 'pilotage.agence' },
+    { id: 'prospection', label: getShortLabel('prospection', 'Commercial'), icon: Target, accent: 'orange', requiresModule: 'prospection' },
+    { id: 'devis-acceptes', label: 'Devis acceptés', icon: FileCheck, accent: 'teal', requiresModule: 'pilotage.agence' },
+    { id: 'anomalies', label: 'Incohérences', icon: AlertTriangle, accent: 'pink', requiresModule: 'pilotage.agence' },
+  ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {
-    return MAIN_TABS_CONFIG.filter(tab => {
+    return mainTabsConfig.filter(tab => {
       if (!tab.requiresModule) return true;
       return hasModule(tab.requiresModule);
     });
-  }, [hasModule]);
+  }, [hasModule, mainTabsConfig]);
 
   return (
     <div className="py-6 px-2 sm:px-4 space-y-6">
