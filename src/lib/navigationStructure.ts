@@ -113,7 +113,7 @@ export const NAVIGATION_STRUCTURE: NavigationDomain[] = [
   },
   {
     id: 'franchiseur',
-    label: 'Réseau',
+    label: 'Franchiseur',
     icon: Network,
     roleGated: FRANCHISEUR_ROLES,
     entries: [
