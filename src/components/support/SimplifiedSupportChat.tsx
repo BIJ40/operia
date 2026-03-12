@@ -626,8 +626,13 @@ export function SimplifiedSupportChat({
   // Screenshot step
   if (showScreenshotStep) {
     return (
-      <div className={cn("flex flex-col h-full items-center justify-center p-6", className)}>
-        <div className="w-full max-w-md space-y-5">
+      <div className={cn("flex flex-col h-full p-6", className)}>
+        <div className="mb-2">
+          <Button variant="ghost" size="sm" onClick={handleGoBack} className="gap-1 text-xs text-muted-foreground hover:text-foreground h-7 px-2">
+            <ArrowLeft className="w-3.5 h-3.5" /> Retour
+          </Button>
+        </div>
+        <div className="w-full max-w-md mx-auto space-y-5 flex-1 flex flex-col justify-center">
           <div className="text-center">
             <div className="w-14 h-14 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center mb-3">
               <Camera className="w-7 h-7 text-primary" />
