@@ -69,6 +69,7 @@ const ADMIN_MAIN_TAB_IDS = ADMIN_MAIN_TABS.map(tab => tab.id);
 const DEFAULT_GESTION_ORDER = ['users', 'inscriptions', 'apporteurs', 'audit-apporteurs', 'agences', 'modules', 'notes', 'activity'];
 
 export default function AdminHubContent() {
+  const { mode: navMode } = useNavigationMode();
   const [searchParams, setSearchParams] = useSearchParams();
   const [persistedMainTab, setPersistedMainTab] = usePersistedTab('admin_main_tab', 'gestion', ADMIN_MAIN_TAB_IDS);
   const activeTabParam = searchParams.get('adminTab');
