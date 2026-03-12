@@ -214,9 +214,9 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
           apogee_user_id
         `);
       
-      // Filtre agences
+      // Filtre agences — agency_id est la source unique de vérité
       if (manageableAgencyIds !== null) {
-        query = query.in('agence', manageableAgencyIds);
+        query = query.in('agency_id', manageableAgencyIds);
       }
       
       // Filtre statut
