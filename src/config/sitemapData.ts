@@ -351,8 +351,8 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
   },
   {
     path: '/agency/commercial',
-    label: 'Commercial',
-    component: 'CommercialPage',
+    label: 'Commercial (redirect)',
+    component: 'Navigate → /?tab=commercial',
     section: 'pilotage',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
