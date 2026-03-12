@@ -6,7 +6,7 @@ import { useState, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FolderOpen, Star, Trash2 } from 'lucide-react';
 import { MediaLibraryManager } from '@/components/media-library/MediaLibraryManager';
-import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 type DocumentsSubTab = 'library' | 'shortcuts' | 'trash';
 
