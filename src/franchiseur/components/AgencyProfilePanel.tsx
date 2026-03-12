@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Building2, Euro, Calendar, Phone, Mail, MapPin, Users, Edit, Loader2, X, TrendingUp, FileText } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +9,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { usePersistedTab } from "@/hooks/usePersistedState";
 import { useAgency } from "../hooks/useAgencies";
 import { useRoyaltyHistory } from "../hooks/useRoyaltyConfig";
-import { useAgencyUsers } from "../hooks/useAgencyUsers";
+import { useAgencyFullTeam, type AgencyTeamMember } from "../hooks/useAgencyFullTeam";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
 import { Separator } from "@/components/ui/separator";
 import { useFranchiseur } from "../contexts/FranchiseurContext";
@@ -18,11 +19,13 @@ import { AgencyMonthlyRoyaltiesTable } from "../components/AgencyMonthlyRoyaltie
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 import { AgencyStatsTab } from "../components/AgencyStatsTab";
+import { AgencyTeamList } from "../components/AgencyTeamList";
 import { ApiToggleProvider } from "@/apogee-connect/contexts/ApiToggleContext";
 import { AgencyProvider } from "@/apogee-connect/contexts/AgencyContext";
 import { FiltersProvider } from "@/apogee-connect/contexts/FiltersContext";
 import { motion } from "framer-motion";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ROUTES } from '@/config/routes';
 
 interface AgencyProfilePanelProps {
   agencyId: string | null;
@@ -31,29 +34,27 @@ interface AgencyProfilePanelProps {
 }
 
 function AgencyProfilePanelContent({ agencyId, onClose }: { agencyId: string; onClose: () => void }) {
+  const navigate = useNavigate();
   const { data: agency, isLoading: agencyLoading } = useAgency(agencyId);
   const { data: royaltyHistory } = useRoyaltyHistory(agencyId);
-  const { data: agencyUsers, isLoading: usersLoading } = useAgencyUsers(agency?.slug || null);
+  const { data: teamMembers = [], isLoading: usersLoading } = useAgencyFullTeam(agencyId);
   const { franchiseurRole } = useFranchiseur();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = usePersistedTab(`franchiseur-agency-${agencyId}-tab`, 'info');
 
   const canManage = franchiseurRole === "directeur" || franchiseurRole === "dg";
 
-  // Liste des membres de l'équipe
-  const teamMembers = (agencyUsers || [])
-    .map((user) => ({
-      id: user.id,
-      first_name: user.first_name || "",
-      last_name: user.last_name || "",
-      email: user.email,
-      role: user.role_agence || "Utilisateur",
-      isActive: user.is_active !== false,
-      globalRole: user.global_role,
-    }))
-    .sort((a, b) => 
-      `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`)
-    );
+  const handleCreateUser = useCallback((member: AgencyTeamMember) => {
+    // Navigate to admin users with pre-fill info
+    const params = new URLSearchParams({
+      action: 'create',
+      firstName: member.first_name,
+      lastName: member.last_name,
+      email: member.email || '',
+      agence: agency?.slug || '',
+    });
+    navigate(`${ROUTES.admin.users}?${params.toString()}`);
+  }, [navigate, agency?.slug]);
 
   if (agencyLoading) {
     return (
@@ -221,39 +222,12 @@ function AgencyProfilePanelContent({ agencyId, onClose }: { agencyId: string; on
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {usersLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : teamMembers.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Users className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                    <p className="text-sm">Aucun utilisateur</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {teamMembers.map((member) => (
-                      <motion.div
-                        key={member.id}
-                        whileHover={{ x: 4 }}
-                        className="flex items-center justify-between p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-all"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-9 w-9">
-                            <AvatarFallback className="bg-gradient-to-br from-violet-500 to-purple-500 text-white text-xs">
-                              {member.first_name?.[0]}{member.last_name?.[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="text-sm font-medium">{member.first_name} {member.last_name}</p>
-                            <p className="text-xs text-muted-foreground">{member.email}</p>
-                          </div>
-                        </div>
-                        <Badge variant="outline" className="text-xs">{member.role}</Badge>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
+                <AgencyTeamList
+                  members={teamMembers}
+                  isLoading={usersLoading}
+                  compact
+                  onCreateUser={canManage ? handleCreateUser : undefined}
+                />
               </CardContent>
             </Card>
           </TabsContent>
