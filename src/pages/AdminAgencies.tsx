@@ -222,9 +222,14 @@ export default function AdminAgencies() {
 
   const handleAssignUser = async (userId: string, agencySlug: string | null) => {
     try {
+      // Resolve agency_id from slug
+      const targetAgency = agencySlug ? agencies.find(a => a.slug === agencySlug) : null;
       const { error } = await supabase
         .from('profiles')
-        .update({ agence: agencySlug })
+        .update({ 
+          agence: agencySlug,
+          agency_id: targetAgency?.id ?? null,
+        })
         .eq('id', userId);
 
       if (error) throw error;
