@@ -32,26 +32,16 @@ export type SharedGlobalRole = keyof typeof SHARED_ROLE_HIERARCHY;
 // ============================================================================
 
 export const SHARED_MODULE_KEYS = [
-  // Legacy (kept for backward compat)
-  'agence',
-  'stats',
-  'rh',
-  'parc',
-  'divers_apporteurs',
-  'divers_plannings',
-  'divers_reunions',
-  'divers_documents',
-  'guides',
+  // Non-migrated legacy (still canonical)
   'ticketing',
-  'aide',
   'prospection',
   'planning_augmente',
   'reseau_franchiseur',
   'admin_plateforme',
   'unified_search',
-  // Hierarchical (additive — Phase 7)
+  // Hierarchical (Phase 7+10)
   'pilotage.agence',
-  'pilotage.dashboard',
+  'pilotage.statistiques',
   'organisation.salaries',
   'organisation.parc',
   'organisation.apporteurs',
