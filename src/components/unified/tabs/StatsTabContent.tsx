@@ -18,15 +18,7 @@ import { openInNewTabPreservingPreviewToken } from '@/lib/openInNewTab';
 import { ROUTES } from '@/config/routes';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { ModuleKey } from '@/types/modules';
-
-const STATS_TABS: (PillTabConfig & { requiresModule?: ModuleKey })[] = [
-  { id: 'general', label: 'Général', icon: LayoutDashboard, requiresModule: 'pilotage.statistiques.general' },
-  { id: 'apporteurs', label: 'Apporteurs', icon: Building2, requiresModule: 'pilotage.statistiques.apporteurs' },
-  { id: 'techniciens', label: 'Techniciens', icon: Users, requiresModule: 'pilotage.statistiques.techniciens' },
-  { id: 'univers', label: 'Univers', icon: Layers, requiresModule: 'pilotage.statistiques.univers' },
-  { id: 'sav', label: 'SAV', icon: AlertTriangle, requiresModule: 'pilotage.statistiques.sav' },
-  { id: 'previsionnel', label: 'Prévisionnel', icon: CalendarClock, requiresModule: 'pilotage.statistiques.previsionnel' },
-];
+import { useModuleLabels } from '@/hooks/useModuleLabels';
 
 const TAB_COMPONENTS: Record<TabId, React.ComponentType> = {
   general: GeneralTab,
