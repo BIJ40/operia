@@ -19,6 +19,8 @@ import {
   Users, Headphones,
   Loader2, Shield, FolderOpen, Kanban,
 } from 'lucide-react';
+import { useNavigationMode } from '@/hooks/useNavigationMode';
+import { MainHeader } from '@/components/navigation/MainHeader';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Tabs } from '@/components/ui/tabs';
 import { useSessionState } from '@/hooks/useSessionState';
