@@ -214,7 +214,7 @@ describe('getEffectiveModules', () => {
       },
       agencyId: null,
     });
-    const unknown = result.find(m => m.id === 'some.unknown.key');
+    const unknown = result.find(m => (m.id as string) === 'some.unknown.key');
     expect(unknown).toBeDefined();
     expect(unknown?.enabled).toBe(true);
     expect(unknown?.source).toBe('bypass');
