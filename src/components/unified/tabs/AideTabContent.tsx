@@ -89,18 +89,10 @@ export default function SupportHubTabContent() {
   const { hasModule } = usePermissions();
 
   const visibleTabs = useMemo(() => {
-    const tabs = ALL_SUPPORT_TABS.filter(tab => {
+    return ALL_SUPPORT_TABS.filter(tab => {
       if (!tab.requiresModule) return true;
       return hasModule(tab.requiresModule);
     });
-
-    // Phase 0 safety net: Ticketing doit toujours rester visible
-    if (!tabs.some(tab => tab.id === 'ticketing')) {
-      const ticketingTab = ALL_SUPPORT_TABS.find(tab => tab.id === 'ticketing');
-      if (ticketingTab) tabs.push(ticketingTab);
-    }
-
-    return tabs;
   }, [hasModule]);
 
   const defaultTab = visibleTabs[0]?.id as SupportSubTab ?? 'aide-en-ligne';
