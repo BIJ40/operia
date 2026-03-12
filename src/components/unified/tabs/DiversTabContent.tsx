@@ -318,9 +318,9 @@ export default function DiversTabContent() {
   ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {
-    return mainTabsConfig.filter(tab => {
-      if (!tab.requiresModule) return true;
-      return hasModule(tab.requiresModule);
+    return mainTabsConfig.map(tab => {
+      if (!tab.requiresModule) return tab;
+      return { ...tab, disabled: !hasModule(tab.requiresModule) };
     });
   }, [hasModule, mainTabsConfig]);
 
