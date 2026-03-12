@@ -11,6 +11,9 @@ export interface HeaderNavChild {
   label: string;
   tab?: UnifiedTab;
   subView?: string;
+  /** SessionStorage key + value to set when selecting (for sub-tab routing) */
+  subTabKey?: string;
+  subTabValue?: string;
   path?: string;
   icon: LucideIcon;
   description?: string;
