@@ -1244,19 +1244,25 @@ body[data-read-only] [draggable="true"] {
 /* ============================================
    MAPBOX — Hide logo & attribution, show ByBij
    ============================================ */
-.mapboxgl-ctrl-logo,
-.mapboxgl-ctrl-attrib {
+.mapboxgl-ctrl-logo {
   display: none !important;
 }
 
-.mapboxgl-ctrl-attrib-button,
-.mapboxgl-compact-show .mapboxgl-ctrl-attrib-button {
+.mapboxgl-ctrl-attrib {
   background: black !important;
-  pointer-events: none !important;
-  opacity: 1 !important;
+  border-radius: 50% !important;
   width: 20px !important;
   height: 20px !important;
-  border-radius: 50% !important;
+  min-height: unset !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  padding: 0 !important;
+}
+
+.mapboxgl-ctrl-attrib-inner,
+.mapboxgl-ctrl-attrib a,
+.mapboxgl-ctrl-attrib-button {
+  display: none !important;
 }
 
 .mapboxgl-map::after {
