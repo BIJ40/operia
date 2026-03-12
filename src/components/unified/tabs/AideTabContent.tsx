@@ -186,6 +186,7 @@ export default function SupportHubTabContent() {
   }
 
   return (
+    <DomainAccentProvider accent="purple">
     <div className="py-6 px-2 sm:px-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div>
