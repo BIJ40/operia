@@ -13,6 +13,7 @@ import { MfaGuard } from '@/components/auth/MfaGuard';
 import { ModuleKey } from '@/types/modules';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
 import { useNavigationMode } from '@/hooks/useNavigationMode';
+import { DomainAccentProvider } from '@/contexts/DomainAccentContext';
 
 const RHSuiviContent = lazy(() => import('@/components/rh/RHSuiviContent').then(m => ({ default: m.RHSuiviContent })));
 const MesApporteursTab = lazy(() => import('@/components/pilotage/MesApporteursTab').then(m => ({ default: m.MesApporteursTab })));
