@@ -327,6 +327,14 @@ export function UserInfoColumn({
           </div>
         )}
 
+        {/* Coherence warning */}
+        {editMode && coherenceWarning && (
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+            <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+            <p className="text-sm text-amber-700 dark:text-amber-400">{coherenceWarning}</p>
+          </div>
+        )}
+
         {/* Save button */}
         {editMode && onSaveUser && (
           <Button
