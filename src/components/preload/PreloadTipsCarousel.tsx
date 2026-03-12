@@ -10,7 +10,7 @@ import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
 
 // Astuces par module (clés hiérarchiques alignées MODULE_DEFINITIONS)
 const TIPS_BY_MODULE: Record<string, string[]> = {
-  'pilotage.dashboard': [
+  'pilotage.statistiques': [
     '💡 Consultez le CA par technicien depuis l\'onglet Stats',
     '📊 Filtrez les données par période pour affiner l\'analyse',
     '📈 Comparez les performances mois par mois',
