@@ -149,7 +149,7 @@ export function userModulesToEnabledModules(
     if (hierarchicalKey) {
       // Legacy key in DB → also set hierarchical, unless DB already has explicit hierarchical row
       if (!explicitHierarchicalKeys.has(hierarchicalKey)) {
-        result[hierarchicalKey as ModuleKey] = value;
+        result[hierarchicalKey] = value;
       }
     }
     // If this IS a hierarchical key, also set the legacy counterpart
