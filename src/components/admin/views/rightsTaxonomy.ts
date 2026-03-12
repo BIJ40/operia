@@ -90,7 +90,7 @@ const LEGACY_LABELS: Partial<Record<string, string[]>> = {
   prospection: ['Commercial / Prospection'],
   admin_plateforme: ['Administration'],
   
-  reseau_franchiseur: ['Réseau Franchiseur'],
+  // reseau_franchiseur retiré — interface de rôle
   'support.aide_en_ligne': ['Aide'],
   // Legacy roots
   agence: ['Pilotage agence', 'Mon agence'],

@@ -188,12 +188,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
         }
 
-        // PRO plan auto-enrichment (check both hierarchical + legacy keys for safety)
+        // PRO plan auto-enrichment (check hierarchical + legacy keys for safety)
+        // reseau_franchiseur retiré — interface de rôle, pas un indicateur de plan PRO
         const parcModule = (resolvedModules['organisation.parc'] || resolvedModules.parc) as any;
-        const reseauModule = resolvedModules.reseau_franchiseur as any;
         const isProAgency = !!(
-          (parcModule && typeof parcModule === 'object' && parcModule.enabled) ||
-          (reseauModule && typeof reseauModule === 'object' && reseauModule.enabled)
+          (parcModule && typeof parcModule === 'object' && parcModule.enabled)
         );
 
         const agenceModule = (resolvedModules['pilotage.agence'] || resolvedModules.agence) as any;

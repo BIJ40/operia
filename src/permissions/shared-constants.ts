@@ -81,7 +81,9 @@ export const SHARED_AGENCY_REQUIRED_MODULES: SharedModuleKey[] = [
 
 export const SHARED_AGENCY_ROLES: SharedGlobalRole[] = ['franchisee_user', 'franchisee_admin'];
 
-export const SHARED_NETWORK_MODULES: SharedModuleKey[] = ['reseau_franchiseur'];
+// reseau_franchiseur retiré de NETWORK_MODULES — interface de rôle (N3+), pas un module standard
+// Voir src/permissions/franchisorAccess.ts
+export const SHARED_NETWORK_MODULES: SharedModuleKey[] = [];
 
 export const SHARED_NETWORK_MIN_ROLE: SharedGlobalRole = 'franchisor_user';
 

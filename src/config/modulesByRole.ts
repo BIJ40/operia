@@ -57,10 +57,7 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
       enabled: true,
       options: { apogee: true, helpconfort: true, apporteurs: true }
     },
-    reseau_franchiseur: {
-      enabled: true,
-      options: { dashboard: true, stats: true, agences: true, redevances: false, comparatifs: true }
-    },
+    // reseau_franchiseur retiré — interface de rôle (N3+), pas un module standard
     'support.aide_en_ligne': {
       enabled: true,
       options: { user: true, agent: true }
@@ -72,10 +69,7 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
       enabled: true,
       options: { apogee: true, helpconfort: true, apporteurs: true, edition: true }
     },
-    reseau_franchiseur: {
-      enabled: true,
-      options: { dashboard: true, stats: true, agences: true, redevances: true, comparatifs: true }
-    },
+    // reseau_franchiseur retiré — interface de rôle (N3+), pas un module standard
     'support.aide_en_ligne': {
       enabled: true,
       options: { user: true, agent: true }
@@ -91,10 +85,7 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
       enabled: true,
       options: { indicateurs: true, actions_a_mener: true, diffusion: true }
     },
-    reseau_franchiseur: {
-      enabled: true,
-      options: { dashboard: true, stats: true, agences: true, redevances: true, comparatifs: true }
-    },
+    // reseau_franchiseur retiré — interface de rôle (N3+), pas un module standard
     'support.aide_en_ligne': {
       enabled: true,
       options: { user: true, agent: true }
@@ -114,10 +105,7 @@ export const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
       enabled: true,
       options: { indicateurs: true, actions_a_mener: true, diffusion: true }
     },
-    reseau_franchiseur: {
-      enabled: true,
-      options: { dashboard: true, stats: true, agences: true, redevances: true, comparatifs: true }
-    },
+    // reseau_franchiseur retiré — interface de rôle (N3+), pas un module standard
     'support.aide_en_ligne': {
       enabled: true,
       options: { user: true, agent: true }

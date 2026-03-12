@@ -180,6 +180,9 @@ export interface ModuleDefinition {
   deployed?: boolean;
   /** Si true, ce module n'est activé que par overwrite utilisateur (user_modules), jamais par plan ou rôle */
   overwriteOnly?: boolean;
+  /** Si true, ce "module" est en réalité une interface de rôle, pas un module standard administrable.
+   *  L'accès est piloté par le rôle global, pas par plan/overwrite. */
+  roleInterface?: boolean;
 }
 
 export interface ModuleOptionDefinition {
