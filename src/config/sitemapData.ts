@@ -108,8 +108,8 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
   // ==================== ACADEMY ====================
   {
     path: '/academy',
-    label: 'Academy Index',
-    component: 'AcademyIndex',
+    label: 'Academy (redirect)',
+    component: 'Navigate → /?tab=support',
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
