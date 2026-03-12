@@ -283,12 +283,12 @@ export function DemoAccueilContent() {
             {/* CA par Univers */}
             <motion.div variants={itemVariants}>
               <WarmCard
-                variant="purple"
+                variant="blue"
                 icon={PieChart}
                 animate={false}
                 className="h-full"
               >
-                <HumanTitle titleKey="ca_univers" icon={PieChart} iconColor="text-warm-purple" size="sm" />
+                <HumanTitle titleKey="ca_univers" icon={PieChart} iconColor="text-warm-blue" size="sm" />
                 <div className="mt-3">
                   <DemoCAParUnivers />
                 </div>
@@ -298,12 +298,12 @@ export function DemoAccueilContent() {
             {/* CA par Apporteur */}
             <motion.div variants={itemVariants}>
               <WarmCard
-                variant="green"
+                variant="blue"
                 icon={TrendingUp}
                 animate={false}
                 className="h-full"
               >
-                <HumanTitle titleKey="ca_apporteurs" icon={TrendingUp} iconColor="text-warm-green" size="sm" />
+                <HumanTitle titleKey="ca_apporteurs" icon={TrendingUp} iconColor="text-warm-blue" size="sm" />
                 <div className="mt-3">
                   <DemoCAApporteurs />
                 </div>
