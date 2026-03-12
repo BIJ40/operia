@@ -75,7 +75,7 @@ par défaut**. Conséquence : un utilisateur STARTER accédait aux fonctionnalit
 | `ticketing` | RC | MODULES, MODULE_DEFINITIONS, plan_tier_modules, module_registry | ✅ hasModule | PilotageTabContent, UnifiedWorkspace, PermissionsRuntimeProof | Conservée |
 | `prospection` | RC | MODULES, MODULE_DEFINITIONS, plan_tier_modules, module_registry | ✅ hasModule + hasModuleOption | ProspectionTabContent | Conservée |
 | `planning_augmente` | ND | MODULES, MODULE_DEFINITIONS, module_registry | ❌ deployed=false | — | Conservée (à surveiller) |
-| `reseau_franchiseur` | RC | MODULES, MODULE_DEFINITIONS, plan_tier_modules, module_registry | ✅ hasModule | UnifiedWorkspace, navigationStructure | Conservée |
+| `reseau_franchiseur` | **RI** | MODULES, MODULE_DEFINITIONS (roleInterface:true) | ✅ canAccessFranchisorInterface | franchisorAccess.ts, navigationStructure | **Interface de rôle** (§7) |
 | `admin_plateforme` | RC | MODULES, MODULE_DEFINITIONS, plan_tier_modules, module_registry | ✅ hasModule | UnifiedWorkspace, navigationStructure | Conservée |
 | `unified_search` | INT | MODULES, MODULE_DEFINITIONS, module_registry | ❌ interne | Exclu de PLAN_VISIBLE_MODULES | Conservée |
 | `pilotage.statistiques` | ST | MODULES, SHARED_MODULE_KEYS, plan_tier_modules, module_registry | ✅ hasModule | PilotageTabContent (gate onglet Stats) | Conservée |
@@ -210,7 +210,56 @@ par défaut**. Conséquence : un utilisateur STARTER accédait aux fonctionnalit
 
 ---
 
-## 7. Règles de contribution futures
+## 7. Interfaces de rôle (`roleInterface: true`)
+
+### Définition
+
+Une **interface de rôle** est un domaine applicatif dont l'accès est piloté **exclusivement par le rôle global**, et non par le système de modules standard (plans, overwrites, admin modules).
+
+### Propriétés
+
+| Aspect | Comportement |
+|--------|-------------|
+| Accès | Piloté par `canAccessFranchisorInterface(role)` — rôle global uniquement |
+| `plan_tier_modules` | Aucune entrée — l'accès ne dépend pas du plan agence |
+| `user_modules` / overwrites | Non utilisé — aucun overwrite nécessaire |
+| Admin modules (Droits) | Exclu — n'apparaît pas dans la matrice standard |
+| `PLAN_VISIBLE_MODULES` | Exclu (`adminOnly: true`) |
+| `DEFAULT_MODULES_BY_ROLE` | Exclu (`defaultForRoles: []`) |
+| `MODULE_DEFINITIONS` | Conservé pour compatibilité technique (types, options), mais `roleInterface: true` + `adminOnly: true` |
+| Sections internes | Contrôlées par `canAccessFranchisorSection(role, section)` |
+
+### Modules concernés
+
+| Clé | Guard global | Guard sections | Règle |
+|-----|-------------|----------------|-------|
+| `reseau_franchiseur` | `canAccessFranchisorInterface()` / `has_franchiseur_access()` SQL | `canAccessFranchisorSection()` | N3+ interface, N4+ redevances |
+
+### Fichiers de référence
+
+- `src/permissions/franchisorAccess.ts` — guards centralisés
+- `src/permissions/__tests__/franchisor-access.test.ts` — tests unitaires
+- `src/permissions/__tests__/role-interface-doctrine.test.ts` — tests CI doctrine
+
+### Comment ajouter une nouvelle interface de rôle
+
+1. Ajouter `roleInterface: true` + `adminOnly: true` + `defaultForRoles: []` dans `MODULE_DEFINITIONS`
+2. Créer un fichier `src/permissions/<name>Access.ts` avec les guards centralisés
+3. Retirer la clé de `RIGHTS_CATEGORIES` dans `rightsTaxonomy.ts`
+4. Ne PAS ajouter d'entrée dans `plan_tier_modules`
+5. Ne PAS ajouter dans `DEFAULT_MODULES_BY_ROLE`
+6. Ajouter des tests dans `role-interface-doctrine.test.ts`
+
+---
+
+## 8. Règles de contribution futures
+
+1. **Fail-closed par défaut** : un nouveau module est bloqué tant qu'il n'a pas d'entrée `plan_tier_modules`.
+2. **Pas de COALESCE(..., true)** dans la RPC ou le moteur permissions.
+3. **Pas de clé frontend orpheline** : toute clé lue par `hasModule()` doit exister dans `MODULES`.
+4. **Tests obligatoires** : toute modification de clé doit passer `coherence-audit.test.ts`.
+5. **Documentation** : toute exception doit être documentée dans ce fichier (§4).
+6. **Interfaces de rôle** : toute clé `roleInterface: true` doit respecter la doctrine §7.
 
 1. **Fail-closed par défaut** : un nouveau module est bloqué tant qu'il n'a pas d'entrée `plan_tier_modules`.
 2. **Pas de COALESCE(..., true)** dans la RPC ou le moteur permissions.
