@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { useAppTheme, type AppTheme } from '@/contexts/ThemeContext';
+import { useNavigationMode } from '@/hooks/useNavigationMode';
 
 interface ProfileMenuProps {
   tabButtonClass: string;
