@@ -187,7 +187,7 @@ export default function SupportHubTabContent() {
 
   return (
     <DomainAccentProvider accent="purple">
-    <div className="py-6 px-2 sm:px-6 space-y-6 max-w-[1400px] mx-auto">
+    <div className="py-6 px-2 sm:px-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
