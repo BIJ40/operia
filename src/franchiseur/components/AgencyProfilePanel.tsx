@@ -34,29 +34,27 @@ interface AgencyProfilePanelProps {
 }
 
 function AgencyProfilePanelContent({ agencyId, onClose }: { agencyId: string; onClose: () => void }) {
+  const navigate = useNavigate();
   const { data: agency, isLoading: agencyLoading } = useAgency(agencyId);
   const { data: royaltyHistory } = useRoyaltyHistory(agencyId);
-  const { data: agencyUsers, isLoading: usersLoading } = useAgencyUsers(agency?.slug || null);
+  const { data: teamMembers = [], isLoading: usersLoading } = useAgencyFullTeam(agencyId);
   const { franchiseurRole } = useFranchiseur();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = usePersistedTab(`franchiseur-agency-${agencyId}-tab`, 'info');
 
   const canManage = franchiseurRole === "directeur" || franchiseurRole === "dg";
 
-  // Liste des membres de l'équipe
-  const teamMembers = (agencyUsers || [])
-    .map((user) => ({
-      id: user.id,
-      first_name: user.first_name || "",
-      last_name: user.last_name || "",
-      email: user.email,
-      role: user.role_agence || "Utilisateur",
-      isActive: user.is_active !== false,
-      globalRole: user.global_role,
-    }))
-    .sort((a, b) => 
-      `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`)
-    );
+  const handleCreateUser = useCallback((member: AgencyTeamMember) => {
+    // Navigate to admin users with pre-fill info
+    const params = new URLSearchParams({
+      action: 'create',
+      firstName: member.first_name,
+      lastName: member.last_name,
+      email: member.email || '',
+      agence: agency?.slug || '',
+    });
+    navigate(`${ROUTES.admin.users}?${params.toString()}`);
+  }, [navigate, agency?.slug]);
 
   if (agencyLoading) {
     return (
