@@ -4,7 +4,9 @@
  * Affiche la structure de navigation réelle de l'application
  * avec des indicateurs d'accès (✅ accessible / 🔒 non accessible).
  *
- * Phase 9c — Alignement sur la navigation admin.
+ * Les labels des entrées liées à un module sont résolus dynamiquement
+ * via useModuleLabels (DB override > fallback compilé).
+ * Les labels structurels (domaines, entrées admin/role-gated) restent statiques.
  */
 
 import { CheckCircle2, Lock } from 'lucide-react';
@@ -15,7 +17,9 @@ import {
   ADMIN_ROLES,
   evaluateGuard,
   type NavigationDomain,
+  type NavigationEntry,
 } from '@/lib/navigationStructure';
+import { useModuleLabels } from '@/hooks/useModuleLabels';
 
 interface NavigationAccessViewProps {
   effectiveModules: Record<string, { enabled?: boolean; options?: Record<string, boolean> }>;
@@ -24,6 +28,7 @@ interface NavigationAccessViewProps {
 
 export function NavigationAccessView({ effectiveModules, globalRole }: NavigationAccessViewProps) {
   const isAdminBypass = !!globalRole && ADMIN_ROLES.includes(globalRole);
+  const { getLabel } = useModuleLabels();
 
   // Filter domains: role-gated domains only shown if user has the role
   const visibleDomains = NAVIGATION_STRUCTURE.filter(domain => {
@@ -45,6 +50,7 @@ export function NavigationAccessView({ effectiveModules, globalRole }: Navigatio
             effectiveModules={effectiveModules}
             globalRole={globalRole}
             isAdminBypass={isAdminBypass}
+            getLabel={getLabel}
           />
         ))}
       </div>
@@ -52,21 +58,39 @@ export function NavigationAccessView({ effectiveModules, globalRole }: Navigatio
   );
 }
 
+/**
+ * Resolve the display label for a navigation entry.
+ * Module-gated entries use DB labels; structural entries keep their static label.
+ */
+function resolveEntryLabel(
+  entry: NavigationEntry,
+  getLabel: (key: string, fallback?: string) => string,
+): string {
+  // Only resolve via DB for module-gated entries (not role-gated or alwaysVisible)
+  if (entry.guard.moduleKey) {
+    return getLabel(entry.guard.moduleKey, entry.label);
+  }
+  return entry.label;
+}
+
 function DomainCard({
   domain,
   effectiveModules,
   globalRole,
   isAdminBypass,
+  getLabel,
 }: {
   domain: NavigationDomain;
   effectiveModules: Record<string, { enabled?: boolean; options?: Record<string, boolean> }>;
   globalRole: GlobalRole | null;
   isAdminBypass: boolean;
+  getLabel: (key: string, fallback?: string) => string;
 }) {
   const Icon = domain.icon;
 
   const entriesWithAccess = domain.entries.map(entry => ({
     ...entry,
+    resolvedLabel: resolveEntryLabel(entry, getLabel),
     accessible: evaluateGuard(entry.guard, effectiveModules, globalRole, isAdminBypass),
   }));
 
@@ -77,7 +101,7 @@ function DomainCard({
 
   return (
     <div className="rounded-lg border bg-card overflow-hidden">
-      {/* Domain header */}
+      {/* Domain header — structural label, not a module */}
       <div className="flex items-center justify-between px-3 py-2.5 bg-muted/40">
         <div className="flex items-center gap-2">
           <Icon className="h-4 w-4 text-primary" />
@@ -108,7 +132,7 @@ function DomainCard({
               <Lock className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
             )}
             <span className={entry.accessible ? '' : 'line-through decoration-muted-foreground/30'}>
-              {entry.label}
+              {entry.resolvedLabel}
             </span>
           </div>
         ))}

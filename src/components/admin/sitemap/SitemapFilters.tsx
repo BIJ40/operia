@@ -14,7 +14,7 @@ import { SECTION_LABELS, type SitemapSection } from "@/config/sitemapData";
 import { type GlobalRole } from "@/types/globalRoles";
 import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 import { MODULE_DEFINITIONS, type ModuleKey } from "@/types/modules";
-import { MODULE_LABELS } from "@/permissions/constants";
+import { useModuleLabels } from "@/hooks/useModuleLabels";
 import { PlanKey, PLAN_LABELS } from "@/config/planTiers";
 import {
   Popover,
@@ -53,6 +53,7 @@ const ALL_MODULES: ModuleKey[] = MODULE_DEFINITIONS.map(m => m.key);
 const ALL_PLANS: PlanKey[] = Object.keys(PLAN_LABELS) as PlanKey[];
 
 export function SitemapFilters({ filters, onChange }: SitemapFiltersProps) {
+  const { getLabel } = useModuleLabels();
   const activeFiltersCount = [
     filters.section !== 'all',
     filters.minRole !== 'all',
@@ -167,7 +168,7 @@ export function SitemapFilters({ filters, onChange }: SitemapFiltersProps) {
                   <SelectItem value="all">Tous les modules</SelectItem>
                   {ALL_MODULES.map((module) => (
                     <SelectItem key={module} value={module}>
-                      {MODULE_LABELS[module] || module}
+                      {getLabel(module, module)}
                     </SelectItem>
                   ))}
                 </SelectContent>
