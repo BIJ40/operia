@@ -178,19 +178,19 @@ export function GeneralTab() {
   // 12 KPIs réorganisés avec vraies données
   const kpis = [
     // Ligne 1
-    { icon: FolderOpen, title: 'Dossiers', value: data?.nbDossiers ?? 0, format: 'number', color: 'blue' },
-    { icon: FileText, title: 'Devis émis', value: data?.nbDevis ?? 0, format: 'number', color: 'teal' },
-    { icon: Receipt, title: 'Factures', value: data?.nbFactures ?? 0, format: 'number', color: 'green' },
-    { icon: Euro, title: 'CA HT', value: data?.caHT ?? 0, format: 'currency', color: 'blue' },
-    { icon: ShoppingCart, title: 'Panier', value: data?.panierMoyen ?? 0, format: 'currency', color: 'purple' },
-    { icon: Wrench, title: 'Interventions', value: data?.nbInterventions ?? 0, format: 'number', color: 'orange' },
+    { icon: FolderOpen, title: 'Dossiers', value: data?.nbDossiers ?? 0, format: 'number', color: 'blue', tooltip: 'Nombre de dossiers créés sur la période' },
+    { icon: FileText, title: 'Devis émis', value: data?.nbDevis ?? 0, format: 'number', color: 'teal', tooltip: 'Nombre total de devis émis' },
+    { icon: Receipt, title: 'Factures', value: data?.nbFactures ?? 0, format: 'number', color: 'green', tooltip: 'Nombre de factures émises sur la période' },
+    { icon: Euro, title: 'CA HT', value: data?.caHT ?? 0, format: 'currency', color: 'blue', tooltip: 'Chiffre d\'affaires HT (somme des factures)' },
+    { icon: ShoppingCart, title: 'Panier', value: data?.panierMoyen ?? 0, format: 'currency', color: 'purple', tooltip: 'Montant moyen HT par dossier (CA / nb factures)' },
+    { icon: Wrench, title: 'Interventions', value: data?.nbInterventions ?? 0, format: 'number', color: 'orange', tooltip: 'Nombre total d\'interventions réalisées' },
     // Ligne 2
-    { icon: AlertTriangle, title: 'Taux SAV', value: savData?.tauxSavGlobal ?? 0, format: 'percent', color: 'rose' },
-    { icon: Percent, title: 'Transfo', value: data?.tauxTransfo ?? 0, format: 'percent', color: 'teal' },
-    { icon: Clock, title: 'Délai', value: data?.delaiMoyen ?? 0, format: 'days', color: 'cyan' },
-    { icon: Target, title: 'RT', value: data?.nbRT ?? 0, format: 'number', color: 'purple' },
-    { icon: TrendingUp, title: 'Évolution', value: data?.evolutionCA ?? 0, format: 'evolution', color: 'green' },
-    { icon: Users, title: 'Techniciens', value: data?.nbTechsActifs ?? 0, format: 'number', color: 'blue' },
+    { icon: AlertTriangle, title: 'Taux SAV', value: savData?.tauxSavGlobal ?? 0, format: 'percent', color: 'rose', tooltip: 'Pourcentage de dossiers ayant un SAV' },
+    { icon: Percent, title: 'Transfo', value: data?.tauxTransfo ?? 0, format: 'percent', color: 'teal', tooltip: 'Taux de transformation devis → factures (en nombre)' },
+    { icon: Clock, title: 'Délai', value: data?.delaiMoyen ?? 0, format: 'days', color: 'cyan', tooltip: 'Durée moyenne d\'un dossier (création → clôture)' },
+    { icon: Target, title: 'RT', value: data?.nbRT ?? 0, format: 'number', color: 'purple', tooltip: 'Nombre de relevés techniques réalisés' },
+    { icon: TrendingUp, title: 'Évolution', value: data?.evolutionCA ?? 0, format: 'evolution', color: 'green', tooltip: 'Évolution du CA vs même période N-1' },
+    { icon: Users, title: 'Techniciens', value: data?.nbTechsActifs ?? 0, format: 'number', color: 'blue', tooltip: 'Nombre de techniciens actifs sur la période' },
   ];
 
   const formatValue = (value: number, format: string) => {
