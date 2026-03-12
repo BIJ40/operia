@@ -64,5 +64,6 @@ export default function GuidesTabContent() {
         </Suspense>
       </Tabs>
     </div>
+    </DomainAccentProvider>
   );
 }
