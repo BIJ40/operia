@@ -230,19 +230,26 @@ export function GeneralTab() {
           const colors = colorMap[kpi.color] || colorMap.blue;
           return (
             <motion.div key={kpi.title} variants={itemVariants}>
-              <Card className={`border-l-3 ${colors.border} ${colors.bg} hover:shadow-sm transition-all h-full rounded-xl`}>
-                <CardContent className="p-3">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <kpi.icon className={`w-3.5 h-3.5 ${colors.text}`} />
-                    <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide truncate">
-                      {kpi.title}
-                    </span>
-                  </div>
-                  <p className={`text-base sm:text-lg font-bold ${colors.text} truncate`}>
-                    {formatValue(kpi.value, kpi.format)}
-                  </p>
-                </CardContent>
-              </Card>
+              <UiTooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <Card className={`border-l-3 ${colors.border} ${colors.bg} hover:shadow-sm transition-all h-full rounded-xl cursor-default`}>
+                    <CardContent className="p-3">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <kpi.icon className={`w-3.5 h-3.5 ${colors.text}`} />
+                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide truncate">
+                          {kpi.title}
+                        </span>
+                      </div>
+                      <p className={`text-base sm:text-lg font-bold ${colors.text} truncate`}>
+                        {formatValue(kpi.value, kpi.format)}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[220px] text-xs">
+                  {kpi.tooltip}
+                </TooltipContent>
+              </UiTooltip>
             </motion.div>
           );
         })}
