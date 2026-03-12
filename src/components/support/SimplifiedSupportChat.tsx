@@ -729,8 +729,11 @@ export function SimplifiedSupportChat({
   // Main chat
   return (
     <div className={cn("flex flex-col h-full", className)}>
-      {/* Domain indicator */}
+      {/* Domain indicator + back */}
       <div className="px-4 pt-2 pb-1 flex items-center gap-2">
+        <Button variant="ghost" size="sm" onClick={handleGoBack} className="gap-1 text-xs text-muted-foreground hover:text-foreground h-7 px-2">
+          <ArrowLeft className="w-3.5 h-3.5" /> Retour
+        </Button>
         <Badge variant="outline" className="rounded-full text-xs">
           {DOMAIN_OPTIONS.find(d => d.value === selectedDomain)?.emoji}{' '}
           {DOMAIN_OPTIONS.find(d => d.value === selectedDomain)?.label}
