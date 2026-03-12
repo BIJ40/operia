@@ -45,7 +45,7 @@ export function MinimalLayout({
   const { isAuthenticated, isAuthLoading } = useAuthCore();
   const { isImpersonating } = useImpersonation();
   const [loginOpen, setLoginOpen] = useState(false);
-  const navigate = useNavigate();
+  
   
   // Hooks for tracking
   useStorageQuota();
