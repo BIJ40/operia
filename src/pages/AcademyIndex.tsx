@@ -43,7 +43,7 @@ const faqModule = {
 
 export default function AcademyIndex() {
   const menuLabels = useMenuLabels();
-  const { hasModuleOption } = useEffectiveModules();
+  const { hasModuleOption } = usePermissions();
   const showFaq = hasModuleOption('support.guides' as any, 'faq');
 
   const getModuleTitle = (module: typeof academyModules[0]): string => {

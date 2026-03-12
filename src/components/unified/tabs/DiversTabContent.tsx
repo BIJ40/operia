@@ -307,7 +307,7 @@ function AdministratifSection() {
 
 export default function DiversTabContent() {
   const [activeMainTab, setActiveMainTab] = useSessionState<OutilsMainTab>('outils_main_tab', 'actions');
-  const { hasModule } = useEffectiveModules();
+  const { hasModule } = usePermissions();
 
   const visibleTabs = useMemo(() => {
     return MAIN_TABS_CONFIG.filter(tab => {

@@ -12,7 +12,7 @@ type DocumentsSubTab = 'library' | 'shortcuts' | 'trash';
 
 export default function DocumentsTabContent() {
   const [activeSubTab, setActiveSubTab] = useState<DocumentsSubTab>('library');
-  const { hasModule } = useEffectiveModules();
+  const { hasModule } = usePermissions();
   
   // Clés COMPAT_MAP : mediatheque.gerer → divers_documents.gerer, mediatheque.corbeille → divers_documents.corbeille_vider
   const canManage = hasModule('mediatheque.gerer' as any);

@@ -431,7 +431,7 @@ export function DataPreloadProvider({ children }: { children: ReactNode }) {
       })();
       executePreload({ showUI });
     }
-  }, [isAuthLoading, isModulesLoading, isPreloading, shouldTriggerPreload, executePreload, user, effectiveAgence]);
+  }, [isAuthLoading, isPreloading, shouldTriggerPreload, executePreload, user, effectiveAgence]);
   
   // Effet d'invalidation sur changement d'agence
   useEffect(() => {

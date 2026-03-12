@@ -86,7 +86,7 @@ function GuidesSection() {
 }
 
 export default function SupportHubTabContent() {
-  const { hasModule } = useEffectiveModules();
+  const { hasModule } = usePermissions();
 
   const visibleTabs = useMemo(() => {
     const tabs = ALL_SUPPORT_TABS.filter(tab => {

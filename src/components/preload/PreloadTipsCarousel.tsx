@@ -47,7 +47,7 @@ export function PreloadTipsCarousel({
   className, 
   intervalMs = 8000 
 }: PreloadTipsCarouselProps) {
-  const { hasModule, hasModuleOption } = useEffectiveModules();
+  const { hasModule, hasModuleOption } = usePermissions();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [tips, setTips] = useState<string[]>(GENERAL_TIPS);
   

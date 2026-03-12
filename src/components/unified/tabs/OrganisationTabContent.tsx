@@ -39,7 +39,7 @@ function LoadingFallback() {
 }
 
 export default function OrganisationTabContent() {
-  const { hasModule } = useEffectiveModules();
+  const { hasModule } = usePermissions();
 
   const visibleTabs = useMemo(() => {
     return ALL_ORGANISATION_TABS.filter(tab => {

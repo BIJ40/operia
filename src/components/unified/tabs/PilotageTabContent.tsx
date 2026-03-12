@@ -41,16 +41,14 @@ function LoadingFallback() {
 }
 
 export default function PilotageTabContent() {
-  const { hasModule, modules, isLoading } = useEffectiveModules();
+  const { hasModule } = usePermissions();
 
   const visibleTabs = useMemo(() => {
     return ALL_PILOTAGE_TABS.filter(tab => {
       if (!tab.requiresModule) return true;
-      // Check both via hasModule AND direct key lookup for robustness
-      const moduleKey = tab.requiresModule;
-      return hasModule(moduleKey) || !!(modules as any)[moduleKey]?.enabled;
+      return hasModule(tab.requiresModule);
     });
-  }, [hasModule, modules]);
+  }, [hasModule]);
 
   const defaultTab = visibleTabs[0]?.id as PilotageSubTab ?? 'stats';
   const [activeTab, setActiveTab] = useSessionState<PilotageSubTab>('pilotage_sub_tab', defaultTab);

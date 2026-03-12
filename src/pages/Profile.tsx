@@ -205,10 +205,16 @@ export default function Profile() {
   };
 
   const getEnabledModulesList = (): string[] => {
-    return MODULE_DEFINITIONS.filter(mod => {
-      const state = effectiveModulesData[mod.key];
-      return state?.enabled === true;
-    }).map(mod => mod.label);
+    if (!enabledModules) return [];
+    return Object.entries(enabledModules)
+      .filter(([, value]) => {
+        if (!value) return false;
+        return typeof value === 'boolean' ? value : (value as any).enabled === true;
+      })
+      .map(([key]) => {
+        const def = MODULE_DEFINITIONS.find(m => m.key === key);
+        return def?.label || key;
+      });
   };
 
   if (!isAuthenticated) {

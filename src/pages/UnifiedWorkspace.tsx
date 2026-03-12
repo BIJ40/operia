@@ -62,10 +62,9 @@ function LoadingFallback() {
 
 function UnifiedWorkspaceContent() {
   const { isLoggingOut } = useAuthCore();
-  const { globalRole, isFranchiseur } = usePermissions();
+  const { globalRole, isFranchiseur, hasModule, hasModuleOption } = usePermissions();
   const { isImpersonating, isRealUserImpersonation } = useImpersonation();
   const effectiveAuth = useEffectiveAuth();
-  const { hasModule, hasModuleOption } = useEffectiveModules();
   const [searchParams, setSearchParams] = useSearchParams();
   const [tabOrder, setTabOrder] = useSessionState<UnifiedTab[]>('unified_workspace_tab_order', DEFAULT_TAB_ORDER);
   const [loginOpen, setLoginOpen] = useState(false);

@@ -103,8 +103,7 @@ function StatsHubContent() {
 }
 
 function PilotageContent() {
-  const { globalRole } = usePermissions();
-  const { hasModule, hasModuleOption } = useEffectiveModules();
+  const { globalRole, hasModule } = usePermissions();
   const [activeTab, setActiveTab] = useSessionState<MainTab>('pilotage_active_tab', 'agence');
   
   const isPlatformAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
