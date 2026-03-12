@@ -256,7 +256,14 @@ export function UserEditForm({
         <Label>Poste occupé</Label>
         <Select 
           value={formData.roleAgence} 
-          onValueChange={(v) => setFormData(prev => ({ ...prev, roleAgence: v }))} 
+          onValueChange={(v) => {
+            const suggested = getSuggestedGlobalRole(v);
+            setFormData(prev => ({
+              ...prev,
+              roleAgence: v,
+              ...(suggested ? { globalRole: suggested } : {}),
+            }));
+          }} 
           disabled={!canEditRoleAgence || isSubmitting}
         >
           <SelectTrigger><SelectValue placeholder="Sélectionner un poste" /></SelectTrigger>
