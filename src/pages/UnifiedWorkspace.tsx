@@ -207,6 +207,8 @@ function UnifiedWorkspaceContent() {
     data-[state=active]:z-20 data-[state=active]:-mb-[2px] data-[state=active]:pb-[calc(0.75rem+2px)] data-[state=active]:scale-[1.02]
   `;
   
+  const { mode: navMode } = useNavigationMode();
+  
   const topPadding = (isImpersonating || isRealUserImpersonation) ? 'pt-10' : '';
   
   // Vue Franchiseur
