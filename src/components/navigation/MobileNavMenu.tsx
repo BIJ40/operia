@@ -14,6 +14,7 @@ interface MobileNavMenuProps {
 
 export function MobileNavMenu({ groups, activeTab, onSelect }: MobileNavMenuProps) {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
