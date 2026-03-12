@@ -13,12 +13,30 @@ export interface RightsCategory {
 }
 
 export const RIGHTS_CATEGORIES: RightsCategory[] = [
-  { id: 'pilotage', label: 'Pilotage', moduleKeys: ['pilotage', 'pilotage.dashboard', 'pilotage.agence'] },
-  { id: 'commercial', label: 'Commercial', moduleKeys: ['commercial', 'prospection', 'commercial.realisations'] },
-  { id: 'organisation', label: 'Organisation', moduleKeys: ['organisation', 'organisation.salaries', 'organisation.apporteurs', 'organisation.plannings', 'organisation.reunions', 'organisation.parc'] },
-  { id: 'documents', label: 'Documents', moduleKeys: ['mediatheque', 'mediatheque.documents'] },
-  { id: 'support', label: 'Support', moduleKeys: ['support', 'support.aide_en_ligne', 'support.guides', 'ticketing'] },
-  { id: 'admin', label: 'Admin', moduleKeys: ['admin', 'admin_plateforme', 'reseau_franchiseur'] },
+  { id: 'pilotage', label: 'Pilotage', moduleKeys: [
+    'pilotage', 'pilotage.dashboard', 'pilotage.agence',
+    'stats', 'agence',
+  ]},
+  { id: 'commercial', label: 'Commercial', moduleKeys: [
+    'commercial', 'prospection', 'commercial.realisations',
+    'realisations',
+  ]},
+  { id: 'organisation', label: 'Organisation', moduleKeys: [
+    'organisation', 'organisation.salaries', 'organisation.apporteurs',
+    'organisation.plannings', 'organisation.reunions', 'organisation.parc',
+    'rh', 'salaries', 'parc', 'outils',
+    'divers_apporteurs', 'divers_plannings', 'divers_reunions', 'divers_documents',
+  ]},
+  { id: 'documents', label: 'Documents', moduleKeys: [
+    'mediatheque', 'mediatheque.documents', 'documents',
+  ]},
+  { id: 'support', label: 'Support', moduleKeys: [
+    'support', 'support.aide_en_ligne', 'support.guides',
+    'ticketing', 'guides', 'aide',
+  ]},
+  { id: 'admin', label: 'Admin', moduleKeys: [
+    'admin', 'admin_plateforme', 'reseau_franchiseur',
+  ]},
 ];
 
 /**
