@@ -60,7 +60,7 @@ export default function PilotageTabContent() {
   const effectiveTab = (visibleTabs.find(t => t.id === activeTab && !t.disabled)) ? activeTab : defaultTab;
 
   return (
-    <div className={navMode === 'header' ? 'pt-2 px-2 sm:px-4 space-y-4' : 'py-6 px-2 sm:px-4 space-y-4'}>
+    <div className={navMode === 'header' ? 'pt-1 px-2 sm:px-4 space-y-3' : 'py-6 px-2 sm:px-4 space-y-4'}>
       <Tabs value={effectiveTab} onValueChange={(v) => setActiveTab(v as PilotageSubTab)}>
         {navMode === 'tabs' && <PillTabsList tabs={visibleTabs} />}
 
