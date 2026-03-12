@@ -44,6 +44,7 @@ export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClas
     purple: 'bg-warm-purple/10 text-warm-purple',
     pink: 'bg-warm-pink/10 text-warm-pink',
     teal: 'bg-warm-teal/10 text-warm-teal',
+    red: 'bg-warm-red/10 text-warm-red',
   };
 
   const ACCENT_DROPDOWN: Record<string, { bg: string; border: string; text: string; hoverBg: string; hoverBorder: string }> = {
