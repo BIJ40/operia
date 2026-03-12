@@ -26,6 +26,7 @@ import { Loader2 } from 'lucide-react';
 import { useSessionState } from '@/hooks/useSessionState';
 import { usePersistedTab } from '@/hooks/usePersistedState';
 import { useNavigationMode } from '@/hooks/useNavigationMode';
+import { DomainAccentProvider } from '@/contexts/DomainAccentContext';
 
 // Lazy load des composants directs
 const TDRUsersPage = lazy(() => import('@/pages/TDRUsersPage'));

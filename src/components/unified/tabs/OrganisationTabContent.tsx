@@ -103,5 +103,6 @@ export default function OrganisationTabContent() {
         </TabsContent>
       </Tabs>
     </div>
+    </DomainAccentProvider>
   );
 }
