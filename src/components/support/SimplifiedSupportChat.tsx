@@ -355,6 +355,7 @@ export function SimplifiedSupportChat({
       const selectedDomainConfig = DOMAIN_OPTIONS.find(d => d.value === selectedDomain);
       const ragContextType: RAGContextType = selectedDomainConfig?.chatContext || 'auto';
       const ragResult = await searchRAG({ query: userMessage.content, contextType: ragContextType });
+      logDebug('simplified-chat', 'RAG result', { context: ragContextType, hasContent: ragResult.hasContent, chunksCount: ragResult.chunks.length });
 
       if (!ragResult.hasContent) {
         setMessages(prev => [...prev, {
