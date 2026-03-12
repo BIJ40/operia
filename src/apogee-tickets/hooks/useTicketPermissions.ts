@@ -81,7 +81,7 @@ export function useMyTicketRole() {
   const { globalRole } = usePermissions();
   
   return useQuery<TicketRoleInfo>({
-    queryKey: ['my-ticket-role', user?.id],
+    queryKey: ['my-ticket-role', user?.id, globalRole],
     queryFn: async (): Promise<TicketRoleInfo> => {
       // Cas 1: Pas d'utilisateur connecté
       if (!user?.id) {
@@ -92,10 +92,10 @@ export function useMyTicketRole() {
       console.log('[MY-TICKET-ROLE] 🔍 Checking access for user:', user.id, 'email:', user.email);
       
       try {
-        // Vérification robuste d'accès Ticketing:
-        // - RPC canonique (source de vérité backend)
-        // - + récupération options via user_modules/profile pour les droits granulaires
-        const [profileResult, userModulesResult, rpcAccessResult] = await Promise.all([
+        // Vérification stricte d'accès Ticketing:
+        // - overwrite user_modules (source de vérité)
+        // - bypass N5+ uniquement
+        const [profileResult, userModulesResult] = await Promise.all([
           supabase
             .from('profiles')
             .select('global_role')
@@ -105,9 +105,7 @@ export function useMyTicketRole() {
             .from('user_modules')
             .select('module_key, options')
             .eq('user_id', user.id)
-            .eq('module_key', 'ticketing'),
-          supabase
-            .rpc('has_apogee_tickets_access', { _user_id: user.id })
+            .eq('module_key', 'ticketing')
         ]);
 
         if (profileResult.error) {
@@ -118,23 +116,15 @@ export function useMyTicketRole() {
           logError('[MY-TICKET-ROLE] Error fetching user_modules for ticketing', userModulesResult.error);
         }
 
-        if (rpcAccessResult.error) {
-          logError('[MY-TICKET-ROLE] Error calling has_apogee_tickets_access', rpcAccessResult.error);
-        }
-
         const profile = profileResult.data;
 
-        // Vérifier le niveau de rôle global (N5+ = admin)
+        // Vérifier le niveau de rôle global (N5+ = admin bypass)
         const effectiveGlobalRole = profile?.global_role || globalRole || null;
         const isN5Plus = ['platform_admin', 'superadmin'].includes(effectiveGlobalRole || '');
 
-        // Vérifier si le module Ticketing est activé via backend (canonique)
-        const hasRpcTicketingAccess = rpcAccessResult.data === true;
-
-        // Extraire les sous-options depuis user_modules
+        // Overwrite utilisateur strict (présence de la ligne user_modules)
         const userModuleRows = (userModulesResult.data || []) as Array<{ module_key: string; options: Record<string, boolean> | null }>;
-        const isModuleEnabledViaUserModules = userModuleRows.length > 0;
-        const hasLocalTicketingAccess = isModuleEnabledViaUserModules;
+        const hasUserOverwriteTicketing = userModuleRows.length > 0;
 
         const userModuleOptions = userModuleRows.reduce<Record<string, boolean>>((acc, row) => {
           if (row?.options && typeof row.options === 'object') {
@@ -149,16 +139,12 @@ export function useMyTicketRole() {
         const canImport = moduleOptions.import === true;
         const canManage = moduleOptions.manage !== false;
 
-        // Accès effectif: RPC + fallback local
-        const hasEffectiveTicketingAccess = hasRpcTicketingAccess || hasLocalTicketingAccess;
-
         // Cas 2: Module non activé et pas admin
-        if (!hasEffectiveTicketingAccess && !isN5Plus) {
+        if (!hasUserOverwriteTicketing && !isN5Plus) {
           console.warn('[MY-TICKET-ROLE] ❌ ACCESS DENIED — module_disabled', {
             userId: user.id,
             email: user.email,
-            hasRpcTicketingAccess,
-            hasLocalTicketingAccess,
+            hasUserOverwriteTicketing,
             isN5Plus,
           });
           return { ...DEFAULT_TICKET_ROLE_INFO, reason: 'module_disabled' };
