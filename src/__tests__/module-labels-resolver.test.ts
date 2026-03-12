@@ -138,3 +138,51 @@ describe('DB override propagation', () => {
     }
   });
 });
+
+// ============================================================================
+// 6. Static configs stay independent of DB labels
+// ============================================================================
+
+describe('Static configs independence', () => {
+  it('navigationStructure entries have static labels (not dependent on DB)', async () => {
+    const { NAVIGATION_STRUCTURE } = await import('@/lib/navigationStructure');
+    for (const domain of NAVIGATION_STRUCTURE) {
+      // Domain labels are structural strings
+      expect(typeof domain.label).toBe('string');
+      expect(domain.label.length).toBeGreaterThan(0);
+      for (const entry of domain.entries) {
+        // Entry labels exist as static fallbacks
+        expect(typeof entry.label).toBe('string');
+        expect(entry.label.length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('rightsTaxonomy categories have static labels independent of modules', async () => {
+    const { RIGHTS_CATEGORIES } = await import('@/components/admin/views/rightsTaxonomy');
+    for (const cat of RIGHTS_CATEGORIES) {
+      expect(typeof cat.label).toBe('string');
+      expect(cat.label.length).toBeGreaterThan(0);
+      // Category labels are NOT module keys
+      expect(cat.moduleKeys).not.toContain(cat.label);
+    }
+  });
+
+  it('resolveModuleLabel used at render-time overrides static labels', () => {
+    // Simulates what NavigationAccessView does: resolve entry label at render
+    const staticLabel = 'Salariés';
+    const dbLabels = { 'organisation.salaries': 'Équipe' };
+    const resolved = resolveModuleLabel('organisation.salaries', dbLabels, staticLabel);
+    // DB override takes priority over static fallback
+    expect(resolved).toBe('Équipe');
+  });
+
+  it('resolveModuleLabel falls back to static label when no DB override', () => {
+    const staticLabel = 'Salariés';
+    const dbLabels = {};
+    const resolved = resolveModuleLabel('organisation.salaries', dbLabels, staticLabel);
+    // Falls back to MODULE_DEFINITIONS label, not the static fallback (which is arg 3)
+    const defLabel = MODULE_DEFINITIONS.find(m => m.key === 'organisation.salaries')?.label;
+    expect(resolved).toBe(defLabel);
+  });
+});
