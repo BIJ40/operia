@@ -454,7 +454,6 @@ const MODULE_ROUTES: Record<string, string> = {
 
 function getModuleRoute(key: string): string | null {
   if (MODULE_ROUTES[key]) return MODULE_ROUTES[key];
-  // Try parent key (e.g. pilotage.statistiques.general → pilotage.statistiques → pilotage)
   const parts = key.split('.');
   while (parts.length > 1) {
     parts.pop();
@@ -462,6 +461,12 @@ function getModuleRoute(key: string): string | null {
     if (MODULE_ROUTES[parent]) return MODULE_ROUTES[parent];
   }
   return null;
+}
+
+/** Navigate to a route string like "/?tab=pilotage" using proper path + search separation */
+function navigateToRoute(navigate: ReturnType<typeof useNavigate>, route: string) {
+  const [pathname, search] = route.split('?');
+  navigate({ pathname: pathname || '/', search: search ? `?${search}` : '' });
 }
 
 // Table-based layout for proper column alignment
