@@ -20,7 +20,7 @@ export function FranchiseurPageContainer({
     <div 
       className={cn(
         "py-6 px-4 sm:px-6 lg:px-8 space-y-6",
-        maxWidth === 'default' && "max-w-[1536px] mx-auto",
+        maxWidth === 'default' && "max-w-[1400px] mx-auto",
         maxWidth === 'narrow' && "max-w-5xl mx-auto",
         maxWidth === 'full' && "w-full",
         className

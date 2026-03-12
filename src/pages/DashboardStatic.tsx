@@ -436,7 +436,7 @@ export default function DashboardStatic() {
   return (
     <DashboardPeriodContext.Provider value={periodConfig}>
       <TooltipProvider delayDuration={0}>
-      <div className="container mx-auto py-6 px-4 max-w-[1536px]">
+      <div className="container mx-auto py-6 px-4 max-w-[1400px]">
         {/* Header avec greeting chaleureux */}
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
