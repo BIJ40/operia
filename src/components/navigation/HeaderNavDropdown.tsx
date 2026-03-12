@@ -3,6 +3,14 @@ import { ChevronDown } from 'lucide-react';
 import type { HeaderNavGroup, HeaderNavChild } from '@/config/headerNavigation';
 import type { UnifiedTab } from '@/components/unified/workspace/types';
 
+interface AccentDropdown {
+  bg: string;
+  border: string;
+  text: string;
+  hoverBg: string;
+  hoverBorder: string;
+}
+
 interface HeaderNavDropdownProps {
   group: HeaderNavGroup;
   isActive: boolean;
@@ -10,9 +18,10 @@ interface HeaderNavDropdownProps {
   pillBase: string;
   pillActive: string;
   pillInactive: string;
+  accentDropdown?: AccentDropdown;
 }
 
-export function HeaderNavDropdown({ group, isActive, onSelect, pillBase, pillActive, pillInactive }: HeaderNavDropdownProps) {
+export function HeaderNavDropdown({ group, isActive, onSelect, pillBase, pillActive, pillInactive, accentDropdown }: HeaderNavDropdownProps) {
   const [open, setOpen] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const Icon = group.icon;

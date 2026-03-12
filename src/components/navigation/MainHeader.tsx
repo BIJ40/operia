@@ -73,7 +73,7 @@ export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClas
             <button
               type="button"
               onClick={() => setActiveTab('accueil')}
-              className={`${pillBase} ${activeTab === 'accueil' ? pillActive : pillInactive}`}
+              className={`${pillBase} ${activeTab === 'accueil' ? ACCENT_ACTIVE['blue'] : pillInactive}`}
             >
               <Home className="w-4 h-4" />
               <span>{getLabel('accueil', 'Accueil')}</span>
