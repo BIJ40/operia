@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { GlobalRole } from '@/types/globalRoles';
 import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
+import { getSuggestedGlobalRole, validateRoleAgenceCoherence } from '@/lib/roleAgenceMapping';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -152,11 +153,13 @@ export function UserEditForm({
       ? (availableAgencies.find((a) => a.slug?.toLowerCase() === normalizedSlug)?.id ?? null)
       : null;
 
+    const normalizedAgence = formData.agence?.trim() || null;
+
     onSave({
       email: formData.email,
       first_name: formData.firstName,
       last_name: formData.lastName,
-      agence: formData.agence,
+      agence: normalizedAgence || '',
       agency_id: resolvedAgencyId,
       role_agence: formData.roleAgence,
       global_role: formData.globalRole as GlobalRole,
@@ -255,7 +258,14 @@ export function UserEditForm({
         <Label>Poste occupé</Label>
         <Select 
           value={formData.roleAgence} 
-          onValueChange={(v) => setFormData(prev => ({ ...prev, roleAgence: v }))} 
+          onValueChange={(v) => {
+            const suggested = getSuggestedGlobalRole(v);
+            setFormData(prev => ({
+              ...prev,
+              roleAgence: v,
+              ...(suggested ? { globalRole: suggested } : {}),
+            }));
+          }} 
           disabled={!canEditRoleAgence || isSubmitting}
         >
           <SelectTrigger><SelectValue placeholder="Sélectionner un poste" /></SelectTrigger>
