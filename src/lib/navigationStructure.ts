@@ -108,7 +108,7 @@ export const NAVIGATION_STRUCTURE: NavigationDomain[] = [
       { label: 'Aide en ligne', guard: { moduleKey: 'support.aide_en_ligne' } },
       { label: 'Guides', guard: { moduleKey: 'support.guides' } },
       { label: 'FAQ', guard: { alwaysVisible: true } },
-      { label: 'Ticketing', guard: { moduleKey: 'ticketing' } },
+      { label: 'Ticketing', guard: { alwaysVisible: true } },
     ],
   },
   {
