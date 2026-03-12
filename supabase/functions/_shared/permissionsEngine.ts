@@ -153,13 +153,11 @@ export function isBypassRole(role: GlobalRole | null): boolean {
 export function normalizeModuleKey(key: string): ModuleKey | null {
   // Check all known module keys (MODULE_MIN_ROLES covers all canonical keys)
   const ALL_MODULE_KEYS: ModuleKey[] = [
-    // Legacy
-    'agence', 'stats', 'rh', 'parc', 'divers_apporteurs', 'divers_plannings',
-    'divers_reunions', 'divers_documents', 'guides', 'ticketing', 'aide',
-    'prospection', 'planning_augmente', 'reseau_franchiseur', 'admin_plateforme',
-    'unified_search',
-    // Hierarchical (Phase 7)
-    'pilotage.agence', 'pilotage.dashboard',
+    // Non-migrated legacy
+    'ticketing', 'prospection', 'planning_augmente',
+    'reseau_franchiseur', 'admin_plateforme', 'unified_search',
+    // Hierarchical (Phase 7+10)
+    'pilotage.agence', 'pilotage.statistiques',
     'organisation.salaries', 'organisation.parc', 'organisation.apporteurs',
     'organisation.plannings', 'organisation.reunions',
     'mediatheque.documents',
