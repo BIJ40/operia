@@ -984,7 +984,7 @@ export function ModulesMasterView() {
                         canDeploy={canDeploy}
                       />
                     ))}
-                  </React.Fragment>
+                  </Fragment>
                 );
               })}
 
