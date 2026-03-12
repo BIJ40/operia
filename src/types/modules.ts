@@ -211,19 +211,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'devis_acceptes', path: 'pilotage.agence.devis_acceptes', label: 'Devis acceptés', description: 'Visualisation des dossiers avec devis acceptés', defaultEnabled: true, routes: ['/?tab=commercial'] },
     ],
   },
-  {
-    key: 'pilotage.dashboard',
-    label: 'Stats',
-    description: 'Statistiques et tableaux de bord',
-    icon: 'BarChart3',
-    category: 'pilotage',
-    defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
-    minRole: 'franchisee_admin',
-    options: [
-      { key: 'stats_hub', path: 'pilotage.dashboard.stats_hub', label: 'Stats Hub', description: 'Tableaux avancés', defaultEnabled: true, routes: ['/?tab=pilotage'] },
-      { key: 'exports', path: 'pilotage.dashboard.exports', label: 'Exports', description: 'Export des données', defaultEnabled: false, routes: ['/?tab=pilotage'] },
-    ],
-  },
+  // pilotage.dashboard definition removed — merged into pilotage.statistiques in module_registry
   {
     key: 'organisation.salaries',
     label: 'Salariés',
