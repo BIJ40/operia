@@ -211,14 +211,15 @@ export function useTechniciensStatia(): TechniciensStatiaData {
         months: Record<string, number>;
       }> || {};
       
-      // Collecter tous les mois disponibles
-      const allMonths = new Set<string>();
-      Object.values(caMensuelRaw).forEach(tech => {
-        Object.keys(tech.months).forEach(m => allMonths.add(m));
-      });
-      
-      // Trier les mois du plus récent au plus ancien
-      const availableMonths = Array.from(allMonths).sort((a, b) => b.localeCompare(a));
+      // Générer les 6 derniers mois avant la fin de la période sélectionnée
+      // (toujours afficher 6 colonnes, même sans données)
+      const endDate = new Date(filters.dateRange.end);
+      const availableMonths: string[] = [];
+      for (let i = 0; i < 6; i++) {
+        const d = new Date(endDate.getFullYear(), endDate.getMonth() - i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        availableMonths.push(key);
+      }
       
       // Transformer en format TechMensuelData[]
       const caMensuelParTech: TechMensuelData[] = Object.entries(caMensuelRaw).map(([techId, data]) => ({
