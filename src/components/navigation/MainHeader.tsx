@@ -35,8 +35,25 @@ export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClas
   }, [visibleTabs, getLabel]);
 
   const pillBase = 'flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 cursor-pointer';
-  const pillActive = 'bg-primary/10 text-primary';
   const pillInactive = 'text-muted-foreground hover:text-foreground hover:bg-muted';
+
+  const ACCENT_ACTIVE: Record<string, string> = {
+    blue: 'bg-warm-blue/10 text-warm-blue',
+    orange: 'bg-warm-orange/10 text-warm-orange',
+    green: 'bg-warm-green/10 text-warm-green',
+    purple: 'bg-warm-purple/10 text-warm-purple',
+    pink: 'bg-warm-pink/10 text-warm-pink',
+    teal: 'bg-warm-teal/10 text-warm-teal',
+  };
+
+  const ACCENT_DROPDOWN: Record<string, { bg: string; border: string; text: string; hoverBg: string; hoverBorder: string }> = {
+    blue: { bg: 'bg-warm-blue/10', border: 'border-warm-blue/15', text: 'text-warm-blue', hoverBg: 'group-hover:bg-warm-blue/15', hoverBorder: 'group-hover:border-warm-blue/30' },
+    orange: { bg: 'bg-warm-orange/10', border: 'border-warm-orange/15', text: 'text-warm-orange', hoverBg: 'group-hover:bg-warm-orange/15', hoverBorder: 'group-hover:border-warm-orange/30' },
+    green: { bg: 'bg-warm-green/10', border: 'border-warm-green/15', text: 'text-warm-green', hoverBg: 'group-hover:bg-warm-green/15', hoverBorder: 'group-hover:border-warm-green/30' },
+    purple: { bg: 'bg-warm-purple/10', border: 'border-warm-purple/15', text: 'text-warm-purple', hoverBg: 'group-hover:bg-warm-purple/15', hoverBorder: 'group-hover:border-warm-purple/30' },
+    pink: { bg: 'bg-warm-pink/10', border: 'border-warm-pink/15', text: 'text-warm-pink', hoverBg: 'group-hover:bg-warm-pink/15', hoverBorder: 'group-hover:border-warm-pink/30' },
+    teal: { bg: 'bg-warm-teal/10', border: 'border-warm-teal/15', text: 'text-warm-teal', hoverBg: 'group-hover:bg-warm-teal/15', hoverBorder: 'group-hover:border-warm-teal/30' },
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border/50 print:hidden">
@@ -56,7 +73,7 @@ export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClas
             <button
               type="button"
               onClick={() => setActiveTab('accueil')}
-              className={`${pillBase} ${activeTab === 'accueil' ? pillActive : pillInactive}`}
+              className={`${pillBase} ${activeTab === 'accueil' ? ACCENT_ACTIVE['blue'] : pillInactive}`}
             >
               <Home className="w-4 h-4" />
               <span>{getLabel('accueil', 'Accueil')}</span>
@@ -69,8 +86,9 @@ export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClas
                 isActive={group.children.some(c => c.tab === activeTab)}
                 onSelect={setActiveTab}
                 pillBase={pillBase}
-                pillActive={pillActive}
+                pillActive={ACCENT_ACTIVE[group.accent || 'blue']}
                 pillInactive={pillInactive}
+                accentDropdown={ACCENT_DROPDOWN[group.accent || 'blue']}
               />
             ))}
           </nav>

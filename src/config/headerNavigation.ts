@@ -27,6 +27,8 @@ export interface HeaderNavGroup {
   icon: LucideIcon;
   /** Main tab this group maps to (for active state) */
   tab: UnifiedTab;
+  /** Accent color for this domain */
+  accent?: 'blue' | 'orange' | 'green' | 'purple' | 'pink' | 'teal';
   children: HeaderNavChild[];
 }
 
@@ -35,6 +37,7 @@ export const HEADER_NAV_GROUPS: HeaderNavGroup[] = [
     label: 'Pilotage',
     icon: BarChart3,
     tab: 'pilotage',
+    accent: 'blue',
     children: [
       { label: 'Statistiques', icon: BarChart3, tab: 'pilotage', description: 'Tableaux de bord et KPIs', scope: 'pilotage.statistiques', subTabKey: 'pilotage_sub_tab', subTabValue: 'stats' },
       { label: 'Performance', icon: Activity, tab: 'pilotage', description: 'Indicateurs de performance', subTabKey: 'pilotage_sub_tab', subTabValue: 'performance' },
@@ -47,6 +50,7 @@ export const HEADER_NAV_GROUPS: HeaderNavGroup[] = [
     label: 'Commercial',
     icon: ShoppingCart,
     tab: 'commercial',
+    accent: 'orange',
     children: [
       { label: 'Suivi client', icon: UsersIcon, tab: 'commercial', description: 'Gestion des apporteurs', subTabKey: 'commercial_sub_tab', subTabValue: 'apporteurs' },
       { label: 'Comparateur', icon: Search, tab: 'commercial', description: 'Benchmark et comparaison', subTabKey: 'commercial_sub_tab', subTabValue: 'comparateur' },
@@ -59,6 +63,7 @@ export const HEADER_NAV_GROUPS: HeaderNavGroup[] = [
     label: 'Organisation',
     icon: Users,
     tab: 'organisation',
+    accent: 'green',
     children: [
       { label: 'Salariés', icon: Users, tab: 'organisation', description: 'Gestion des équipes', scope: 'organisation.salaries', subTabKey: 'organisation_sub_tab', subTabValue: 'collaborateurs' },
       { label: 'Véhicules', icon: Car, tab: 'organisation', description: 'Parc automobile', scope: 'organisation.parc', subTabKey: 'organisation_sub_tab', subTabValue: 'parc' },
@@ -72,6 +77,7 @@ export const HEADER_NAV_GROUPS: HeaderNavGroup[] = [
     label: 'Documents',
     icon: FolderOpen,
     tab: 'documents',
+    accent: 'teal',
     children: [
       { label: 'Médiathèque', icon: FolderOpen, tab: 'documents', description: 'Fichiers et ressources', scope: 'mediatheque.documents' },
     ],
@@ -80,6 +86,7 @@ export const HEADER_NAV_GROUPS: HeaderNavGroup[] = [
     label: 'Support',
     icon: Headphones,
     tab: 'support',
+    accent: 'purple',
     children: [
       { label: 'Aide', icon: HelpCircle, tab: 'support', description: 'Centre d\'aide' },
       { label: 'Ticketing', icon: Kanban, tab: 'ticketing', description: 'Suivi des tickets', scope: 'ticketing' },
@@ -89,6 +96,7 @@ export const HEADER_NAV_GROUPS: HeaderNavGroup[] = [
     label: 'Admin',
     icon: Shield,
     tab: 'admin',
+    accent: 'pink',
     children: [
       { label: 'Administration', icon: Shield, tab: 'admin', description: 'Paramètres plateforme', scope: 'admin_plateforme' },
     ],

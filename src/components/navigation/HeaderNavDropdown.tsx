@@ -3,6 +3,14 @@ import { ChevronDown } from 'lucide-react';
 import type { HeaderNavGroup, HeaderNavChild } from '@/config/headerNavigation';
 import type { UnifiedTab } from '@/components/unified/workspace/types';
 
+interface AccentDropdown {
+  bg: string;
+  border: string;
+  text: string;
+  hoverBg: string;
+  hoverBorder: string;
+}
+
 interface HeaderNavDropdownProps {
   group: HeaderNavGroup;
   isActive: boolean;
@@ -10,9 +18,10 @@ interface HeaderNavDropdownProps {
   pillBase: string;
   pillActive: string;
   pillInactive: string;
+  accentDropdown?: AccentDropdown;
 }
 
-export function HeaderNavDropdown({ group, isActive, onSelect, pillBase, pillActive, pillInactive }: HeaderNavDropdownProps) {
+export function HeaderNavDropdown({ group, isActive, onSelect, pillBase, pillActive, pillInactive, accentDropdown }: HeaderNavDropdownProps) {
   const [open, setOpen] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const Icon = group.icon;
@@ -72,10 +81,14 @@ export function HeaderNavDropdown({ group, isActive, onSelect, pillBase, pillAct
                 key={child.label}
                 type="button"
                 onClick={() => handleSelect(child)}
-                className="flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-left transition-colors duration-150 hover:bg-primary/5 group"
+                className="flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-left transition-colors duration-150 hover:bg-muted/50 group"
               >
-                <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/15 flex items-center justify-center shrink-0 transition-colors group-hover:bg-primary/15 group-hover:border-primary/30">
-                  <ChildIcon className="w-4 h-4 text-primary" />
+                <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 transition-colors ${
+                  accentDropdown 
+                    ? `${accentDropdown.bg} ${accentDropdown.border} ${accentDropdown.hoverBg} ${accentDropdown.hoverBorder}`
+                    : 'bg-primary/10 border-primary/15 group-hover:bg-primary/15 group-hover:border-primary/30'
+                }`}>
+                  <ChildIcon className={`w-4 h-4 ${accentDropdown ? accentDropdown.text : 'text-primary'}`} />
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-foreground">{child.label}</p>
