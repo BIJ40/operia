@@ -352,8 +352,8 @@ export function SimplifiedSupportChat({
     setIsLoading(true);
 
     try {
-      const domain = DOMAIN_OPTIONS.find(d => d.value === selectedDomain);
-      const ragContextType: RAGContextType = domain?.chatContext || 'auto';
+      const selectedDomainConfig = DOMAIN_OPTIONS.find(d => d.value === selectedDomain);
+      const ragContextType: RAGContextType = selectedDomainConfig?.chatContext || 'auto';
       const ragResult = await searchRAG({ query: userMessage.content, contextType: ragContextType });
 
       if (!ragResult.hasContent) {
