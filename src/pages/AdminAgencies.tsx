@@ -121,12 +121,12 @@ export default function AdminAgencies() {
     setExpandedAgencies(newExpanded);
   };
 
-  const getUsersForAgency = (slug: string) => {
-    return users.filter((user) => user.agence === slug);
+  const getUsersForAgency = (agencyId: string) => {
+    return users.filter((user) => user.agency_id === agencyId);
   };
 
   const getUsersWithoutAgency = () => {
-    return users.filter((user) => !user.agence && user.role_agence === 'dirigeant');
+    return users.filter((user) => !user.agency_id && user.role_agence === 'dirigeant');
   };
 
   // Get current plan for an agency
