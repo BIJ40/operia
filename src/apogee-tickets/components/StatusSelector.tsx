@@ -85,7 +85,7 @@ export function StatusSelector({
         sideOffset={4}
       >
         <div className="grid gap-1 max-h-64 overflow-y-auto">
-          {availableStatuses.map((s) => {
+          {selectableStatuses.map((s) => {
             const isSelected = s.id === localStatus;
             const color = s.color || '#6b7280';
             
