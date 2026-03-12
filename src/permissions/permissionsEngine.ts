@@ -304,7 +304,7 @@ export function validateUserPermissions(ctx: PermissionContext): PermissionIssue
   
   // Règle 4: Support level sans agent option
   if (supportLevel && supportLevel > 0) {
-    const aideModule = enabledModules?.aide;
+    const aideModule = enabledModules?.['support.aide_en_ligne'] || enabledModules?.aide;
     const isAgentEnabled = typeof aideModule === 'object' 
       ? aideModule?.options?.agent === true
       : false;
@@ -314,8 +314,8 @@ export function validateUserPermissions(ctx: PermissionContext): PermissionIssue
         type: 'error',
         code: 'SUPPORT_LEVEL_NO_AGENT',
         message: `Niveau support SA${supportLevel} défini mais option agent non activée`,
-        fix: 'Activer aide.options.agent ou retirer support_level',
-        moduleId: 'aide',
+        fix: 'Activer support.aide_en_ligne.options.agent ou retirer support_level',
+        moduleId: 'support.aide_en_ligne' as ModuleKey,
       });
     }
   }

@@ -45,8 +45,10 @@ export function getModuleOptions(moduleKey: ModuleKey): ModuleOptionDefinition[]
  * Vérifie si un path d'option est valide (ex: "pilotage_agence.carte_rdv")
  */
 export function isValidOptionPath(path: string): boolean {
-  const [moduleKey, optionKey] = path.split('.') as [ModuleKey, string];
-  
+  const lastDot = path.lastIndexOf('.');
+  if (lastDot <= 0) return false;
+  const moduleKey = path.substring(0, lastDot) as ModuleKey;
+  const optionKey = path.substring(lastDot + 1);
   if (!moduleKey || !optionKey) return false;
   if (!isValidModuleKey(moduleKey)) return false;
   

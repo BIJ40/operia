@@ -13,11 +13,11 @@ export interface RightsCategory {
 }
 
 export const RIGHTS_CATEGORIES: RightsCategory[] = [
-  { id: 'pilotage', label: 'Pilotage', moduleKeys: ['pilotage', 'stats', 'agence'] },
-  { id: 'commercial', label: 'Commercial', moduleKeys: ['commercial', 'prospection', 'realisations'] },
-  { id: 'organisation', label: 'Organisation', moduleKeys: ['organisation', 'rh', 'divers_apporteurs', 'divers_plannings', 'divers_reunions', 'parc', 'divers_documents'] },
-  { id: 'documents', label: 'Documents', moduleKeys: ['mediatheque', 'documents'] },
-  { id: 'support', label: 'Support', moduleKeys: ['support', 'aide', 'guides', 'ticketing'] },
+  { id: 'pilotage', label: 'Pilotage', moduleKeys: ['pilotage', 'pilotage.dashboard', 'pilotage.agence'] },
+  { id: 'commercial', label: 'Commercial', moduleKeys: ['commercial', 'prospection', 'commercial.realisations'] },
+  { id: 'organisation', label: 'Organisation', moduleKeys: ['organisation', 'organisation.salaries', 'organisation.apporteurs', 'organisation.plannings', 'organisation.reunions', 'organisation.parc'] },
+  { id: 'documents', label: 'Documents', moduleKeys: ['mediatheque', 'mediatheque.documents'] },
+  { id: 'support', label: 'Support', moduleKeys: ['support', 'support.aide_en_ligne', 'support.guides', 'ticketing'] },
   { id: 'admin', label: 'Admin', moduleKeys: ['admin', 'admin_plateforme', 'reseau_franchiseur'] },
 ];
 
@@ -42,27 +42,27 @@ export function nodeMatchesAnyCategory(nodeKey: string): boolean {
 }
 
 const NAVIGATION_LABEL_FALLBACKS: Record<string, string> = {
-  rh: 'Salariés',
-  parc: 'Parc',
+  'organisation.salaries': 'Salariés',
+  'organisation.parc': 'Parc',
   prospection: 'Prospection',
   admin_plateforme: 'Admin',
-  agence: 'Mon agence',
-  divers_documents: 'Documents légaux',
-  divers_apporteurs: 'Apporteurs',
-  divers_plannings: 'Plannings',
-  divers_reunions: 'Réunions',
-  aide: 'Aide en ligne',
+  'pilotage.agence': 'Mon agence',
+  'mediatheque.documents': 'Documents',
+  'organisation.apporteurs': 'Apporteurs',
+  'organisation.plannings': 'Plannings',
+  'organisation.reunions': 'Réunions',
+  'support.aide_en_ligne': 'Aide en ligne',
   reseau_franchiseur: 'Franchiseur',
 };
 
 const LEGACY_LABELS: Partial<Record<string, string[]>> = {
-  rh: ['Ressources humaines'],
-  parc: ['Parc véhicules & EPI'],
+  'organisation.salaries': ['Ressources humaines', 'RH'],
+  'organisation.parc': ['Parc véhicules & EPI'],
   prospection: ['Commercial / Prospection'],
   admin_plateforme: ['Administration'],
-  agence: ['Pilotage agence'],
+  'pilotage.agence': ['Pilotage agence'],
   reseau_franchiseur: ['Réseau Franchiseur'],
-  aide: ['Aide'],
+  'support.aide_en_ligne': ['Aide'],
 };
 
 export function getRightsDisplayLabel(moduleKey: string, label: string): string {

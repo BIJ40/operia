@@ -1,6 +1,7 @@
 /**
  * PERMISSIONS ENGINE — Tests unitaires
  * Vérifie le moteur de permissions V2.0
+ * Phase 8: Migré vers clés hiérarchiques
  */
 
 import { describe, it, expect } from 'vitest';
@@ -89,8 +90,8 @@ describe('hasAccess', () => {
   const baseCtx: PermissionContext = {
     globalRole: 'franchisee_admin',
     enabledModules: {
-      agence: { enabled: true, options: { indicateurs: true, actions_a_mener: true } },
-      rh: { enabled: true, options: { rh_viewer: true, rh_admin: false } },
+      'pilotage.agence': { enabled: true, options: { indicateurs: true, actions_a_mener: true } },
+      'organisation.salaries': { enabled: true, options: { rh_viewer: true, rh_admin: false } },
     },
     agencyId: 'agency-1',
   };
@@ -119,7 +120,7 @@ describe('hasAccess', () => {
     const params: HasAccessParams = {
       ...baseCtx,
       globalRole: 'base_user',
-      moduleId: 'agence', // minRole = franchisee_admin
+      moduleId: 'pilotage.agence', // minRole = franchisee_admin
     };
     expect(hasAccess(params)).toBe(false);
   });
@@ -128,7 +129,7 @@ describe('hasAccess', () => {
     const params: HasAccessParams = {
       ...baseCtx,
       agencyId: null,
-      moduleId: 'agence',
+      moduleId: 'pilotage.agence',
     };
     expect(hasAccess(params)).toBe(false);
   });
@@ -156,7 +157,7 @@ describe('hasAccess', () => {
   it('grants access when module explicitly enabled', () => {
     const params: HasAccessParams = {
       ...baseCtx,
-      moduleId: 'agence',
+      moduleId: 'pilotage.agence',
     };
     expect(hasAccess(params)).toBe(true);
   });
@@ -164,7 +165,7 @@ describe('hasAccess', () => {
   it('checks specific option — enabled', () => {
     const params: HasAccessParams = {
       ...baseCtx,
-      moduleId: 'rh',
+      moduleId: 'organisation.salaries',
       optionId: 'rh_viewer',
     };
     expect(hasAccess(params)).toBe(true);
@@ -173,7 +174,7 @@ describe('hasAccess', () => {
   it('checks specific option — disabled', () => {
     const params: HasAccessParams = {
       ...baseCtx,
-      moduleId: 'rh',
+      moduleId: 'organisation.salaries',
       optionId: 'rh_admin',
     };
     expect(hasAccess(params)).toBe(false);
@@ -184,8 +185,6 @@ describe('hasAccess', () => {
       ...baseCtx,
       moduleId: 'ticketing',
     };
-    // ticketing not in enabledModules and not in default for franchisee_admin
-    // depends on DEFAULT_MODULES_BY_ROLE — should be false if not listed
     const result = hasAccess(params);
     expect(typeof result).toBe('boolean');
   });
@@ -211,11 +210,11 @@ describe('getEffectiveModules', () => {
     const result = getEffectiveModules({
       globalRole: 'franchisee_admin',
       enabledModules: {
-        agence: { enabled: true, options: {} },
+        'pilotage.agence': { enabled: true, options: {} },
       },
       agencyId: null,
     });
-    const agenceModule = result.find(m => m.id === 'agence');
+    const agenceModule = result.find(m => m.id === 'pilotage.agence');
     expect(agenceModule?.enabled).toBe(false);
   });
 
@@ -223,11 +222,11 @@ describe('getEffectiveModules', () => {
     const result = getEffectiveModules({
       globalRole: 'franchisee_admin',
       enabledModules: {
-        guides: { enabled: true, options: { apogee: true, faq: false } },
+        'support.guides': { enabled: true, options: { apogee: true, faq: false } },
       },
       agencyId: 'agency-1',
     });
-    const guidesModule = result.find(m => m.id === 'guides');
+    const guidesModule = result.find(m => m.id === 'support.guides');
     expect(guidesModule?.enabled).toBe(true);
     expect(guidesModule?.source).toBe('explicit');
     expect(guidesModule?.options?.apogee).toBe(true);
@@ -262,7 +261,7 @@ describe('validateUserPermissions', () => {
     const issues = validateUserPermissions({
       globalRole: 'franchisee_admin',
       enabledModules: {
-        agence: { enabled: true, options: {} },
+        'pilotage.agence': { enabled: true, options: {} },
       },
       agencyId: 'agency-1',
     });
@@ -274,7 +273,7 @@ describe('validateUserPermissions', () => {
     const issues = validateUserPermissions({
       globalRole: 'franchisee_admin',
       enabledModules: {
-        aide: { enabled: true, options: { user: true, agent: false } },
+        'support.aide_en_ligne': { enabled: true, options: { user: true, agent: false } },
       },
       agencyId: 'agency-1',
       supportLevel: 2,

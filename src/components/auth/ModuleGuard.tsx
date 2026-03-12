@@ -8,7 +8,6 @@ import { Navigate } from 'react-router-dom';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { hasAccess, isBypassRole, MODULE_LABELS } from '@/permissions';
-import { resolveModuleViaCompat, resolveModuleOptionViaCompat } from '@/permissions/compatMap';
 import { ModuleKey } from '@/types/modules';
 import { Loader2, Lock } from 'lucide-react';
 
@@ -81,22 +80,20 @@ export function ModuleGuard({
     // Logique OR : au moins une des options doit être accessible
     canAccessModule = requiredOptions.some(opt => 
       hasAccess({ ...permissionContext, moduleId: moduleKey, optionId: opt })
-      || isBypass
-      || resolveModuleOptionViaCompat(enabledModules, moduleKey, opt)
-    );
+    ) || isBypass;
   } else if (requiredOption) {
     // Option unique requise
     canAccessModule = hasAccess({ 
       ...permissionContext, 
       moduleId: moduleKey, 
       optionId: requiredOption 
-    }) || isBypass || resolveModuleOptionViaCompat(enabledModules, moduleKey, requiredOption);
+    }) || isBypass;
   } else {
-    // Juste le module — legacy d'abord, COMPAT en fallback
+    // Vérification module
     canAccessModule = hasAccess({ 
       ...permissionContext, 
       moduleId: moduleKey 
-    }) || isBypass || resolveModuleViaCompat(enabledModules, moduleKey);
+    }) || isBypass;
   }
 
   if (!canAccessModule) {

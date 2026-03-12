@@ -11,10 +11,9 @@ import { setSentryUser, clearSentryUser } from '@/lib/sentry';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { EnabledModules, ModuleKey, isModuleEnabled as checkModuleEnabled } from '@/types/modules';
 import { 
-  hasAccess, hasMinRole, isBypassRole,
+  hasAccess, hasMinRole,
   type PermissionContext,
 } from '@/permissions';
-import { resolveModuleViaCompat, resolveModuleOptionViaCompat } from '@/permissions/compatMap';
 import { userModulesToEnabledModules } from '@/lib/userModulesUtils';
 
 // Sub-contexts (Phase 1 split)
@@ -73,10 +72,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const globalRoleLevel = globalRole ? GLOBAL_ROLES[globalRole] : 0;
   const isAdmin = globalRoleLevel >= GLOBAL_ROLES.platform_admin;
   const isFranchiseur = globalRoleLevel >= GLOBAL_ROLES.franchisor_user;
-  const isSupport = checkModuleEnabled(enabledModules, 'aide');
+  const isSupport = checkModuleEnabled(enabledModules, 'support.aide_en_ligne' as ModuleKey);
 
   // Support module
-  const supportModuleConfig = enabledModules?.aide;
+  const supportModuleConfig = enabledModules?.['support.aide_en_ligne'];
   const supportOptions: SupportModuleOptions = 
     (typeof supportModuleConfig === 'object' && supportModuleConfig !== null && 'options' in supportModuleConfig)
       ? (supportModuleConfig.options as SupportModuleOptions)
@@ -111,20 +110,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [globalRole]);
 
   const hasModuleGuard = useCallback((moduleKey: ModuleKey): boolean => {
-    // 1. Legacy check via permissionsEngine (clés historiques)
-    if (hasAccess({ ...accessContext, moduleId: moduleKey })) return true;
-    // 2. COMPAT_MAP fallback (Phase 3 — nouvelles clés fonctionnelles)
-    if (isBypassRole(globalRole)) return true;
-    return resolveModuleViaCompat(enabledModules, moduleKey);
-  }, [accessContext, globalRole, enabledModules]);
+    return hasAccess({ ...accessContext, moduleId: moduleKey });
+  }, [accessContext]);
 
   const hasModuleOptionGuard = useCallback((moduleKey: ModuleKey, optionKey: string): boolean => {
-    // 1. Legacy check via permissionsEngine
-    if (hasAccess({ ...accessContext, moduleId: moduleKey, optionId: optionKey })) return true;
-    // 2. COMPAT_MAP fallback (Phase 3 — ex: mediatheque.gerer → divers_documents.gerer)
-    if (isBypassRole(globalRole)) return true;
-    return resolveModuleOptionViaCompat(enabledModules, moduleKey, optionKey);
-  }, [accessContext, globalRole, enabledModules]);
+    return hasAccess({ ...accessContext, moduleId: moduleKey, optionId: optionKey });
+  }, [accessContext]);
 
   // ============================================================================
   // Chargement des données utilisateur
@@ -197,21 +188,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
         }
 
-        // PRO plan auto-enrichment
-        const parcModule = resolvedModules.parc as any;
+        // PRO plan auto-enrichment (check both hierarchical + legacy keys for safety)
+        const parcModule = (resolvedModules['organisation.parc'] || resolvedModules.parc) as any;
         const reseauModule = resolvedModules.reseau_franchiseur as any;
         const isProAgency = !!(
           (parcModule && typeof parcModule === 'object' && parcModule.enabled) ||
           (reseauModule && typeof reseauModule === 'object' && reseauModule.enabled)
         );
 
-        const agenceModule = resolvedModules.agence as any;
+        const agenceModule = (resolvedModules['pilotage.agence'] || resolvedModules.agence) as any;
         if (isProAgency && agenceModule && typeof agenceModule === 'object' && agenceModule.enabled) {
           const agenceOptions = (agenceModule.options && typeof agenceModule.options === 'object')
             ? agenceModule.options as Record<string, boolean>
             : {};
 
-          resolvedModules.agence = {
+          resolvedModules['pilotage.agence'] = {
             enabled: true,
             options: { ...agenceOptions, stats_hub: true },
           } as any;
@@ -407,13 +398,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Pilotage Agence — module canonique: pilotage.agence
       case 'mes_indicateurs':
         return hasModuleGuard('pilotage.agence' as ModuleKey);
-      // Sous-onglets Guides — module parent: guides + option spécifique
+      // Sous-onglets Guides — module parent: support.guides + option spécifique
       case 'apporteurs':
-        return hasModuleOptionGuard('guides' as ModuleKey, 'apporteurs');
+        return hasModuleOptionGuard('support.guides' as ModuleKey, 'apporteurs');
       case 'helpconfort':
-        return hasModuleOptionGuard('guides' as ModuleKey, 'helpconfort');
+        return hasModuleOptionGuard('support.guides' as ModuleKey, 'helpconfort');
       case 'apogee':
-        return hasModuleOptionGuard('guides' as ModuleKey, 'apogee');
+        return hasModuleOptionGuard('support.guides' as ModuleKey, 'apogee');
       default:
         // Unknown scope = deny by default (secure)
         logAuth.warn(`hasAccessToScope: unknown scope "${scope}", denying access`);

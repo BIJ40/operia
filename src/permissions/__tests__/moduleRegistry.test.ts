@@ -40,9 +40,9 @@ describe('getAllModules', () => {
 
 describe('getModule', () => {
   it('returns module for valid key', () => {
-    const mod = getModule('rh');
+    const mod = getModule('organisation.salaries' as any);
     expect(mod).toBeDefined();
-    expect(mod!.key).toBe('rh');
+    expect(mod!.key).toBe('organisation.salaries');
   });
 
   it('returns undefined for invalid key', () => {
@@ -55,8 +55,8 @@ describe('getModule', () => {
 // ============================================================================
 
 describe('getModuleOptions', () => {
-  it('returns options for rh module', () => {
-    const opts = getModuleOptions('rh');
+  it('returns options for organisation.salaries module', () => {
+    const opts = getModuleOptions('organisation.salaries' as any);
     expect(opts.length).toBeGreaterThan(0);
     expect(opts.some(o => o.key === 'rh_viewer' || o.key === 'rh_admin')).toBe(true);
   });

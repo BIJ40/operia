@@ -19,7 +19,7 @@ import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { ModuleKey } from '@/types/modules';
 import { resolveEffectiveModulesFromBackend } from '@/lib/effectiveModulesResolver';
-import { COMPAT_MAP } from '@/permissions/compatMap';
+
 
 export interface EffectiveModuleRow {
   module_key: string;
@@ -114,18 +114,7 @@ export function useEffectiveModules(): EffectiveModulesResult & { isLoading: boo
    */
   const hasModule = (moduleKey: ModuleKey): boolean => {
     if (isAdminBypass) return true;
-    // Direct check (key already in user's resolved modules)
-    if (modules[moduleKey]?.enabled) return true;
-    // Compat fallback (Phase 3)
-    const compat = COMPAT_MAP[moduleKey as string];
-    if (!compat) return false;
-    // Option-based check (e.g. prospection.dashboard → commercial.suivi_client)
-    if (compat.optionCheck) {
-      const { moduleKey: mk, optionKey: ok } = compat.optionCheck;
-      return !!(modules[mk]?.enabled && modules[mk]?.options?.[ok]);
-    }
-    // Key-based fallback (OR logic across legacy keys)
-    return compat.keys.some(k => modules[k]?.enabled);
+    return !!modules[moduleKey]?.enabled;
   };
   
   const hasModuleOption = (moduleKey: ModuleKey, optionKey: string): boolean => {
