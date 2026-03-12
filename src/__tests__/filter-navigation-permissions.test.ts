@@ -129,18 +129,23 @@ describe('filterSubTabs', () => {
     { id: 'actions', label: 'Actions', requiresModule: 'pilotage.agence' as any },
   ];
 
-  it('filters sub-tabs by module', () => {
+  it('marks inaccessible sub-tabs as disabled', () => {
     const result = filterSubTabs(subTabs, (key: any) => key === 'pilotage.statistiques');
-    expect(result.map(t => t.id)).toEqual(['stats']);
+    expect(result).toHaveLength(3);
+    expect(result.find(t => t.id === 'stats')?.disabled).toBeFalsy();
+    expect(result.find(t => t.id === 'perf')?.disabled).toBe(true);
+    expect(result.find(t => t.id === 'actions')?.disabled).toBe(true);
   });
 
-  it('returns all if all modules enabled', () => {
+  it('returns all enabled if all modules enabled', () => {
     const result = filterSubTabs(subTabs, () => true);
     expect(result).toHaveLength(3);
+    expect(result.every(t => !t.disabled)).toBe(true);
   });
 
-  it('returns none if all modules disabled', () => {
+  it('marks all as disabled if all modules disabled', () => {
     const result = filterSubTabs(subTabs, () => false);
-    expect(result).toHaveLength(0);
+    expect(result).toHaveLength(3);
+    expect(result.every(t => t.disabled)).toBe(true);
   });
 });
