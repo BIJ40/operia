@@ -10,7 +10,7 @@ import { Headphones, BookOpen, HelpCircle, Ticket, Loader2 } from 'lucide-react'
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
-import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { ModuleKey } from '@/types/modules';
 import { InternalApogeeLayout } from '@/components/guides/apogee/InternalApogeeLayout';
 
