@@ -617,10 +617,15 @@ export function ActionsConfigDialog({
                             <Input
                               value={status.id}
                               onChange={(e) => {
+                                if (!newStatusIds.includes(status.id)) return;
+                                const nextId = e.target.value.toUpperCase().replace(/\s/g, '_');
                                 const updated = [...editedStatuses];
-                                updated[idx] = { ...status, id: e.target.value.toUpperCase().replace(/\s/g, '_') };
+                                updated[idx] = { ...status, id: nextId };
                                 setEditedStatuses(updated);
+                                setNewStatusIds((prev) => prev.map((id) => (id === status.id ? nextId : id)));
                               }}
+                              disabled={!newStatusIds.includes(status.id)}
+                              title={!newStatusIds.includes(status.id) ? "L'ID technique des statuts existants est verrouillé" : undefined}
                               placeholder="BACKLOG"
                               className="h-9 text-xs font-mono"
                             />
