@@ -388,13 +388,60 @@ function OverridesPopover({
 // Row component
 // ============================================================================
 
-// Route mapping for module keys → app routes
+// Route mapping for module keys → app routes (canonical G3 keys)
 const MODULE_ROUTES: Record<string, string> = {
+  // Accueil
+  accueil: '/',
+  // Pilotage
+  pilotage: '/?tab=pilotage',
+  'pilotage.statistiques': '/?tab=pilotage',
+  'pilotage.performance': '/?tab=pilotage',
+  'pilotage.actions_a_mener': '/?tab=pilotage',
+  'pilotage.devis_acceptes': '/?tab=pilotage',
+  'pilotage.incoherences': '/?tab=pilotage',
+  // Commercial
+  commercial: '/?tab=commercial',
+  prospection: '/?tab=commercial',
+  'commercial.realisations': '/?tab=commercial',
+  // Organisation
+  organisation: '/?tab=organisation',
+  'organisation.salaries': '/?tab=organisation',
+  'organisation.apporteurs': '/?tab=organisation',
+  'organisation.plannings': '/?tab=organisation',
+  'organisation.reunions': '/?tab=organisation',
+  'organisation.parc': '/?tab=organisation',
+  'organisation.docgen': '/?tab=organisation',
+  // Documents
+  mediatheque: '/?tab=documents',
+  'mediatheque.documents': '/?tab=documents',
+  'mediatheque.consulter': '/?tab=documents',
+  'mediatheque.gerer': '/?tab=documents',
+  // Support
+  support: '/?tab=support',
+  'support.aide_en_ligne': '/?tab=support',
+  'support.guides': '/?tab=support',
+  'support.faq': '/?tab=support',
+  ticketing: '/?tab=support',
+  'ticketing.kanban': '/?tab=support',
+  'ticketing.liste': '/?tab=support',
+  'ticketing.create': '/?tab=support',
+  'ticketing.manage': '/?tab=support',
+  // Admin
+  admin: '/?tab=admin',
+  admin_plateforme: '/?tab=admin',
+  'admin_plateforme.users': '/?tab=admin',
+  'admin_plateforme.agencies': '/?tab=admin',
+  'admin_plateforme.permissions': '/?tab=admin',
+  'admin.gestion': '/?tab=admin&adminTab=gestion',
+  // Franchiseur
+  reseau_franchiseur: '/?tab=franchiseur',
+  // Planning augmenté
+  planning_augmente: '/?tab=organisation',
+  // Legacy keys (backward compat)
   agence: '/?tab=pilotage',
   stats: '/?tab=pilotage',
-  prospection: '/?tab=commercial',
-  realisations: '/?tab=commercial',
   rh: '/?tab=organisation',
+  realisations: '/?tab=commercial',
   divers_apporteurs: '/?tab=organisation',
   divers_plannings: '/?tab=organisation',
   divers_reunions: '/?tab=organisation',
@@ -403,16 +450,17 @@ const MODULE_ROUTES: Record<string, string> = {
   documents: '/?tab=documents',
   aide: '/?tab=support',
   guides: '/?tab=support',
-  ticketing: '/?tab=support',
-  reseau_franchiseur: '/?tab=franchiseur',
-  admin_plateforme: '/?tab=admin',
 };
 
 function getModuleRoute(key: string): string | null {
-  // Check exact key first, then first segment
   if (MODULE_ROUTES[key]) return MODULE_ROUTES[key];
-  const root = key.split('.')[0];
-  if (MODULE_ROUTES[root]) return MODULE_ROUTES[root];
+  // Try parent key (e.g. pilotage.statistiques.general → pilotage.statistiques → pilotage)
+  const parts = key.split('.');
+  while (parts.length > 1) {
+    parts.pop();
+    const parent = parts.join('.');
+    if (MODULE_ROUTES[parent]) return MODULE_ROUTES[parent];
+  }
   return null;
 }
 
