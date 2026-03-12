@@ -56,9 +56,7 @@ export function HeaderNavDropdown({ group, isActive, onSelect, pillBase, pillAct
           }
         }}
       >
-        <div className={`flex items-center justify-center w-7 h-7 rounded-lg transition-colors duration-200 ${isActive ? 'bg-primary/20' : 'bg-muted'}`}>
-          <Icon className="w-4 h-4" />
-        </div>
+        <Icon className="w-4 h-4" />
         <span>{group.label}</span>
         {hasDropdown && (
           <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
