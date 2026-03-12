@@ -604,6 +604,16 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
 
   const handleRoleChange = (userId: string, role: GlobalRole) => {
     setModifiedUsers(prev => ({ ...prev, [userId]: { ...prev[userId], global_role: role } }));
+    // Auto-save immédiatement : persister le rôle sans attendre un clic "Enregistrer"
+    const targetUser = visibleUsers.find(u => u.id === userId);
+    if (targetUser) {
+      const existingChanges = modifiedUsers[userId];
+      saveMutation.mutate({
+        userId,
+        globalRole: role,
+        enabledModules: existingChanges?.enabled_modules ?? targetUser.enabled_modules,
+      });
+    }
   };
 
   const handleModuleToggle = (userId: string, moduleKey: ModuleKey, enabled: boolean) => {
