@@ -464,7 +464,7 @@ function getModuleRoute(key: string): string | null {
   return null;
 }
 
-const GRID_COLS = 'grid-cols-[minmax(220px,1fr)_auto_auto_auto_auto_auto_auto_auto]';
+const GRID_COLS = 'grid-cols-[minmax(220px,max-content)_auto_auto_auto_auto_auto_auto_auto]';
 
 interface ModuleRowProps {
   node: RegistryNode;
