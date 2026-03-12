@@ -203,11 +203,12 @@ export function SimplifiedSupportChat({
       
       if (error) {
         logError('simplified-chat', 'Screenshot upload error', error);
+        errorToast('La capture d\'écran n\'a pas pu être jointe. Votre demande a été créée sans capture.');
         return null;
       }
       
       // Also insert into apogee_ticket_attachments
-      await supabase.from('apogee_ticket_attachments').insert({
+      const { error: attachError } = await supabase.from('apogee_ticket_attachments').insert({
         ticket_id: ticketId,
         file_name: screenshotFile.name,
         file_path: filePath,
@@ -215,10 +216,17 @@ export function SimplifiedSupportChat({
         file_type: screenshotFile.type,
         uploaded_by: user.id,
       });
+
+      if (attachError) {
+        logError('simplified-chat', 'Screenshot attachment record error', attachError);
+        errorToast('La capture a été uploadée mais n\'a pas pu être liée au ticket.');
+        return null;
+      }
       
       return filePath;
     } catch (err) {
       logError('simplified-chat', 'Screenshot upload failed', err);
+      errorToast('Erreur lors de l\'upload de la capture d\'écran. Le ticket a été créé sans capture.');
       return null;
     }
   };
