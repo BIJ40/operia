@@ -27,7 +27,9 @@ export type GlobalRole =
   | 'superadmin';
 
 // ModuleKey V3 — aligné avec src/types/modules.ts
+// Legacy + hierarchical keys (Phase 7 additive migration)
 export type ModuleKey = 
+  // Legacy
   | 'agence'
   | 'stats'
   | 'rh'
@@ -43,7 +45,19 @@ export type ModuleKey =
   | 'planning_augmente'
   | 'reseau_franchiseur'
   | 'admin_plateforme'
-  | 'unified_search';
+  | 'unified_search'
+  // Hierarchical (Phase 7)
+  | 'pilotage.agence'
+  | 'pilotage.dashboard'
+  | 'organisation.salaries'
+  | 'organisation.parc'
+  | 'organisation.apporteurs'
+  | 'organisation.plannings'
+  | 'organisation.reunions'
+  | 'mediatheque.documents'
+  | 'support.aide_en_ligne'
+  | 'support.guides'
+  | 'commercial.realisations';
 
 // Legacy module keys → V3 mapping (pour rétrocompat des données en base)
 export const MODULE_COMPAT_MAP: Record<string, ModuleKey> = {
