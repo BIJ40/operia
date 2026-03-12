@@ -59,7 +59,7 @@ export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClas
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border/50 print:hidden">
-      <div className="container mx-auto max-w-[1400px] px-4">
+      <div className="container mx-auto max-w-7xl px-4">
         <div className="h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <MobileNavMenu groups={visibleGroups} activeTab={activeTab} onSelect={setActiveTab} />

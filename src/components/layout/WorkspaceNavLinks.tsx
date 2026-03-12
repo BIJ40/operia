@@ -118,7 +118,7 @@ export function WorkspaceNavLinks({ activeTab }: WorkspaceNavLinksProps) {
           <ProfileMenu tabButtonClass={tabButtonClass} />
         </div>
       </div>
-      <div className="container mx-auto max-w-[1400px] px-4">
+      <div className="container mx-auto max-w-7xl px-4">
         <div className="border-t-2 border-primary/50 bg-background"></div>
       </div>
     </div>

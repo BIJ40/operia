@@ -393,7 +393,7 @@ export default function RdvMapPage() {
 
       {/* Carte */}
       <div className="flex-1 min-h-0 bg-muted/20 p-3 sm:p-4 md:p-6">
-        <div className="mx-auto h-full w-full max-w-[1400px]">
+        <div className="mx-auto h-full w-full max-w-7xl">
           <div className="relative h-full w-full overflow-hidden rounded-xl border bg-background shadow-sm">
             {!mapboxToken ? (
               <div className="absolute inset-0 flex items-center justify-center bg-muted">
