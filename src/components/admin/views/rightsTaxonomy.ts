@@ -64,7 +64,7 @@ const NAVIGATION_LABEL_FALLBACKS: Record<string, string> = {
   'organisation.parc': 'Parc',
   prospection: 'Prospection',
   admin_plateforme: 'Admin plateforme',
-  'pilotage.agence': 'Mon agence',
+  'pilotage.agence': 'Pilotage agence',
   'mediatheque.documents': 'Documents',
   'organisation.apporteurs': 'Apporteurs',
   'organisation.plannings': 'Plannings',
@@ -72,7 +72,7 @@ const NAVIGATION_LABEL_FALLBACKS: Record<string, string> = {
   'support.aide_en_ligne': 'Aide en ligne',
   reseau_franchiseur: 'Franchiseur',
   // Legacy roots → business labels
-  agence: 'Mon agence',
+  agence: 'Pilotage agence',
   rh: 'Salariés',
   parc: 'Parc',
   realisations: 'Réalisations',
@@ -88,11 +88,11 @@ const LEGACY_LABELS: Partial<Record<string, string[]>> = {
   'organisation.parc': ['Parc véhicules & EPI'],
   prospection: ['Commercial / Prospection'],
   admin_plateforme: ['Administration'],
-  'pilotage.agence': ['Pilotage agence'],
+  'pilotage.agence': ['Pilotage agence', 'Mon agence'],
   reseau_franchiseur: ['Réseau Franchiseur'],
   'support.aide_en_ligne': ['Aide'],
   // Legacy roots
-  agence: ['Pilotage agence'],
+  agence: ['Pilotage agence', 'Mon agence'],
   rh: ['Ressources humaines'],
   parc: ['Parc véhicules & EPI'],
 };
