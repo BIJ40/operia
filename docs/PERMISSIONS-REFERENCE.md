@@ -287,6 +287,7 @@ Une **interface de rôle** est un domaine applicatif dont l'accès est piloté *
 3. **Les mutations d'assignation agence doivent mettre à jour `agency_id` ET `agence` (via trigger `normalize_profile_agency`).**
 4. **En cas de divergence `agence` / `agency_id`, c'est `agency_id` qui fait foi.**
 5. **Les Edge Functions utilisant `profile.agence` pour construire des URLs Apogée (`https://{slug}.hc-apogee.fr`) sont des usages légitimes du slug.**
+6. **Les contrôles d'accès agence côté Edge Functions doivent résoudre le slug en UUID et comparer via `agency_id`.**
 
 ### Fichiers vérifiés (2026-03-12)
 
@@ -298,8 +299,10 @@ Une **interface de rôle** est un domaine applicatif dont l'accès est piloté *
 | `AdminNotificationSender.tsx` | Ciblage notification par agence | ✅ Migré vers `agency_id` |
 | `DataPreloadContext.tsx` | Slug pour API Apogée | ✅ Usage légitime du slug |
 | Edge Functions (get-kpis, commanditaires...) | Slug pour URL Apogée | ✅ Usage légitime du slug |
-| `get-client-contact` | Vérification accès agence | ⚠️ À migrer (edge function backend) |
+| `get-client-contact` | Vérification accès agence | ✅ Migré vers `agency_id` (résolution slug→UUID) |
+| `_shared/auth.ts` | `assertAgencyAccess` | ✅ Migré vers `agency_id` (UUID) |
 
 ### Tests de verrouillage
 
-Fichier : `src/__tests__/agency-source-of-truth.test.ts` — 5+ tests garantissant que `agency_id` prévaut.
+- Frontend : `src/__tests__/agency-source-of-truth.test.ts` — 8 tests garantissant que `agency_id` prévaut.
+- Backend : `supabase/functions/tests/agency-access-control.test.ts` — 6 tests couvrant les cas de divergence slug/UUID.
