@@ -50,7 +50,7 @@ function LoadingFallback() {
 
 /** Sous-composant Guides avec navigation par catégorie */
 function GuidesSection() {
-  const { hasModule } = useEffectiveModules();
+  const { hasModule } = usePermissions();
   
   const visibleGuides = useMemo(() => {
     return GUIDE_SECTIONS.filter(g => {
