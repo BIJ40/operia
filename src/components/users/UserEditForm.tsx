@@ -153,11 +153,13 @@ export function UserEditForm({
       ? (availableAgencies.find((a) => a.slug?.toLowerCase() === normalizedSlug)?.id ?? null)
       : null;
 
+    const normalizedAgence = formData.agence?.trim() || null;
+
     onSave({
       email: formData.email,
       first_name: formData.firstName,
       last_name: formData.lastName,
-      agence: formData.agence,
+      agence: normalizedAgence || '',
       agency_id: resolvedAgencyId,
       role_agence: formData.roleAgence,
       global_role: formData.globalRole as GlobalRole,
