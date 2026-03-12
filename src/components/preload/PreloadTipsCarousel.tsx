@@ -8,23 +8,23 @@ import { Lightbulb } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
 
-// Astuces par module
+// Astuces par module (clés hiérarchiques alignées MODULE_DEFINITIONS)
 const TIPS_BY_MODULE: Record<string, string[]> = {
-  stats: [
+  'pilotage.dashboard': [
     '💡 Consultez le CA par technicien depuis l\'onglet Stats',
     '📊 Filtrez les données par période pour affiner l\'analyse',
     '📈 Comparez les performances mois par mois',
   ],
-  agence: [
+  'pilotage.agence': [
     '🎯 Les indicateurs clés sont visibles sur le tableau de bord',
     '📈 Suivez l\'évolution du CA mensuel en temps réel',
     '🔍 Cliquez sur un graphique pour voir les détails',
   ],
-  rh: [
+  'organisation.salaries': [
     '👥 Gérez vos collaborateurs depuis l\'espace RH',
     '📅 Planifiez les congés et absences facilement',
   ],
-  guides: [
+  'support.guides': [
     '🎓 Accédez aux formations depuis les Guides',
     '📚 Consultez les guides et ressources disponibles',
   ],
