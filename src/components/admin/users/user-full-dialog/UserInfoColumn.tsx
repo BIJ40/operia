@@ -76,9 +76,12 @@ export function UserInfoColumn({
   const [newPassword, setNewPassword] = useState('');
   const [sendEmail, setSendEmail] = useState(true);
 
+  const coherenceWarning = validateRoleAgenceCoherence(formData.roleAgence, formData.globalRole, formData.agence || null);
+
   const handleSaveUser = () => {
     if (!onSaveUser) return;
-    const normalizedSlug = (formData.agence || '').toLowerCase();
+    const normalizedAgence = formData.agence?.trim() || null;
+    const normalizedSlug = (normalizedAgence || '').toLowerCase();
     const resolvedAgencyId = normalizedSlug
       ? (agencies.find(a => a.slug?.toLowerCase() === normalizedSlug)?.id ?? null)
       : null;
@@ -87,7 +90,7 @@ export function UserInfoColumn({
       first_name: formData.firstName,
       last_name: formData.lastName,
       email: formData.email,
-      agence: formData.agence,
+      agence: normalizedAgence || '',
       agency_id: resolvedAgencyId,
       role_agence: formData.roleAgence,
       global_role: formData.globalRole,
