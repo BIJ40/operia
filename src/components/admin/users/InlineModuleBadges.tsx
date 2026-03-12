@@ -154,7 +154,7 @@ export const InlineModuleBadges = memo(function InlineModuleBadges({
                     title={isFromPlan ? "Inclus dans le plan" : "Override utilisateur"}
                   >
                     <Icon className="w-3 h-3 mr-1" />
-                    {MODULE_SHORT_LABELS[key]}
+                    {getShortLabel(key)}
                   </Badge>
                 );
               })}
