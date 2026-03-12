@@ -109,7 +109,7 @@ export default function SupportHubTabContent() {
 
         <TabsContent value="faq" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
-            <SupportTabContent defaultCategory="faq" />
+            <SupportTabContent />
           </Suspense>
         </TabsContent>
 
