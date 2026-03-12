@@ -1,5 +1,5 @@
-export const APP_VERSION = '0.9.7';
-export const APP_CODENAME = 'Verrouillage Permissions — Fail-Closed';
+export const APP_VERSION = '0.9.8';
+export const APP_CODENAME = 'Centre d\'aide — Refonte UX & Permissions';
 
 /**
  * Changelog v0.8.7 (2026-01-31)
