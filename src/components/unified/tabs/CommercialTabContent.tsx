@@ -102,7 +102,7 @@ function CommercialInner() {
   }
 
   return (
-    <div className={navMode === 'header' ? 'pt-2 px-2 sm:px-4 space-y-4' : 'py-6 px-2 sm:px-4 space-y-4'}>
+    <div className={navMode === 'header' ? 'pt-1 px-2 sm:px-4 space-y-3' : 'py-6 px-2 sm:px-4 space-y-4'}>
       <Tabs value={effectiveTab} onValueChange={setActiveTab}>
         {navMode === 'tabs' && <PillTabsList tabs={visibleTabs} />}
 

@@ -24,19 +24,16 @@ export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClas
       .filter(group => group.children.length > 0);
   }, [visibleTabs]);
 
-  const pillBase = 'flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-border/50 bg-card/80 backdrop-blur-sm text-muted-foreground font-medium text-sm shadow-sm hover:shadow-md hover:border-border transition-all duration-200 cursor-pointer';
-  const pillActive = 'bg-gradient-to-br from-primary/15 to-primary/5 border-primary/40 text-primary shadow-lg font-semibold';
-  const pillInactive = '';
+  const pillBase = 'flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 cursor-pointer';
+  const pillActive = 'bg-primary/10 text-primary';
+  const pillInactive = 'text-muted-foreground hover:text-foreground hover:bg-muted';
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border/50 print:hidden">
       <div className="container mx-auto max-w-7xl px-4">
-        {/* Top row: logo + profile */}
         <div className="h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {/* Mobile hamburger */}
             <MobileNavMenu groups={visibleGroups} activeTab={activeTab} onSelect={setActiveTab} />
-            {/* Logo */}
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-sm">
                 <span className="text-primary-foreground font-bold text-sm">HC</span>
@@ -45,16 +42,13 @@ export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClas
             </div>
           </div>
 
-          {/* Desktop nav pills */}
-          <nav className="hidden md:flex items-center gap-1.5">
+          <nav className="hidden md:flex items-center gap-1">
             <button
               type="button"
               onClick={() => setActiveTab('accueil')}
               className={`${pillBase} ${activeTab === 'accueil' ? pillActive : pillInactive}`}
             >
-              <div className={`flex items-center justify-center w-7 h-7 rounded-lg transition-colors duration-200 ${activeTab === 'accueil' ? 'bg-primary/20' : 'bg-muted'}`}>
-                <Home className="w-4 h-4" />
-              </div>
+              <Home className="w-4 h-4" />
               <span>Accueil</span>
             </button>
 
