@@ -18,7 +18,7 @@ import { describe, it, expect } from 'vitest';
 import { MODULE_DEFINITIONS, PLAN_VISIBLE_MODULES } from '@/types/modules';
 import { DEFAULT_MODULES_BY_ROLE } from '@/config/modulesByRole';
 import { RIGHTS_CATEGORIES } from '@/components/admin/views/rightsTaxonomy';
-import { SITEMAP } from '@/config/sitemapData';
+import { SITEMAP_ROUTES } from '@/config/sitemapData';
 
 // ============================================================================
 // Discover all roleInterface modules dynamically
