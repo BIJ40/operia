@@ -329,6 +329,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'apporteurs', path: 'support.guides.apporteurs', label: 'Apporteurs', description: 'Guide apporteurs', defaultEnabled: true, routes: ['/?tab=support'] },
       { key: 'helpconfort', path: 'support.guides.helpconfort', label: 'HelpConfort', description: 'Guide HelpConfort', defaultEnabled: true, routes: ['/?tab=support'] },
       { key: 'faq', path: 'support.guides.faq', label: 'FAQ', description: 'Questions fréquentes', defaultEnabled: true, routes: ['/?tab=support'] },
+      { key: 'edition', path: 'support.guides.edition', label: 'Édition contenu', description: 'Modifier le contenu des guides', defaultEnabled: false, routes: ['/?tab=support'] },
     ],
   },
   {
