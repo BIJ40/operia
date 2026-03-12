@@ -493,6 +493,39 @@ export function SimplifiedSupportChat({
     }
   };
 
+  // ─── Go back ──────────────────────────────────────────────────
+  const handleGoBack = () => {
+    if (showScreenshotStep) {
+      setShowScreenshotStep(false);
+      setScreenshotFile(null);
+      return;
+    }
+    if (aiHasResponded || messages.length > 1) {
+      // Back from chat to orientation
+      setOrientationComplete(false);
+      setOrientationStep(0);
+      setOrientationAnswers({});
+      setMessages([]);
+      setInput('');
+      setAiHasResponded(false);
+      setTicketCreated(false);
+      return;
+    }
+    if (orientationComplete) {
+      setOrientationComplete(false);
+      setMessages([]);
+      return;
+    }
+    if (orientationStep > 0) {
+      setOrientationStep(orientationStep - 1);
+      return;
+    }
+    // Back to domain selection
+    setSelectedDomain(null);
+    setOrientationStep(0);
+    setOrientationAnswers({});
+  };
+
   // ─── Reset ────────────────────────────────────────────────────
   const handleNewChat = () => {
     setSelectedDomain(null);
