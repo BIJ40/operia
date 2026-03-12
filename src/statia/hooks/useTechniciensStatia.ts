@@ -213,7 +213,8 @@ export function useTechniciensStatia(): TechniciensStatiaData {
       
       // Générer les 6 derniers mois avant la fin de la période sélectionnée
       // (toujours afficher 6 colonnes, même sans données)
-      const endDate = new Date(filters.dateRange.end);
+      const now = new Date();
+      const endDate = filters.dateRange.end < now ? new Date(filters.dateRange.end) : now;
       const availableMonths: string[] = [];
       for (let i = 0; i < 6; i++) {
         const d = new Date(endDate.getFullYear(), endDate.getMonth() - i, 1);
