@@ -1249,6 +1249,16 @@ body[data-read-only] [draggable="true"] {
   display: none !important;
 }
 
+.mapboxgl-ctrl-attrib-button,
+.mapboxgl-compact-show .mapboxgl-ctrl-attrib-button {
+  background: black !important;
+  pointer-events: none !important;
+  opacity: 1 !important;
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 50% !important;
+}
+
 .mapboxgl-map::after {
   content: 'ByBij';
   position: absolute;
