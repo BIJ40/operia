@@ -46,10 +46,14 @@ export function HeaderNavDropdown({ group, isActive, onSelect, pillBase, pillAct
         window.dispatchEvent(new CustomEvent('session-state-change', { detail: { key: child.subTabKey, value: child.subTabValue } }));
       } catch {}
     }
-    // If path is specified, navigate directly to that URL (handles query params like adminView)
+
+    // If path is specified, navigate directly to that URL (preserves query params like adminView)
     if (child.path) {
       navigate(child.path);
+      setOpen(false);
+      return;
     }
+
     if (child.tab) onSelect(child.tab);
     setOpen(false);
   }, [onSelect, navigate]);

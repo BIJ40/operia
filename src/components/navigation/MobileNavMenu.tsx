@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Menu, ChevronDown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import type { HeaderNavGroup } from '@/config/headerNavigation';
