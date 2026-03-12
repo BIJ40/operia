@@ -201,8 +201,14 @@ describe('N5/N6 bypass access', () => {
 // ============================================================================
 
 describe('Agency-required module enforcement', () => {
+  // Filter to legacy keys only — hierarchical keys are resolved at the guard/COMPAT_MAP layer,
+  // not by the hasAccess engine which iterates MODULE_DEFINITIONS (flat keys only).
+  const engineAgencyModules = AGENCY_REQUIRED_MODULES.filter(
+    m => MODULE_DEFINITIONS.some(d => d.key === m)
+  );
+
   it('denies agency modules when no agencyId (for non-bypass roles)', () => {
-    for (const moduleId of AGENCY_REQUIRED_MODULES) {
+    for (const moduleId of engineAgencyModules) {
       const params: HasAccessParams = {
         globalRole: 'franchisee_admin',
         enabledModules: { [moduleId]: { enabled: true, options: {} } },
@@ -214,7 +220,7 @@ describe('Agency-required module enforcement', () => {
   });
 
   it('allows agency modules with agencyId', () => {
-    for (const moduleId of AGENCY_REQUIRED_MODULES) {
+    for (const moduleId of engineAgencyModules) {
       const params: HasAccessParams = {
         globalRole: 'franchisee_admin',
         enabledModules: { [moduleId]: { enabled: true, options: {} } },
@@ -324,7 +330,9 @@ describe('Module option min roles', () => {
   it('all option min role keys reference valid modules', () => {
     const validModuleKeys = new Set(MODULE_DEFINITIONS.map(m => m.key));
     for (const key of Object.keys(MODULE_OPTION_MIN_ROLES)) {
-      const moduleKey = key.split('.')[0];
+      // Support multi-dot keys: use lastIndexOf to extract moduleKey
+      const lastDot = key.lastIndexOf('.');
+      const moduleKey = key.substring(0, lastDot);
       expect(validModuleKeys.has(moduleKey as ModuleKey)).toBe(true);
     }
   });
@@ -332,8 +340,8 @@ describe('Module option min roles', () => {
   it('option min roles never EXCEED the option min role declarations', () => {
     // Verify all option min role entries reference valid option keys
     for (const [path, optionMinRole] of Object.entries(MODULE_OPTION_MIN_ROLES)) {
-      const parts = path.split('.');
-      expect(parts.length).toBe(2);
+      const lastDot = path.lastIndexOf('.');
+      expect(lastDot).toBeGreaterThan(0); // must have at least "x.y"
       // The role itself must be a valid GlobalRole
       expect(ROLE_HIERARCHY[optionMinRole]).toBeDefined();
     }
@@ -346,7 +354,8 @@ describe('Module option min roles', () => {
     // This test ensures we are AWARE of such cases.
     const overriddenByModule: string[] = [];
     for (const [path, optionMinRole] of Object.entries(MODULE_OPTION_MIN_ROLES)) {
-      const moduleKey = path.split('.')[0] as ModuleKey;
+      const lastDot = path.lastIndexOf('.');
+      const moduleKey = path.substring(0, lastDot) as ModuleKey;
       const moduleMinRole = MODULE_MIN_ROLES[moduleKey];
       if (moduleMinRole && ROLE_HIERARCHY[optionMinRole] < ROLE_HIERARCHY[moduleMinRole]) {
         overriddenByModule.push(path);

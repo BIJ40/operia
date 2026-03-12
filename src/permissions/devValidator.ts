@@ -58,9 +58,10 @@ function validateModuleOptionMinRoles(): Array<{ type: 'error' | 'warning'; sour
   const validModuleKeys = new Set(getValidModuleKeys());
   
   for (const key of Object.keys(MODULE_OPTION_MIN_ROLES)) {
-    const parts = key.split('.');
-    
-    if (parts.length !== 2) {
+    // Support multi-dot keys: "moduleKey.optionKey" where moduleKey can contain dots
+    // e.g. "rh.rh_viewer" or "pilotage.agence.indicateurs"
+    const lastDot = key.lastIndexOf('.');
+    if (lastDot <= 0) {
       issues.push({
         type: 'error',
         source: 'MODULE_OPTION_MIN_ROLES',
@@ -70,7 +71,8 @@ function validateModuleOptionMinRoles(): Array<{ type: 'error' | 'warning'; sour
       continue;
     }
     
-    const [moduleKey, optionKey] = parts;
+    const moduleKey = key.substring(0, lastDot);
+    const optionKey = key.substring(lastDot + 1);
     
     if (!validModuleKeys.has(moduleKey as ModuleKey)) {
       issues.push({

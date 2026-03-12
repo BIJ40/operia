@@ -130,7 +130,11 @@ describe('Constants ↔ MODULE_DEFINITIONS consistency', () => {
   it('MODULE_OPTION_MIN_ROLES only contains valid option paths', () => {
     const validKeys = new Set(getValidModuleKeys());
     for (const path of Object.keys(MODULE_OPTION_MIN_ROLES)) {
-      const [moduleKey, optionKey] = path.split('.');
+      // Support multi-dot keys: use lastIndexOf to split moduleKey.optionKey
+      const lastDot = path.lastIndexOf('.');
+      expect(lastDot).toBeGreaterThan(0);
+      const moduleKey = path.substring(0, lastDot);
+      const optionKey = path.substring(lastDot + 1);
       expect(validKeys.has(moduleKey as any)).toBe(true);
       // Option key should exist in the module's options
       const validOpts = getValidOptionKeys(moduleKey as any);

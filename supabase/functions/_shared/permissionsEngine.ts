@@ -27,7 +27,9 @@ export type GlobalRole =
   | 'superadmin';
 
 // ModuleKey V3 — aligné avec src/types/modules.ts
+// Legacy + hierarchical keys (Phase 7 additive migration)
 export type ModuleKey = 
+  // Legacy
   | 'agence'
   | 'stats'
   | 'rh'
@@ -43,7 +45,19 @@ export type ModuleKey =
   | 'planning_augmente'
   | 'reseau_franchiseur'
   | 'admin_plateforme'
-  | 'unified_search';
+  | 'unified_search'
+  // Hierarchical (Phase 7)
+  | 'pilotage.agence'
+  | 'pilotage.dashboard'
+  | 'organisation.salaries'
+  | 'organisation.parc'
+  | 'organisation.apporteurs'
+  | 'organisation.plannings'
+  | 'organisation.reunions'
+  | 'mediatheque.documents'
+  | 'support.aide_en_ligne'
+  | 'support.guides'
+  | 'commercial.realisations';
 
 // Legacy module keys → V3 mapping (pour rétrocompat des données en base)
 export const MODULE_COMPAT_MAP: Record<string, ModuleKey> = {
@@ -79,7 +93,10 @@ export interface PermissionIssue {
 
 export const BYPASS_ROLES: GlobalRole[] = ['superadmin', 'platform_admin'];
 
-export const AGENCY_REQUIRED_MODULES: ModuleKey[] = ['agence', 'rh', 'parc', 'prospection'];
+export const AGENCY_REQUIRED_MODULES: ModuleKey[] = [
+  'agence', 'rh', 'parc', 'prospection',
+  'pilotage.agence', 'organisation.salaries', 'organisation.parc',
+];
 
 export const AGENCY_ROLES: GlobalRole[] = ['franchisee_user', 'franchisee_admin'];
 
@@ -101,10 +118,11 @@ export const ROLE_HIERARCHY: Record<GlobalRole, number> = {
 // Edge functions can't import from src/, so this is a synced copy.
 // Last sync: 2026-03-08
 export const MODULE_MIN_ROLES: Partial<Record<ModuleKey, GlobalRole>> = {
+  // Legacy
   agence: 'franchisee_admin',
   stats: 'franchisee_admin',
-  rh: 'franchisee_admin',  // Aligned with MODULE_DEFINITIONS.minRole
-  parc: 'franchisee_admin', // Aligned with MODULE_DEFINITIONS.minRole
+  rh: 'franchisee_admin',
+  parc: 'franchisee_admin',
   divers_apporteurs: 'franchisee_admin',
   divers_plannings: 'franchisee_admin',
   divers_reunions: 'franchisee_admin',
@@ -116,6 +134,18 @@ export const MODULE_MIN_ROLES: Partial<Record<ModuleKey, GlobalRole>> = {
   planning_augmente: 'franchisee_admin',
   reseau_franchiseur: 'franchisor_user',
   admin_plateforme: 'platform_admin',
+  // Hierarchical (Phase 7)
+  'pilotage.agence': 'franchisee_admin',
+  'pilotage.dashboard': 'franchisee_admin',
+  'organisation.salaries': 'franchisee_admin',
+  'organisation.parc': 'franchisee_admin',
+  'organisation.apporteurs': 'franchisee_admin',
+  'organisation.plannings': 'franchisee_admin',
+  'organisation.reunions': 'franchisee_admin',
+  'mediatheque.documents': 'franchisee_admin',
+  'support.aide_en_ligne': 'base_user',
+  'support.guides': 'base_user',
+  'commercial.realisations': 'franchisee_admin',
 };
 
 // ============================================================================
@@ -143,10 +173,18 @@ export function isBypassRole(role: GlobalRole | null): boolean {
 export function normalizeModuleKey(key: string): ModuleKey | null {
   // Check all known module keys (MODULE_MIN_ROLES covers all canonical keys)
   const ALL_MODULE_KEYS: ModuleKey[] = [
+    // Legacy
     'agence', 'stats', 'rh', 'parc', 'divers_apporteurs', 'divers_plannings',
     'divers_reunions', 'divers_documents', 'guides', 'ticketing', 'aide',
     'prospection', 'planning_augmente', 'reseau_franchiseur', 'admin_plateforme',
     'unified_search',
+    // Hierarchical (Phase 7)
+    'pilotage.agence', 'pilotage.dashboard',
+    'organisation.salaries', 'organisation.parc', 'organisation.apporteurs',
+    'organisation.plannings', 'organisation.reunions',
+    'mediatheque.documents',
+    'support.aide_en_ligne', 'support.guides',
+    'commercial.realisations',
   ];
   if (ALL_MODULE_KEYS.includes(key as ModuleKey)) return key as ModuleKey;
   if (key in MODULE_COMPAT_MAP) return MODULE_COMPAT_MAP[key];
