@@ -28,7 +28,7 @@ export interface HeaderNavGroup {
   /** Main tab this group maps to (for active state) */
   tab: UnifiedTab;
   /** Accent color for this domain */
-  accent?: 'blue' | 'orange' | 'green' | 'purple' | 'pink' | 'teal';
+  accent?: 'blue' | 'orange' | 'green' | 'purple' | 'pink' | 'teal' | 'red';
   children: HeaderNavChild[];
 }
 
