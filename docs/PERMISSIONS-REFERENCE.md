@@ -266,3 +266,40 @@ Une **interface de rôle** est un domaine applicatif dont l'accès est piloté *
 3. **Pas de clé frontend orpheline** : toute clé lue par `hasModule()` doit exister dans `MODULES`.
 4. **Tests obligatoires** : toute modification de clé doit passer `coherence-audit.test.ts`.
 5. **Documentation** : toute exception doit être documentée dans ce fichier (§4).
+
+---
+
+## 12. Doctrine de rattachement agence
+
+> Ajouté : 2026-03-12 — **VERROUILLÉ**
+
+### Principe
+
+| Champ | Rôle | Usage autorisé |
+|-------|------|----------------|
+| `agency_id` (UUID) | **Source unique de vérité** | Filtres métier, compteurs, listes équipe, scopes, requêtes DB |
+| `agence` (slug string) | Champ dérivé / informatif | Affichage, construction d'URL Apogée (`{slug}.hc-apogee.fr`), recherche textuelle |
+
+### Règles
+
+1. **Aucun calcul métier critique ne doit dépendre uniquement du slug `agence`.**
+2. **Toute nouvelle feature rattachant un utilisateur à une agence doit utiliser `agency_id`.**
+3. **Les mutations d'assignation agence doivent mettre à jour `agency_id` ET `agence` (via trigger `normalize_profile_agency`).**
+4. **En cas de divergence `agence` / `agency_id`, c'est `agency_id` qui fait foi.**
+5. **Les Edge Functions utilisant `profile.agence` pour construire des URLs Apogée (`https://{slug}.hc-apogee.fr`) sont des usages légitimes du slug.**
+
+### Fichiers vérifiés (2026-03-12)
+
+| Fichier | Usage | Statut |
+|---------|-------|--------|
+| `AdminAgencies.tsx` | Compteur + liste équipe | ✅ Migré vers `agency_id` |
+| `use-user-management.ts` | Scope + filtre query | ✅ Migré vers `agency_id` |
+| `useUserFilters.ts` | Filtre agence | ✅ Migré (agency_id prioritaire) |
+| `AdminNotificationSender.tsx` | Ciblage notification par agence | ✅ Migré vers `agency_id` |
+| `DataPreloadContext.tsx` | Slug pour API Apogée | ✅ Usage légitime du slug |
+| Edge Functions (get-kpis, commanditaires...) | Slug pour URL Apogée | ✅ Usage légitime du slug |
+| `get-client-contact` | Vérification accès agence | ⚠️ À migrer (edge function backend) |
+
+### Tests de verrouillage
+
+Fichier : `src/__tests__/agency-source-of-truth.test.ts` — 5+ tests garantissant que `agency_id` prévaut.
