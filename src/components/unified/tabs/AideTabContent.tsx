@@ -41,3 +41,84 @@ function LoadingFallback() {
     </div>
   );
 }
+
+export default function SupportHubTabContent() {
+  const { hasModule } = usePermissions();
+  const { getShortLabel } = useModuleLabels();
+  const [activeGuide, setActiveGuide] = useState('apogee');
+
+  // A: module labels resolved from DB/definitions
+  // B: 'FAQ' has no module guard → structural label, keep hardcoded
+  const allTabs: (PillTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
+    { id: 'aide-en-ligne', label: getShortLabel('support.aide_en_ligne', 'Aide en ligne'), icon: Headphones, accent: 'blue', requiresModule: 'support.aide_en_ligne' },
+    { id: 'guides', label: getShortLabel('support.guides', 'Guides'), icon: BookOpen, accent: 'purple', requiresModule: 'support.guides' },
+    { id: 'faq', label: 'FAQ', icon: HelpCircle, accent: 'green' },
+    { id: 'ticketing', label: getShortLabel('ticketing', 'Ticketing'), icon: Ticket, accent: 'orange', requiresModule: 'ticketing' },
+  ], [getShortLabel]);
+
+  const visibleTabs = useMemo(() => {
+    return allTabs.filter(tab => {
+      if (!tab.requiresModule) return true;
+      return hasModule(tab.requiresModule);
+    });
+  }, [hasModule, allTabs]);
+
+  const defaultTab = visibleTabs[0]?.id as SupportSubTab ?? 'faq';
+  const [activeTab, setActiveTab] = useSessionState<SupportSubTab>('support_sub_tab', defaultTab);
+  const effectiveTab = visibleTabs.some(t => t.id === activeTab) ? activeTab : defaultTab;
+
+  // Filter guide sections by module access
+  const visibleGuides = useMemo(() => {
+    return GUIDE_SECTIONS.filter(g => {
+      if (!g.requiresModule) return true;
+      return hasModule(g.requiresModule);
+    });
+  }, [hasModule]);
+
+  return (
+    <div className="py-6 px-2 sm:px-4 space-y-4">
+      <Tabs value={effectiveTab} onValueChange={(v) => setActiveTab(v as SupportSubTab)}>
+        <PillTabsList tabs={visibleTabs} />
+
+        <TabsContent value="aide-en-ligne" className="mt-4">
+          <Suspense fallback={<LoadingFallback />}>
+            <SupportTabContent />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="guides" className="mt-4">
+          {visibleGuides.length > 1 && (
+            <div className="flex gap-2 mb-4">
+              {visibleGuides.map(guide => (
+                <button
+                  key={guide.id}
+                  onClick={() => setActiveGuide(guide.id)}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    activeGuide === guide.id
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  }`}
+                >
+                  {guide.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {activeGuide === 'apogee' && <InternalApogeeLayout />}
+        </TabsContent>
+
+        <TabsContent value="faq" className="mt-4">
+          <Suspense fallback={<LoadingFallback />}>
+            <SupportTabContent defaultCategory="faq" />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="ticketing" className="mt-4">
+          <Suspense fallback={<LoadingFallback />}>
+            <TicketingTabContent />
+          </Suspense>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
