@@ -45,13 +45,13 @@ export default function StatsTabContent() {
   ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {
-    return statsTabs.filter(tab => {
-      if (!tab.requiresModule) return true;
-      return hasModule(tab.requiresModule);
+    return statsTabs.map(tab => {
+      if (!tab.requiresModule) return tab;
+      return { ...tab, disabled: !hasModule(tab.requiresModule) };
     });
   }, [hasModule, statsTabs]);
 
-  const effectiveTab = visibleTabs.some(t => t.id === activeTab) ? activeTab : (visibleTabs[0]?.id as TabId ?? 'general');
+  const effectiveTab = (visibleTabs.find(t => t.id === activeTab && !t.disabled)) ? activeTab : ((visibleTabs.find(t => !t.disabled)?.id as TabId) ?? 'general');
 
   useEffect(() => {
     if (effectiveTab !== activeTab) {
