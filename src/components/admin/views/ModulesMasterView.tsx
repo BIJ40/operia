@@ -454,7 +454,6 @@ const MODULE_ROUTES: Record<string, string> = {
 
 function getModuleRoute(key: string): string | null {
   if (MODULE_ROUTES[key]) return MODULE_ROUTES[key];
-  // Try parent key (e.g. pilotage.statistiques.general → pilotage.statistiques → pilotage)
   const parts = key.split('.');
   while (parts.length > 1) {
     parts.pop();
@@ -462,6 +461,12 @@ function getModuleRoute(key: string): string | null {
     if (MODULE_ROUTES[parent]) return MODULE_ROUTES[parent];
   }
   return null;
+}
+
+/** Navigate to a route string like "/?tab=pilotage" using proper path + search separation */
+function navigateToRoute(navigate: ReturnType<typeof useNavigate>, route: string) {
+  const [pathname, search] = route.split('?');
+  navigate({ pathname: pathname || '/', search: search ? `?${search}` : '' });
 }
 
 // Table-based layout for proper column alignment
@@ -612,7 +617,7 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
             size="icon"
             className="h-7 w-7 text-primary hover:text-primary/80 hover:bg-primary/10"
             title={`Ouvrir ${node.label}`}
-            onClick={() => navigate(route)}
+            onClick={() => navigateToRoute(navigate, route)}
           >
             <ExternalLink className="w-3.5 h-3.5" />
           </Button>
