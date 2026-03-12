@@ -10,7 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency, formatPercent } from '@/lib/formatters';
 import { motion } from 'framer-motion';
 import { FolderOpen, FileText, Euro, ShoppingCart, AlertTriangle, Percent, Clock, Wrench, TrendingUp, Users, Target, Receipt } from 'lucide-react';
-import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell } from 'recharts';
+import { XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell } from 'recharts';
+import { Tooltip as UiTooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const containerVariants = {
   hidden: { opacity: 0 },
