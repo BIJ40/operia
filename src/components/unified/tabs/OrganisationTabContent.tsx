@@ -59,6 +59,7 @@ export default function OrganisationTabContent() {
   const effectiveTab = (visibleTabs.find(t => t.id === activeTab && !t.disabled)) ? activeTab : defaultTab;
 
   return (
+    <DomainAccentProvider accent="green">
     <div className={navMode === 'header' ? 'pt-1 px-2 sm:px-4 space-y-3' : 'py-6 px-2 sm:px-4 space-y-4'}>
       <Tabs value={effectiveTab} onValueChange={(v) => setActiveTab(v as OrganisationSubTab)}>
         {navMode === 'tabs' && <PillTabsList tabs={visibleTabs} />}

@@ -135,8 +135,10 @@ function CommercialInner() {
 
 export default function CommercialTabContent() {
   return (
-    <ApporteurTabsProvider>
-      <CommercialInner />
-    </ApporteurTabsProvider>
+    <DomainAccentProvider accent="orange">
+      <ApporteurTabsProvider>
+        <CommercialInner />
+      </ApporteurTabsProvider>
+    </DomainAccentProvider>
   );
 }

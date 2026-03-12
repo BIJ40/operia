@@ -97,5 +97,6 @@ export default function PilotageTabContent() {
         </TabsContent>
       </Tabs>
     </div>
+    </DomainAccentProvider>
   );
 }
