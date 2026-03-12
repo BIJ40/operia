@@ -713,13 +713,13 @@ function CategoryHeaderRow({
           </span>
         )}
       </div>
-      <div className="text-center text-muted-foreground/30">—</div>
-      <div className="text-center text-muted-foreground/30">—</div>
-      <div className="text-center text-muted-foreground/30">—</div>
-      <div className="text-center text-muted-foreground/30">—</div>
-      <div className="text-center text-muted-foreground/30">—</div>
-      <div className="text-center text-muted-foreground/30">—</div>
-      <div className="text-center text-muted-foreground/30">—</div>
+      <div className="text-muted-foreground/30">—</div>
+      <div className="text-muted-foreground/30">—</div>
+      <div className="text-muted-foreground/30">—</div>
+      <div className="text-muted-foreground/30">—</div>
+      <div className="text-muted-foreground/30">—</div>
+      <div className="text-muted-foreground/30">—</div>
+      <div className="text-muted-foreground/30">—</div>
     </div>
   );
 }
