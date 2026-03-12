@@ -74,7 +74,7 @@ export function HeaderNavDropdown({ group, isActive, onSelect, pillBase, pillAct
                 onClick={() => handleSelect(child)}
                 className="flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-left transition-colors duration-150 hover:bg-primary/5 group"
               >
-                <div className="w-8 h-8 rounded-lg bg-primary/8 border border-primary/15 flex items-center justify-center shrink-0 transition-colors group-hover:bg-primary/15 group-hover:border-primary/30">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/15 flex items-center justify-center shrink-0 transition-colors group-hover:bg-primary/15 group-hover:border-primary/30">
                   <ChildIcon className="w-4 h-4 text-primary" />
                 </div>
                 <div className="min-w-0">

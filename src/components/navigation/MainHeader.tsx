@@ -24,9 +24,9 @@ export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClas
       .filter(group => group.children.length > 0);
   }, [visibleTabs]);
 
-  const pillBase = 'flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all duration-200 cursor-pointer';
-  const pillActive = 'bg-primary/8 border-primary/25 text-primary shadow-sm';
-  const pillInactive = 'bg-card border-border text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-primary/5 hover:shadow-sm';
+  const pillBase = 'flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-border/50 bg-card/80 backdrop-blur-sm text-sm font-medium transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md';
+  const pillActive = 'bg-gradient-to-br from-primary/15 to-primary/5 border-primary/40 text-primary shadow-md font-semibold';
+  const pillInactive = 'text-muted-foreground hover:text-foreground hover:border-border';
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border print:hidden">
