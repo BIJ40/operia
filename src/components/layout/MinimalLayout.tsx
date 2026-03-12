@@ -21,8 +21,7 @@ import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useStorageQuota } from '@/hooks/use-storage-quota';
 import { useUserPresence } from '@/hooks/use-user-presence';
 import { useConnectionLogger } from '@/hooks/use-connection-logger';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Home } from 'lucide-react';
+import { WorkspaceNavLinks } from './WorkspaceNavLinks';
 import { cn } from '@/lib/utils';
 
 interface MinimalLayoutProps {
