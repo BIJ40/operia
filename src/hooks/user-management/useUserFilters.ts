@@ -40,8 +40,14 @@ export function useUserFilters({ users, modifiedUsers, showDeactivated }: UseUse
       }
       
       if (agencyFilter !== 'all') {
-        if (agencyFilter === 'none' && user.agence) return false;
-        if (agencyFilter !== 'none' && user.agence !== agencyFilter) return false;
+        // agency_id is the source of truth; agence slug used as fallback for display/search
+        const userAgencyId = user.agency_id;
+        const userAgenceSlug = user.agence;
+        if (agencyFilter === 'none' && (userAgencyId || userAgenceSlug)) return false;
+        if (agencyFilter !== 'none') {
+          // agencyFilter is a slug - match against agence slug
+          if (userAgenceSlug !== agencyFilter) return false;
+        }
       }
       
       if (roleFilter !== 'all') {

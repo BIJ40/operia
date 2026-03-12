@@ -302,8 +302,10 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       }
       
       if (agencyFilter !== 'all') {
-        if (agencyFilter === 'none' && user.agence) return false;
-        if (agencyFilter !== 'none' && user.agence !== agencyFilter) return false;
+        const userAgencyId = user.agency_id;
+        const userAgenceSlug = user.agence;
+        if (agencyFilter === 'none' && (userAgencyId || userAgenceSlug)) return false;
+        if (agencyFilter !== 'none' && userAgenceSlug !== agencyFilter) return false;
       }
       
       if (roleFilter !== 'all') {
