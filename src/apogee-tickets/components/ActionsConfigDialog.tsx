@@ -329,7 +329,11 @@ export function ActionsConfigDialog({
       }
       
       if (count && count > 0) {
-        errorToast(`Impossible de supprimer : ${count} ticket(s) utilisent encore ce(s) statut(s). Déplacez-les d'abord vers un autre statut.`);
+        const deletedLabels = statuses
+          .filter((s) => toDelete.includes(s.id))
+          .map((s) => s.label)
+          .join(', ');
+        errorToast(`Impossible de supprimer le(s) statut(s) ${deletedLabels || toDelete.join(', ')} : ${count} ticket(s) les utilisent encore. Remettez l'ID technique d'origine ou déplacez les tickets vers un autre statut.`);
         return;
       }
 
