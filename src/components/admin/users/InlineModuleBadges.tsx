@@ -24,7 +24,7 @@ import { PLAN_VISIBLE_MODULES, MODULE_SHORT_LABELS } from '@/types/modules';
 // Icônes pour chaque module — doit inclure TOUS les modules visibles
 const MODULE_ICONS: Partial<Record<ModuleKey, LucideIcon>> = {
   'pilotage.agence': Building2,
-  'pilotage.dashboard': BarChart3,
+  'pilotage.statistiques': BarChart3,
   'organisation.salaries': Users,
   'organisation.parc': Truck,
   'organisation.apporteurs': Handshake,
