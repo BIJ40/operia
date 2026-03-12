@@ -126,7 +126,7 @@ describe('Shared constants sync with frontend constants', () => {
     expect([...SHARED_AGENCY_REQUIRED_MODULES].sort()).toEqual([...AGENCY_REQUIRED_MODULES].sort());
   });
 
-  it('SHARED_NETWORK_MODULES matches NETWORK_MODULES', () => {
+  it('SHARED_NETWORK_MODULES matches NETWORK_MODULES (both empty — franchiseur is role-based)', () => {
     expect([...SHARED_NETWORK_MODULES].sort()).toEqual([...NETWORK_MODULES].sort());
   });
 

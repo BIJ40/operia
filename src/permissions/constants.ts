@@ -42,8 +42,10 @@ export const AGENCY_ROLES: GlobalRole[] = ['franchisee_user', 'franchisee_admin'
 // RÈGLE 4: MODULES RÉSEAU
 // ============================================================================
 
-/** Modules réservés aux rôles réseau (N3+) */
-export const NETWORK_MODULES: ModuleKey[] = ['reseau_franchiseur'];
+// reseau_franchiseur retiré — interface de rôle (N3+), pas un module standard
+// Voir src/permissions/franchisorAccess.ts
+/** Modules réservés aux rôles réseau (N3+) — vidé car franchiseur = interface de rôle */
+export const NETWORK_MODULES: ModuleKey[] = [];
 
 /** Rôle minimum pour les modules réseau */
 export const NETWORK_MIN_ROLE: GlobalRole = 'franchisor_user';
