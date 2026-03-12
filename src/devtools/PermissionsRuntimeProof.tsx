@@ -96,9 +96,9 @@ export function usePermissionsRuntimeProof() {
       label: 'mediatheque.gerer via hasModule',
       path: 'usePermissions().hasModule',
       key: 'mediatheque.gerer',
-      result: hasModule('mediatheque.gerer' as ModuleKey),
+      result: hasModule('mediatheque.gerer'),
       expected: hasDiversDocsGerer,
-      pass: hasModule('mediatheque.gerer' as ModuleKey) === hasDiversDocsGerer,
+      pass: hasModule('mediatheque.gerer') === hasDiversDocsGerer,
     });
 
     tests.push({
