@@ -61,12 +61,12 @@ interface OrientationStep {
 }
 
 // ─── Domain config ──────────────────────────────────────────────
-const DOMAIN_OPTIONS = [
+const DOMAIN_OPTIONS: { label: string; value: string; emoji: string; chatContext: RAGContextType }[] = [
   { label: 'Apogée', value: 'apogee', emoji: '📘', chatContext: 'apogee' },
   { label: 'HelpConfort', value: 'helpconfort', emoji: '🏠', chatContext: 'helpconfort' },
-  { label: 'HC Services', value: 'hc-services', emoji: '🔧', chatContext: 'apogee' },
-  { label: 'Divers', value: 'divers', emoji: '📋', chatContext: 'autre' },
-] as const;
+  { label: 'HC Services', value: 'hc-services', emoji: '🔧', chatContext: 'helpconfort' },
+  { label: 'Divers', value: 'divers', emoji: '📋', chatContext: 'auto' },
+];
 
 const ORIENTATION_STEPS: OrientationStep[] = [
   {
