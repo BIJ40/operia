@@ -88,6 +88,7 @@ export const InlineModuleBadges = memo(function InlineModuleBadges({
   planModules = [],
 }: InlineModuleBadgesProps) {
   const [open, setOpen] = useState(false);
+  const { getShortLabel } = useModuleLabels();
   
   // Modules activés pour cet utilisateur
   const activeModules = PLAN_VISIBLE_MODULES.filter(key => 
