@@ -20,6 +20,7 @@ export default function DocumentsTabContent() {
   const canEmptyTrash = hasModule('mediatheque.corbeille' as any);
 
   return (
+    <DomainAccentProvider accent="teal">
     <div className="container mx-auto max-w-7xl px-4 py-6">
       <Tabs value={activeSubTab} onValueChange={(v) => setActiveSubTab(v as DocumentsSubTab)}>
         <div className="flex items-center justify-between mb-6">
