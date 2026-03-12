@@ -84,7 +84,7 @@ describe('Role Interface doctrine', () => {
 
   // ── BLOC 6: Not used by moduleGuard in sitemapData ──
   describe('Not used by moduleGuard in sitemapData', () => {
-    function collectModuleGuardKeys(routes: typeof SITEMAP): string[] {
+    function collectModuleGuardKeys(routes: typeof SITEMAP_ROUTES): string[] {
       const keys: string[] = [];
       for (const route of routes) {
         if (route.guards?.moduleGuard?.moduleKey) {
