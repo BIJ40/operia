@@ -196,7 +196,7 @@ describe('Protected modules', () => {
   });
 
   it('non-protected module returns false', () => {
-    expect(isProtectedModule('guides')).toBe(false);
+    expect(isProtectedModule('support.guides')).toBe(false);
   });
 
   it('PROTECTED_MODULES contains only valid keys', () => {

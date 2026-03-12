@@ -274,30 +274,30 @@ describe('isModuleEnabledInModules', () => {
 
 describe('isModuleOptionEnabledInModules', () => {
   it('returns false for null modules', () => {
-    expect(isModuleOptionEnabledInModules(null, 'rh', 'rh_viewer')).toBe(false);
+    expect(isModuleOptionEnabledInModules(null, 'organisation.salaries', 'rh_viewer')).toBe(false);
   });
 
   it('returns false for boolean module', () => {
-    expect(isModuleOptionEnabledInModules({ rh: true as any }, 'rh', 'rh_viewer')).toBe(false);
+    expect(isModuleOptionEnabledInModules({ 'organisation.salaries': true as any }, 'organisation.salaries', 'rh_viewer')).toBe(false);
   });
 
   it('returns true when option enabled', () => {
-    const modules = { rh: { enabled: true, options: { rh_viewer: true } } };
-    expect(isModuleOptionEnabledInModules(modules, 'rh', 'rh_viewer')).toBe(true);
+    const modules = { 'organisation.salaries': { enabled: true, options: { rh_viewer: true } } };
+    expect(isModuleOptionEnabledInModules(modules, 'organisation.salaries', 'rh_viewer')).toBe(true);
   });
 
   it('returns false when option disabled', () => {
-    const modules = { rh: { enabled: true, options: { rh_viewer: false } } };
-    expect(isModuleOptionEnabledInModules(modules, 'rh', 'rh_viewer')).toBe(false);
+    const modules = { 'organisation.salaries': { enabled: true, options: { rh_viewer: false } } };
+    expect(isModuleOptionEnabledInModules(modules, 'organisation.salaries', 'rh_viewer')).toBe(false);
   });
 
   it('returns false when module disabled', () => {
-    const modules = { rh: { enabled: false, options: { rh_viewer: true } } };
-    expect(isModuleOptionEnabledInModules(modules, 'rh', 'rh_viewer')).toBe(false);
+    const modules = { 'organisation.salaries': { enabled: false, options: { rh_viewer: true } } };
+    expect(isModuleOptionEnabledInModules(modules, 'organisation.salaries', 'rh_viewer')).toBe(false);
   });
 
   it('returns false for missing option', () => {
-    const modules = { rh: { enabled: true, options: { rh_admin: true } } };
-    expect(isModuleOptionEnabledInModules(modules, 'rh', 'rh_viewer')).toBe(false);
+    const modules = { 'organisation.salaries': { enabled: true, options: { rh_admin: true } } };
+    expect(isModuleOptionEnabledInModules(modules, 'organisation.salaries', 'rh_viewer')).toBe(false);
   });
 });

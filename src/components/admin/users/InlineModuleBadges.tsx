@@ -44,7 +44,7 @@ const MODULE_ICONS: Partial<Record<ModuleKey, LucideIcon>> = {
 // Couleurs pour les badges actifs
 const MODULE_COLORS: Partial<Record<ModuleKey, string>> = {
   'pilotage.agence': 'bg-blue-500 text-white hover:bg-blue-600',
-  'pilotage.dashboard': 'bg-emerald-500 text-white hover:bg-emerald-600',
+  'pilotage.statistiques': 'bg-emerald-500 text-white hover:bg-emerald-600',
   'organisation.salaries': 'bg-violet-500 text-white hover:bg-violet-600',
   'organisation.parc': 'bg-orange-500 text-white hover:bg-orange-600',
   'organisation.apporteurs': 'bg-pink-500 text-white hover:bg-pink-600',

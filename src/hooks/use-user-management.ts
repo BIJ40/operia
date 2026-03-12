@@ -644,7 +644,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
     }
     
     // 🛡️ P0.2 + P1: GESTION SPÉCIALE support.aide_en_ligne.agent
-    if ((moduleKey === 'support.aide_en_ligne' || moduleKey === 'aide') && optionKey === 'agent') {
+    if (moduleKey === 'support.aide_en_ligne' && optionKey === 'agent') {
       const opts = (newModuleState.options ?? {}) as Record<string, unknown>;
       if (enabled) {
         // ✅ ACTIVATION agent support → forcer level: 1 (SA1) si absent
