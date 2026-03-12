@@ -34,6 +34,7 @@ export default function StatsTabContent() {
   const { activeTab, setActiveTab } = useStatsHub();
   const { hasModule } = usePermissions();
   const { getShortLabel } = useModuleLabels();
+  const { mode: navMode } = useNavigationMode();
 
   // A: All stats sub-tabs map to real modules (pilotage.statistiques.*) → dynamic labels
   const statsTabs: (PillTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
