@@ -162,7 +162,7 @@ export function DataPreloadProvider({ children }: { children: ReactNode }) {
   const { agence } = useProfile();
   const { globalRole } = usePermissionsCtx();
   const { isRealUserImpersonation, impersonatedUser } = useImpersonation();
-  const { hasModuleOption, isLoading: isModulesLoading } = useEffectiveModules();
+  const { hasModule, hasModuleOption, isLoading: isModulesLoading } = useEffectiveModules();
   
   // État
   const [isPreloading, setIsPreloading] = useState(false);
