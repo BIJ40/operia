@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatEuros } from '@/apogee-connect/utils/formatters';
 import { Wrench, FolderCheck, Clock, TrendingUp, Calendar, AlertCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const TECH_KPIS = [
   { 
@@ -14,21 +15,24 @@ const TECH_KPIS = [
     label: 'Mon CA du mois', 
     icon: TrendingUp,
     format: 'currency',
-    color: 'bg-emerald-400/70'
+    color: 'bg-emerald-400/70',
+    tooltip: 'Votre chiffre d\'affaires HT personnel ce mois-ci'
   },
   { 
     key: 'dossiersTraites', 
     label: 'Dossiers terminés', 
     icon: FolderCheck,
     format: 'number',
-    color: 'bg-blue-400/70'
+    color: 'bg-blue-400/70',
+    tooltip: 'Nombre de dossiers que vous avez terminés ce mois'
   },
   { 
     key: 'interventionsRealisees', 
     label: 'Rendez-Vous', 
     icon: Wrench,
     format: 'number',
-    color: 'bg-amber-400/70'
+    color: 'bg-amber-400/70',
+    tooltip: 'Nombre de rendez-vous réalisés ce mois'
   },
 ];
 
