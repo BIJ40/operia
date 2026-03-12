@@ -929,13 +929,13 @@ export function ModulesMasterView() {
       `grid ${GRID_COLS} gap-x-4 gap-y-0 items-center py-2 px-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide`
     )}>
       <div>Nom</div>
-      <div className="text-center whitespace-nowrap px-2">Type</div>
-      <div className="text-center whitespace-nowrap px-2">Déployé</div>
-      <div className="text-center whitespace-nowrap px-2">Plan min.</div>
-      <div className="text-center whitespace-nowrap px-2">Effectif</div>
-      <div className="text-center whitespace-nowrap px-2">Rôle min.</div>
-      <div className="text-center whitespace-nowrap px-2">Privil.</div>
-      <div className="text-center whitespace-nowrap px-2">Lien</div>
+      <div className="whitespace-nowrap">Type</div>
+      <div className="whitespace-nowrap">Déployé</div>
+      <div className="whitespace-nowrap">Plan min.</div>
+      <div className="whitespace-nowrap">Effectif</div>
+      <div className="whitespace-nowrap">Rôle min.</div>
+      <div className="whitespace-nowrap">Privil.</div>
+      <div className="whitespace-nowrap">Lien</div>
     </div>
   );
 
