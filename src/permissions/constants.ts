@@ -25,10 +25,12 @@ export const BYPASS_MIN_LEVEL = GLOBAL_ROLES.platform_admin;
 
 /** Modules qui nécessitent que l'utilisateur ait une agence assignée */
 export const AGENCY_REQUIRED_MODULES: ModuleKey[] = [
-  // Legacy (kept for backward compat until COMPAT_MAP removal)
-  'agence', 'rh', 'parc', 'prospection',
-  // Hierarchical equivalents (additive — Phase 7)
+  // Legacy (kept for additive safety — Phase 8 Ajustement 1)
+  'agence', 'rh', 'parc',
+  // Hierarchical equivalents
   'pilotage.agence', 'organisation.salaries', 'organisation.parc',
+  // Prospection — unchanged
+  'prospection',
 ];
 
 // ============================================================================
