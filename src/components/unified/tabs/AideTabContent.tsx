@@ -57,15 +57,15 @@ export default function SupportHubTabContent() {
   ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {
-    return allTabs.filter(tab => {
-      if (!tab.requiresModule) return true;
-      return hasModule(tab.requiresModule);
+    return allTabs.map(tab => {
+      if (!tab.requiresModule) return tab;
+      return { ...tab, disabled: !hasModule(tab.requiresModule) };
     });
   }, [hasModule, allTabs]);
 
-  const defaultTab = visibleTabs[0]?.id as SupportSubTab ?? 'faq';
+  const defaultTab = (visibleTabs.find(t => !t.disabled)?.id as SupportSubTab) ?? 'faq';
   const [activeTab, setActiveTab] = useSessionState<SupportSubTab>('support_sub_tab', defaultTab);
-  const effectiveTab = visibleTabs.some(t => t.id === activeTab) ? activeTab : defaultTab;
+  const effectiveTab = (visibleTabs.find(t => t.id === activeTab && !t.disabled)) ? activeTab : defaultTab;
 
   // Filter guide sections by module access
   const visibleGuides = useMemo(() => {

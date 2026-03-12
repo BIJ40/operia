@@ -77,24 +77,25 @@ function CommercialInner() {
   ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {
-    return allTabs.filter(tab => {
+    return allTabs.map(tab => {
       const moduleKey = TAB_MODULE_MAP[tab.id];
-      if (moduleKey) return hasModule(moduleKey);
+      if (moduleKey) return { ...tab, disabled: !hasModule(moduleKey) };
       const optionKey = TAB_OPTION_MAP[tab.id];
-      return optionKey ? hasModuleOption('prospection', optionKey) : true;
+      if (optionKey) return { ...tab, disabled: !hasModuleOption('prospection', optionKey) };
+      return tab;
     });
   }, [hasModuleOption, hasModule, allTabs]);
 
-  const defaultTab = visibleTabs[0]?.id ?? 'apporteurs';
+  const defaultTab = visibleTabs.find(t => !t.disabled)?.id ?? 'apporteurs';
   const [activeTab, setActiveTab] = useSessionState<string>('commercial_sub_tab', defaultTab);
-  const effectiveTab = visibleTabs.some(t => t.id === activeTab) ? activeTab : defaultTab;
+  const effectiveTab = (visibleTabs.find(t => t.id === activeTab && !t.disabled)) ? activeTab : defaultTab;
 
   const handleVeilleSelectApporteur = useCallback((id: string, name: string) => {
     openApporteur(id, name);
     setActiveTab('apporteurs');
   }, [openApporteur, setActiveTab]);
 
-  if (visibleTabs.length === 0) {
+  if (visibleTabs.every(t => t.disabled)) {
     return <div className="py-6 px-4 text-muted-foreground text-sm">Aucun onglet accessible.</div>;
   }
 

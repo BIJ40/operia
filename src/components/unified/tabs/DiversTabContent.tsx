@@ -80,6 +80,7 @@ interface FolderTabConfig {
   id: string;
   label: string;
   icon: React.ElementType;
+  disabled?: boolean;
 }
 
 interface DraggableFolderTabsProps {
@@ -159,29 +160,32 @@ function DraggableFolderTabs({
                 key={tab.id}
                 id={tab.id}
                 isActive={isActive}
-                isDraggable={true}
-                onClick={() => onTabChange(tab.id)}
+                isDraggable={!tab.disabled}
+                onClick={() => !tab.disabled && onTabChange(tab.id)}
                 className={cn(
                   "flex items-center gap-2 px-5 py-3",
                   "rounded-t-2xl border-2 border-b-0",
                   "font-medium text-sm transition-all duration-200",
                   "relative -mb-[2px] z-10",
-                  isActive 
+                  tab.disabled && "opacity-40 cursor-not-allowed",
+                  !tab.disabled && isActive 
                     ? "bg-background text-foreground shadow-md" 
-                    : "bg-muted/50 border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
+                    : !tab.disabled 
+                      ? "bg-muted/50 border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
+                      : "bg-muted/30 border-transparent text-muted-foreground"
                 )}
                 style={{
-                  borderColor: isActive ? accentColor : undefined,
-                  boxShadow: isActive ? `0 -2px 8px -2px ${accentColor}40` : undefined,
+                  borderColor: isActive && !tab.disabled ? accentColor : undefined,
+                  boxShadow: isActive && !tab.disabled ? `0 -2px 8px -2px ${accentColor}40` : undefined,
                 }}
               >
                 <span 
                   className={cn(
                     "flex items-center justify-center w-6 h-6 rounded-lg",
-                    isActive ? "text-white" : "text-muted-foreground"
+                    isActive && !tab.disabled ? "text-white" : "text-muted-foreground"
                   )}
                   style={{
-                    backgroundColor: isActive ? accentColor : 'transparent',
+                    backgroundColor: isActive && !tab.disabled ? accentColor : 'transparent',
                   }}
                 >
                   <Icon className="w-3.5 h-3.5" />
@@ -244,25 +248,25 @@ function AdministratifSection() {
   ], [getShortLabel]);
 
   const visibleAdminTabs = useMemo(() => {
-    return adminTabsConfig.filter(tab => {
-      if (!tab.requiresModule) return true;
-      return hasModule(tab.requiresModule);
+    return adminTabsConfig.map(tab => {
+      if (!tab.requiresModule) return tab;
+      return { ...tab, disabled: !hasModule(tab.requiresModule) };
     });
   }, [hasModule, adminTabsConfig]);
 
-  const defaultTab = visibleAdminTabs[0]?.id as AdminSubTab ?? 'reunions';
+  const defaultTab = (visibleAdminTabs.find(t => !t.disabled)?.id as AdminSubTab) ?? 'reunions';
   const [subTab, setSubTab] = useSessionState<AdminSubTab>('outils_admin_sub', defaultTab);
   const defaultOrder = visibleAdminTabs.map(t => t.id);
   const [tabOrder, setTabOrder] = useSessionState<string[]>('outils_admin_order', defaultOrder);
   
-  // Ensure active tab is still visible
-  const effectiveSubTab = visibleAdminTabs.some(t => t.id === subTab) ? subTab : defaultTab;
+  // Ensure active tab is still enabled
+  const effectiveSubTab = (visibleAdminTabs.find(t => t.id === subTab && !t.disabled)) ? subTab : defaultTab;
 
   const handleReorder = useCallback((newOrder: string[]) => {
     setTabOrder(newOrder);
   }, [setTabOrder]);
 
-  if (visibleAdminTabs.length === 0) {
+  if (visibleAdminTabs.every(t => t.disabled)) {
     return (
       <div className="flex items-center justify-center py-16 text-muted-foreground">
         Aucun outil administratif activé.
@@ -318,9 +322,9 @@ export default function DiversTabContent() {
   ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {
-    return mainTabsConfig.filter(tab => {
-      if (!tab.requiresModule) return true;
-      return hasModule(tab.requiresModule);
+    return mainTabsConfig.map(tab => {
+      if (!tab.requiresModule) return tab;
+      return { ...tab, disabled: !hasModule(tab.requiresModule) };
     });
   }, [hasModule, mainTabsConfig]);
 

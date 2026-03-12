@@ -45,15 +45,15 @@ export default function OrganisationTabContent() {
   ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {
-    return allTabs.filter(tab => {
-      if (!tab.requiresModule) return true;
-      return hasModule(tab.requiresModule);
+    return allTabs.map(tab => {
+      if (!tab.requiresModule) return tab;
+      return { ...tab, disabled: !hasModule(tab.requiresModule) };
     });
   }, [hasModule, allTabs]);
 
-  const defaultTab = visibleTabs[0]?.id as OrganisationSubTab ?? 'collaborateurs';
+  const defaultTab = (visibleTabs.find(t => !t.disabled)?.id as OrganisationSubTab) ?? 'collaborateurs';
   const [activeTab, setActiveTab] = useSessionState<OrganisationSubTab>('organisation_sub_tab', defaultTab);
-  const effectiveTab = visibleTabs.some(t => t.id === activeTab) ? activeTab : defaultTab;
+  const effectiveTab = (visibleTabs.find(t => t.id === activeTab && !t.disabled)) ? activeTab : defaultTab;
 
   return (
     <div className="py-6 px-2 sm:px-4 space-y-4">
