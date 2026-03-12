@@ -55,9 +55,9 @@ export function usePermissionsRuntimeProof() {
       label: 'support.ticketing via hasModule (Path B)',
       path: 'usePermissions().hasModule',
       key: 'support.ticketing',
-      result: hasModule('support.ticketing' as ModuleKey),
+      result: hasModule('support.ticketing'),
       expected: hasTicketingLegacy,
-      pass: hasModule('support.ticketing' as ModuleKey) === hasTicketingLegacy,
+      pass: hasModule('support.ticketing') === hasTicketingLegacy,
     });
 
     tests.push({
