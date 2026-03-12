@@ -102,7 +102,7 @@ export const ROUTES = {
   // SUPPORT V2
   // ============================================
   support: {
-    index: '/support',                // SupportIndex.tsx - HUB page with Chat IA
+    index: '/support',                // Redirects to /?tab=support
     userTickets: '/support/mes-demandes', // UserTickets.tsx - Full ticket management
     console: '/support/console',      // AdminSupportTickets.tsx - SU Console (N1/N2/N5)
     faq: '/support/faq',

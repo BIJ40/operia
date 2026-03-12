@@ -108,8 +108,8 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
   // ==================== ACADEMY ====================
   {
     path: '/academy',
-    label: 'Academy Index',
-    component: 'AcademyIndex',
+    label: 'Academy (redirect)',
+    component: 'Navigate → /?tab=support',
     section: 'academy',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
@@ -235,8 +235,8 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
   // ==================== PILOTAGE ====================
   {
     path: '/agency',
-    label: 'Pilotage Index',
-    component: 'PilotageIndex',
+    label: 'Pilotage (redirect)',
+    component: 'Navigate → /?tab=pilotage',
     section: 'pilotage',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
@@ -351,8 +351,8 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
   },
   {
     path: '/agency/commercial',
-    label: 'Commercial',
-    component: 'CommercialPage',
+    label: 'Commercial (redirect)',
+    component: 'Navigate → /?tab=commercial',
     section: 'pilotage',
     guards: {
       roleGuard: { minRole: 'franchisee_admin' },
@@ -447,8 +447,8 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
   // ==================== RH ====================
   {
     path: '/rh',
-    label: 'RH Index',
-    component: 'RHIndex',
+    label: 'RH (redirect)',
+    component: 'Navigate → /?tab=organisation',
     section: 'rh',
     planRequired: 'PRO',
     guards: {
@@ -594,8 +594,8 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
   // Voir src/permissions/franchisorAccess.ts
   {
     path: '/hc-reseau',
-    label: 'Réseau Index',
-    component: 'ReseauIndex',
+    label: 'Réseau (redirect)',
+    component: 'Navigate → franchiseur interface',
     section: 'reseau',
     guards: {
       roleGuard: { minRole: 'franchisor_user' },
@@ -707,8 +707,8 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
   // Ticketing = overwrite-only module (user_modules), not activated by plan or role
   {
     path: '/projects',
-    label: 'Projects Index',
-    component: 'ProjectsIndex',
+    label: 'Projects (redirect)',
+    component: 'Navigate → /?tab=ticketing',
     section: 'projects',
     guards: {
       roleGuard: { minRole: 'base_user' },
