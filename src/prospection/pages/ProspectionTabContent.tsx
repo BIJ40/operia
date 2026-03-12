@@ -17,6 +17,7 @@ import { ApporteurComparisonPage } from '../pages/ApporteurComparisonPage';
 import { ProspectsUnifiedPage } from '../pages/ProspectsUnifiedPage';
 import { VeilleApporteursTab } from '../pages/VeilleApporteursTab';
 import { usePermissions } from '@/contexts/PermissionsContext';
+import { useModuleLabels } from '@/hooks/useModuleLabels';
 
 const RealisationsPage = lazy(() => import('@/realisations/pages/RealisationsPage'));
 
@@ -32,14 +33,6 @@ const TAB_OPTION_MAP: Record<string, string> = {
 const TAB_MODULE_MAP: Record<string, ModuleKey> = {
   realisations: 'commercial.realisations',
 };
-
-const ALL_TABS: PillTabConfig[] = [
-  { id: 'apporteurs', label: 'Suivi client', icon: Building2 },
-  { id: 'comparateur', label: 'Comparateur', icon: GitCompare },
-  { id: 'veille', label: 'Veille', icon: Radar },
-  { id: 'prospects', label: 'Prospects', icon: UserSearch },
-  { id: 'realisations', label: 'Réalisations', icon: Camera },
-];
 
 function ApporteursTabInner() {
   const { openApporteur } = useApporteurTabs();
@@ -63,10 +56,21 @@ function ApporteursTabInner() {
 function ProspectionInner() {
   const { hasModuleOption, hasModule } = usePermissions();
   const { openApporteur } = useApporteurTabs();
+  const { getShortLabel } = useModuleLabels();
+
+  // A: 'Réalisations' maps to module commercial.realisations → dynamic label
+  // B: 'Suivi client', 'Comparateur', 'Veille', 'Prospects' are prospection options, not standalone modules → static
+  const allTabs: PillTabConfig[] = useMemo(() => [
+    { id: 'apporteurs', label: 'Suivi client', icon: Building2 },
+    { id: 'comparateur', label: 'Comparateur', icon: GitCompare },
+    { id: 'veille', label: 'Veille', icon: Radar },
+    { id: 'prospects', label: 'Prospects', icon: UserSearch },
+    { id: 'realisations', label: getShortLabel('commercial.realisations', 'Réalisations'), icon: Camera },
+  ], [getShortLabel]);
 
   // Filtrer les onglets visibles selon les permissions
   const visibleTabs = useMemo(() => {
-    return ALL_TABS.filter(tab => {
+    return allTabs.filter(tab => {
       // Check module-level access
       const moduleKey = TAB_MODULE_MAP[tab.id];
       if (moduleKey) return hasModule(moduleKey);
@@ -74,7 +78,7 @@ function ProspectionInner() {
       const optionKey = TAB_OPTION_MAP[tab.id];
       return optionKey ? hasModuleOption('prospection', optionKey) : true;
     });
-  }, [hasModuleOption, hasModule]);
+  }, [hasModuleOption, hasModule, allTabs]);
 
   const [activeTab, setActiveTab] = useState(() => visibleTabs[0]?.id ?? 'apporteurs');
 
