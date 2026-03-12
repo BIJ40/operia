@@ -14,7 +14,7 @@
  * Seul N6 (superadmin) peut changer le statut is_deployed.
  */
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, Fragment } from 'react';
 import {
   useModuleRegistry,
   useUpdateModuleNode,
