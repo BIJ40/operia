@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Menu, ChevronDown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import type { HeaderNavGroup } from '@/config/headerNavigation';
@@ -13,6 +14,7 @@ interface MobileNavMenuProps {
 
 export function MobileNavMenu({ groups, activeTab, onSelect }: MobileNavMenuProps) {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -36,7 +38,11 @@ export function MobileNavMenu({ groups, activeTab, onSelect }: MobileNavMenuProp
                 <button
                   key={group.label}
                   type="button"
-                  onClick={() => { if (child.tab) onSelect(child.tab); setOpen(false); }}
+                  onClick={() => {
+                    if (child.path) navigate(child.path);
+                    else if (child.tab) onSelect(child.tab);
+                    setOpen(false);
+                  }}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
                     ${isGroupActive ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted'}`}
                 >
@@ -61,9 +67,13 @@ export function MobileNavMenu({ groups, activeTab, onSelect }: MobileNavMenuProp
                     const ChildIcon = child.icon;
                     return (
                       <button
-                        key={child.label}
+                        key={`${group.tab}-${child.subTabValue ?? child.path ?? child.label}`}
                         type="button"
-                        onClick={() => { if (child.tab) onSelect(child.tab); setOpen(false); }}
+                        onClick={() => {
+                          if (child.path) navigate(child.path);
+                          else if (child.tab) onSelect(child.tab);
+                          setOpen(false);
+                        }}
                         className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors
                           ${child.tab === activeTab ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
                       >
