@@ -16,6 +16,7 @@ const OrganisationTabContent = lazy(() => import('@/components/unified/tabs/Orga
 const AdminTabContent = lazy(() => import('@/components/unified/tabs/AdminTabContent'));
 const DocumentsTabContent = lazy(() => import('@/components/unified/tabs/DocumentsTabContent'));
 const SupportHubTabContent = lazy(() => import('@/components/unified/tabs/AideTabContent'));
+const TicketingTabContent = lazy(() => import('@/pages/ProjectsIndex'));
 
 function LoadingFallback() {
   return (
@@ -66,6 +67,12 @@ export function WorkspaceTabContent({ isN0User }: WorkspaceTabContentProps) {
         <TabsContent value="support" className="mt-0">
           <LocalErrorBoundary componentName="Support">
             <SupportHubTabContent />
+          </LocalErrorBoundary>
+        </TabsContent>
+
+        <TabsContent value="ticketing" className="mt-0">
+          <LocalErrorBoundary componentName="Ticketing">
+            <TicketingTabContent />
           </LocalErrorBoundary>
         </TabsContent>
 

@@ -17,7 +17,7 @@ import { useSearchParams } from 'react-router-dom';
 import { 
   Home, BarChart3, ShoppingCart, 
   Users, Headphones,
-  Loader2, Shield, FolderOpen,
+  Loader2, Shield, FolderOpen, Kanban,
 } from 'lucide-react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Tabs } from '@/components/ui/tabs';
@@ -114,6 +114,7 @@ function UnifiedWorkspaceContent() {
     { id: 'organisation', label: getShortLabel('organisation', 'Organisation'), icon: Users, requiresOption: { module: 'organisation.salaries' }, altModules: ['organisation.parc', 'organisation.apporteurs', 'organisation.plannings', 'organisation.reunions', 'pilotage.agence'] },
     { id: 'documents', label: getShortLabel('mediatheque', 'Documents'), icon: FolderOpen, requiresOption: { module: 'mediatheque.documents' } },
     { id: 'support', label: getShortLabel('support', 'Support'), icon: Headphones },
+    { id: 'ticketing', label: 'Ticketing', icon: Kanban, requiresOption: { module: 'ticketing' } },
     { id: 'admin', label: getShortLabel('admin', 'Admin'), icon: Shield, requiresOption: { module: 'admin_plateforme' } },
   ], [getShortLabel]);
   

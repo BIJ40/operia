@@ -39,6 +39,9 @@ export function isWorkspaceTabVisible(
   // Admin tab: role-only guard (handled separately by caller)
   if (tab.id === 'admin') return false; // non-admin never sees admin
 
+  // Ticketing: overwrite-only module — check via hasModule directly
+  if (tab.id === 'ticketing') return perms.hasModule('ticketing' as ModuleKey);
+
   // Check primary module
   const { module, option } = tab.requiresOption;
   if (option) {
