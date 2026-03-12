@@ -55,9 +55,40 @@ const DEFAULT_ACCENTS: Array<'blue' | 'purple' | 'green' | 'orange' | 'pink' | '
 interface PillTabsListProps {
   tabs: PillTabConfig[];
   className?: string;
+  variant?: 'pill' | 'switcher';
 }
 
-export function PillTabsList({ tabs, className }: PillTabsListProps) {
+export function PillTabsList({ tabs, className, variant = 'pill' }: PillTabsListProps) {
+  if (variant === 'switcher') {
+    return (
+      <TabsList className={cn(
+        "inline-flex items-center gap-0.5 bg-muted/30 rounded-lg border border-border/60 p-0.5 h-auto",
+        className
+      )}>
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isDisabled = tab.disabled === true;
+          return (
+            <TabsTrigger
+              key={tab.id}
+              value={tab.id}
+              disabled={isDisabled}
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-sm font-medium transition-all",
+                "text-muted-foreground bg-transparent border border-transparent",
+                "data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:border-border/50 data-[state=active]:text-foreground",
+                isDisabled && "opacity-50 cursor-not-allowed"
+              )}
+            >
+              <Icon className="w-4 h-4" />
+              <span className="hidden sm:inline">{tab.label}</span>
+            </TabsTrigger>
+          );
+        })}
+      </TabsList>
+    );
+  }
+
   return (
     <TabsList className={cn(
       "flex flex-wrap justify-center gap-2 bg-transparent h-auto p-0",
