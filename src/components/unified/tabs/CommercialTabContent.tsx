@@ -104,7 +104,7 @@ function CommercialInner() {
   return (
     <div className={navMode === 'header' ? 'pt-1 px-2 sm:px-4 space-y-3' : 'py-6 px-2 sm:px-4 space-y-4'}>
       <Tabs value={effectiveTab} onValueChange={setActiveTab}>
-        <PillTabsList tabs={visibleTabs} variant={navMode === 'header' ? 'switcher' : 'pill'} />
+        {navMode === 'tabs' && <PillTabsList tabs={visibleTabs} />}
 
         <TabsContent value="apporteurs" className="mt-4">
           <ApporteursTabInner />
