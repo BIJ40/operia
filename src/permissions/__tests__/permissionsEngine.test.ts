@@ -206,6 +206,21 @@ describe('getEffectiveModules', () => {
     expect(result.every(m => m.source === 'bypass')).toBe(true);
   });
 
+  it('bypass N5+ includes RPC keys not in MODULE_DEFINITIONS', () => {
+    const result = getEffectiveModules({
+      globalRole: 'superadmin',
+      enabledModules: {
+        'some.unknown.key' as any: { enabled: true, options: { foo: true } },
+      },
+      agencyId: null,
+    });
+    const unknown = result.find(m => m.id === 'some.unknown.key');
+    expect(unknown).toBeDefined();
+    expect(unknown?.enabled).toBe(true);
+    expect(unknown?.source).toBe('bypass');
+    expect(unknown?.options?.foo).toBe(true);
+  });
+
   it('disables agency modules when no agency', () => {
     const result = getEffectiveModules({
       globalRole: 'franchisee_admin',
@@ -231,6 +246,52 @@ describe('getEffectiveModules', () => {
     expect(guidesModule?.source).toBe('explicit');
     expect(guidesModule?.options?.apogee).toBe(true);
     expect(guidesModule?.options?.faq).toBe(false);
+  });
+
+  it('RPC key unknown to MODULE_DEFINITIONS is visible to hasAccess', () => {
+    const unknownKey = 'custom.new_feature' as any;
+    const result = getEffectiveModules({
+      globalRole: 'franchisee_admin',
+      enabledModules: {
+        [unknownKey]: { enabled: true, options: { beta: true } },
+      },
+      agencyId: 'agency-1',
+    });
+    const found = result.find(m => m.id === unknownKey);
+    expect(found).toBeDefined();
+    expect(found?.enabled).toBe(true);
+    expect(found?.source).toBe('explicit');
+    expect(found?.options?.beta).toBe(true);
+  });
+
+  it('complements with DEFAULT_MODULES_BY_ROLE for missing keys', () => {
+    const result = getEffectiveModules({
+      globalRole: 'franchisee_admin',
+      enabledModules: {
+        'support.guides': { enabled: true, options: { apogee: true } },
+      },
+      agencyId: 'agency-1',
+    });
+    // support.guides comes from RPC (explicit)
+    const guides = result.find(m => m.id === 'support.guides');
+    expect(guides?.source).toBe('explicit');
+    // pilotage.agence should come from defaults (franchisee_admin has it)
+    const agence = result.find(m => m.id === 'pilotage.agence');
+    expect(agence).toBeDefined();
+    expect(agence?.source).toBe('default');
+  });
+
+  it('does NOT override RPC key with DEFAULT_MODULES_BY_ROLE', () => {
+    const result = getEffectiveModules({
+      globalRole: 'franchisee_admin',
+      enabledModules: {
+        'support.guides': { enabled: false, options: {} },
+      },
+      agencyId: 'agency-1',
+    });
+    const guides = result.find(m => m.id === 'support.guides');
+    expect(guides?.enabled).toBe(false);
+    expect(guides?.source).toBe('explicit');
   });
 });
 
