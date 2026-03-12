@@ -122,6 +122,7 @@ export default function AdminHubContent() {
   const activeGestionAccent = activeGestionTab?.accent ? accentColors[activeGestionTab.accent] : undefined;
 
   return (
+    <DomainAccentProvider accent="red">
     <div className={navMode === 'header' ? 'pt-1 space-y-3' : 'py-6 space-y-6'}>
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         {/* Main Tabs - Style Pill or Switcher */}
