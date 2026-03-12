@@ -10,6 +10,7 @@ const db = supabase as any;
 
 export interface RealisationWithMeta extends Realisation {
   media_count: number;
+  cover_url: string | null;
 }
 
 export function useRealisations(search = '') {
@@ -37,19 +38,49 @@ export function useRealisations(search = '') {
       const ids = items.map(r => r.id);
       if (ids.length === 0) return [];
 
-      const { data: mediaStats } = await db
+      // Fetch all media for counts + first image per realisation
+      const { data: allMedia } = await db
         .from('realisation_media')
-        .select('realisation_id')
-        .in('realisation_id', ids);
+        .select('realisation_id, storage_path, sequence_order, media_role')
+        .in('realisation_id', ids)
+        .order('sequence_order', { ascending: true });
 
       const countMap = new Map<string, number>();
-      ((mediaStats || []) as any[]).forEach((m) => {
+      const coverPathMap = new Map<string, string>();
+
+      ((allMedia || []) as any[]).forEach((m) => {
         countMap.set(m.realisation_id, (countMap.get(m.realisation_id) || 0) + 1);
+        // Keep first image as cover (priority: cover role, then first by order)
+        if (!coverPathMap.has(m.realisation_id)) {
+          coverPathMap.set(m.realisation_id, m.storage_path);
+        } else if (m.media_role === 'cover') {
+          coverPathMap.set(m.realisation_id, m.storage_path);
+        }
       });
+
+      // Generate signed URLs for covers
+      const coverEntries = Array.from(coverPathMap.entries());
+      const coverUrlMap = new Map<string, string>();
+
+      if (coverEntries.length > 0) {
+        const paths = coverEntries.map(([, path]) => path);
+        const { data: signedData } = await supabase.storage
+          .from('realisation-media')
+          .createSignedUrls(paths, 3600);
+
+        if (signedData) {
+          signedData.forEach((item: any, idx: number) => {
+            if (item.signedUrl) {
+              coverUrlMap.set(coverEntries[idx][0], item.signedUrl);
+            }
+          });
+        }
+      }
 
       return items.map((r) => ({
         ...r,
         media_count: countMap.get(r.id) || 0,
+        cover_url: coverUrlMap.get(r.id) || null,
       }));
     },
     enabled: !!agencyId,
