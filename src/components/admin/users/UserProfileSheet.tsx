@@ -362,7 +362,7 @@ export const UserProfileSheet = memo(function UserProfileSheet({
                 Droits effectifs issus du moteur de permissions — ce que l'utilisateur peut réellement faire.
               </p>
                 <p className="text-sm text-muted-foreground italic">Chargement des droits effectifs…</p>
-              ) : activeModules.length > 0 ? (
+              {rpcModulesLoading ? (
                 <div className="space-y-2">
                   {activeModules.map(mod => {
                     const optLabels = getModuleOptionsLabels(mod.key);

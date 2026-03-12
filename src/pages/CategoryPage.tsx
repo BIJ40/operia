@@ -71,7 +71,7 @@ export default function CategoryPage({ scope }: CategoryPageProps) {
   const { hasGlobalRole, hasModuleOption, hasAccessToScope } = usePermissions();
   
   // V2: Vérification par rôle global + option module
-  const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('guides', 'edition');
+  const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('support.guides', 'edition');
   
   const getEditUrl = (url: string) => isEditMode ? `${url}?edit=true` : url;
   

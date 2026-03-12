@@ -311,7 +311,7 @@ export default function ApporteurGuide() {
   const { hasAccessToScope, hasGlobalRole, hasModuleOption } = usePermissions();
   
   // P0: Utiliser V2 - hasModuleOption au lieu de isAdmin
-  const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('guides', 'edition');
+  const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('support.guides', 'edition');
   const canDelete = hasGlobalRole('platform_admin');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');

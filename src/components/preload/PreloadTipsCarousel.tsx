@@ -55,17 +55,17 @@ export function PreloadTipsCarousel({
   useEffect(() => {
     const contextualTips: string[] = [];
     
-    // Ajouter les tips des modules actifs
-    if (hasModuleOption('stats', 'stats_hub') || hasModuleOption('agence', 'stats_hub')) {
-      contextualTips.push(...(TIPS_BY_MODULE.stats || []));
+    // Ajouter les tips des modules actifs (clés hiérarchiques)
+    if (hasModuleOption('pilotage.dashboard', 'stats_hub') || hasModuleOption('pilotage.agence', 'indicateurs')) {
+      contextualTips.push(...(TIPS_BY_MODULE['pilotage.dashboard'] || []));
     }
     
-    if (hasModuleOption('rh', 'collaborateurs')) {
-      contextualTips.push(...(TIPS_BY_MODULE.rh || []));
+    if (hasModuleOption('organisation.salaries', 'rh_viewer')) {
+      contextualTips.push(...(TIPS_BY_MODULE['organisation.salaries'] || []));
     }
     
-    if (hasModuleOption('guides', 'formations')) {
-      contextualTips.push(...(TIPS_BY_MODULE.academy || []));
+    if (hasModuleOption('support.guides', 'apogee')) {
+      contextualTips.push(...(TIPS_BY_MODULE['support.guides'] || []));
     }
     
     // Fallback sur les tips générales si aucune contextuelle
