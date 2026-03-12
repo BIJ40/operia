@@ -97,7 +97,7 @@ describe('Role Interface doctrine', () => {
       return keys;
     }
 
-    const allModuleGuardKeys = collectModuleGuardKeys(SITEMAP);
+    const allModuleGuardKeys = collectModuleGuardKeys(SITEMAP_ROUTES);
     for (const key of ROLE_INTERFACE_KEYS) {
       it(`${key} has no moduleGuard in routes`, () => {
         expect(allModuleGuardKeys).not.toContain(key);
