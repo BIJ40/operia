@@ -118,10 +118,11 @@ export const ROLE_HIERARCHY: Record<GlobalRole, number> = {
 // Edge functions can't import from src/, so this is a synced copy.
 // Last sync: 2026-03-08
 export const MODULE_MIN_ROLES: Partial<Record<ModuleKey, GlobalRole>> = {
+  // Legacy
   agence: 'franchisee_admin',
   stats: 'franchisee_admin',
-  rh: 'franchisee_admin',  // Aligned with MODULE_DEFINITIONS.minRole
-  parc: 'franchisee_admin', // Aligned with MODULE_DEFINITIONS.minRole
+  rh: 'franchisee_admin',
+  parc: 'franchisee_admin',
   divers_apporteurs: 'franchisee_admin',
   divers_plannings: 'franchisee_admin',
   divers_reunions: 'franchisee_admin',
@@ -133,6 +134,18 @@ export const MODULE_MIN_ROLES: Partial<Record<ModuleKey, GlobalRole>> = {
   planning_augmente: 'franchisee_admin',
   reseau_franchiseur: 'franchisor_user',
   admin_plateforme: 'platform_admin',
+  // Hierarchical (Phase 7)
+  'pilotage.agence': 'franchisee_admin',
+  'pilotage.dashboard': 'franchisee_admin',
+  'organisation.salaries': 'franchisee_admin',
+  'organisation.parc': 'franchisee_admin',
+  'organisation.apporteurs': 'franchisee_admin',
+  'organisation.plannings': 'franchisee_admin',
+  'organisation.reunions': 'franchisee_admin',
+  'mediatheque.documents': 'franchisee_admin',
+  'support.aide_en_ligne': 'base_user',
+  'support.guides': 'base_user',
+  'commercial.realisations': 'franchisee_admin',
 };
 
 // ============================================================================
