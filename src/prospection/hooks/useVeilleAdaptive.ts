@@ -271,9 +271,9 @@ export function useVeilleAdaptive() {
     // Filtre catégorie
     switch (activeFilter) {
       case 'dormants': result = result.filter(r => r.isDormant); break;
-      case 'en_baisse': result = result.filter(r => r.score >= 0 && r.score < 42); break;
-      case 'stables': result = result.filter(r => r.score >= 42 && r.score <= 58); break;
-      case 'en_hausse': result = result.filter(r => r.score > 58); break;
+      case 'en_baisse': result = result.filter(r => !r.isDormant && r.score >= 0 && r.score < 42); break;
+      case 'stables': result = result.filter(r => !r.isDormant && r.score >= 42 && r.score <= 58); break;
+      case 'en_hausse': result = result.filter(r => !r.isDormant && r.score > 58); break;
     }
 
     // Recherche
