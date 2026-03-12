@@ -33,11 +33,7 @@ export const MODULES = {
   'pilotage.incoherences': 'pilotage.incoherences',
   // (pilotage.dashboard removed — merged into pilotage.statistiques)
   'pilotage.agence': 'pilotage.agence',
-  // Commercial
-  'commercial.suivi_client': 'commercial.suivi_client',
-  'commercial.comparateur': 'commercial.comparateur',
-  'commercial.veille': 'commercial.veille',
-  'commercial.prospects': 'commercial.prospects',
+  // Commercial (suivi_client/comparateur/veille/prospects removed — ghost keys, gated by prospection module options)
   'commercial.realisations': 'commercial.realisations',
   // Organisation
   'organisation.salaries': 'organisation.salaries',
@@ -567,11 +563,7 @@ export const MODULE_SHORT_LABELS: Partial<Record<ModuleKey, string>> = {
   'pilotage.actions_a_mener': 'Actions',
   'pilotage.devis_acceptes': 'Devis',
   'pilotage.incoherences': 'Incohérences',
-  // Commercial
-  'commercial.suivi_client': 'Suivi client',
-  'commercial.comparateur': 'Comparateur',
-  'commercial.veille': 'Veille',
-  'commercial.prospects': 'Prospects',
+  // Commercial (ghost keys removed — gated by prospection module options)
   'commercial.realisations': 'Réalisations',
   // Organisation
   'organisation.salaries': 'Salariés',
