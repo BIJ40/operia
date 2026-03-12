@@ -9,21 +9,10 @@ import { GlobalRole, GLOBAL_ROLES } from './globalRoles';
 
 // Définition des modules alignés avec les onglets UI
 export const MODULES = {
-  // Modules V3 legacy (onglets existants)
-  agence: 'agence',
-  stats: 'stats',
-  rh: 'rh',
-  parc: 'parc',
-  divers_apporteurs: 'divers_apporteurs',
-  divers_plannings: 'divers_plannings',
-  divers_reunions: 'divers_reunions',
-  divers_documents: 'divers_documents',
-  guides: 'guides',
+  // Non-migrated legacy modules (still canonical)
   ticketing: 'ticketing',
-  aide: 'aide',
   prospection: 'prospection',
   planning_augmente: 'planning_augmente',
-  realisations: 'realisations',
   reseau_franchiseur: 'reseau_franchiseur',
   admin_plateforme: 'admin_plateforme',
   unified_search: 'unified_search',
