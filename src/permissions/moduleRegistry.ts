@@ -101,7 +101,7 @@ export function validateModuleDefinitions(
   
   for (const key of Object.keys(externalKeys)) {
     // Vérifier si c'est un module racine
-    if (validModuleKeys.has(key as ModuleKey)) {
+    if (isValidModuleKey(key)) {
       continue; // Module valide
     }
     
