@@ -416,7 +416,7 @@ export function DataPreloadProvider({ children }: { children: ReactNode }) {
     if (isPreloading || hasTriggeredRef.current) return;
     
     // Attendre que tout soit chargé
-    if (isAuthLoading || isModulesLoading) return;
+    if (isAuthLoading) return;
     
     // Vérifier les conditions
     if (shouldTriggerPreload()) {
