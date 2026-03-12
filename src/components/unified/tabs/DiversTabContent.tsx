@@ -245,7 +245,7 @@ const ADMIN_TABS_CONFIG: (FolderTabConfig & { requiresModule?: ModuleKey })[] = 
 ];
 
 function AdministratifSection() {
-  const { hasModule } = useEffectiveModules();
+  const { hasModule } = usePermissions();
   
   const visibleAdminTabs = useMemo(() => {
     return ADMIN_TABS_CONFIG.filter(tab => {
