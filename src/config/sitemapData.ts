@@ -590,6 +590,8 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
   },
 
   // ==================== RESEAU FRANCHISEUR ====================
+  // Interface de rôle (N3+) — accès piloté par rôle global, pas par module.
+  // Voir src/permissions/franchisorAccess.ts
   {
     path: '/hc-reseau',
     label: 'Réseau Index',
@@ -597,7 +599,6 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'reseau',
     guards: {
       roleGuard: { minRole: 'franchisor_user' },
-      moduleGuard: { moduleKey: 'reseau_franchiseur' },
     },
   },
   {
@@ -607,7 +608,6 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'reseau',
     guards: {
       roleGuard: { minRole: 'franchisor_user' },
-      moduleGuard: { moduleKey: 'reseau_franchiseur' },
     },
   },
   {
@@ -617,7 +617,6 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'reseau',
     guards: {
       roleGuard: { minRole: 'franchisor_user' },
-      moduleGuard: { moduleKey: 'reseau_franchiseur' },
     },
   },
   {
@@ -627,7 +626,6 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'reseau',
     guards: {
       roleGuard: { minRole: 'franchisor_user' },
-      moduleGuard: { moduleKey: 'reseau_franchiseur' },
     },
     isDynamic: true,
   },
@@ -638,7 +636,6 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'reseau',
     guards: {
       roleGuard: { minRole: 'franchisor_user' },
-      moduleGuard: { moduleKey: 'reseau_franchiseur' },
     },
   },
   {
@@ -648,7 +645,6 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'reseau',
     guards: {
       roleGuard: { minRole: 'franchisor_user' },
-      moduleGuard: { moduleKey: 'reseau_franchiseur' },
     },
     isDynamic: true,
   },
@@ -659,7 +655,6 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'reseau',
     guards: {
       roleGuard: { minRole: 'franchisor_user' },
-      moduleGuard: { moduleKey: 'reseau_franchiseur' },
     },
   },
   {
@@ -669,7 +664,6 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'reseau',
     guards: {
       roleGuard: { minRole: 'franchisor_user' },
-      moduleGuard: { moduleKey: 'reseau_franchiseur' },
     },
   },
   {
@@ -679,7 +673,6 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'reseau',
     guards: {
       roleGuard: { minRole: 'franchisor_user' },
-      moduleGuard: { moduleKey: 'reseau_franchiseur' },
     },
   },
   {
@@ -689,7 +682,6 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'reseau',
     guards: {
       roleGuard: { minRole: 'franchisor_user' },
-      moduleGuard: { moduleKey: 'reseau_franchiseur' },
     },
   },
   {
@@ -699,7 +691,6 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'reseau',
     guards: {
       roleGuard: { minRole: 'franchisor_admin' },
-      moduleGuard: { moduleKey: 'reseau_franchiseur' },
     },
   },
   {
@@ -709,7 +700,6 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'reseau',
     guards: {
       roleGuard: { minRole: 'franchisor_user' },
-      moduleGuard: { moduleKey: 'reseau_franchiseur' },
     },
   },
 

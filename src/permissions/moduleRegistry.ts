@@ -153,6 +153,15 @@ export function logValidationIssues(issues: ValidationIssue[]): void {
 export const PROTECTED_MODULES: ModuleKey[] = ['ticketing'];
 
 /**
+ * Modules qui sont en réalité des interfaces de rôle, pas des modules administrables.
+ * Ils restent dans MODULE_DEFINITIONS pour compatibilité technique mais ne doivent pas
+ * apparaître dans l'admin des modules standard.
+ */
+export const ROLE_INTERFACE_MODULES: ModuleKey[] = MODULE_DEFINITIONS
+  .filter(m => (m as any).roleInterface === true)
+  .map(m => m.key);
+
+/**
  * Modules activables UNIQUEMENT par overwrite utilisateur (user_modules).
  * Jamais activés par plan (plan_tier_modules) ni par rôle (DEFAULT_MODULES_BY_ROLE).
  */
@@ -174,3 +183,9 @@ export function isProtectedModule(moduleKey: ModuleKey): boolean {
   return PROTECTED_MODULES.includes(moduleKey);
 }
 
+/**
+ * Vérifie si un module est une interface de rôle (pas administrable)
+ */
+export function isRoleInterfaceModule(moduleKey: ModuleKey): boolean {
+  return ROLE_INTERFACE_MODULES.includes(moduleKey);
+}

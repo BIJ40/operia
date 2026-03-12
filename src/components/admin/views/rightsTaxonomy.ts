@@ -34,7 +34,8 @@ export const RIGHTS_CATEGORIES: RightsCategory[] = [
     'ticketing',
   ]},
   { id: 'admin', label: 'Admin', moduleKeys: [
-    'admin', 'admin_plateforme', 'reseau_franchiseur',
+    'admin', 'admin_plateforme',
+    // reseau_franchiseur retiré — interface de rôle, pas un module administrable
   ]},
 ];
 
@@ -70,7 +71,7 @@ const NAVIGATION_LABEL_FALLBACKS: Record<string, string> = {
   'organisation.plannings': 'Plannings',
   'organisation.reunions': 'Réunions',
   'support.aide_en_ligne': 'Aide en ligne',
-  reseau_franchiseur: 'Franchiseur',
+  // reseau_franchiseur retiré — interface de rôle
   // Legacy roots → business labels
   agence: 'Pilotage agence',
   rh: 'Salariés',
@@ -89,7 +90,7 @@ const LEGACY_LABELS: Partial<Record<string, string[]>> = {
   prospection: ['Commercial / Prospection'],
   admin_plateforme: ['Administration'],
   
-  reseau_franchiseur: ['Réseau Franchiseur'],
+  // reseau_franchiseur retiré — interface de rôle
   'support.aide_en_ligne': ['Aide'],
   // Legacy roots
   agence: ['Pilotage agence', 'Mon agence'],
