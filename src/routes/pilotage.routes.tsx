@@ -6,7 +6,7 @@ import { ModuleGuard } from "@/components/auth/ModuleGuard";
 import { Loader2 } from "lucide-react";
 
 // Lazy loaded pages
-const PilotageIndex = lazy(() => import("@/pages/PilotageIndex"));
+
 const IndicateursLayout = lazy(() => import("@/apogee-connect/pages/IndicateursLayout"));
 const IndicateursAccueil = lazy(() => import("@/apogee-connect/pages/IndicateursAccueil"));
 const StatsHub = lazy(() => import("@/apogee-connect/pages/StatsHub"));
