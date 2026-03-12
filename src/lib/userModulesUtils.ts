@@ -156,7 +156,7 @@ export function userModulesToEnabledModules(
     const legacyKey = HIERARCHICAL_TO_LEGACY[row.module_key];
     if (legacyKey) {
       // Hierarchical key in DB → also set legacy (hierarchical takes precedence)
-      result[legacyKey as ModuleKey] = value;
+      result[legacyKey] = value;
     }
   }
   

@@ -57,7 +57,7 @@ export function useUserFilters({ users, modifiedUsers, showDeactivated }: UseUse
 
       if (moduleFilter !== 'all') {
         const effectiveModules = modifiedUsers[user.id]?.enabled_modules ?? user.enabled_modules ?? {};
-        if (!isModuleEnabledForUser(effectiveModules, moduleFilter as ModuleKey)) return false;
+        if (!isModuleEnabledForUser(effectiveModules, moduleFilter)) return false;
       }
       
       return true;

@@ -16,9 +16,13 @@ type RpcRow = {
   options: unknown;
 };
 
-function normalizeOptions(raw: unknown): Record<string, any> {
+function normalizeOptions(raw: unknown): Record<string, boolean> {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
-  return raw as Record<string, any>;
+  const result: Record<string, boolean> = {};
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+    result[k] = v === true;
+  }
+  return result;
 }
 
 function upsertModule(
@@ -27,11 +31,11 @@ function upsertModule(
   enabled: boolean,
   options: unknown
 ) {
-  const key = moduleKey as ModuleKey;
-  acc[key] = {
+  const value: ModuleOptionsState = {
     enabled: enabled === true,
     options: normalizeOptions(options),
-  } as ModuleOptionsState as any;
+  };
+  acc[moduleKey] = value;
 }
 
 export type EffectiveModulesSource =
