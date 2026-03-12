@@ -235,8 +235,8 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
   // ==================== PILOTAGE ====================
   {
     path: '/agency',
-    label: 'Pilotage Index',
-    component: 'PilotageIndex',
+    label: 'Pilotage (redirect)',
+    component: 'Navigate → /?tab=pilotage',
     section: 'pilotage',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
