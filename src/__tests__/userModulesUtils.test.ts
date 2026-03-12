@@ -248,23 +248,23 @@ describe('enabledModulesToRows', () => {
 
 describe('isModuleEnabledInModules', () => {
   it('returns false for null modules', () => {
-    expect(isModuleEnabledInModules(null, 'agence')).toBe(false);
+    expect(isModuleEnabledInModules(null, 'pilotage.agence')).toBe(false);
   });
 
   it('returns false for missing module', () => {
-    expect(isModuleEnabledInModules({}, 'agence')).toBe(false);
+    expect(isModuleEnabledInModules({}, 'pilotage.agence')).toBe(false);
   });
 
   it('returns true for enabled module object', () => {
-    expect(isModuleEnabledInModules({ agence: { enabled: true } }, 'agence')).toBe(true);
+    expect(isModuleEnabledInModules({ 'pilotage.agence': { enabled: true } }, 'pilotage.agence')).toBe(true);
   });
 
   it('returns false for disabled module object', () => {
-    expect(isModuleEnabledInModules({ agence: { enabled: false } }, 'agence')).toBe(false);
+    expect(isModuleEnabledInModules({ 'pilotage.agence': { enabled: false } }, 'pilotage.agence')).toBe(false);
   });
 
   it('handles boolean shorthand true', () => {
-    expect(isModuleEnabledInModules({ agence: true as any }, 'agence')).toBe(true);
+    expect(isModuleEnabledInModules({ 'pilotage.agence': true as any }, 'pilotage.agence')).toBe(true);
   });
 });
 
