@@ -23,7 +23,7 @@ const ALL_SUPPORT_TABS: (PillTabConfig & { requiresModule?: ModuleKey })[] = [
   { id: 'aide-en-ligne', label: 'Aide en ligne', icon: Headphones, accent: 'blue', requiresModule: 'support.aide_en_ligne' },
   { id: 'guides', label: 'Guides', icon: BookOpen, accent: 'purple', requiresModule: 'support.guides' },
   { id: 'faq', label: 'FAQ', icon: HelpCircle, accent: 'green' },
-  { id: 'ticketing', label: 'Ticketing', icon: Ticket, accent: 'orange' },
+  { id: 'ticketing', label: 'Ticketing', icon: Ticket, accent: 'orange', requiresModule: 'ticketing' },
 ];
 
 /** Configuration des guides disponibles (extensible) */
@@ -89,18 +89,10 @@ export default function SupportHubTabContent() {
   const { hasModule } = usePermissions();
 
   const visibleTabs = useMemo(() => {
-    const tabs = ALL_SUPPORT_TABS.filter(tab => {
+    return ALL_SUPPORT_TABS.filter(tab => {
       if (!tab.requiresModule) return true;
       return hasModule(tab.requiresModule);
     });
-
-    // Phase 0 safety net: Ticketing doit toujours rester visible
-    if (!tabs.some(tab => tab.id === 'ticketing')) {
-      const ticketingTab = ALL_SUPPORT_TABS.find(tab => tab.id === 'ticketing');
-      if (ticketingTab) tabs.push(ticketingTab);
-    }
-
-    return tabs;
   }, [hasModule]);
 
   const defaultTab = visibleTabs[0]?.id as SupportSubTab ?? 'aide-en-ligne';

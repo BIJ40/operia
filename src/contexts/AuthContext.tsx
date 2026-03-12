@@ -405,6 +405,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return hasModuleOptionGuard('support.guides' as ModuleKey, 'helpconfort');
       case 'apogee':
         return hasModuleOptionGuard('support.guides' as ModuleKey, 'apogee');
+      // Ticketing — overwrite-only module
+      case 'ticketing':
+      case 'apogee_tickets':
+        return hasModuleGuard('ticketing' as ModuleKey);
       default:
         // Unknown scope = deny by default (secure)
         logAuth.warn(`hasAccessToScope: unknown scope "${scope}", denying access`);

@@ -612,8 +612,8 @@ export function canAccessTileGroup(
     case 'support':
       return caps.canAccessSupport;
     case 'projects':
-      // Accessible si le module ticketing est activé (vérifié au niveau tile)
-      return true;
+      // Ticketing = overwrite-only, vérifié au niveau module
+      return caps.canAccessSupport;
     case 'franchiseur':
       return caps.canAccessFranchiseur;
     case 'admin':
