@@ -105,10 +105,10 @@ export function usePermissionsRuntimeProof() {
       label: 'organisation.documents_legaux via hasModule (should be false — no legacy)',
       path: 'usePermissions().hasModule',
       key: 'organisation.documents_legaux',
-      result: hasModule('organisation.documents_legaux' as ModuleKey),
+      result: hasModule('organisation.documents_legaux'),
       // No legacy key exists for this, so it should be false unless explicitly granted
       expected: false,
-      pass: !hasModule('organisation.documents_legaux' as ModuleKey),
+      pass: !hasModule('organisation.documents_legaux'),
     });
 
     return tests;
