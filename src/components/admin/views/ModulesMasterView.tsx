@@ -906,8 +906,8 @@ export function ModulesMasterView() {
         <CardContent className="p-0">
           {headerRow}
 
-          {groupedCategories.map(({ category, nodes }) => {
-            if (nodes.length === 0) return null;
+          {groupedCategories.map(({ category, rootNode, nodes }) => {
+            if (nodes.length === 0 && !rootNode) return null;
             const isCategoryCollapsed = collapsedCategories.has(category.id);
 
             return (
@@ -917,6 +917,9 @@ export function ModulesMasterView() {
                   collapsed={isCategoryCollapsed}
                   onToggle={() => toggleCategory(category.id)}
                   moduleCount={nodes.filter((node) => node.depth === 1).length}
+                  rootNode={rootNode}
+                  onRenameRoot={handleRenameLabel}
+                  isUpdating={updateNode.isPending || propagate.isPending}
                 />
 
                 {!isCategoryCollapsed && nodes.map((node) => (
