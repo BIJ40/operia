@@ -382,6 +382,7 @@ export function ActionsConfigDialog({
     }
 
     queryClient.invalidateQueries({ queryKey: ['apogee-ticket-statuses'] });
+    setNewStatusIds([]);
     successToast('Statuts Kanban sauvegardés');
   };
 
