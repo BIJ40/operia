@@ -19,7 +19,7 @@ import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { ModuleKey } from '@/types/modules';
 import { resolveEffectiveModulesFromBackend } from '@/lib/effectiveModulesResolver';
-import { COMPAT_MAP } from '@/permissions/compatMap';
+
 
 export interface EffectiveModuleRow {
   module_key: string;
