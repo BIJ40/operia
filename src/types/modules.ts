@@ -81,41 +81,41 @@ export type ModuleKey = keyof typeof MODULES;
 
 // Sous-options par module
 export const MODULE_OPTIONS = {
-  agence: {
-    indicateurs: 'agence.indicateurs',
-    actions_a_mener: 'agence.actions_a_mener',
-    diffusion: 'agence.diffusion',
-    devis_acceptes: 'agence.devis_acceptes',
+  'pilotage.agence': {
+    indicateurs: 'pilotage.agence.indicateurs',
+    actions_a_mener: 'pilotage.agence.actions_a_mener',
+    diffusion: 'pilotage.agence.diffusion',
+    devis_acceptes: 'pilotage.agence.devis_acceptes',
   },
-  stats: {
-    stats_hub: 'stats.stats_hub',
-    exports: 'stats.exports',
+  'pilotage.dashboard': {
+    stats_hub: 'pilotage.dashboard.stats_hub',
+    exports: 'pilotage.dashboard.exports',
   },
-  rh: {
-    rh_viewer: 'rh.rh_viewer',
-    rh_admin: 'rh.rh_admin',
+  'organisation.salaries': {
+    rh_viewer: 'organisation.salaries.rh_viewer',
+    rh_admin: 'organisation.salaries.rh_admin',
   },
-  parc: {
-    vehicules: 'parc.vehicules',
-    epi: 'parc.epi',
-    equipements: 'parc.equipements',
+  'organisation.parc': {
+    vehicules: 'organisation.parc.vehicules',
+    epi: 'organisation.parc.epi',
+    equipements: 'organisation.parc.equipements',
   },
-  divers_apporteurs: {
-    consulter: 'divers_apporteurs.consulter',
-    gerer: 'divers_apporteurs.gerer',
+  'organisation.apporteurs': {
+    consulter: 'organisation.apporteurs.consulter',
+    gerer: 'organisation.apporteurs.gerer',
   },
-  divers_plannings: {},
-  divers_reunions: {},
-  divers_documents: {
-    consulter: 'divers_documents.consulter',
-    gerer: 'divers_documents.gerer',
-    corbeille_vider: 'divers_documents.corbeille_vider',
+  'organisation.plannings': {},
+  'organisation.reunions': {},
+  'mediatheque.documents': {
+    consulter: 'mediatheque.documents.consulter',
+    gerer: 'mediatheque.documents.gerer',
+    corbeille_vider: 'mediatheque.documents.corbeille_vider',
   },
-  guides: {
-    apogee: 'guides.apogee',
-    apporteurs: 'guides.apporteurs',
-    helpconfort: 'guides.helpconfort',
-    faq: 'guides.faq',
+  'support.guides': {
+    apogee: 'support.guides.apogee',
+    apporteurs: 'support.guides.apporteurs',
+    helpconfort: 'support.guides.helpconfort',
+    faq: 'support.guides.faq',
   },
   ticketing: {
     kanban: 'ticketing.kanban',
@@ -123,9 +123,9 @@ export const MODULE_OPTIONS = {
     manage: 'ticketing.manage',
     import: 'ticketing.import',
   },
-  aide: {
-    user: 'aide.user',
-    agent: 'aide.agent',
+  'support.aide_en_ligne': {
+    user: 'support.aide_en_ligne.user',
+    agent: 'support.aide_en_ligne.agent',
   },
   prospection: {
     dashboard: 'prospection.dashboard',
@@ -138,13 +138,13 @@ export const MODULE_OPTIONS = {
     optimize: 'planning_augmente.optimize',
     admin: 'planning_augmente.admin',
   },
-  realisations: {
-    view: 'realisations.view',
-    create: 'realisations.create',
-    edit: 'realisations.edit',
-    validate: 'realisations.validate',
-    publish_prepare: 'realisations.publish_prepare',
-    export: 'realisations.export',
+  'commercial.realisations': {
+    view: 'commercial.realisations.view',
+    create: 'commercial.realisations.create',
+    edit: 'commercial.realisations.edit',
+    validate: 'commercial.realisations.validate',
+    publish_prepare: 'commercial.realisations.publish_prepare',
+    export: 'commercial.realisations.export',
   },
   reseau_franchiseur: {
     dashboard: 'reseau_franchiseur.dashboard',
