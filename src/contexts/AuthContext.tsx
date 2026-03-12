@@ -387,29 +387,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   /**
    * Scope-to-module mapping for legacy hasAccessToScope checks.
-   * Each scope maps to a module (and optionally a required role/option).
+   * Single source of truth — delegates to module/option guards.
    */
   const hasAccessToScope = useCallback((scope: string): boolean => {
     // Bypass for platform_admin and above
     if (isAdmin) return true;
 
     switch (scope) {
-      // Pilotage Agence — module canonique: pilotage.agence
       case 'mes_indicateurs':
-        return hasModuleGuard('pilotage.agence' as ModuleKey);
-      // Sous-onglets Guides — module parent: support.guides + option spécifique
+        return hasModuleGuard('pilotage.agence');
       case 'apporteurs':
-        return hasModuleOptionGuard('support.guides' as ModuleKey, 'apporteurs');
+        return hasModuleOptionGuard('support.guides', 'apporteurs');
       case 'helpconfort':
-        return hasModuleOptionGuard('support.guides' as ModuleKey, 'helpconfort');
+        return hasModuleOptionGuard('support.guides', 'helpconfort');
       case 'apogee':
-        return hasModuleOptionGuard('support.guides' as ModuleKey, 'apogee');
-      // Ticketing — overwrite-only module
+        return hasModuleOptionGuard('support.guides', 'apogee');
       case 'ticketing':
       case 'apogee_tickets':
-        return hasModuleGuard('ticketing' as ModuleKey);
+        return hasModuleGuard('ticketing');
       default:
-        // Unknown scope = deny by default (secure)
         logAuth.warn(`hasAccessToScope: unknown scope "${scope}", denying access`);
         return false;
     }
