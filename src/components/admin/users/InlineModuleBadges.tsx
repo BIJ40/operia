@@ -116,7 +116,7 @@ export const InlineModuleBadges = memo(function InlineModuleBadges({
           return (
             <Badge key={key} className={cn("text-xs", MODULE_COLORS[key])}>
               <Icon className="w-3 h-3 mr-1" />
-              {MODULE_SHORT_LABELS[key]}
+              {getShortLabel(key)}
             </Badge>
           );
         })}
