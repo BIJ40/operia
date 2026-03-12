@@ -99,13 +99,10 @@ export default function AdminNotificationSender() {
     }
     
     if (targetType === 'agency' && selectedAgency) {
-      const agency = agencies.find(a => a.id === selectedAgency);
-      if (!agency) return [];
-      
       const { data } = await supabase
         .from('profiles')
         .select('id')
-        .eq('agence', agency.slug);
+        .eq('agency_id', selectedAgency);
       
       return data?.map(u => u.id) || [];
     }
