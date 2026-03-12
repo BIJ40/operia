@@ -52,7 +52,9 @@ export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClas
               onClick={() => setActiveTab('accueil')}
               className={`${pillBase} ${activeTab === 'accueil' ? pillActive : pillInactive}`}
             >
-              <Home className="w-4 h-4" />
+              <div className={`flex items-center justify-center w-7 h-7 rounded-lg transition-colors duration-200 ${activeTab === 'accueil' ? 'bg-primary/20' : 'bg-muted'}`}>
+                <Home className="w-4 h-4" />
+              </div>
               <span>Accueil</span>
             </button>
 
