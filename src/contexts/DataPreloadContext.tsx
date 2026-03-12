@@ -270,7 +270,7 @@ export function DataPreloadProvider({ children }: { children: ReactNode }) {
     }
     
     return true;
-  }, [user, isAuthLoading, isModulesLoading, effectiveAgence, hasStatsAccess]);
+  }, [user, isAuthLoading, effectiveAgence, hasStatsAccess]);
   
   // Fonction de préchargement principale
   const executePreload = useCallback(async (opts?: { showUI?: boolean }) => {
