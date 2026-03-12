@@ -123,7 +123,7 @@ describe('filterWorkspaceTabs', () => {
 });
 
 describe('filterSubTabs', () => {
-  const subTabs = [
+  const subTabs: { id: string; label: string; requiresModule?: any; disabled?: boolean }[] = [
     { id: 'stats', label: 'Stats', requiresModule: 'pilotage.statistiques' as any },
     { id: 'perf', label: 'Performance', requiresModule: 'pilotage.agence' as any },
     { id: 'actions', label: 'Actions', requiresModule: 'pilotage.agence' as any },
