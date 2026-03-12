@@ -32,6 +32,7 @@ const THEME_OPTIONS: { key: AppTheme; label: string; icon: React.ElementType }[]
 export function ProfileMenu({ tabButtonClass }: ProfileMenuProps) {
   const { user, logout } = useAuthCore();
   const { theme, setTheme } = useAppTheme();
+  const { mode: navMode, toggleMode: toggleNavMode } = useNavigationMode();
 
   return (
     <div className="flex items-end gap-2 shrink-0">
