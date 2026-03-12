@@ -75,7 +75,7 @@ par défaut**. Conséquence : un utilisateur STARTER accédait aux fonctionnalit
 | `ticketing` | RC | MODULES, MODULE_DEFINITIONS, plan_tier_modules, module_registry | ✅ hasModule | PilotageTabContent, UnifiedWorkspace, PermissionsRuntimeProof | Conservée |
 | `prospection` | RC | MODULES, MODULE_DEFINITIONS, plan_tier_modules, module_registry | ✅ hasModule + hasModuleOption | ProspectionTabContent | Conservée |
 | `planning_augmente` | ND | MODULES, MODULE_DEFINITIONS, module_registry | ❌ deployed=false | — | Conservée (à surveiller) |
-| `reseau_franchiseur` | RC | MODULES, MODULE_DEFINITIONS, plan_tier_modules, module_registry | ✅ hasModule | UnifiedWorkspace, navigationStructure | Conservée |
+| `reseau_franchiseur` | **RI** | MODULES, MODULE_DEFINITIONS (roleInterface:true) | ✅ canAccessFranchisorInterface | franchisorAccess.ts, navigationStructure | **Interface de rôle** (§7) |
 | `admin_plateforme` | RC | MODULES, MODULE_DEFINITIONS, plan_tier_modules, module_registry | ✅ hasModule | UnifiedWorkspace, navigationStructure | Conservée |
 | `unified_search` | INT | MODULES, MODULE_DEFINITIONS, module_registry | ❌ interne | Exclu de PLAN_VISIBLE_MODULES | Conservée |
 | `pilotage.statistiques` | ST | MODULES, SHARED_MODULE_KEYS, plan_tier_modules, module_registry | ✅ hasModule | PilotageTabContent (gate onglet Stats) | Conservée |
