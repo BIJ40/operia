@@ -206,7 +206,7 @@ export const InlineModuleBadges = memo(function InlineModuleBadges({
                       isEnabled ? "text-primary" : "text-muted-foreground"
                     )} />
                     <span className={cn(!isEnabled && "text-muted-foreground")}>
-                      {MODULE_SHORT_LABELS[key]}
+                      {getShortLabel(key)}
                     </span>
                     {isFromPlan && isEnabled && (
                       <span className="text-[10px] text-muted-foreground bg-muted px-1 rounded">
