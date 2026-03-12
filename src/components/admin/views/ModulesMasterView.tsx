@@ -960,7 +960,7 @@ export function ModulesMasterView() {
                 const isCategoryCollapsed = collapsedCategories.has(category.id);
 
                 return (
-                  <React.Fragment key={category.id}>
+                  <Fragment key={category.id}>
                     <CategoryHeaderRow
                       category={category}
                       collapsed={isCategoryCollapsed}
