@@ -91,4 +91,52 @@ describe('Agency source of truth: agency_id', () => {
     const withoutAgency = getUsersWithoutAgency(mockProfiles);
     expect(withoutAgency.find(u => u.id === 'u5')).toBeDefined();
   });
+
+  it('assignment mutation must update agency_id (not just agence slug)', () => {
+    // Simulate what handleAssignUser should produce
+    const assignUser = (user: MockProfile, targetAgencyId: string, targetSlug: string) => ({
+      ...user,
+      agency_id: targetAgencyId,
+      agence: targetSlug,
+    });
+
+    const u4assigned = assignUser(mockProfiles[3], AGENCY_UUID, 'lyon');
+    expect(u4assigned.agency_id).toBe(AGENCY_UUID);
+    expect(u4assigned.agence).toBe('lyon');
+
+    // After assignment, user appears in the team
+    const updatedProfiles = mockProfiles.map(u => u.id === 'u4' ? u4assigned : u);
+    const lyonTeam = getUsersForAgency(updatedProfiles, AGENCY_UUID);
+    expect(lyonTeam.find(u => u.id === 'u4')).toBeDefined();
+  });
+
+  it('unassignment sets agency_id to null', () => {
+    const unassign = (user: MockProfile) => ({
+      ...user,
+      agency_id: null,
+      agence: null,
+    });
+
+    const u1unassigned = unassign(mockProfiles[0]);
+    expect(u1unassigned.agency_id).toBeNull();
+
+    const updatedProfiles = mockProfiles.map(u => u.id === 'u1' ? u1unassigned : u);
+    const lyonTeam = getUsersForAgency(updatedProfiles, AGENCY_UUID);
+    expect(lyonTeam.find(u => u.id === 'u1')).toBeUndefined();
+    
+    const withoutAgency = getUsersWithoutAgency(updatedProfiles);
+    expect(withoutAgency.find(u => u.id === 'u1')).toBeDefined();
+  });
+
+  it('notification targeting by agency_id finds correct users', () => {
+    // Simulates AdminNotificationSender logic: filter by agency_id
+    const getTargetUsersForAgency = (users: MockProfile[], agencyId: string) =>
+      users.filter(u => u.agency_id === agencyId).map(u => u.id);
+
+    const lyonTargets = getTargetUsersForAgency(mockProfiles, AGENCY_UUID);
+    expect(lyonTargets).toContain('u1');
+    expect(lyonTargets).toContain('u2');
+    expect(lyonTargets).toContain('u6'); // has agency_id but no slug
+    expect(lyonTargets).not.toContain('u5'); // has slug but no agency_id
+  });
 });
