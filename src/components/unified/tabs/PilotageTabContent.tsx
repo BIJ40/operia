@@ -11,6 +11,7 @@ import { useSessionState } from '@/hooks/useSessionState';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { ModuleKey } from '@/types/modules';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
+import { useNavigationMode } from '@/hooks/useNavigationMode';
 
 // Lazy loaded
 const StatsTabContent = lazy(() => import('@/components/unified/tabs/StatsTabContent'));
