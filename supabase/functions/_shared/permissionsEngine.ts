@@ -27,28 +27,18 @@ export type GlobalRole =
   | 'superadmin';
 
 // ModuleKey V3 — aligné avec src/types/modules.ts
-// Legacy + hierarchical keys (Phase 7 additive migration)
+// Legacy + hierarchical keys (Phase 10 — legacy removed)
 export type ModuleKey = 
-  // Legacy
-  | 'agence'
-  | 'stats'
-  | 'rh'
-  | 'parc'
-  | 'divers_apporteurs'
-  | 'divers_plannings'
-  | 'divers_reunions'
-  | 'divers_documents'
-  | 'guides'
+  // Non-migrated legacy (still canonical)
   | 'ticketing'
-  | 'aide'
   | 'prospection'
   | 'planning_augmente'
   | 'reseau_franchiseur'
   | 'admin_plateforme'
   | 'unified_search'
-  // Hierarchical (Phase 7)
+  // Hierarchical (Phase 7+10)
   | 'pilotage.agence'
-  | 'pilotage.dashboard'
+  | 'pilotage.statistiques'
   | 'organisation.salaries'
   | 'organisation.parc'
   | 'organisation.apporteurs'
