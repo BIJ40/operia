@@ -661,7 +661,7 @@ function CategoryHeaderRow({
   };
 
   return (
-    <div className={cn(`grid ${GRID_COLS} gap-2 items-center py-2.5 px-3 border-b border-border bg-muted/20`)}>
+    <div className={cn(`grid ${GRID_COLS} gap-x-4 gap-y-0 items-center py-2.5 px-3 border-b border-border bg-muted/20`)}>
       <div className="flex items-center gap-2 min-w-0">
         <button
           type="button"
