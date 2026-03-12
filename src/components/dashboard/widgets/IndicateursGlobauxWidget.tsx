@@ -26,6 +26,7 @@ const KPI_CONFIG: Array<{
   format: 'currency' | 'percent' | 'number' | 'days'; 
   accent: AccentThemeKey;
   icon: string;
+  tooltip: string;
   getValue: (result: any) => number | null;
 }> = [
   { 
@@ -35,6 +36,7 @@ const KPI_CONFIG: Array<{
     format: 'currency', 
     accent: 'blue',
     icon: '€',
+    tooltip: 'Chiffre d\'affaires HT total sur la période sélectionnée (somme des factures)',
     getValue: (r) => r?.value ?? null
   },
   { 
@@ -44,6 +46,7 @@ const KPI_CONFIG: Array<{
     format: 'percent', 
     accent: 'green',
     icon: '📈',
+    tooltip: 'Pourcentage de devis transformés en factures (nb factures / nb devis × 100)',
     getValue: (r) => r?.value ?? null
   },
   { 
@@ -53,6 +56,7 @@ const KPI_CONFIG: Array<{
     format: 'currency', 
     accent: 'pink',
     icon: '🛒',
+    tooltip: 'Montant moyen HT par dossier facturé (CA HT / nb factures)',
     getValue: (r) => r?.value ?? null
   },
   { 
@@ -62,6 +66,7 @@ const KPI_CONFIG: Array<{
     format: 'number', 
     accent: 'purple',
     icon: '📁',
+    tooltip: 'Nombre de dossiers créés sur la période',
     getValue: (r) => r?.value ?? null
   },
   { 
@@ -71,6 +76,7 @@ const KPI_CONFIG: Array<{
     format: 'number', 
     accent: 'orange',
     icon: '📄',
+    tooltip: 'Nombre total de devis émis sur la période',
     getValue: (r) => r?.value ?? null
   },
 ];
