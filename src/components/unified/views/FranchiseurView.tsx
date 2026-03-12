@@ -203,7 +203,7 @@ function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FranchiseurTab)} className="flex flex-col h-screen">
         {/* Tab bar fixe en haut */}
         <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
-          <div className="container mx-auto max-w-[1400px] px-4 pt-3 pb-0">
+          <div className="container mx-auto max-w-7xl px-4 pt-3 pb-0">
             <div className="flex items-end justify-between gap-4">
               <DndContext
                 sensors={sensors}
