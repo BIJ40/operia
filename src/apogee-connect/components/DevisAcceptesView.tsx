@@ -86,7 +86,7 @@ function ColumnFilterPopover({
               className="h-7 text-xs"
             />
           </div>
-          <ScrollArea className="max-h-48">
+          <ScrollArea className="h-48 overflow-y-auto">
             <div className="p-1">
               {filtered.length === 0 ? (
                 <p className="text-xs text-muted-foreground text-center py-2">Aucun résultat</p>
