@@ -35,9 +35,20 @@ export function WorkspaceNavLinks({ activeTab }: WorkspaceNavLinksProps) {
   const navigate = useNavigate();
   const { globalRole, hasModule, hasModuleOption } = usePermissions();
   const effectiveAuth = useEffectiveAuth();
+  const { getShortLabel } = useModuleLabels();
   
   const effectiveIsPlatformAdmin = effectiveAuth.globalRole === 'superadmin' || effectiveAuth.globalRole === 'platform_admin';
   const realIsPlatformAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
+
+  const allTabs: TabConfig[] = useMemo(() => [
+    { id: 'accueil', label: 'Accueil', icon: Home },
+    { id: 'pilotage', label: getShortLabel('pilotage', 'Pilotage'), icon: BarChart3, requiresOption: { module: 'pilotage.statistiques' }, altModules: ['pilotage.agence'] },
+    { id: 'commercial', label: getShortLabel('commercial', 'Commercial'), icon: ShoppingCart, requiresOption: { module: 'prospection' }, altModules: ['pilotage.agence', 'commercial.realisations'] },
+    { id: 'organisation', label: getShortLabel('organisation', 'Organisation'), icon: Users, requiresOption: { module: 'organisation.salaries' }, altModules: ['organisation.parc', 'organisation.apporteurs', 'organisation.plannings', 'organisation.reunions', 'pilotage.agence'] },
+    { id: 'documents', label: getShortLabel('mediatheque', 'Documents'), icon: FolderOpen, requiresOption: { module: 'mediatheque.documents' } },
+    { id: 'support', label: getShortLabel('support', 'Support'), icon: Headphones },
+    { id: 'admin', label: getShortLabel('admin', 'Admin'), icon: Shield, requiresOption: { module: 'admin_plateforme' } },
+  ], [getShortLabel]);
 
   const permCheckers = useMemo(() => ({
     hasModule: hasModule as (key: any) => boolean,
@@ -46,8 +57,8 @@ export function WorkspaceNavLinks({ activeTab }: WorkspaceNavLinksProps) {
   }), [hasModule, hasModuleOption, effectiveIsPlatformAdmin]);
 
   const visibleTabs = useMemo(
-    () => filterWorkspaceTabs(ALL_TABS, permCheckers, realIsPlatformAdmin),
-    [permCheckers, realIsPlatformAdmin]
+    () => filterWorkspaceTabs(allTabs, permCheckers, realIsPlatformAdmin),
+    [allTabs, permCheckers, realIsPlatformAdmin]
   );
 
   const handleClick = (tabId: UnifiedTab) => {
