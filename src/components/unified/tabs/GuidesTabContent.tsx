@@ -10,6 +10,7 @@ import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
 import { InternalApogeeLayout } from '@/components/guides/apogee/InternalApogeeLayout';
 import { useNavigationMode } from '@/hooks/useNavigationMode';
+import { DomainAccentProvider } from '@/contexts/DomainAccentContext';
 
 const ApporteurGuide = lazy(() => import('@/pages/ApporteurGuide'));
 const HelpConfort = lazy(() => import('@/pages/HelpConfort'));

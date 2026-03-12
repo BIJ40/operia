@@ -77,5 +77,6 @@ export default function DocumentsTabContent() {
         )}
       </Tabs>
     </div>
+    </DomainAccentProvider>
   );
 }
