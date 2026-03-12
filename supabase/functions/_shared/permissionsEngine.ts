@@ -93,7 +93,10 @@ export interface PermissionIssue {
 
 export const BYPASS_ROLES: GlobalRole[] = ['superadmin', 'platform_admin'];
 
-export const AGENCY_REQUIRED_MODULES: ModuleKey[] = ['agence', 'rh', 'parc', 'prospection'];
+export const AGENCY_REQUIRED_MODULES: ModuleKey[] = [
+  'agence', 'rh', 'parc', 'prospection',
+  'pilotage.agence', 'organisation.salaries', 'organisation.parc',
+];
 
 export const AGENCY_ROLES: GlobalRole[] = ['franchisee_user', 'franchisee_admin'];
 
