@@ -622,6 +622,7 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
       </td>
     </tr>
   );
+}
 
 function CategoryHeaderRow({
   category,
