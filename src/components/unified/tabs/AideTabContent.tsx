@@ -67,8 +67,8 @@ const DOC_SECTIONS = [
   },
   {
     id: 'hc-services',
-    label: 'HC Services',
-    description: 'Documentation HC Services',
+    label: 'Operia',
+    description: 'Documentation Operia',
     href: ROUTES.academy.hcServices,
     emoji: '🏠',
     accentClass: 'border-l-teal-500',
@@ -77,8 +77,8 @@ const DOC_SECTIONS = [
   },
   {
     id: 'hc-base',
-    label: 'Base documentaire',
-    description: 'Documents et ressources',
+    label: 'Base documentaire HelpConfort',
+    description: 'Documents et ressources HelpConfort',
     href: ROUTES.academy.documents,
     emoji: '📂',
     accentClass: 'border-l-purple-500',
