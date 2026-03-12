@@ -205,8 +205,8 @@ export default function Profile() {
   };
 
   const getEnabledModulesList = (): string[] => {
-    if (!enabledModules) return [];
-    return Object.entries(enabledModules)
+    if (!rawEnabledModules) return [];
+    return Object.entries(rawEnabledModules)
       .filter(([, value]) => {
         if (!value) return false;
         return typeof value === 'boolean' ? value : (value as any).enabled === true;
