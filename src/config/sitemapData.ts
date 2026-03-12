@@ -594,8 +594,8 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
   // Voir src/permissions/franchisorAccess.ts
   {
     path: '/hc-reseau',
-    label: 'Réseau Index',
-    component: 'ReseauIndex',
+    label: 'Réseau (redirect)',
+    component: 'Navigate → franchiseur interface',
     section: 'reseau',
     guards: {
       roleGuard: { minRole: 'franchisor_user' },
