@@ -13,7 +13,7 @@ import {
   FileText, Users2, Loader2, Users, CalendarDays, 
   Car, FolderOpen, Settings, Eye, Activity, Target, FileCheck, AlertTriangle
 } from 'lucide-react';
-import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { ModuleKey } from '@/types/modules';
 
 import {
