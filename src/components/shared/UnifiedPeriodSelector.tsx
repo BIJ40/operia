@@ -5,6 +5,7 @@ import type { DateRange } from "react-day-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { useDomainAccent, type DomainAccent } from '@/contexts/DomainAccentContext';
 import { 
   format, 
   startOfToday, 
