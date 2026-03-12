@@ -33,11 +33,7 @@ export const MODULES = {
   'pilotage.incoherences': 'pilotage.incoherences',
   // (pilotage.dashboard removed — merged into pilotage.statistiques)
   'pilotage.agence': 'pilotage.agence',
-  // Commercial
-  'commercial.suivi_client': 'commercial.suivi_client',
-  'commercial.comparateur': 'commercial.comparateur',
-  'commercial.veille': 'commercial.veille',
-  'commercial.prospects': 'commercial.prospects',
+  // Commercial (suivi_client/comparateur/veille/prospects removed — ghost keys, gated by prospection module options)
   'commercial.realisations': 'commercial.realisations',
   // Organisation
   'organisation.salaries': 'organisation.salaries',
