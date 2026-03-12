@@ -10,7 +10,7 @@
  */
 
 import { ReactNode, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+
 import { LoginFormCard } from '@/components/LoginFormCard';
 import { LoginDialog } from '@/components/LoginDialog';
 import { ImageModal } from '@/components/ImageModal';
@@ -21,8 +21,7 @@ import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useStorageQuota } from '@/hooks/use-storage-quota';
 import { useUserPresence } from '@/hooks/use-user-presence';
 import { useConnectionLogger } from '@/hooks/use-connection-logger';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Home } from 'lucide-react';
+import { WorkspaceNavLinks } from './WorkspaceNavLinks';
 import { cn } from '@/lib/utils';
 
 interface MinimalLayoutProps {
@@ -46,7 +45,7 @@ export function MinimalLayout({
   const { isAuthenticated, isAuthLoading } = useAuthCore();
   const { isImpersonating } = useImpersonation();
   const [loginOpen, setLoginOpen] = useState(false);
-  const navigate = useNavigate();
+  
   
   // Hooks for tracking
   useStorageQuota();
@@ -71,10 +70,6 @@ export function MinimalLayout({
     );
   }
 
-  const handleBack = () => {
-    navigate(`/?tab=${backTab}`);
-  };
-
   return (
     <AiUnifiedProvider>
       <div className={cn(
@@ -82,29 +77,9 @@ export function MinimalLayout({
         'bg-gradient-to-br from-background via-background to-muted/30',
         isImpersonating ? 'pt-10' : ''
       )}>
-        {/* Barre de retour minimaliste */}
+        {/* Navigation complète */}
         {showBackBar && (
-          <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border/50">
-            <div className="container max-w-7xl mx-auto px-4 py-2 flex items-center gap-3">
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={handleBack}
-                className="gap-2 text-muted-foreground hover:text-foreground"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span className="hidden sm:inline">{backLabel}</span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/')}
-                className="ml-auto text-muted-foreground hover:text-foreground"
-              >
-                <Home className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
+          <WorkspaceNavLinks activeTab={backTab} />
         )}
         
         {/* Contenu principal */}
