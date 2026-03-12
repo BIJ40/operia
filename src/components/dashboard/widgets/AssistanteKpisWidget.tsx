@@ -13,42 +13,42 @@ const ASSISTANTE_KPIS = [
     label: 'Devis créés', 
     icon: FileText,
     format: 'number',
-    color: 'from-blue-500 to-blue-600'
+    color: 'bg-blue-400/70'
   },
   { 
     key: 'facturesCrees', 
     label: 'Factures créées', 
     icon: Receipt,
     format: 'number',
-    color: 'from-green-500 to-green-600'
+    color: 'bg-emerald-400/70'
   },
   { 
     key: 'dossiersCrees', 
     label: 'Dossiers créés', 
     icon: FolderPlus,
     format: 'number',
-    color: 'from-purple-500 to-purple-600'
+    color: 'bg-violet-400/70'
   },
   { 
     key: 'rdvPlanifies', 
     label: 'RDV planifiés', 
     icon: Calendar,
     format: 'number',
-    color: 'from-orange-500 to-orange-600'
+    color: 'bg-amber-400/70'
   },
   { 
     key: 'dossiersEnCours', 
     label: 'Dossiers en cours', 
     icon: FolderOpen,
     format: 'number',
-    color: 'from-cyan-500 to-cyan-600'
+    color: 'bg-cyan-400/70'
   },
   { 
     key: 'clientsContactes', 
     label: 'Clients contactés', 
     icon: Users,
     format: 'number',
-    color: 'from-pink-500 to-pink-600'
+    color: 'bg-pink-400/70'
   },
 ];
 

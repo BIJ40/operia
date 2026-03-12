@@ -14,21 +14,21 @@ const TECH_KPIS = [
     label: 'Mon CA du mois', 
     icon: TrendingUp,
     format: 'currency',
-    color: 'from-green-500 to-green-600'
+    color: 'bg-emerald-400/70'
   },
   { 
     key: 'dossiersTraites', 
     label: 'Dossiers terminés', 
     icon: FolderCheck,
     format: 'number',
-    color: 'from-blue-500 to-blue-600'
+    color: 'bg-blue-400/70'
   },
   { 
     key: 'interventionsRealisees', 
     label: 'Rendez-Vous', 
     icon: Wrench,
     format: 'number',
-    color: 'from-orange-500 to-orange-600'
+    color: 'bg-amber-400/70'
   },
 ];
 
