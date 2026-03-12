@@ -60,6 +60,7 @@ const GESTION_SUB_TABS: FolderTabConfig[] = [
   { id: 'audit-apporteurs', label: 'Audit Apporteurs', icon: ScrollText, accent: 'green' },
   { id: 'agences', label: 'Agences', icon: Building2, accent: 'purple' },
   { id: 'modules', label: 'Droits', icon: Shield, accent: 'orange' },
+  { id: 'notes', label: 'Notes', icon: StickyNote, accent: 'orange' },
   { id: 'activity', label: 'Activité', icon: Activity, accent: 'green' },
 ];
 
