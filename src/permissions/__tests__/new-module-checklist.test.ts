@@ -14,13 +14,6 @@ import {
   isModuleEnabled,
   isModuleOptionEnabled,
 } from '@/types/modules';
-import { 
-  MODULES, 
-  MODULE_DEFINITIONS, 
-  ModuleKey, 
-  PLAN_VISIBLE_MODULES,
-  MODULE_OPTIONS,
-} from '@/types/modules';
 import { MODULE_OPTION_MIN_ROLES } from '../constants';
 import { SHARED_MODULE_KEYS, SHARED_MODULE_MIN_ROLES } from '../shared-constants';
 import { DEFAULT_MODULES_BY_ROLE } from '@/config/modulesByRole';
@@ -103,7 +96,7 @@ describe('Rule 6: Non-deployed modules not in DEFAULT_MODULES_BY_ROLE', () => {
   
   for (const mod of nonDeployed) {
     it(`${mod.key} (deployed=false) not enabled in any role defaults`, () => {
-      for (const [role, defaults] of Object.entries(DEFAULT_MODULES_BY_ROLE)) {
+      for (const [_role, defaults] of Object.entries(DEFAULT_MODULES_BY_ROLE)) {
         const entry = defaults[mod.key];
         const isEnabled = typeof entry === 'boolean' ? entry : typeof entry === 'object' ? entry?.enabled : false;
         expect(isEnabled).not.toBe(true);
@@ -159,22 +152,19 @@ describe('Rule 9: Shared min_roles alignment', () => {
 });
 
 // ============================================================================
-// RULE 10: Fail-open prevention — permissionsEngine must not use permissive defaults
+// RULE 10: Fail-open prevention — module resolution defaults to deny
 // ============================================================================
 
 describe('Rule 10: No permissive fallbacks in module resolution', () => {
   it('isModuleEnabled returns false for null enabledModules', () => {
-    const { isModuleEnabled } = await import('@/types/modules');
     expect(isModuleEnabled(null, 'ticketing')).toBe(false);
   });
 
   it('isModuleEnabled returns false for unknown key', () => {
-    const { isModuleEnabled } = await import('@/types/modules');
     expect(isModuleEnabled({}, 'ticketing')).toBe(false);
   });
 
   it('isModuleOptionEnabled returns false for null enabledModules', () => {
-    const { isModuleOptionEnabled } = await import('@/types/modules');
     expect(isModuleOptionEnabled(null, 'ticketing', 'kanban')).toBe(false);
   });
 });
