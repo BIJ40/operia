@@ -1,0 +1,2 @@
+INSERT INTO apogee_ticket_support_exchanges (ticket_id, sender_user_id, is_from_support, message)
+VALUES ('ce7d61e7-fedf-4b3f-b266-e11729eff7c8', '384280d0-80a0-413a-9834-55996e8f6e5e', true, 'Bonjour, nous avons identifié le problème. Pouvez-vous vider le cache de votre navigateur et réessayer ?')
