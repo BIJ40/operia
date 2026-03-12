@@ -10,9 +10,12 @@
  * 6. Marquage comme lu
  */
 
-import "https://deno.land/std@0.224.0/dotenv/load.ts";
+import { config } from "https://deno.land/std@0.224.0/dotenv/mod.ts";
 import { assertEquals, assertExists, assert } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+// Load .env without strict validation
+await config({ export: true, allowEmptyValues: true });
 
 const SUPABASE_URL = Deno.env.get("VITE_SUPABASE_URL")!;
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
