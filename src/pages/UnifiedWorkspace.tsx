@@ -110,7 +110,7 @@ function UnifiedWorkspaceContent() {
     { id: 'commercial', label: 'Commercial', icon: ShoppingCart, requiresOption: { module: 'prospection' }, altModules: ['pilotage.agence', 'commercial.realisations'] },
     { id: 'organisation', label: 'Organisation', icon: Users, requiresOption: { module: 'organisation.salaries' }, altModules: ['organisation.parc', 'organisation.apporteurs', 'organisation.plannings', 'organisation.reunions', 'pilotage.agence'] },
     { id: 'documents', label: 'Documents', icon: FolderOpen, requiresOption: { module: 'mediatheque.documents' } },
-    { id: 'support', label: 'Support', icon: Headphones, requiresOption: { module: 'support.aide_en_ligne' }, altModules: ['support.guides', 'ticketing'] },
+    { id: 'support', label: 'Support', icon: Headphones },
     { id: 'admin', label: 'Admin', icon: Shield, requiresOption: { module: 'admin_plateforme' } },
   ], []);
   

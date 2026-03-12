@@ -714,6 +714,7 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
   },
 
   // ==================== PROJECTS ====================
+  // Phase 0: ticketing accessible à tout utilisateur authentifié (plus de moduleGuard ticketing)
   {
     path: '/projects',
     label: 'Projects Index',
@@ -721,7 +722,6 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'projects',
     guards: {
       roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'ticketing' },
     },
   },
   {
@@ -731,7 +731,6 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'projects',
     guards: {
       roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'ticketing' },
     },
   },
   {
@@ -741,7 +740,6 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'projects',
     guards: {
       roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'ticketing' },
     },
   },
   {
@@ -751,7 +749,6 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'projects',
     guards: {
       roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'ticketing' },
     },
   },
   {
@@ -761,7 +758,6 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'projects',
     guards: {
       roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'ticketing' },
     },
   },
   {
@@ -771,7 +767,6 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'projects',
     guards: {
       roleGuard: { minRole: 'base_user' },
-      moduleGuard: { moduleKey: 'ticketing' },
     },
   },
   {
@@ -781,7 +776,6 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'projects',
     guards: {
       roleGuard: { minRole: 'franchisee_user' },
-      moduleGuard: { moduleKey: 'ticketing' },
     },
   },
   // Duplicate scan feature removed v0.8.3
