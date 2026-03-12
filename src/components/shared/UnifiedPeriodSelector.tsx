@@ -358,13 +358,13 @@ export function UnifiedPeriodSelector({
   };
 
   const PERIOD_HOVER: Record<DomainAccent, string> = {
-    blue: 'hover:bg-warm-blue/15 hover:text-warm-blue hover:border-warm-blue/40',
-    orange: 'hover:bg-warm-orange/15 hover:text-warm-orange hover:border-warm-orange/40',
-    green: 'hover:bg-warm-green/15 hover:text-warm-green hover:border-warm-green/40',
-    purple: 'hover:bg-warm-purple/15 hover:text-warm-purple hover:border-warm-purple/40',
-    pink: 'hover:bg-warm-pink/15 hover:text-warm-pink hover:border-warm-pink/40',
-    teal: 'hover:bg-warm-teal/15 hover:text-warm-teal hover:border-warm-teal/40',
-    red: 'hover:bg-warm-red/15 hover:text-warm-red hover:border-warm-red/40',
+    blue: 'hover:bg-muted/60 hover:text-foreground hover:border-border',
+    orange: 'hover:bg-muted/60 hover:text-foreground hover:border-border',
+    green: 'hover:bg-muted/60 hover:text-foreground hover:border-border',
+    purple: 'hover:bg-muted/60 hover:text-foreground hover:border-border',
+    pink: 'hover:bg-muted/60 hover:text-foreground hover:border-border',
+    teal: 'hover:bg-muted/60 hover:text-foreground hover:border-border',
+    red: 'hover:bg-muted/60 hover:text-foreground hover:border-border',
   };
 
   // Styles selon la variante
