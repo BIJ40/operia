@@ -70,6 +70,12 @@ export function WorkspaceTabContent({ isN0User }: WorkspaceTabContentProps) {
           </LocalErrorBoundary>
         </TabsContent>
 
+        <TabsContent value="ticketing" className="mt-0">
+          <LocalErrorBoundary componentName="Ticketing">
+            <TicketingTabContent />
+          </LocalErrorBoundary>
+        </TabsContent>
+
         <TabsContent value="admin" className="mt-0">
           <LocalErrorBoundary componentName="Administration">
             <AdminTabContent />

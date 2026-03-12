@@ -17,7 +17,7 @@ import { useSearchParams } from 'react-router-dom';
 import { 
   Home, BarChart3, ShoppingCart, 
   Users, Headphones,
-  Loader2, Shield, FolderOpen,
+  Loader2, Shield, FolderOpen, Kanban,
 } from 'lucide-react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Tabs } from '@/components/ui/tabs';
