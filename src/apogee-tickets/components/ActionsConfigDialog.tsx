@@ -679,7 +679,10 @@ export function ActionsConfigDialog({
                           variant="ghost"
                           size="icon"
                           className="shrink-0"
-                          onClick={() => setEditedStatuses(editedStatuses.filter((_, i) => i !== idx))}
+                          onClick={() => {
+                            setNewStatusIds((prev) => prev.filter((id) => id !== status.id));
+                            setEditedStatuses(editedStatuses.filter((_, i) => i !== idx));
+                          }}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
