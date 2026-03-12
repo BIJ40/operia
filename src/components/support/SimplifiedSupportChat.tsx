@@ -344,8 +344,9 @@ export function SimplifiedSupportChat({
     setIsLoading(true);
 
     try {
-      const ragResult = await getApogeeContext(userMessage.content);
-      logDebug('simplified-chat', 'RAG result', { hasContent: ragResult.hasContent, chunksCount: ragResult.chunks.length });
+      const domain = DOMAIN_OPTIONS.find(d => d.value === selectedDomain);
+      const ragContextType: RAGContextType = domain?.chatContext || 'auto';
+      const ragResult = await searchRAG({ query: userMessage.content, contextType: ragContextType });
 
       if (!ragResult.hasContent) {
         setMessages(prev => [...prev, {
