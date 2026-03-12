@@ -211,7 +211,7 @@ export default function SupportHubTabContent() {
             <SimplifiedSupportChat
               onTicketCreated={handleTicketCreated}
               onChatClosed={() => {}}
-              className="min-h-[340px] max-h-[400px]"
+              className="min-h-[250px] max-h-[280px]"
             />
           </CardContent>
         </Card>
