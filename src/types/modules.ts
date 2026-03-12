@@ -462,7 +462,21 @@ export const PLAN_VISIBLE_MODULES: ModuleKey[] = MODULE_DEFINITIONS
   .map(m => m.key);
 
 
+/**
+ * EnabledModules interface.
+ * 
+ * TRANSITIONAL (Phase 8): Named properties for legacy keys are KEPT because:
+ * 1. The RPC still returns legacy keys alongside hierarchical ones
+ * 2. AuthContext.tsx PRO enrichment reads .parc, .agence, .reseau_franchiseur directly
+ * 3. Removing them would require migrating all direct property access patterns
+ * 4. The index signature handles hierarchical keys (`enabledModules['pilotage.agence']`)
+ * 
+ * These named props will be removed when:
+ * - The RPC stops returning legacy keys
+ * - All consumers migrate to bracket notation
+ */
 export interface EnabledModules {
+  // Legacy named props (transitional — see comment above)
   agence?: boolean | ModuleOptionsState;
   stats?: boolean | ModuleOptionsState;
   rh?: boolean | ModuleOptionsState;
@@ -480,7 +494,7 @@ export interface EnabledModules {
   reseau_franchiseur?: boolean | ModuleOptionsState;
   admin_plateforme?: boolean | ModuleOptionsState;
   unified_search?: boolean | ModuleOptionsState;
-  /** Index signature for new dotted keys and dynamic access */
+  /** Index signature for hierarchical keys and dynamic access */
   [key: string]: boolean | ModuleOptionsState | undefined;
 }
 
