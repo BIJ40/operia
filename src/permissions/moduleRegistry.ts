@@ -47,7 +47,7 @@ export function getModuleOptions(moduleKey: ModuleKey): ModuleOptionDefinition[]
 export function isValidOptionPath(path: string): boolean {
   const lastDot = path.lastIndexOf('.');
   if (lastDot <= 0) return false;
-  const moduleKey = path.substring(0, lastDot) as ModuleKey;
+  const moduleKey = path.substring(0, lastDot);
   const optionKey = path.substring(lastDot + 1);
   if (!moduleKey || !optionKey) return false;
   if (!isValidModuleKey(moduleKey)) return false;
