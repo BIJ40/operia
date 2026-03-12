@@ -27,7 +27,6 @@ import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
 import { GlobalRole } from '@/types/globalRoles';
 import { VISIBLE_ROLE_LABELS, VISIBLE_ROLE_COLORS } from '@/lib/visibleRoleLabels';
 import { MODULE_DEFINITIONS } from '@/types/modules';
-import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
 import { ALL_USER_QUERY_PATTERNS } from '@/lib/queryKeys';
 import { WarmPageContainer } from '@/components/ui/warm-page-container';
 import { WarmCard } from '@/components/ui/warm-card';
