@@ -38,6 +38,7 @@ export interface UserProfile {
   first_name: string | null;
   last_name: string | null;
   agence: string | null;
+  agency_id: string | null;
   global_role: GlobalRole | null;
   enabled_modules: EnabledModules | null;
   role_agence: string | null;
