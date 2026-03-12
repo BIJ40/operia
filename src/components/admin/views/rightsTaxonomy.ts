@@ -18,13 +18,10 @@ export const RIGHTS_CATEGORIES: RightsCategory[] = [
   ]},
   { id: 'commercial', label: 'Commercial', moduleKeys: [
     'commercial', 'prospection', 'commercial.realisations',
-    'realisations',
   ]},
   { id: 'organisation', label: 'Organisation', moduleKeys: [
     'organisation', 'organisation.salaries', 'organisation.apporteurs',
     'organisation.plannings', 'organisation.reunions', 'organisation.parc',
-    'rh', 'salaries', 'parc', 'outils',
-    'divers_apporteurs', 'divers_plannings', 'divers_reunions', 'divers_documents',
   ]},
   { id: 'documents', label: 'Documents', moduleKeys: [
     'mediatheque', 'mediatheque.documents', 'documents',
