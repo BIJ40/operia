@@ -129,15 +129,23 @@ L'option `edition` était utilisée dans 10 fichiers via `hasModuleOption('guide
 | SupportSettings écrit `module_key='aide'` (hardcodé L184) | Existant | Faible | Fonctionne car DB attend legacy |
 | RPC renvoie clés legacy ET hiérarchiques | Attendu | Aucun | `UserProfileSheet` itère MODULE_DEFINITIONS |
 
-## 9. Recommandation prod : GO / NO-GO
+## 9. Validation finale
 
-### **GO CONDITIONNEL**
+### Build
+✅ **Build compile** — aucune erreur TypeScript, preview fonctionnelle.
 
+### Tests
+✅ **264 tests passés (14 suites)** — incluant les 36 tests `userModulesUtils` (dual-key, normalisation legacy, anti-doublon).
+
+## 10. Recommandation prod : GO / NO-GO
+
+### **GO**
+
+✅ Build compile sans erreur
+✅ 264/264 tests passent
 ✅ L'admin affiche les bons labels hiérarchiques métier
 ✅ Les deux vues (effective vs configurée) sont clairement séparées
 ✅ L'édition écrit les bonnes clés legacy en DB
 ✅ Les options manquantes (`edition`) sont formalisées
 ✅ Aucun doublon visuel possible
 ✅ Aucune modification RPC/DB
-
-⚠️ **Condition** : valider que le build compile et que les tests passent avant déploiement.
