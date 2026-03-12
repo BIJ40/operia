@@ -80,6 +80,7 @@ export default function AdminAgencies() {
   const navigate = useNavigate();
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [collaborators, setCollaborators] = useState<CollaboratorRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAgency, setEditingAgency] = useState<Agency | null>(null);
