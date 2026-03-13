@@ -36,10 +36,11 @@ try {
 }
 
 // Safe SW registration (fails silently in sandboxed iframes like Lovable preview)
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/registerSW.js').catch(() => {
-    // SW registration not available in sandboxed iframes
-  });
-}
+// Suppress SW registration errors in sandboxed iframes (Lovable preview)
+window.addEventListener('unhandledrejection', (e) => {
+  if (e.reason?.message?.includes('insecure') || e.reason?.name === 'SecurityError') {
+    e.preventDefault();
+  }
+});
 
 createRoot(document.getElementById("root")!).render(<App />);
