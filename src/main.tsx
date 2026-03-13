@@ -35,4 +35,12 @@ try {
   // ignore
 }
 
+// Safe SW registration (fails silently in sandboxed iframes like Lovable preview)
+// Suppress SW registration errors in sandboxed iframes (Lovable preview)
+window.addEventListener('unhandledrejection', (e) => {
+  if (e.reason?.message?.includes('insecure') || e.reason?.name === 'SecurityError') {
+    e.preventDefault();
+  }
+});
+
 createRoot(document.getElementById("root")!).render(<App />);
