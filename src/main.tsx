@@ -35,4 +35,13 @@ try {
   // ignore
 }
 
+// Safe SW registration (fails silently in sandboxed iframes like Lovable preview)
+if ('serviceWorker' in navigator) {
+  import('virtual:pwa-register').then(({ registerSW }) => {
+    registerSW({ immediate: true });
+  }).catch(() => {
+    // SW registration not available in this context
+  });
+}
+
 createRoot(document.getElementById("root")!).render(<App />);
