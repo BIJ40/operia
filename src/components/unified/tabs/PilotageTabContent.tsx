@@ -97,6 +97,12 @@ export default function PilotageTabContent() {
             <AnomaliesDevisDossierView />
           </Suspense>
         </TabsContent>
+
+        <TabsContent value="resultat" className="mt-4">
+          <Suspense fallback={<LoadingFallback />}>
+            <ResultatTabContent />
+          </Suspense>
+        </TabsContent>
       </Tabs>
     </div>
     </DomainAccentProvider>
