@@ -48,6 +48,7 @@ export default function PilotageTabContent() {
     { id: 'actions', label: getShortLabel('pilotage.actions_a_mener', 'Actions à mener'), icon: Settings, accent: 'orange', requiresModule: 'pilotage.actions_a_mener' },
     { id: 'devis-acceptes', label: getShortLabel('pilotage.devis_acceptes', 'Devis acceptés'), icon: FileCheck, accent: 'teal', requiresModule: 'pilotage.devis_acceptes' },
     { id: 'anomalies', label: getShortLabel('pilotage.incoherences', 'Incohérences'), icon: AlertTriangle, accent: 'pink', requiresModule: 'pilotage.incoherences' },
+    { id: 'resultat', label: getShortLabel('pilotage.resultat', 'Résultat'), icon: TrendingUp, accent: 'green', requiresModule: 'pilotage.resultat' },
   ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {
