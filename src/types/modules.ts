@@ -574,6 +574,7 @@ export const MODULE_SHORT_LABELS: Partial<Record<ModuleKey, string>> = {
   'pilotage.actions_a_mener': 'Actions',
   'pilotage.devis_acceptes': 'Devis',
   'pilotage.incoherences': 'Incohérences',
+  'pilotage.resultat': 'Résultat',
   // Commercial (ghost keys removed — gated by prospection module options)
   'commercial.realisations': 'Réalisations',
   // Organisation

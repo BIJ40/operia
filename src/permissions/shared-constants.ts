@@ -110,5 +110,6 @@ export const SHARED_MODULE_MIN_ROLES: Partial<Record<SharedModuleKey, SharedGlob
   'mediatheque.documents': 'franchisee_admin',
   'support.aide_en_ligne': 'base_user',
   'support.guides': 'franchisee_admin',
+  'pilotage.resultat': 'franchisee_admin',
   'commercial.realisations': 'franchisee_user',
 };
