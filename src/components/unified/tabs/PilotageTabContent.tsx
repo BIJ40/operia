@@ -4,7 +4,7 @@
  */
 
 import { lazy, Suspense, useMemo } from 'react';
-import { BarChart3, Activity, Settings, FileCheck, AlertTriangle, Loader2 } from 'lucide-react';
+import { BarChart3, Activity, Settings, FileCheck, AlertTriangle, TrendingUp, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
@@ -24,8 +24,9 @@ const ActionsAMenerTab = lazy(() =>
 );
 const DevisAcceptesView = lazy(() => import('@/apogee-connect/components/DevisAcceptesView'));
 const AnomaliesDevisDossierView = lazy(() => import('@/apogee-connect/components/AnomaliesDevisDossierView'));
+const ResultatTabContent = lazy(() => import('@/components/financial/ResultatTabContent'));
 
-type PilotageSubTab = 'stats' | 'performance' | 'actions' | 'devis-acceptes' | 'anomalies';
+type PilotageSubTab = 'stats' | 'performance' | 'actions' | 'devis-acceptes' | 'anomalies' | 'resultat';
 
 function LoadingFallback() {
   return (
@@ -47,6 +48,7 @@ export default function PilotageTabContent() {
     { id: 'actions', label: getShortLabel('pilotage.actions_a_mener', 'Actions à mener'), icon: Settings, accent: 'orange', requiresModule: 'pilotage.actions_a_mener' },
     { id: 'devis-acceptes', label: getShortLabel('pilotage.devis_acceptes', 'Devis acceptés'), icon: FileCheck, accent: 'teal', requiresModule: 'pilotage.devis_acceptes' },
     { id: 'anomalies', label: getShortLabel('pilotage.incoherences', 'Incohérences'), icon: AlertTriangle, accent: 'pink', requiresModule: 'pilotage.incoherences' },
+    { id: 'resultat', label: getShortLabel('pilotage.resultat', 'Résultat'), icon: TrendingUp, accent: 'green', requiresModule: 'pilotage.resultat' },
   ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {
@@ -93,6 +95,12 @@ export default function PilotageTabContent() {
         <TabsContent value="anomalies" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
             <AnomaliesDevisDossierView />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="resultat" className="mt-4">
+          <Suspense fallback={<LoadingFallback />}>
+            <ResultatTabContent />
           </Suspense>
         </TabsContent>
       </Tabs>
