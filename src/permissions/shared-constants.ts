@@ -50,6 +50,7 @@ export const SHARED_MODULE_KEYS = [
   'mediatheque.documents',
   'support.aide_en_ligne',
   'support.guides',
+  'pilotage.resultat',
   'commercial.realisations',
 ] as const;
 
