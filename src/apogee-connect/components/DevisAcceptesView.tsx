@@ -310,10 +310,10 @@ export default function DevisAcceptesView() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                        <MapPin className="w-3 h-3 shrink-0" />
-                        <span className="truncate max-w-[100px]">{d.ville}</span>
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <ZoneIndicator zones={[d.ville]} size={22} />
+                        <span className="text-xs text-muted-foreground truncate max-w-[80px]">{d.ville}</span>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1">
