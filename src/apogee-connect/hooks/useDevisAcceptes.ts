@@ -399,6 +399,7 @@ export function useDevisAcceptes() {
     setFilters,
     setSearch: (search: string) => setFilters(f => ({ ...f, search })),
     setUniversFilter: (univers: string[]) => setFilters(f => ({ ...f, univers })),
+    setZonesFilter: (zones: string[]) => setFilters(f => ({ ...f, zones })),
     setVillesFilter: (villes: string[]) => setFilters(f => ({ ...f, villes })),
     setApporteursFilter: (apporteurs: string[]) => setFilters(f => ({ ...f, apporteurs })),
     setStatusesFilter: (statuses: string[]) => setFilters(f => ({ ...f, statuses })),
