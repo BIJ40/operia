@@ -45,7 +45,8 @@ const canRegisterSW = () => {
 };
 
 if (canRegisterSW()) {
-  import('virtual:pwa-register').then(({ registerSW }) => {
+  // @ts-ignore - virtual module provided by vite-plugin-pwa
+  import('virtual:pwa-register').then(({ registerSW }: any) => {
     registerSW({ immediate: true });
   }).catch(() => {
     // SW registration not available
