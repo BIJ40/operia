@@ -42,9 +42,11 @@ export interface DossierDevisAccepte {
   nbDevis: number;
   totalHT: number;
   lastDevisDate: string | null;
+  /** Temps d'action prévu en minutes (durée totale des interventions planifiées) */
+  tempsAction: number | null;
 }
 
-export type SortField = 'totalHT' | 'lastDevisDate' | 'clientName' | 'projectRef';
+export type SortField = 'totalHT' | 'lastDevisDate' | 'clientName' | 'projectRef' | 'tempsAction';
 export type SortDirection = 'asc' | 'desc';
 
 interface Filters {
