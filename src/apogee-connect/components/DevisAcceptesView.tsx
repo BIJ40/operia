@@ -2,7 +2,7 @@
  * Vue complète des devis acceptés avec filtres, stats et table triable.
  */
 import { useState } from 'react';
-import { Search, ArrowUpDown, ArrowUp, ArrowDown, FileCheck, Loader2, CalendarCheck, Filter, X } from 'lucide-react';
+import { Search, ArrowUpDown, ArrowUp, ArrowDown, FileCheck, Loader2, CalendarCheck, Filter, X, MapPin, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +37,7 @@ function ColumnFilterPopover({
   currentSortField,
   sortDir,
   onSort,
+  icon: Icon,
 }: {
   label: string;
   options: string[];
@@ -46,6 +47,7 @@ function ColumnFilterPopover({
   currentSortField?: SortField;
   sortDir?: 'asc' | 'desc';
   onSort?: () => void;
+  icon?: React.ComponentType<{ className?: string }>;
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const filtered = searchTerm
@@ -63,11 +65,17 @@ function ColumnFilterPopover({
     <div className="flex items-center gap-0.5">
       {onSort && sortField && (
         <button onClick={onSort} className="flex items-center hover:text-foreground">
+          {Icon && <Icon className="w-3.5 h-3.5 mr-1 opacity-60" />}
           {label}
           <SortIcon field={sortField} current={currentSortField!} dir={sortDir!} />
         </button>
       )}
-      {!onSort && <span>{label}</span>}
+      {!onSort && (
+        <span className="flex items-center">
+          {Icon && <Icon className="w-3.5 h-3.5 mr-1 opacity-60" />}
+          {label}
+        </span>
+      )}
       <Popover>
         <PopoverTrigger asChild>
           <button className={cn(
@@ -136,6 +144,15 @@ const STATE_BADGE_COLORS: Record<string, string> = {
   'done': 'bg-muted text-muted-foreground',
   'canceled': 'bg-destructive/10 text-destructive',
 };
+
+/** Format minutes into readable duration */
+function formatDuration(minutes: number | null): string {
+  if (minutes === null || minutes === 0) return '—';
+  if (minutes < 60) return `${minutes}min`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m > 0 ? `${h}h${String(m).padStart(2, '0')}` : `${h}h`;
+}
 
 export default function DevisAcceptesView() {
   const {
@@ -221,20 +238,21 @@ export default function DevisAcceptesView() {
                     onSelectionChange={setApporteursFilter}
                   />
                 </TableHead>
-                <TableHead className="hidden md:table-cell">
-                  <ColumnFilterPopover
-                    label="Ville"
-                    options={allVilles}
-                    selected={filters.villes}
-                    onSelectionChange={setVillesFilter}
-                  />
-                </TableHead>
-                <TableHead className="hidden lg:table-cell">
+                <TableHead>
                   <ColumnFilterPopover
                     label="Univers"
                     options={allUnivers}
                     selected={filters.univers}
                     onSelectionChange={setUniversFilter}
+                  />
+                </TableHead>
+                <TableHead>
+                  <ColumnFilterPopover
+                    label="Zone"
+                    options={allVilles}
+                    selected={filters.villes}
+                    onSelectionChange={setVillesFilter}
+                    icon={MapPin}
                   />
                 </TableHead>
                 <TableHead>
@@ -249,6 +267,13 @@ export default function DevisAcceptesView() {
                 <TableHead className="cursor-pointer select-none text-right" onClick={() => setSort('totalHT')}>
                   <span className="flex items-center justify-end">Total HT <SortIcon field="totalHT" current={filters.sortField} dir={filters.sortDir} /></span>
                 </TableHead>
+                <TableHead className="cursor-pointer select-none" onClick={() => setSort('tempsAction')}>
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 opacity-60" />
+                    Temps
+                    <SortIcon field="tempsAction" current={filters.sortField} dir={filters.sortDir} />
+                  </span>
+                </TableHead>
                 <TableHead className="hidden md:table-cell cursor-pointer select-none" onClick={() => setSort('lastDevisDate')}>
                   <span className="flex items-center">Dernier devis <SortIcon field="lastDevisDate" current={filters.sortField} dir={filters.sortDir} /></span>
                 </TableHead>
@@ -257,7 +282,7 @@ export default function DevisAcceptesView() {
             <TableBody>
               {dossiers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
+                  <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
                     <FileCheck className="w-8 h-8 mx-auto mb-2 opacity-40" />
                     Aucun dossier trouvé pour ce filtre
                   </TableCell>
@@ -277,13 +302,18 @@ export default function DevisAcceptesView() {
                     </TableCell>
                     <TableCell>{d.clientName}</TableCell>
                     <TableCell className="hidden lg:table-cell text-muted-foreground">{d.commanditaireName || '—'}</TableCell>
-                    <TableCell className="hidden md:table-cell text-muted-foreground">{d.ville}</TableCell>
-                    <TableCell className="hidden lg:table-cell">
+                    <TableCell>
                       <div className="flex flex-wrap gap-1">
-                        {d.univers.map(u => (
+                        {d.univers.length > 0 ? d.univers.map(u => (
                           <Badge key={u} variant="secondary" className="text-[10px] capitalize">{u}</Badge>
-                        ))}
+                        )) : <span className="text-muted-foreground text-xs">—</span>}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        <MapPin className="w-3 h-3 shrink-0" />
+                        <span className="truncate max-w-[100px]">{d.ville}</span>
+                      </span>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1">
@@ -303,6 +333,15 @@ export default function DevisAcceptesView() {
                     </TableCell>
                     <TableCell className="text-center">{d.nbDevis}</TableCell>
                     <TableCell className="text-right font-semibold">{formatCurrency(d.totalHT)}</TableCell>
+                    <TableCell>
+                      <span className={cn(
+                        "inline-flex items-center gap-1 text-xs",
+                        d.tempsAction ? "text-foreground" : "text-muted-foreground"
+                      )}>
+                        <Clock className="w-3 h-3 opacity-50" />
+                        {formatDuration(d.tempsAction)}
+                      </span>
+                    </TableCell>
                     <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
                       {d.lastDevisDate ? new Date(d.lastDevisDate).toLocaleDateString('fr-FR') : '—'}
                     </TableCell>
