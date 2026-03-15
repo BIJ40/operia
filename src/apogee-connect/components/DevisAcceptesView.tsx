@@ -253,7 +253,6 @@ export default function DevisAcceptesView() {
                     options={allVilles}
                     selected={filters.villes}
                     onSelectionChange={setVillesFilter}
-                    icon={MapPin}
                   />
                 </TableHead>
                 <TableHead>
