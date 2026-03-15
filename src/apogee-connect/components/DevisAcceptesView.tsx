@@ -157,13 +157,13 @@ function formatDuration(minutes: number | null): string {
 
 export default function DevisAcceptesView() {
   const {
-    dossiers, totalDossiers, totalHT, allUnivers, allVilles, allApporteurs, allStatuses,
-    isLoading, filters, setSearch, setUniversFilter, setVillesFilter, setApporteursFilter, setStatusesFilter, setSort,
+    dossiers, totalDossiers, totalHT, allUnivers, allZones, allApporteurs, allStatuses,
+    isLoading, filters, setSearch, setUniversFilter, setZonesFilter, setApporteursFilter, setStatusesFilter, setSort,
   } = useDevisAcceptes();
 
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
-  const activeFilterCount = (filters.univers.length > 0 ? 1 : 0) + (filters.villes.length > 0 ? 1 : 0) + (filters.apporteurs.length > 0 ? 1 : 0) + (filters.statuses.length > 0 ? 1 : 0);
+  const activeFilterCount = (filters.univers.length > 0 ? 1 : 0) + (filters.zones.length > 0 ? 1 : 0) + (filters.apporteurs.length > 0 ? 1 : 0) + (filters.statuses.length > 0 ? 1 : 0);
 
   if (isLoading) {
     return (
