@@ -224,9 +224,11 @@ export function useDevisAcceptes() {
       const univers: string[] = projectData.universes || project?.universes || [];
       univers.forEach(u => universSet.add(u));
 
-      // Ville from project.data.searchFilters.ville or project.ville
+      // Ville & Zone
       const ville = projectData.searchFilters?.ville || project?.ville || '—';
       if (ville && ville !== '—') villesSet.add(ville);
+      const zone = villeToZone(ville);
+      if (zone) zonesSet.add(zone);
 
       // Track apporteur name
       const commanditaireNameStr = commanditaire?.nom || commanditaire?.raisonSociale || '';
