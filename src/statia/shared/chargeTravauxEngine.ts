@@ -27,6 +27,17 @@ export interface ChargeTravauxProjet {
   totalHeuresTech: number;
   nbTechs: number;
   devisHT: number;
+  // Enrichissement pilotage avancé
+  createdAt: string | null;
+  ageDays: number | null;
+  riskFlux: number;
+  riskData: number;
+  riskValue: number;
+  riskScoreGlobal: number;
+  dataQualityFlags: string[];
+  includedInForecastCalc: boolean;
+  includedInChargeCalc: boolean;
+  technicianIds: string[];
 }
 
 export interface ChargeTravauxUniversStats {
