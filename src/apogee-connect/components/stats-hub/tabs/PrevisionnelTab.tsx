@@ -315,10 +315,25 @@ export function PrevisionnelTab() {
                     </TooltipContent>
                   </Tooltip>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Layers className="h-5 w-5 text-purple-500" />
-                  <span className="text-lg font-semibold">{parUnivers.length}</span>
-                  <span className="text-muted-foreground">univers</span>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Layers className="h-5 w-5 text-purple-500" />
+                    <span className="text-lg font-semibold">{parUnivers.length}</span>
+                    <span className="text-muted-foreground">univers</span>
+                  </div>
+                  {data?.dataQuality && (
+                    <Badge
+                      variant="outline"
+                      className="text-xs"
+                      style={{
+                        borderColor: data.dataQuality.score >= 75 ? 'hsl(142, 76%, 36%)' : data.dataQuality.score >= 50 ? 'hsl(45, 93%, 47%)' : 'hsl(0, 84%, 60%)',
+                        color: data.dataQuality.score >= 75 ? 'hsl(142, 76%, 36%)' : data.dataQuality.score >= 50 ? 'hsl(45, 93%, 47%)' : 'hsl(0, 84%, 60%)',
+                      }}
+                    >
+                      <Shield className="h-3 w-3 mr-1" />
+                      Fiabilité {data.dataQuality.score}%
+                    </Badge>
+                  )}
                 </div>
               </div>
             </TooltipProvider>
