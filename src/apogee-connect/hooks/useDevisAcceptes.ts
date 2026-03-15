@@ -186,7 +186,12 @@ export function useDevisAcceptes() {
       const now = new Date();
       let hasPlannedIntervention = false;
       let plannedInterventionType: string | null = null;
+      let tempsAction: number | null = null;
       for (const itv of projectInterventions) {
+        // Accumulate planned duration (minutes)
+        if (itv.duree && itv.duree > 0) {
+          tempsAction = (tempsAction || 0) + itv.duree;
+        }
         const dateStr = itv.date || itv.dateIntervention || (itv as any).dateReelle;
         if (!dateStr) continue;
         try {
@@ -197,7 +202,6 @@ export function useDevisAcceptes() {
             if (t2 === 'TH' || t2 === 'RT' || t2 === 'RDV' || t2 === 'RDVTECH') {
               plannedInterventionType = t2;
             }
-            break;
           }
         } catch { /* ignore */ }
       }
