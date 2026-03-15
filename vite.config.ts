@@ -15,7 +15,8 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === "development" && componentTagger(),
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
+      selfDestroying: false,
       includeAssets: ["favicon.ico", "favicon.png", "logo-apogee.png"],
       manifest: false, // We use manual manifest.webmanifest
       workbox: {
