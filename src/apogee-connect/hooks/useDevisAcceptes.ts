@@ -15,7 +15,7 @@ import { useMemo, useState } from 'react';
 import { DataService } from '@/apogee-connect/services/dataService';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useAgency } from '@/apogee-connect/contexts/AgencyContext';
-import { villeToZone } from '@/shared/utils/zoneMapping';
+import { villeToZone, ZONE_NAMES } from '@/shared/utils/zoneMapping';
 import type { Project, Client, Devis, Intervention } from '@/apogee-connect/types';
 
 // Seuls les devis explicitement acceptés ou commandés (order = accepté + en travaux)
@@ -283,7 +283,7 @@ export function useDevisAcceptes() {
     return { 
       dossiers: result, 
       allUnivers: Array.from(universSet).sort(),
-      allZones: Array.from(zonesSet).sort(),
+      allZones: Array.from(zonesSet).filter(z => ZONE_NAMES.includes(z)).sort(),
       allVilles: Array.from(villesSet).sort(),
       allApporteurs: Array.from(apporteursSet).sort(),
       allStatuses: Array.from(statusesSet).sort(),
