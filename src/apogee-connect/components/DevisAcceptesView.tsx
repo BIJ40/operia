@@ -257,6 +257,12 @@ export default function DevisAcceptesView() {
                     options={allZones}
                     selected={filters.zones}
                     onSelectionChange={setZonesFilter}
+                    renderOption={(opt) => (
+                      <span className="flex items-center gap-2 truncate capitalize">
+                        <ZoneIndicator zones={[opt]} size={18} />
+                        {opt}
+                      </span>
+                    )}
                   />
                 </TableHead>
                 <TableHead>
