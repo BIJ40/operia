@@ -342,7 +342,12 @@ export function useDevisAcceptes() {
       );
     }
 
-    // Ville filter
+    // Zone filter
+    if (filters.zones.length > 0) {
+      list = list.filter(d => filters.zones.includes(d.zone));
+    }
+
+    // Ville filter (legacy)
     if (filters.villes.length > 0) {
       list = list.filter(d => filters.villes.includes(d.ville));
     }
