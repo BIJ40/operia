@@ -354,6 +354,8 @@ export function useDevisAcceptes() {
           return a.clientName.localeCompare(b.clientName) * dir;
         case 'projectRef':
           return a.projectRef.localeCompare(b.projectRef) * dir;
+        case 'tempsAction':
+          return ((a.tempsAction || 0) - (b.tempsAction || 0)) * dir;
         default:
           return 0;
       }
