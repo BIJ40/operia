@@ -692,6 +692,13 @@ export function PrevisionnelTab() {
         </Card>
       </motion.div>
 
+      {/* Pilotage avancé */}
+      {data && (
+        <motion.div variants={itemVariants}>
+          <PilotageAvanceSection data={data} />
+        </motion.div>
+      )}
+
       {/* Debug Info */}
       {debug && (
         <motion.div variants={itemVariants}>
