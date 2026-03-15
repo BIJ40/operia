@@ -101,6 +101,7 @@ export function useDevisAcceptes() {
   const [filters, setFilters] = useState<Filters>({
     search: '',
     univers: [],
+    zones: [],
     villes: [],
     apporteurs: [],
     statuses: [],
