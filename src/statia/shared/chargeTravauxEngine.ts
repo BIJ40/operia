@@ -64,6 +64,58 @@ export interface ChargeParEtatStats {
   devisHT: number;
 }
 
+export interface RiskProjectEntry {
+  projectId: number | string;
+  reference?: string;
+  label?: string;
+  riskScoreGlobal: number;
+  riskFlux: number;
+  riskData: number;
+  riskValue: number;
+  ageDays: number | null;
+  devisHT: number;
+  etatWorkflowLabel: string;
+}
+
+export interface TechnicianCharge {
+  technicianId: string;
+  hours: number;
+  projects: number;
+}
+
+export interface WeeklyLoadEntry {
+  weekLabel: string;
+  weekStart: string;
+  hours: number;
+  projects: number;
+}
+
+export interface DataQualityInfo {
+  score: number;
+  withHours: number;
+  withDevis: number;
+  withUnivers: number;
+  withPlannedDate: number;
+  total: number;
+  flags: Record<string, number>;
+}
+
+export interface PipelineMaturityInfo {
+  commercial: number;
+  a_commander: number;
+  pret_planification: number;
+  planifie: number;
+  bloque: number;
+}
+
+export interface PipelineAgingInfo {
+  bucket_0_7: number;
+  bucket_8_15: number;
+  bucket_16_30: number;
+  bucket_30_plus: number;
+  unknown: number;
+}
+
 export interface ChargeTravauxResult {
   parUnivers: ChargeTravauxUniversStats[];
   parEtat: ChargeParEtatStats[];
@@ -74,7 +126,7 @@ export interface ChargeTravauxResult {
     totalNbTechs: number;
     nbDossiers: number;
     totalDevisHT: number;
-    caPlanifie: number; // CA des devis "to order" uniquement (dossiers planifiés)
+    caPlanifie: number;
   };
   debug: {
     totalProjects: number;
@@ -90,6 +142,13 @@ export interface ChargeTravauxResult {
     caPlanifieDevisCount: number;
     sampleDevis: any;
   };
+  // Pilotage avancé
+  dataQuality: DataQualityInfo;
+  pipelineMaturity: PipelineMaturityInfo;
+  pipelineAging: PipelineAgingInfo;
+  riskProjects: RiskProjectEntry[];
+  chargeByTechnician: TechnicianCharge[];
+  weeklyLoad: WeeklyLoadEntry[];
 }
 
 /**
