@@ -78,8 +78,8 @@ function DossierTable({ dossiers, emptyText }: { dossiers: ChargeTravauxProjet[]
 }
 
 export function ActionsSection({ parProjet }: Props) {
-  const [openCommander, setOpenCommander] = useState(true);
-  const [openPlanifier, setOpenPlanifier] = useState(true);
+  const [openCommander, setOpenCommander] = useState(false);
+  const [openPlanifier, setOpenPlanifier] = useState(false);
 
   const aCommander = parProjet.filter((p) => p.etatWorkflow === 'devis_to_order');
   const aPlanifier = parProjet.filter((p) => p.etatWorkflow === 'to_planify_tvx');
