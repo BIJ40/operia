@@ -39,6 +39,7 @@ export interface DossierDevisAccepte {
   clientName: string;
   commanditaireName: string;
   ville: string;
+  zone: string;
   univers: string[];
   nbDevis: number;
   totalHT: number;
