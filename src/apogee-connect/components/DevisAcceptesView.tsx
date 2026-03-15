@@ -248,12 +248,29 @@ export default function DevisAcceptesView() {
                   />
                 </TableHead>
                 <TableHead>
-                  <ColumnFilterPopover
-                    label="Zone"
-                    options={allVilles}
-                    selected={filters.villes}
-                    onSelectionChange={setVillesFilter}
-                  />
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs">Zone</span>
+                    <div className="flex items-center gap-0.5 ml-1">
+                      {allZones.map(z => (
+                        <ZoneIndicator
+                          key={z}
+                          zones={[z]}
+                          size={20}
+                          selected={filters.zones.includes(z)}
+                          onClick={() => {
+                            setZonesFilter(
+                              filters.zones.includes(z)
+                                ? filters.zones.filter(x => x !== z)
+                                : [...filters.zones, z]
+                            );
+                          }}
+                        />
+                      ))}
+                    </div>
+                    {filters.zones.length > 0 && (
+                      <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-0.5">{filters.zones.length}</Badge>
+                    )}
+                  </div>
                 </TableHead>
                 <TableHead>
                   <ColumnFilterPopover
