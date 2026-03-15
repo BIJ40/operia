@@ -2,7 +2,7 @@
  * Vue complète des devis acceptés avec filtres, stats et table triable.
  */
 import { useState } from 'react';
-import { Search, ArrowUpDown, ArrowUp, ArrowDown, FileCheck, Loader2, CalendarCheck, Filter, X, MapPin, Clock } from 'lucide-react';
+import { Search, ArrowUpDown, ArrowUp, ArrowDown, FileCheck, Loader2, CalendarCheck, Filter, X, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +19,7 @@ import { DossierDetailDialog } from '@/apogee-connect/components/DossierDetailDi
 import { useDevisAcceptes, SortField } from '@/apogee-connect/hooks/useDevisAcceptes';
 import { formatCurrency } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
+import { ZoneIndicator } from '@/planning-v2/components/day/ZoneIndicator';
 
 function SortIcon({ field, current, dir }: { field: SortField; current: SortField; dir: 'asc' | 'desc' }) {
   if (field !== current) return <ArrowUpDown className="w-3.5 h-3.5 ml-1 opacity-40" />;
@@ -252,7 +253,6 @@ export default function DevisAcceptesView() {
                     options={allVilles}
                     selected={filters.villes}
                     onSelectionChange={setVillesFilter}
-                    icon={MapPin}
                   />
                 </TableHead>
                 <TableHead>
@@ -310,10 +310,10 @@ export default function DevisAcceptesView() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                        <MapPin className="w-3 h-3 shrink-0" />
-                        <span className="truncate max-w-[100px]">{d.ville}</span>
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <ZoneIndicator zones={[d.ville]} size={22} />
+                        <span className="text-xs text-muted-foreground truncate max-w-[80px]">{d.ville}</span>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1">
