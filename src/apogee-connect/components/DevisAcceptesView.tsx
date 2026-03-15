@@ -39,6 +39,7 @@ function ColumnFilterPopover({
   sortDir,
   onSort,
   icon: Icon,
+  renderOption,
 }: {
   label: string;
   options: string[];
@@ -49,6 +50,7 @@ function ColumnFilterPopover({
   sortDir?: 'asc' | 'desc';
   onSort?: () => void;
   icon?: React.ComponentType<{ className?: string }>;
+  renderOption?: (opt: string) => React.ReactNode;
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const filtered = searchTerm
@@ -110,7 +112,9 @@ function ColumnFilterPopover({
                       onCheckedChange={() => toggle(opt)}
                       className="h-3.5 w-3.5"
                     />
-                    <span className="truncate capitalize">{opt}</span>
+                    {renderOption ? renderOption(opt) : (
+                      <span className="truncate capitalize">{opt}</span>
+                    )}
                   </label>
                 ))
               )}
