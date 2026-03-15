@@ -621,11 +621,179 @@ export function computeChargeTravauxAvenirParUnivers(
     caPlanifie: totalCAPlanifie
   };
 
+  // --- Agrégats pilotage avancé ---
+  const total = parProjet.length;
+
+  // dataQuality
+  const withHours = parProjet.filter(p => p.totalHeuresTech > 0).length;
+  const withDevis = parProjet.filter(p => p.devisHT > 0).length;
+  const withUnivers = parProjet.filter(p => !p.dataQualityFlags.includes('missing_univers')).length;
+  const withPlannedDate = parProjet.filter(p => !p.dataQualityFlags.includes('missing_planned_date')).length;
+  const flagCounts: Record<string, number> = {};
+  for (const p of parProjet) {
+    for (const f of p.dataQualityFlags) {
+      flagCounts[f] = (flagCounts[f] || 0) + 1;
+    }
+  }
+  const dataQuality: DataQualityInfo = {
+    score: total > 0 ? Math.round(100 * (withHours + withDevis + withUnivers + withPlannedDate) / (4 * total)) : 0,
+    withHours, withDevis, withUnivers, withPlannedDate, total,
+    flags: flagCounts,
+  };
+
+  // pipelineMaturity (priority: planifie > bloque > pret_planification > a_commander > commercial)
+  const pipelineMaturity: PipelineMaturityInfo = { commercial: 0, a_commander: 0, pret_planification: 0, planifie: 0, bloque: 0 };
+  for (const p of parProjet) {
+    const hasFuturePlannedDate = !p.dataQualityFlags.includes('missing_planned_date');
+    if (hasFuturePlannedDate) {
+      pipelineMaturity.planifie++;
+    } else if (p.etatWorkflow === 'wait_fourn') {
+      pipelineMaturity.bloque++;
+    } else if (p.etatWorkflow === 'to_planify_tvx' && p.includedInForecastCalc) {
+      pipelineMaturity.pret_planification++;
+    } else if (p.etatWorkflow === 'devis_to_order') {
+      pipelineMaturity.a_commander++;
+    } else {
+      pipelineMaturity.commercial++;
+    }
+  }
+
+  // pipelineAging
+  const pipelineAging: PipelineAgingInfo = { bucket_0_7: 0, bucket_8_15: 0, bucket_16_30: 0, bucket_30_plus: 0, unknown: 0 };
+  for (const p of parProjet) {
+    if (p.ageDays === null) { pipelineAging.unknown++; }
+    else if (p.ageDays <= 7) { pipelineAging.bucket_0_7++; }
+    else if (p.ageDays <= 15) { pipelineAging.bucket_8_15++; }
+    else if (p.ageDays <= 30) { pipelineAging.bucket_16_30++; }
+    else { pipelineAging.bucket_30_plus++; }
+  }
+
+  // riskProjects (filtered > 0.6, sorted desc)
+  const riskProjects: RiskProjectEntry[] = parProjet
+    .filter(p => p.riskScoreGlobal > 0.6)
+    .sort((a, b) => b.riskScoreGlobal - a.riskScoreGlobal)
+    .map(p => ({
+      projectId: p.projectId,
+      reference: p.reference,
+      label: p.label,
+      riskScoreGlobal: p.riskScoreGlobal,
+      riskFlux: p.riskFlux,
+      riskData: p.riskData,
+      riskValue: p.riskValue,
+      ageDays: p.ageDays,
+      devisHT: p.devisHT,
+      etatWorkflowLabel: p.etatWorkflowLabel,
+    }));
+
+  // chargeByTechnician (aggregation per intervention, split hours among techs)
+  const techMap = new Map<string, { hours: number; projectIds: Set<number | string> }>();
+  for (const p of parProjet) {
+    const intervs = byProjectId.get(Number(p.projectId)) || [];
+    for (const itv of intervs) {
+      const { heuresTech: hTech } = extractHoursFromIntervention(itv);
+      if (hTech === 0) continue;
+      const ids: string[] = [];
+      const uid = itv?.userId ?? itv?.user_id;
+      if (uid) ids.push(String(uid));
+      const uids = itv?.usersIds ?? itv?.data?.usersIds;
+      if (Array.isArray(uids)) for (const u of uids) { if (u && !ids.includes(String(u))) ids.push(String(u)); }
+      if (ids.length === 0) continue;
+      const share = hTech / ids.length;
+      for (const tid of ids) {
+        if (!techMap.has(tid)) techMap.set(tid, { hours: 0, projectIds: new Set() });
+        const entry = techMap.get(tid)!;
+        entry.hours += share;
+        entry.projectIds.add(p.projectId);
+      }
+    }
+  }
+  const chargeByTechnician: TechnicianCharge[] = Array.from(techMap.entries())
+    .map(([technicianId, v]) => ({ technicianId, hours: Math.round(v.hours * 10) / 10, projects: v.projectIds.size }))
+    .sort((a, b) => b.hours - a.hours);
+
+  // weeklyLoad (S to S+3 from today)
+  const nowDate = new Date();
+  nowDate.setHours(0, 0, 0, 0);
+  // Get monday of current week
+  const dayOfWeek = nowDate.getDay();
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const currentMonday = new Date(nowDate);
+  currentMonday.setDate(nowDate.getDate() + mondayOffset);
+
+  const weekBuckets: { start: Date; label: string; hours: number; projectIds: Set<number | string> }[] = [];
+  for (let w = 0; w < 4; w++) {
+    const weekStart = new Date(currentMonday);
+    weekStart.setDate(currentMonday.getDate() + w * 7);
+    const weekNum = getISOWeekNumber(weekStart);
+    weekBuckets.push({ start: weekStart, label: `S${weekNum}`, hours: 0, projectIds: new Set() });
+  }
+  const weekEndMs = new Date(weekBuckets[3].start);
+  weekEndMs.setDate(weekEndMs.getDate() + 7);
+
+  for (const p of parProjet) {
+    const intervs = byProjectId.get(Number(p.projectId)) || [];
+    for (const itv of intervs) {
+      const dates = getInterventionDates(itv);
+      const { heuresTech: hTech } = extractHoursFromIntervention(itv);
+      for (const d of dates) {
+        const dMs = d.getTime();
+        if (dMs < currentMonday.getTime() || dMs >= weekEndMs.getTime()) continue;
+        for (const bucket of weekBuckets) {
+          const bucketEnd = new Date(bucket.start);
+          bucketEnd.setDate(bucket.start.getDate() + 7);
+          if (dMs >= bucket.start.getTime() && dMs < bucketEnd.getTime()) {
+            bucket.hours += hTech;
+            bucket.projectIds.add(p.projectId);
+            break;
+          }
+        }
+      }
+    }
+  }
+  const weeklyLoad: WeeklyLoadEntry[] = weekBuckets.map(b => ({
+    weekLabel: b.label,
+    weekStart: b.start.toISOString().slice(0, 10),
+    hours: Math.round(b.hours * 10) / 10,
+    projects: b.projectIds.size,
+  }));
+
   return {
     parUnivers,
     parEtat,
     parProjet,
     totaux,
-    debug
+    debug,
+    dataQuality,
+    pipelineMaturity,
+    pipelineAging,
+    riskProjects,
+    chargeByTechnician,
+    weeklyLoad,
   };
+}
+
+/** Get ISO week number */
+function getISOWeekNumber(date: Date): number {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
+
+/** Extract all valid dates from an intervention */
+function getInterventionDates(itv: any): Date[] {
+  const dates: Date[] = [];
+  const tryAdd = (v: any) => {
+    if (!v) return;
+    const d = new Date(v);
+    if (!isNaN(d.getTime())) dates.push(d);
+  };
+  tryAdd(itv?.dateReelle);
+  tryAdd(itv?.date);
+  const visites = Array.isArray(itv?.visites) ? itv.visites : (Array.isArray(itv?.data?.visites) ? itv.data.visites : []);
+  for (const v of visites) {
+    tryAdd(v?.dateReelle);
+    tryAdd(v?.date);
+  }
+  return dates;
 }
