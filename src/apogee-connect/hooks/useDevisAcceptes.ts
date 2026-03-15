@@ -172,6 +172,7 @@ export function useDevisAcceptes() {
     }
 
     const universSet = new Set<string>();
+    const zonesSet = new Set<string>();
     const villesSet = new Set<string>();
     const apporteursSet = new Set<string>();
     const statusesSet = new Set<string>();
