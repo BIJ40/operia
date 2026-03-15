@@ -612,9 +612,11 @@ export function PrevisionnelTab() {
                   <TableHead>Libellé</TableHead>
                   <TableHead>État</TableHead>
                   <TableHead>Univers</TableHead>
-                  <TableHead className="text-right">Durée</TableHead>
-                  <TableHead className="text-right">H. Homme</TableHead>
-                  <TableHead className="text-right">CA Devis</TableHead>
+                   <TableHead className="text-right">Durée</TableHead>
+                   <TableHead className="text-right">H. Homme</TableHead>
+                   <TableHead className="text-right">CA Devis</TableHead>
+                   <TableHead className="text-right">Âge</TableHead>
+                   <TableHead className="text-right">Risque</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
