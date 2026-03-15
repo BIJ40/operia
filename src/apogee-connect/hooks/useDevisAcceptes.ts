@@ -15,6 +15,7 @@ import { useMemo, useState } from 'react';
 import { DataService } from '@/apogee-connect/services/dataService';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useAgency } from '@/apogee-connect/contexts/AgencyContext';
+import { villeToZone } from '@/shared/utils/zoneMapping';
 import type { Project, Client, Devis, Intervention } from '@/apogee-connect/types';
 
 // Seuls les devis explicitement acceptés ou commandés (order = accepté + en travaux)
@@ -38,6 +39,7 @@ export interface DossierDevisAccepte {
   clientName: string;
   commanditaireName: string;
   ville: string;
+  zone: string;
   univers: string[];
   nbDevis: number;
   totalHT: number;
@@ -52,6 +54,7 @@ export type SortDirection = 'asc' | 'desc';
 interface Filters {
   search: string;
   univers: string[];
+  zones: string[];
   villes: string[];
   apporteurs: string[];
   statuses: string[];
@@ -98,6 +101,7 @@ export function useDevisAcceptes() {
   const [filters, setFilters] = useState<Filters>({
     search: '',
     univers: [],
+    zones: [],
     villes: [],
     apporteurs: [],
     statuses: [],
@@ -121,10 +125,11 @@ export function useDevisAcceptes() {
     },
   });
 
-  const { dossiers, allUnivers, allVilles, allApporteurs, allStatuses, statusCounts } = useMemo(() => {
+  const { dossiers, allUnivers, allZones, allVilles, allApporteurs, allStatuses, statusCounts } = useMemo(() => {
     if (!rawData) return { 
       dossiers: [], 
       allUnivers: [] as string[], 
+      allZones: [] as string[],
       allVilles: [] as string[],
       allApporteurs: [] as string[],
       allStatuses: [] as string[],
@@ -167,6 +172,7 @@ export function useDevisAcceptes() {
     }
 
     const universSet = new Set<string>();
+    const zonesSet = new Set<string>();
     const villesSet = new Set<string>();
     const apporteursSet = new Set<string>();
     const statusesSet = new Set<string>();
@@ -218,9 +224,11 @@ export function useDevisAcceptes() {
       const univers: string[] = projectData.universes || project?.universes || [];
       univers.forEach(u => universSet.add(u));
 
-      // Ville from project.data.searchFilters.ville or project.ville
+      // Ville & Zone
       const ville = projectData.searchFilters?.ville || project?.ville || '—';
       if (ville && ville !== '—') villesSet.add(ville);
+      const zone = villeToZone(ville);
+      if (zone) zonesSet.add(zone);
 
       // Track apporteur name
       const commanditaireNameStr = commanditaire?.nom || commanditaire?.raisonSociale || '';
@@ -263,6 +271,7 @@ export function useDevisAcceptes() {
         clientName: client?.nom || client?.raisonSociale || '—',
         commanditaireName: commanditaire?.nom || commanditaire?.raisonSociale || '',
         ville,
+        zone,
         univers,
         nbDevis: devisList.length,
         totalHT,
@@ -274,6 +283,7 @@ export function useDevisAcceptes() {
     return { 
       dossiers: result, 
       allUnivers: Array.from(universSet).sort(),
+      allZones: Array.from(zonesSet).sort(),
       allVilles: Array.from(villesSet).sort(),
       allApporteurs: Array.from(apporteursSet).sort(),
       allStatuses: Array.from(statusesSet).sort(),
@@ -332,7 +342,12 @@ export function useDevisAcceptes() {
       );
     }
 
-    // Ville filter
+    // Zone filter
+    if (filters.zones.length > 0) {
+      list = list.filter(d => filters.zones.includes(d.zone));
+    }
+
+    // Ville filter (legacy)
     if (filters.villes.length > 0) {
       list = list.filter(d => filters.villes.includes(d.ville));
     }
@@ -374,6 +389,7 @@ export function useDevisAcceptes() {
     totalDossiers: filteredDossiers.length,
     totalHT,
     allUnivers,
+    allZones,
     allVilles,
     allApporteurs,
     allStatuses,
@@ -383,6 +399,7 @@ export function useDevisAcceptes() {
     setFilters,
     setSearch: (search: string) => setFilters(f => ({ ...f, search })),
     setUniversFilter: (univers: string[]) => setFilters(f => ({ ...f, univers })),
+    setZonesFilter: (zones: string[]) => setFilters(f => ({ ...f, zones })),
     setVillesFilter: (villes: string[]) => setFilters(f => ({ ...f, villes })),
     setApporteursFilter: (apporteurs: string[]) => setFilters(f => ({ ...f, apporteurs })),
     setStatusesFilter: (statuses: string[]) => setFilters(f => ({ ...f, statuses })),

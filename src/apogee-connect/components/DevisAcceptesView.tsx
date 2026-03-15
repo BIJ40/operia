@@ -1,7 +1,7 @@
 /**
  * Vue complète des devis acceptés avec filtres, stats et table triable.
  */
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, FileCheck, Loader2, CalendarCheck, Filter, X, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -157,13 +157,13 @@ function formatDuration(minutes: number | null): string {
 
 export default function DevisAcceptesView() {
   const {
-    dossiers, totalDossiers, totalHT, allUnivers, allVilles, allApporteurs, allStatuses,
-    isLoading, filters, setSearch, setUniversFilter, setVillesFilter, setApporteursFilter, setStatusesFilter, setSort,
+    dossiers, totalDossiers, totalHT, allUnivers, allZones, allApporteurs, allStatuses,
+    isLoading, filters, setSearch, setUniversFilter, setZonesFilter, setApporteursFilter, setStatusesFilter, setSort,
   } = useDevisAcceptes();
 
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
-  const activeFilterCount = (filters.univers.length > 0 ? 1 : 0) + (filters.villes.length > 0 ? 1 : 0) + (filters.apporteurs.length > 0 ? 1 : 0) + (filters.statuses.length > 0 ? 1 : 0);
+  const activeFilterCount = (filters.univers.length > 0 ? 1 : 0) + (filters.zones.length > 0 ? 1 : 0) + (filters.apporteurs.length > 0 ? 1 : 0) + (filters.statuses.length > 0 ? 1 : 0);
 
   if (isLoading) {
     return (
@@ -210,7 +210,7 @@ export default function DevisAcceptesView() {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => { setUniversFilter([]); setVillesFilter([]); setApporteursFilter([]); setStatusesFilter([]); }} 
+            onClick={() => { setUniversFilter([]); setZonesFilter([]); setApporteursFilter([]); setStatusesFilter([]); }} 
             className="h-7 text-xs"
           >
             <X className="w-3 h-3 mr-1" />
@@ -248,12 +248,29 @@ export default function DevisAcceptesView() {
                   />
                 </TableHead>
                 <TableHead>
-                  <ColumnFilterPopover
-                    label="Zone"
-                    options={allVilles}
-                    selected={filters.villes}
-                    onSelectionChange={setVillesFilter}
-                  />
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs">Zone</span>
+                    <div className="flex items-center gap-0.5 ml-1">
+                      {allZones.map(z => (
+                        <ZoneIndicator
+                          key={z}
+                          zones={[z]}
+                          size={20}
+                          selected={filters.zones.includes(z)}
+                          onClick={() => {
+                            setZonesFilter(
+                              filters.zones.includes(z)
+                                ? filters.zones.filter(x => x !== z)
+                                : [...filters.zones, z]
+                            );
+                          }}
+                        />
+                      ))}
+                    </div>
+                    {filters.zones.length > 0 && (
+                      <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-0.5">{filters.zones.length}</Badge>
+                    )}
+                  </div>
                 </TableHead>
                 <TableHead>
                   <ColumnFilterPopover

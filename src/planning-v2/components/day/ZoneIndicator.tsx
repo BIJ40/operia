@@ -4,40 +4,19 @@
  */
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
-// Couleurs fixes par zone (mapping HelpConfort)
-const ZONE_COLOR_MAP: Record<string, string> = {
-  "peyrehorade": "#9CA3AF", // gris
-  "hagetmau": "#8B5CF6",    // violet
-  "mimizan": "#EAB308",     // jaune
-  "capbreton": "#F97316",   // orange
-  "mont de marsan": "#3B82F6", // bleu
-  "dax": "#22C55E",         // vert
-  "pays basque": "#EF4444", // rouge
-};
-
-// Fallback pour zones non mappées
-const FALLBACK_COLORS = ["#6B7280", "#A78BFA", "#FBBF24", "#FB923C", "#60A5FA", "#4ADE80", "#F87171", "#2DD4BF", "#F472B6", "#818CF8"];
-let fallbackIndex = 0;
-const fallbackCache = new Map<string, string>();
-
-function getZoneColor(zone: string): string {
-  const key = zone.toLowerCase().trim();
-  if (ZONE_COLOR_MAP[key]) return ZONE_COLOR_MAP[key];
-  if (fallbackCache.has(key)) return fallbackCache.get(key)!;
-  const color = FALLBACK_COLORS[fallbackIndex % FALLBACK_COLORS.length];
-  fallbackCache.set(key, color);
-  fallbackIndex++;
-  return color;
-}
+import { getZoneColor } from "@/shared/utils/zoneMapping";
 
 interface ZoneIndicatorProps {
   zones: string[];
   /** Size of the wheel in px (default 28) */
   size?: number;
+  /** If true, render as a clickable button */
+  onClick?: () => void;
+  /** Visual selected state */
+  selected?: boolean;
 }
 
-export function ZoneIndicator({ zones, size = 28 }: ZoneIndicatorProps) {
+export function ZoneIndicator({ zones, size = 28, onClick, selected }: ZoneIndicatorProps) {
   if (zones.length === 0) return null;
 
   // Count occurrences
@@ -73,31 +52,36 @@ export function ZoneIndicator({ zones, size = 28 }: ZoneIndicatorProps) {
     .map(([zone, count]) => `${zone.charAt(0).toUpperCase() + zone.slice(1)} (${count})`)
     .join(", ");
 
+  const svgEl = (
+    <svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      className={`shrink-0 ${onClick ? 'cursor-pointer' : 'cursor-default'} ${selected ? 'ring-2 ring-primary ring-offset-1 rounded-full' : ''}`}
+      onClick={onClick}
+    >
+      {segments.map((seg, i) => (
+        <circle
+          key={i}
+          cx={cx}
+          cy={cy}
+          r={radius}
+          fill="none"
+          stroke={seg.color}
+          strokeWidth={strokeWidth}
+          strokeDasharray={`${seg.length} ${circumference - seg.length}`}
+          strokeDashoffset={-seg.offset}
+          transform={`rotate(-90 ${cx} ${cy})`}
+        />
+      ))}
+    </svg>
+  );
+
   return (
     <TooltipProvider delayDuration={200}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <svg
-            width={size}
-            height={size}
-            viewBox={`0 0 ${size} ${size}`}
-            className="cursor-default shrink-0"
-          >
-            {segments.map((seg, i) => (
-              <circle
-                key={i}
-                cx={cx}
-                cy={cy}
-                r={radius}
-                fill="none"
-                stroke={seg.color}
-                strokeWidth={strokeWidth}
-                strokeDasharray={`${seg.length} ${circumference - seg.length}`}
-                strokeDashoffset={-seg.offset}
-                transform={`rotate(-90 ${cx} ${cy})`}
-              />
-            ))}
-          </svg>
+          {svgEl}
         </TooltipTrigger>
         <TooltipContent side="bottom" className="text-xs">
           Zones : {tooltipText}
