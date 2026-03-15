@@ -283,7 +283,7 @@ export function useDevisAcceptes() {
     return { 
       dossiers: result, 
       allUnivers: Array.from(universSet).sort(),
-      allZones: Array.from(zonesSet).sort(),
+      allZones: Array.from(zonesSet).filter(z => ZONE_NAMES.includes(z)).sort(),
       allVilles: Array.from(villesSet).sort(),
       allApporteurs: Array.from(apporteursSet).sort(),
       allStatuses: Array.from(statusesSet).sort(),
