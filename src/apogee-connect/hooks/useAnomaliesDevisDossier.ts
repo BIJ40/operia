@@ -37,7 +37,7 @@ const STATE_LABELS: Record<string, string> = {
   'devis_a_faire': 'Devis à faire',
   'wait_fourn': 'Attente fourn.',
   'to_planify_tvx': 'À planifier',
-  'planified_tvx': 'À planifier',
+  'planified_tvx': 'Planifié travaux',
   'planifie_rt': 'Planifié RT',
   'rt_fait': 'RT fait',
   'to_be_invoiced': 'À facturer',
