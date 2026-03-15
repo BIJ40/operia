@@ -54,6 +54,7 @@ export type SortDirection = 'asc' | 'desc';
 interface Filters {
   search: string;
   univers: string[];
+  zones: string[];
   villes: string[];
   apporteurs: string[];
   statuses: string[];
