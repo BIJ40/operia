@@ -267,6 +267,7 @@ export function useDevisAcceptes() {
         nbDevis: devisList.length,
         totalHT,
         lastDevisDate: lastDate,
+        tempsAction,
       });
     }
 
