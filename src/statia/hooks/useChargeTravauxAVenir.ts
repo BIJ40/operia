@@ -74,28 +74,27 @@ export function useChargeTravauxAVenir() {
     queryFn: async () => {
       if (!agencySlug) return null;
       const services = getGlobalApogeeDataServices();
-      const [projects, interventions, devis, factures] = await Promise.all([
+      const [projects, interventions, devis, factures, users] = await Promise.all([
         services.getProjects(agencySlug, undefined),
         services.getInterventions(agencySlug, undefined),
         services.getDevis(agencySlug, undefined),
         services.getFactures(agencySlug, undefined),
+        services.getUsers(agencySlug),
       ]);
-      return { projects, interventions, devis, factures };
+      return { projects, interventions, devis, factures, users };
     },
     enabled: isAgencyReady && !!agencySlug,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 
-  // Calculer les stats globales à partir des données brutes
+  // Calculer les stats globales à partir des données brutes (avec users pour enrichment)
   const globalStats = useMemo(() => {
     if (!globalQuery.data) return null;
-    const { projects, interventions, devis } = globalQuery.data;
-    return computeChargeTravauxAvenirParUnivers(projects, interventions, devis);
+    const { projects, interventions, devis, users } = globalQuery.data;
+    return computeChargeTravauxAvenirParUnivers(projects, interventions, devis, users);
   }, [globalQuery.data]);
 
   // Calculer le CA Planifié filtré par période (côté client, pas de refetch)
-  // Exclut les projets déjà facturés
-  // N'inclut que les interventions planifiées à J+0 minimum (pas de J-)
   const caPlanifieData = useMemo(() => {
     if (!globalQuery.data) return { caPlanifie: 0, caPlanifieDevisCount: 0 };
     
@@ -103,25 +102,21 @@ export function useChargeTravauxAVenir() {
     const startMs = dateRange.start.getTime();
     const endMs = dateRange.end.getTime();
     
-    // Date du jour à minuit pour le filtre J+0 minimum
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayMs = today.getTime();
 
-    // Doit être dans la période ET >= aujourd'hui (prévisionnel uniquement)
     const isInRangeAndFuture = (d: Date) => {
       const t = d.getTime();
       return t >= startMs && t <= endMs && t >= todayMs;
     };
 
-    // Créer un Set des projectIds déjà facturés
     const facturedProjectIds = new Set<number>();
     for (const f of factures) {
       const pid = getProjectId(f);
       if (pid != null) facturedProjectIds.add(pid);
     }
 
-    // Indexer les interventions par projectId
     const interventionsByProjectId = new Map<number, any[]>();
     for (const itv of interventions) {
       const pid = getProjectId(itv);
@@ -130,7 +125,6 @@ export function useChargeTravauxAVenir() {
       interventionsByProjectId.get(pid)!.push(itv);
     }
 
-    // Indexer les devis par projectId
     const devisByProjectId = new Map<number, any[]>();
     for (const d of devis) {
       const pid = getProjectId(d);
@@ -145,11 +139,8 @@ export function useChargeTravauxAVenir() {
     for (const project of projects) {
       const projectId = Number(project?.id);
       if (!Number.isFinite(projectId)) continue;
-
-      // Exclure les projets déjà facturés
       if (facturedProjectIds.has(projectId)) continue;
 
-      // Vérifier si ce projet a une intervention planifiée dans la période
       const projectInterventions = interventionsByProjectId.get(projectId) || [];
       const hasInterventionInPeriod = projectInterventions.some((itv) => {
         const planningDate = getInterventionPlanningDate(itv);
@@ -158,7 +149,6 @@ export function useChargeTravauxAVenir() {
 
       if (!hasInterventionInPeriod) continue;
 
-      // Chercher un devis "to order" pour ce projet
       const projectDevis = devisByProjectId.get(projectId) || [];
       for (const d of projectDevis) {
         if (!isDevisToOrder(d)) continue;
@@ -170,7 +160,7 @@ export function useChargeTravauxAVenir() {
         if (montant > 0) {
           caPlanifie += montant;
           caPlanifieDevisCount++;
-          break; // 1 seul devis to_order par projet
+          break;
         }
       }
     }
@@ -196,7 +186,6 @@ export function useChargeTravauxAVenir() {
 
   return {
     data,
-    // Exposer les données brutes pour le composant CAPlanifieCard
     rawData: globalQuery.data,
     isLoading: globalQuery.isLoading,
     isError: globalQuery.isError,
@@ -204,4 +193,14 @@ export function useChargeTravauxAVenir() {
   };
 }
 
-export type { ChargeTravauxResult, ChargeTravauxProjet, ChargeTravauxUniversStats, ChargeParEtatStats } from '../shared/chargeTravauxEngine';
+export type {
+  ChargeTravauxResult,
+  ChargeTravauxProjet,
+  ChargeTravauxUniversStats,
+  ChargeParEtatStats,
+  ChargeTechnicien,
+  PipelineAgeBucket,
+  ChargeParSemaine,
+  DataQualityFlag,
+  PipelineMaturity,
+} from '../shared/chargeTravauxEngine';
