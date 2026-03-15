@@ -648,6 +648,34 @@ export function PrevisionnelTab() {
                       <TableCell className="text-right text-green-600 font-medium">
                         {d.devisHT > 0 ? formatCurrency(d.devisHT) : '—'}
                       </TableCell>
+                      <TableCell className="text-right">
+                        {d.ageDays === null ? (
+                          <span className="text-muted-foreground">—</span>
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] px-1.5 py-0"
+                            style={{
+                              borderColor: d.ageDays <= 7 ? 'hsl(142, 76%, 36%)' : d.ageDays <= 15 ? 'hsl(45, 93%, 47%)' : d.ageDays <= 30 ? 'hsl(25, 95%, 53%)' : 'hsl(0, 84%, 60%)',
+                              color: d.ageDays <= 7 ? 'hsl(142, 76%, 36%)' : d.ageDays <= 15 ? 'hsl(45, 93%, 47%)' : d.ageDays <= 30 ? 'hsl(25, 95%, 53%)' : 'hsl(0, 84%, 60%)',
+                            }}
+                          >
+                            {d.ageDays}j
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] px-1.5 py-0"
+                          style={{
+                            borderColor: d.riskScoreGlobal < 0.3 ? 'hsl(142, 76%, 36%)' : d.riskScoreGlobal < 0.6 ? 'hsl(45, 93%, 47%)' : 'hsl(0, 84%, 60%)',
+                            color: d.riskScoreGlobal < 0.3 ? 'hsl(142, 76%, 36%)' : d.riskScoreGlobal < 0.6 ? 'hsl(45, 93%, 47%)' : 'hsl(0, 84%, 60%)',
+                          }}
+                        >
+                          {Math.round(d.riskScoreGlobal * 100)}%
+                        </Badge>
+                      </TableCell>
                     </TableRow>
                   );
                 })}
