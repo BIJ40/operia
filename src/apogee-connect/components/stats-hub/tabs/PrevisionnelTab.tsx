@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Clock, Calendar, FolderOpen, Layers, ChevronDown, ChevronUp, Users, Package, ShoppingCart, ClipboardList, Euro } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { motion } from 'framer-motion';
+import { Shield } from 'lucide-react';
 import {
   Table,
   TableBody,
