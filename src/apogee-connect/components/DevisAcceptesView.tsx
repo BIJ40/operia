@@ -19,6 +19,7 @@ import { DossierDetailDialog } from '@/apogee-connect/components/DossierDetailDi
 import { useDevisAcceptes, SortField } from '@/apogee-connect/hooks/useDevisAcceptes';
 import { formatCurrency } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
+import { ZoneIndicator } from '@/planning-v2/components/day/ZoneIndicator';
 
 function SortIcon({ field, current, dir }: { field: SortField; current: SortField; dir: 'asc' | 'desc' }) {
   if (field !== current) return <ArrowUpDown className="w-3.5 h-3.5 ml-1 opacity-40" />;
