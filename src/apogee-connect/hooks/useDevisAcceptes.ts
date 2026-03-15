@@ -389,6 +389,7 @@ export function useDevisAcceptes() {
     totalDossiers: filteredDossiers.length,
     totalHT,
     allUnivers,
+    allZones,
     allVilles,
     allApporteurs,
     allStatuses,
