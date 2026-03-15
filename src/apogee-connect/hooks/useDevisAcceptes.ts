@@ -271,6 +271,7 @@ export function useDevisAcceptes() {
         clientName: client?.nom || client?.raisonSociale || '—',
         commanditaireName: commanditaire?.nom || commanditaire?.raisonSociale || '',
         ville,
+        zone,
         univers,
         nbDevis: devisList.length,
         totalHT,
