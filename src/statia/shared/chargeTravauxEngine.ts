@@ -458,6 +458,77 @@ export function computeChargeTravauxAvenirParUnivers(
     const universes = (project?.data?.universes as string[]) || ['Non classé'];
     const normalizedUniverses = universes.map(normalizeUnivers);
 
+    // --- Enrichissement pilotage avancé ---
+    // createdAt & ageDays
+    const rawCreatedAt = project?.createdAt ?? project?.data?.createdAt ?? null;
+    const createdAtStr = rawCreatedAt ? String(rawCreatedAt) : null;
+    let ageDays: number | null = null;
+    if (createdAtStr) {
+      const createdDate = new Date(createdAtStr);
+      if (!isNaN(createdDate.getTime())) {
+        ageDays = Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+      }
+    }
+
+    // dataQualityFlags
+    const dataQualityFlags: string[] = [];
+    if (heuresTech === 0) dataQualityFlags.push('missing_hours');
+    if (totalDevisHTProjet === 0) dataQualityFlags.push('missing_devis');
+    if (normalizedUniverses.length === 1 && normalizedUniverses[0] === 'Non classé') dataQualityFlags.push('missing_univers');
+    if (ageDays === null) dataQualityFlags.push('missing_created_at');
+
+    // Check for planned date
+    let hasPlannedDate = false;
+    for (const itv of intervs) {
+      const d = itv?.dateReelle ?? itv?.date;
+      if (d) { hasPlannedDate = true; break; }
+      const visites = Array.isArray(itv?.visites) ? itv.visites : (Array.isArray(itv?.data?.visites) ? itv.data.visites : []);
+      for (const v of visites) {
+        if (v?.dateReelle ?? v?.date) { hasPlannedDate = true; break; }
+      }
+      if (hasPlannedDate) break;
+    }
+    if (!hasPlannedDate) dataQualityFlags.push('missing_planned_date');
+
+    // technicianIds
+    const techIdSet = new Set<string>();
+    for (const itv of intervs) {
+      const uid = itv?.userId ?? itv?.user_id;
+      if (uid) techIdSet.add(String(uid));
+      const uids = itv?.usersIds ?? itv?.data?.usersIds;
+      if (Array.isArray(uids)) {
+        for (const u of uids) if (u) techIdSet.add(String(u));
+      }
+    }
+    const technicianIds = Array.from(techIdSet);
+
+    // riskFlux
+    const riskFlux = ageDays === null ? 0.5 : ageDays > 30 ? 1.0 : ageDays > 15 ? 0.6 : ageDays > 7 ? 0.3 : 0;
+
+    // riskData
+    const riskData = dataQualityFlags.length / 5;
+
+    // riskValue
+    let riskValue = 0;
+    const isAdvanced = state === 'devis_to_order' || state === 'wait_fourn';
+    if (totalDevisHTProjet === 0 && isAdvanced) {
+      riskValue = 1.0;
+    } else if (totalDevisHTProjet > 5000 && ageDays !== null && ageDays > 15) {
+      riskValue = 0.8;
+    } else if (totalDevisHTProjet === 0 && state === 'to_planify_tvx') {
+      riskValue = 0.4;
+    } else if (totalDevisHTProjet > 0 && totalDevisHTProjet < 500) {
+      riskValue = 0.3;
+    }
+
+    const riskScoreGlobal = 0.25 * riskFlux + 0.40 * riskData + 0.35 * riskValue;
+
+    // includedInForecastCalc: devisHT > 0 et devis non draft/rejected/canceled (already filtered by calculateDevisHTForProject)
+    const includedInForecastCalc = totalDevisHTProjet > 0;
+
+    // includedInChargeCalc: heures > 0 et (technicien ou date planifiée)
+    const includedInChargeCalc = heuresTech > 0 && (technicianIds.length > 0 || hasPlannedDate);
+
     parProjet.push({
       projectId,
       reference: project.ref || project.reference,
@@ -468,7 +539,17 @@ export function computeChargeTravauxAvenirParUnivers(
       totalHeuresRdv: heuresRdv,
       totalHeuresTech: heuresTech,
       nbTechs: maxNbTechs,
-      devisHT: totalDevisHTProjet
+      devisHT: totalDevisHTProjet,
+      createdAt: createdAtStr,
+      ageDays,
+      riskFlux,
+      riskData,
+      riskValue,
+      riskScoreGlobal,
+      dataQualityFlags,
+      includedInForecastCalc,
+      includedInChargeCalc,
+      technicianIds,
     });
 
     // Mise à jour des stats par état
