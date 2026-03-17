@@ -10,10 +10,12 @@ import type {
   ProfitabilityInputs,
   ProfitabilityResult,
   ProfitabilityFacture,
+  ProfitabilityIntervention,
   EmployeeCostProfile,
   ProjectCost,
   AgencyOverheadRule,
   ReliabilityLevel,
+  ActionabilityLevel,
 } from '@/types/projectProfitability';
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -30,10 +32,41 @@ function sumValidatedCosts(costs: ProjectCost[], type: ProjectCost['cost_type'])
     .reduce((s, c) => s + (c.amount_ht ?? 0), 0);
 }
 
-function sumOtherCosts(costs: ProjectCost[]): number {
+function sumAllCosts(costs: ProjectCost[], type: ProjectCost['cost_type']): number {
   return costs
-    .filter(c => ['travel', 'rental', 'misc'].includes(c.cost_type) && c.validation_status === 'validated')
+    .filter(c => c.cost_type === type)
     .reduce((s, c) => s + (c.amount_ht ?? 0), 0);
+}
+
+function sumOtherCosts(costs: ProjectCost[], validatedOnly: boolean): number {
+  return costs
+    .filter(c => ['travel', 'rental', 'misc'].includes(c.cost_type) && (!validatedOnly || c.validation_status === 'validated'))
+    .reduce((s, c) => s + (c.amount_ht ?? 0), 0);
+}
+
+// ─── Hash computation ────────────────────────────────────────
+
+/**
+ * Compute a deterministic hash of Apogée input data for staleness detection.
+ * Uses a simple string hash (no crypto dependency needed in browser).
+ */
+function computeApogeeHash(
+  factures: ProfitabilityFacture[],
+  interventions: ProfitabilityIntervention[],
+): string {
+  const payload = JSON.stringify({
+    factures: factures
+      .map(f => ({ id: f.id, totalHT: f.totalHT, paidTTC: f.paidTTC, updatedAt: f.updatedAt ?? null }))
+      .sort((a, b) => a.id.localeCompare(b.id)),
+    interventions: interventions
+      .map(i => ({ id: i.id, hours: i.hours, technicianIds: [...i.technicianIds].sort(), updatedAt: i.updatedAt ?? null }))
+      .sort((a, b) => a.id.localeCompare(b.id)),
+  });
+  let hash = 0;
+  for (let i = 0; i < payload.length; i++) {
+    hash = ((hash << 5) - hash + payload.charCodeAt(i)) | 0;
+  }
+  return hash.toString(36);
 }
 
 // ─── Overhead calculation ────────────────────────────────────
@@ -42,14 +75,17 @@ function computeOverhead(
   rules: AgencyOverheadRule[],
   caInvoicedHT: number,
   hoursTotal: number,
+  flags: string[],
 ): number {
   const validated = rules.filter(r => r.validation_status === 'validated');
   let total = 0;
+  let hasNonProrated = false;
   for (const rule of validated) {
     switch (rule.allocation_mode) {
       case 'per_project':
       case 'fixed':
         total += rule.allocation_value;
+        hasNonProrated = true;
         break;
       case 'percentage_ca':
         total += caInvoicedHT * (rule.allocation_value / 100);
@@ -59,6 +95,7 @@ function computeOverhead(
         break;
     }
   }
+  if (hasNonProrated) flags.push('overhead_not_prorated');
   return total;
 }
 
@@ -84,6 +121,14 @@ function computeReliability(
   else if (score >= 20) level = 'low';
 
   return { score, level };
+}
+
+// ─── Actionability ───────────────────────────────────────────
+
+function computeActionability(completenessScore: number): ActionabilityLevel {
+  if (completenessScore >= 80) return 'exploitable';
+  if (completenessScore >= 60) return 'partial';
+  return 'not_exploitable';
 }
 
 // ─── Main engine ─────────────────────────────────────────────
@@ -118,15 +163,6 @@ export function computeProjectProfitability(
 
   // ── 2. Hours ──────────────────────────────────────────────
 
-  /**
-   * HYPOTHÈSE V1 : les heures d'une intervention représentent la durée
-   * totale du créneau commun. Si N techniciens sont affectés, chacun
-   * est considéré comme ayant travaillé hours/N.
-   *
-   * Cette hypothèse peut sous-estimer le coût MO dans les cas où
-   * la durée représente le temps individuel (chaque tech fait X heures).
-   * À affiner en Phase 2 avec des données de créneau par technicien.
-   */
   const hoursByTech = new Map<string, number>();
   for (const itv of interventions) {
     const techCount = itv.technicianIds.length || 1;
@@ -144,21 +180,16 @@ export function computeProjectProfitability(
 
   // ── 3. Labor cost ─────────────────────────────────────────
 
-  // Build cost profile lookup by apogee_user_id (string) for matching with intervention technicianIds
   const profileMap = new Map<string, EmployeeCostProfile>();
   for (const cp of costProfiles) {
     if (cp.loaded_hourly_cost != null && cp.loaded_hourly_cost > 0) {
-      // Primary key: apogee_user_id (matches intervention technicianIds)
       if (cp.apogee_user_id != null) {
         profileMap.set(String(cp.apogee_user_id), cp);
       }
-      // Secondary key: collaborator_id (fallback for internal lookups)
       profileMap.set(cp.collaborator_id, cp);
     }
   }
 
-  // Compute average hourly cost for fallback
-  // Deduplicate by collaborator_id to avoid counting the same profile twice
   const uniqueProfiles = new Map<string, EmployeeCostProfile>();
   for (const cp of costProfiles) {
     if (cp.loaded_hourly_cost != null && cp.loaded_hourly_cost > 0) {
@@ -195,20 +226,23 @@ export function computeProjectProfitability(
   }
 
   if (hasEstimatedLabor) flags.push('labor_cost_estimated');
-  // missing_cost_profile is now set after coverageRate is computed (section 7)
 
-  // ── 4. Project costs ──────────────────────────────────────
+  // ── 4. Project costs (validated for margin, all for transparency) ──
 
   const costPurchases = sumValidatedCosts(projectCosts, 'purchase');
   const costSubcontracting = sumValidatedCosts(projectCosts, 'subcontract');
-  const costOther = sumOtherCosts(projectCosts);
+  const costOther = sumOtherCosts(projectCosts, true);
+
+  const costPurchasesAll = sumAllCosts(projectCosts, 'purchase');
+  const costSubcontractingAll = sumAllCosts(projectCosts, 'subcontract');
+  const costOtherAll = sumOtherCosts(projectCosts, false);
 
   const hasCostsEntered = projectCosts.filter(c => c.validation_status === 'validated').length > 0;
   if (!hasCostsEntered) flags.push('no_project_costs_validated');
 
   // ── 5. Overhead ───────────────────────────────────────────
 
-  const costOverhead = computeOverhead(overheadRules, caInvoicedHT, hoursTotal);
+  const costOverhead = computeOverhead(overheadRules, caInvoicedHT, hoursTotal, flags);
   if (overheadRules.filter(r => r.validation_status === 'validated').length === 0) {
     flags.push('overhead_not_configured');
   }
@@ -227,18 +261,21 @@ export function computeProjectProfitability(
     flags.push('high_overhead_ratio');
   }
 
+  // Anomaly flags
+  if (marginPct !== null && marginPct > 60) flags.push('margin_suspiciously_high');
+  if (marginPct !== null && marginPct < -30) flags.push('margin_critical');
+  if (hoursTotal > 0 && costLabor === 0) flags.push('labor_cost_zero');
+
   // ── 7. Reliability ────────────────────────────────────────
 
   const hasZeroInvoices = factures.some(f => f.totalHT === 0 && !isAvoir(f));
 
-  // Cost profile coverage: % of project technicians with a valid cost profile
   const projectTechIds = new Set(
     interventions.flatMap(i => i.technicianIds),
   );
   const coveredCount = [...projectTechIds].filter(id => profileMap.has(id)).length;
   const coverageRate = projectTechIds.size > 0 ? coveredCount / projectTechIds.size : 0;
 
-  // Flags based on coverage
   if (projectTechIds.size > 0 && coverageRate === 0) {
     flags.push('missing_cost_profile');
   } else if (coverageRate > 0 && coverageRate < 1) {
@@ -258,6 +295,12 @@ export function computeProjectProfitability(
 
   const { score: completenessScore, level: reliabilityLevel } = computeReliability(checks);
 
+  // ── 8. Actionability & Hash ───────────────────────────────
+
+  const actionabilityLevel = computeActionability(completenessScore);
+  const apogeeDataHash = computeApogeeHash(factures, interventions);
+  const computedAt = new Date().toISOString();
+
   // ── Result ────────────────────────────────────────────────
 
   return {
@@ -270,13 +313,19 @@ export function computeProjectProfitability(
     costOther,
     costOverhead,
     costTotal,
+    costPurchasesAll,
+    costSubcontractingAll,
+    costOtherAll,
     grossMargin,
     netMargin,
     marginPct,
     hoursTotal,
     completenessScore,
     reliabilityLevel,
+    actionabilityLevel,
     flags,
     laborDetail,
+    apogeeDataHash,
+    computedAt,
   };
 }

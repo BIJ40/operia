@@ -1,6 +1,6 @@
 /**
  * Types pour le module Rentabilité Dossier.
- * Phase 1 — Fondations (aucune UI).
+ * Phase 1 — Fondations + corrections robustesse.
  */
 
 // ─── Enums (miroir SQL) ─────────────────────────────────────
@@ -14,6 +14,7 @@ export type CostInputSource = 'manual' | 'invoice_upload';
 export type OverheadCostType = 'rent' | 'vehicle' | 'fuel' | 'admin' | 'software' | 'insurance' | 'other';
 export type OverheadAllocationMode = 'per_project' | 'percentage_ca' | 'per_hour' | 'fixed';
 export type ReliabilityLevel = 'insufficient' | 'low' | 'medium' | 'good' | 'excellent';
+export type ActionabilityLevel = 'exploitable' | 'partial' | 'not_exploitable';
 
 // ─── Table rows ──────────────────────────────────────────────
 
@@ -74,6 +75,8 @@ export interface ProjectCost {
   document_path: string | null;
   extracted_data_json: Record<string, unknown> | null;
   validation_status: CostValidation;
+  validated_by: string | null;
+  validated_at: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -134,6 +137,18 @@ export interface ProfitabilitySnapshot {
   validation_status: CostValidation;
   created_by: string | null;
   created_at: string;
+  /** Hash of Apogée input data (factures + interventions) for staleness detection */
+  apogee_data_hash: string | null;
+  /** Timestamp of the Apogée data used for this snapshot */
+  apogee_last_sync_at: string | null;
+  /** Snapshot version number (incremented on each computation) */
+  version: number;
+  /** Link to the previous version of this snapshot */
+  previous_snapshot_id: string | null;
+  /** User who validated this snapshot */
+  validated_by: string | null;
+  /** When the snapshot was validated */
+  validated_at: string | null;
 }
 
 // ─── Engine I/O ──────────────────────────────────────────────
@@ -162,6 +177,8 @@ export interface ProfitabilityFacture {
   totalTTC: number;
   typeFacture: string | null;
   paidTTC: number;
+  /** Last modification timestamp for hash computation */
+  updatedAt?: string | null;
 }
 
 /** Minimal intervention shape consumed by the engine */
@@ -170,6 +187,8 @@ export interface ProfitabilityIntervention {
   /** Apogée user IDs of assigned technicians */
   technicianIds: string[];
   hours: number;
+  /** Last modification timestamp for hash computation */
+  updatedAt?: string | null;
 }
 
 /** Full result output from the engine */
@@ -180,13 +199,18 @@ export interface ProfitabilityResult {
   caInvoicedHT: number;
   caCollectedTTC: number;
 
-  // Costs breakdown
+  // Costs breakdown (validated only — used for margin)
   costLabor: number;
   costPurchases: number;
   costSubcontracting: number;
   costOther: number;
   costOverhead: number;
   costTotal: number;
+
+  // Costs breakdown (all entered — for transparency)
+  costPurchasesAll: number;
+  costSubcontractingAll: number;
+  costOtherAll: number;
 
   // Margins
   grossMargin: number;
@@ -200,6 +224,9 @@ export interface ProfitabilityResult {
   completenessScore: number;
   reliabilityLevel: ReliabilityLevel;
 
+  // Actionability (base level — UI may downgrade further)
+  actionabilityLevel: ActionabilityLevel;
+
   // Flags / alerts
   flags: string[];
 
@@ -211,4 +238,9 @@ export interface ProfitabilityResult {
     cost: number;
     isEstimated: boolean;
   }[];
+
+  /** Hash of Apogée input data for staleness detection */
+  apogeeDataHash: string;
+  /** Timestamp of computation */
+  computedAt: string;
 }

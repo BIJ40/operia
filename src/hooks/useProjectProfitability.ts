@@ -80,7 +80,7 @@ export function useProjectProfitability(options: UseProjectProfitabilityOptions)
           const snapshotData: Omit<ProfitabilitySnapshot, 'id' | 'created_at'> = {
             agency_id: agencyId,
             project_id: projectId,
-            computed_at: new Date().toISOString(),
+            computed_at: result.computedAt,
             ca_invoiced_ht: result.caInvoicedHT,
             ca_collected_ttc: result.caCollectedTTC,
             cost_labor: result.costLabor,
@@ -98,6 +98,12 @@ export function useProjectProfitability(options: UseProjectProfitabilityOptions)
             flags_json: result.flags,
             validation_status: 'draft',
             created_by: null,
+            apogee_data_hash: result.apogeeDataHash,
+            apogee_last_sync_at: new Date().toISOString(),
+            version: 1, // Managed by repository
+            previous_snapshot_id: null, // Managed by repository
+            validated_by: null,
+            validated_at: null,
           };
           await upsertSnapshot(snapshotData);
         } catch {
