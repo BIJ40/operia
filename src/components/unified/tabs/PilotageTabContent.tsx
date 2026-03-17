@@ -27,7 +27,7 @@ const AnomaliesDevisDossierView = lazy(() => import('@/apogee-connect/components
 const ResultatTabContent = lazy(() => import('@/components/financial/ResultatTabContent'));
 const RentabilitePlaceholder = lazy(() => import('@/components/profitability/RentabilitePlaceholder'));
 
-type PilotageSubTab = 'stats' | 'performance' | 'actions' | 'devis-acceptes' | 'anomalies' | 'resultat';
+type PilotageSubTab = 'stats' | 'performance' | 'actions' | 'devis-acceptes' | 'anomalies' | 'resultat' | 'rentabilite';
 
 function LoadingFallback() {
   return (
