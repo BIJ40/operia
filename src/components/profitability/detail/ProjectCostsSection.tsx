@@ -4,7 +4,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, X, Trash2 } from 'lucide-react';
+import { Check, X, Trash2, Plus, Pencil } from 'lucide-react';
 import { formatCurrency, PROJECT_COST_TYPE_LABELS } from '../constants';
 import type { ProjectCost } from '@/types/projectProfitability';
 
@@ -18,7 +18,14 @@ interface ProjectCostsSectionProps {
   costOtherValidated: number;
   onValidate?: (id: string, status: 'draft' | 'validated') => void;
   onDelete?: (id: string) => void;
+  onAdd?: () => void;
+  onEdit?: (cost: ProjectCost) => void;
 }
+
+const SOURCE_LABELS: Record<string, { label: string; className: string }> = {
+  manual: { label: 'Manuel', className: 'bg-muted text-muted-foreground' },
+  invoice_upload: { label: 'Facture', className: 'bg-blue-50 text-blue-700 border-blue-200' },
+};
 
 export function ProjectCostsSection({
   costs,
@@ -30,6 +37,8 @@ export function ProjectCostsSection({
   costOtherValidated,
   onValidate,
   onDelete,
+  onAdd,
+  onEdit,
 }: ProjectCostsSectionProps) {
   const totalAll = costPurchasesAll + costSubcontractingAll + costOtherAll;
   const totalValidated = costPurchasesValidated + costSubcontractingValidated + costOtherValidated;
@@ -53,6 +62,16 @@ export function ProjectCostsSection({
         </div>
       </div>
 
+      {/* Add button */}
+      {onAdd && (
+        <div className="flex justify-end">
+          <Button size="sm" variant="outline" onClick={onAdd}>
+            <Plus className="h-3.5 w-3.5 mr-1" />
+            Ajouter un coût
+          </Button>
+        </div>
+      )}
+
       {/* Costs table */}
       {costs.length === 0 ? (
         <p className="text-sm text-muted-foreground py-4 text-center">
@@ -65,72 +84,68 @@ export function ProjectCostsSection({
               <TableHead>Type</TableHead>
               <TableHead>Description</TableHead>
               <TableHead className="text-right">Montant HT</TableHead>
+              <TableHead>Source</TableHead>
               <TableHead>Statut</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {costs.map((cost) => (
-              <TableRow key={cost.id}>
-                <TableCell>
-                  <Badge variant="outline" className="text-xs">
-                    {PROJECT_COST_TYPE_LABELS[cost.cost_type] ?? cost.cost_type}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-muted-foreground text-sm">
-                  {cost.description || '—'}
-                </TableCell>
-                <TableCell className="text-right font-medium">{formatCurrency(cost.amount_ht)}</TableCell>
-                <TableCell>
-                  {cost.validation_status === 'validated' ? (
-                    <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200 text-xs">
-                      Validé
+            {costs.map((cost) => {
+              const source = SOURCE_LABELS[cost.source] ?? SOURCE_LABELS.manual;
+              return (
+                <TableRow key={cost.id}>
+                  <TableCell>
+                    <Badge variant="outline" className="text-xs">
+                      {PROJECT_COST_TYPE_LABELS[cost.cost_type] ?? cost.cost_type}
                     </Badge>
-                  ) : (
-                    <Badge variant="outline" className="bg-muted text-muted-foreground text-xs">
-                      Brouillon
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">
+                    {cost.description || '—'}
+                  </TableCell>
+                  <TableCell className="text-right font-medium">{formatCurrency(cost.amount_ht)}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={`text-xs ${source.className}`}>
+                      {source.label}
                     </Badge>
-                  )}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-1">
-                    {onValidate && cost.validation_status === 'draft' && (
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7"
-                        onClick={() => onValidate(cost.id, 'validated')}
-                        title="Valider"
-                      >
-                        <Check className="h-3.5 w-3.5 text-green-600" />
-                      </Button>
+                  </TableCell>
+                  <TableCell>
+                    {cost.validation_status === 'validated' ? (
+                      <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200 text-xs">
+                        Validé
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="bg-muted text-muted-foreground text-xs">
+                        Brouillon
+                      </Badge>
                     )}
-                    {onValidate && cost.validation_status === 'validated' && (
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7"
-                        onClick={() => onValidate(cost.id, 'draft')}
-                        title="Repasser en brouillon"
-                      >
-                        <X className="h-3.5 w-3.5 text-amber-600" />
-                      </Button>
-                    )}
-                    {onDelete && (
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7"
-                        onClick={() => onDelete(cost.id)}
-                        title="Supprimer"
-                      >
-                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                      </Button>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      {onEdit && (
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onEdit(cost)} title="Modifier">
+                          <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                        </Button>
+                      )}
+                      {onValidate && cost.validation_status === 'draft' && (
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onValidate(cost.id, 'validated')} title="Valider">
+                          <Check className="h-3.5 w-3.5 text-green-600" />
+                        </Button>
+                      )}
+                      {onValidate && cost.validation_status === 'validated' && (
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onValidate(cost.id, 'draft')} title="Repasser en brouillon">
+                          <X className="h-3.5 w-3.5 text-amber-600" />
+                        </Button>
+                      )}
+                      {onDelete && (
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onDelete(cost.id)} title="Supprimer">
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       )}
