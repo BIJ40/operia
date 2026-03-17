@@ -73,9 +73,14 @@ export async function getCostProfileByCollaborator(
   } as EmployeeCostProfile;
 }
 
+/**
+ * Upserts a cost profile. Returns the DB row WITHOUT the enriched `apogee_user_id`
+ * field (which is only available via the collaborators join in `listCostProfiles`).
+ * Callers needing the enriched type should re-fetch via `listCostProfiles` after mutation.
+ */
 export async function upsertCostProfile(
   profile: Partial<EmployeeCostProfile> & { agency_id: string; collaborator_id: string },
-): Promise<EmployeeCostProfile> {
+): Promise<Omit<EmployeeCostProfile, 'apogee_user_id'>> {
   // Strip apogee_user_id (computed from join, not a real column)
   const { apogee_user_id: _strip, ...dbFields } = profile;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -86,7 +91,7 @@ export async function upsertCostProfile(
     .single();
 
   if (error) { logError('[profitabilityRepo.upsertCostProfile]', error); throw error; }
-  return { ...(data as Record<string, unknown>), apogee_user_id: null } as EmployeeCostProfile;
+  return data as Omit<EmployeeCostProfile, 'apogee_user_id'>;
 }
 
 // ─── employee_salary_documents ───────────────────────────────
