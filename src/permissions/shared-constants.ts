@@ -51,6 +51,7 @@ export const SHARED_MODULE_KEYS = [
   'support.aide_en_ligne',
   'support.guides',
   'pilotage.resultat',
+  'pilotage.rentabilite',
   'commercial.realisations',
 ] as const;
 
