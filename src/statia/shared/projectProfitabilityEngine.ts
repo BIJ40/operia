@@ -238,8 +238,10 @@ export function computeProjectProfitability(
   const coveredCount = [...projectTechIds].filter(id => profileMap.has(id)).length;
   const coverageRate = projectTechIds.size > 0 ? coveredCount / projectTechIds.size : 0;
 
-  // Flag partial coverage (>0% but <100%)
-  if (coverageRate > 0 && coverageRate < 1) {
+  // Flags based on coverage
+  if (projectTechIds.size > 0 && coverageRate === 0) {
+    flags.push('missing_cost_profile');
+  } else if (coverageRate > 0 && coverageRate < 1) {
     flags.push('partial_cost_profile_coverage');
   }
 
