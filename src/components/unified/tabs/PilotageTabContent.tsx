@@ -105,6 +105,12 @@ export default function PilotageTabContent() {
             <ResultatTabContent />
           </Suspense>
         </TabsContent>
+
+        <TabsContent value="rentabilite" className="mt-4">
+          <Suspense fallback={<LoadingFallback />}>
+            <RentabilitePlaceholder />
+          </Suspense>
+        </TabsContent>
       </Tabs>
     </div>
     </DomainAccentProvider>
