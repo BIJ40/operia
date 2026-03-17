@@ -4,7 +4,7 @@
  */
 
 import { lazy, Suspense, useMemo } from 'react';
-import { BarChart3, Activity, Settings, FileCheck, AlertTriangle, TrendingUp, Loader2 } from 'lucide-react';
+import { BarChart3, Activity, Settings, FileCheck, AlertTriangle, TrendingUp, PieChart, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
@@ -25,8 +25,9 @@ const ActionsAMenerTab = lazy(() =>
 const DevisAcceptesView = lazy(() => import('@/apogee-connect/components/DevisAcceptesView'));
 const AnomaliesDevisDossierView = lazy(() => import('@/apogee-connect/components/AnomaliesDevisDossierView'));
 const ResultatTabContent = lazy(() => import('@/components/financial/ResultatTabContent'));
+const RentabilitePlaceholder = lazy(() => import('@/components/profitability/RentabilitePlaceholder'));
 
-type PilotageSubTab = 'stats' | 'performance' | 'actions' | 'devis-acceptes' | 'anomalies' | 'resultat';
+type PilotageSubTab = 'stats' | 'performance' | 'actions' | 'devis-acceptes' | 'anomalies' | 'resultat' | 'rentabilite';
 
 function LoadingFallback() {
   return (
@@ -49,6 +50,7 @@ export default function PilotageTabContent() {
     { id: 'devis-acceptes', label: getShortLabel('pilotage.devis_acceptes', 'Devis acceptés'), icon: FileCheck, accent: 'teal', requiresModule: 'pilotage.devis_acceptes' },
     { id: 'anomalies', label: getShortLabel('pilotage.incoherences', 'Incohérences'), icon: AlertTriangle, accent: 'pink', requiresModule: 'pilotage.incoherences' },
     { id: 'resultat', label: getShortLabel('pilotage.resultat', 'Résultat'), icon: TrendingUp, accent: 'green', requiresModule: 'pilotage.resultat' },
+    { id: 'rentabilite', label: getShortLabel('pilotage.rentabilite', 'Rentabilité'), icon: PieChart, accent: 'green', requiresModule: 'pilotage.rentabilite' },
   ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {
@@ -101,6 +103,12 @@ export default function PilotageTabContent() {
         <TabsContent value="resultat" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
             <ResultatTabContent />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="rentabilite" className="mt-4">
+          <Suspense fallback={<LoadingFallback />}>
+            <RentabilitePlaceholder />
           </Suspense>
         </TabsContent>
       </Tabs>

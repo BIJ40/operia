@@ -51,6 +51,7 @@ export const SHARED_MODULE_KEYS = [
   'support.aide_en_ligne',
   'support.guides',
   'pilotage.resultat',
+  'pilotage.rentabilite',
   'commercial.realisations',
 ] as const;
 
@@ -111,5 +112,6 @@ export const SHARED_MODULE_MIN_ROLES: Partial<Record<SharedModuleKey, SharedGlob
   'support.aide_en_ligne': 'base_user',
   'support.guides': 'franchisee_admin',
   'pilotage.resultat': 'franchisee_admin',
+  'pilotage.rentabilite': 'franchisee_admin',
   'commercial.realisations': 'franchisee_user',
 };

@@ -32,6 +32,7 @@ export const MODULES = {
   'pilotage.devis_acceptes': 'pilotage.devis_acceptes',
   'pilotage.incoherences': 'pilotage.incoherences',
   'pilotage.resultat': 'pilotage.resultat',
+  'pilotage.rentabilite': 'pilotage.rentabilite',
   // (pilotage.dashboard removed — merged into pilotage.statistiques)
   'pilotage.agence': 'pilotage.agence',
   // Commercial (suivi_client/comparateur/veille/prospects removed — ghost keys, gated by prospection module options)
@@ -575,6 +576,7 @@ export const MODULE_SHORT_LABELS: Partial<Record<ModuleKey, string>> = {
   'pilotage.devis_acceptes': 'Devis',
   'pilotage.incoherences': 'Incohérences',
   'pilotage.resultat': 'Résultat',
+  'pilotage.rentabilite': 'Rentabilité',
   // Commercial (ghost keys removed — gated by prospection module options)
   'commercial.realisations': 'Réalisations',
   // Organisation
