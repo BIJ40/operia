@@ -16,3 +16,4 @@ export * as announcementRepo from './announcementRepository';
 export * as userModulesRepo from './userModulesRepository';
 export * as adminDocumentRepo from './adminDocumentRepository';
 export * as maintenanceRepo from './maintenanceRepository';
+export * as profitabilityRepo from './profitabilityRepository';

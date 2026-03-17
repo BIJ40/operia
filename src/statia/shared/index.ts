@@ -39,3 +39,8 @@ export {
   type ChargeTravauxUniversStats,
   type ChargeParEtatStats
 } from './chargeTravauxEngine';
+
+// Rentabilité dossier
+export {
+  computeProjectProfitability,
+} from './projectProfitabilityEngine';
