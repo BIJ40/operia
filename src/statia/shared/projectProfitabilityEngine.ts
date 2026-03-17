@@ -118,7 +118,15 @@ export function computeProjectProfitability(
 
   // ── 2. Hours ──────────────────────────────────────────────
 
-  // Group hours by technician
+  /**
+   * HYPOTHÈSE V1 : les heures d'une intervention représentent la durée
+   * totale du créneau commun. Si N techniciens sont affectés, chacun
+   * est considéré comme ayant travaillé hours/N.
+   *
+   * Cette hypothèse peut sous-estimer le coût MO dans les cas où
+   * la durée représente le temps individuel (chaque tech fait X heures).
+   * À affiner en Phase 2 avec des données de créneau par technicien.
+   */
   const hoursByTech = new Map<string, number>();
   for (const itv of interventions) {
     const techCount = itv.technicianIds.length || 1;
@@ -136,16 +144,28 @@ export function computeProjectProfitability(
 
   // ── 3. Labor cost ─────────────────────────────────────────
 
-  // Build cost profile lookup by collaborator_id
+  // Build cost profile lookup by apogee_user_id (string) for matching with intervention technicianIds
   const profileMap = new Map<string, EmployeeCostProfile>();
   for (const cp of costProfiles) {
     if (cp.loaded_hourly_cost != null && cp.loaded_hourly_cost > 0) {
+      // Primary key: apogee_user_id (matches intervention technicianIds)
+      if (cp.apogee_user_id != null) {
+        profileMap.set(String(cp.apogee_user_id), cp);
+      }
+      // Secondary key: collaborator_id (fallback for internal lookups)
       profileMap.set(cp.collaborator_id, cp);
     }
   }
 
   // Compute average hourly cost for fallback
-  const profileValues = Array.from(profileMap.values());
+  // Deduplicate by collaborator_id to avoid counting the same profile twice
+  const uniqueProfiles = new Map<string, EmployeeCostProfile>();
+  for (const cp of costProfiles) {
+    if (cp.loaded_hourly_cost != null && cp.loaded_hourly_cost > 0) {
+      uniqueProfiles.set(cp.collaborator_id, cp);
+    }
+  }
+  const profileValues = Array.from(uniqueProfiles.values());
   const avgHourlyCost =
     profileValues.length > 0
       ? profileValues.reduce((s, p) => s + (p.loaded_hourly_cost ?? 0), 0) / profileValues.length
@@ -183,6 +203,9 @@ export function computeProjectProfitability(
   const costSubcontracting = sumValidatedCosts(projectCosts, 'subcontract');
   const costOther = sumOtherCosts(projectCosts);
 
+  const hasCostsEntered = projectCosts.filter(c => c.validation_status === 'validated').length > 0;
+  if (!hasCostsEntered) flags.push('no_project_costs_validated');
+
   // ── 5. Overhead ───────────────────────────────────────────
 
   const costOverhead = computeOverhead(overheadRules, caInvoicedHT, hoursTotal);
@@ -207,18 +230,28 @@ export function computeProjectProfitability(
   // ── 7. Reliability ────────────────────────────────────────
 
   const hasZeroInvoices = factures.some(f => f.totalHT === 0 && !isAvoir(f));
-  const hasCostsEntered = projectCosts.filter(c => c.validation_status === 'validated').length > 0;
+
+  // Cost profile coverage: % of project technicians with a valid cost profile
+  const projectTechIds = new Set(
+    interventions.flatMap(i => i.technicianIds),
+  );
+  const coveredCount = [...projectTechIds].filter(id => profileMap.has(id)).length;
+  const coverageRate = projectTechIds.size > 0 ? coveredCount / projectTechIds.size : 0;
+
+  // Flag partial coverage (>0% but <100%)
+  if (coverageRate > 0 && coverageRate < 1) {
+    flags.push('partial_cost_profile_coverage');
+  }
 
   const checks: ReliabilityCheck[] = [
     { label: 'invoices_present', weight: 20, pass: factures.length > 0 },
-    { label: 'hours_present', weight: 15, pass: interventions.length > 0 },
-    { label: 'cost_profile_exists', weight: 15, pass: profileMap.size > 0 },
+    { label: 'hours_present', weight: 15, pass: hoursTotal > 0 },
+    { label: 'cost_profile_coverage', weight: 25, pass: coverageRate >= 0.8 },
     { label: 'costs_entered', weight: 10, pass: hasCostsEntered },
     { label: 'overhead_configured', weight: 10, pass: overheadRules.filter(r => r.validation_status === 'validated').length > 0 },
     { label: 'labor_not_estimated', weight: 10, pass: !hasEstimatedLabor },
     { label: 'invoices_coherent', weight: 5, pass: !hasZeroInvoices },
-    { label: 'hours_positive', weight: 10, pass: hoursTotal > 0 },
-    { label: 'project_closed', weight: 5, pass: isProjectClosed },
+    { label: 'project_closed_or_invoiced', weight: 5, pass: isProjectClosed || caInvoicedHT > 0 },
   ];
 
   const { score: completenessScore, level: reliabilityLevel } = computeReliability(checks);
