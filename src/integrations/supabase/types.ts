@@ -6332,6 +6332,8 @@ export type Database = {
           project_id: string
           source: Database["public"]["Enums"]["cost_input_source"]
           updated_at: string
+          validated_at: string | null
+          validated_by: string | null
           validation_status: Database["public"]["Enums"]["cost_validation_type"]
           vat_rate: number | null
         }
@@ -6350,6 +6352,8 @@ export type Database = {
           project_id: string
           source?: Database["public"]["Enums"]["cost_input_source"]
           updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
           validation_status?: Database["public"]["Enums"]["cost_validation_type"]
           vat_rate?: number | null
         }
@@ -6368,6 +6372,8 @@ export type Database = {
           project_id?: string
           source?: Database["public"]["Enums"]["cost_input_source"]
           updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
           validation_status?: Database["public"]["Enums"]["cost_validation_type"]
           vat_rate?: number | null
         }
@@ -6384,6 +6390,8 @@ export type Database = {
       project_profitability_snapshots: {
         Row: {
           agency_id: string
+          apogee_data_hash: string | null
+          apogee_last_sync_at: string | null
           ca_collected_ttc: number
           ca_invoiced_ht: number
           completeness_score: number
@@ -6402,12 +6410,18 @@ export type Database = {
           id: string
           margin_pct: number | null
           net_margin: number
+          previous_snapshot_id: string | null
           project_id: string
           reliability_level: Database["public"]["Enums"]["reliability_level_type"]
+          validated_at: string | null
+          validated_by: string | null
           validation_status: Database["public"]["Enums"]["cost_validation_type"]
+          version: number
         }
         Insert: {
           agency_id: string
+          apogee_data_hash?: string | null
+          apogee_last_sync_at?: string | null
           ca_collected_ttc?: number
           ca_invoiced_ht?: number
           completeness_score?: number
@@ -6426,12 +6440,18 @@ export type Database = {
           id?: string
           margin_pct?: number | null
           net_margin?: number
+          previous_snapshot_id?: string | null
           project_id: string
           reliability_level?: Database["public"]["Enums"]["reliability_level_type"]
+          validated_at?: string | null
+          validated_by?: string | null
           validation_status?: Database["public"]["Enums"]["cost_validation_type"]
+          version?: number
         }
         Update: {
           agency_id?: string
+          apogee_data_hash?: string | null
+          apogee_last_sync_at?: string | null
           ca_collected_ttc?: number
           ca_invoiced_ht?: number
           completeness_score?: number
@@ -6450,9 +6470,13 @@ export type Database = {
           id?: string
           margin_pct?: number | null
           net_margin?: number
+          previous_snapshot_id?: string | null
           project_id?: string
           reliability_level?: Database["public"]["Enums"]["reliability_level_type"]
+          validated_at?: string | null
+          validated_by?: string | null
           validation_status?: Database["public"]["Enums"]["cost_validation_type"]
+          version?: number
         }
         Relationships: [
           {
@@ -6460,6 +6484,13 @@ export type Database = {
             columns: ["agency_id"]
             isOneToOne: false
             referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_profitability_snapshots_previous_snapshot_id_fkey"
+            columns: ["previous_snapshot_id"]
+            isOneToOne: false
+            referencedRelation: "project_profitability_snapshots"
             referencedColumns: ["id"]
           },
         ]
