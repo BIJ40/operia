@@ -27,7 +27,7 @@ export function useProjectApogeeData(projectId: string | null) {
     staleTime: 2 * 60 * 1000,
     queryFn: async () => {
       // Use a wide date range to get all project data
-      const dateRange = { start: '2020-01-01', end: new Date().toISOString().slice(0, 10) };
+      const dateRange = { start: new Date('2020-01-01'), end: new Date() };
 
       const [rawFactures, rawInterventions] = await Promise.all([
         services.getFactures(agencySlug, dateRange),

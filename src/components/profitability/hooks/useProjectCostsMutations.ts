@@ -3,7 +3,7 @@
  */
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
-import { useAuth } from '@/contexts/AuthCoreContext';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   insertProjectCost,
   updateProjectCost,

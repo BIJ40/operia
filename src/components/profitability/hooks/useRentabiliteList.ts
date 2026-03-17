@@ -28,7 +28,7 @@ export function useRentabiliteList() {
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const services = getGlobalApogeeDataServices();
-      const dateRange = { start: '2020-01-01', end: new Date().toISOString().slice(0, 10) };
+      const dateRange = { start: new Date('2020-01-01'), end: new Date() };
 
       const [snapshots, rawProjects, rawClients] = await Promise.all([
         listSnapshots(agencyId!),
