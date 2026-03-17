@@ -195,7 +195,7 @@ export function computeProjectProfitability(
   }
 
   if (hasEstimatedLabor) flags.push('labor_cost_estimated');
-  if (profileMap.size === 0 && hoursTotal > 0) flags.push('missing_cost_profile');
+  // missing_cost_profile is now set after coverageRate is computed (section 7)
 
   // ── 4. Project costs ──────────────────────────────────────
 
