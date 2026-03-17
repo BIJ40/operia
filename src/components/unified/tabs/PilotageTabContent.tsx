@@ -108,7 +108,7 @@ export default function PilotageTabContent() {
 
         <TabsContent value="rentabilite" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
-            <RentabilitePlaceholder />
+            <RentabiliteTabContent />
           </Suspense>
         </TabsContent>
       </Tabs>
