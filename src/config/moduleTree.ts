@@ -93,6 +93,7 @@ export const MODULE_TREE: ModuleTreeNode[] = [
       },
       { key: 'outils.performance', label: 'Performance', nodeType: 'screen', requiredPlan: 'PRO', deployed: false },
       { key: 'outils.commercial', label: 'Commercial', nodeType: 'screen', requiredPlan: 'PRO', deployed: false },
+      { key: 'outils.rentabilite', label: 'Rentabilité Dossier', nodeType: 'screen', requiredPlan: 'PRO', deployed: false },
     ],
   },
   {
