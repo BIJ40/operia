@@ -12,6 +12,7 @@ import type {
   AgencyOverheadRule,
   ProfitabilitySnapshot,
   CostValidation,
+  ValidationStatus,
 } from '@/types/projectProfitability';
 
 // ─── employee_cost_profiles ──────────────────────────────────
@@ -118,6 +119,30 @@ export async function insertSalaryDocument(
     .single();
 
   if (error) { logError('[profitabilityRepo.insertSalaryDocument]', error); throw error; }
+  return data as SalaryDocument;
+}
+
+/**
+ * Update salary document validation status with traceability.
+ */
+export async function updateSalaryDocumentValidation(
+  id: string,
+  status: ValidationStatus,
+  userId: string,
+): Promise<SalaryDocument> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('employee_salary_documents')
+    .update({
+      validation_status: status,
+      validated_by: status === 'validated' ? userId : null,
+      validated_at: status === 'validated' ? new Date().toISOString() : null,
+    })
+    .eq('id', id)
+    .select('*')
+    .single();
+
+  if (error) { logError('[profitabilityRepo.updateSalaryDocumentValidation]', error); throw error; }
   return data as SalaryDocument;
 }
 
@@ -238,6 +263,26 @@ export async function insertProjectCostDocument(
   return data as ProjectCostDocument;
 }
 
+/**
+ * Update project cost document validation status.
+ * Note: project_cost_documents only has validation_status (no validated_by/validated_at).
+ */
+export async function updateProjectCostDocumentValidation(
+  id: string,
+  status: ValidationStatus,
+): Promise<ProjectCostDocument> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('project_cost_documents')
+    .update({ validation_status: status })
+    .eq('id', id)
+    .select('*')
+    .single();
+
+  if (error) { logError('[profitabilityRepo.updateProjectCostDocumentValidation]', error); throw error; }
+  return data as ProjectCostDocument;
+}
+
 // ─── agency_overhead_rules ───────────────────────────────────
 
 export async function listOverheadRules(
@@ -279,6 +324,29 @@ export async function deleteOverheadRule(id: string): Promise<void> {
   if (error) { logError('[profitabilityRepo.deleteOverheadRule]', error); throw error; }
 }
 
+/**
+ * Update overhead rule validation status.
+ * Status-only — no validated_by/validated_at on agency_overhead_rules.
+ */
+export async function updateOverheadRuleValidation(
+  id: string,
+  status: CostValidation,
+): Promise<AgencyOverheadRule> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('agency_overhead_rules')
+    .update({
+      validation_status: status,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .select('*')
+    .single();
+
+  if (error) { logError('[profitabilityRepo.updateOverheadRuleValidation]', error); throw error; }
+  return data as AgencyOverheadRule;
+}
+
 // ─── project_profitability_snapshots ─────────────────────────
 
 /**
@@ -307,11 +375,21 @@ export async function getSnapshot(
  * - If a draft exists → update it in-place
  * - If last snapshot is validated → insert new version (preserving the validated one)
  * - If none exists → insert version 1
+ * 
+ * IMPORTANT: Always creates/updates as 'draft'. Never auto-validates.
  */
 export async function upsertSnapshot(
   snapshot: Omit<ProfitabilitySnapshot, 'id' | 'created_at'>,
 ): Promise<ProfitabilitySnapshot> {
   const { agency_id, project_id } = snapshot;
+
+  // Force draft status — recalculate never auto-validates
+  const snapshotData = {
+    ...snapshot,
+    validation_status: 'draft' as CostValidation,
+    validated_by: null,
+    validated_at: null,
+  };
 
   // 1. Find latest snapshot for this project
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -335,7 +413,7 @@ export async function upsertSnapshot(
     const { data, error } = await (supabase as any)
       .from('project_profitability_snapshots')
       .update({
-        ...snapshot,
+        ...snapshotData,
         version: lastSnapshot.version, // keep same version for draft update
       })
       .eq('id', lastSnapshot.id)
@@ -351,7 +429,7 @@ export async function upsertSnapshot(
   const { data, error } = await (supabase as any)
     .from('project_profitability_snapshots')
     .insert({
-      ...snapshot,
+      ...snapshotData,
       version: lastSnapshot ? nextVersion : 1,
       previous_snapshot_id: lastSnapshot?.id ?? null,
     })
@@ -401,4 +479,31 @@ export async function listSnapshots(
 
   if (error) { logError('[profitabilityRepo.listSnapshots]', error); throw error; }
   return (data ?? []) as ProfitabilitySnapshot[];
+}
+
+// ─── Collaborator resolution ─────────────────────────────────
+
+export interface CollaboratorMinimal {
+  id: string;
+  first_name: string;
+  last_name: string;
+  apogee_user_id: number | null;
+}
+
+/**
+ * List collaborators for an agency (minimal fields for mapping).
+ */
+export async function listCollaboratorsMinimal(
+  agencyId: string,
+): Promise<CollaboratorMinimal[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('collaborators')
+    .select('id, first_name, last_name, apogee_user_id')
+    .eq('agency_id', agencyId)
+    .order('last_name', { ascending: true })
+    .limit(500);
+
+  if (error) { logError('[profitabilityRepo.listCollaboratorsMinimal]', error); throw error; }
+  return (data ?? []) as CollaboratorMinimal[];
 }
