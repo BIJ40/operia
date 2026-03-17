@@ -21,6 +21,8 @@ export interface EmployeeCostProfile {
   id: string;
   agency_id: string;
   collaborator_id: string;
+  /** Apogée user ID — resolved via collaborators join, used for technician mapping */
+  apogee_user_id: number | null;
   salary_gross_monthly: number | null;
   employer_charges_rate: number | null;
   employer_monthly_cost: number | null;
@@ -136,13 +138,6 @@ export interface ProfitabilitySnapshot {
 
 // ─── Engine I/O ──────────────────────────────────────────────
 
-/** Lightweight labor entry for engine input */
-export interface LaborEntry {
-  collaborator_id: string;
-  hours: number;
-  loaded_hourly_cost: number | null;
-}
-
 /** Input bundle for the profitability engine */
 export interface ProfitabilityInputs {
   projectId: string;
@@ -150,7 +145,7 @@ export interface ProfitabilityInputs {
   factures: ProfitabilityFacture[];
   /** Interventions from Apogée API */
   interventions: ProfitabilityIntervention[];
-  /** Cost profiles for technicians involved */
+  /** Cost profiles for technicians involved (enriched with apogee_user_id) */
   costProfiles: EmployeeCostProfile[];
   /** Manual/uploaded project costs */
   projectCosts: ProjectCost[];
@@ -172,6 +167,7 @@ export interface ProfitabilityFacture {
 /** Minimal intervention shape consumed by the engine */
 export interface ProfitabilityIntervention {
   id: string;
+  /** Apogée user IDs of assigned technicians */
   technicianIds: string[];
   hours: number;
 }

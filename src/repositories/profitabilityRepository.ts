@@ -15,6 +15,11 @@ import type {
 
 // ─── employee_cost_profiles ──────────────────────────────────
 
+/**
+ * Lists cost profiles enriched with apogee_user_id from the collaborators join.
+ * The select uses `collaborators!inner(apogee_user_id)` to resolve the
+ * Apogée ↔ Supabase technician mapping needed by the engine.
+ */
 export async function listCostProfiles(
   agencyId: string,
   options?: { limit?: number },
@@ -23,13 +28,22 @@ export async function listCostProfiles(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from('employee_cost_profiles')
-    .select('*')
+    .select('*, collaborators!inner(apogee_user_id)')
     .eq('agency_id', agencyId)
     .order('effective_from', { ascending: false })
     .limit(limit);
 
   if (error) { logError('[profitabilityRepo.listCostProfiles]', error); throw error; }
-  return (data ?? []) as EmployeeCostProfile[];
+
+  // Flatten the joined apogee_user_id into the profile object
+  return ((data ?? []) as Record<string, unknown>[]).map((row) => {
+    const collaborators = row.collaborators as { apogee_user_id: number | null } | null;
+    const { collaborators: _discard, ...rest } = row;
+    return {
+      ...rest,
+      apogee_user_id: collaborators?.apogee_user_id ?? null,
+    } as EmployeeCostProfile;
+  });
 }
 
 export async function getCostProfileByCollaborator(
@@ -39,7 +53,7 @@ export async function getCostProfileByCollaborator(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from('employee_cost_profiles')
-    .select('*')
+    .select('*, collaborators!inner(apogee_user_id)')
     .eq('collaborator_id', collaboratorId)
     .lte('effective_from', today)
     .or(`effective_to.is.null,effective_to.gte.${today}`)
@@ -48,21 +62,31 @@ export async function getCostProfileByCollaborator(
     .maybeSingle();
 
   if (error) { logError('[profitabilityRepo.getCostProfileByCollaborator]', error); throw error; }
-  return data as EmployeeCostProfile | null;
+  if (!data) return null;
+
+  const row = data as Record<string, unknown>;
+  const collaborators = row.collaborators as { apogee_user_id: number | null } | null;
+  const { collaborators: _discard, ...rest } = row;
+  return {
+    ...rest,
+    apogee_user_id: collaborators?.apogee_user_id ?? null,
+  } as EmployeeCostProfile;
 }
 
 export async function upsertCostProfile(
   profile: Partial<EmployeeCostProfile> & { agency_id: string; collaborator_id: string },
 ): Promise<EmployeeCostProfile> {
+  // Strip apogee_user_id (computed from join, not a real column)
+  const { apogee_user_id: _strip, ...dbFields } = profile;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from('employee_cost_profiles')
-    .upsert({ ...profile, updated_at: new Date().toISOString() })
+    .upsert({ ...dbFields, updated_at: new Date().toISOString() })
     .select('*')
     .single();
 
   if (error) { logError('[profitabilityRepo.upsertCostProfile]', error); throw error; }
-  return data as EmployeeCostProfile;
+  return { ...(data as Record<string, unknown>), apogee_user_id: null } as EmployeeCostProfile;
 }
 
 // ─── employee_salary_documents ───────────────────────────────
