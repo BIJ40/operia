@@ -26,7 +26,10 @@ export default function ResultatTabContent() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
+  const [resetting, setResetting] = useState(false);
   const { toast } = useToast();
+  const { agencyId } = useAuth();
+  const queryClient = useQueryClient();
 
   const { isLocked, isLoading: monthLoading, upsertMonth, financialMonth } = useFinancialMonth(year, month);
   const { charges, completionScore, isLoading: chargesLoading, createCharge, updateChargeViaRpc } = useFinancialCharges(year, month);
