@@ -101,52 +101,15 @@ function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
     }
   }, [urlTab]);
   
-  // Onglets triés selon l'ordre personnalisé (Accueil toujours premier)
+  // Onglets dans l'ordre fixe (Accueil toujours premier)
   const sortedTabs = useMemo(() => {
     const accueilTab = ALL_TABS.find(t => t.id === 'accueil')!;
     const otherTabs = ALL_TABS.filter(t => t.id !== 'accueil');
-    
-    // Trier selon tabOrder
     const sorted = [...otherTabs].sort((a, b) => {
-      const indexA = tabOrder.indexOf(a.id);
-      const indexB = tabOrder.indexOf(b.id);
-      if (indexA === -1 && indexB === -1) return 0;
-      if (indexA === -1) return 1;
-      if (indexB === -1) return -1;
-      return indexA - indexB;
+      return FIXED_TAB_ORDER.indexOf(a.id) - FIXED_TAB_ORDER.indexOf(b.id);
     });
-    
     return [accueilTab, ...sorted];
-  }, [tabOrder]);
-  
-  // DnD sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-  
-  // Handle drag end
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
-    
-    if (!over || active.id === over.id) return;
-    
-    // Ne pas permettre de déplacer Accueil
-    if (active.id === 'accueil' || over.id === 'accueil') return;
-    
-    const oldIndex = tabOrder.indexOf(active.id as FranchiseurTab);
-    const newIndex = tabOrder.indexOf(over.id as FranchiseurTab);
-    
-    if (oldIndex !== -1 && newIndex !== -1) {
-      setTabOrder(arrayMove(tabOrder, oldIndex, newIndex));
-    }
-  }, [tabOrder, setTabOrder]);
+  }, []);
   
   // Mettre à jour le titre de la page selon l'onglet actif
   useEffect(() => {
