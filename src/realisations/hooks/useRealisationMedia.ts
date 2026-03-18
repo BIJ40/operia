@@ -186,6 +186,7 @@ export function useDeleteMedia() {
     onSuccess: (_, media) => {
       qc.invalidateQueries({ queryKey: ['realisation-media', media.realisation_id] });
       qc.invalidateQueries({ queryKey: ['realisations'] });
+      qc.invalidateQueries({ queryKey: ['generated-visuals'] });
       toast.success('Média supprimé');
     },
     onError: () => toast.error('Erreur suppression'),
