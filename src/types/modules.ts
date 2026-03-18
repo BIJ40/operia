@@ -296,6 +296,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     minRole: 'franchisee_admin',
     options: [],
   },
+  {
     key: 'mediatheque.documents',
     label: 'Documents',
     description: 'Médiathèque centralisée style Finder',
