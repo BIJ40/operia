@@ -57,7 +57,7 @@ const ZonesDeplacementTab = lazy(() => import('@/components/organisation/ZonesDe
 // Types pour les niveaux de navigation
 type OutilsMainTab = 'actions' | 'apporteurs' | 'administratif' | 'parc' | 'performance' | 'prospection' | 'devis-acceptes' | 'anomalies';
 type ApporteursSubTab = 'espace';
-type AdminSubTab = 'reunions' | 'plannings' | 'documents';
+type AdminSubTab = 'reunions' | 'plannings' | 'documents' | 'zones';
 
 // Configuration des onglets principaux (niveau 1)
 // Configuration des onglets principaux avec module requis
