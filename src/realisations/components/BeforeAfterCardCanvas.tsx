@@ -54,6 +54,25 @@ function drawCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: numb
   ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
 }
 
+/** Draw image fully contained (letterboxed) without cropping */
+function drawContain(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, w: number, h: number) {
+  const imgRatio = img.naturalWidth / img.naturalHeight;
+  const boxRatio = w / h;
+  let dw: number, dh: number, dx: number, dy: number;
+  if (imgRatio > boxRatio) {
+    dw = w;
+    dh = w / imgRatio;
+    dx = x;
+    dy = y + (h - dh) / 2;
+  } else {
+    dh = h;
+    dw = h * imgRatio;
+    dx = x + (w - dw) / 2;
+    dy = y;
+  }
+  ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, dx, dy, dw, dh);
+}
+
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
