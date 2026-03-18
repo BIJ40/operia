@@ -4,7 +4,7 @@
  */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, Image, Trash2, X, Send, Loader2 } from 'lucide-react';
+import { Download, Image, Trash2, X, Send, Loader2, RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useGeneratedVisuals } from '../hooks/useGeneratedVisuals';
