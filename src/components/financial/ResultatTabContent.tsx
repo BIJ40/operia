@@ -1,39 +1,68 @@
 /**
- * ResultatTabContent — Main orchestrator for financial result module
+ * ResultatTabContent — Full P&L orchestrator matching Excel "Compte de Résultats"
  */
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Lock, AlertTriangle } from 'lucide-react';
+import { Lock, AlertTriangle, Database, Keyboard, Calculator } from 'lucide-react';
 import { MonthSelector } from './MonthSelector';
-import { ActivityBlock } from './ActivityBlock';
-import { CABlock } from './CABlock';
-import { ChargesBlock } from './ChargesBlock';
-import { ResultBlock } from './ResultBlock';
 import { CompletionIndicator } from './CompletionIndicator';
 import { KpiRow } from './KpiRow';
+import { PLSectionBlock } from './PLSectionBlock';
+import { PL_SECTIONS } from '@/config/financialLineItems';
 import { useFinancialMonth } from '@/hooks/useFinancialMonth';
 import { useFinancialCharges } from '@/hooks/useFinancialCharges';
 import { useFinancialSummary } from '@/hooks/useFinancialSummary';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ResultatTabContent() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
+  const { toast } = useToast();
 
-  const { isLocked, isLoading: monthLoading, isError: monthError } = useFinancialMonth(year, month);
-  const { charges, completionScore, isLoading: chargesLoading, isError: chargesError, createCharge, updateChargeViaRpc } = useFinancialCharges(year, month);
-  const { summary, isLoading: summaryLoading, isError: summaryError } = useFinancialSummary(year, month);
+  const { isLocked, isLoading: monthLoading, upsertMonth } = useFinancialMonth(year, month);
+  const { charges, completionScore, isLoading: chargesLoading, createCharge, updateChargeViaRpc } = useFinancialCharges(year, month);
+  const { summary, isLoading: summaryLoading } = useFinancialSummary(year, month);
+
+  const isLoading = monthLoading || chargesLoading || summaryLoading;
 
   const handleMonthChange = (y: number, m: number) => {
     setYear(y);
     setMonth(m);
   };
 
-  const hasNoData = !summary && !summaryLoading && !chargesLoading && !monthLoading;
+  const handleSaveMonthlyField = async (field: string, value: number) => {
+    try {
+      await upsertMonth.mutateAsync({ [field]: value });
+      toast({ title: 'Donnée enregistrée' });
+    } catch (e: any) {
+      toast({ title: 'Erreur', description: e.message, variant: 'destructive' });
+    }
+  };
+
+  const handleCreateCharge = async (values: { charge_type: string; category: 'FIXE' | 'VARIABLE'; amount: number }) => {
+    try {
+      await createCharge.mutateAsync(values);
+      toast({ title: 'Charge enregistrée' });
+    } catch (e: any) {
+      toast({ title: 'Erreur', description: e.message, variant: 'destructive' });
+    }
+  };
+
+  const handleUpdateCharge = async (params: { charge_id: string; new_amount: number; new_start_month: string }) => {
+    try {
+      await updateChargeViaRpc.mutateAsync(params);
+      toast({ title: 'Charge mise à jour' });
+    } catch (e: any) {
+      toast({ title: 'Erreur', description: e.message, variant: 'destructive' });
+    }
+  };
+
+  const hasNoData = !summary && !isLoading;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <MonthSelector year={year} month={month} onChange={handleMonthChange} />
@@ -41,7 +70,7 @@ export default function ResultatTabContent() {
           {isLocked && (
             <Badge variant="secondary" className="gap-1">
               <Lock className="h-3 w-3" />
-              Mois verrouillé
+              Verrouillé
             </Badge>
           )}
           <div className="w-48">
@@ -50,12 +79,22 @@ export default function ResultatTabContent() {
         </div>
       </div>
 
-      {/* Empty state info */}
+      {/* Legend */}
+      <div className="flex flex-wrap gap-3 text-[10px] text-muted-foreground">
+        <span className="flex items-center gap-1"><Database className="h-3 w-3 text-blue-500" /> API Apogée</span>
+        <span className="flex items-center gap-1"><Keyboard className="h-3 w-3 text-amber-500" /> Saisie mensuelle</span>
+        <span className="flex items-center gap-1"><Keyboard className="h-3 w-3 text-green-500" /> Fixe annuel</span>
+        <span className="flex items-center gap-1"><Keyboard className="h-3 w-3 text-orange-500" /> Variable mensuel</span>
+        <span className="flex items-center gap-1"><Calculator className="h-3 w-3 text-muted-foreground" /> Calculé</span>
+      </div>
+
+      {/* Empty state */}
       {hasNoData && (
         <Alert>
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Aucune donnée financière pour ce mois. Commencez par renseigner vos charges ci-dessous, puis saisissez vos données d'activité pour voir le résultat s'afficher.
+            Aucune donnée pour ce mois. Les données d'activité (CA, factures, heures, achats) sont synchronisées depuis Apogée.
+            Les charges et la masse salariale sont à saisir manuellement.
           </AlertDescription>
         </Alert>
       )}
@@ -63,27 +102,46 @@ export default function ResultatTabContent() {
       {/* KPIs */}
       <KpiRow summary={summary} isLoading={summaryLoading} />
 
-      {/* Content grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="space-y-4">
-          <ActivityBlock summary={summary} isLoading={summaryLoading} />
-          <CABlock summary={summary} isLoading={summaryLoading} />
-          <ChargesBlock
-            charges={charges}
-            isLocked={isLocked}
-            isLoading={chargesLoading}
-            year={year}
-            month={month}
-            onCreateCharge={async (values) => {
-              await createCharge.mutateAsync(values);
-            }}
-            onUpdateCharge={async (params) => {
-              await updateChargeViaRpc.mutateAsync(params);
-            }}
-          />
+      {/* P&L Sections */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        {/* Left column: Activité, CA, Masse salariale, Achats/Marges */}
+        <div className="space-y-3">
+          {PL_SECTIONS.filter(s => ['activite', 'ca', 'masse_salariale', 'achats_marges'].includes(s.key)).map(section => (
+            <PLSectionBlock
+              key={section.key}
+              section={section}
+              summary={summary}
+              charges={charges}
+              isLocked={isLocked}
+              isLoading={isLoading}
+              onSaveMonthlyField={handleSaveMonthlyField}
+              onCreateCharge={handleCreateCharge}
+              onUpdateCharge={handleUpdateCharge}
+              year={year}
+              month={month}
+              defaultCollapsed={section.key === 'ca'}
+            />
+          ))}
         </div>
-        <div>
-          <ResultBlock summary={summary} isLoading={summaryLoading} />
+
+        {/* Right column: Improductifs, Charges agence/locations/externes/autres, Résultat */}
+        <div className="space-y-3">
+          {PL_SECTIONS.filter(s => ['improductifs', 'charges_agence', 'locations', 'charges_externes', 'autres', 'resultat'].includes(s.key)).map(section => (
+            <PLSectionBlock
+              key={section.key}
+              section={section}
+              summary={summary}
+              charges={charges}
+              isLocked={isLocked}
+              isLoading={isLoading}
+              onSaveMonthlyField={handleSaveMonthlyField}
+              onCreateCharge={handleCreateCharge}
+              onUpdateCharge={handleUpdateCharge}
+              year={year}
+              month={month}
+              defaultCollapsed={['charges_agence', 'locations', 'charges_externes', 'autres'].includes(section.key)}
+            />
+          ))}
         </div>
       </div>
     </div>

@@ -1,17 +1,18 @@
 /**
  * useFinancialCharges — Manage agency_financial_charges for a given month
+ * Now supports the full P&L charge_type taxonomy (agence_*, location_*, externe_*, autre_*)
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { PL_SECTIONS } from '@/config/financialLineItems';
 
-export type ChargeType = 'salaires' | 'charges_sociales' | 'loyer' | 'assurances' | 'telecom' | 'vehicules' | 'divers';
 export type ChargeCategory = 'FIXE' | 'VARIABLE';
 
 export interface FinancialCharge {
   id: string;
   agency_id: string;
-  charge_type: ChargeType;
+  charge_type: string;
   category: ChargeCategory;
   label: string | null;
   amount: number;
@@ -22,39 +23,19 @@ export interface FinancialCharge {
   updated_at: string;
 }
 
-export const CHARGE_LABELS: Record<ChargeType, string> = {
-  salaires: 'Salaires',
-  charges_sociales: 'Charges sociales',
-  loyer: 'Loyer',
-  assurances: 'Assurances',
-  telecom: 'Télécom',
-  vehicules: 'Véhicules',
-  divers: 'Divers',
-};
-
-export const CHARGE_WEIGHTS: Record<ChargeType, number> = {
-  salaires: 30,
-  charges_sociales: 25,
-  loyer: 20,
-  vehicules: 10,
-  assurances: 5,
-  telecom: 5,
-  divers: 5,
-};
-
-export const ONBOARDING_STEPS = [
-  { label: 'Charges salariales', types: ['salaires', 'charges_sociales'] as ChargeType[] },
-  { label: 'Charges fixes', types: ['loyer', 'assurances', 'telecom'] as ChargeType[] },
-  { label: 'Autres charges', types: ['vehicules', 'divers'] as ChargeType[] },
-];
-
+/** Compute a completion score based on how many charge sections have data */
 export function computeCompletionScore(charges: FinancialCharge[]): number {
-  const filledTypes = new Set(charges.filter(c => c.amount > 0).map(c => c.charge_type));
-  let score = 0;
-  for (const [type, weight] of Object.entries(CHARGE_WEIGHTS)) {
-    if (filledTypes.has(type as ChargeType)) score += weight;
-  }
-  return score;
+  const chargeSections = PL_SECTIONS.filter(s =>
+    ['charges_agence', 'locations', 'charges_externes', 'autres'].includes(s.key)
+  );
+  const totalItems = chargeSections.reduce((n, s) => n + s.items.filter(i => i.charge_key).length, 0);
+  if (totalItems === 0) return 0;
+  const filledKeys = new Set(charges.filter(c => c.amount > 0).map(c => c.charge_type));
+  const filledCount = chargeSections
+    .flatMap(s => s.items)
+    .filter(i => i.charge_key && filledKeys.has(i.charge_key))
+    .length;
+  return Math.round((filledCount / totalItems) * 100);
 }
 
 function isTableNotFoundError(error: any): boolean {
@@ -91,7 +72,7 @@ export function useFinancialCharges(year: number, month: number) {
   });
 
   const createCharge = useMutation({
-    mutationFn: async (values: { charge_type: ChargeType; category: ChargeCategory; amount: number; label?: string; notes?: string }) => {
+    mutationFn: async (values: { charge_type: string; category: ChargeCategory; amount: number; label?: string; notes?: string }) => {
       const { data, error } = await (supabase as any)
         .from('agency_financial_charges')
         .insert({
@@ -129,6 +110,17 @@ export function useFinancialCharges(year: number, month: number) {
 
   const completionScore = computeCompletionScore(query.data ?? []);
 
+  /** Get the amount for a specific charge_type (charge_key) */
+  function getChargeAmount(chargeKey: string): number {
+    const charge = (query.data ?? []).find(c => c.charge_type === chargeKey);
+    return charge?.amount ?? 0;
+  }
+
+  /** Get the charge record for a specific charge_type */
+  function getCharge(chargeKey: string): FinancialCharge | undefined {
+    return (query.data ?? []).find(c => c.charge_type === chargeKey);
+  }
+
   return {
     charges: query.data ?? [],
     isLoading: query.isLoading,
@@ -136,6 +128,8 @@ export function useFinancialCharges(year: number, month: number) {
     completionScore,
     createCharge,
     updateChargeViaRpc,
+    getChargeAmount,
+    getCharge,
     refetch: query.refetch,
   };
 }

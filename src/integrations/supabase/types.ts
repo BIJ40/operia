@@ -287,16 +287,29 @@ export type Database = {
         Row: {
           achats: number | null
           agency_id: string
+          aides_emploi: number | null
           ca_total: number | null
+          charges_patronales_franchise: number | null
+          charges_patronales_improductifs: number | null
+          charges_patronales_intervenants: number | null
           created_at: string | null
+          frais_franchise: number | null
+          frais_personnel_improductifs: number | null
+          frais_personnel_intervenants: number | null
           heures_facturees: number | null
           id: string
           locked_at: string | null
           locked_by: string | null
           month: number
           nb_factures: number | null
+          nb_heures_payees_improductifs: number | null
+          nb_heures_payees_productifs: number | null
           nb_interventions: number | null
+          nb_salaries: number | null
           notes: string | null
+          salaires_brut_franchise: number | null
+          salaires_brut_improductifs: number | null
+          salaires_brut_intervenants: number | null
           sous_traitance: number | null
           sync_version: number | null
           synced_at: string | null
@@ -306,16 +319,29 @@ export type Database = {
         Insert: {
           achats?: number | null
           agency_id: string
+          aides_emploi?: number | null
           ca_total?: number | null
+          charges_patronales_franchise?: number | null
+          charges_patronales_improductifs?: number | null
+          charges_patronales_intervenants?: number | null
           created_at?: string | null
+          frais_franchise?: number | null
+          frais_personnel_improductifs?: number | null
+          frais_personnel_intervenants?: number | null
           heures_facturees?: number | null
           id?: string
           locked_at?: string | null
           locked_by?: string | null
           month: number
           nb_factures?: number | null
+          nb_heures_payees_improductifs?: number | null
+          nb_heures_payees_productifs?: number | null
           nb_interventions?: number | null
+          nb_salaries?: number | null
           notes?: string | null
+          salaires_brut_franchise?: number | null
+          salaires_brut_improductifs?: number | null
+          salaires_brut_intervenants?: number | null
           sous_traitance?: number | null
           sync_version?: number | null
           synced_at?: string | null
@@ -325,16 +351,29 @@ export type Database = {
         Update: {
           achats?: number | null
           agency_id?: string
+          aides_emploi?: number | null
           ca_total?: number | null
+          charges_patronales_franchise?: number | null
+          charges_patronales_improductifs?: number | null
+          charges_patronales_intervenants?: number | null
           created_at?: string | null
+          frais_franchise?: number | null
+          frais_personnel_improductifs?: number | null
+          frais_personnel_intervenants?: number | null
           heures_facturees?: number | null
           id?: string
           locked_at?: string | null
           locked_by?: string | null
           month?: number
           nb_factures?: number | null
+          nb_heures_payees_improductifs?: number | null
+          nb_heures_payees_productifs?: number | null
           nb_interventions?: number | null
+          nb_salaries?: number | null
           notes?: string | null
+          salaires_brut_franchise?: number | null
+          salaires_brut_improductifs?: number | null
+          salaires_brut_intervenants?: number | null
           sous_traitance?: number | null
           sync_version?: number | null
           synced_at?: string | null
@@ -9747,23 +9786,48 @@ export type Database = {
         Row: {
           achats: number | null
           agency_id: string | null
+          aides_emploi: number | null
           ca_net: number | null
           ca_total: number | null
+          charges_agence: number | null
+          charges_autres: number | null
+          charges_externes: number | null
           charges_fixes: number | null
+          charges_location: number | null
+          charges_patronales_franchise: number | null
+          charges_patronales_improductifs: number | null
+          charges_patronales_intervenants: number | null
           charges_variables: number | null
+          frais_franchise: number | null
+          frais_personnel_improductifs: number | null
+          frais_personnel_intervenants: number | null
           heures_facturees: number | null
           id: string | null
           locked_at: string | null
           marge_brute: number | null
           marge_contributive: number | null
+          marge_sur_achats: number | null
+          masse_salariale_productifs: number | null
           month: number | null
           month_date: string | null
           nb_factures: number | null
+          nb_heures_payees_improductifs: number | null
+          nb_heures_payees_productifs: number | null
           nb_interventions: number | null
+          nb_salaries: number | null
+          resultat_avant_is: number | null
           resultat_exploitation: number | null
+          salaires_brut_franchise: number | null
+          salaires_brut_improductifs: number | null
+          salaires_brut_intervenants: number | null
           sous_traitance: number | null
           sync_version: number | null
           synced_at: string | null
+          taux_marge_achats: number | null
+          taux_marge_brute: number | null
+          total_charges: number | null
+          total_charges_hors_ms_productifs: number | null
+          total_improductifs: number | null
           year: number | null
         }
         Relationships: [
