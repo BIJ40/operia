@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Pencil, Check, X, Database, Keyboard, Calculator } from 'lucide-react';
+import { Pencil, Check, X, Keyboard, Calculator, Users } from 'lucide-react';
 import { formatCurrency, formatPercent } from '@/lib/formatters';
 import type { PLSection as PLSectionType, LineItem } from '@/config/financialLineItems';
 import type { FinancialSummary } from '@/hooks/useFinancialSummary';
@@ -27,11 +27,13 @@ interface PLSectionProps {
   month: number;
   /** Whether the section is initially collapsed */
   defaultCollapsed?: boolean;
+  /** Auto-populated values from external sources (e.g. collaborator count) */
+  autoValues?: Record<string, number>;
 }
 
-function getSourceIcon(source_type: string) {
+function getSourceIcon(source_type: string, autoSource?: string) {
+  if (autoSource) return <Users className="h-3 w-3 text-primary" />;
   switch (source_type) {
-    case 'api': return <Database className="h-3 w-3 text-blue-500" />;
     case 'manual_monthly': return <Keyboard className="h-3 w-3 text-amber-500" />;
     case 'manual_fixed': return <Keyboard className="h-3 w-3 text-green-500" />;
     case 'manual_variable': return <Keyboard className="h-3 w-3 text-orange-500" />;
@@ -40,9 +42,9 @@ function getSourceIcon(source_type: string) {
   }
 }
 
-function getSourceBadge(source_type: string) {
+function getSourceBadge(source_type: string, autoSource?: string) {
+  if (autoSource) return <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 font-normal text-primary border-primary/30">Auto</Badge>;
   switch (source_type) {
-    case 'api': return <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 font-normal text-blue-600 border-blue-200">API</Badge>;
     case 'manual_fixed': return <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 font-normal text-green-600 border-green-200">Fixe</Badge>;
     case 'manual_variable': return <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 font-normal text-orange-600 border-orange-200">Variable</Badge>;
     default: return null;
@@ -61,6 +63,7 @@ export function PLSectionBlock({
   year,
   month,
   defaultCollapsed = false,
+  autoValues = {},
 }: PLSectionProps) {
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
   const [editingKey, setEditingKey] = useState<string | null>(null);
@@ -71,6 +74,15 @@ export function PLSectionBlock({
 
   function getValue(item: LineItem): number {
     // Monthly fields from summary
+    if (item.month_field && summary) {
+      const summaryVal = (summary as any)[item.month_field];
+      if (summaryVal != null && summaryVal !== 0) return summaryVal;
+    }
+    // Auto values (fallback when no saved value)
+    if (item.month_field && autoValues[item.month_field] != null) {
+      const summaryVal = summary ? (summary as any)[item.month_field] : null;
+      if (!summaryVal) return autoValues[item.month_field];
+    }
     if (item.month_field && summary) {
       return (summary as any)[item.month_field] ?? 0;
     }
@@ -179,11 +191,11 @@ export function PLSectionBlock({
                     style={{ paddingLeft: (item.indent ?? 0) * 16 }}
                   >
                     <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                      {getSourceIcon(item.source_type)}
+                      {getSourceIcon(item.source_type, item.autoSource)}
                       <span className={`text-xs truncate ${item.bold ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
                         {item.label}
                       </span>
-                      {getSourceBadge(item.source_type)}
+                      {getSourceBadge(item.source_type, item.autoSource)}
                     </div>
 
                     <div className="flex items-center gap-1 flex-shrink-0 ml-2">

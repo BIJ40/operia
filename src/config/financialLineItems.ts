@@ -3,14 +3,13 @@
  * Maps the Excel "Compte de Résultats" template to data sources and UI structure.
  *
  * source_type:
- *   'api'           → fetched from Apogee sync (read-only in UI)
- *   'manual_monthly' → entered each month (editable)
+ *   'manual_monthly' → entered/synced each month (editable)
  *   'manual_fixed'   → entered once per year, applied monthly (charge table)
  *   'manual_variable' → entered monthly (charge table)
  *   'calculated'     → computed from other fields (read-only)
  */
 
-export type SourceType = 'api' | 'manual_monthly' | 'manual_fixed' | 'manual_variable' | 'calculated';
+export type SourceType = 'manual_monthly' | 'manual_fixed' | 'manual_variable' | 'calculated';
 
 export interface LineItem {
   key: string;
@@ -30,6 +29,8 @@ export interface LineItem {
   bold?: boolean;
   /** Negative display (deduction) */
   negative?: boolean;
+  /** Auto-populated from another source (e.g. collaborators count) — still editable */
+  autoSource?: string;
 }
 
 export interface PLSection {
@@ -48,12 +49,12 @@ export const PL_SECTIONS: PLSection[] = [
     key: 'activite',
     title: 'ACTIVITÉ',
     items: [
-      { key: 'nb_factures', label: 'Nombre de factures', source_type: 'api', month_field: 'nb_factures' },
-      { key: 'nb_interventions', label: "Nombre d'interventions", source_type: 'api', month_field: 'nb_interventions' },
-      { key: 'nb_salaries', label: 'Nombre de salariés', source_type: 'manual_monthly', month_field: 'nb_salaries' },
-      { key: 'heures_facturees', label: "Nombre d'heures facturées", source_type: 'api', month_field: 'heures_facturees' },
-      { key: 'nb_heures_payees_productifs', label: "Nombre d'heures payées productifs", source_type: 'api', month_field: 'nb_heures_payees_productifs' },
-      { key: 'nb_heures_payees_improductifs', label: "Nombre d'heures payées improductifs", source_type: 'api', month_field: 'nb_heures_payees_improductifs' },
+      { key: 'nb_factures', label: 'Nombre de factures', source_type: 'manual_monthly', month_field: 'nb_factures' },
+      { key: 'nb_interventions', label: "Nombre d'interventions", source_type: 'manual_monthly', month_field: 'nb_interventions' },
+      { key: 'nb_salaries', label: 'Nombre de salariés', source_type: 'manual_monthly', month_field: 'nb_salaries', autoSource: 'collaborators_count' },
+      { key: 'heures_facturees', label: "Nombre d'heures facturées", source_type: 'manual_monthly', month_field: 'heures_facturees' },
+      { key: 'nb_heures_payees_productifs', label: "Nombre d'heures payées productifs", source_type: 'manual_monthly', month_field: 'nb_heures_payees_productifs' },
+      { key: 'nb_heures_payees_improductifs', label: "Nombre d'heures payées improductifs", source_type: 'manual_monthly', month_field: 'nb_heures_payees_improductifs' },
     ],
   },
 
@@ -62,14 +63,14 @@ export const PL_SECTIONS: PLSection[] = [
     key: 'ca',
     title: 'CHIFFRE D\'AFFAIRES',
     items: [
-      { key: 'ca_total', label: 'CA HT', source_type: 'api', month_field: 'ca_total', bold: true },
-      { key: 'ca_plomberie', label: 'CA HT Plomberie', source_type: 'api', indent: 1 },
-      { key: 'ca_electricite', label: 'CA HT Électricité', source_type: 'api', indent: 1 },
-      { key: 'ca_menuiserie', label: 'CA HT Menuiserie', source_type: 'api', indent: 1 },
-      { key: 'ca_serrurerie', label: 'CA HT Serrurerie', source_type: 'api', indent: 1 },
-      { key: 'ca_vitrerie', label: 'CA HT Vitrerie', source_type: 'api', indent: 1 },
-      { key: 'ca_volets', label: 'CA HT Volets roulants', source_type: 'api', indent: 1 },
-      { key: 'ca_autres', label: 'CA HT Autres', source_type: 'api', indent: 1 },
+      { key: 'ca_total', label: 'CA HT', source_type: 'manual_monthly', month_field: 'ca_total', bold: true },
+      { key: 'ca_plomberie', label: 'CA HT Plomberie', source_type: 'manual_monthly', indent: 1 },
+      { key: 'ca_electricite', label: 'CA HT Électricité', source_type: 'manual_monthly', indent: 1 },
+      { key: 'ca_menuiserie', label: 'CA HT Menuiserie', source_type: 'manual_monthly', indent: 1 },
+      { key: 'ca_serrurerie', label: 'CA HT Serrurerie', source_type: 'manual_monthly', indent: 1 },
+      { key: 'ca_vitrerie', label: 'CA HT Vitrerie', source_type: 'manual_monthly', indent: 1 },
+      { key: 'ca_volets', label: 'CA HT Volets roulants', source_type: 'manual_monthly', indent: 1 },
+      { key: 'ca_autres', label: 'CA HT Autres', source_type: 'manual_monthly', indent: 1 },
     ],
   },
 
@@ -92,7 +93,7 @@ export const PL_SECTIONS: PLSection[] = [
     key: 'achats_marges',
     title: 'ACHATS & MARGES',
     items: [
-      { key: 'achats', label: 'ACHATS DE MARCHANDISES', source_type: 'api', month_field: 'achats', bold: true },
+      { key: 'achats', label: 'ACHATS DE MARCHANDISES', source_type: 'manual_monthly', month_field: 'achats', bold: true },
       { key: 'marge_sur_achats', label: 'MARGE SUR ACHATS', source_type: 'calculated', bold: true, isSubtotal: true },
       { key: 'taux_marge_achats', label: 'TAUX DE MARGE SUR ACHATS', source_type: 'calculated', isPercent: true },
       { key: 'marge_brute', label: 'MARGE BRUTE ACHATS+MO', source_type: 'calculated', bold: true, isSubtotal: true },
