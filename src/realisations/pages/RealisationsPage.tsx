@@ -1,24 +1,25 @@
 /**
- * RealisationsPage — List with hero photo thumbnails + Visuals gallery
+ * RealisationsPage — Tabs: Réalisations list + Avant/Après visuals gallery
  */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Camera, Image, Calendar, ChevronRight, ChevronDown, Sparkles } from 'lucide-react';
+import { Plus, Search, Camera, Image, Calendar, ChevronRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useRealisations } from '../hooks/useRealisations';
 import { useGeneratedVisuals } from '../hooks/useGeneratedVisuals';
 import { VisualsGallery } from '../components/VisualsGallery';
 import { SYNC_STATUS_LABELS, SYNC_STATUS_COLORS, type ExternalSyncStatus } from '../types';
 
+type Tab = 'realisations' | 'avant-apres';
+
 export default function RealisationsPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
+  const [activeTab, setActiveTab] = useState<Tab>('realisations');
   const { data: realisations = [], isLoading } = useRealisations(search);
   const { data: visuals = [] } = useGeneratedVisuals();
-  const [visualsOpen, setVisualsOpen] = useState(true);
 
   return (
     <div className="space-y-4">
@@ -33,30 +34,80 @@ export default function RealisationsPage() {
             <p className="text-xs text-muted-foreground">Photos terrain</p>
           </div>
         </div>
-        <Button onClick={() => navigate('/realisations/new')} size="sm" className="gap-1.5">
-          <Plus className="w-3.5 h-3.5" /> Nouvelle
-        </Button>
+        {activeTab === 'realisations' && (
+          <Button onClick={() => navigate('/realisations/new')} size="sm" className="gap-1.5">
+            <Plus className="w-3.5 h-3.5" /> Nouvelle
+          </Button>
+        )}
       </div>
 
-      {/* Visuals Gallery Section */}
-      {visuals.length > 0 && (
-        <Collapsible open={visualsOpen} onOpenChange={setVisualsOpen}>
-          <CollapsibleTrigger asChild>
-            <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 hover:bg-primary/10 transition-colors group">
-              <Sparkles className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium text-foreground flex-1 text-left">
-                Visuels Avant/Après
+      {/* Tabs */}
+      <div className="flex border-b border-border">
+        <button
+          onClick={() => setActiveTab('realisations')}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'realisations'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <span className="flex items-center gap-1.5">
+            <Camera className="w-3.5 h-3.5" />
+            Réalisations
+          </span>
+        </button>
+        <button
+          onClick={() => setActiveTab('avant-apres')}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'avant-apres'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <span className="flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5" />
+            Avant / Après
+            {visuals.length > 0 && (
+              <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded-full font-semibold">
+                {visuals.length}
               </span>
-              <span className="text-xs text-muted-foreground mr-1">{visuals.length}</span>
-              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${visualsOpen ? '' : '-rotate-90'}`} />
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="pt-3">
-            <VisualsGallery />
-          </CollapsibleContent>
-        </Collapsible>
-      )}
+            )}
+          </span>
+        </button>
+      </div>
 
+      {/* Tab content */}
+      {activeTab === 'realisations' ? (
+        <RealisationsListContent
+          realisations={realisations}
+          isLoading={isLoading}
+          search={search}
+          setSearch={setSearch}
+          navigate={navigate}
+        />
+      ) : (
+        <VisualsGallery />
+      )}
+    </div>
+  );
+}
+
+// ─── Réalisations list ────────────────────────────────────────
+function RealisationsListContent({
+  realisations,
+  isLoading,
+  search,
+  setSearch,
+  navigate,
+}: {
+  realisations: any[];
+  isLoading: boolean;
+  search: string;
+  setSearch: (v: string) => void;
+  navigate: (path: string) => void;
+}) {
+  return (
+    <>
       {/* Search */}
       <div className="relative max-w-sm">
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
@@ -129,7 +180,7 @@ export default function RealisationsPage() {
           ))}
         </div>
       )}
-    </div>
+    </>
   );
 }
 
