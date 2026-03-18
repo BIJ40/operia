@@ -33,6 +33,7 @@ interface PLSectionProps {
 
 function getSourceIcon(source_type: string, autoSource?: string) {
   if (autoSource === 'statia') return <Zap className="h-3 w-3 text-blue-500" />;
+  if (autoSource === 'collaborators') return <Users className="h-3 w-3 text-primary" />;
   if (autoSource) return <Users className="h-3 w-3 text-primary" />;
   switch (source_type) {
     case 'manual_monthly': return <Keyboard className="h-3 w-3 text-amber-500" />;
@@ -45,6 +46,7 @@ function getSourceIcon(source_type: string, autoSource?: string) {
 
 function getSourceBadge(source_type: string, autoSource?: string, hasAutoValue?: boolean) {
   if (autoSource === 'statia' && hasAutoValue) return <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 font-normal text-blue-600 border-blue-200">StatIA</Badge>;
+  if (autoSource === 'collaborators' && hasAutoValue) return <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 font-normal text-primary border-primary/30">RH</Badge>;
   if (autoSource && hasAutoValue) return <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 font-normal text-primary border-primary/30">Auto</Badge>;
   switch (source_type) {
     case 'manual_fixed': return <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 font-normal text-green-600 border-green-200">Fixe</Badge>;
@@ -75,15 +77,20 @@ export function PLSectionBlock({
   const monthDate = `${year}-${String(month).padStart(2, '0')}-01`;
 
   function getValue(item: LineItem): number {
+    // Display-only items (e.g. panier_moyen, ca_par_heure) — always from autoValues
+    if (item.displayOnly) {
+      return autoValues[item.key] ?? 0;
+    }
     // Monthly fields from summary
     if (item.month_field && summary) {
       const summaryVal = (summary as any)[item.month_field];
       if (summaryVal != null && summaryVal !== 0) return summaryVal;
     }
-    // Auto values (fallback when no saved value)
-    if (item.month_field && autoValues[item.month_field] != null) {
-      const summaryVal = summary ? (summary as any)[item.month_field] : null;
-      if (!summaryVal) return autoValues[item.month_field];
+    // Auto values keyed by month_field or item key
+    const autoKey = item.month_field || item.key;
+    if (autoValues[autoKey] != null) {
+      const summaryVal = summary && item.month_field ? (summary as any)[item.month_field] : null;
+      if (!summaryVal) return autoValues[autoKey];
     }
     if (item.month_field && summary) {
       return (summary as any)[item.month_field] ?? 0;
@@ -111,7 +118,7 @@ export function PLSectionBlock({
   }
 
   function isEditable(item: LineItem): boolean {
-    if (isLocked) return false;
+    if (isLocked || item.displayOnly) return false;
     return item.source_type === 'manual_monthly' || item.source_type === 'manual_fixed' || item.source_type === 'manual_variable';
   }
 
@@ -197,7 +204,7 @@ export function PLSectionBlock({
                       <span className={`text-xs truncate ${item.bold ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
                         {item.label}
                       </span>
-                      {getSourceBadge(item.source_type, item.autoSource, !!(item.month_field && autoValues[item.month_field]))}
+                      {getSourceBadge(item.source_type, item.autoSource, !!(autoValues[item.month_field || item.key]))}
                     </div>
 
                     <div className="flex items-center gap-1 flex-shrink-0 ml-2">
