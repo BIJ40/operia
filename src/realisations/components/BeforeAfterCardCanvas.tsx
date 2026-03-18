@@ -138,16 +138,20 @@ export function BeforeAfterCardCanvas({
       ctx.fillStyle = theme.bg;
       ctx.fillRect(0, 0, SIZE, SIZE);
 
-      // ── Top bar — Banner image (full width, NOT cropped)
+      // ── Top bar — Banner with colored border around it
       const bannerRatio = imgBanner.naturalWidth / imgBanner.naturalHeight;
-      const bannerW = SIZE;
-      const bannerH = Math.round(bannerW / bannerRatio);
-      const topBarH = Math.min(bannerH, 240);
-      ctx.save();
-      ctx.fillStyle = '#FFFFFF';
+      const bannerPad = 12; // colored padding around the banner
+      const bannerInnerW = SIZE - bannerPad * 2;
+      const bannerInnerH = Math.round(bannerInnerW / bannerRatio);
+      const topBarH = Math.min(bannerInnerH + bannerPad * 2, 260);
+      // Colored background behind banner
+      ctx.fillStyle = theme.bg;
       ctx.fillRect(0, 0, SIZE, topBarH);
-      drawContain(ctx, imgBanner, 0, 0, SIZE, topBarH);
-      ctx.restore();
+      // White area for the banner itself
+      const innerH = topBarH - bannerPad * 2;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(bannerPad, bannerPad, bannerInnerW, innerH);
+      drawContain(ctx, imgBanner, bannerPad, bannerPad, bannerInnerW, innerH);
 
       // ── Photos zone — Two side-by-side images with diagonal white line overlay
       const photoY = topBarH + 10;
