@@ -4,6 +4,7 @@ import { formatCurrency, formatPercent } from '@/lib/formatters';
 interface KpiRowProps {
   summary: FinancialSummary | null;
   isLoading: boolean;
+  autoValues?: Record<string, number>;
 }
 
 function KpiCard({ label, value, suffix }: { label: string; value: string; suffix?: string }) {
@@ -17,7 +18,7 @@ function KpiCard({ label, value, suffix }: { label: string; value: string; suffi
   );
 }
 
-export function KpiRow({ summary, isLoading }: KpiRowProps) {
+export function KpiRow({ summary, isLoading, autoValues = {} }: KpiRowProps) {
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -28,16 +29,16 @@ export function KpiRow({ summary, isLoading }: KpiRowProps) {
     );
   }
 
-  const caNet = summary?.ca_net ?? 0;
+  const caNet = summary?.ca_net ?? autoValues.ca_total ?? 0;
   const margeBrute = summary?.marge_brute ?? 0;
   const margeContributive = summary?.marge_contributive ?? 0;
-  const heures = summary?.heures_facturees ?? 0;
-  const nbFactures = summary?.nb_factures ?? 0;
+  const heures = summary?.heures_facturees ?? autoValues.heures_facturees ?? 0;
+  const nbFactures = summary?.nb_factures ?? autoValues.nb_factures ?? 0;
 
   const tauxMargeBrute = caNet > 0 ? (margeBrute / caNet) * 100 : 0;
   const tauxMargeContrib = caNet > 0 ? (margeContributive / caNet) * 100 : 0;
-  const panierMoyen = nbFactures > 0 ? caNet / nbFactures : 0;
-  const caParHeure = heures > 0 ? caNet / heures : 0;
+  const panierMoyen = autoValues.panier_moyen ?? (nbFactures > 0 ? caNet / nbFactures : 0);
+  const caParHeure = autoValues.ca_par_heure ?? (heures > 0 ? caNet / heures : 0);
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
