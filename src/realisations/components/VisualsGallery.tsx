@@ -26,6 +26,7 @@ export function VisualsGallery() {
   const { data: visuals = [], isLoading } = useGeneratedVisuals();
   const deleteMedia = useDeleteMedia();
   const dispatchVisual = useDispatchVisualWebhook();
+  const [sendingId, setSendingId] = useState<string | null>(null);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [lightboxTitle, setLightboxTitle] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; realisation_id: string; storage_path: string } | null>(null);
@@ -117,10 +118,16 @@ export function VisualsGallery() {
                 size="sm"
                 variant="outline"
                 className="w-full h-7 text-xs gap-1.5"
-                disabled={dispatchVisual.isPending}
-                onClick={() => dispatchVisual.mutate({ mediaId: v.id, realisationId: v.realisation_id })}
+                disabled={sendingId === v.id}
+                onClick={() => {
+                  setSendingId(v.id);
+                  dispatchVisual.mutate(
+                    { mediaId: v.id, realisationId: v.realisation_id },
+                    { onSettled: () => setSendingId(null) },
+                  );
+                }}
               >
-                {dispatchVisual.isPending ? (
+                {sendingId === v.id ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
                 ) : (
                   <Send className="w-3 h-3" />
