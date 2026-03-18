@@ -3,7 +3,7 @@
  */
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Lock, AlertTriangle, Keyboard, Calculator } from 'lucide-react';
+import { Lock, AlertTriangle, Keyboard, Calculator, Zap } from 'lucide-react';
 import { MonthSelector } from './MonthSelector';
 import { CompletionIndicator } from './CompletionIndicator';
 import { KpiRow } from './KpiRow';
