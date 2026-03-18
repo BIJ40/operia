@@ -130,38 +130,68 @@ export function BeforeAfterCardCanvas({
       drawCover(ctx, imgBanner, 0, 0, SIZE, topBarH);
       ctx.restore();
 
-      // ── Photos zone
+      // ── Photos zone — Diagonal split (/ direction: AVANT bottom-left, APRÈS top-right)
       const photoY = topBarH + 10;
       const photoH = SIZE - topBarH - 10 - 120; // bottom bar = 120
-      const photoW = (SIZE - 60) / 2; // 20 left + 20 gap + 20 right
-      const radius = 16;
+      const photoW = SIZE;
+      const margin = 20;
 
-      // Avant
+      // Full photo area
+      const areaX = margin;
+      const areaY = photoY;
+      const areaW = photoW - margin * 2;
+      const areaH = photoH;
+
+      // Diagonal offset for gap (pixels to shift each side for the white diagonal gap)
+      const gap = 6;
+
+      // AVANT — bottom-left triangle (below the / diagonal)
       ctx.save();
-      roundRect(ctx, 20, photoY, photoW, photoH, radius);
+      ctx.beginPath();
+      ctx.moveTo(areaX, areaY + areaH);                          // bottom-left
+      ctx.lineTo(areaX + areaW - gap, areaY + areaH);            // bottom-right (shifted)
+      ctx.lineTo(areaX, areaY + gap);                             // top-left (shifted)
+      ctx.closePath();
       ctx.clip();
-      drawCover(ctx, imgAvant, 20, photoY, photoW, photoH);
-      // Label banner
+      drawCover(ctx, imgAvant, areaX, areaY, areaW, areaH);
+      // Label AVANT — bottom-left
       ctx.fillStyle = 'rgba(0,0,0,0.55)';
-      ctx.fillRect(20, photoY + photoH - 64, photoW, 64);
+      roundRect(ctx, areaX + 20, areaY + areaH - 74, 160, 54, 12);
+      ctx.fill();
       ctx.fillStyle = '#FFFFFF';
-      ctx.font = 'bold 32px sans-serif';
+      ctx.font = 'bold 30px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('AVANT', 20 + photoW / 2, photoY + photoH - 22);
+      ctx.fillText('AVANT', areaX + 100, areaY + areaH - 38);
       ctx.restore();
 
-      // Après
-      const apresX = 20 + photoW + 20;
+      // APRÈS — top-right triangle (above the / diagonal)
       ctx.save();
-      roundRect(ctx, apresX, photoY, photoW, photoH, radius);
+      ctx.beginPath();
+      ctx.moveTo(areaX + areaW, areaY);                           // top-right
+      ctx.lineTo(areaX + gap, areaY);                              // top-left (shifted)
+      ctx.lineTo(areaX + areaW, areaY + areaH - gap);             // bottom-right (shifted)
+      ctx.closePath();
       ctx.clip();
-      drawCover(ctx, imgApres, apresX, photoY, photoW, photoH);
+      drawCover(ctx, imgApres, areaX, areaY, areaW, areaH);
+      // Label APRÈS — top-right
       ctx.fillStyle = 'rgba(0,0,0,0.55)';
-      ctx.fillRect(apresX, photoY + photoH - 64, photoW, 64);
+      roundRect(ctx, areaX + areaW - 180, areaY + 20, 160, 54, 12);
+      ctx.fill();
       ctx.fillStyle = '#FFFFFF';
-      ctx.font = 'bold 32px sans-serif';
+      ctx.font = 'bold 30px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('APRÈS', apresX + photoW / 2, photoY + photoH - 22);
+      ctx.fillText('APRÈS', areaX + areaW - 100, areaY + 56);
+      ctx.restore();
+
+      // Diagonal separator line (white)
+      ctx.save();
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = gap * 2;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(areaX, areaY + areaH);
+      ctx.lineTo(areaX + areaW, areaY);
+      ctx.stroke();
       ctx.restore();
 
       // ── Bottom bar
