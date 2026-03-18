@@ -77,15 +77,20 @@ export function PLSectionBlock({
   const monthDate = `${year}-${String(month).padStart(2, '0')}-01`;
 
   function getValue(item: LineItem): number {
+    // Display-only items (e.g. panier_moyen, ca_par_heure) — always from autoValues
+    if (item.displayOnly) {
+      return autoValues[item.key] ?? 0;
+    }
     // Monthly fields from summary
     if (item.month_field && summary) {
       const summaryVal = (summary as any)[item.month_field];
       if (summaryVal != null && summaryVal !== 0) return summaryVal;
     }
-    // Auto values (fallback when no saved value)
-    if (item.month_field && autoValues[item.month_field] != null) {
-      const summaryVal = summary ? (summary as any)[item.month_field] : null;
-      if (!summaryVal) return autoValues[item.month_field];
+    // Auto values keyed by month_field or item key
+    const autoKey = item.month_field || item.key;
+    if (autoValues[autoKey] != null) {
+      const summaryVal = summary && item.month_field ? (summary as any)[item.month_field] : null;
+      if (!summaryVal) return autoValues[autoKey];
     }
     if (item.month_field && summary) {
       return (summary as any)[item.month_field] ?? 0;
