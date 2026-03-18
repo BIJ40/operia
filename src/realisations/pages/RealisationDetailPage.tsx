@@ -14,6 +14,7 @@ import { MEDIA_ROLE_LABELS, SYNC_STATUS_LABELS, SYNC_STATUS_COLORS, type MediaRo
 import { BeforeAfterGenerator } from '../components/BeforeAfterGenerator';
 import { useCommercialProfile } from '@/commercial/hooks/useCommercialProfile';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
