@@ -70,7 +70,6 @@ function UnifiedWorkspaceContent() {
   const { isImpersonating, isRealUserImpersonation } = useImpersonation();
   const effectiveAuth = useEffectiveAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [tabOrder, setTabOrder] = useSessionState<UnifiedTab[]>('unified_workspace_tab_order', DEFAULT_TAB_ORDER);
   const [loginOpen, setLoginOpen] = useState(false);
   
   // Support URL ?tab=XXX pour navigation directe
@@ -144,37 +143,17 @@ function UnifiedWorkspaceContent() {
     [allTabs, permCheckers, realIsPlatformAdmin]
   );
 
-  // Auto-repair tab order
-  useEffect(() => {
-    const visibleIds = visibleTabs.filter(t => t.id !== 'accueil').map(t => t.id);
-    const cleaned = tabOrder.filter(id => visibleIds.includes(id));
-    const defaultVisible = DEFAULT_TAB_ORDER.filter(id => visibleIds.includes(id));
-    const missingFromDefault = defaultVisible.filter(id => !cleaned.includes(id));
-    const extraMissing = visibleIds.filter(id => !cleaned.includes(id) && !defaultVisible.includes(id));
-    const next = [...cleaned, ...missingFromDefault, ...extraMissing];
-    const isSame = next.length === tabOrder.length && next.every((v, i) => v === tabOrder[i]);
-    if (!isSame) setTabOrder(next);
-  }, [visibleTabs, tabOrder, setTabOrder]);
-  
-  // Onglets triés
+  // Onglets dans l'ordre fixe DEFAULT_TAB_ORDER
   const sortedTabs = useMemo(() => {
     const accueilTab = visibleTabs.find(t => t.id === 'accueil')!;
     const otherTabs = visibleTabs.filter(t => t.id !== 'accueil');
     const sorted = [...otherTabs].sort((a, b) => {
-      const indexA = tabOrder.indexOf(a.id);
-      const indexB = tabOrder.indexOf(b.id);
-      if (indexA === -1 && indexB === -1) return 0;
-      if (indexA === -1) return 1;
-      if (indexB === -1) return -1;
+      const indexA = DEFAULT_TAB_ORDER.indexOf(a.id);
+      const indexB = DEFAULT_TAB_ORDER.indexOf(b.id);
       return indexA - indexB;
     });
     return [accueilTab, ...sorted];
-  }, [visibleTabs, tabOrder]);
-
-  const sortableIds = useMemo(
-    () => sortedTabs.filter(t => t.id !== 'accueil').map(t => t.id),
-    [sortedTabs]
-  );
+  }, [visibleTabs]);
   
   // Effective N0 user check
   const effectiveIsN0User = !effectiveGlobalRole || effectiveGlobalRole === 'base_user';
@@ -236,14 +215,12 @@ function UnifiedWorkspaceContent() {
               />
             ) : (
               <WorkspaceTabBar
-                sortedTabs={sortedTabs}
-                sortableIds={sortableIds}
+                tabs={sortedTabs}
                 activeTab={validActiveTab}
                 tabButtonClass={tabButtonClass}
                 isTabAccessible={isTabAccessible}
                 isTabVisuallyDisabled={isTabVisuallyDisabled}
                 setActiveTab={setActiveTab}
-                setTabOrder={setTabOrder}
               />
             )}
             

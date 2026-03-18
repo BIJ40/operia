@@ -11,21 +11,6 @@ import {
   Home, GitCompare, Building2, Coins, BarChart3,
   MoreHorizontal, BookOpen, Ticket, HelpCircle, Loader2
 } from 'lucide-react';
-import { 
-  DndContext, 
-  closestCenter, 
-  KeyboardSensor, 
-  PointerSensor, 
-  useSensor, 
-  useSensors,
-  DragEndEvent
-} from '@dnd-kit/core';
-import { 
-  arrayMove, 
-  SortableContext, 
-  sortableKeyboardCoordinates, 
-  horizontalListSortingStrategy 
-} from '@dnd-kit/sortable';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList } from '@/components/ui/tabs';
 import { useSessionState } from '@/hooks/useSessionState';
@@ -33,8 +18,8 @@ import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { FranchiseurProvider } from '@/franchiseur/contexts/FranchiseurContext';
 import { NetworkFiltersProvider } from '@/franchiseur/contexts/NetworkFiltersContext';
 import { AiUnifiedProvider } from '@/components/ai';
-import { DraggableTab } from '@/components/unified/DraggableTab';
 import { ProfileMenu } from '@/components/unified/workspace/ProfileMenu';
+import { cn } from '@/lib/utils';
 
 import { ImageModal } from '@/components/ImageModal';
 import { ACCENT_THEMES, type AccentThemeKey } from '@/lib/accentThemes';
@@ -65,8 +50,8 @@ interface TabConfig {
   icon: React.ElementType;
 }
 
-// Ordre par défaut des onglets (hors Accueil qui est toujours premier)
-const DEFAULT_TAB_ORDER: FranchiseurTab[] = ['periode', 'agences', 'redevances', 'statistiques', 'divers', 'guides', 'support'];
+// Ordre fixe des onglets (hors Accueil qui est toujours premier)
+const FIXED_TAB_ORDER: FranchiseurTab[] = ['periode', 'agences', 'redevances', 'statistiques', 'divers', 'guides', 'support'];
 
 const ALL_TABS: TabConfig[] = [
   { id: 'accueil', label: 'Accueil', icon: Home },
@@ -90,8 +75,6 @@ function LoadingFallback() {
 function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
   const { isImpersonating } = useImpersonation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [tabOrder, setTabOrder] = useSessionState<FranchiseurTab[]>('franchiseur_view_tab_order', DEFAULT_TAB_ORDER);
-  
   // Use a different URL param when embedded inside AdminHub to avoid conflict with parent's ?tab=
   const urlParamKey = embedded ? 'fTab' : 'tab';
   
@@ -118,52 +101,15 @@ function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
     }
   }, [urlTab]);
   
-  // Onglets triés selon l'ordre personnalisé (Accueil toujours premier)
+  // Onglets dans l'ordre fixe (Accueil toujours premier)
   const sortedTabs = useMemo(() => {
     const accueilTab = ALL_TABS.find(t => t.id === 'accueil')!;
     const otherTabs = ALL_TABS.filter(t => t.id !== 'accueil');
-    
-    // Trier selon tabOrder
     const sorted = [...otherTabs].sort((a, b) => {
-      const indexA = tabOrder.indexOf(a.id);
-      const indexB = tabOrder.indexOf(b.id);
-      if (indexA === -1 && indexB === -1) return 0;
-      if (indexA === -1) return 1;
-      if (indexB === -1) return -1;
-      return indexA - indexB;
+      return FIXED_TAB_ORDER.indexOf(a.id) - FIXED_TAB_ORDER.indexOf(b.id);
     });
-    
     return [accueilTab, ...sorted];
-  }, [tabOrder]);
-  
-  // DnD sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-  
-  // Handle drag end
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
-    
-    if (!over || active.id === over.id) return;
-    
-    // Ne pas permettre de déplacer Accueil
-    if (active.id === 'accueil' || over.id === 'accueil') return;
-    
-    const oldIndex = tabOrder.indexOf(active.id as FranchiseurTab);
-    const newIndex = tabOrder.indexOf(over.id as FranchiseurTab);
-    
-    if (oldIndex !== -1 && newIndex !== -1) {
-      setTabOrder(arrayMove(tabOrder, oldIndex, newIndex));
-    }
-  }, [tabOrder, setTabOrder]);
+  }, []);
   
   // Mettre à jour le titre de la page selon l'onglet actif
   useEffect(() => {
@@ -192,9 +138,6 @@ function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
     }
   `;
   
-  // IDs pour le sortable context (exclure accueil)
-  const sortableIds = sortedTabs.filter(t => t.id !== 'accueil').map(t => t.id);
-  
   // Calculer le padding top selon les bandeaux actifs
   const topPadding = isImpersonating ? 'pt-10' : '';
   
@@ -205,54 +148,28 @@ function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
         <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
           <div className="container mx-auto max-w-7xl px-4 pt-3 pb-0">
             <div className="flex items-end justify-between gap-4">
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <TabsList className="h-auto p-0 bg-transparent flex flex-nowrap gap-1 items-end justify-start flex-1 overflow-x-auto scrollbar-hide">
-                  {/* Onglet Accueil - non draggable */}
-                  {sortedTabs[0] && (
+              <TabsList className="h-auto p-0 bg-transparent flex flex-nowrap gap-1 items-end justify-start flex-1 overflow-x-auto scrollbar-hide">
+                {sortedTabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  const accent = ACCENT_THEMES[tabAccent[tab.id]];
+                  return (
                     <button
-                      onClick={() => setActiveTab('accueil')}
-                      className={tabButtonClass('accueil', activeTab === 'accueil')}
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      data-state={isActive ? 'active' : 'inactive'}
+                      className={tabButtonClass(tab.id, isActive)}
                     >
                       <div className="flex items-center gap-1.5">
-                        <div className={`w-7 h-7 rounded-xl bg-gradient-to-br ${ACCENT_THEMES[tabAccent.accueil].gradient} flex items-center justify-center shadow-sm transition-transform group-hover:scale-110 shrink-0`}>
-                          <Home className="w-3.5 h-3.5 text-primary-foreground" />
+                        <div className={`w-7 h-7 rounded-xl bg-gradient-to-br ${accent.gradient} flex items-center justify-center shadow-sm transition-transform group-hover:scale-110 shrink-0`}>
+                          <Icon className="w-3.5 h-3.5 text-primary-foreground" />
                         </div>
-                        <span className="text-xs font-bold tracking-tight truncate max-w-[80px]">Accueil</span>
+                        <span className="text-xs font-bold tracking-tight truncate max-w-[80px]">{tab.label}</span>
                       </div>
                     </button>
-                  )}
-                  
-                  {/* Onglets sortables */}
-                  <SortableContext items={sortableIds} strategy={horizontalListSortingStrategy}>
-                    {sortedTabs.slice(1).map((tab) => {
-                      const Icon = tab.icon;
-                      const isActive = activeTab === tab.id;
-                      const accent = ACCENT_THEMES[tabAccent[tab.id]];
-                      return (
-                        <DraggableTab
-                          key={tab.id}
-                          id={tab.id}
-                          isActive={isActive}
-                          isDraggable={true}
-                          onClick={() => setActiveTab(tab.id)}
-                          className={tabButtonClass(tab.id, isActive)}
-                        >
-                          <div className="flex items-center gap-1.5">
-                            <div className={`w-7 h-7 rounded-xl bg-gradient-to-br ${accent.gradient} flex items-center justify-center shadow-sm transition-transform duration-300 group-hover:scale-110 shrink-0`}>
-                              <Icon className="w-3.5 h-3.5 text-primary-foreground" />
-                            </div>
-                            <span className="text-xs font-bold tracking-tight truncate max-w-[80px]">{tab.label}</span>
-                          </div>
-                        </DraggableTab>
-                      );
-                    })}
-                  </SortableContext>
-                </TabsList>
-              </DndContext>
+                  );
+                })}
+              </TabsList>
 
               <ProfileMenu tabButtonClass={`
                 relative px-3 py-2.5 rounded-t-2xl border-2 border-b-0 transition-all duration-300 whitespace-nowrap shrink-0 min-w-0
