@@ -336,13 +336,6 @@ Deno.serve(async (req) => {
         const relevantTechs = techIds.filter(id => usersById.has(id));
         if (relevantTechs.length === 0) continue;
 
-        // Debug: log a few visits to understand structure
-        if (debugSampled < 5) {
-          const techName = relevantTechs.map(id => usersById.get(id)).join(',');
-          console.log(`[ZONES-DEBUG] Visit ${debugSampled}: tech=${techName}, date="${visite?.date}", duree=${visite?.duree}, type2="${visite?.type2}", heureDebut="${visite?.heureDebut}", heureFin="${visite?.heureFin}", keys=${Object.keys(visite || {}).join(',')}`);
-          debugSampled++;
-        }
-
         // Extract time information for panier calculation
         let startMinutes = -1;
         let endMinutes = -1;
