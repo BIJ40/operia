@@ -64,7 +64,7 @@ function ApporteursTabInner() {
 }
 
 function CommercialInner() {
-  const { hasModuleOption, hasModule } = usePermissions();
+  const { hasModuleOption, hasModule, isDeployedModule } = usePermissions();
   const { openApporteur } = useApporteurTabs();
   const { getShortLabel } = useModuleLabels();
   const { mode: navMode } = useNavigationMode();
@@ -80,14 +80,21 @@ function CommercialInner() {
   ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {
-    return allTabs.map(tab => {
-      const moduleKey = TAB_MODULE_MAP[tab.id];
-      if (moduleKey) return { ...tab, disabled: !hasModule(moduleKey) };
-      const optionKey = TAB_OPTION_MAP[tab.id];
-      if (optionKey) return { ...tab, disabled: !hasModuleOption('prospection', optionKey) };
-      return tab;
-    });
-  }, [hasModuleOption, hasModule, allTabs]);
+    return allTabs
+      .filter(tab => {
+        // Hide non-deployed modules
+        const moduleKey = TAB_MODULE_MAP[tab.id];
+        if (moduleKey && !isDeployedModule(moduleKey)) return false;
+        return true;
+      })
+      .map(tab => {
+        const moduleKey = TAB_MODULE_MAP[tab.id];
+        if (moduleKey) return { ...tab, disabled: !hasModule(moduleKey) };
+        const optionKey = TAB_OPTION_MAP[tab.id];
+        if (optionKey) return { ...tab, disabled: !hasModuleOption('prospection', optionKey) };
+        return tab;
+      });
+  }, [hasModuleOption, hasModule, isDeployedModule, allTabs]);
 
   const defaultTab = visibleTabs.find(t => !t.disabled)?.id ?? 'apporteurs';
   const [activeTab, setActiveTab] = useSessionState<string>('commercial_sub_tab', defaultTab);

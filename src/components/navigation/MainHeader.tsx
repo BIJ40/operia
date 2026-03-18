@@ -6,6 +6,7 @@ import { MobileNavMenu } from './MobileNavMenu';
 import { ProfileMenu } from '@/components/unified/workspace/ProfileMenu';
 import type { UnifiedTab } from '@/components/unified/workspace/types';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface MainHeaderProps {
   activeTab: UnifiedTab;
@@ -16,6 +17,7 @@ interface MainHeaderProps {
 
 export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClass }: MainHeaderProps) {
   const { getLabel } = useModuleLabels();
+  const { hasModule, isDeployedModule, isAdmin } = usePermissions();
 
   const visibleGroups = useMemo(() => {
     const visibleIds = new Set(visibleTabs.map(t => t.id));
@@ -91,6 +93,9 @@ export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClas
                 pillActive={ACCENT_ACTIVE[group.accent || 'blue']}
                 pillInactive={pillInactive}
                 accentDropdown={ACCENT_DROPDOWN[group.accent || 'blue']}
+                isDeployedModule={isDeployedModule}
+                hasModule={hasModule}
+                isAdmin={isAdmin}
               />
             ))}
           </nav>

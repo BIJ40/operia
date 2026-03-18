@@ -33,7 +33,7 @@ function LoadingFallback() {
 }
 
 export default function OrganisationTabContent() {
-  const { hasModule } = usePermissions();
+  const { hasModule, isDeployedModule } = usePermissions();
   const { getShortLabel } = useModuleLabels();
   const { mode: navMode } = useNavigationMode();
 
@@ -48,11 +48,16 @@ export default function OrganisationTabContent() {
   ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {
-    return allTabs.map(tab => {
-      if (!tab.requiresModule) return tab;
-      return { ...tab, disabled: !hasModule(tab.requiresModule) };
-    });
-  }, [hasModule, allTabs]);
+    return allTabs
+      .filter(tab => {
+        if (tab.requiresModule && !isDeployedModule(tab.requiresModule)) return false;
+        return true;
+      })
+      .map(tab => {
+        if (!tab.requiresModule) return tab;
+        return { ...tab, disabled: !hasModule(tab.requiresModule) };
+      });
+  }, [hasModule, isDeployedModule, allTabs]);
 
   const defaultTab = (visibleTabs.find(t => !t.disabled)?.id as OrganisationSubTab) ?? 'collaborateurs';
   const [activeTab, setActiveTab] = useSessionState<OrganisationSubTab>('organisation_sub_tab', defaultTab);

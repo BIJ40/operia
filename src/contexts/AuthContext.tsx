@@ -63,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Permissions V2
   const [globalRole, setGlobalRole] = useState<GlobalRole | null>(null);
   const [enabledModules, setEnabledModules] = useState<EnabledModules | null>(null);
+  const [deployedModuleKeys, setDeployedModuleKeys] = useState<Set<string>>(new Set());
   
   const currentUserIdRef = useRef<string | null>(null);
 
@@ -117,6 +118,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return hasAccess({ ...accessContext, moduleId: moduleKey, optionId: optionKey });
   }, [accessContext]);
 
+  const isDeployedModuleGuard = useCallback((moduleKey: ModuleKey): boolean => {
+    return deployedModuleKeys.has(moduleKey);
+  }, [deployedModuleKeys]);
+
   // ============================================================================
   // Chargement des données utilisateur
   // ============================================================================
@@ -130,7 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTimeout(() => reject(new Error('Timeout: chargement profil trop long')), PROFILE_TIMEOUT_MS);
       });
 
-      const [profileResult, modulesResult] = await Promise.race([
+      const [profileResult, modulesResult, deployedResult] = await Promise.race([
         Promise.all([
           supabase
             .from('profiles')
@@ -138,12 +143,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .eq('id', userId)
             .single(),
           supabase.rpc('get_user_effective_modules', { p_user_id: userId }),
+          supabase
+            .from('module_registry')
+            .select('key')
+            .eq('is_deployed', true),
         ]),
         timeoutPromise,
       ]);
 
       const { data: profile, error: profileError } = profileResult;
       const { data: effectiveModules, error: modulesError } = modulesResult;
+      const { data: deployedRows, error: deployedError } = deployedResult;
+
+      // Build deployed module keys set
+      if (!deployedError && Array.isArray(deployedRows)) {
+        setDeployedModuleKeys(new Set(deployedRows.map((r: any) => r.key)));
+      } else {
+        logAuth.warn('[AUTH] Failed to load deployed module keys', deployedError);
+      }
       
       if (profileError) {
         logAuth.error('Erreur requête profil:', profileError);
@@ -341,6 +358,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsActive(true);
     setGlobalRole(null);
     setEnabledModules(null);
+    setDeployedModuleKeys(new Set());
     setIsReadOnly(false);
   }, []);
 
@@ -441,6 +459,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     hasGlobalRole: hasGlobalRoleGuard,
     hasModule: hasModuleGuard,
     hasModuleOption: hasModuleOptionGuard,
+    isDeployedModule: isDeployedModuleGuard,
     isAdmin,
     isSupport,
     isFranchiseur,
@@ -455,7 +474,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     suggestedGlobalRole: globalRole ?? 'base_user',
   }), [
     globalRole, enabledModules, accessContext,
-    hasGlobalRoleGuard, hasModuleGuard, hasModuleOptionGuard,
+    hasGlobalRoleGuard, hasModuleGuard, hasModuleOptionGuard, isDeployedModuleGuard,
     isAdmin, isSupport, isFranchiseur,
     canAccessSupportUser, hasSupportAgentRole, isSupportAdmin,
     canAccessSupportConsoleUI, canManageTickets,
