@@ -11,21 +11,6 @@ import {
   Home, GitCompare, Building2, Coins, BarChart3,
   MoreHorizontal, BookOpen, Ticket, HelpCircle, Loader2
 } from 'lucide-react';
-import { 
-  DndContext, 
-  closestCenter, 
-  KeyboardSensor, 
-  PointerSensor, 
-  useSensor, 
-  useSensors,
-  DragEndEvent
-} from '@dnd-kit/core';
-import { 
-  arrayMove, 
-  SortableContext, 
-  sortableKeyboardCoordinates, 
-  horizontalListSortingStrategy 
-} from '@dnd-kit/sortable';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList } from '@/components/ui/tabs';
 import { useSessionState } from '@/hooks/useSessionState';
@@ -33,8 +18,8 @@ import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { FranchiseurProvider } from '@/franchiseur/contexts/FranchiseurContext';
 import { NetworkFiltersProvider } from '@/franchiseur/contexts/NetworkFiltersContext';
 import { AiUnifiedProvider } from '@/components/ai';
-import { DraggableTab } from '@/components/unified/DraggableTab';
 import { ProfileMenu } from '@/components/unified/workspace/ProfileMenu';
+import { cn } from '@/lib/utils';
 
 import { ImageModal } from '@/components/ImageModal';
 import { ACCENT_THEMES, type AccentThemeKey } from '@/lib/accentThemes';
