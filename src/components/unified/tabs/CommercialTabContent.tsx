@@ -60,7 +60,7 @@ function ApporteursTabInner() {
 }
 
 function CommercialInner() {
-  const { hasModuleOption, hasModule, isDeployedModule } = usePermissions();
+  const { hasModule, isDeployedModule } = usePermissions();
   const { openApporteur } = useApporteurTabs();
   const { getShortLabel } = useModuleLabels();
   const { mode: navMode } = useNavigationMode();
