@@ -14,6 +14,25 @@ import { MEDIA_ROLE_LABELS, SYNC_STATUS_LABELS, SYNC_STATUS_COLORS, type MediaRo
 import { BeforeAfterGenerator } from '../components/BeforeAfterGenerator';
 import { useCommercialProfile } from '@/commercial/hooks/useCommercialProfile';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+
+function useAgencyInfo(agencyId: string | null) {
+  return useQuery({
+    queryKey: ['agency-info', agencyId],
+    queryFn: async () => {
+      if (!agencyId) return null;
+      const { data, error } = await supabase
+        .from('apogee_agencies')
+        .select('slug, adresse, ville, code_postal, contact_phone, contact_email')
+        .eq('id', agencyId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!agencyId,
+  });
+}
 
 export default function RealisationDetailPage() {
   const { id } = useParams<{ id: string }>();
