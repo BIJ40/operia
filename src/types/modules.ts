@@ -47,6 +47,7 @@ export const MODULES = {
   'organisation.plannings': 'organisation.plannings',
   'organisation.reunions': 'organisation.reunions',
   'organisation.parc': 'organisation.parc',
+  'organisation.zones': 'organisation.zones',
   'organisation.documents_legaux': 'organisation.documents_legaux',
   // Médiathèque
   'mediatheque.consulter': 'mediatheque.consulter',
@@ -94,6 +95,7 @@ export const MODULE_OPTIONS = {
   },
   'organisation.plannings': {},
   'organisation.reunions': {},
+  'organisation.zones': {},
   'mediatheque.documents': {
     consulter: 'mediatheque.documents.consulter',
     gerer: 'mediatheque.documents.gerer',
@@ -277,6 +279,17 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Réunions',
     description: 'Gestion des réunions',
     icon: 'Video',
+    category: 'organisation',
+    uiSubTab: 'administratif',
+    defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
+    minRole: 'franchisee_admin',
+    options: [],
+  },
+  {
+    key: 'organisation.zones',
+    label: 'Zones de déplacement',
+    description: 'Récapitulatif mensuel des zones BTP par technicien',
+    icon: 'MapPin',
     category: 'organisation',
     uiSubTab: 'administratif',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],

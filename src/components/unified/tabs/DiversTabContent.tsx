@@ -11,7 +11,7 @@
 import { lazy, Suspense, useCallback, useMemo } from 'react';
 import { 
   FileText, Users2, Loader2, Users, CalendarDays, 
-  Car, FolderOpen, Settings, Eye, Activity, Target, FileCheck, AlertTriangle
+  Car, FolderOpen, Settings, Eye, Activity, Target, FileCheck, AlertTriangle, MapPin
 } from 'lucide-react';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { ModuleKey } from '@/types/modules';
@@ -52,12 +52,12 @@ const PerformanceDashboard = lazy(() =>
 const ProspectionTabContent = lazy(() => import('@/prospection/pages/ProspectionTabContent'));
 const DevisAcceptesView = lazy(() => import('@/apogee-connect/components/DevisAcceptesView'));
 const AnomaliesDevisDossierView = lazy(() => import('@/apogee-connect/components/AnomaliesDevisDossierView'));
-
+const ZonesDeplacementTab = lazy(() => import('@/components/organisation/ZonesDeplacementTab'));
 
 // Types pour les niveaux de navigation
 type OutilsMainTab = 'actions' | 'apporteurs' | 'administratif' | 'parc' | 'performance' | 'prospection' | 'devis-acceptes' | 'anomalies';
 type ApporteursSubTab = 'espace';
-type AdminSubTab = 'reunions' | 'plannings' | 'documents';
+type AdminSubTab = 'reunions' | 'plannings' | 'documents' | 'zones';
 
 // Configuration des onglets principaux (niveau 1)
 // Configuration des onglets principaux avec module requis
@@ -245,6 +245,7 @@ function AdministratifSection() {
     { id: 'reunions', label: getShortLabel('organisation.reunions', 'Réunions'), icon: Users2, requiresModule: 'organisation.reunions' },
     { id: 'plannings', label: getShortLabel('organisation.plannings', 'Plannings'), icon: CalendarDays, requiresModule: 'organisation.plannings' },
     { id: 'documents', label: getShortLabel('mediatheque.documents', 'Documents'), icon: FileText, requiresModule: 'mediatheque.documents' },
+    { id: 'zones', label: getShortLabel('organisation.zones', 'Zones'), icon: MapPin, requiresModule: 'organisation.zones' },
   ], [getShortLabel]);
 
   const visibleAdminTabs = useMemo(() => {
@@ -298,6 +299,11 @@ function AdministratifSection() {
         {effectiveSubTab === 'documents' && (
           <Suspense fallback={<LoadingFallback />}>
             <AgencyAdminDocuments />
+          </Suspense>
+        )}
+        {effectiveSubTab === 'zones' && (
+          <Suspense fallback={<LoadingFallback />}>
+            <ZonesDeplacementTab />
           </Suspense>
         )}
       </div>
