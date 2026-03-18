@@ -26,6 +26,7 @@ export function VisualsGallery() {
   const { data: visuals = [], isLoading } = useGeneratedVisuals();
   const deleteMedia = useDeleteMedia();
   const dispatchVisual = useDispatchVisualWebhook();
+  const [sendingId, setSendingId] = useState<string | null>(null);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [lightboxTitle, setLightboxTitle] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; realisation_id: string; storage_path: string } | null>(null);
