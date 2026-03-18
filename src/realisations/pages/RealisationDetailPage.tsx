@@ -1,5 +1,5 @@
 /**
- * RealisationDetailPage — Photos + sync status
+ * RealisationDetailPage — Photos + sync status + Before/After generator
  */
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -11,6 +11,9 @@ import { useRealisation } from '../hooks/useRealisations';
 import { useRealisationMedia, useUploadMedia, useDeleteMedia, useUpdateMediaRole } from '../hooks/useRealisationMedia';
 import { useDispatchWebhook } from '../hooks/useDispatchWebhook';
 import { MEDIA_ROLE_LABELS, SYNC_STATUS_LABELS, SYNC_STATUS_COLORS, type MediaRole, type ExternalSyncStatus } from '../types';
+import { BeforeAfterGenerator } from '../components/BeforeAfterGenerator';
+import { useCommercialProfile } from '@/commercial/hooks/useCommercialProfile';
+import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 
 export default function RealisationDetailPage() {
   const { id } = useParams<{ id: string }>();
