@@ -65,10 +65,27 @@ export default function ResultatTabContent() {
 
   const hasNoData = !summary && !isLoading;
 
-  // Auto-populate nb_salaries from collaborators count if not yet set
+  // Auto-populate from StatIA metrics + collaborator count when no manual value exists
   const autoValues: Record<string, number> = {};
   if (collaboratorCount > 0 && (!financialMonth || !financialMonth.nb_salaries)) {
     autoValues['nb_salaries'] = collaboratorCount;
+  }
+  // Bridge StatIA computed values for activity & CA fields
+  const statiaFieldMap: Record<string, string> = {
+    ca_total: 'ca_total',
+    nb_factures: 'nb_factures',
+    nb_interventions: 'nb_interventions',
+    heures_facturees: 'heures_facturees',
+  };
+  for (const [statiaKey, monthField] of Object.entries(statiaFieldMap)) {
+    const val = (statiaValues as any)[statiaKey];
+    if (val != null && val > 0) {
+      // Only auto-fill if no manual value saved
+      const savedVal = financialMonth ? (financialMonth as any)[monthField] : null;
+      if (!savedVal || savedVal === 0) {
+        autoValues[monthField] = val;
+      }
+    }
   }
 
   return (
