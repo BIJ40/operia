@@ -179,15 +179,9 @@ function AdministratifSection() {
 
   const defaultTab = (visibleAdminTabs.find(t => !t.disabled)?.id as AdminSubTab) ?? 'reunions';
   const [subTab, setSubTab] = useSessionState<AdminSubTab>('outils_admin_sub', defaultTab);
-  const defaultOrder = visibleAdminTabs.map(t => t.id);
-  const [tabOrder, setTabOrder] = useSessionState<string[]>('outils_admin_order', defaultOrder);
   
   // Ensure active tab is still enabled
   const effectiveSubTab = (visibleAdminTabs.find(t => t.id === subTab && !t.disabled)) ? subTab : defaultTab;
-
-  const handleReorder = useCallback((newOrder: string[]) => {
-    setTabOrder(newOrder);
-  }, [setTabOrder]);
 
   if (visibleAdminTabs.every(t => t.disabled)) {
     return (
@@ -199,13 +193,10 @@ function AdministratifSection() {
 
   return (
     <div className="space-y-0">
-      <DraggableFolderTabs 
+      <StaticFolderTabs 
         tabs={visibleAdminTabs} 
-        tabOrder={tabOrder}
         activeTab={effectiveSubTab} 
         onTabChange={(t) => setSubTab(t as AdminSubTab)}
-        onReorder={handleReorder}
-        storageKey="outils_admin_order"
       />
       <div className="rounded-2xl rounded-tl-none border-2 border-border bg-background p-4 sm:p-6 shadow-sm">
         {effectiveSubTab === 'reunions' && (
