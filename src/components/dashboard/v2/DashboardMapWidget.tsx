@@ -356,23 +356,21 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
                     <Maximize2 className="h-3.5 w-3.5 text-foreground" />
                   </button>
                 </DialogTrigger>
-                <DialogContent className="max-w-5xl h-[80vh] p-0">
-                  <DialogHeader className="px-6 py-4 border-b">
+                <DialogContent className="max-w-5xl h-[80vh] p-0 flex flex-col">
+                  <DialogHeader className="px-6 py-4 border-b shrink-0">
                     <DialogTitle className="flex items-center gap-2">
                       <MapPin className="h-5 w-5 text-warm-teal" />
                       Carte des RDV du jour
                     </DialogTitle>
                   </DialogHeader>
-                  <div className="relative flex-1 w-full h-full min-h-[500px]">
-                    <ExpandedMapContent
-                      rdvs={filteredRdvs}
-                      selectedRdv={selectedRdv}
-                      onSelectRdv={setSelectedRdv}
-                      mapboxToken={mapboxToken || ''}
-                      isOpen={isExpanded}
-                      technicians={technicians}
-                    />
-                  </div>
+                  <ExpandedMapContent
+                    rdvs={filteredRdvs}
+                    selectedRdv={selectedRdv}
+                    onSelectRdv={setSelectedRdv}
+                    mapboxToken={mapboxToken || ''}
+                    isOpen={isExpanded}
+                    technicians={technicians}
+                  />
                 </DialogContent>
               </Dialog>
             </div>
@@ -618,12 +616,11 @@ function ExpandedMapContent({
   }, []);
 
   return (
-    <div className="relative w-full h-full">
-      <div ref={mapContainerRef} className="absolute inset-0 w-full h-full" />
-
-      {/* Tech filter chips — top left */}
+    <div className="flex flex-col w-full h-full min-h-0">
+      {/* Tech filter bar — above the map */}
       {technicians.length > 0 && (
-        <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-1.5 max-w-[60%]">
+        <div className="shrink-0 px-4 py-2.5 border-b bg-muted/30 flex flex-wrap items-center gap-1.5">
+          <span className="text-xs text-muted-foreground mr-1.5">Techniciens :</span>
           {technicians.map(tech => {
             const active = selectedTechIds.includes(tech.id);
             return (
@@ -631,10 +628,10 @@ function ExpandedMapContent({
                 key={tech.id}
                 onClick={() => toggleTech(tech.id)}
                 className={cn(
-                  "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all shadow-sm border",
+                  "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all border",
                   active
-                    ? "bg-foreground text-background border-foreground"
-                    : "bg-background/90 text-foreground border-border/50 hover:bg-background backdrop-blur-sm"
+                    ? "bg-foreground text-background border-foreground shadow-sm"
+                    : "bg-background text-foreground border-border hover:bg-muted"
                 )}
               >
                 <span
@@ -648,25 +645,30 @@ function ExpandedMapContent({
           {selectedTechIds.length > 0 && (
             <button
               onClick={() => setSelectedTechIds([])}
-              className="px-2.5 py-1 rounded-full text-xs text-muted-foreground hover:text-foreground bg-background/90 border border-border/50 backdrop-blur-sm shadow-sm transition-all"
+              className="px-2.5 py-1 rounded-full text-xs text-muted-foreground hover:text-foreground bg-background border border-border hover:bg-muted transition-all"
             >
-              ✕ Tous
+              ✕ Réinitialiser
             </button>
           )}
         </div>
       )}
 
-      {/* Tour summary bar */}
-      {isTourMode && tourTech && sortedRdvs.length >= 2 && (
-        <TourSummaryBar
-          techName={tourTech.name}
-          techColor={tourTech.color}
-          rdvCount={sortedRdvs.length}
-          distanceKm={distanceKm}
-          durationMin={durationMin}
-          isLoading={routeLoading}
-        />
-      )}
+      {/* Map */}
+      <div className="relative flex-1 min-h-0">
+        <div ref={mapContainerRef} className="absolute inset-0 w-full h-full" />
+
+        {/* Tour summary bar */}
+        {isTourMode && tourTech && sortedRdvs.length >= 2 && (
+          <TourSummaryBar
+            techName={tourTech.name}
+            techColor={tourTech.color}
+            rdvCount={sortedRdvs.length}
+            distanceKm={distanceKm}
+            durationMin={durationMin}
+            isLoading={routeLoading}
+          />
+        )}
+      </div>
     </div>
   );
 }
