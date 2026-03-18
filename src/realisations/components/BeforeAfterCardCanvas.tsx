@@ -184,16 +184,6 @@ export function BeforeAfterCardCanvas({
       ctx.fillText('APRÈS', apresX + photoW / 2, photoY + photoH - 18);
       ctx.restore();
 
-      // Diagonal white line overlay across the full photo zone
-      ctx.save();
-      ctx.strokeStyle = '#FFFFFF';
-      ctx.lineWidth = 6;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(20, photoY + photoH);
-      ctx.lineTo(SIZE - 20, photoY);
-      ctx.stroke();
-      ctx.restore();
 
       // ── Bottom bar
       const bottomY = SIZE - 120;
