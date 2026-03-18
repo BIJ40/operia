@@ -1,14 +1,12 @@
 /**
  * PLSection — Renders a single P&L section with editable rows
- * Handles both monthly fields (stored in agency_financial_months)
- * and charge fields (stored in agency_financial_charges)
+ * Double-click to edit, Tab to move between fields, Enter to save
  */
-import { useState } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Pencil, Check, X, Keyboard, Calculator, Users, Zap } from 'lucide-react';
+import { Keyboard, Calculator, Users, Zap } from 'lucide-react';
 import { formatCurrency, formatPercent } from '@/lib/formatters';
 import type { PLSection as PLSectionType, LineItem } from '@/config/financialLineItems';
 import type { FinancialSummary } from '@/hooks/useFinancialSummary';
@@ -25,9 +23,7 @@ interface PLSectionProps {
   onUpdateCharge: (params: { charge_id: string; new_amount: number; new_start_month: string }) => Promise<any>;
   year: number;
   month: number;
-  /** Whether the section is initially collapsed */
   defaultCollapsed?: boolean;
-  /** Auto-populated values from external sources (e.g. collaborator count) */
   autoValues?: Record<string, number>;
 }
 
@@ -73,20 +69,29 @@ export function PLSectionBlock({
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [saving, setSaving] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const monthDate = `${year}-${String(month).padStart(2, '0')}-01`;
 
+  // List of editable item keys in order for Tab navigation
+  const editableKeys = useMemo(() =>
+    section.items
+      .filter(item => {
+        if (isLocked || item.displayOnly) return false;
+        return item.source_type === 'manual_monthly' || item.source_type === 'manual_fixed' || item.source_type === 'manual_variable';
+      })
+      .map(item => item.key),
+    [section.items, isLocked]
+  );
+
   function getValue(item: LineItem): number {
-    // Display-only items (e.g. panier_moyen, ca_par_heure) — always from autoValues
     if (item.displayOnly) {
       return autoValues[item.key] ?? 0;
     }
-    // Monthly fields from summary
     if (item.month_field && summary) {
       const summaryVal = (summary as any)[item.month_field];
       if (summaryVal != null && summaryVal !== 0) return summaryVal;
     }
-    // Auto values keyed by month_field or item key
     const autoKey = item.month_field || item.key;
     if (autoValues[autoKey] != null) {
       const summaryVal = summary && item.month_field ? (summary as any)[item.month_field] : null;
@@ -95,12 +100,10 @@ export function PLSectionBlock({
     if (item.month_field && summary) {
       return (summary as any)[item.month_field] ?? 0;
     }
-    // Charge fields
     if (item.charge_key) {
       const charge = charges.find(c => c.charge_type === item.charge_key);
       return charge?.amount ?? 0;
     }
-    // Calculated fields from summary
     if (item.source_type === 'calculated' && summary) {
       return (summary as any)[item.key] ?? 0;
     }
@@ -109,9 +112,9 @@ export function PLSectionBlock({
 
   function formatValue(item: LineItem, val: number): string {
     if (item.isPercent) return formatPercent(val);
-    // For activity section, show raw numbers
     if (section.key === 'activite') {
-      if (item.key.includes('heures')) return `${val.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} h`;
+      if (item.key.includes('heures') || item.key === 'ca_par_heure') return `${val.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} h`;
+      if (item.key === 'panier_moyen') return formatCurrency(val);
       return val.toLocaleString('fr-FR');
     }
     return formatCurrency(val);
@@ -127,11 +130,13 @@ export function PLSectionBlock({
     setEditValue(String(getValue(item) || ''));
   }
 
-  async function saveEdit(item: LineItem) {
+  const findItemByKey = useCallback((key: string) => section.items.find(i => i.key === key), [section.items]);
+
+  async function saveAndMoveNext(item: LineItem, moveToNext: boolean) {
     const newVal = parseFloat(editValue) || 0;
     setSaving(true);
     try {
-      if (item.month_field && (item.source_type === 'manual_monthly')) {
+      if (item.month_field && item.source_type === 'manual_monthly') {
         await onSaveMonthlyField(item.month_field, newVal);
       } else if (item.charge_key) {
         const existing = charges.find(c => c.charge_type === item.charge_key);
@@ -152,6 +157,18 @@ export function PLSectionBlock({
       }
     } finally {
       setSaving(false);
+      if (moveToNext) {
+        const idx = editableKeys.indexOf(item.key);
+        if (idx >= 0 && idx < editableKeys.length - 1) {
+          const nextKey = editableKeys[idx + 1];
+          const nextItem = findItemByKey(nextKey);
+          if (nextItem) {
+            setEditingKey(nextKey);
+            setEditValue(String(getValue(nextItem) || ''));
+            return;
+          }
+        }
+      }
       setEditingKey(null);
       setEditValue('');
     }
@@ -194,10 +211,13 @@ export function PLSectionBlock({
                 return (
                   <div
                     key={item.key}
-                    className={`flex items-center justify-between py-1 group ${
+                    className={`flex items-center justify-between py-1 ${
                       item.isSubtotal ? 'border-t border-border mt-1 pt-1.5' : ''
-                    }`}
+                    } ${editable && !editing ? 'cursor-pointer hover:bg-muted/50 rounded-sm -mx-1 px-1 transition-colors' : ''}`}
                     style={{ paddingLeft: (item.indent ?? 0) * 16 }}
+                    onDoubleClick={() => {
+                      if (editable && !editing) startEdit(item);
+                    }}
                   >
                     <div className="flex items-center gap-1.5 min-w-0 flex-1">
                       {getSourceIcon(item.source_type, item.autoSource)}
@@ -209,42 +229,39 @@ export function PLSectionBlock({
 
                     <div className="flex items-center gap-1 flex-shrink-0 ml-2">
                       {editing ? (
-                        <>
-                          <Input
-                            type="number"
-                            step={item.key.includes('nb_') || item.key.includes('salaries') ? 1 : 0.01}
-                            value={editValue}
-                            onChange={e => setEditValue(e.target.value)}
-                            className="w-28 h-6 text-xs"
-                            autoFocus
-                            onKeyDown={e => {
-                              if (e.key === 'Enter') saveEdit(item);
-                              if (e.key === 'Escape') { setEditingKey(null); setEditValue(''); }
-                            }}
-                          />
-                          <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => saveEdit(item)} disabled={saving}>
-                            <Check className="h-3 w-3" />
-                          </Button>
-                          <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => { setEditingKey(null); setEditValue(''); }}>
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </>
+                        <Input
+                          ref={inputRef}
+                          type="number"
+                          step={item.key.includes('nb_') || item.key.includes('salaries') ? 1 : 0.01}
+                          value={editValue}
+                          onChange={e => setEditValue(e.target.value)}
+                          className="w-28 h-6 text-xs tabular-nums text-right"
+                          autoFocus
+                          onKeyDown={e => {
+                            if (e.key === 'Tab') {
+                              e.preventDefault();
+                              saveAndMoveNext(item, true);
+                            }
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              saveAndMoveNext(item, false);
+                            }
+                            if (e.key === 'Escape') {
+                              setEditingKey(null);
+                              setEditValue('');
+                            }
+                          }}
+                          onBlur={() => {
+                            // Save on blur (clicking away)
+                            if (editingKey === item.key) {
+                              saveAndMoveNext(item, false);
+                            }
+                          }}
+                        />
                       ) : (
-                        <>
-                          <span className={`text-xs tabular-nums font-medium ${colorForValue(val, item)} ${item.bold ? 'font-semibold' : ''}`}>
-                            {formatValue(item, val)}
-                          </span>
-                          {editable && !isLocked && (
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => startEdit(item)}
-                            >
-                              <Pencil className="h-2.5 w-2.5" />
-                            </Button>
-                          )}
-                        </>
+                        <span className={`text-xs tabular-nums font-medium ${colorForValue(val, item)} ${item.bold ? 'font-semibold' : ''}`}>
+                          {formatValue(item, val)}
+                        </span>
                       )}
                     </div>
                   </div>
