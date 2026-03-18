@@ -168,9 +168,10 @@ Deno.serve(async (req) => {
 
     const depot = await geocodeAddress(agency.adresse, agency.code_postal || '', agency.ville || '');
     if (!depot) {
+      console.warn('[ZONES] Could not geocode agency address, returning empty data');
       return withCors(req, new Response(
-        JSON.stringify({ success: false, error: 'Impossible de géocoder l\'adresse de l\'agence' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: true, data: [], warning: 'Impossible de géocoder l\'adresse de l\'agence. Vérifiez l\'adresse dans les paramètres.' }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
       ));
     }
 
