@@ -177,6 +177,29 @@ export default function SupportHubTabContent() {
     queryClient.invalidateQueries({ queryKey: ['combined-user-tickets'] });
   };
 
+  // Guide view
+  const openGuide = (guideTab: GuideViewId) => {
+    if (guideTab) {
+      sessionStorage.setItem('guides_sub_tab', JSON.stringify(guideTab));
+      window.dispatchEvent(new CustomEvent('session-state-change', { detail: { key: 'guides_sub_tab', value: guideTab } }));
+    }
+    setGuideView(guideTab);
+  };
+
+  if (guideView) {
+    return (
+      <div className="py-3 px-2 sm:px-4">
+        <Button variant="ghost" size="sm" onClick={() => setGuideView(null)} className="mb-3 gap-1.5">
+          <ArrowLeft className="w-4 h-4" />
+          Retour au centre d'aide
+        </Button>
+        <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>}>
+          <GuidesTabContent />
+        </Suspense>
+      </div>
+    );
+  }
+
   // Detail view
   if (selectedTicketId) {
     return (
