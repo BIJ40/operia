@@ -29,6 +29,7 @@ interface PLSectionProps {
 
 function getSourceIcon(source_type: string, autoSource?: string) {
   if (autoSource === 'statia') return <Zap className="h-3 w-3 text-blue-500" />;
+  if (autoSource === 'royalty') return <Calculator className="h-3 w-3 text-emerald-500" />;
   if (autoSource === 'collaborators') return <Users className="h-3 w-3 text-primary" />;
   if (autoSource) return <Users className="h-3 w-3 text-primary" />;
   switch (source_type) {
@@ -42,6 +43,7 @@ function getSourceIcon(source_type: string, autoSource?: string) {
 
 function getSourceBadge(source_type: string, autoSource?: string, hasAutoValue?: boolean) {
   if (autoSource === 'statia' && hasAutoValue) return <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 font-normal text-blue-600 border-blue-200">StatIA</Badge>;
+  if (autoSource === 'royalty' && hasAutoValue) return <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 font-normal text-emerald-600 border-emerald-200">Barème</Badge>;
   if (autoSource === 'collaborators' && hasAutoValue) return <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 font-normal text-primary border-primary/30">RH</Badge>;
   if (autoSource && hasAutoValue) return <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 font-normal text-primary border-primary/30">Auto</Badge>;
   switch (source_type) {
@@ -128,7 +130,10 @@ export function PLSectionBlock({
     }
     if (item.charge_key) {
       const charge = charges.find(c => c.charge_type === item.charge_key);
-      return charge?.amount ?? 0;
+      if (charge?.amount) return charge.amount;
+      // Fallback to auto-values (e.g. royalty auto-calc)
+      if (autoValues[item.charge_key] != null) return autoValues[item.charge_key];
+      return 0;
     }
     if (item.source_type === 'calculated') {
       return getCalculatedValue(item);
@@ -250,7 +255,7 @@ export function PLSectionBlock({
                       <span className={`text-xs truncate ${item.bold ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
                         {item.label}
                       </span>
-                      {getSourceBadge(item.source_type, item.autoSource, !!(autoValues[item.month_field || item.key]))}
+                      {getSourceBadge(item.source_type, item.autoSource, !!(autoValues[item.month_field || item.charge_key || item.key]))}
                     </div>
 
                     <div className="w-32 text-right flex-shrink-0 ml-2">

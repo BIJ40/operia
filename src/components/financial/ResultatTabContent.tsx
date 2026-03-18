@@ -15,6 +15,7 @@ import { useFinancialCharges } from '@/hooks/useFinancialCharges';
 import { useFinancialSummary } from '@/hooks/useFinancialSummary';
 import { useCollaboratorCount } from '@/hooks/useCollaboratorCount';
 import { useStatiaFinancialBridge } from '@/hooks/useStatiaFinancialBridge';
+import { useRoyaltyAutoValues } from '@/hooks/useRoyaltyAutoValues';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -36,6 +37,10 @@ export default function ResultatTabContent() {
   const { summary, isLoading: summaryLoading } = useFinancialSummary(year, month);
   const { counts: collabCounts } = useCollaboratorCount();
   const { statiaValues, isLoading: statiaLoading } = useStatiaFinancialBridge(year, month);
+
+  // Royalty auto-calc: use StatIA CA or saved CA for computation
+  const currentMonthCA = statiaValues.ca_total ?? (financialMonth?.ca_total ?? undefined);
+  const { data: royaltyValues } = useRoyaltyAutoValues(year, month, currentMonthCA);
 
   const isLoading = monthLoading || chargesLoading || summaryLoading;
 
@@ -168,6 +173,16 @@ export default function ResultatTabContent() {
       } else {
         tryAutoFill(key, val);
       }
+    }
+  }
+
+  // Royalty auto-values (HC Redevance + HC FCN)
+  if (royaltyValues) {
+    if (royaltyValues.externe_redevances_hc_assistance > 0) {
+      autoValues['externe_redevances_hc_assistance'] = royaltyValues.externe_redevances_hc_assistance;
+    }
+    if (royaltyValues.externe_redevances_hc_fcn > 0) {
+      autoValues['externe_redevances_hc_fcn'] = royaltyValues.externe_redevances_hc_fcn;
     }
   }
 
