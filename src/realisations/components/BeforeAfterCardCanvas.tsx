@@ -202,24 +202,59 @@ export function BeforeAfterCardCanvas({
 
 
       // ── Bottom bar
-      const bottomY = SIZE - 120;
+      const bottomY = SIZE - 140;
       ctx.fillStyle = theme.accent;
-      ctx.fillRect(0, bottomY, SIZE, 120);
+      ctx.fillRect(0, bottomY, SIZE, 140);
 
+      // Left side: service label + tagline
       ctx.fillStyle = '#FFFFFF';
       ctx.font = 'bold 34px sans-serif';
       ctx.textAlign = 'left';
-      ctx.fillText(theme.label, 40, bottomY + 48);
+      ctx.fillText(theme.label, 40, bottomY + 42);
 
-      ctx.font = '24px sans-serif';
+      ctx.font = '22px sans-serif';
       ctx.fillStyle = theme.labelColor;
-      ctx.fillText(tagline, 40, bottomY + 84);
+      ctx.fillText(tagline, 40, bottomY + 74);
 
-      if (phone) {
-        ctx.font = 'bold 30px sans-serif';
-        ctx.fillStyle = '#FFFFFF';
-        ctx.textAlign = 'right';
-        ctx.fillText(phone, SIZE - 40, bottomY + 68);
+      // Right side: agency signature
+      ctx.textAlign = 'right';
+      const sigX = SIZE - 40;
+      let sigY = bottomY + 30;
+
+      // Agency name (from slug, capitalized)
+      const displayName = agencySlug
+        ? `Help Confort ${agencySlug.charAt(0).toUpperCase() + agencySlug.slice(1).replace(/-/g, ' ')}`
+        : agencyName;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.fillText(displayName, sigX, sigY);
+      sigY += 26;
+
+      // Address line
+      const addressParts: string[] = [];
+      if (agencyAddress) addressParts.push(agencyAddress);
+      if (addressParts.length > 0) {
+        ctx.font = '18px sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.fillText(addressParts.join(', '), sigX, sigY);
+        sigY += 22;
+      }
+
+      // City + postal code
+      const cityLine = [agencyPostalCode, agencyCity].filter(Boolean).join(' ');
+      if (cityLine) {
+        ctx.font = '18px sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.fillText(cityLine, sigX, sigY);
+        sigY += 22;
+      }
+
+      // Phone + email
+      const contactLine = [agencyPhone, agencyEmail].filter(Boolean).join(' — ');
+      if (contactLine) {
+        ctx.font = '18px sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.fillText(contactLine, sigX, sigY);
       }
     } catch (err) {
       console.error('Canvas render error', err);
