@@ -138,21 +138,13 @@ const DEFAULT_APPORTEURS_ORDER = ['espace'];
 
 function ApporteursSection() {
   const [subTab, setSubTab] = useSessionState<ApporteursSubTab>('outils_apporteurs_sub', 'espace');
-  const [tabOrder, setTabOrder] = useSessionState<string[]>('outils_apporteurs_order', DEFAULT_APPORTEURS_ORDER);
-
-  const handleReorder = useCallback((newOrder: string[]) => {
-    setTabOrder(newOrder);
-  }, [setTabOrder]);
 
   return (
     <div className="space-y-0">
-      <DraggableFolderTabs 
+      <StaticFolderTabs 
         tabs={APPORTEURS_TABS} 
-        tabOrder={tabOrder}
         activeTab={subTab} 
         onTabChange={(t) => setSubTab(t as ApporteursSubTab)}
-        onReorder={handleReorder}
-        storageKey="outils_apporteurs_order"
       />
       <div className="rounded-2xl rounded-tl-none border-2 border-border bg-background p-4 sm:p-6 shadow-sm">
         {subTab === 'espace' && (
