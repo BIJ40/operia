@@ -38,7 +38,7 @@ function LoadingFallback() {
 }
 
 export default function PilotageTabContent() {
-  const { hasModule, isDeployedModule } = usePermissions();
+  const { hasModule, isDeployedModule, isAdmin } = usePermissions();
   const { getShortLabel } = useModuleLabels();
   const { mode: navMode } = useNavigationMode();
 
@@ -62,9 +62,9 @@ export default function PilotageTabContent() {
       })
       .map(tab => {
         if (!tab.requiresModule) return tab;
-        return { ...tab, disabled: !hasModule(tab.requiresModule) };
+        return { ...tab, disabled: !isAdmin && !hasModule(tab.requiresModule) };
       });
-  }, [hasModule, isDeployedModule, allTabs]);
+  }, [allTabs, hasModule, isAdmin, isDeployedModule]);
 
   const defaultTab = (visibleTabs.find(t => !t.disabled)?.id as PilotageSubTab) ?? 'stats';
   const [activeTab, setActiveTab] = useSessionState<PilotageSubTab>('pilotage_sub_tab', defaultTab);
