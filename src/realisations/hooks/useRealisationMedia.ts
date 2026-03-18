@@ -58,6 +58,16 @@ export function useUploadMedia() {
       if (!ALLOWED_TYPES.has(file.type)) throw new Error(`Type non autorisé: ${file.type}`);
       if (file.size > MAX_FILE_SIZE) throw new Error('Fichier trop volumineux (max 50 Mo)');
 
+      // Extract EXIF date
+      let exifTakenAt: string | null = null;
+      try {
+        const exif = await exifr.parse(file, { pick: ['DateTimeOriginal', 'CreateDate', 'ModifyDate'] });
+        const exifDate = exif?.DateTimeOriginal || exif?.CreateDate || exif?.ModifyDate;
+        if (exifDate instanceof Date && !isNaN(exifDate.getTime())) {
+          exifTakenAt = exifDate.toISOString();
+        }
+      } catch { /* no EXIF data, that's fine */ }
+
       const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
       const fileName = `${crypto.randomUUID()}.${ext}`;
       const storagePath = `agency/${agencyId}/realisation/${realisationId}/original/${fileName}`;
@@ -81,6 +91,7 @@ export function useUploadMedia() {
           media_role: mediaRole,
           sequence_order: sequenceOrder,
           file_size_bytes: file.size,
+          exif_taken_at: exifTakenAt,
         })
         .select()
         .single();
