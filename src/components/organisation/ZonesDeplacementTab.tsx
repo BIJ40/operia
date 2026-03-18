@@ -179,6 +179,25 @@ export default function ZonesDeplacementTab() {
                     </TableCell>
                   ))}
                   <TableCell className="text-center font-bold">{tech.total}</TableCell>
+                  <TableCell className="text-center">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex items-center gap-1 font-semibold">
+                            {tech.paniers ?? tech.total}
+                            {(tech.paniersExclus ?? 0) > 0 && (
+                              <span className="text-[10px] text-amber-500 font-normal">(-{tech.paniersExclus})</span>
+                            )}
+                          </span>
+                        </TooltipTrigger>
+                        {(tech.paniersExclus ?? 0) > 0 && (
+                          <TooltipContent>
+                            <p>{tech.paniersExclus} jour(s) exclu(s) : matin seul &lt; 5h</p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
