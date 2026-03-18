@@ -64,7 +64,7 @@ export function BeforeAfterGenerator({
     if (autoApres) setApresMedia(autoApres);
 
     if (hasAutoSelection) {
-      setStep('preview');
+      setStep('ready');
     } else if (autoAvant) {
       setStep('select-apres');
     } else {
@@ -84,13 +84,13 @@ export function BeforeAfterGenerator({
     if (step === 'select-avant') {
       setAvantMedia(m);
       if (apresMedia) {
-        setStep('preview');
+        setStep('ready');
       } else {
         setStep('select-apres');
       }
     } else if (step === 'select-apres') {
       setApresMedia(m);
-      setStep('preview');
+      setStep('ready');
     }
   };
 
