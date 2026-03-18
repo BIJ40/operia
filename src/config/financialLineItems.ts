@@ -49,10 +49,10 @@ export const PL_SECTIONS: PLSection[] = [
     key: 'activite',
     title: 'ACTIVITÉ',
     items: [
-      { key: 'nb_factures', label: 'Nombre de factures', source_type: 'manual_monthly', month_field: 'nb_factures' },
-      { key: 'nb_interventions', label: "Nombre d'interventions", source_type: 'manual_monthly', month_field: 'nb_interventions' },
+      { key: 'nb_factures', label: 'Nombre de factures', source_type: 'manual_monthly', month_field: 'nb_factures', autoSource: 'statia' },
+      { key: 'nb_interventions', label: "Nombre d'interventions", source_type: 'manual_monthly', month_field: 'nb_interventions', autoSource: 'statia' },
       { key: 'nb_salaries', label: 'Nombre de salariés', source_type: 'manual_monthly', month_field: 'nb_salaries', autoSource: 'collaborators_count' },
-      { key: 'heures_facturees', label: "Nombre d'heures facturées", source_type: 'manual_monthly', month_field: 'heures_facturees' },
+      { key: 'heures_facturees', label: "Nombre d'heures facturées", source_type: 'manual_monthly', month_field: 'heures_facturees', autoSource: 'statia' },
       { key: 'nb_heures_payees_productifs', label: "Nombre d'heures payées productifs", source_type: 'manual_monthly', month_field: 'nb_heures_payees_productifs' },
       { key: 'nb_heures_payees_improductifs', label: "Nombre d'heures payées improductifs", source_type: 'manual_monthly', month_field: 'nb_heures_payees_improductifs' },
     ],
