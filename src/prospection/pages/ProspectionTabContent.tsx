@@ -67,14 +67,10 @@ function ProspectionInner() {
   // Filtrer les onglets visibles selon les permissions
   const visibleTabs = useMemo(() => {
     return allTabs.filter(tab => {
-      // Check module-level access
       const moduleKey = TAB_MODULE_MAP[tab.id];
-      if (moduleKey) return hasModule(moduleKey);
-      // Check prospection option access
-      const optionKey = TAB_OPTION_MAP[tab.id];
-      return optionKey ? hasModuleOption('prospection', optionKey) : true;
+      return moduleKey ? hasModule(moduleKey) : true;
     });
-  }, [hasModuleOption, hasModule, allTabs]);
+  }, [hasModule, allTabs]);
 
   const [activeTab, setActiveTab] = useState(() => visibleTabs[0]?.id ?? 'apporteurs');
 
