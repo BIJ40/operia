@@ -111,6 +111,12 @@ export default function OrganisationTabContent() {
             <AgencyAdminDocuments />
           </Suspense>
         </TabsContent>
+
+        <TabsContent value="droits-equipe" className="mt-4">
+          <Suspense fallback={<LoadingFallback />}>
+            <AgencyTeamRightsPanel />
+          </Suspense>
+        </TabsContent>
       </Tabs>
     </div>
     </DomainAccentProvider>
