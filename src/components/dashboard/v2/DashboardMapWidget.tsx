@@ -380,6 +380,7 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
                       onSelectRdv={setSelectedRdv}
                       mapboxToken={mapboxToken || ''}
                       isOpen={isExpanded}
+                      technicians={technicians}
                     />
                   </div>
                 </DialogContent>
