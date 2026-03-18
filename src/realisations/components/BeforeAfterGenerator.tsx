@@ -97,6 +97,19 @@ export function BeforeAfterGenerator({
 
   const photosWithUrl = media.filter(m => m.signedUrl);
 
+  // Filter photos by relevant role when selecting
+  const getFilteredPhotos = () => {
+    if (step === 'select-avant') {
+      const avantPhotos = photosWithUrl.filter(m => m.media_role === 'before');
+      return avantPhotos.length > 0 ? avantPhotos : photosWithUrl;
+    }
+    if (step === 'select-apres') {
+      const apresPhotos = photosWithUrl.filter(m => m.media_role === 'after');
+      return apresPhotos.length > 0 ? apresPhotos : photosWithUrl;
+    }
+    return photosWithUrl;
+  };
+
   return (
     <>
       <Button onClick={handleOpen} variant="outline" size="sm" className="gap-2">
