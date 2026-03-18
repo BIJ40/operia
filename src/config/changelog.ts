@@ -15,6 +15,31 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.9.9",
+    title: "Accessibilité modules & Granularité Commercial",
+    date: "2026-03-18",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // ACCESSIBILITÉ NAVIGATION
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Logique à 3 états dans la navigation : modules non déployés masqués, modules déployés sans accès grisés, modules accessibles cliquables' },
+      { type: 'feature', description: 'Les administrateurs (N5+) voient tous les modules déployés comme cliquables, mais les modules en développement restent masqués de la navigation' },
+      { type: 'feature', description: 'Accès admin aux modules en développement conservé via les liens directs de la page Droits (ModuleGuard bypass)' },
+      { type: 'improvement', description: 'Header dropdown : sous-modules inaccessibles affichés en grisé avec pointer-events désactivés' },
+      { type: 'improvement', description: 'Chargement des clés déployées depuis module_registry (is_deployed) dans AuthContext pour filtrage navigation' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // GRANULARITÉ COMMERCIAL
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Promotion des 4 sous-onglets Commercial en modules indépendants : commercial.suivi_client, commercial.comparateur, commercial.veille, commercial.prospects' },
+      { type: 'feature', description: 'Chaque sous-onglet Commercial est désormais individuellement déployable, activable par plan et overridable par utilisateur' },
+      { type: 'improvement', description: 'Migration automatique des plan_tier_modules : les options prospection existantes converties en entrées commercial.* correspondantes' },
+      { type: 'improvement', description: 'Remplacement de hasModuleOption(prospection, ...) par hasModule(commercial.*) dans CommercialTabContent et ProspectionTabContent' },
+      { type: 'improvement', description: 'Taxonomie des droits (rightsTaxonomy) enrichie avec les 4 nouvelles clés sous la catégorie Commercial' },
+      { type: 'improvement', description: 'Header navigation : scopes Commercial mis à jour vers les clés granulaires (commercial.suivi_client au lieu de prospection)' },
+    ],
+  },
+  {
     version: "V0.9.8",
     title: "Centre d'aide — Refonte UX & Permissions documentaires",
     date: "2026-03-12",
