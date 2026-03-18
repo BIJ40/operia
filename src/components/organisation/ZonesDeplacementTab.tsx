@@ -54,11 +54,15 @@ export default function ZonesDeplacementTab() {
     const sums: Record<string, number> = {};
     ZONE_LABELS.forEach(z => { sums[z] = 0; });
     let total = 0;
+    let paniers = 0;
+    let paniersExclus = 0;
     data.forEach(t => {
       ZONE_LABELS.forEach(z => { sums[z] += t.zones[z] || 0; });
       total += t.total;
+      paniers += t.paniers ?? t.total;
+      paniersExclus += t.paniersExclus ?? 0;
     });
-    return { sums, total };
+    return { sums, total, paniers, paniersExclus };
   }, [data]);
 
   const exportToExcel = async () => {
