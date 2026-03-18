@@ -23,6 +23,7 @@ interface Props {
   userId: string;
   roleAgence: string | null;
   n2HasModule: (key: ModuleKey) => boolean;
+  isDeployedModule: (key: ModuleKey) => boolean;
 }
 
 export function TeamMemberModules({ userId, roleAgence, n2HasModule }: Props) {
