@@ -1,5 +1,5 @@
 /**
- * Hook — Media for a realisation + upload
+ * Hook — Media for a realisation + upload + EXIF extraction
  * Uses 'any' cast for new tables not yet in generated types
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import type { RealisationMedia, MediaRole } from '../types';
 import { toast } from 'sonner';
+import exifr from 'exifr';
 
 const db = supabase as any;
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'video/mp4']);
