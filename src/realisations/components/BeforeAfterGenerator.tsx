@@ -19,6 +19,12 @@ interface BeforeAfterGeneratorProps {
   logoUrl?: string | null;
   agencyName?: string;
   phone?: string;
+  agencySlug?: string;
+  agencyAddress?: string | null;
+  agencyCity?: string | null;
+  agencyPostalCode?: string | null;
+  agencyPhone?: string | null;
+  agencyEmail?: string | null;
   onCardSaved?: (url: string) => void;
 }
 
