@@ -287,7 +287,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
   },
   {
     key: 'organisation.zones',
-    label: 'Zones de déplacement',
+    label: 'Zones',
     description: 'Récapitulatif mensuel des zones BTP par technicien',
     icon: 'MapPin',
     category: 'organisation',
