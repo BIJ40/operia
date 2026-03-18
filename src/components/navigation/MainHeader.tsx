@@ -17,6 +17,7 @@ interface MainHeaderProps {
 
 export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClass }: MainHeaderProps) {
   const { getLabel } = useModuleLabels();
+  const { hasModule, isDeployedModule, isAdmin } = usePermissions();
 
   const visibleGroups = useMemo(() => {
     const visibleIds = new Set(visibleTabs.map(t => t.id));
