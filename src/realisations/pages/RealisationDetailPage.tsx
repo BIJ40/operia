@@ -20,6 +20,8 @@ export default function RealisationDetailPage() {
   const navigate = useNavigate();
   const { data: realisation, isLoading } = useRealisation(id);
   const { data: media = [] } = useRealisationMedia(id);
+  const { agencyId } = useEffectiveAuth();
+  const { data: commercialProfile } = useCommercialProfile(agencyId ?? null);
   const uploadMedia = useUploadMedia();
   const deleteMedia = useDeleteMedia();
   const updateMediaRole = useUpdateMediaRole();
