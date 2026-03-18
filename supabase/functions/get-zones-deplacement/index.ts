@@ -322,6 +322,9 @@ Deno.serve(async (req) => {
     // Map: techId → Map<date, { startMin: number, endMax: number, totalMinutes: number }>
     const techDayTime = new Map<number, Map<string, { startMin: number; endMax: number; totalMinutes: number }>>();
 
+    // Debug: sample first few visits to understand time field availability
+    let debugSampled = 0;
+
     for (const intervention of interventions) {
       const data = intervention?.data || {};
       const visites = Array.isArray(data.visites) ? data.visites : [];
@@ -335,6 +338,13 @@ Deno.serve(async (req) => {
         const techIds: number[] = Array.isArray(visite?.usersIds) ? visite.usersIds : [];
         const relevantTechs = techIds.filter(id => usersById.has(id));
         if (relevantTechs.length === 0) continue;
+
+        // Debug: log a few visits to understand structure
+        if (debugSampled < 5) {
+          const techName = relevantTechs.map(id => usersById.get(id)).join(',');
+          console.log(`[ZONES-DEBUG] Visit ${debugSampled}: tech=${techName}, date="${visite?.date}", duree=${visite?.duree}, type2="${visite?.type2}", heureDebut="${visite?.heureDebut}", heureFin="${visite?.heureFin}", keys=${Object.keys(visite || {}).join(',')}`);
+          debugSampled++;
+        }
 
         // Extract time information for panier calculation
         let startMinutes = -1;
@@ -398,6 +408,23 @@ Deno.serve(async (req) => {
             }
           }
         }
+      }
+    }
+
+    // Debug: log time info for techs with name containing "BROCHARD"
+    for (const [techId, timeMap] of techDayTime.entries()) {
+      const name = usersById.get(techId) || '';
+      if (name.toUpperCase().includes('BROCHARD')) {
+        for (const [day, info] of timeMap.entries()) {
+          console.log(`[ZONES-DEBUG] BROCHARD time: day=${day}, startMin=${info.startMin} (${Math.floor(info.startMin/60)}:${String(info.startMin%60).padStart(2,'0')}), endMax=${info.endMax} (${Math.floor(info.endMax/60)}:${String(info.endMax%60).padStart(2,'0')}), totalMin=${info.totalMinutes}`);
+        }
+      }
+    }
+    // Also log if BROCHARD has no time data
+    for (const [techId] of techDayMax.entries()) {
+      const name = usersById.get(techId) || '';
+      if (name.toUpperCase().includes('BROCHARD') && !techDayTime.has(techId)) {
+        console.log(`[ZONES-DEBUG] BROCHARD has zone data but NO time data at all`);
       }
     }
 
