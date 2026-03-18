@@ -7121,6 +7121,7 @@ export type Database = {
           alt_text: string | null
           caption: string | null
           created_at: string
+          exif_taken_at: string | null
           file_name: string
           file_size_bytes: number | null
           height: number | null
@@ -7140,6 +7141,7 @@ export type Database = {
           alt_text?: string | null
           caption?: string | null
           created_at?: string
+          exif_taken_at?: string | null
           file_name: string
           file_size_bytes?: number | null
           height?: number | null
@@ -7159,6 +7161,7 @@ export type Database = {
           alt_text?: string | null
           caption?: string | null
           created_at?: string
+          exif_taken_at?: string | null
           file_name?: string
           file_size_bytes?: number | null
           height?: number | null
