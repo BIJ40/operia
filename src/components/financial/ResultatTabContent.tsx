@@ -98,7 +98,8 @@ export default function ResultatTabContent() {
     }
   };
 
-  const hasNoData = !summary && !isLoading;
+  const hasStatiaData = !statiaLoading && statiaValues.ca_total != null && statiaValues.ca_total > 0;
+  const hasNoData = !summary && !isLoading && !hasStatiaData;
 
   // ── Reset handler: delete monthly row + variable charges for this month ──
   const handleReset = async () => {
