@@ -63,7 +63,7 @@ export const PL_SECTIONS: PLSection[] = [
     key: 'ca',
     title: 'CHIFFRE D\'AFFAIRES',
     items: [
-      { key: 'ca_total', label: 'CA HT', source_type: 'manual_monthly', month_field: 'ca_total', bold: true },
+      { key: 'ca_total', label: 'CA HT', source_type: 'manual_monthly', month_field: 'ca_total', bold: true, autoSource: 'statia' },
       { key: 'ca_plomberie', label: 'CA HT Plomberie', source_type: 'manual_monthly', indent: 1 },
       { key: 'ca_electricite', label: 'CA HT Électricité', source_type: 'manual_monthly', indent: 1 },
       { key: 'ca_menuiserie', label: 'CA HT Menuiserie', source_type: 'manual_monthly', indent: 1 },
