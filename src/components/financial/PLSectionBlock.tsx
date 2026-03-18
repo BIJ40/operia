@@ -43,6 +43,7 @@ function getSourceIcon(source_type: string, autoSource?: string) {
 
 function getSourceBadge(source_type: string, autoSource?: string, hasAutoValue?: boolean) {
   if (autoSource === 'statia' && hasAutoValue) return <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 font-normal text-blue-600 border-blue-200">StatIA</Badge>;
+  if (autoSource === 'royalty' && hasAutoValue) return <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 font-normal text-emerald-600 border-emerald-200">Barème</Badge>;
   if (autoSource === 'collaborators' && hasAutoValue) return <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 font-normal text-primary border-primary/30">RH</Badge>;
   if (autoSource && hasAutoValue) return <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 font-normal text-primary border-primary/30">Auto</Badge>;
   switch (source_type) {
