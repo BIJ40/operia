@@ -187,18 +187,6 @@ export default function ZonesDeplacementTab() {
                 </TableRow>
               ))}
             </TableBody>
-            {totals && (
-              <TableFooter>
-                <TableRow>
-                  <TableCell className="font-bold">Total</TableCell>
-                  {ZONE_LABELS.map(z => (
-                    <TableCell key={z} className="text-center font-bold">{totals.sums[z]}</TableCell>
-                  ))}
-                  <TableCell className="text-center font-bold text-primary">{totals.total}</TableCell>
-                  <TableCell className="text-center font-bold">{totals.paniers}</TableCell>
-                </TableRow>
-              </TableFooter>
-            )}
           </Table>
         </div>
       )}
