@@ -19,6 +19,7 @@ export default function RealisationDetailPage() {
   const { data: media = [] } = useRealisationMedia(id);
   const uploadMedia = useUploadMedia();
   const deleteMedia = useDeleteMedia();
+  const updateMediaRole = useUpdateMediaRole();
   const dispatchWebhook = useDispatchWebhook();
 
   if (isLoading) {
