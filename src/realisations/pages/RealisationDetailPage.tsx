@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useRealisation } from '../hooks/useRealisations';
-import { useRealisationMedia, useUploadMedia, useDeleteMedia, useUpdateMediaRole } from '../hooks/useRealisationMedia';
+import { useRealisationMedia, useUploadMedia, useDeleteMedia, useUpdateMediaRole, useAutoSuggestRoles } from '../hooks/useRealisationMedia';
 import { useDispatchWebhook } from '../hooks/useDispatchWebhook';
 import { MEDIA_ROLE_LABELS, SYNC_STATUS_LABELS, SYNC_STATUS_COLORS, type MediaRole, type ExternalSyncStatus } from '../types';
 import { BeforeAfterGenerator } from '../components/BeforeAfterGenerator';
