@@ -5,7 +5,8 @@
 import { useMemo, useState } from 'react';
 import { format, subMonths } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { MapPin, Loader2, ChevronLeft, ChevronRight, AlertCircle, Download } from 'lucide-react';
+import { MapPin, Loader2, ChevronLeft, ChevronRight, AlertCircle, Download, UtensilsCrossed } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import {
   Table, TableBody, TableCell, TableHead,
@@ -53,11 +54,15 @@ export default function ZonesDeplacementTab() {
     const sums: Record<string, number> = {};
     ZONE_LABELS.forEach(z => { sums[z] = 0; });
     let total = 0;
+    let paniers = 0;
+    let paniersExclus = 0;
     data.forEach(t => {
       ZONE_LABELS.forEach(z => { sums[z] += t.zones[z] || 0; });
       total += t.total;
+      paniers += t.paniers ?? t.total;
+      paniersExclus += t.paniersExclus ?? 0;
     });
-    return { sums, total };
+    return { sums, total, paniers, paniersExclus };
   }, [data]);
 
   const exportToExcel = async () => {
@@ -68,6 +73,7 @@ export default function ZonesDeplacementTab() {
       const row: Record<string, string | number> = { 'Technicien': tech.techName };
       ZONE_LABELS.forEach(z => { row[`Zone ${z}`] = tech.zones[z]; });
       row['Total'] = tech.total;
+      row['Paniers'] = tech.paniers ?? tech.total;
       return row;
     });
 
@@ -76,6 +82,7 @@ export default function ZonesDeplacementTab() {
       const totalRow: Record<string, string | number> = { 'Technicien': 'TOTAL' };
       ZONE_LABELS.forEach(z => { totalRow[`Zone ${z}`] = totals.sums[z]; });
       totalRow['Total'] = totals.total;
+      totalRow['Paniers'] = totals.paniers;
       rows.push(totalRow);
     }
 
@@ -148,6 +155,12 @@ export default function ZonesDeplacementTab() {
                   </TableHead>
                 ))}
                 <TableHead className="text-center w-20 font-bold">Total</TableHead>
+                <TableHead className="text-center w-20">
+                  <div className="flex items-center justify-center gap-1">
+                    <UtensilsCrossed className="h-3.5 w-3.5" />
+                    <span className="font-semibold">Paniers</span>
+                  </div>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -166,6 +179,25 @@ export default function ZonesDeplacementTab() {
                     </TableCell>
                   ))}
                   <TableCell className="text-center font-bold">{tech.total}</TableCell>
+                  <TableCell className="text-center">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex items-center gap-1 font-semibold">
+                            {tech.paniers ?? tech.total}
+                            {(tech.paniersExclus ?? 0) > 0 && (
+                              <span className="text-[10px] text-amber-500 font-normal">(-{tech.paniersExclus})</span>
+                            )}
+                          </span>
+                        </TooltipTrigger>
+                        {(tech.paniersExclus ?? 0) > 0 && (
+                          <TooltipContent>
+                            <p>{tech.paniersExclus} jour(s) exclu(s) : matin seul &lt; 5h</p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -177,6 +209,7 @@ export default function ZonesDeplacementTab() {
                     <TableCell key={z} className="text-center font-bold">{totals.sums[z]}</TableCell>
                   ))}
                   <TableCell className="text-center font-bold text-primary">{totals.total}</TableCell>
+                  <TableCell className="text-center font-bold">{totals.paniers}</TableCell>
                 </TableRow>
               </TableFooter>
             )}

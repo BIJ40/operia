@@ -316,9 +316,11 @@ Deno.serve(async (req) => {
       return result;
     }
 
-    // 8. Process: for each day, for each tech → find max distance to depot
+    // 8. Process: for each day, for each tech → find max distance + track time spans for panier logic
     // Map: techId → Map<date, maxDistKm>
     const techDayMax = new Map<number, Map<string, number>>();
+    // Map: techId → Map<date, { startMin: number, endMax: number, totalMinutes: number }>
+    const techDayTime = new Map<number, Map<string, { startMin: number; endMax: number; totalMinutes: number }>>();
 
     for (const intervention of interventions) {
       const data = intervention?.data || {};
@@ -331,10 +333,35 @@ Deno.serve(async (req) => {
         if (!vDate || !days.includes(vDate)) continue;
 
         const techIds: number[] = Array.isArray(visite?.usersIds) ? visite.usersIds : [];
-        
-        // Only process techs we know about
         const relevantTechs = techIds.filter(id => usersById.has(id));
         if (relevantTechs.length === 0) continue;
+
+        // Extract time information for panier calculation
+        let startMinutes = -1;
+        let endMinutes = -1;
+        const duree = typeof visite?.duree === 'number' ? visite.duree : (parseInt(visite?.duree) || 0);
+
+        // Try date ISO string for start time (e.g. "2026-03-15T08:00:00")
+        if (typeof visite?.date === 'string' && visite.date.length >= 16) {
+          const timePart = visite.date.substring(11, 16); // "HH:mm"
+          const [hh, mm] = timePart.split(':').map(Number);
+          if (Number.isFinite(hh) && Number.isFinite(mm)) {
+            startMinutes = hh * 60 + mm;
+            if (duree > 0) endMinutes = startMinutes + duree;
+          }
+        }
+        // Fallback: heureDebut / heureFin
+        if (startMinutes < 0 && typeof visite?.heureDebut === 'string') {
+          const [hh, mm] = visite.heureDebut.split(':').map(Number);
+          if (Number.isFinite(hh)) startMinutes = hh * 60 + (mm || 0);
+        }
+        if (endMinutes < 0 && typeof visite?.heureFin === 'string') {
+          const [hh, mm] = visite.heureFin.split(':').map(Number);
+          if (Number.isFinite(hh)) endMinutes = hh * 60 + (mm || 0);
+        }
+        if (endMinutes < 0 && startMinutes >= 0 && duree > 0) {
+          endMinutes = startMinutes + duree;
+        }
 
         // Get coordinates for this intervention's client
         let coords: { lat: number; lng: number } | null = null;
@@ -346,32 +373,68 @@ Deno.serve(async (req) => {
         const distKm = haversineKm(depot.lat, depot.lng, coords.lat, coords.lng);
 
         for (const techId of relevantTechs) {
+          // Track max distance
           if (!techDayMax.has(techId)) techDayMax.set(techId, new Map());
           const dayMap = techDayMax.get(techId)!;
           const current = dayMap.get(vDate) ?? 0;
           if (distKm > current) dayMap.set(vDate, distKm);
+
+          // Track time spans
+          if (startMinutes >= 0 || endMinutes >= 0) {
+            if (!techDayTime.has(techId)) techDayTime.set(techId, new Map());
+            const timeMap = techDayTime.get(techId)!;
+            const existing = timeMap.get(vDate);
+            const visitDuration = duree > 0 ? duree : (endMinutes > startMinutes ? endMinutes - startMinutes : 60);
+            if (!existing) {
+              timeMap.set(vDate, {
+                startMin: startMinutes >= 0 ? startMinutes : 1440,
+                endMax: endMinutes >= 0 ? endMinutes : 0,
+                totalMinutes: visitDuration,
+              });
+            } else {
+              if (startMinutes >= 0 && startMinutes < existing.startMin) existing.startMin = startMinutes;
+              if (endMinutes >= 0 && endMinutes > existing.endMax) existing.endMax = endMinutes;
+              existing.totalMinutes += visitDuration;
+            }
+          }
         }
       }
     }
 
-    // 9. Aggregate into zone counts per tech
+    // 9. Aggregate into zone counts per tech + panier calculation
     const ZONE_LABELS: ZoneLabel[] = ['1A', '1B', '2', '3', '4', '5'];
     const results: Array<{
       techId: number;
       techName: string;
       zones: Record<ZoneLabel, number>;
       total: number;
+      paniers: number;
+      paniersExclus: number;
     }> = [];
 
     for (const [techId, dayMap] of techDayMax.entries()) {
       const zones: Record<ZoneLabel, number> = { '1A': 0, '1B': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
       let total = 0;
+      let paniersExclus = 0;
+      const timeMap = techDayTime.get(techId);
 
-      for (const [, maxKm] of dayMap) {
+      for (const [day, maxKm] of dayMap) {
         const zone = classifyZone(maxKm);
         if (zone) {
           zones[zone]++;
           total++;
+
+          // Panier exclusion: morning-only (<= 13h) AND < 5h total
+          if (timeMap) {
+            const timeInfo = timeMap.get(day);
+            if (timeInfo && timeInfo.endMax > 0) {
+              const morningOnly = timeInfo.endMax <= 13 * 60; // ends by 13:00
+              const lessThan5h = timeInfo.totalMinutes < 300; // < 5 hours
+              if (morningOnly && lessThan5h) {
+                paniersExclus++;
+              }
+            }
+          }
         }
       }
 
@@ -380,6 +443,8 @@ Deno.serve(async (req) => {
         techName: usersById.get(techId) || `Tech ${techId}`,
         zones,
         total,
+        paniers: total - paniersExclus,
+        paniersExclus,
       });
     }
 
