@@ -18,15 +18,15 @@ export interface ServiceTheme {
 }
 
 export const SERVICE_THEMES: Record<string, ServiceTheme> = {
-  plomberie:     { label: 'Plomberie',     bg: '#00B3EB', accent: '#0098D4', labelColor: '#E0F4FD' },
-  chauffage:     { label: 'Chauffage',     bg: '#008DDF', accent: '#0077C0', labelColor: '#D6EEFF' },
-  electricite:   { label: 'Électricité',   bg: '#FEAD04', accent: '#E09800', labelColor: '#FFF4D6' },
-  climatisation: { label: 'Climatisation', bg: '#009CE3', accent: '#0082C0', labelColor: '#D6F0FF' },
-  serrurerie:    { label: 'Serrurerie',    bg: '#F85A10', accent: '#D94A0A', labelColor: '#FFE4D6' },
-  volets:        { label: 'Volets',        bg: '#53B730', accent: '#449926', labelColor: '#DDEFD6' },
-  vitrerie:      { label: 'Vitrerie',      bg: '#1D51A7', accent: '#17428A', labelColor: '#D6DFEF' },
-  menuiserie:    { label: 'Menuiserie',    bg: '#B8947C', accent: '#9A7A64', labelColor: '#EDE5DE' },
-  general:       { label: 'Multi-services', bg: '#37474F', accent: '#263238', labelColor: '#CFD8DC' },
+  plomberie:     { label: 'Plomberie',           bg: '#2D8BC9', accent: '#136AAD', labelColor: '#D6EEFF' },
+  electricite:   { label: 'Électricité',         bg: '#F8A73C', accent: '#F68A30', labelColor: '#FFF4D6' },
+  serrurerie:    { label: 'Serrurerie',          bg: '#E22673', accent: '#DF0E61', labelColor: '#FFD6E8' },
+  menuiserie:    { label: 'Menuiserie',          bg: '#EF8531', accent: '#E86424', labelColor: '#FFE4D6' },
+  vitrerie:      { label: 'Vitrerie',            bg: '#90C14E', accent: '#62B144', labelColor: '#E4F2D6' },
+  volets:        { label: 'Volets roulants',     bg: '#A23189', accent: '#912982', labelColor: '#F0D6EC' },
+  pmr:           { label: 'Adaptation logement', bg: '#3C64A2', accent: '#2650A6', labelColor: '#D6DFEF' },
+  renovation:    { label: 'Rénovation',          bg: '#B79D84', accent: '#957E6E', labelColor: '#EDE5DE' },
+  general:       { label: 'Multi-services',      bg: '#37474F', accent: '#263238', labelColor: '#CFD8DC' },
 };
 
 // ─── Canvas helpers ───────────────────────────────────────────
