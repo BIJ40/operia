@@ -28,7 +28,7 @@ interface BeforeAfterGeneratorProps {
   onCardSaved?: (url: string) => void;
 }
 
-type SelectionStep = 'idle' | 'select-avant' | 'select-apres' | 'preview';
+type SelectionStep = 'idle' | 'select-avant' | 'select-apres' | 'ready' | 'preview';
 
 export function BeforeAfterGenerator({
   media,
