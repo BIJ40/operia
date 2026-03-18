@@ -34,24 +34,33 @@ function classifyZone(km: number): ZoneLabel | null {
 }
 
 async function geocodeAddress(address: string, postalCode: string, city: string): Promise<{ lat: number; lng: number } | null> {
-  try {
-    const textQuery = `${address} ${city}`.trim();
-    const params = [`q=${encodeURIComponent(textQuery)}`, 'limit=1'];
-    if (postalCode?.length >= 2) params.push(`postcode=${encodeURIComponent(postalCode)}`);
-    
-    const url = `https://api-adresse.data.gouv.fr/search/?${params.join('&')}`;
-    const response = await fetch(url);
-    if (!response.ok) return null;
-    
-    const data = await response.json();
-    if (data.features?.length > 0) {
-      const [lng, lat] = data.features[0].geometry.coordinates;
-      return { lat, lng };
+  // Try multiple strategies in order of precision
+  const queries = [
+    `${address} ${city}`.trim(),
+    `${address} ${postalCode} ${city}`.trim(),
+    city ? `${postalCode} ${city}`.trim() : '',
+    postalCode || '',
+  ].filter(q => q.length > 2);
+
+  for (const textQuery of queries) {
+    try {
+      const params = [`q=${encodeURIComponent(textQuery)}`, 'limit=1'];
+      if (postalCode?.length >= 2) params.push(`postcode=${encodeURIComponent(postalCode)}`);
+      
+      const url = `https://api-adresse.data.gouv.fr/search/?${params.join('&')}`;
+      const response = await fetch(url);
+      if (!response.ok) continue;
+      
+      const data = await response.json();
+      if (data.features?.length > 0) {
+        const [lng, lat] = data.features[0].geometry.coordinates;
+        return { lat, lng };
+      }
+    } catch {
+      continue;
     }
-    return null;
-  } catch {
-    return null;
   }
+  return null;
 }
 
 function getDaysInMonth(monthStr: string): string[] {
