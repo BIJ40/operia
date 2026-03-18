@@ -11,7 +11,7 @@
 import { lazy, Suspense, useCallback, useMemo } from 'react';
 import { 
   FileText, Users2, Loader2, Users, CalendarDays, 
-  Car, FolderOpen, Settings, Eye, Activity, Target, FileCheck, AlertTriangle
+  Car, FolderOpen, Settings, Eye, Activity, Target, FileCheck, AlertTriangle, MapPin
 } from 'lucide-react';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { ModuleKey } from '@/types/modules';
