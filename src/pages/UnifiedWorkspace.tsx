@@ -38,7 +38,7 @@ import { LoginFormCard } from '@/components/LoginFormCard';
 import { LoginDialog } from '@/components/LoginDialog';
 import { ImageModal } from '@/components/ImageModal';
 import { AiUnifiedProvider } from '@/components/ai';
-import { SidebarChat } from '@/components/chat/SidebarChat';
+
 
 // Sub-components (Phase 2 split)
 import { LogoutOverlay } from '@/components/unified/workspace/LogoutOverlay';
@@ -253,7 +253,7 @@ function UnifiedWorkspaceContent() {
         
         <ImageModal />
         <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
-        <SidebarChat />
+        
       </TooltipProvider>
     </AiUnifiedProvider>
   );
