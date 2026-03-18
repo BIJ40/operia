@@ -215,14 +215,12 @@ function UnifiedWorkspaceContent() {
               />
             ) : (
               <WorkspaceTabBar
-                sortedTabs={sortedTabs}
-                sortableIds={sortableIds}
+                tabs={sortedTabs}
                 activeTab={validActiveTab}
                 tabButtonClass={tabButtonClass}
                 isTabAccessible={isTabAccessible}
                 isTabVisuallyDisabled={isTabVisuallyDisabled}
                 setActiveTab={setActiveTab}
-                setTabOrder={setTabOrder}
               />
             )}
             
