@@ -305,7 +305,7 @@ function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
       </Tabs>
       
       <ImageModal />
-      <SidebarChat />
+      
     </div>
   );
 }

@@ -253,7 +253,7 @@ function UnifiedWorkspaceContent() {
         
         <ImageModal />
         <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
-        <SidebarChat />
+        
       </TooltipProvider>
     </AiUnifiedProvider>
   );

@@ -90,7 +90,7 @@ export function MinimalLayout({
 
       <ImageModal />
       <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
-      <SidebarChat />
+      
     </AiUnifiedProvider>
   );
 }
