@@ -60,7 +60,7 @@ function ApporteursTabInner() {
 }
 
 function CommercialInner() {
-  const { hasModule, isDeployedModule } = usePermissions();
+  const { hasModule, isDeployedModule, isAdmin } = usePermissions();
   const { openApporteur } = useApporteurTabs();
   const { getShortLabel } = useModuleLabels();
   const { mode: navMode } = useNavigationMode();
@@ -84,10 +84,10 @@ function CommercialInner() {
       })
       .map(tab => {
         const moduleKey = TAB_MODULE_MAP[tab.id];
-        if (moduleKey) return { ...tab, disabled: !hasModule(moduleKey) };
+        if (moduleKey) return { ...tab, disabled: !isAdmin && !hasModule(moduleKey) };
         return tab;
       });
-  }, [hasModule, isDeployedModule, allTabs]);
+  }, [allTabs, hasModule, isAdmin, isDeployedModule]);
 
   const defaultTab = visibleTabs.find(t => !t.disabled)?.id ?? 'apporteurs';
   const [activeTab, setActiveTab] = useSessionState<string>('commercial_sub_tab', defaultTab);
