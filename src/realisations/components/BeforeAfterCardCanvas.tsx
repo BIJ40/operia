@@ -18,15 +18,15 @@ export interface ServiceTheme {
 }
 
 export const SERVICE_THEMES: Record<string, ServiceTheme> = {
-  plomberie: { label: 'Plomberie', bg: '#1565C0', accent: '#0D47A1', labelColor: '#BBDEFB' },
-  serrurerie: { label: 'Serrurerie', bg: '#C62828', accent: '#B71C1C', labelColor: '#FFCDD2' },
-  menuiserie: { label: 'Menuiserie', bg: '#5D4037', accent: '#3E2723', labelColor: '#D7CCC8' },
-  volets: { label: 'Volets', bg: '#2E7D32', accent: '#1B5E20', labelColor: '#C8E6C9' },
-  chauffage: { label: 'Chauffage', bg: '#E65100', accent: '#BF360C', labelColor: '#FFE0B2' },
-  electricite: { label: 'Électricité', bg: '#F9A825', accent: '#F57F17', labelColor: '#FFF9C4' },
-  vitrerie: { label: 'Vitrerie', bg: '#00838F', accent: '#006064', labelColor: '#B2EBF2' },
-  climatisation: { label: 'Climatisation', bg: '#5C6BC0', accent: '#3949AB', labelColor: '#C5CAE9' },
-  general: { label: 'Multi-services', bg: '#37474F', accent: '#263238', labelColor: '#CFD8DC' },
+  plomberie:     { label: 'Plomberie',     bg: '#00B3EB', accent: '#0098D4', labelColor: '#E0F4FD' },
+  chauffage:     { label: 'Chauffage',     bg: '#008DDF', accent: '#0077C0', labelColor: '#D6EEFF' },
+  electricite:   { label: 'Électricité',   bg: '#FEAD04', accent: '#E09800', labelColor: '#FFF4D6' },
+  climatisation: { label: 'Climatisation', bg: '#009CE3', accent: '#0082C0', labelColor: '#D6F0FF' },
+  serrurerie:    { label: 'Serrurerie',    bg: '#F85A10', accent: '#D94A0A', labelColor: '#FFE4D6' },
+  volets:        { label: 'Volets',        bg: '#53B730', accent: '#449926', labelColor: '#DDEFD6' },
+  vitrerie:      { label: 'Vitrerie',      bg: '#1D51A7', accent: '#17428A', labelColor: '#D6DFEF' },
+  menuiserie:    { label: 'Menuiserie',    bg: '#B8947C', accent: '#9A7A64', labelColor: '#EDE5DE' },
+  general:       { label: 'Multi-services', bg: '#37474F', accent: '#263238', labelColor: '#CFD8DC' },
 };
 
 // ─── Canvas helpers ───────────────────────────────────────────
