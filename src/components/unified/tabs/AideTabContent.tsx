@@ -271,11 +271,13 @@ export default function SupportHubTabContent() {
                 return (
                   <button
                     key={section.id}
-                    onClick={() => openGuide(section.guideTab)}
+                    onClick={() => !section.disabled && openGuide(section.guideTab)}
+                    disabled={!!section.disabled}
                     className={cn(
                       'w-full flex items-center gap-3 p-3 rounded-xl border-l-4 transition-all text-left',
-                      section.accentClass,
-                      section.bgClass,
+                      section.disabled
+                        ? 'border-l-muted bg-muted/30 opacity-50 cursor-not-allowed'
+                        : cn(section.accentClass, section.bgClass),
                     )}
                   >
                     <span className="text-xl">{section.emoji}</span>
@@ -283,7 +285,7 @@ export default function SupportHubTabContent() {
                       <p className="font-medium text-sm">{section.label}</p>
                       <p className="text-xs text-muted-foreground">{section.description}</p>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                    {!section.disabled && <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
                   </button>
                 );
               }
