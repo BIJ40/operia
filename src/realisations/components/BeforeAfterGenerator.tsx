@@ -97,6 +97,19 @@ export function BeforeAfterGenerator({
 
   const photosWithUrl = media.filter(m => m.signedUrl);
 
+  // Filter photos by relevant role when selecting
+  const getFilteredPhotos = () => {
+    if (step === 'select-avant') {
+      const avantPhotos = photosWithUrl.filter(m => m.media_role === 'before');
+      return avantPhotos.length > 0 ? avantPhotos : photosWithUrl;
+    }
+    if (step === 'select-apres') {
+      const apresPhotos = photosWithUrl.filter(m => m.media_role === 'after');
+      return apresPhotos.length > 0 ? apresPhotos : photosWithUrl;
+    }
+    return photosWithUrl;
+  };
+
   return (
     <>
       <Button onClick={handleOpen} variant="outline" size="sm" className="gap-2">
@@ -158,7 +171,7 @@ export function BeforeAfterGenerator({
                   : 'Cliquez sur la photo APRÈS :'}
               </p>
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                {photosWithUrl.map(m => {
+                {getFilteredPhotos().map(m => {
                   const isSelected = m.id === avantMedia?.id || m.id === apresMedia?.id;
                   const isDisabled = (step === 'select-apres' && m.id === avantMedia?.id)
                     || (step === 'select-avant' && m.id === apresMedia?.id);
@@ -176,7 +189,7 @@ export function BeforeAfterGenerator({
                       }`}
                     >
                       <img src={m.signedUrl} alt="" className="w-full h-full object-cover" />
-                      {m.media_role && ['before', 'during', 'after'].includes(m.media_role) && (
+                      {m.media_role && ['before', 'after'].includes(m.media_role) && (
                         <span className="absolute top-1 left-1 text-[10px] font-bold bg-black/60 text-white px-1.5 py-0.5 rounded">
                           {MEDIA_ROLE_LABELS[m.media_role]}
                         </span>

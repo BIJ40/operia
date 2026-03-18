@@ -54,6 +54,25 @@ function drawCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: numb
   ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
 }
 
+/** Draw image fully contained (letterboxed) without cropping */
+function drawContain(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, w: number, h: number) {
+  const imgRatio = img.naturalWidth / img.naturalHeight;
+  const boxRatio = w / h;
+  let dw: number, dh: number, dx: number, dy: number;
+  if (imgRatio > boxRatio) {
+    dw = w;
+    dh = w / imgRatio;
+    dx = x;
+    dy = y + (h - dh) / 2;
+  } else {
+    dh = h;
+    dw = h * imgRatio;
+    dx = x + (w - dw) / 2;
+    dy = y;
+  }
+  ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, dx, dy, dw, dh);
+}
+
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
@@ -119,78 +138,60 @@ export function BeforeAfterCardCanvas({
       ctx.fillStyle = theme.bg;
       ctx.fillRect(0, 0, SIZE, SIZE);
 
-      // ── Top bar — Banner image (cover full width, proportional height)
+      // ── Top bar — Banner image (full width, NOT cropped)
       const bannerRatio = imgBanner.naturalWidth / imgBanner.naturalHeight;
       const bannerW = SIZE;
       const bannerH = Math.round(bannerW / bannerRatio);
-      const topBarH = Math.min(bannerH, 200); // cap at 200px
+      const topBarH = Math.min(bannerH, 240);
       ctx.save();
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, SIZE, topBarH);
-      drawCover(ctx, imgBanner, 0, 0, SIZE, topBarH);
+      drawContain(ctx, imgBanner, 0, 0, SIZE, topBarH);
       ctx.restore();
 
-      // ── Photos zone — Diagonal split (/ direction: AVANT bottom-left, APRÈS top-right)
+      // ── Photos zone — Two side-by-side images with diagonal white line overlay
       const photoY = topBarH + 10;
       const photoH = SIZE - topBarH - 10 - 120; // bottom bar = 120
-      const photoW = SIZE;
-      const margin = 20;
+      const gap = 16;
+      const photoW = (SIZE - 40 - gap) / 2; // 20px margin each side + gap
+      const radius = 16;
 
-      // Full photo area
-      const areaX = margin;
-      const areaY = photoY;
-      const areaW = photoW - margin * 2;
-      const areaH = photoH;
-
-      // Diagonal offset for gap (pixels to shift each side for the white diagonal gap)
-      const gap = 6;
-
-      // AVANT — bottom-left triangle (below the / diagonal)
+      // AVANT (left)
       ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(areaX, areaY + areaH);                          // bottom-left
-      ctx.lineTo(areaX + areaW - gap, areaY + areaH);            // bottom-right (shifted)
-      ctx.lineTo(areaX, areaY + gap);                             // top-left (shifted)
-      ctx.closePath();
+      roundRect(ctx, 20, photoY, photoW, photoH, radius);
       ctx.clip();
-      drawCover(ctx, imgAvant, areaX, areaY, areaW, areaH);
-      // Label AVANT — bottom-left
+      drawCover(ctx, imgAvant, 20, photoY, photoW, photoH);
+      // Label AVANT bottom
       ctx.fillStyle = 'rgba(0,0,0,0.55)';
-      roundRect(ctx, areaX + 20, areaY + areaH - 74, 160, 54, 12);
-      ctx.fill();
+      ctx.fillRect(20, photoY + photoH - 56, photoW, 56);
       ctx.fillStyle = '#FFFFFF';
       ctx.font = 'bold 30px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('AVANT', areaX + 100, areaY + areaH - 38);
+      ctx.fillText('AVANT', 20 + photoW / 2, photoY + photoH - 18);
       ctx.restore();
 
-      // APRÈS — top-right triangle (above the / diagonal)
+      // APRÈS (right)
+      const apresX = 20 + photoW + gap;
       ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(areaX + areaW, areaY);                           // top-right
-      ctx.lineTo(areaX + gap, areaY);                              // top-left (shifted)
-      ctx.lineTo(areaX + areaW, areaY + areaH - gap);             // bottom-right (shifted)
-      ctx.closePath();
+      roundRect(ctx, apresX, photoY, photoW, photoH, radius);
       ctx.clip();
-      drawCover(ctx, imgApres, areaX, areaY, areaW, areaH);
-      // Label APRÈS — top-right
+      drawCover(ctx, imgApres, apresX, photoY, photoW, photoH);
       ctx.fillStyle = 'rgba(0,0,0,0.55)';
-      roundRect(ctx, areaX + areaW - 180, areaY + 20, 160, 54, 12);
-      ctx.fill();
+      ctx.fillRect(apresX, photoY + photoH - 56, photoW, 56);
       ctx.fillStyle = '#FFFFFF';
       ctx.font = 'bold 30px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('APRÈS', areaX + areaW - 100, areaY + 56);
+      ctx.fillText('APRÈS', apresX + photoW / 2, photoY + photoH - 18);
       ctx.restore();
 
-      // Diagonal separator line (white)
+      // Diagonal white line overlay across the full photo zone
       ctx.save();
       ctx.strokeStyle = '#FFFFFF';
-      ctx.lineWidth = gap * 2;
+      ctx.lineWidth = 6;
       ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.moveTo(areaX, areaY + areaH);
-      ctx.lineTo(areaX + areaW, areaY);
+      ctx.moveTo(20, photoY + photoH);
+      ctx.lineTo(SIZE - 20, photoY);
       ctx.stroke();
       ctx.restore();
 

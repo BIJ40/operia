@@ -22,7 +22,7 @@ export function useRealisationMedia(realisationId: string | undefined) {
         .from('realisation_media')
         .select('*')
         .eq('realisation_id', realisationId)
-        .order('media_role')
+        .order('created_at', { ascending: true })
         .order('sequence_order');
       if (error) throw error;
 
