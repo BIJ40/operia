@@ -5,7 +5,7 @@
 import { useMemo, useState } from 'react';
 import { format, subMonths } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { MapPin, Loader2, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
+import { MapPin, Loader2, ChevronLeft, ChevronRight, AlertCircle, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table, TableBody, TableCell, TableHead,
@@ -60,6 +60,31 @@ export default function ZonesDeplacementTab() {
     return { sums, total };
   }, [data]);
 
+  const exportToExcel = async () => {
+    if (!data?.length) return;
+    const XLSX = await import('xlsx');
+    
+    const rows = data.map(tech => {
+      const row: Record<string, string | number> = { 'Technicien': tech.techName };
+      ZONE_LABELS.forEach(z => { row[`Zone ${z}`] = tech.zones[z]; });
+      row['Total'] = tech.total;
+      return row;
+    });
+
+    // Add totals row
+    if (totals) {
+      const totalRow: Record<string, string | number> = { 'Technicien': 'TOTAL' };
+      ZONE_LABELS.forEach(z => { totalRow[`Zone ${z}`] = totals.sums[z]; });
+      totalRow['Total'] = totals.total;
+      rows.push(totalRow);
+    }
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Zones');
+    XLSX.writeFile(wb, `zones-deplacement-${month}.xlsx`);
+  };
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -69,6 +94,12 @@ export default function ZonesDeplacementTab() {
           <h3 className="text-lg font-semibold">Zones de déplacement BTP</h3>
         </div>
         <div className="flex items-center gap-2">
+          {data?.length ? (
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={exportToExcel}>
+              <Download className="h-3.5 w-3.5" />
+              Excel
+            </Button>
+          ) : null}
           <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateMonth(-1)}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
