@@ -32,6 +32,7 @@ interface PLSectionProps {
 }
 
 function getSourceIcon(source_type: string, autoSource?: string) {
+  if (autoSource === 'statia') return <Zap className="h-3 w-3 text-blue-500" />;
   if (autoSource) return <Users className="h-3 w-3 text-primary" />;
   switch (source_type) {
     case 'manual_monthly': return <Keyboard className="h-3 w-3 text-amber-500" />;
@@ -42,8 +43,9 @@ function getSourceIcon(source_type: string, autoSource?: string) {
   }
 }
 
-function getSourceBadge(source_type: string, autoSource?: string) {
-  if (autoSource) return <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 font-normal text-primary border-primary/30">Auto</Badge>;
+function getSourceBadge(source_type: string, autoSource?: string, hasAutoValue?: boolean) {
+  if (autoSource === 'statia' && hasAutoValue) return <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 font-normal text-blue-600 border-blue-200">StatIA</Badge>;
+  if (autoSource && hasAutoValue) return <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 font-normal text-primary border-primary/30">Auto</Badge>;
   switch (source_type) {
     case 'manual_fixed': return <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 font-normal text-green-600 border-green-200">Fixe</Badge>;
     case 'manual_variable': return <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 font-normal text-orange-600 border-orange-200">Variable</Badge>;
