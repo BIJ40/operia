@@ -9,6 +9,7 @@
 import { useMemo } from 'react';
 import { useUserModules, useToggleModule } from '@/hooks/useUserModules';
 import { N2_ASSIGNABLE_MODULES, getPresetForRole } from '@/config/roleAgenceModulePresets';
+import { useModuleLabels } from '@/hooks/useModuleLabels';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { RotateCcw, Loader2 } from 'lucide-react';
@@ -29,6 +30,7 @@ export function TeamMemberModules({ userId, roleAgence, n2HasModule }: Props) {
   const toggleModule = useToggleModule();
   const queryClient = useQueryClient();
   const { user } = useAuthCore();
+  const { getShortLabel } = useModuleLabels();
 
   // Only show modules that the N2 has access to
   const assignableModules = useMemo(() => {
@@ -111,7 +113,7 @@ export function TeamMemberModules({ userId, roleAgence, n2HasModule }: Props) {
                 key={mod.key}
                 className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-muted/50 transition-colors"
               >
-                <span className="text-sm">{mod.label}</span>
+                <span className="text-sm">{getShortLabel(mod.key, mod.fallbackLabel)}</span>
                 <Switch
                   checked={isModuleEnabled(mod.key)}
                   onCheckedChange={(checked) => handleToggle(mod.key, checked)}
