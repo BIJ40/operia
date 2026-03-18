@@ -19,6 +19,7 @@ export interface ServiceTheme {
 export const SERVICE_THEMES: Record<string, ServiceTheme> = {
   plomberie: { label: 'Plomberie', bg: '#1565C0', accent: '#0D47A1', labelColor: '#BBDEFB' },
   serrurerie: { label: 'Serrurerie', bg: '#C62828', accent: '#B71C1C', labelColor: '#FFCDD2' },
+  menuiserie: { label: 'Menuiserie', bg: '#5D4037', accent: '#3E2723', labelColor: '#D7CCC8' },
   volets: { label: 'Volets', bg: '#2E7D32', accent: '#1B5E20', labelColor: '#C8E6C9' },
   chauffage: { label: 'Chauffage', bg: '#E65100', accent: '#BF360C', labelColor: '#FFE0B2' },
   electricite: { label: 'Électricité', bg: '#F9A825', accent: '#F57F17', labelColor: '#FFF9C4' },
