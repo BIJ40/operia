@@ -354,6 +354,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsActive(true);
     setGlobalRole(null);
     setEnabledModules(null);
+    setDeployedModuleKeys(new Set());
     setIsReadOnly(false);
   }, []);
 
