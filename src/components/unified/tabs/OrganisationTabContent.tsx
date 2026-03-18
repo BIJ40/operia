@@ -66,7 +66,9 @@ export default function OrganisationTabContent() {
 
   const defaultTab = (visibleTabs.find(t => !t.disabled)?.id as OrganisationSubTab) ?? 'collaborateurs';
   const [activeTab, setActiveTab] = useSessionState<OrganisationSubTab>('organisation_sub_tab', defaultTab);
-  const effectiveTab = (visibleTabs.find(t => t.id === activeTab && !t.disabled)) ? activeTab : defaultTab;
+  const effectiveTab = isAdmin && allTabs.some(t => t.id === activeTab)
+    ? activeTab
+    : ((visibleTabs.find(t => t.id === activeTab && !t.disabled)) ? activeTab : defaultTab);
 
   return (
     <DomainAccentProvider accent="green">

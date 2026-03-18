@@ -68,7 +68,9 @@ export default function PilotageTabContent() {
 
   const defaultTab = (visibleTabs.find(t => !t.disabled)?.id as PilotageSubTab) ?? 'stats';
   const [activeTab, setActiveTab] = useSessionState<PilotageSubTab>('pilotage_sub_tab', defaultTab);
-  const effectiveTab = (visibleTabs.find(t => t.id === activeTab && !t.disabled)) ? activeTab : defaultTab;
+  const effectiveTab = isAdmin && allTabs.some(t => t.id === activeTab)
+    ? activeTab
+    : ((visibleTabs.find(t => t.id === activeTab && !t.disabled)) ? activeTab : defaultTab);
 
   return (
     <DomainAccentProvider accent="blue">
