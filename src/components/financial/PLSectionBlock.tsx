@@ -93,6 +93,8 @@ export function PLSectionBlock({
     total_charges_externes: 'charges_externes',
     total_autres: 'charges_autres',
     total_charges_hors_ms: 'total_charges_hors_ms_productifs',
+    ca_ht_reprise: 'ca_total',
+    total_produits: 'ca_total',
   };
 
   function getCalculatedValue(item: LineItem): number {
