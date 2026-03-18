@@ -3,7 +3,7 @@
  */
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Lock, AlertTriangle, Keyboard, Calculator } from 'lucide-react';
+import { Lock, AlertTriangle, Keyboard, Calculator, Zap } from 'lucide-react';
 import { MonthSelector } from './MonthSelector';
 import { CompletionIndicator } from './CompletionIndicator';
 import { KpiRow } from './KpiRow';
@@ -13,6 +13,7 @@ import { useFinancialMonth } from '@/hooks/useFinancialMonth';
 import { useFinancialCharges } from '@/hooks/useFinancialCharges';
 import { useFinancialSummary } from '@/hooks/useFinancialSummary';
 import { useCollaboratorCount } from '@/hooks/useCollaboratorCount';
+import { useStatiaFinancialBridge } from '@/hooks/useStatiaFinancialBridge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 
@@ -26,6 +27,7 @@ export default function ResultatTabContent() {
   const { charges, completionScore, isLoading: chargesLoading, createCharge, updateChargeViaRpc } = useFinancialCharges(year, month);
   const { summary, isLoading: summaryLoading } = useFinancialSummary(year, month);
   const { count: collaboratorCount } = useCollaboratorCount();
+  const { statiaValues, isLoading: statiaLoading } = useStatiaFinancialBridge(year, month);
 
   const isLoading = monthLoading || chargesLoading || summaryLoading;
 
@@ -63,10 +65,27 @@ export default function ResultatTabContent() {
 
   const hasNoData = !summary && !isLoading;
 
-  // Auto-populate nb_salaries from collaborators count if not yet set
+  // Auto-populate from StatIA metrics + collaborator count when no manual value exists
   const autoValues: Record<string, number> = {};
   if (collaboratorCount > 0 && (!financialMonth || !financialMonth.nb_salaries)) {
     autoValues['nb_salaries'] = collaboratorCount;
+  }
+  // Bridge StatIA computed values for activity & CA fields
+  const statiaFieldMap: Record<string, string> = {
+    ca_total: 'ca_total',
+    nb_factures: 'nb_factures',
+    nb_interventions: 'nb_interventions',
+    heures_facturees: 'heures_facturees',
+  };
+  for (const [statiaKey, monthField] of Object.entries(statiaFieldMap)) {
+    const val = (statiaValues as any)[statiaKey];
+    if (val != null && val > 0) {
+      // Only auto-fill if no manual value saved
+      const savedVal = financialMonth ? (financialMonth as any)[monthField] : null;
+      if (!savedVal || savedVal === 0) {
+        autoValues[monthField] = val;
+      }
+    }
   }
 
   return (
@@ -89,6 +108,7 @@ export default function ResultatTabContent() {
 
       {/* Legend */}
       <div className="flex flex-wrap gap-3 text-[10px] text-muted-foreground">
+        <span className="flex items-center gap-1"><Zap className="h-3 w-3 text-blue-500" /> Auto StatIA</span>
         <span className="flex items-center gap-1"><Keyboard className="h-3 w-3 text-amber-500" /> Saisie mensuelle</span>
         <span className="flex items-center gap-1"><Keyboard className="h-3 w-3 text-green-500" /> Fixe annuel</span>
         <span className="flex items-center gap-1"><Keyboard className="h-3 w-3 text-orange-500" /> Variable mensuel</span>
