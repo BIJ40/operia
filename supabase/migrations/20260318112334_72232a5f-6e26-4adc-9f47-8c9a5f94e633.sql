@@ -1,0 +1,1 @@
+UPDATE module_registry SET label = 'Zones' WHERE key = 'organisation.zones';
