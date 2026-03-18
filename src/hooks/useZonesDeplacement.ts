@@ -14,6 +14,8 @@ export interface TechZoneSummary {
   techName: string;
   zones: Record<ZoneLabel, number>;
   total: number;
+  paniers: number;
+  paniersExclus: number;
 }
 
 interface UseZonesDeplacementOptions {

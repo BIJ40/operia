@@ -5,7 +5,8 @@
 import { useMemo, useState } from 'react';
 import { format, subMonths } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { MapPin, Loader2, ChevronLeft, ChevronRight, AlertCircle, Download } from 'lucide-react';
+import { MapPin, Loader2, ChevronLeft, ChevronRight, AlertCircle, Download, UtensilsCrossed } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import {
   Table, TableBody, TableCell, TableHead,
