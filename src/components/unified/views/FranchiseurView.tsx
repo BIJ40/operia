@@ -50,8 +50,8 @@ interface TabConfig {
   icon: React.ElementType;
 }
 
-// Ordre par défaut des onglets (hors Accueil qui est toujours premier)
-const DEFAULT_TAB_ORDER: FranchiseurTab[] = ['periode', 'agences', 'redevances', 'statistiques', 'divers', 'guides', 'support'];
+// Ordre fixe des onglets (hors Accueil qui est toujours premier)
+const FIXED_TAB_ORDER: FranchiseurTab[] = ['periode', 'agences', 'redevances', 'statistiques', 'divers', 'guides', 'support'];
 
 const ALL_TABS: TabConfig[] = [
   { id: 'accueil', label: 'Accueil', icon: Home },
