@@ -14,6 +14,7 @@ import { MEDIA_ROLE_LABELS, SYNC_STATUS_LABELS, SYNC_STATUS_COLORS, type MediaRo
 import { BeforeAfterGenerator } from '../components/BeforeAfterGenerator';
 import { useCommercialProfile } from '@/commercial/hooks/useCommercialProfile';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -47,6 +48,9 @@ export default function RealisationDetailPage() {
   const updateMediaRole = useUpdateMediaRole();
   const autoSuggestRoles = useAutoSuggestRoles();
   const dispatchWebhook = useDispatchWebhook();
+  const { hasModule } = usePermissions();
+  const canAddPhotos = hasModule('commercial.realisations.photos');
+  const canGenerateAvap = hasModule('commercial.realisations.generer_avap');
 
   if (isLoading) {
     return (
@@ -181,29 +185,33 @@ export default function RealisationDetailPage() {
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">Photos</CardTitle>
               <div className="flex items-center gap-2">
-                <BeforeAfterGenerator
-                  media={media}
-                  realisationId={r.id}
-                  agencyId={r.agency_id}
-                  logoUrl={commercialProfile?.logo_agence_url}
-                  agencyName={commercialProfile?.agence_nom_long || undefined}
-                  phone={commercialProfile?.phone_contact || undefined}
-                  agencySlug={agencyInfo?.slug}
-                  agencyAddress={agencyInfo?.adresse}
-                  agencyCity={agencyInfo?.ville}
-                  agencyPostalCode={agencyInfo?.code_postal}
-                  agencyPhone={agencyInfo?.contact_phone}
-                  agencyEmail={agencyInfo?.contact_email}
-                  onCardSaved={() => {
-                    // Refresh media list after card saved
-                  }}
-                />
-                <label className="cursor-pointer">
-                  <Button size="sm" asChild>
-                    <span><Upload className="w-4 h-4 mr-1" /> Ajouter</span>
-                  </Button>
-                  <input type="file" multiple accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileUpload} />
-                </label>
+                {canGenerateAvap && (
+                  <BeforeAfterGenerator
+                    media={media}
+                    realisationId={r.id}
+                    agencyId={r.agency_id}
+                    logoUrl={commercialProfile?.logo_agence_url}
+                    agencyName={commercialProfile?.agence_nom_long || undefined}
+                    phone={commercialProfile?.phone_contact || undefined}
+                    agencySlug={agencyInfo?.slug}
+                    agencyAddress={agencyInfo?.adresse}
+                    agencyCity={agencyInfo?.ville}
+                    agencyPostalCode={agencyInfo?.code_postal}
+                    agencyPhone={agencyInfo?.contact_phone}
+                    agencyEmail={agencyInfo?.contact_email}
+                    onCardSaved={() => {
+                      // Refresh media list after card saved
+                    }}
+                  />
+                )}
+                {canAddPhotos && (
+                  <label className="cursor-pointer">
+                    <Button size="sm" asChild>
+                      <span><Upload className="w-4 h-4 mr-1" /> Ajouter</span>
+                    </Button>
+                    <input type="file" multiple accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileUpload} />
+                  </label>
+                )}
               </div>
             </div>
           </CardHeader>

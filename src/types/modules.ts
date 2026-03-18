@@ -41,6 +41,10 @@ export const MODULES = {
   'commercial.veille': 'commercial.veille',
   'commercial.prospects': 'commercial.prospects',
   'commercial.realisations': 'commercial.realisations',
+  'commercial.realisations.photos': 'commercial.realisations.photos',
+  'commercial.realisations.generer_avap': 'commercial.realisations.generer_avap',
+  'commercial.realisations.onglet_avap': 'commercial.realisations.onglet_avap',
+  'commercial.realisations.valider_envoyer': 'commercial.realisations.valider_envoyer',
   // Organisation
   'organisation.salaries': 'organisation.salaries',
   'organisation.apporteurs': 'organisation.apporteurs',
