@@ -138,9 +138,6 @@ function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
     }
   `;
   
-  // IDs pour le sortable context (exclure accueil)
-  const sortableIds = sortedTabs.filter(t => t.id !== 'accueil').map(t => t.id);
-  
   // Calculer le padding top selon les bandeaux actifs
   const topPadding = isImpersonating ? 'pt-10' : '';
   
@@ -151,54 +148,28 @@ function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
         <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
           <div className="container mx-auto max-w-7xl px-4 pt-3 pb-0">
             <div className="flex items-end justify-between gap-4">
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <TabsList className="h-auto p-0 bg-transparent flex flex-nowrap gap-1 items-end justify-start flex-1 overflow-x-auto scrollbar-hide">
-                  {/* Onglet Accueil - non draggable */}
-                  {sortedTabs[0] && (
+              <TabsList className="h-auto p-0 bg-transparent flex flex-nowrap gap-1 items-end justify-start flex-1 overflow-x-auto scrollbar-hide">
+                {sortedTabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  const accent = ACCENT_THEMES[tabAccent[tab.id]];
+                  return (
                     <button
-                      onClick={() => setActiveTab('accueil')}
-                      className={tabButtonClass('accueil', activeTab === 'accueil')}
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      data-state={isActive ? 'active' : 'inactive'}
+                      className={tabButtonClass(tab.id, isActive)}
                     >
                       <div className="flex items-center gap-1.5">
-                        <div className={`w-7 h-7 rounded-xl bg-gradient-to-br ${ACCENT_THEMES[tabAccent.accueil].gradient} flex items-center justify-center shadow-sm transition-transform group-hover:scale-110 shrink-0`}>
-                          <Home className="w-3.5 h-3.5 text-primary-foreground" />
+                        <div className={`w-7 h-7 rounded-xl bg-gradient-to-br ${accent.gradient} flex items-center justify-center shadow-sm transition-transform group-hover:scale-110 shrink-0`}>
+                          <Icon className="w-3.5 h-3.5 text-primary-foreground" />
                         </div>
-                        <span className="text-xs font-bold tracking-tight truncate max-w-[80px]">Accueil</span>
+                        <span className="text-xs font-bold tracking-tight truncate max-w-[80px]">{tab.label}</span>
                       </div>
                     </button>
-                  )}
-                  
-                  {/* Onglets sortables */}
-                  <SortableContext items={sortableIds} strategy={horizontalListSortingStrategy}>
-                    {sortedTabs.slice(1).map((tab) => {
-                      const Icon = tab.icon;
-                      const isActive = activeTab === tab.id;
-                      const accent = ACCENT_THEMES[tabAccent[tab.id]];
-                      return (
-                        <DraggableTab
-                          key={tab.id}
-                          id={tab.id}
-                          isActive={isActive}
-                          isDraggable={true}
-                          onClick={() => setActiveTab(tab.id)}
-                          className={tabButtonClass(tab.id, isActive)}
-                        >
-                          <div className="flex items-center gap-1.5">
-                            <div className={`w-7 h-7 rounded-xl bg-gradient-to-br ${accent.gradient} flex items-center justify-center shadow-sm transition-transform duration-300 group-hover:scale-110 shrink-0`}>
-                              <Icon className="w-3.5 h-3.5 text-primary-foreground" />
-                            </div>
-                            <span className="text-xs font-bold tracking-tight truncate max-w-[80px]">{tab.label}</span>
-                          </div>
-                        </DraggableTab>
-                      );
-                    })}
-                  </SortableContext>
-                </TabsList>
-              </DndContext>
+                  );
+                })}
+              </TabsList>
 
               <ProfileMenu tabButtonClass={`
                 relative px-3 py-2.5 rounded-t-2xl border-2 border-b-0 transition-all duration-300 whitespace-nowrap shrink-0 min-w-0
