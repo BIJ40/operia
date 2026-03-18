@@ -15,7 +15,7 @@ import { LoginFormCard } from '@/components/LoginFormCard';
 import { LoginDialog } from '@/components/LoginDialog';
 import { ImageModal } from '@/components/ImageModal';
 import { AiUnifiedProvider } from '@/components/ai';
-import { SidebarChat } from '@/components/chat/SidebarChat';
+
 import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useStorageQuota } from '@/hooks/use-storage-quota';
