@@ -15,6 +15,36 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.10.0",
+    title: "Mode Tournée Technicien — Carte des RDV",
+    date: "2026-03-18",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // MODE TOURNÉE CARTE
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Mode tournée technicien : sélectionner un seul tech sur la carte affiche ses RDV numérotés (1, 2, 3…) dans l\'ordre chronologique' },
+      { type: 'feature', description: 'Tracé du trajet routier réel en pointillés entre les RDV (API Mapbox Directions), couleur du technicien' },
+      { type: 'feature', description: 'Bandeau résumé de tournée : nom du tech, nombre de RDV, distance totale (km), durée estimée du trajet' },
+      { type: 'feature', description: 'Filtre technicien dans la carte agrandie du dashboard : pastilles cliquables par tech avec mode tournée intégré' },
+      { type: 'improvement', description: 'Hook useRouteDirections : appel API Mapbox Directions avec géométrie GeoJSON, distance et durée' },
+      { type: 'improvement', description: 'PinMarker enrichi : support du numéro d\'ordre dans la pastille (orderNumber) pour le mode tournée' },
+      { type: 'improvement', description: 'Mode tournée disponible sur CartePage, MapPlanningView et DashboardMapWidget (carte agrandie)' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // WIDGET CARTE DASHBOARD
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Header carte dashboard compacté : compteurs RDV et techs sur une seule ligne, bouton agrandir réduit à l\'icône' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // DROITS ÉQUIPE
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Toggle maître par catégorie dans les droits équipe : cocher/décocher une catégorie entière (Commercial, Pilotage…)' },
+      { type: 'improvement', description: 'Titres de catégories mis en évidence avec couleur et taille agrandie + compteur modules actifs' },
+      { type: 'improvement', description: 'État indéterminé (partiel) sur la checkbox catégorie quand certains modules sont cochés' },
+      { type: 'fix', description: 'Filtrage des modules non déployés dans l\'interface Droits équipe (cohérence avec les permissions réelles)' },
+    ],
+  },
+  {
     version: "V0.9.9",
     title: "Accessibilité modules & Granularité Commercial",
     date: "2026-03-18",
