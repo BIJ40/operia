@@ -50,13 +50,18 @@ export default function RealisationDetailPage() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-    for (const file of Array.from(files)) {
+    const fileList = Array.from(files);
+    for (const file of fileList) {
       await uploadMedia.mutateAsync({
         realisationId: r.id,
         agencyId: r.agency_id,
         file,
         mediaRole: 'before',
       });
+    }
+    // Auto-suggest roles after batch upload
+    if (fileList.length >= 2 || (media.length + fileList.length) >= 2) {
+      autoSuggestRoles.mutate(r.id);
     }
     e.target.value = '';
   };
