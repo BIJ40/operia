@@ -5,7 +5,7 @@
  */
 
 import { lazy, Suspense, useMemo } from 'react';
-import { BookOpen, Users, Building2, HelpCircle, Loader2, Home } from 'lucide-react';
+import { BookOpen, Users, Building2, HelpCircle, Loader2, Home, type LucideIcon } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
