@@ -16,7 +16,7 @@ const BLOCK_COLUMNS = 'id, title, slug, type, content, content_type, content_upd
 const PAGE_SIZE = 500;
 
 async function fetchAllPaginated<T>(
-  buildQuery: (from: number, to: number) => ReturnType<typeof supabase.from>,
+  buildQuery: (from: number, to: number) => any,
   label: string
 ): Promise<{ success: boolean; data: T[] }> {
   const allRows: T[] = [];
