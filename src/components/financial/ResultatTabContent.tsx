@@ -15,6 +15,7 @@ import { useFinancialCharges } from '@/hooks/useFinancialCharges';
 import { useFinancialSummary } from '@/hooks/useFinancialSummary';
 import { useCollaboratorCount } from '@/hooks/useCollaboratorCount';
 import { useStatiaFinancialBridge } from '@/hooks/useStatiaFinancialBridge';
+import { useRoyaltyAutoValues } from '@/hooks/useRoyaltyAutoValues';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
