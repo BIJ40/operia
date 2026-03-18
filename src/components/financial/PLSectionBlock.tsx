@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Pencil, Check, X, Keyboard, Calculator, Users } from 'lucide-react';
+import { Pencil, Check, X, Keyboard, Calculator, Users, Zap } from 'lucide-react';
 import { formatCurrency, formatPercent } from '@/lib/formatters';
 import type { PLSection as PLSectionType, LineItem } from '@/config/financialLineItems';
 import type { FinancialSummary } from '@/hooks/useFinancialSummary';
