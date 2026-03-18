@@ -268,11 +268,11 @@ export default function SupportHubTabContent() {
 
               if (hasAccess) {
                 return (
-                  <Link
+                  <button
                     key={section.id}
-                    to={section.href}
+                    onClick={() => openGuide(section.guideTab)}
                     className={cn(
-                      'flex items-center gap-3 p-3 rounded-xl border-l-4 transition-all',
+                      'w-full flex items-center gap-3 p-3 rounded-xl border-l-4 transition-all text-left',
                       section.accentClass,
                       section.bgClass,
                     )}
@@ -282,9 +282,10 @@ export default function SupportHubTabContent() {
                       <p className="font-medium text-sm">{section.label}</p>
                       <p className="text-xs text-muted-foreground">{section.description}</p>
                     </div>
-                    <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0" />
-                  </Link>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                  </button>
                 );
+              }
               }
 
               return (
