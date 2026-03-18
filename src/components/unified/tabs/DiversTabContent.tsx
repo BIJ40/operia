@@ -245,7 +245,7 @@ function AdministratifSection() {
     { id: 'reunions', label: getShortLabel('organisation.reunions', 'Réunions'), icon: Users2, requiresModule: 'organisation.reunions' },
     { id: 'plannings', label: getShortLabel('organisation.plannings', 'Plannings'), icon: CalendarDays, requiresModule: 'organisation.plannings' },
     { id: 'documents', label: getShortLabel('mediatheque.documents', 'Documents'), icon: FileText, requiresModule: 'mediatheque.documents' },
-  ], [getShortLabel]);
+    { id: 'zones', label: getShortLabel('organisation.zones', 'Zones'), icon: MapPin, requiresModule: 'organisation.zones' },
 
   const visibleAdminTabs = useMemo(() => {
     return adminTabsConfig.map(tab => {
