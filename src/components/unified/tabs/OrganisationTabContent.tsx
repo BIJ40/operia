@@ -4,7 +4,7 @@
  */
 
 import { lazy, Suspense, useMemo } from 'react';
-import { Users, Handshake, CalendarDays, Users2, Car, FileText, Shield, Loader2 } from 'lucide-react';
+import { Users, Handshake, CalendarDays, Users2, Car, FileText, Shield, MapPin, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
@@ -22,8 +22,9 @@ const RHMeetingsPage = lazy(() => import('@/pages/rh/RHMeetingsPage'));
 const VehiculesTabContent = lazy(() => import('@/components/unified/tabs/VehiculesTabContent'));
 const AgencyAdminDocuments = lazy(() => import('@/components/outils/AgencyAdminDocuments').then(m => ({ default: m.AgencyAdminDocuments })));
 const AgencyTeamRightsPanel = lazy(() => import('@/components/agency/AgencyTeamRightsPanel').then(m => ({ default: m.AgencyTeamRightsPanel })));
+const ZonesDeplacementTab = lazy(() => import('@/components/organisation/ZonesDeplacementTab'));
 
-type OrganisationSubTab = 'collaborateurs' | 'apporteurs' | 'plannings' | 'reunions' | 'parc' | 'conformite' | 'droits-equipe';
+type OrganisationSubTab = 'collaborateurs' | 'apporteurs' | 'plannings' | 'reunions' | 'parc' | 'conformite' | 'droits-equipe' | 'zones';
 
 function LoadingFallback() {
   return (
@@ -46,6 +47,7 @@ export default function OrganisationTabContent() {
     { id: 'parc', label: getShortLabel('organisation.parc', 'Parc'), icon: Car, accent: 'pink', requiresModule: 'organisation.parc' },
     // B: "Documents légaux" is a structural label, not a module name — gated by pilotage.agence
     { id: 'conformite', label: 'Documents légaux', icon: FileText, accent: 'teal', requiresModule: 'pilotage.agence' },
+    { id: 'zones', label: getShortLabel('organisation.zones', 'Zones'), icon: MapPin, accent: 'orange', requiresModule: 'organisation.zones' },
     // Droits équipe : visible uniquement pour N2+ (franchisee_admin et au-dessus)
     ...(globalRole && ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(globalRole)
       ? [{ id: 'droits-equipe', label: 'Droits équipe', icon: Shield, accent: 'blue' as const, requiresModule: 'organisation.salaries' as ModuleKey }]
@@ -115,6 +117,12 @@ export default function OrganisationTabContent() {
         <TabsContent value="droits-equipe" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
             <AgencyTeamRightsPanel />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="zones" className="mt-4">
+          <Suspense fallback={<LoadingFallback />}>
+            <ZonesDeplacementTab />
           </Suspense>
         </TabsContent>
       </Tabs>
