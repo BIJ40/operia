@@ -25,7 +25,7 @@ interface TeamMember {
 
 export function AgencyTeamRightsPanel() {
   const { agencyId } = useEffectiveAuth();
-  const { hasModule } = usePermissions();
+  const { hasModule, isDeployedModule } = usePermissions();
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
 
   const { data: members = [], isLoading } = useQuery({
