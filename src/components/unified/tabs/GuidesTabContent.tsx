@@ -22,7 +22,7 @@ type GuideTab = 'apogee' | 'apporteurs' | 'helpconfort' | 'operia' | 'faq';
 interface GuideTabDef {
   id: GuideTab;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: LucideIcon;
   /** Permission option key in support.guides — null = always visible */
   permissionOption: 'apogee' | 'apporteurs' | 'helpconfort' | null;
   /** If true, tab is always disabled (content not yet available) */
