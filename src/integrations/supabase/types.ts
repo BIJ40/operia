@@ -233,6 +233,124 @@ export type Database = {
           },
         ]
       }
+      agency_financial_charges: {
+        Row: {
+          agency_id: string
+          amount: number
+          category: string
+          charge_type: string
+          created_at: string | null
+          end_month: string | null
+          id: string
+          label: string | null
+          notes: string | null
+          start_month: string
+          updated_at: string | null
+        }
+        Insert: {
+          agency_id: string
+          amount?: number
+          category: string
+          charge_type: string
+          created_at?: string | null
+          end_month?: string | null
+          id?: string
+          label?: string | null
+          notes?: string | null
+          start_month: string
+          updated_at?: string | null
+        }
+        Update: {
+          agency_id?: string
+          amount?: number
+          category?: string
+          charge_type?: string
+          created_at?: string | null
+          end_month?: string | null
+          id?: string
+          label?: string | null
+          notes?: string | null
+          start_month?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_financial_charges_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agency_financial_months: {
+        Row: {
+          achats: number | null
+          agency_id: string
+          ca_total: number | null
+          created_at: string | null
+          heures_facturees: number | null
+          id: string
+          locked_at: string | null
+          locked_by: string | null
+          month: number
+          nb_factures: number | null
+          nb_interventions: number | null
+          notes: string | null
+          sous_traitance: number | null
+          sync_version: number | null
+          synced_at: string | null
+          updated_at: string | null
+          year: number
+        }
+        Insert: {
+          achats?: number | null
+          agency_id: string
+          ca_total?: number | null
+          created_at?: string | null
+          heures_facturees?: number | null
+          id?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          month: number
+          nb_factures?: number | null
+          nb_interventions?: number | null
+          notes?: string | null
+          sous_traitance?: number | null
+          sync_version?: number | null
+          synced_at?: string | null
+          updated_at?: string | null
+          year: number
+        }
+        Update: {
+          achats?: number | null
+          agency_id?: string
+          ca_total?: number | null
+          created_at?: string | null
+          heures_facturees?: number | null
+          id?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          month?: number
+          nb_factures?: number | null
+          nb_interventions?: number | null
+          notes?: string | null
+          sous_traitance?: number | null
+          sync_version?: number | null
+          synced_at?: string | null
+          updated_at?: string | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_financial_months_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agency_overhead_rules: {
         Row: {
           agency_id: string
@@ -9625,7 +9743,39 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      agency_financial_summary: {
+        Row: {
+          achats: number | null
+          agency_id: string | null
+          ca_net: number | null
+          ca_total: number | null
+          charges_fixes: number | null
+          charges_variables: number | null
+          heures_facturees: number | null
+          id: string | null
+          locked_at: string | null
+          marge_brute: number | null
+          marge_contributive: number | null
+          month: number | null
+          month_date: string | null
+          nb_factures: number | null
+          nb_interventions: number | null
+          resultat_exploitation: number | null
+          sous_traitance: number | null
+          sync_version: number | null
+          synced_at: string | null
+          year: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_financial_months_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       auto_generate_monthly_epi_acks: { Args: never; Returns: number }
@@ -10023,6 +10173,15 @@ export type Database = {
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       unlock_document_request: { Args: { p_request_id: string }; Returns: Json }
+      update_financial_charge: {
+        Args: {
+          p_charge_id: string
+          p_new_amount: number
+          p_new_start_month: string
+          p_notes?: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       activity_actor_type: "user" | "apporteur" | "system" | "ai"
