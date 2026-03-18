@@ -23,16 +23,12 @@ import { VeilleApporteursTab } from '@/prospection/pages/VeilleApporteursTab';
 
 const RealisationsPage = lazy(() => import('@/realisations/pages/RealisationsPage'));
 
-/** Mapping tab id → clé d'option du module prospection */
-const TAB_OPTION_MAP: Record<string, string> = {
-  apporteurs: 'dashboard',
-  comparateur: 'comparateur',
-  veille: 'veille',
-  prospects: 'prospects',
-};
-
-/** Tabs nécessitant un module spécifique (hors prospection options) */
+/** Mapping tab id → module key */
 const TAB_MODULE_MAP: Record<string, ModuleKey> = {
+  apporteurs: 'commercial.suivi_client',
+  comparateur: 'commercial.comparateur',
+  veille: 'commercial.veille',
+  prospects: 'commercial.prospects',
   realisations: 'commercial.realisations',
 };
 
