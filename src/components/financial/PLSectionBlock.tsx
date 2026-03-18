@@ -29,6 +29,7 @@ interface PLSectionProps {
 
 function getSourceIcon(source_type: string, autoSource?: string) {
   if (autoSource === 'statia') return <Zap className="h-3 w-3 text-blue-500" />;
+  if (autoSource === 'royalty') return <Calculator className="h-3 w-3 text-emerald-500" />;
   if (autoSource === 'collaborators') return <Users className="h-3 w-3 text-primary" />;
   if (autoSource) return <Users className="h-3 w-3 text-primary" />;
   switch (source_type) {
