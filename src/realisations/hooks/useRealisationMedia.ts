@@ -116,13 +116,34 @@ export function useUpdateMediaRole() {
         .update({ media_role: newRole })
         .eq('id', mediaId);
       if (error) throw error;
+      return { mediaId, realisationId, newRole };
     },
-    onSuccess: (_, vars) => {
-      qc.invalidateQueries({ queryKey: ['realisation-media', vars.realisationId] });
-      qc.invalidateQueries({ queryKey: ['realisations'] });
+    onMutate: async (vars) => {
+      // Cancel outgoing refetches
+      await qc.cancelQueries({ queryKey: ['realisation-media', vars.realisationId] });
+      // Optimistic update
+      const prev = qc.getQueryData<RealisationMedia[]>(['realisation-media', vars.realisationId]);
+      if (prev) {
+        qc.setQueryData<RealisationMedia[]>(
+          ['realisation-media', vars.realisationId],
+          prev.map(m => m.id === vars.mediaId ? { ...m, media_role: vars.newRole } : m),
+        );
+      }
+      return { prev };
+    },
+    onError: (_err, vars, context) => {
+      if (context?.prev) {
+        qc.setQueryData(['realisation-media', vars.realisationId], context.prev);
+      }
+      toast.error('Erreur mise à jour du tag');
+    },
+    onSuccess: () => {
       toast.success('Tag mis à jour');
     },
-    onError: () => toast.error('Erreur mise à jour du tag'),
+    onSettled: (_, __, vars) => {
+      qc.invalidateQueries({ queryKey: ['realisation-media', vars.realisationId] });
+      qc.invalidateQueries({ queryKey: ['realisations'] });
+    },
   });
 }
 
