@@ -70,7 +70,6 @@ function UnifiedWorkspaceContent() {
   const { isImpersonating, isRealUserImpersonation } = useImpersonation();
   const effectiveAuth = useEffectiveAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [tabOrder, setTabOrder] = useSessionState<UnifiedTab[]>('unified_workspace_tab_order', DEFAULT_TAB_ORDER);
   const [loginOpen, setLoginOpen] = useState(false);
   
   // Support URL ?tab=XXX pour navigation directe
