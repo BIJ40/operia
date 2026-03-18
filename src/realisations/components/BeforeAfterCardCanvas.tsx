@@ -7,6 +7,7 @@ import { Download, Loader2, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import bannerSrc from '@/assets/banniere_helpconfort.jpg';
 
 // ─── Service color mapping ────────────────────────────────────
 export interface ServiceTheme {
@@ -108,41 +109,26 @@ export function BeforeAfterCardCanvas({
 
     setIsRendering(true);
     try {
-      const [imgAvant, imgApres] = await Promise.all([loadImage(avantUrl), loadImage(apresUrl)]);
-      let imgLogo: HTMLImageElement | null = null;
-      if (logoUrl) {
-        try { imgLogo = await loadImage(logoUrl); } catch { /* no logo */ }
-      }
+      const [imgAvant, imgApres, imgBanner] = await Promise.all([
+        loadImage(avantUrl),
+        loadImage(apresUrl),
+        loadImage(bannerSrc),
+      ]);
 
       // ── Background
       ctx.fillStyle = theme.bg;
       ctx.fillRect(0, 0, SIZE, SIZE);
 
-      // ── Top bar (logo area) — 120px
-      const topBarH = 120;
-      if (imgLogo) {
-        // White pill behind logo
-        const logoH = 60;
-        const logoW = Math.min((imgLogo.naturalWidth / imgLogo.naturalHeight) * logoH, 260);
-        const lx = (SIZE - logoW - 40) / 2;
-        const ly = (topBarH - logoH - 20) / 2;
-        ctx.fillStyle = '#FFFFFF';
-        roundRect(ctx, lx, ly, logoW + 40, logoH + 20, 14);
-        ctx.fill();
-        ctx.drawImage(imgLogo, lx + 20, ly + 10, logoW, logoH);
-      } else {
-        // Agency name fallback
-        ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 42px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(agencyName, SIZE / 2, topBarH / 2 + 14);
-      }
-
-      // ── Service label top-right
-      ctx.fillStyle = theme.labelColor;
-      ctx.font = 'bold 36px sans-serif';
-      ctx.textAlign = 'right';
-      ctx.fillText(theme.label, SIZE - 40, topBarH / 2 + 12);
+      // ── Top bar — Banner image (cover full width, proportional height)
+      const bannerRatio = imgBanner.naturalWidth / imgBanner.naturalHeight;
+      const bannerW = SIZE;
+      const bannerH = Math.round(bannerW / bannerRatio);
+      const topBarH = Math.min(bannerH, 200); // cap at 200px
+      ctx.save();
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, SIZE, topBarH);
+      drawCover(ctx, imgBanner, 0, 0, SIZE, topBarH);
+      ctx.restore();
 
       // ── Photos zone
       const photoY = topBarH + 10;
