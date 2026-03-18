@@ -166,7 +166,15 @@ Deno.serve(async (req) => {
       ));
     }
 
-    const depot = await geocodeAddress(agency.adresse, agency.code_postal || '', agency.ville || '');
+    // Auto-detect swapped code_postal / ville
+    let cp = agency.code_postal || '';
+    let ville = agency.ville || '';
+    if (cp && !/^\d{4,5}$/.test(cp.trim()) && /^\d{4,5}$/.test(ville.trim())) {
+      // Fields are swapped
+      [cp, ville] = [ville, cp];
+    }
+
+    const depot = await geocodeAddress(agency.adresse, cp, ville);
     if (!depot) {
       console.warn('[ZONES] Could not geocode agency address, returning empty data');
       return withCors(req, new Response(
