@@ -1,7 +1,7 @@
 /**
  * ResultatTabContent — Full P&L orchestrator matching Excel "Compte de Résultats"
  */
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Lock, AlertTriangle, Keyboard, Calculator, Zap, Users, RotateCcw } from 'lucide-react';
@@ -38,6 +38,33 @@ export default function ResultatTabContent() {
   const { statiaValues, isLoading: statiaLoading } = useStatiaFinancialBridge(year, month);
 
   const isLoading = monthLoading || chargesLoading || summaryLoading;
+
+  // ── Auto-seed: when StatIA has data but no financial_month row exists, create it ──
+  const autoSeededRef = useRef<string>('');
+  useEffect(() => {
+    const seedKey = `${year}-${month}`;
+    if (autoSeededRef.current === seedKey) return; // already seeded this month
+    if (monthLoading || statiaLoading) return; // still loading
+    if (financialMonth) return; // row already exists
+    if (!statiaValues.ca_total || statiaValues.ca_total === 0) return; // no StatIA data
+
+    autoSeededRef.current = seedKey;
+    const seedValues: Record<string, number> = {};
+    const fieldsToSeed = [
+      'ca_total', 'nb_factures', 'nb_interventions', 'heures_facturees',
+    ] as const;
+    for (const f of fieldsToSeed) {
+      if (statiaValues[f] != null && statiaValues[f]! > 0) {
+        seedValues[f] = statiaValues[f]!;
+      }
+    }
+    if (Object.keys(seedValues).length > 0) {
+      upsertMonth.mutateAsync(seedValues).catch(() => {
+        // Reset so it can retry
+        autoSeededRef.current = '';
+      });
+    }
+  }, [monthLoading, statiaLoading, financialMonth, statiaValues, year, month, upsertMonth]);
 
   const handleMonthChange = (y: number, m: number) => {
     setYear(y);
