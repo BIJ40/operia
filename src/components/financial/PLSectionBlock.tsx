@@ -130,7 +130,10 @@ export function PLSectionBlock({
     }
     if (item.charge_key) {
       const charge = charges.find(c => c.charge_type === item.charge_key);
-      return charge?.amount ?? 0;
+      if (charge?.amount) return charge.amount;
+      // Fallback to auto-values (e.g. royalty auto-calc)
+      if (autoValues[item.charge_key] != null) return autoValues[item.charge_key];
+      return 0;
     }
     if (item.source_type === 'calculated') {
       return getCalculatedValue(item);
