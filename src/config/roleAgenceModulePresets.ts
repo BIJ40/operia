@@ -45,23 +45,34 @@ export const ROLE_AGENCE_MODULE_PRESETS: Record<string, ModuleKey[]> = {
  * filtrés côté UI par les modules du N2 lui-même
  */
 export const N2_ASSIGNABLE_MODULES: { key: ModuleKey; fallbackLabel: string; category: string }[] = [
+  // Pilotage
+  { key: 'pilotage.statistiques', fallbackLabel: 'Statistiques', category: 'Pilotage' },
+  { key: 'pilotage.performance', fallbackLabel: 'Performance', category: 'Pilotage' },
+  { key: 'pilotage.actions_a_mener', fallbackLabel: 'Actions à mener', category: 'Pilotage' },
+  { key: 'pilotage.devis_acceptes', fallbackLabel: 'Devis acceptés', category: 'Pilotage' },
+  { key: 'pilotage.incoherences', fallbackLabel: 'Incohérences', category: 'Pilotage' },
+  { key: 'pilotage.resultat', fallbackLabel: 'Résultat', category: 'Pilotage' },
+  { key: 'pilotage.rentabilite', fallbackLabel: 'Rentabilité', category: 'Pilotage' },
   // Commercial
   { key: 'commercial.suivi_client', fallbackLabel: 'Suivi client', category: 'Commercial' },
   { key: 'commercial.comparateur', fallbackLabel: 'Comparateur', category: 'Commercial' },
   { key: 'commercial.prospects', fallbackLabel: 'Prospects', category: 'Commercial' },
   { key: 'commercial.realisations', fallbackLabel: 'Réalisations', category: 'Commercial' },
   { key: 'commercial.veille', fallbackLabel: 'Veille concurrentielle', category: 'Commercial' },
-  // Mon agence  
-  { key: 'organisation.salaries', fallbackLabel: 'Mes collaborateurs', category: 'Mon agence' },
-  { key: 'organisation.plannings', fallbackLabel: 'Plannings', category: 'Mon agence' },
-  { key: 'organisation.documents_legaux', fallbackLabel: 'Documents légaux', category: 'Mon agence' },
-  // Documents
-  { key: 'mediatheque.consulter', fallbackLabel: 'Médiathèque', category: 'Documents' },
-  { key: 'mediatheque.documents', fallbackLabel: 'Mes documents', category: 'Documents' },
-  // Centre d'aide
-  { key: 'support.guides', fallbackLabel: 'Guides & tutoriels', category: 'Centre d\'aide' },
-  { key: 'support.aide_en_ligne', fallbackLabel: 'Assistance en ligne', category: 'Centre d\'aide' },
-  { key: 'support.faq', fallbackLabel: 'Questions fréquentes', category: 'Centre d\'aide' },
+  // Organisation
+  { key: 'organisation.salaries', fallbackLabel: 'Collaborateurs', category: 'Organisation' },
+  { key: 'organisation.apporteurs', fallbackLabel: 'Apporteurs', category: 'Organisation' },
+  { key: 'organisation.plannings', fallbackLabel: 'Plannings', category: 'Organisation' },
+  { key: 'organisation.reunions', fallbackLabel: 'Réunions', category: 'Organisation' },
+  { key: 'organisation.parc', fallbackLabel: 'Parc', category: 'Organisation' },
+  { key: 'organisation.documents_legaux', fallbackLabel: 'Documents légaux', category: 'Organisation' },
+  // Médiathèque
+  { key: 'mediatheque.consulter', fallbackLabel: 'Consulter', category: 'Médiathèque' },
+  { key: 'mediatheque.documents', fallbackLabel: 'Documents', category: 'Médiathèque' },
+  // Support
+  { key: 'support.guides', fallbackLabel: 'Guides & tutoriels', category: 'Support' },
+  { key: 'support.aide_en_ligne', fallbackLabel: 'Assistance en ligne', category: 'Support' },
+  { key: 'support.faq', fallbackLabel: 'Questions fréquentes', category: 'Support' },
 ];
 
 /**
