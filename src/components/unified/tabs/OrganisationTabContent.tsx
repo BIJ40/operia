@@ -34,7 +34,7 @@ function LoadingFallback() {
 }
 
 export default function OrganisationTabContent() {
-  const { hasModule, isDeployedModule } = usePermissions();
+  const { hasModule, isDeployedModule, globalRole } = usePermissions();
   const { getShortLabel } = useModuleLabels();
   const { mode: navMode } = useNavigationMode();
 
