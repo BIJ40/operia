@@ -25,6 +25,10 @@ export interface FinancialMonth {
   updated_at: string;
 }
 
+function isTableNotFoundError(error: any): boolean {
+  return error?.code === 'PGRST205' || error?.message?.includes('Could not find the table');
+}
+
 export function useFinancialMonth(year: number, month: number) {
   const { agencyId } = useAuth();
   const queryClient = useQueryClient();
@@ -33,6 +37,10 @@ export function useFinancialMonth(year: number, month: number) {
   const query = useQuery({
     queryKey,
     enabled: !!agencyId && year > 0 && month >= 1 && month <= 12,
+    retry: (failureCount, error: any) => {
+      if (isTableNotFoundError(error)) return false;
+      return failureCount < 3;
+    },
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('agency_financial_months')
@@ -41,7 +49,10 @@ export function useFinancialMonth(year: number, month: number) {
         .eq('year', year)
         .eq('month', month)
         .maybeSingle();
-      if (error) throw error;
+      if (error) {
+        if (isTableNotFoundError(error)) return null;
+        throw error;
+      }
       return data as FinancialMonth | null;
     },
   });
@@ -70,6 +81,7 @@ export function useFinancialMonth(year: number, month: number) {
   return {
     financialMonth: query.data ?? null,
     isLoading: query.isLoading,
+    isError: query.isError,
     isLocked: !!query.data?.locked_at,
     upsertMonth,
     refetch: query.refetch,
