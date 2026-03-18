@@ -13,6 +13,7 @@ import { useFinancialMonth } from '@/hooks/useFinancialMonth';
 import { useFinancialCharges } from '@/hooks/useFinancialCharges';
 import { useFinancialSummary } from '@/hooks/useFinancialSummary';
 import { useCollaboratorCount } from '@/hooks/useCollaboratorCount';
+import { useStatiaFinancialBridge } from '@/hooks/useStatiaFinancialBridge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 
