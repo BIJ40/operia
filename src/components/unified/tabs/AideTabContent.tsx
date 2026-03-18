@@ -70,12 +70,13 @@ const DOC_SECTIONS = [
   {
     id: 'hc-services',
     label: 'Operia',
-    description: 'Documentation Operia',
-    guideTab: 'helpconfort' as GuideViewId,
+    description: 'Documentation Operia — bientôt disponible',
+    guideTab: null as unknown as GuideViewId,
     emoji: '🏠',
     accentClass: 'border-l-teal-500',
     bgClass: 'bg-teal-500/5 hover:bg-teal-500/10',
     permissionOption: 'helpconfort' as const,
+    disabled: true,
   },
   {
     id: 'hc-base',
