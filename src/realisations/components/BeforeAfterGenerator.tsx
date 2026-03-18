@@ -174,19 +174,27 @@ export function BeforeAfterGenerator({
             />
           </div>
 
-          {/* Photo selection grid */}
-          {(step === 'select-avant' || step === 'select-apres') && (
+          {/* Photo selection grid — visible during selection AND ready states */}
+          {(step === 'select-avant' || step === 'select-apres' || step === 'ready') && (
             <div>
-              <p className="text-sm text-muted-foreground mb-3">
-                {step === 'select-avant'
-                  ? 'Cliquez sur la photo AVANT :'
-                  : 'Cliquez sur la photo APRÈS :'}
-              </p>
+              {step !== 'ready' && (
+                <p className="text-sm text-muted-foreground mb-3">
+                  {step === 'select-avant'
+                    ? 'Cliquez sur la photo AVANT :'
+                    : 'Cliquez sur la photo APRÈS :'}
+                </p>
+              )}
+              {step === 'ready' && (
+                <p className="text-sm text-muted-foreground mb-3">
+                  Photos sélectionnées. Cliquez sur AVANT ou APRÈS ci-dessus pour changer.
+                </p>
+              )}
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                 {getFilteredPhotos().map(m => {
                   const isSelected = m.id === avantMedia?.id || m.id === apresMedia?.id;
                   const isDisabled = (step === 'select-apres' && m.id === avantMedia?.id)
-                    || (step === 'select-avant' && m.id === apresMedia?.id);
+                    || (step === 'select-avant' && m.id === apresMedia?.id)
+                    || step === 'ready';
                   return (
                     <button
                       key={m.id}
@@ -210,6 +218,12 @@ export function BeforeAfterGenerator({
                   );
                 })}
               </div>
+              {step === 'ready' && (
+                <Button className="w-full mt-4" onClick={() => setStep('preview')}>
+                  <Layers className="w-4 h-4 mr-2" />
+                  Générer l'aperçu
+                </Button>
+              )}
             </div>
           )}
 
@@ -218,7 +232,7 @@ export function BeforeAfterGenerator({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-foreground">Aperçu du visuel</p>
-                <Button variant="ghost" size="sm" onClick={handleReset}>
+                <Button variant="ghost" size="sm" onClick={() => setStep('ready')}>
                   Changer les photos
                 </Button>
               </div>
