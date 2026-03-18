@@ -191,3 +191,66 @@ export function useDeleteMedia() {
     onError: () => toast.error('Erreur suppression'),
   });
 }
+
+/**
+ * Auto-suggest before/after roles based on EXIF timestamps.
+ * Oldest photo → 'before', newest → 'after'. Only applies to photos
+ * that all have exif_taken_at and are currently tagged as 'before' (default).
+ */
+export function useAutoSuggestRoles() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (realisationId: string) => {
+      const { data: mediaList, error } = await db
+        .from('realisation_media')
+        .select('id, media_role, exif_taken_at, sequence_order')
+        .eq('realisation_id', realisationId)
+        .order('exif_taken_at', { ascending: true });
+      if (error) throw error;
+
+      const items = (mediaList || []) as Array<{
+        id: string; media_role: string; exif_taken_at: string | null; sequence_order: number;
+      }>;
+
+      // Only auto-suggest if we have at least 2 photos with EXIF dates
+      const withExif = items.filter(m => m.exif_taken_at);
+      if (withExif.length < 2) return { suggested: 0 };
+
+      // Sort by EXIF date
+      withExif.sort((a, b) => new Date(a.exif_taken_at!).getTime() - new Date(b.exif_taken_at!).getTime());
+
+      const updates: Array<{ id: string; role: MediaRole }> = [];
+
+      // Oldest = before, newest = after, middle = during
+      withExif.forEach((m, idx) => {
+        let suggestedRole: MediaRole;
+        if (idx === 0) {
+          suggestedRole = 'before';
+        } else if (idx === withExif.length - 1) {
+          suggestedRole = 'after';
+        } else {
+          suggestedRole = 'during';
+        }
+
+        // Only update if currently default ('before') — don't override manual tags
+        if (m.media_role === 'before' && suggestedRole !== 'before') {
+          updates.push({ id: m.id, role: suggestedRole });
+        }
+      });
+
+      // Apply updates
+      for (const u of updates) {
+        await db.from('realisation_media').update({ media_role: u.role }).eq('id', u.id);
+      }
+
+      return { suggested: updates.length };
+    },
+    onSuccess: (result, realisationId) => {
+      if (result && result.suggested > 0) {
+        qc.invalidateQueries({ queryKey: ['realisation-media', realisationId] });
+        toast.success(`${result.suggested} photo(s) auto-tagguée(s) selon les métadonnées EXIF`);
+      }
+    },
+  });
+}
