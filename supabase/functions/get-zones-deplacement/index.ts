@@ -322,9 +322,6 @@ Deno.serve(async (req) => {
     // Map: techId → Map<date, { startMin: number, endMax: number, totalMinutes: number }>
     const techDayTime = new Map<number, Map<string, { startMin: number; endMax: number; totalMinutes: number }>>();
 
-    // Debug: sample first few visits to understand time field availability
-    let debugSampled = 0;
-
     for (const intervention of interventions) {
       const data = intervention?.data || {};
       const visites = Array.isArray(data.visites) ? data.visites : [];
