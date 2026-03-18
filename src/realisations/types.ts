@@ -38,6 +38,7 @@ export interface RealisationMedia {
   height: number | null;
   alt_text: string | null;
   caption: string | null;
+  exif_taken_at: string | null;
   created_at: string;
   updated_at: string;
   // Computed client-side

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useRealisation } from '../hooks/useRealisations';
-import { useRealisationMedia, useUploadMedia, useDeleteMedia, useUpdateMediaRole } from '../hooks/useRealisationMedia';
+import { useRealisationMedia, useUploadMedia, useDeleteMedia, useUpdateMediaRole, useAutoSuggestRoles } from '../hooks/useRealisationMedia';
 import { useDispatchWebhook } from '../hooks/useDispatchWebhook';
 import { MEDIA_ROLE_LABELS, SYNC_STATUS_LABELS, SYNC_STATUS_COLORS, type MediaRole, type ExternalSyncStatus } from '../types';
 import { BeforeAfterGenerator } from '../components/BeforeAfterGenerator';
@@ -25,6 +25,7 @@ export default function RealisationDetailPage() {
   const uploadMedia = useUploadMedia();
   const deleteMedia = useDeleteMedia();
   const updateMediaRole = useUpdateMediaRole();
+  const autoSuggestRoles = useAutoSuggestRoles();
   const dispatchWebhook = useDispatchWebhook();
 
   if (isLoading) {
@@ -49,13 +50,18 @@ export default function RealisationDetailPage() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-    for (const file of Array.from(files)) {
+    const fileList = Array.from(files);
+    for (const file of fileList) {
       await uploadMedia.mutateAsync({
         realisationId: r.id,
         agencyId: r.agency_id,
         file,
         mediaRole: 'before',
       });
+    }
+    // Auto-suggest roles after batch upload
+    if (fileList.length >= 2 || (media.length + fileList.length) >= 2) {
+      autoSuggestRoles.mutate(r.id);
     }
     e.target.value = '';
   };

@@ -1,5 +1,5 @@
 /**
- * Hook — Media for a realisation + upload
+ * Hook — Media for a realisation + upload + EXIF extraction
  * Uses 'any' cast for new tables not yet in generated types
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import type { RealisationMedia, MediaRole } from '../types';
 import { toast } from 'sonner';
+import exifr from 'exifr';
 
 const db = supabase as any;
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'video/mp4']);
@@ -57,6 +58,16 @@ export function useUploadMedia() {
       if (!ALLOWED_TYPES.has(file.type)) throw new Error(`Type non autorisé: ${file.type}`);
       if (file.size > MAX_FILE_SIZE) throw new Error('Fichier trop volumineux (max 50 Mo)');
 
+      // Extract EXIF date
+      let exifTakenAt: string | null = null;
+      try {
+        const exif = await exifr.parse(file, { pick: ['DateTimeOriginal', 'CreateDate', 'ModifyDate'] });
+        const exifDate = exif?.DateTimeOriginal || exif?.CreateDate || exif?.ModifyDate;
+        if (exifDate instanceof Date && !isNaN(exifDate.getTime())) {
+          exifTakenAt = exifDate.toISOString();
+        }
+      } catch { /* no EXIF data, that's fine */ }
+
       const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
       const fileName = `${crypto.randomUUID()}.${ext}`;
       const storagePath = `agency/${agencyId}/realisation/${realisationId}/original/${fileName}`;
@@ -80,6 +91,7 @@ export function useUploadMedia() {
           media_role: mediaRole,
           sequence_order: sequenceOrder,
           file_size_bytes: file.size,
+          exif_taken_at: exifTakenAt,
         })
         .select()
         .single();
@@ -177,5 +189,68 @@ export function useDeleteMedia() {
       toast.success('Média supprimé');
     },
     onError: () => toast.error('Erreur suppression'),
+  });
+}
+
+/**
+ * Auto-suggest before/after roles based on EXIF timestamps.
+ * Oldest photo → 'before', newest → 'after'. Only applies to photos
+ * that all have exif_taken_at and are currently tagged as 'before' (default).
+ */
+export function useAutoSuggestRoles() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (realisationId: string) => {
+      const { data: mediaList, error } = await db
+        .from('realisation_media')
+        .select('id, media_role, exif_taken_at, sequence_order')
+        .eq('realisation_id', realisationId)
+        .order('exif_taken_at', { ascending: true });
+      if (error) throw error;
+
+      const items = (mediaList || []) as Array<{
+        id: string; media_role: string; exif_taken_at: string | null; sequence_order: number;
+      }>;
+
+      // Only auto-suggest if we have at least 2 photos with EXIF dates
+      const withExif = items.filter(m => m.exif_taken_at);
+      if (withExif.length < 2) return { suggested: 0 };
+
+      // Sort by EXIF date
+      withExif.sort((a, b) => new Date(a.exif_taken_at!).getTime() - new Date(b.exif_taken_at!).getTime());
+
+      const updates: Array<{ id: string; role: MediaRole }> = [];
+
+      // Oldest = before, newest = after, middle = during
+      withExif.forEach((m, idx) => {
+        let suggestedRole: MediaRole;
+        if (idx === 0) {
+          suggestedRole = 'before';
+        } else if (idx === withExif.length - 1) {
+          suggestedRole = 'after';
+        } else {
+          suggestedRole = 'during';
+        }
+
+        // Only update if currently default ('before') — don't override manual tags
+        if (m.media_role === 'before' && suggestedRole !== 'before') {
+          updates.push({ id: m.id, role: suggestedRole });
+        }
+      });
+
+      // Apply updates
+      for (const u of updates) {
+        await db.from('realisation_media').update({ media_role: u.role }).eq('id', u.id);
+      }
+
+      return { suggested: updates.length };
+    },
+    onSuccess: (result, realisationId) => {
+      if (result && result.suggested > 0) {
+        qc.invalidateQueries({ queryKey: ['realisation-media', realisationId] });
+        toast.success(`${result.suggested} photo(s) auto-tagguée(s) selon les métadonnées EXIF`);
+      }
+    },
   });
 }

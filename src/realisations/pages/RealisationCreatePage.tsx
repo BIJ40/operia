@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCreateRealisation } from '../hooks/useRealisationMutations';
-import { useUploadMedia } from '../hooks/useRealisationMedia';
+import { useUploadMedia, useAutoSuggestRoles } from '../hooks/useRealisationMedia';
 import { useDispatchWebhook } from '../hooks/useDispatchWebhook';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import type { Realisation } from '../types';
@@ -24,6 +24,7 @@ export default function RealisationCreatePage() {
   const navigate = useNavigate();
   const createRealisation = useCreateRealisation();
   const uploadMedia = useUploadMedia();
+  const autoSuggestRoles = useAutoSuggestRoles();
   const dispatchWebhook = useDispatchWebhook();
   const { agencyId } = useEffectiveAuth();
   const [isSaving, setIsSaving] = useState(false);
@@ -75,6 +76,11 @@ export default function RealisationCreatePage() {
           file: pf.file,
           mediaRole: 'before',
         });
+      }
+
+      // Auto-suggest before/after based on EXIF dates
+      if (pendingFiles.length >= 2) {
+        autoSuggestRoles.mutate(created.id);
       }
 
       // Auto-dispatch webhook (fire and forget, once only)
