@@ -27,6 +27,7 @@ export default function ResultatTabContent() {
   const { charges, completionScore, isLoading: chargesLoading, createCharge, updateChargeViaRpc } = useFinancialCharges(year, month);
   const { summary, isLoading: summaryLoading } = useFinancialSummary(year, month);
   const { count: collaboratorCount } = useCollaboratorCount();
+  const { statiaValues, isLoading: statiaLoading } = useStatiaFinancialBridge(year, month);
 
   const isLoading = monthLoading || chargesLoading || summaryLoading;
 
