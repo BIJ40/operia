@@ -3,7 +3,8 @@
  */
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Lock, AlertTriangle, Keyboard, Calculator, Zap, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Lock, AlertTriangle, Keyboard, Calculator, Zap, Users, RotateCcw } from 'lucide-react';
 import { MonthSelector } from './MonthSelector';
 import { CompletionIndicator } from './CompletionIndicator';
 import { KpiRow } from './KpiRow';
@@ -15,13 +16,20 @@ import { useFinancialSummary } from '@/hooks/useFinancialSummary';
 import { useCollaboratorCount } from '@/hooks/useCollaboratorCount';
 import { useStatiaFinancialBridge } from '@/hooks/useStatiaFinancialBridge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function ResultatTabContent() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
+  const [resetting, setResetting] = useState(false);
   const { toast } = useToast();
+  const { agencyId } = useAuth();
+  const queryClient = useQueryClient();
 
   const { isLocked, isLoading: monthLoading, upsertMonth, financialMonth } = useFinancialMonth(year, month);
   const { charges, completionScore, isLoading: chargesLoading, createCharge, updateChargeViaRpc } = useFinancialCharges(year, month);
@@ -65,6 +73,41 @@ export default function ResultatTabContent() {
 
   const hasNoData = !summary && !isLoading;
 
+  // ── Reset handler: delete monthly row + variable charges for this month ──
+  const handleReset = async () => {
+    if (!agencyId || isLocked) return;
+    setResetting(true);
+    try {
+      // 1. Delete the monthly data row (manual fields only — auto data re-populates)
+      if (financialMonth?.id) {
+        await (supabase as any)
+          .from('agency_financial_months')
+          .delete()
+          .eq('id', financialMonth.id);
+      }
+      // 2. Delete variable charges for this month (they are month-specific)
+      const monthDate = `${year}-${String(month).padStart(2, '0')}-01`;
+      const variableChargeIds = charges
+        .filter(c => c.category === 'VARIABLE' && c.start_month === monthDate)
+        .map(c => c.id);
+      if (variableChargeIds.length > 0) {
+        await (supabase as any)
+          .from('agency_financial_charges')
+          .delete()
+          .in('id', variableChargeIds);
+      }
+      // 3. Invalidate all queries
+      queryClient.invalidateQueries({ queryKey: ['financial-month', agencyId, year, month] });
+      queryClient.invalidateQueries({ queryKey: ['financial-charges', agencyId, year, month] });
+      queryClient.invalidateQueries({ queryKey: ['financial-summary', agencyId, year, month] });
+      toast({ title: 'Données réinitialisées', description: 'Les saisies manuelles ont été supprimées. Les données automatiques sont conservées.' });
+    } catch (e: any) {
+      toast({ title: 'Erreur', description: e.message, variant: 'destructive' });
+    } finally {
+      setResetting(false);
+    }
+  };
+
   // Build auto-values map from StatIA + collaborators
   const autoValues: Record<string, number> = {};
 
@@ -92,13 +135,10 @@ export default function ResultatTabContent() {
   for (const key of statiaFields) {
     const val = statiaValues[key];
     if (val != null && val > 0) {
-      // Display-only fields (panier_moyen, ca_par_heure) always show
       if (key === 'panier_moyen' || key === 'ca_par_heure') {
         autoValues[key] = val;
       } else {
-        // For storable fields, only auto-fill if no manual value
-        const monthField = key; // keys match month_field names
-        tryAutoFill(monthField, val);
+        tryAutoFill(key, val);
       }
     }
   }
@@ -114,6 +154,33 @@ export default function ResultatTabContent() {
               <Lock className="h-3 w-3" />
               Verrouillé
             </Badge>
+          )}
+          {!isLocked && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs" disabled={resetting || isLoading}>
+                  <RotateCcw className={`h-3 w-3 ${resetting ? 'animate-spin' : ''}`} />
+                  Réinitialiser
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Réinitialiser les saisies ?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Cette action supprimera toutes les valeurs saisies manuellement pour ce mois 
+                    (masse salariale, achats, charges variables…). 
+                    Les données automatiques (CA, interventions, heures depuis StatIA et effectifs depuis RH) 
+                    seront conservées et ré-affichées. Les charges fixes annuelles ne sont pas affectées.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleReset} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Réinitialiser
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
           <div className="w-48">
             <CompletionIndicator score={completionScore} />
