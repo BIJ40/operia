@@ -167,7 +167,7 @@ export function BeforeAfterCardCanvas({
 
       // ── Photos zone — Two side-by-side images with diagonal white line overlay
       const photoY = topBarH + 10;
-      const photoH = SIZE - topBarH - 10 - 120; // bottom bar = 120
+      const photoH = SIZE - topBarH - 10 - 140; // bottom bar = 140
       const gap = 16;
       const photoW = (SIZE - 40 - gap) / 2; // 20px margin each side + gap
       const radius = 16;
