@@ -54,9 +54,9 @@ export const HEADER_NAV_GROUPS: HeaderNavGroup[] = [
     tab: 'commercial',
     accent: 'orange',
     children: [
-      { label: 'Suivi client', icon: UsersIcon, tab: 'commercial', description: 'Gestion des apporteurs', subTabKey: 'commercial_sub_tab', subTabValue: 'apporteurs' },
-      { label: 'Comparateur', icon: Search, tab: 'commercial', description: 'Benchmark et comparaison', subTabKey: 'commercial_sub_tab', subTabValue: 'comparateur' },
-      { label: 'Veille', icon: Eye, tab: 'commercial', description: 'Veille concurrentielle', subTabKey: 'commercial_sub_tab', subTabValue: 'veille' },
+      { label: 'Suivi client', icon: UsersIcon, tab: 'commercial', description: 'Gestion des apporteurs', scope: 'prospection', subTabKey: 'commercial_sub_tab', subTabValue: 'apporteurs' },
+      { label: 'Comparateur', icon: Search, tab: 'commercial', description: 'Benchmark et comparaison', scope: 'prospection', subTabKey: 'commercial_sub_tab', subTabValue: 'comparateur' },
+      { label: 'Veille', icon: Eye, tab: 'commercial', description: 'Veille concurrentielle', scope: 'prospection', subTabKey: 'commercial_sub_tab', subTabValue: 'veille' },
       { label: 'Prospects', icon: ShoppingCart, tab: 'commercial', description: 'Suivi des prospects', scope: 'prospection', subTabKey: 'commercial_sub_tab', subTabValue: 'prospects' },
       { label: 'Réalisations', icon: TrendingUp, tab: 'commercial', description: 'Chiffres et bilans', scope: 'commercial.realisations', subTabKey: 'commercial_sub_tab', subTabValue: 'realisations' },
     ],
