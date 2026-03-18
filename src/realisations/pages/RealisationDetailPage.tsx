@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useRealisation } from '../hooks/useRealisations';
-import { useRealisationMedia, useUploadMedia, useDeleteMedia } from '../hooks/useRealisationMedia';
+import { useRealisationMedia, useUploadMedia, useDeleteMedia, useUpdateMediaRole } from '../hooks/useRealisationMedia';
 import { useDispatchWebhook } from '../hooks/useDispatchWebhook';
 import { MEDIA_ROLE_LABELS, SYNC_STATUS_LABELS, SYNC_STATUS_COLORS, type MediaRole, type ExternalSyncStatus } from '../types';
 
@@ -19,6 +19,7 @@ export default function RealisationDetailPage() {
   const { data: media = [] } = useRealisationMedia(id);
   const uploadMedia = useUploadMedia();
   const deleteMedia = useDeleteMedia();
+  const updateMediaRole = useUpdateMediaRole();
   const dispatchWebhook = useDispatchWebhook();
 
   if (isLoading) {
@@ -161,23 +162,44 @@ export default function RealisationDetailPage() {
         {/* Gallery */}
         {media.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {media.map(m => (
-              <div key={m.id} className="relative group rounded-xl overflow-hidden border border-border bg-muted aspect-square">
-                {m.signedUrl ? (
-                  <img src={m.signedUrl} alt={m.file_name} className="w-full h-full object-cover" loading="lazy" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Image className="w-8 h-8 text-muted-foreground/30" />
+            {media.map(m => {
+              const ROLE_TAGS: MediaRole[] = ['before', 'during', 'after'];
+              return (
+                <div key={m.id} className="relative group rounded-xl overflow-hidden border border-border bg-muted">
+                  <div className="aspect-square">
+                    {m.signedUrl ? (
+                      <img src={m.signedUrl} alt={m.file_name} className="w-full h-full object-cover" loading="lazy" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Image className="w-8 h-8 text-muted-foreground/30" />
+                      </div>
+                    )}
+                    <button
+                      onClick={() => deleteMedia.mutate(m)}
+                      className="absolute top-2 right-2 w-7 h-7 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                )}
-                <button
-                  onClick={() => deleteMedia.mutate(m)}
-                  className="absolute top-2 right-2 w-7 h-7 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ))}
+                  {/* Role tag selector */}
+                  <div className="flex gap-1 p-1.5 bg-card border-t border-border">
+                    {ROLE_TAGS.map(role => (
+                      <button
+                        key={role}
+                        onClick={() => updateMediaRole.mutate({ mediaId: m.id, realisationId: r.id, newRole: role })}
+                        className={`flex-1 text-[11px] font-medium py-1 rounded-md transition-colors ${
+                          m.media_role === role
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-muted-foreground hover:bg-accent'
+                        }`}
+                      >
+                        {MEDIA_ROLE_LABELS[role]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-12 text-muted-foreground">

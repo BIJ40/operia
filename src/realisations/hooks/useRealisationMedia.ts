@@ -106,6 +106,26 @@ export function useUploadMedia() {
   });
 }
 
+export function useUpdateMediaRole() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ mediaId, realisationId, newRole }: { mediaId: string; realisationId: string; newRole: MediaRole }) => {
+      const { error } = await db
+        .from('realisation_media')
+        .update({ media_role: newRole })
+        .eq('id', mediaId);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ['realisation-media', vars.realisationId] });
+      qc.invalidateQueries({ queryKey: ['realisations'] });
+      toast.success('Tag mis à jour');
+    },
+    onError: () => toast.error('Erreur mise à jour du tag'),
+  });
+}
+
 export function useDeleteMedia() {
   const qc = useQueryClient();
 
