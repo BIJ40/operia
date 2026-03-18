@@ -459,6 +459,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     hasGlobalRole: hasGlobalRoleGuard,
     hasModule: hasModuleGuard,
     hasModuleOption: hasModuleOptionGuard,
+    isDeployedModule: isDeployedModuleGuard,
     isAdmin,
     isSupport,
     isFranchiseur,
@@ -473,7 +474,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     suggestedGlobalRole: globalRole ?? 'base_user',
   }), [
     globalRole, enabledModules, accessContext,
-    hasGlobalRoleGuard, hasModuleGuard, hasModuleOptionGuard,
+    hasGlobalRoleGuard, hasModuleGuard, hasModuleOptionGuard, isDeployedModuleGuard,
     isAdmin, isSupport, isFranchiseur,
     canAccessSupportUser, hasSupportAgentRole, isSupportAdmin,
     canAccessSupportConsoleUI, canManageTickets,

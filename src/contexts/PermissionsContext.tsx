@@ -39,6 +39,9 @@ export interface PermissionsContextType {
   // Scope-based access (maps scope → module check)
   hasAccessToScope: (scope: string) => boolean;
 
+  // Deployment check (module_registry.is_deployed)
+  isDeployedModule: (moduleKey: ModuleKey) => boolean;
+
   // Compat
   suggestedGlobalRole: GlobalRole;
 }
