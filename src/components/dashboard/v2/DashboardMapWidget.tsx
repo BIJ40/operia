@@ -18,6 +18,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRdvMap, calculateBounds, MapRdv } from '@/hooks/useRdvMap';
 import { createPinMarkerElement } from '@/components/map/PinMarker';
+import { TourSummaryBar } from '@/components/map/TourSummaryBar';
+import { useRouteDirections } from '@/hooks/useRouteDirections';
 import { HumanTitle } from './HumanTitle';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
