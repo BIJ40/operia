@@ -119,6 +119,12 @@ export default function OrganisationTabContent() {
             <AgencyTeamRightsPanel />
           </Suspense>
         </TabsContent>
+
+        <TabsContent value="zones" className="mt-4">
+          <Suspense fallback={<LoadingFallback />}>
+            <ZonesDeplacementTab />
+          </Suspense>
+        </TabsContent>
       </Tabs>
     </div>
     </DomainAccentProvider>
