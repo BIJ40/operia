@@ -149,6 +149,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const { data: profile, error: profileError } = profileResult;
       const { data: effectiveModules, error: modulesError } = modulesResult;
+      const { data: deployedRows, error: deployedError } = deployedResult;
+
+      // Build deployed module keys set
+      if (!deployedError && Array.isArray(deployedRows)) {
+        setDeployedModuleKeys(new Set(deployedRows.map((r: any) => r.key)));
+      } else {
+        logAuth.warn('[AUTH] Failed to load deployed module keys', deployedError);
+      }
       
       if (profileError) {
         logAuth.error('Erreur requête profil:', profileError);
