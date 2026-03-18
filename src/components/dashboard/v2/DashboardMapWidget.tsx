@@ -463,7 +463,7 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
 }
 
 /**
- * Expanded map in dialog — separate instance, only mounts when dialog opens
+ * Expanded map in dialog — separate instance with tech filter + tour mode
  */
 function ExpandedMapContent({
   rdvs,
@@ -471,17 +471,44 @@ function ExpandedMapContent({
   onSelectRdv,
   mapboxToken,
   isOpen,
+  technicians,
 }: {
   rdvs: MapRdv[];
   selectedRdv: MapRdv | null;
   onSelectRdv: (rdv: MapRdv | null) => void;
   mapboxToken: string;
   isOpen: boolean;
+  technicians: { id: number; name: string; color: string }[];
 }) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const [mapReady, setMapReady] = useState(false);
+  const [selectedTechIds, setSelectedTechIds] = useState<number[]>([]);
+
+  // Filter rdvs by selected techs
+  const filteredRdvs = useMemo(() => {
+    if (selectedTechIds.length === 0) return rdvs;
+    return rdvs.filter(r => r.users.some(u => selectedTechIds.includes(u.id)));
+  }, [rdvs, selectedTechIds]);
+
+  // Tour mode
+  const isTourMode = selectedTechIds.length === 1;
+  const tourTech = isTourMode ? technicians.find(t => t.id === selectedTechIds[0]) : null;
+
+  const sortedRdvs = useMemo(() => {
+    if (!isTourMode) return filteredRdvs;
+    return [...filteredRdvs].sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime());
+  }, [filteredRdvs, isTourMode]);
+
+  // Route directions
+  const routeCoords = useMemo<[number, number][]>(() => {
+    if (!isTourMode || sortedRdvs.length < 2) return [];
+    return sortedRdvs.map(r => [r.lng, r.lat]);
+  }, [isTourMode, sortedRdvs]);
+
+  const { geometry: routeGeometry, distanceKm, durationMin, isLoading: routeLoading } =
+    useRouteDirections(routeCoords, mapboxToken, isTourMode && routeCoords.length >= 2);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -490,7 +517,6 @@ function ExpandedMapContent({
 
     let ro: ResizeObserver | null = null;
 
-    // Small delay to let dialog animate open and get dimensions
     const timer = setTimeout(() => {
       mapboxgl.accessToken = mapboxToken;
 
@@ -525,6 +551,7 @@ function ExpandedMapContent({
     };
   }, [isOpen, mapboxToken]);
 
+  // Update markers
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady) return;
@@ -532,11 +559,13 @@ function ExpandedMapContent({
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
 
-    rdvs.forEach(rdv => {
+    sortedRdvs.forEach((rdv, index) => {
       const isSelected = selectedRdv?.rdvId === rdv.rdvId;
+      const orderNumber = isTourMode ? index + 1 : undefined;
+
       const el = createPinMarkerElement(rdv.users, 40, isSelected, () => {
         onSelectRdv(isSelected ? null : rdv);
-      });
+      }, orderNumber);
 
       const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
         .setLngLat([rdv.lng, rdv.lat])
@@ -545,8 +574,8 @@ function ExpandedMapContent({
       markersRef.current.push(marker);
     });
 
-    const bounds = calculateBounds(rdvs);
-    if (bounds && rdvs.length > 0) {
+    const bounds = calculateBounds(sortedRdvs);
+    if (bounds && sortedRdvs.length > 0) {
       const doFit = () => {
         map.fitBounds(bounds as [[number, number], [number, number]], {
           padding: 60,
@@ -554,19 +583,98 @@ function ExpandedMapContent({
           duration: 500,
         });
       };
-      if (map.isStyleLoaded()) {
-        doFit();
-      } else {
-        map.once('load', doFit);
-      }
+      if (map.isStyleLoaded()) doFit();
+      else map.once('load', doFit);
     }
-  }, [rdvs, selectedRdv, onSelectRdv, mapReady]);
+  }, [sortedRdvs, selectedRdv, onSelectRdv, mapReady, isTourMode]);
+
+  // Draw/remove route layer
+  const TOUR_SRC = 'tour-route-src';
+  const TOUR_LYR = 'tour-route-lyr';
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady) return;
+
+    if (map.getLayer(TOUR_LYR)) map.removeLayer(TOUR_LYR);
+    if (map.getSource(TOUR_SRC)) map.removeSource(TOUR_SRC);
+
+    if (!isTourMode || !routeGeometry) return;
+
+    map.addSource(TOUR_SRC, {
+      type: 'geojson',
+      data: { type: 'Feature', properties: {}, geometry: routeGeometry },
+    });
+
+    map.addLayer({
+      id: TOUR_LYR,
+      type: 'line',
+      source: TOUR_SRC,
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': tourTech?.color || '#6366f1',
+        'line-width': 4,
+        'line-dasharray': [2, 3],
+        'line-opacity': 0.75,
+      },
+    });
+  }, [routeGeometry, isTourMode, mapReady, tourTech?.color]);
+
+  const toggleTech = useCallback((id: number) => {
+    setSelectedTechIds(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]);
+  }, []);
 
   return (
-    <div 
-      ref={mapContainerRef} 
-      className="absolute inset-0 w-full h-full"
-    />
+    <div className="relative w-full h-full">
+      <div ref={mapContainerRef} className="absolute inset-0 w-full h-full" />
+
+      {/* Tech filter chips — top left */}
+      {technicians.length > 0 && (
+        <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-1.5 max-w-[60%]">
+          {technicians.map(tech => {
+            const active = selectedTechIds.includes(tech.id);
+            return (
+              <button
+                key={tech.id}
+                onClick={() => toggleTech(tech.id)}
+                className={cn(
+                  "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all shadow-sm border",
+                  active
+                    ? "bg-foreground text-background border-foreground"
+                    : "bg-background/90 text-foreground border-border/50 hover:bg-background backdrop-blur-sm"
+                )}
+              >
+                <span
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: tech.color }}
+                />
+                <span className="truncate max-w-[100px]">{tech.name}</span>
+              </button>
+            );
+          })}
+          {selectedTechIds.length > 0 && (
+            <button
+              onClick={() => setSelectedTechIds([])}
+              className="px-2.5 py-1 rounded-full text-xs text-muted-foreground hover:text-foreground bg-background/90 border border-border/50 backdrop-blur-sm shadow-sm transition-all"
+            >
+              ✕ Tous
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Tour summary bar */}
+      {isTourMode && tourTech && sortedRdvs.length >= 2 && (
+        <TourSummaryBar
+          techName={tourTech.name}
+          techColor={tourTech.color}
+          rdvCount={sortedRdvs.length}
+          distanceKm={distanceKm}
+          durationMin={durationMin}
+          isLoading={routeLoading}
+        />
+      )}
+    </div>
   );
 }
 
