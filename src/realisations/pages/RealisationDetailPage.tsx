@@ -188,6 +188,12 @@ export default function RealisationDetailPage() {
                   logoUrl={commercialProfile?.logo_agence_url}
                   agencyName={commercialProfile?.agence_nom_long || undefined}
                   phone={commercialProfile?.phone_contact || undefined}
+                  agencySlug={agencyInfo?.slug}
+                  agencyAddress={agencyInfo?.adresse}
+                  agencyCity={agencyInfo?.ville}
+                  agencyPostalCode={agencyInfo?.code_postal}
+                  agencyPhone={agencyInfo?.contact_phone}
+                  agencyEmail={agencyInfo?.contact_email}
                   onCardSaved={() => {
                     // Refresh media list after card saved
                   }}
