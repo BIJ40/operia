@@ -8,6 +8,10 @@ const corsHeaders = {
 /**
  * dispatch-realisation-webhook — Sends photos to external receive-photos endpoint
  * 
+ * Supports two modes:
+ * 1. Full realisation: { realisation_id } → sends all media
+ * 2. Single visual:   { realisation_id, media_id, label_override } → sends one media with custom label
+ * 
  * Payload format expected by receive-photos:
  * { secret: "whsec_...", photos: [{ url, label, chantier }] }
  */
@@ -37,7 +41,7 @@ Deno.serve(async (req: Request) => {
   const userId = user.id
 
   try {
-    const { realisation_id } = await req.json()
+    const { realisation_id, media_id, label_override } = await req.json()
     if (!realisation_id) return json({ error: 'realisation_id required' }, 400)
 
     const adminClient = createClient(
@@ -56,24 +60,30 @@ Deno.serve(async (req: Request) => {
       return json({ error: 'Realisation not found' }, 404)
     }
 
-    // Guard: don't send if already queued/processing
-    if (['queued', 'processing'].includes(realisation.external_sync_status)) {
+    // For full realisation dispatch: guard against double-send
+    if (!media_id && ['queued', 'processing'].includes(realisation.external_sync_status)) {
       return json({ error: 'Already queued or processing', status: realisation.external_sync_status }, 409)
     }
 
-    // Fetch media for this realisation
-    const { data: mediaItems, error: mediaError } = await adminClient
+    // Fetch media — either single or all
+    let mediaQuery = adminClient
       .from('realisation_media')
-      .select('id, storage_path, media_role, original_file_name')
+      .select('id, storage_path, media_role, original_file_name, file_name')
       .eq('realisation_id', realisation_id)
       .order('sequence_order')
+
+    if (media_id) {
+      mediaQuery = mediaQuery.eq('id', media_id)
+    }
+
+    const { data: mediaItems, error: mediaError } = await mediaQuery
 
     if (mediaError) {
       return json({ error: 'Failed to fetch media' }, 500)
     }
 
     if (!mediaItems || mediaItems.length === 0) {
-      return json({ error: 'No media found for this realisation' }, 400)
+      return json({ error: 'No media found' }, 400)
     }
 
     // Generate signed URLs for each media (1h validity)
@@ -81,16 +91,24 @@ Deno.serve(async (req: Request) => {
     for (const media of mediaItems) {
       const { data: urlData, error: urlError } = await adminClient.storage
         .from('realisations-private')
-        .createSignedUrl(media.storage_path, 3600) // 1 hour
+        .createSignedUrl(media.storage_path, 3600)
 
       if (urlError || !urlData?.signedUrl) {
         console.error(`Failed to sign URL for ${media.storage_path}:`, urlError)
         continue
       }
 
+      // Determine label: use override if provided, auto-detect AVAP for avant-apres files, or use role
+      let label = media.media_role || 'other'
+      if (label_override) {
+        label = label_override
+      } else if (media.file_name?.startsWith('avant-apres-')) {
+        label = 'AVAP'
+      }
+
       photos.push({
         url: urlData.signedUrl,
-        label: media.media_role || 'other',
+        label,
         chantier: realisation.title,
       })
     }
@@ -123,18 +141,22 @@ Deno.serve(async (req: Request) => {
 
     if (!webhookResponse.ok) {
       const errorText = await webhookResponse.text()
-      await adminClient.from('realisations').update({
-        external_sync_status: 'failed',
-        external_sync_error: `Webhook ${webhookResponse.status}: ${errorText.slice(0, 500)}`,
-        external_sync_last_at: new Date().toISOString(),
-      }).eq('id', realisation_id)
+      
+      // Only update realisation status for full dispatches
+      if (!media_id) {
+        await adminClient.from('realisations').update({
+          external_sync_status: 'failed',
+          external_sync_error: `Webhook ${webhookResponse.status}: ${errorText.slice(0, 500)}`,
+          external_sync_last_at: new Date().toISOString(),
+        }).eq('id', realisation_id)
+      }
 
       await adminClient.from('realisation_activity_log').insert({
         agency_id: realisation.agency_id,
         realisation_id,
         actor_type: 'system',
-        action_type: 'webhook_failed',
-        action_payload: { status: webhookResponse.status, error: errorText.slice(0, 500) },
+        action_type: media_id ? 'visual_webhook_failed' : 'webhook_failed',
+        action_payload: { status: webhookResponse.status, error: errorText.slice(0, 500), media_id },
       })
 
       return json({ error: 'Webhook failed', details: errorText.slice(0, 200) }, 502)
@@ -142,23 +164,30 @@ Deno.serve(async (req: Request) => {
 
     await webhookResponse.text() // consume body
 
-    // Mark as queued
-    await adminClient.from('realisations').update({
-      external_sync_status: 'queued',
-      external_sync_error: null,
-      external_sync_last_at: new Date().toISOString(),
-    }).eq('id', realisation_id)
+    // Only update realisation sync status for full dispatches
+    if (!media_id) {
+      await adminClient.from('realisations').update({
+        external_sync_status: 'queued',
+        external_sync_error: null,
+        external_sync_last_at: new Date().toISOString(),
+      }).eq('id', realisation_id)
+    }
 
     await adminClient.from('realisation_activity_log').insert({
       agency_id: realisation.agency_id,
       realisation_id,
       actor_type: 'user',
       actor_user_id: userId,
-      action_type: 'webhook_dispatched',
-      action_payload: { webhook_url: webhookUrl, photos_count: photos.length },
+      action_type: media_id ? 'visual_webhook_dispatched' : 'webhook_dispatched',
+      action_payload: { 
+        webhook_url: webhookUrl, 
+        photos_count: photos.length, 
+        media_id,
+        label: media_id ? (label_override || 'AVAP') : undefined,
+      },
     })
 
-    return json({ success: true, status: 'queued', photos_sent: photos.length })
+    return json({ success: true, status: 'sent', photos_sent: photos.length })
   } catch (err) {
     return json({ error: (err as Error).message }, 500)
   }

@@ -1,12 +1,15 @@
 /**
  * VisualsGallery — Grid of all generated before/after visuals
+ * With validate button to push individual visuals via webhook
  */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, Image, Trash2, X } from 'lucide-react';
+import { Download, Image, Trash2, X, Send, CheckCircle2, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { useGeneratedVisuals } from '../hooks/useGeneratedVisuals';
 import { useDeleteMedia } from '../hooks/useRealisationMedia';
+import { useDispatchVisualWebhook } from '../hooks/useDispatchVisualWebhook';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,14 +25,15 @@ export function VisualsGallery() {
   const navigate = useNavigate();
   const { data: visuals = [], isLoading } = useGeneratedVisuals();
   const deleteMedia = useDeleteMedia();
+  const dispatchVisual = useDispatchVisualWebhook();
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [lightboxTitle, setLightboxTitle] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; realisation_id: string; storage_path: string } | null>(null);
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {[...Array(6)].map((_, i) => <Skeleton key={i} className="aspect-square rounded-lg" />)}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        {[...Array(6)].map((_, i) => <Skeleton key={i} className="aspect-[4/3] rounded-lg" />)}
       </div>
     );
   }
@@ -70,14 +74,14 @@ export function VisualsGallery() {
 
   return (
     <>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {visuals.map(v => (
           <div key={v.id} className="group relative rounded-lg overflow-hidden border border-border/50 bg-card">
             <button
               onClick={() => { setLightboxUrl(v.signedUrl); setLightboxTitle(v.realisation_title); }}
               className="w-full"
             >
-              <div className="aspect-square">
+              <div className="aspect-[4/3]">
                 <img
                   src={v.signedUrl}
                   alt={`Visuel ${v.realisation_title}`}
@@ -93,19 +97,36 @@ export function VisualsGallery() {
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
-            <div className="px-2 py-1.5 flex items-center justify-between gap-1">
-              <button
-                onClick={() => navigate(`/realisations/${v.realisation_id}`)}
-                className="text-xs text-muted-foreground truncate hover:text-foreground transition-colors"
+            <div className="px-2 py-1.5 space-y-1.5">
+              <div className="flex items-center justify-between gap-1">
+                <button
+                  onClick={() => navigate(`/realisations/${v.realisation_id}`)}
+                  className="text-xs text-muted-foreground truncate hover:text-foreground transition-colors"
+                >
+                  {v.realisation_title}
+                </button>
+                <button
+                  onClick={() => handleDownload(v.signedUrl, v.file_name)}
+                  className="shrink-0 p-1 rounded hover:bg-accent/50 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Download className="w-3 h-3" />
+                </button>
+              </div>
+              {/* Validate + push button */}
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full h-7 text-xs gap-1.5"
+                disabled={dispatchVisual.isPending}
+                onClick={() => dispatchVisual.mutate({ mediaId: v.id, realisationId: v.realisation_id })}
               >
-                {v.realisation_title}
-              </button>
-              <button
-                onClick={() => handleDownload(v.signedUrl, v.file_name)}
-                className="shrink-0 p-1 rounded hover:bg-accent/50 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Download className="w-3 h-3" />
-              </button>
+                {dispatchVisual.isPending ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Send className="w-3 h-3" />
+                )}
+                Valider & Envoyer
+              </Button>
             </div>
           </div>
         ))}
