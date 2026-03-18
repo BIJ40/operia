@@ -6,6 +6,7 @@ import { MobileNavMenu } from './MobileNavMenu';
 import { ProfileMenu } from '@/components/unified/workspace/ProfileMenu';
 import type { UnifiedTab } from '@/components/unified/workspace/types';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface MainHeaderProps {
   activeTab: UnifiedTab;
