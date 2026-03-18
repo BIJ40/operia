@@ -118,8 +118,14 @@ export function VisualsGallery() {
                 size="sm"
                 variant="outline"
                 className="w-full h-7 text-xs gap-1.5"
-                disabled={dispatchVisual.isPending}
-                onClick={() => dispatchVisual.mutate({ mediaId: v.id, realisationId: v.realisation_id })}
+                disabled={sendingId === v.id}
+                onClick={() => {
+                  setSendingId(v.id);
+                  dispatchVisual.mutate(
+                    { mediaId: v.id, realisationId: v.realisation_id },
+                    { onSettled: () => setSendingId(null) },
+                  );
+                }}
               >
                 {dispatchVisual.isPending ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
