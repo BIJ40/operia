@@ -75,8 +75,6 @@ function LoadingFallback() {
 function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
   const { isImpersonating } = useImpersonation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [tabOrder, setTabOrder] = useSessionState<FranchiseurTab[]>('franchiseur_view_tab_order', DEFAULT_TAB_ORDER);
-  
   // Use a different URL param when embedded inside AdminHub to avoid conflict with parent's ?tab=
   const urlParamKey = embedded ? 'fTab' : 'tab';
   
