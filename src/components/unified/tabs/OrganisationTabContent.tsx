@@ -4,7 +4,7 @@
  */
 
 import { lazy, Suspense, useMemo } from 'react';
-import { Users, Handshake, CalendarDays, Users2, Car, FileText, Loader2 } from 'lucide-react';
+import { Users, Handshake, CalendarDays, Users2, Car, FileText, Shield, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
@@ -21,8 +21,9 @@ const PlanningHebdo = lazy(() => import('@/pages/PlanningTechniciensSemaine'));
 const RHMeetingsPage = lazy(() => import('@/pages/rh/RHMeetingsPage'));
 const VehiculesTabContent = lazy(() => import('@/components/unified/tabs/VehiculesTabContent'));
 const AgencyAdminDocuments = lazy(() => import('@/components/outils/AgencyAdminDocuments').then(m => ({ default: m.AgencyAdminDocuments })));
+const AgencyTeamRightsPanel = lazy(() => import('@/components/agency/AgencyTeamRightsPanel').then(m => ({ default: m.AgencyTeamRightsPanel })));
 
-type OrganisationSubTab = 'collaborateurs' | 'apporteurs' | 'plannings' | 'reunions' | 'parc' | 'conformite';
+type OrganisationSubTab = 'collaborateurs' | 'apporteurs' | 'plannings' | 'reunions' | 'parc' | 'conformite' | 'droits-equipe';
 
 function LoadingFallback() {
   return (
@@ -33,7 +34,7 @@ function LoadingFallback() {
 }
 
 export default function OrganisationTabContent() {
-  const { hasModule, isDeployedModule } = usePermissions();
+  const { hasModule, isDeployedModule, globalRole } = usePermissions();
   const { getShortLabel } = useModuleLabels();
   const { mode: navMode } = useNavigationMode();
 
@@ -45,7 +46,11 @@ export default function OrganisationTabContent() {
     { id: 'parc', label: getShortLabel('organisation.parc', 'Parc'), icon: Car, accent: 'pink', requiresModule: 'organisation.parc' },
     // B: "Documents légaux" is a structural label, not a module name — gated by pilotage.agence
     { id: 'conformite', label: 'Documents légaux', icon: FileText, accent: 'teal', requiresModule: 'pilotage.agence' },
-  ], [getShortLabel]);
+    // Droits équipe : visible uniquement pour N2+ (franchisee_admin et au-dessus)
+    ...(globalRole && ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(globalRole)
+      ? [{ id: 'droits-equipe', label: 'Droits équipe', icon: Shield, accent: 'blue' as const, requiresModule: 'organisation.salaries' as ModuleKey }]
+      : []),
+  ], [getShortLabel, globalRole]);
 
   const visibleTabs = useMemo(() => {
     return allTabs
@@ -104,6 +109,12 @@ export default function OrganisationTabContent() {
         <TabsContent value="conformite" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
             <AgencyAdminDocuments />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="droits-equipe" className="mt-4">
+          <Suspense fallback={<LoadingFallback />}>
+            <AgencyTeamRightsPanel />
           </Suspense>
         </TabsContent>
       </Tabs>

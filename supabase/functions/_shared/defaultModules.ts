@@ -30,6 +30,38 @@ type GlobalRole = 'base_user' | 'franchisee_user' | 'franchisee_admin' | 'franch
 const DIRIGEANT_ROLES = ['dirigeant', 'gérant', 'gerant', 'associé', 'associe'];
 
 /**
+ * Presets de modules par poste pour les N1 (franchisee_user)
+ * Appliqués automatiquement à la création du compte
+ */
+const N1_ROLE_PRESETS: Record<string, string[]> = {
+  commercial: [
+    'commercial.suivi_client', 'commercial.comparateur',
+    'commercial.prospects', 'commercial.realisations',
+    'support.guides', 'support.aide_en_ligne',
+  ],
+  assistante: [
+    'organisation.salaries', 'organisation.plannings',
+    'organisation.documents_legaux',
+    'mediatheque.consulter', 'mediatheque.documents',
+    'support.guides', 'support.aide_en_ligne',
+  ],
+  technicien: [
+    'support.guides', 'support.aide_en_ligne',
+  ],
+};
+
+/**
+ * Convertit une liste de clés modules en EnabledModules
+ */
+function presetToEnabledModules(keys: string[]): EnabledModules {
+  const result: EnabledModules = {};
+  for (const key of keys) {
+    result[key] = { enabled: true, options: {} };
+  }
+  return result;
+}
+
+/**
  * Modules par défaut pour les EMPLOYÉS d'agence (commercial, assistante, etc.)
  * Accès minimal : uniquement guides et support utilisateur
  */
@@ -98,6 +130,17 @@ export function getDefaultModulesForRole(role: string): EnabledModules {
  * Un commercial N2 ne doit PAS avoir les mêmes modules qu'un dirigeant N2
  */
 export function getDefaultModulesForCreation(globalRole: string, roleAgence: string | null): EnabledModules {
+  // N1 avec poste connu → preset par poste
+  if (globalRole === 'franchisee_user' && roleAgence) {
+    const normalizedRole = roleAgence.toLowerCase().trim();
+    const preset = N1_ROLE_PRESETS[normalizedRole];
+    if (preset) {
+      console.log(`[defaultModules] N1 avec poste "${roleAgence}" → preset spécifique (${preset.length} modules)`);
+      return presetToEnabledModules(preset);
+    }
+  }
+
+  // N2 : dirigeant vs employé agence
   if (globalRole === 'franchisee_admin' && roleAgence) {
     const normalizedRole = roleAgence.toLowerCase().trim();
     if (!DIRIGEANT_ROLES.includes(normalizedRole)) {
