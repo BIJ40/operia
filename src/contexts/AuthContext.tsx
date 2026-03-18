@@ -118,6 +118,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return hasAccess({ ...accessContext, moduleId: moduleKey, optionId: optionKey });
   }, [accessContext]);
 
+  const isDeployedModuleGuard = useCallback((moduleKey: ModuleKey): boolean => {
+    return deployedModuleKeys.has(moduleKey);
+  }, [deployedModuleKeys]);
+
   // ============================================================================
   // Chargement des données utilisateur
   // ============================================================================
