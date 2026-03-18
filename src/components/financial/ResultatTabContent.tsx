@@ -176,6 +176,16 @@ export default function ResultatTabContent() {
     }
   }
 
+  // Royalty auto-values (HC Redevance + HC FCN)
+  if (royaltyValues) {
+    if (royaltyValues.externe_redevances_hc_assistance > 0) {
+      autoValues['externe_redevances_hc_assistance'] = royaltyValues.externe_redevances_hc_assistance;
+    }
+    if (royaltyValues.externe_redevances_hc_fcn > 0) {
+      autoValues['externe_redevances_hc_fcn'] = royaltyValues.externe_redevances_hc_fcn;
+    }
+  }
+
   return (
     <div className="space-y-3">
       {/* Header */}
