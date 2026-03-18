@@ -30,6 +30,7 @@ export function TeamMemberModules({ userId, roleAgence, n2HasModule }: Props) {
   const toggleModule = useToggleModule();
   const queryClient = useQueryClient();
   const { user } = useAuthCore();
+  const { getShortLabel } = useModuleLabels();
 
   // Only show modules that the N2 has access to
   const assignableModules = useMemo(() => {
