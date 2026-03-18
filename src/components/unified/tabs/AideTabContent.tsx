@@ -26,7 +26,8 @@ import {
   Loader2,
   MessageCircle,
   Search,
-  ExternalLink,
+  ChevronRight,
+  ArrowLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
