@@ -1,19 +1,24 @@
 /**
- * RealisationsPage — List with hero photo thumbnails
+ * RealisationsPage — List with hero photo thumbnails + Visuals gallery
  */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Camera, Image, Calendar, ChevronRight } from 'lucide-react';
+import { Plus, Search, Camera, Image, Calendar, ChevronRight, ChevronDown, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useRealisations } from '../hooks/useRealisations';
+import { useGeneratedVisuals } from '../hooks/useGeneratedVisuals';
+import { VisualsGallery } from '../components/VisualsGallery';
 import { SYNC_STATUS_LABELS, SYNC_STATUS_COLORS, type ExternalSyncStatus } from '../types';
 
 export default function RealisationsPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const { data: realisations = [], isLoading } = useRealisations(search);
+  const { data: visuals = [] } = useGeneratedVisuals();
+  const [visualsOpen, setVisualsOpen] = useState(true);
 
   return (
     <div className="space-y-4">
@@ -32,6 +37,25 @@ export default function RealisationsPage() {
           <Plus className="w-3.5 h-3.5" /> Nouvelle
         </Button>
       </div>
+
+      {/* Visuals Gallery Section */}
+      {visuals.length > 0 && (
+        <Collapsible open={visualsOpen} onOpenChange={setVisualsOpen}>
+          <CollapsibleTrigger asChild>
+            <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 hover:bg-primary/10 transition-colors group">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span className="text-sm font-medium text-foreground flex-1 text-left">
+                Visuels Avant/Après
+              </span>
+              <span className="text-xs text-muted-foreground mr-1">{visuals.length}</span>
+              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${visualsOpen ? '' : '-rotate-90'}`} />
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-3">
+            <VisualsGallery />
+          </CollapsibleContent>
+        </Collapsible>
+      )}
 
       {/* Search */}
       <div className="relative max-w-sm">
