@@ -119,6 +119,12 @@ export function BeforeAfterCardCanvas({
   phone = '',
   realisationId,
   agencyId,
+  agencySlug,
+  agencyAddress,
+  agencyCity,
+  agencyPostalCode,
+  agencyPhone,
+  agencyEmail,
   onCardSaved,
 }: BeforeAfterCardCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
