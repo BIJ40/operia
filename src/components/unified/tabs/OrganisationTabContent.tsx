@@ -48,7 +48,7 @@ export default function OrganisationTabContent() {
     { id: 'conformite', label: 'Documents légaux', icon: FileText, accent: 'teal', requiresModule: 'pilotage.agence' },
     // Droits équipe : visible uniquement pour N2+ (franchisee_admin et au-dessus)
     ...(globalRole && ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(globalRole)
-      ? [{ id: 'droits-equipe', label: 'Droits équipe', icon: Shield, accent: 'amber' as const, requiresModule: 'organisation.salaries' as ModuleKey }]
+      ? [{ id: 'droits-equipe', label: 'Droits équipe', icon: Shield, accent: 'blue' as const, requiresModule: 'organisation.salaries' as ModuleKey }]
       : []),
   ], [getShortLabel, globalRole]);
 
