@@ -54,11 +54,17 @@ export default function PilotageTabContent() {
   ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {
-    return allTabs.map(tab => {
-      if (!tab.requiresModule) return tab;
-      return { ...tab, disabled: !hasModule(tab.requiresModule) };
-    });
-  }, [hasModule, allTabs]);
+    return allTabs
+      .filter(tab => {
+        // Hide non-deployed modules from navigation (even for admins)
+        if (tab.requiresModule && !isDeployedModule(tab.requiresModule)) return false;
+        return true;
+      })
+      .map(tab => {
+        if (!tab.requiresModule) return tab;
+        return { ...tab, disabled: !hasModule(tab.requiresModule) };
+      });
+  }, [hasModule, isDeployedModule, allTabs]);
 
   const defaultTab = (visibleTabs.find(t => !t.disabled)?.id as PilotageSubTab) ?? 'stats';
   const [activeTab, setActiveTab] = useSessionState<PilotageSubTab>('pilotage_sub_tab', defaultTab);
