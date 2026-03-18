@@ -9,6 +9,7 @@
 import { useMemo } from 'react';
 import { useUserModules, useToggleModule } from '@/hooks/useUserModules';
 import { N2_ASSIGNABLE_MODULES, getPresetForRole } from '@/config/roleAgenceModulePresets';
+import { useModuleLabels } from '@/hooks/useModuleLabels';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { RotateCcw, Loader2 } from 'lucide-react';
