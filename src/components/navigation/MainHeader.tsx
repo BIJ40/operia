@@ -93,6 +93,9 @@ export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClas
                 pillActive={ACCENT_ACTIVE[group.accent || 'blue']}
                 pillInactive={pillInactive}
                 accentDropdown={ACCENT_DROPDOWN[group.accent || 'blue']}
+                isDeployedModule={isDeployedModule}
+                hasModule={hasModule}
+                isAdmin={isAdmin}
               />
             ))}
           </nav>
