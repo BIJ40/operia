@@ -356,23 +356,21 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
                     <Maximize2 className="h-3.5 w-3.5 text-foreground" />
                   </button>
                 </DialogTrigger>
-                <DialogContent className="max-w-5xl h-[80vh] p-0">
-                  <DialogHeader className="px-6 py-4 border-b">
+                <DialogContent className="max-w-5xl h-[80vh] p-0 flex flex-col">
+                  <DialogHeader className="px-6 py-4 border-b shrink-0">
                     <DialogTitle className="flex items-center gap-2">
                       <MapPin className="h-5 w-5 text-warm-teal" />
                       Carte des RDV du jour
                     </DialogTitle>
                   </DialogHeader>
-                  <div className="relative flex-1 w-full h-full min-h-[500px]">
-                    <ExpandedMapContent
-                      rdvs={filteredRdvs}
-                      selectedRdv={selectedRdv}
-                      onSelectRdv={setSelectedRdv}
-                      mapboxToken={mapboxToken || ''}
-                      isOpen={isExpanded}
-                      technicians={technicians}
-                    />
-                  </div>
+                  <ExpandedMapContent
+                    rdvs={filteredRdvs}
+                    selectedRdv={selectedRdv}
+                    onSelectRdv={setSelectedRdv}
+                    mapboxToken={mapboxToken || ''}
+                    isOpen={isExpanded}
+                    technicians={technicians}
+                  />
                 </DialogContent>
               </Dialog>
             </div>
