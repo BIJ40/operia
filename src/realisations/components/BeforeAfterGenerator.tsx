@@ -231,6 +231,12 @@ export function BeforeAfterGenerator({
                 phone={phone}
                 realisationId={realisationId}
                 agencyId={agencyId}
+                agencySlug={agencySlug}
+                agencyAddress={agencyAddress}
+                agencyCity={agencyCity}
+                agencyPostalCode={agencyPostalCode}
+                agencyPhone={agencyPhone}
+                agencyEmail={agencyEmail}
                 onCardSaved={handleCardSaved}
               />
             </div>
