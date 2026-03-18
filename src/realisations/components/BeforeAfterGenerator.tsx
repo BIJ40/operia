@@ -37,6 +37,12 @@ export function BeforeAfterGenerator({
   logoUrl,
   agencyName,
   phone,
+  agencySlug,
+  agencyAddress,
+  agencyCity,
+  agencyPostalCode,
+  agencyPhone,
+  agencyEmail,
   onCardSaved,
 }: BeforeAfterGeneratorProps) {
   const [step, setStep] = useState<SelectionStep>('idle');
