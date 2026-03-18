@@ -261,7 +261,7 @@ export function BeforeAfterCardCanvas({
     } finally {
       setIsRendering(false);
     }
-  }, [avantUrl, apresUrl, theme, logoUrl, agencyName, tagline, phone]);
+  }, [avantUrl, apresUrl, theme, logoUrl, agencyName, tagline, phone, agencySlug, agencyAddress, agencyCity, agencyPostalCode, agencyPhone, agencyEmail]);
 
   useEffect(() => { render(); }, [render]);
 
