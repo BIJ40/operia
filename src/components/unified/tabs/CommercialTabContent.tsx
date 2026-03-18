@@ -91,7 +91,9 @@ function CommercialInner() {
 
   const defaultTab = visibleTabs.find(t => !t.disabled)?.id ?? 'apporteurs';
   const [activeTab, setActiveTab] = useSessionState<string>('commercial_sub_tab', defaultTab);
-  const effectiveTab = (visibleTabs.find(t => t.id === activeTab && !t.disabled)) ? activeTab : defaultTab;
+  const effectiveTab = isAdmin && allTabs.some(t => t.id === activeTab)
+    ? activeTab
+    : ((visibleTabs.find(t => t.id === activeTab && !t.disabled)) ? activeTab : defaultTab);
 
   const handleVeilleSelectApporteur = useCallback((id: string, name: string) => {
     openApporteur(id, name);
