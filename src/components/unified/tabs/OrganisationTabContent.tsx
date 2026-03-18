@@ -45,8 +45,7 @@ export default function OrganisationTabContent() {
     { id: 'plannings', label: getShortLabel('organisation.plannings', 'Plannings'), icon: CalendarDays, accent: 'green', requiresModule: 'organisation.plannings' },
     { id: 'reunions', label: getShortLabel('organisation.reunions', 'Réunions'), icon: Users2, accent: 'orange', requiresModule: 'organisation.reunions' },
     { id: 'parc', label: getShortLabel('organisation.parc', 'Parc'), icon: Car, accent: 'pink', requiresModule: 'organisation.parc' },
-    // B: "Documents légaux" is a structural label, not a module name — gated by pilotage.agence
-    { id: 'conformite', label: 'Documents légaux', icon: FileText, accent: 'teal', requiresModule: 'pilotage.agence' },
+    { id: 'conformite', label: getShortLabel('organisation.documents_legaux', 'Documents légaux'), icon: FileText, accent: 'teal', requiresModule: 'organisation.documents_legaux' },
     { id: 'zones', label: getShortLabel('organisation.zones', 'Zones'), icon: MapPin, accent: 'orange', requiresModule: 'organisation.zones' },
     // Droits équipe : visible uniquement pour N2+ (franchisee_admin et au-dessus)
     ...(globalRole && ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(globalRole)
