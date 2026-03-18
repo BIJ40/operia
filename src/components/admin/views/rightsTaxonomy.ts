@@ -23,7 +23,8 @@ export const RIGHTS_CATEGORIES: RightsCategory[] = [
     'pilotage.rentabilite', 'planning_augmente',
   ]},
   { id: 'commercial', label: 'Commercial', moduleKeys: [
-    'commercial', 'prospection', 'commercial.realisations',
+    'commercial', 'prospection', 'commercial.suivi_client', 'commercial.comparateur',
+    'commercial.veille', 'commercial.prospects', 'commercial.realisations',
   ]},
   { id: 'organisation', label: 'Organisation', moduleKeys: [
     'organisation', 'organisation.salaries', 'organisation.apporteurs',

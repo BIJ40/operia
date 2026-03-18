@@ -23,16 +23,12 @@ import { VeilleApporteursTab } from '@/prospection/pages/VeilleApporteursTab';
 
 const RealisationsPage = lazy(() => import('@/realisations/pages/RealisationsPage'));
 
-/** Mapping tab id → clé d'option du module prospection */
-const TAB_OPTION_MAP: Record<string, string> = {
-  apporteurs: 'dashboard',
-  comparateur: 'comparateur',
-  veille: 'veille',
-  prospects: 'prospects',
-};
-
-/** Tabs nécessitant un module spécifique (hors prospection options) */
+/** Mapping tab id → module key */
 const TAB_MODULE_MAP: Record<string, ModuleKey> = {
+  apporteurs: 'commercial.suivi_client',
+  comparateur: 'commercial.comparateur',
+  veille: 'commercial.veille',
+  prospects: 'commercial.prospects',
   realisations: 'commercial.realisations',
 };
 
@@ -64,7 +60,7 @@ function ApporteursTabInner() {
 }
 
 function CommercialInner() {
-  const { hasModuleOption, hasModule, isDeployedModule } = usePermissions();
+  const { hasModule, isDeployedModule } = usePermissions();
   const { openApporteur } = useApporteurTabs();
   const { getShortLabel } = useModuleLabels();
   const { mode: navMode } = useNavigationMode();
@@ -82,7 +78,6 @@ function CommercialInner() {
   const visibleTabs = useMemo(() => {
     return allTabs
       .filter(tab => {
-        // Hide non-deployed modules
         const moduleKey = TAB_MODULE_MAP[tab.id];
         if (moduleKey && !isDeployedModule(moduleKey)) return false;
         return true;
@@ -90,11 +85,9 @@ function CommercialInner() {
       .map(tab => {
         const moduleKey = TAB_MODULE_MAP[tab.id];
         if (moduleKey) return { ...tab, disabled: !hasModule(moduleKey) };
-        const optionKey = TAB_OPTION_MAP[tab.id];
-        if (optionKey) return { ...tab, disabled: !hasModuleOption('prospection', optionKey) };
         return tab;
       });
-  }, [hasModuleOption, hasModule, isDeployedModule, allTabs]);
+  }, [hasModule, isDeployedModule, allTabs]);
 
   const defaultTab = visibleTabs.find(t => !t.disabled)?.id ?? 'apporteurs';
   const [activeTab, setActiveTab] = useSessionState<string>('commercial_sub_tab', defaultTab);

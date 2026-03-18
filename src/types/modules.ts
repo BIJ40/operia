@@ -35,7 +35,11 @@ export const MODULES = {
   'pilotage.rentabilite': 'pilotage.rentabilite',
   // (pilotage.dashboard removed — merged into pilotage.statistiques)
   'pilotage.agence': 'pilotage.agence',
-  // Commercial (suivi_client/comparateur/veille/prospects removed — ghost keys, gated by prospection module options)
+  // Commercial
+  'commercial.suivi_client': 'commercial.suivi_client',
+  'commercial.comparateur': 'commercial.comparateur',
+  'commercial.veille': 'commercial.veille',
+  'commercial.prospects': 'commercial.prospects',
   'commercial.realisations': 'commercial.realisations',
   // Organisation
   'organisation.salaries': 'organisation.salaries',
@@ -371,6 +375,51 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'admin', path: 'planning_augmente.admin', label: 'Admin', description: 'Configuration pondérations', defaultEnabled: false, routes: [] },
     ],
   },
+  // Commercial sub-modules (promoted from prospection options)
+  {
+    key: 'commercial.suivi_client',
+    label: 'Suivi client',
+    description: 'Fiche apporteur et suivi',
+    icon: 'Users',
+    category: 'commercial',
+    uiSubTab: 'apporteurs',
+    defaultForRoles: [],
+    minRole: 'franchisee_user',
+    options: [],
+  },
+  {
+    key: 'commercial.comparateur',
+    label: 'Comparateur',
+    description: 'Comparer apporteurs',
+    icon: 'GitCompare',
+    category: 'commercial',
+    uiSubTab: 'comparateur',
+    defaultForRoles: [],
+    minRole: 'franchisee_user',
+    options: [],
+  },
+  {
+    key: 'commercial.veille',
+    label: 'Veille',
+    description: 'Monitoring apporteurs',
+    icon: 'Radar',
+    category: 'commercial',
+    uiSubTab: 'veille',
+    defaultForRoles: [],
+    minRole: 'franchisee_user',
+    options: [],
+  },
+  {
+    key: 'commercial.prospects',
+    label: 'Prospects',
+    description: 'Gestion prospects',
+    icon: 'UserSearch',
+    category: 'commercial',
+    uiSubTab: 'prospects',
+    defaultForRoles: [],
+    minRole: 'franchisee_user',
+    options: [],
+  },
   // Module premium Réalisations
   {
     key: 'commercial.realisations',
@@ -577,7 +626,11 @@ export const MODULE_SHORT_LABELS: Partial<Record<ModuleKey, string>> = {
   'pilotage.incoherences': 'Incohérences',
   'pilotage.resultat': 'Résultat',
   'pilotage.rentabilite': 'Rentabilité',
-  // Commercial (ghost keys removed — gated by prospection module options)
+  // Commercial
+  'commercial.suivi_client': 'Suivi client',
+  'commercial.comparateur': 'Comparateur',
+  'commercial.veille': 'Veille',
+  'commercial.prospects': 'Prospects',
   'commercial.realisations': 'Réalisations',
   // Organisation
   'organisation.salaries': 'Salariés',
