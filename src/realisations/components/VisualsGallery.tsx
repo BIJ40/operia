@@ -3,16 +3,28 @@
  */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, ExternalLink, Image, Loader2, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Download, Image, Trash2, X } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGeneratedVisuals } from '../hooks/useGeneratedVisuals';
+import { useDeleteMedia } from '../hooks/useRealisationMedia';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export function VisualsGallery() {
   const navigate = useNavigate();
   const { data: visuals = [], isLoading } = useGeneratedVisuals();
+  const deleteMedia = useDeleteMedia();
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [lightboxTitle, setLightboxTitle] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; realisation_id: string; storage_path: string } | null>(null);
 
   if (isLoading) {
     return (
@@ -44,9 +56,16 @@ export function VisualsGallery() {
       a.click();
       URL.revokeObjectURL(a.href);
     } catch {
-      // fallback
       window.open(url, '_blank');
     }
+  };
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    deleteMedia.mutate(
+      { id: deleteTarget.id, realisation_id: deleteTarget.realisation_id, storage_path: deleteTarget.storage_path } as any,
+      { onSettled: () => setDeleteTarget(null) },
+    );
   };
 
   return (
@@ -66,6 +85,13 @@ export function VisualsGallery() {
                   loading="lazy"
                 />
               </div>
+            </button>
+            {/* Delete button overlay */}
+            <button
+              onClick={() => setDeleteTarget({ id: v.id, realisation_id: v.realisation_id, storage_path: v.storage_path })}
+              className="absolute top-2 right-2 w-7 h-7 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
             <div className="px-2 py-1.5 flex items-center justify-between gap-1">
               <button
@@ -107,6 +133,24 @@ export function VisualsGallery() {
           </div>
         </div>
       )}
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce visuel ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Le visuel sera définitivement supprimé.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
