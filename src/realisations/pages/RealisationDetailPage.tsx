@@ -183,11 +183,11 @@ export default function RealisationDetailPage() {
           </CardHeader>
         </Card>
 
-        {/* Gallery */}
+        {/* Gallery — stable order by created_at, no reorder on tag change */}
         {media.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {media.map(m => {
-              const ROLE_TAGS: MediaRole[] = ['before', 'during', 'after'];
+            {[...media].sort((a, b) => a.created_at.localeCompare(b.created_at)).map(m => {
+              const ROLE_TAGS: MediaRole[] = ['before', 'after'];
               return (
                 <div key={m.id} className="relative group rounded-xl overflow-hidden border border-border bg-muted">
                   <div className="aspect-square">
