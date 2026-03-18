@@ -6,9 +6,7 @@
  * 4. Mes demandes (suivi conversationnel)
  */
 
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { ROUTES } from '@/config/routes';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
