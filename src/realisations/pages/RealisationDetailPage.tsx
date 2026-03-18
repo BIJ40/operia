@@ -25,6 +25,7 @@ export default function RealisationDetailPage() {
   const uploadMedia = useUploadMedia();
   const deleteMedia = useDeleteMedia();
   const updateMediaRole = useUpdateMediaRole();
+  const autoSuggestRoles = useAutoSuggestRoles();
   const dispatchWebhook = useDispatchWebhook();
 
   if (isLoading) {
