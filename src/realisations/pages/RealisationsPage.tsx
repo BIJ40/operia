@@ -1,5 +1,6 @@
 /**
  * RealisationsPage — Tabs: Réalisations list + Avant/Après visuals gallery
+ * Onglet Avant/Après conditionné par le droit commercial.realisations.onglet_avap
  */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -10,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useRealisations } from '../hooks/useRealisations';
 import { useGeneratedVisuals } from '../hooks/useGeneratedVisuals';
 import { VisualsGallery } from '../components/VisualsGallery';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { SYNC_STATUS_LABELS, SYNC_STATUS_COLORS, type ExternalSyncStatus } from '../types';
 
 type Tab = 'realisations' | 'avant-apres';
@@ -20,6 +22,10 @@ export default function RealisationsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('realisations');
   const { data: realisations = [], isLoading } = useRealisations(search);
   const { data: visuals = [] } = useGeneratedVisuals();
+  const { hasModule } = usePermissions();
+
+  const canSeeAvapTab = hasModule('commercial.realisations.onglet_avap');
+  const canAddPhotos = hasModule('commercial.realisations.photos');
 
   return (
     <div className="space-y-4">
@@ -34,56 +40,59 @@ export default function RealisationsPage() {
             <p className="text-xs text-muted-foreground">Photos terrain</p>
           </div>
         </div>
-        {activeTab === 'realisations' && (
+        {activeTab === 'realisations' && canAddPhotos && (
           <Button onClick={() => navigate('/realisations/new')} size="sm" className="gap-1.5">
             <Plus className="w-3.5 h-3.5" /> Nouvelle
           </Button>
         )}
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-border">
-        <button
-          onClick={() => setActiveTab('realisations')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-            activeTab === 'realisations'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <span className="flex items-center gap-1.5">
-            <Camera className="w-3.5 h-3.5" />
-            Réalisations
-          </span>
-        </button>
-        <button
-          onClick={() => setActiveTab('avant-apres')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-            activeTab === 'avant-apres'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <span className="flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5" />
-            Avant / Après
-            {visuals.length > 0 && (
-              <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded-full font-semibold">
-                {visuals.length}
-              </span>
-            )}
-          </span>
-        </button>
-      </div>
+      {/* Tabs — only show if AV/AP tab is enabled */}
+      {canSeeAvapTab && (
+        <div className="flex border-b border-border">
+          <button
+            onClick={() => setActiveTab('realisations')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'realisations'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <span className="flex items-center gap-1.5">
+              <Camera className="w-3.5 h-3.5" />
+              Réalisations
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveTab('avant-apres')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'avant-apres'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <span className="flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" />
+              Avant / Après
+              {visuals.length > 0 && (
+                <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded-full font-semibold">
+                  {visuals.length}
+                </span>
+              )}
+            </span>
+          </button>
+        </div>
+      )}
 
       {/* Tab content */}
-      {activeTab === 'realisations' ? (
+      {activeTab === 'realisations' || !canSeeAvapTab ? (
         <RealisationsListContent
           realisations={realisations}
           isLoading={isLoading}
           search={search}
           setSearch={setSearch}
           navigate={navigate}
+          canAddPhotos={canAddPhotos}
         />
       ) : (
         <VisualsGallery />
@@ -99,12 +108,14 @@ function RealisationsListContent({
   search,
   setSearch,
   navigate,
+  canAddPhotos,
 }: {
   realisations: any[];
   isLoading: boolean;
   search: string;
   setSearch: (v: string) => void;
   navigate: (path: string) => void;
+  canAddPhotos: boolean;
 }) {
   return (
     <>
@@ -126,9 +137,11 @@ function RealisationsListContent({
           </div>
           <h2 className="text-base font-semibold text-foreground mb-1">Aucune réalisation</h2>
           <p className="text-sm text-muted-foreground max-w-xs mb-4">Ajoutez des photos de vos interventions.</p>
-          <Button onClick={() => navigate('/realisations/new')} size="sm">
-            <Plus className="w-3.5 h-3.5 mr-1" /> Créer
-          </Button>
+          {canAddPhotos && (
+            <Button onClick={() => navigate('/realisations/new')} size="sm">
+              <Plus className="w-3.5 h-3.5 mr-1" /> Créer
+            </Button>
+          )}
         </div>
       ) : (
         <div className="rounded-lg border border-border/60 bg-card overflow-hidden divide-y divide-border/40">
