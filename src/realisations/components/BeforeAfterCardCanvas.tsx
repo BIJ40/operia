@@ -98,6 +98,12 @@ interface BeforeAfterCardCanvasProps {
   phone?: string;
   realisationId?: string;
   agencyId?: string;
+  agencySlug?: string;
+  agencyAddress?: string | null;
+  agencyCity?: string | null;
+  agencyPostalCode?: string | null;
+  agencyPhone?: string | null;
+  agencyEmail?: string | null;
   onCardSaved?: (url: string) => void;
 }
 
