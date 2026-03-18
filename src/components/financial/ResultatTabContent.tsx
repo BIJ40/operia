@@ -3,7 +3,7 @@
  */
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Lock, AlertTriangle, Keyboard, Calculator, Zap } from 'lucide-react';
+import { Lock, AlertTriangle, Keyboard, Calculator, Zap, Users } from 'lucide-react';
 import { MonthSelector } from './MonthSelector';
 import { CompletionIndicator } from './CompletionIndicator';
 import { KpiRow } from './KpiRow';
@@ -26,7 +26,7 @@ export default function ResultatTabContent() {
   const { isLocked, isLoading: monthLoading, upsertMonth, financialMonth } = useFinancialMonth(year, month);
   const { charges, completionScore, isLoading: chargesLoading, createCharge, updateChargeViaRpc } = useFinancialCharges(year, month);
   const { summary, isLoading: summaryLoading } = useFinancialSummary(year, month);
-  const { count: collaboratorCount } = useCollaboratorCount();
+  const { counts: collabCounts } = useCollaboratorCount();
   const { statiaValues, isLoading: statiaLoading } = useStatiaFinancialBridge(year, month);
 
   const isLoading = monthLoading || chargesLoading || summaryLoading;
@@ -65,25 +65,40 @@ export default function ResultatTabContent() {
 
   const hasNoData = !summary && !isLoading;
 
-  // Auto-populate from StatIA metrics + collaborator count when no manual value exists
+  // Build auto-values map from StatIA + collaborators
   const autoValues: Record<string, number> = {};
-  if (collaboratorCount > 0 && (!financialMonth || !financialMonth.nb_salaries)) {
-    autoValues['nb_salaries'] = collaboratorCount;
-  }
-  // Bridge StatIA computed values for activity & CA fields
-  const statiaFieldMap: Record<string, string> = {
-    ca_total: 'ca_total',
-    nb_factures: 'nb_factures',
-    nb_interventions: 'nb_interventions',
-    heures_facturees: 'heures_facturees',
+
+  // Helper: only auto-fill if no manual value saved
+  const tryAutoFill = (field: string, value: number | undefined) => {
+    if (value == null || value === 0) return;
+    const savedVal = financialMonth ? (financialMonth as any)[field] : null;
+    if (!savedVal || savedVal === 0) {
+      autoValues[field] = value;
+    }
   };
-  for (const [statiaKey, monthField] of Object.entries(statiaFieldMap)) {
-    const val = (statiaValues as any)[statiaKey];
+
+  // Collaborator-based auto values
+  tryAutoFill('nb_salaries', collabCounts.total || undefined);
+  tryAutoFill('nb_heures_payees_productifs', collabCounts.heuresPayeesProductifs || undefined);
+  tryAutoFill('nb_heures_payees_improductifs', collabCounts.heuresPayeesImproductifs || undefined);
+
+  // StatIA auto values (activity + CA fields)
+  const statiaFields: (keyof typeof statiaValues)[] = [
+    'ca_total', 'nb_factures', 'nb_interventions', 'heures_facturees',
+    'ca_plomberie', 'ca_electricite', 'ca_menuiserie', 'ca_serrurerie',
+    'ca_vitrerie', 'ca_volets', 'ca_autres',
+    'panier_moyen', 'ca_par_heure',
+  ];
+  for (const key of statiaFields) {
+    const val = statiaValues[key];
     if (val != null && val > 0) {
-      // Only auto-fill if no manual value saved
-      const savedVal = financialMonth ? (financialMonth as any)[monthField] : null;
-      if (!savedVal || savedVal === 0) {
-        autoValues[monthField] = val;
+      // Display-only fields (panier_moyen, ca_par_heure) always show
+      if (key === 'panier_moyen' || key === 'ca_par_heure') {
+        autoValues[key] = val;
+      } else {
+        // For storable fields, only auto-fill if no manual value
+        const monthField = key; // keys match month_field names
+        tryAutoFill(monthField, val);
       }
     }
   }
@@ -109,6 +124,7 @@ export default function ResultatTabContent() {
       {/* Legend */}
       <div className="flex flex-wrap gap-3 text-[10px] text-muted-foreground">
         <span className="flex items-center gap-1"><Zap className="h-3 w-3 text-blue-500" /> Auto StatIA</span>
+        <span className="flex items-center gap-1"><Users className="h-3 w-3 text-primary" /> Auto RH</span>
         <span className="flex items-center gap-1"><Keyboard className="h-3 w-3 text-amber-500" /> Saisie mensuelle</span>
         <span className="flex items-center gap-1"><Keyboard className="h-3 w-3 text-green-500" /> Fixe annuel</span>
         <span className="flex items-center gap-1"><Keyboard className="h-3 w-3 text-orange-500" /> Variable mensuel</span>
