@@ -38,6 +38,10 @@ export default function ResultatTabContent() {
   const { counts: collabCounts } = useCollaboratorCount();
   const { statiaValues, isLoading: statiaLoading } = useStatiaFinancialBridge(year, month);
 
+  // Royalty auto-calc: use StatIA CA or saved CA for computation
+  const currentMonthCA = statiaValues.ca_total ?? (financialMonth?.ca_total ?? undefined);
+  const { data: royaltyValues } = useRoyaltyAutoValues(year, month, currentMonthCA);
+
   const isLoading = monthLoading || chargesLoading || summaryLoading;
 
   // ── Auto-seed: when StatIA has data but no financial_month row exists, create it ──
