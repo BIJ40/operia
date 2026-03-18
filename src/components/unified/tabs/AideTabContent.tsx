@@ -43,13 +43,15 @@ import { usePermissions } from '@/contexts/PermissionsContext';
 import { Lock } from 'lucide-react';
 import { DomainAccentProvider } from '@/contexts/DomainAccentContext';
 
+type GuideViewId = 'apogee' | 'apporteurs' | 'helpconfort' | null;
+
 // ─── Base documentaire config ───────────────────────────────────
 const DOC_SECTIONS = [
   {
     id: 'apogee',
     label: 'Apogée',
     description: 'Guide complet du logiciel Apogée',
-    href: ROUTES.academy.apogee,
+    guideTab: 'apogee' as GuideViewId,
     emoji: '📘',
     accentClass: 'border-l-primary',
     bgClass: 'bg-primary/5 hover:bg-primary/10',
@@ -59,7 +61,7 @@ const DOC_SECTIONS = [
     id: 'apporteurs',
     label: 'Apporteurs',
     description: 'Ressources apporteurs d\'affaires',
-    href: ROUTES.academy.apporteurs,
+    guideTab: 'apporteurs' as GuideViewId,
     emoji: '🤝',
     accentClass: 'border-l-amber-500',
     bgClass: 'bg-amber-500/5 hover:bg-amber-500/10',
@@ -69,7 +71,7 @@ const DOC_SECTIONS = [
     id: 'hc-services',
     label: 'Operia',
     description: 'Documentation Operia',
-    href: ROUTES.academy.hcServices,
+    guideTab: 'helpconfort' as GuideViewId,
     emoji: '🏠',
     accentClass: 'border-l-teal-500',
     bgClass: 'bg-teal-500/5 hover:bg-teal-500/10',
@@ -79,7 +81,7 @@ const DOC_SECTIONS = [
     id: 'hc-base',
     label: 'Base documentaire HelpConfort',
     description: 'Documents et ressources HelpConfort',
-    href: ROUTES.academy.documents,
+    guideTab: 'helpconfort' as GuideViewId,
     emoji: '📂',
     accentClass: 'border-l-purple-500',
     bgClass: 'bg-purple-500/5 hover:bg-purple-500/10',
