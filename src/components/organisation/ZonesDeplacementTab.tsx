@@ -73,6 +73,7 @@ export default function ZonesDeplacementTab() {
       const row: Record<string, string | number> = { 'Technicien': tech.techName };
       ZONE_LABELS.forEach(z => { row[`Zone ${z}`] = tech.zones[z]; });
       row['Total'] = tech.total;
+      row['Paniers'] = tech.paniers ?? tech.total;
       return row;
     });
 
@@ -81,6 +82,7 @@ export default function ZonesDeplacementTab() {
       const totalRow: Record<string, string | number> = { 'Technicien': 'TOTAL' };
       ZONE_LABELS.forEach(z => { totalRow[`Zone ${z}`] = totals.sums[z]; });
       totalRow['Total'] = totals.total;
+      totalRow['Paniers'] = totals.paniers;
       rows.push(totalRow);
     }
 
