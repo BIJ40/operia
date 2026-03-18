@@ -47,6 +47,7 @@ export const MODULES = {
   'organisation.plannings': 'organisation.plannings',
   'organisation.reunions': 'organisation.reunions',
   'organisation.parc': 'organisation.parc',
+  'organisation.zones': 'organisation.zones',
   'organisation.documents_legaux': 'organisation.documents_legaux',
   // Médiathèque
   'mediatheque.consulter': 'mediatheque.consulter',
