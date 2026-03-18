@@ -120,49 +120,10 @@ const SortableCategory = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative border-2 border-l-4 rounded-lg px-3 py-1.5 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 flex items-center justify-center gap-2 overflow-visible min-h-[2.5rem] ${getColorClass(category.colorPreset, isEmpty)}`}
+      className="group relative"
     >
-      {/* Badge Vide */}
-      {isEmpty && !isEditMode && (
-        <div className="absolute -top-2 -right-2 z-20">
-          <div className="bg-muted text-muted-foreground text-xs font-semibold px-3 py-1 rounded-xl shadow-md flex items-center gap-1 border border-muted-foreground/30">
-            <Ban className="w-3 h-3" />
-            Vide
-          </div>
-        </div>
-      )}
-      {isEditMode && !editingId && (
-        <>
-          <div
-            {...attributes}
-            {...listeners}
-            className="absolute -top-2 -left-2 cursor-grab active:cursor-grabbing z-10 bg-background rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <GripVertical className="w-4 h-4 text-muted-foreground hover:text-primary" />
-          </div>
-          <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-            <Button
-              onClick={() => onEdit(category.id)}
-              size="icon"
-              variant="outline"
-              className="h-7 w-7 bg-background shadow-md"
-            >
-              <Edit2 className="w-3 h-3" />
-            </Button>
-            <Button
-              onClick={() => onDelete(category.id)}
-              size="icon"
-              variant="destructive"
-              className="h-7 w-7 shadow-md"
-            >
-              <Trash2 className="w-3 h-3" />
-            </Button>
-          </div>
-        </>
-      )}
-      
       {editingId === category.id ? (
-        <div className="space-y-3">
+        <div className="border-2 border-primary rounded-lg p-4 bg-card space-y-3">
           <Input
             value={editTitle}
             onChange={(e) => onEditTitleChange(e.target.value)}
@@ -290,16 +251,69 @@ const SortableCategory = ({
           </div>
         </div>
       ) : (
-        <Link to={`${ROUTES.academy.apporteursCategory(category.slug)}${isEditMode ? '?edit=true' : ''}`} className="flex items-center gap-3 flex-1 min-w-0">
+        <Link
+          to={`${ROUTES.academy.apporteursCategory(category.slug)}${isEditMode ? '?edit=true' : ''}`}
+          className={`flex flex-col items-center justify-center rounded-xl p-3 transition-all duration-200 hover:scale-105 hover:shadow-md ${isEmpty ? 'opacity-40 grayscale' : ''}`}
+          title={category.title}
+        >
           {isCustomImage ? (
-            <img src={category.icon} alt={category.title} className="w-6 h-6 object-contain flex-shrink-0" />
+            <img
+              src={category.icon}
+              alt={category.title}
+              className="w-16 h-16 sm:w-20 sm:h-20 object-contain"
+            />
           ) : (
-            <Icon className="w-6 h-6 text-primary flex-shrink-0" />
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-muted/50 flex items-center justify-center">
+              <Icon className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
+            </div>
           )}
           {category.showTitleOnCard !== false && (
-            <span className="text-base font-medium text-foreground truncate">{category.title}</span>
+            <span className="mt-1.5 text-xs font-medium text-muted-foreground text-center truncate max-w-full">
+              {category.title}
+            </span>
           )}
         </Link>
+      )}
+
+      {/* Edit mode controls */}
+      {isEditMode && !editingId && (
+        <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+          <Button
+            {...attributes}
+            {...listeners}
+            size="icon"
+            variant="outline"
+            className="h-6 w-6 bg-background shadow-sm cursor-grab active:cursor-grabbing"
+          >
+            <GripVertical className="w-3 h-3" />
+          </Button>
+          <Button
+            onClick={() => onEdit(category.id)}
+            size="icon"
+            variant="outline"
+            className="h-6 w-6 bg-background shadow-sm"
+          >
+            <Edit2 className="w-3 h-3" />
+          </Button>
+          <Button
+            onClick={() => onDelete(category.id)}
+            size="icon"
+            variant="destructive"
+            className="h-6 w-6 shadow-sm"
+          >
+            <Trash2 className="w-3 h-3" />
+          </Button>
+        </div>
+      )}
+
+      {/* Badge Vide */}
+      {isEmpty && !isEditMode && (
+        <div className="absolute -top-1 -right-1 z-20">
+          <div className="bg-muted text-muted-foreground text-[10px] font-semibold px-1.5 py-0.5 rounded-md shadow-sm flex items-center gap-0.5 border border-muted-foreground/30">
+            <Ban className="w-2.5 h-2.5" />
+            Vide
+          </div>
+        </div>
       )}
     </div>
   );
