@@ -57,6 +57,10 @@ export function computeCompletionScore(charges: FinancialCharge[]): number {
   return score;
 }
 
+function isTableNotFoundError(error: any): boolean {
+  return error?.code === 'PGRST205' || error?.message?.includes('Could not find the table');
+}
+
 export function useFinancialCharges(year: number, month: number) {
   const { agencyId } = useAuth();
   const queryClient = useQueryClient();
@@ -66,6 +70,10 @@ export function useFinancialCharges(year: number, month: number) {
   const query = useQuery({
     queryKey,
     enabled: !!agencyId,
+    retry: (failureCount, error: any) => {
+      if (isTableNotFoundError(error)) return false;
+      return failureCount < 3;
+    },
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('agency_financial_charges')
@@ -74,7 +82,10 @@ export function useFinancialCharges(year: number, month: number) {
         .lte('start_month', monthDate)
         .or(`end_month.is.null,end_month.gte.${monthDate}`)
         .order('charge_type');
-      if (error) throw error;
+      if (error) {
+        if (isTableNotFoundError(error)) return [] as FinancialCharge[];
+        throw error;
+      }
       return (data ?? []) as FinancialCharge[];
     },
   });
@@ -121,6 +132,7 @@ export function useFinancialCharges(year: number, month: number) {
   return {
     charges: query.data ?? [],
     isLoading: query.isLoading,
+    isError: query.isError,
     completionScore,
     createCharge,
     updateChargeViaRpc,

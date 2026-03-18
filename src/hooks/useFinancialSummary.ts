@@ -28,12 +28,20 @@ export interface FinancialSummary {
   resultat_exploitation: number;
 }
 
+function isTableNotFoundError(error: any): boolean {
+  return error?.code === 'PGRST205' || error?.message?.includes('Could not find the table');
+}
+
 export function useFinancialSummary(year: number, month: number) {
   const { agencyId } = useAuth();
 
   const query = useQuery({
     queryKey: ['financial-summary', agencyId, year, month],
     enabled: !!agencyId && year > 0 && month >= 1 && month <= 12,
+    retry: (failureCount, error: any) => {
+      if (isTableNotFoundError(error)) return false;
+      return failureCount < 3;
+    },
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('agency_financial_summary')
@@ -42,7 +50,10 @@ export function useFinancialSummary(year: number, month: number) {
         .eq('year', year)
         .eq('month', month)
         .maybeSingle();
-      if (error) throw error;
+      if (error) {
+        if (isTableNotFoundError(error)) return null;
+        throw error;
+      }
       return data as FinancialSummary | null;
     },
   });
@@ -50,6 +61,7 @@ export function useFinancialSummary(year: number, month: number) {
   return {
     summary: query.data ?? null,
     isLoading: query.isLoading,
+    isError: query.isError,
     refetch: query.refetch,
   };
 }
