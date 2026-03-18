@@ -108,6 +108,7 @@ export default function ResultatTabContent() {
 
       {/* Legend */}
       <div className="flex flex-wrap gap-3 text-[10px] text-muted-foreground">
+        <span className="flex items-center gap-1"><Zap className="h-3 w-3 text-blue-500" /> Auto StatIA</span>
         <span className="flex items-center gap-1"><Keyboard className="h-3 w-3 text-amber-500" /> Saisie mensuelle</span>
         <span className="flex items-center gap-1"><Keyboard className="h-3 w-3 text-green-500" /> Fixe annuel</span>
         <span className="flex items-center gap-1"><Keyboard className="h-3 w-3 text-orange-500" /> Variable mensuel</span>
