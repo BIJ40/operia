@@ -64,46 +64,13 @@ interface FolderTabConfig {
   disabled?: boolean;
 }
 
-interface DraggableFolderTabsProps {
+interface StaticFolderTabsProps {
   tabs: FolderTabConfig[];
-  tabOrder: string[];
   activeTab: string;
   onTabChange: (tab: string) => void;
-  onReorder: (newOrder: string[]) => void;
-  storageKey: string;
 }
 
-function DraggableFolderTabs({ 
-  tabs, 
-  tabOrder, 
-  activeTab, 
-  onTabChange, 
-  onReorder 
-}: DraggableFolderTabsProps) {
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      const oldIndex = tabOrder.indexOf(active.id as string);
-      const newIndex = tabOrder.indexOf(over.id as string);
-      onReorder(arrayMove(tabOrder, oldIndex, newIndex));
-    }
-  };
-
-  // Trier les tabs selon l'ordre
-  const sortedTabs = [...tabs].sort((a, b) => 
-    tabOrder.indexOf(a.id) - tabOrder.indexOf(b.id)
-  );
-
-  // Palette de couleurs
+function StaticFolderTabs({ tabs, activeTab, onTabChange }: StaticFolderTabsProps) {
   const accentColors: Record<string, string> = {
     blue: 'hsl(var(--warm-blue))',
     purple: 'hsl(var(--warm-purple))',
@@ -113,71 +80,53 @@ function DraggableFolderTabs({
     teal: 'hsl(var(--warm-teal))',
   };
 
-  // Mapper les indices aux couleurs
-  const tabColorMap: Record<string, string> = {};
-  sortedTabs.forEach((tab, index) => {
-    const colorKeys = Object.keys(accentColors);
-    tabColorMap[tab.id] = accentColors[colorKeys[index % colorKeys.length]];
-  });
-
-  const activeColor = tabColorMap[activeTab];
+  const colorKeys = Object.keys(accentColors);
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext items={tabOrder} strategy={horizontalListSortingStrategy}>
-        <div className="flex gap-1 bg-transparent h-auto p-0 mb-0">
-          {sortedTabs.map((tab, index) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            const colorKeys = Object.keys(accentColors);
-            const accentColor = accentColors[colorKeys[index % colorKeys.length]];
-            
-            return (
-              <DraggableTab
-                key={tab.id}
-                id={tab.id}
-                isActive={isActive}
-                isDraggable={!tab.disabled}
-                onClick={() => !tab.disabled && onTabChange(tab.id)}
-                className={cn(
-                  "flex items-center gap-2 px-5 py-3",
-                  "rounded-t-2xl border-2 border-b-0",
-                  "font-medium text-sm transition-all duration-200",
-                  "relative -mb-[2px] z-10",
-                  tab.disabled && "opacity-40 cursor-not-allowed",
-                  !tab.disabled && isActive 
-                    ? "bg-background text-foreground shadow-md" 
-                    : !tab.disabled 
-                      ? "bg-muted/50 border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
-                      : "bg-muted/30 border-transparent text-muted-foreground"
-                )}
-                style={{
-                  borderColor: isActive && !tab.disabled ? accentColor : undefined,
-                  boxShadow: isActive && !tab.disabled ? `0 -2px 8px -2px ${accentColor}40` : undefined,
-                }}
-              >
-                <span 
-                  className={cn(
-                    "flex items-center justify-center w-6 h-6 rounded-lg",
-                    isActive && !tab.disabled ? "text-white" : "text-muted-foreground"
-                  )}
-                  style={{
-                    backgroundColor: isActive && !tab.disabled ? accentColor : 'transparent',
-                  }}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                </span>
-                <span>{tab.label}</span>
-              </DraggableTab>
-            );
-          })}
-        </div>
-      </SortableContext>
-    </DndContext>
+    <div className="flex gap-1 bg-transparent h-auto p-0 mb-0">
+      {tabs.map((tab, index) => {
+        const Icon = tab.icon;
+        const isActive = activeTab === tab.id;
+        const accentColor = accentColors[colorKeys[index % colorKeys.length]];
+
+        return (
+          <button
+            key={tab.id}
+            onClick={() => !tab.disabled && onTabChange(tab.id)}
+            disabled={tab.disabled}
+            className={cn(
+              "flex items-center gap-2 px-5 py-3",
+              "rounded-t-2xl border-2 border-b-0",
+              "font-medium text-sm transition-all duration-200",
+              "relative -mb-[2px] z-10",
+              tab.disabled && "opacity-40 cursor-not-allowed",
+              !tab.disabled && isActive
+                ? "bg-background text-foreground shadow-md"
+                : !tab.disabled
+                  ? "bg-muted/50 border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
+                  : "bg-muted/30 border-transparent text-muted-foreground"
+            )}
+            style={{
+              borderColor: isActive && !tab.disabled ? accentColor : undefined,
+              boxShadow: isActive && !tab.disabled ? `0 -2px 8px -2px ${accentColor}40` : undefined,
+            }}
+          >
+            <span
+              className={cn(
+                "flex items-center justify-center w-6 h-6 rounded-lg",
+                isActive && !tab.disabled ? "text-white" : "text-muted-foreground"
+              )}
+              style={{
+                backgroundColor: isActive && !tab.disabled ? accentColor : 'transparent',
+              }}
+            >
+              <Icon className="w-3.5 h-3.5" />
+            </span>
+            <span>{tab.label}</span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
