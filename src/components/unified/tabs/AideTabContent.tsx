@@ -6,9 +6,7 @@
  * 4. Mes demandes (suivi conversationnel)
  */
 
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { ROUTES } from '@/config/routes';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,7 +26,8 @@ import {
   Loader2,
   MessageCircle,
   Search,
-  ExternalLink,
+  ChevronRight,
+  ArrowLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -44,13 +43,15 @@ import { usePermissions } from '@/contexts/PermissionsContext';
 import { Lock } from 'lucide-react';
 import { DomainAccentProvider } from '@/contexts/DomainAccentContext';
 
+type GuideViewId = 'apogee' | 'apporteurs' | 'helpconfort' | null;
+
 // ─── Base documentaire config ───────────────────────────────────
 const DOC_SECTIONS = [
   {
     id: 'apogee',
     label: 'Apogée',
     description: 'Guide complet du logiciel Apogée',
-    href: ROUTES.academy.apogee,
+    guideTab: 'apogee' as GuideViewId,
     emoji: '📘',
     accentClass: 'border-l-primary',
     bgClass: 'bg-primary/5 hover:bg-primary/10',
@@ -60,7 +61,7 @@ const DOC_SECTIONS = [
     id: 'apporteurs',
     label: 'Apporteurs',
     description: 'Ressources apporteurs d\'affaires',
-    href: ROUTES.academy.apporteurs,
+    guideTab: 'apporteurs' as GuideViewId,
     emoji: '🤝',
     accentClass: 'border-l-amber-500',
     bgClass: 'bg-amber-500/5 hover:bg-amber-500/10',
@@ -70,7 +71,7 @@ const DOC_SECTIONS = [
     id: 'hc-services',
     label: 'Operia',
     description: 'Documentation Operia',
-    href: ROUTES.academy.hcServices,
+    guideTab: 'helpconfort' as GuideViewId,
     emoji: '🏠',
     accentClass: 'border-l-teal-500',
     bgClass: 'bg-teal-500/5 hover:bg-teal-500/10',
@@ -80,7 +81,7 @@ const DOC_SECTIONS = [
     id: 'hc-base',
     label: 'Base documentaire HelpConfort',
     description: 'Documents et ressources HelpConfort',
-    href: ROUTES.academy.documents,
+    guideTab: 'helpconfort' as GuideViewId,
     emoji: '📂',
     accentClass: 'border-l-purple-500',
     bgClass: 'bg-purple-500/5 hover:bg-purple-500/10',
@@ -160,6 +161,8 @@ function InlineFaq() {
   );
 }
 
+const GuidesTabContent = lazy(() => import('@/components/unified/tabs/GuidesTabContent'));
+
 // ─── Main component ─────────────────────────────────────────────
 export default function SupportHubTabContent() {
   const queryClient = useQueryClient();
@@ -167,11 +170,35 @@ export default function SupportHubTabContent() {
   const { tickets: combinedTickets, isLoading: combinedLoading } = useCombinedUserTickets();
   const { unreadCount: totalUnreadCount } = useUserProjectUnreadCount();
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+  const [guideView, setGuideView] = useState<GuideViewId>(null);
 
   const handleTicketCreated = (_ticketId: string) => {
     queryClient.invalidateQueries({ queryKey: ['user-project-tickets'] });
     queryClient.invalidateQueries({ queryKey: ['combined-user-tickets'] });
   };
+
+  // Guide view
+  const openGuide = (guideTab: GuideViewId) => {
+    if (guideTab) {
+      sessionStorage.setItem('guides_sub_tab', JSON.stringify(guideTab));
+      window.dispatchEvent(new CustomEvent('session-state-change', { detail: { key: 'guides_sub_tab', value: guideTab } }));
+    }
+    setGuideView(guideTab);
+  };
+
+  if (guideView) {
+    return (
+      <div className="py-3 px-2 sm:px-4">
+        <Button variant="ghost" size="sm" onClick={() => setGuideView(null)} className="mb-3 gap-1.5">
+          <ArrowLeft className="w-4 h-4" />
+          Retour au centre d'aide
+        </Button>
+        <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>}>
+          <GuidesTabContent />
+        </Suspense>
+      </div>
+    );
+  }
 
   // Detail view
   if (selectedTicketId) {
@@ -241,11 +268,11 @@ export default function SupportHubTabContent() {
 
               if (hasAccess) {
                 return (
-                  <Link
+                  <button
                     key={section.id}
-                    to={section.href}
+                    onClick={() => openGuide(section.guideTab)}
                     className={cn(
-                      'flex items-center gap-3 p-3 rounded-xl border-l-4 transition-all',
+                      'w-full flex items-center gap-3 p-3 rounded-xl border-l-4 transition-all text-left',
                       section.accentClass,
                       section.bgClass,
                     )}
@@ -255,8 +282,8 @@ export default function SupportHubTabContent() {
                       <p className="font-medium text-sm">{section.label}</p>
                       <p className="text-xs text-muted-foreground">{section.description}</p>
                     </div>
-                    <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0" />
-                  </Link>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                  </button>
                 );
               }
 
