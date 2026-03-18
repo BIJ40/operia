@@ -45,7 +45,7 @@ export default function CategoryOperia() {
   const { isAuthenticated } = useAuthCore();
   const { hasGlobalRole, hasModuleOption } = usePermissions();
   
-  const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('guides', 'edition');
+  const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('support.guides', 'edition');
   const getEditUrl = (url: string) => isEditMode ? `${url}?edit=true` : url;
 
   const [openAccordions, setOpenAccordions] = useState<string[]>([]);

@@ -11,13 +11,15 @@
 
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Maximize2, Users, Calendar, AlertCircle, Clock } from 'lucide-react';
+import { MapPin, Maximize2, Users, Calendar, AlertCircle, Clock, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRdvMap, calculateBounds, MapRdv } from '@/hooks/useRdvMap';
 import { createPinMarkerElement } from '@/components/map/PinMarker';
+import { TourSummaryBar } from '@/components/map/TourSummaryBar';
+import { useRouteDirections } from '@/hooks/useRouteDirections';
 import { HumanTitle } from './HumanTitle';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -46,9 +48,66 @@ interface DashboardMapWidgetProps {
   agencySlug?: string;
 }
 
-const MAPBOX_STYLE = 'mapbox://styles/bij40/cmjbi8grj000t01s3ajxo3amm';
+const PRIMARY_MAPBOX_STYLE = 'mapbox://styles/bij40/cmjbi8grj000t01s3ajxo3amm';
+const FALLBACK_MAPBOX_STYLE = 'mapbox://styles/mapbox/streets-v12';
 
 type MapTimeFilter = 'jour' | 'actuel';
+
+function enableStyleFallback(map: mapboxgl.Map) {
+  let fallbackApplied = false;
+
+  const applyFallback = () => {
+    if (fallbackApplied) return;
+    fallbackApplied = true;
+    console.warn('[MAP] Style principal indisponible, fallback activé');
+    map.setStyle(FALLBACK_MAPBOX_STYLE);
+    map.once('style.load', () => {
+      console.log('[MAP] Fallback style loaded, forcing resize');
+      map.resize();
+    });
+  };
+
+  map.on('error', (event: any) => {
+    const message = String(event?.error?.message ?? '').toLowerCase();
+    const status = event?.error?.status ?? event?.error?.statusCode;
+    const isStyleError =
+      message.includes('style') ||
+      message.includes('sprite') ||
+      message.includes('source') ||
+      status === 401 ||
+      status === 403 ||
+      status === 404;
+
+    if (isStyleError) {
+      applyFallback();
+    }
+  });
+
+  map.on('styledata', () => {
+    if (!map.isStyleLoaded()) return;
+
+    const style = map.getStyle();
+    const sourceCount = Object.keys(style?.sources ?? {}).length;
+    const hasRenderableLayer = (style?.layers ?? []).some(layer => layer.type !== 'background');
+
+    if (sourceCount === 0 || !hasRenderableLayer) {
+      applyFallback();
+    }
+  });
+}
+
+/**
+ * Attach a ResizeObserver to auto-resize the map when container dimensions change
+ */
+function attachResizeObserver(container: HTMLElement, map: mapboxgl.Map): ResizeObserver {
+  const ro = new ResizeObserver(() => {
+    if (map && !((map as any)._removed)) {
+      map.resize();
+    }
+  });
+  ro.observe(container);
+  return ro;
+}
 
 export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidgetProps) {
   const today = new Date();
@@ -85,37 +144,45 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
     const container = mapContainerRef.current;
     if (!container || !mapboxToken || mapRef.current) return;
 
-    console.log('[MAP] Init. Container:', container.offsetWidth, 'x', container.offsetHeight);
+    let ro: ResizeObserver | null = null;
 
-    mapboxgl.accessToken = mapboxToken;
+    // Delay init to let Framer Motion animation finish
+    const initTimer = setTimeout(() => {
+      console.log('[MAP] Init. Container:', container.offsetWidth, 'x', container.offsetHeight);
 
-    const map = new mapboxgl.Map({
-      container,
-      style: MAPBOX_STYLE,
-      center: [2.3522, 48.8566],
-      zoom: 10,
-      attributionControl: true,
-    });
+      mapboxgl.accessToken = mapboxToken;
 
-    map.on('load', () => {
-      console.log('[MAP] Style loaded');
-      map.resize();
-    });
+      const map = new mapboxgl.Map({
+        container,
+        style: PRIMARY_MAPBOX_STYLE,
+        center: [2.3522, 48.8566],
+        zoom: 10,
+        attributionControl: true,
+      });
 
-    map.on('error', (e: any) => {
-      console.error('[MAP] Error:', e.error?.message || e);
-    });
+      map.on('load', () => {
+        console.log('[MAP] Style loaded');
+        map.resize();
+      });
 
-    mapRef.current = map;
-    setMapReady(true);
+      enableStyleFallback(map);
+      ro = attachResizeObserver(container, map);
+
+      mapRef.current = map;
+      setMapReady(true);
+    }, 150);
 
     return () => {
+      clearTimeout(initTimer);
       console.log('[MAP] Cleanup');
       setMapReady(false);
+      ro?.disconnect();
       markersRef.current.forEach(m => m.remove());
       markersRef.current = [];
-      map.remove();
-      mapRef.current = null;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
     };
   }, [mapboxToken]);
 
@@ -226,6 +293,11 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
         </div>
       )}
 
+      {/* Edge gradients — bottom + sides */}
+      <div className="absolute bottom-0 left-0 right-0 h-16 z-[2] pointer-events-none bg-gradient-to-t from-white/90 to-white/0 dark:from-background/90 dark:to-background/0" />
+      <div className="absolute top-0 bottom-0 left-0 w-10 z-[2] pointer-events-none bg-gradient-to-r from-white/70 to-white/0 dark:from-background/70 dark:to-background/0" />
+      <div className="absolute top-0 bottom-0 right-0 w-10 z-[2] pointer-events-none bg-gradient-to-l from-white/70 to-white/0 dark:from-background/70 dark:to-background/0" />
+
       {/* Header */}
       {!isLoading && !tokenLoading && (
         <div className="absolute top-0 left-0 right-0 z-10 px-4 py-3 bg-gradient-to-b from-white/90 to-white/0 dark:from-background/90 dark:to-background/0">
@@ -237,13 +309,13 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
               size="md"
             />
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               {/* Toggle Jour / Actuel */}
               <div className="flex items-center rounded-full bg-white/80 dark:bg-background/80 border border-border/50 shadow-sm p-0.5">
                 <button
                   onClick={() => setTimeFilter('jour')}
                   className={cn(
-                    "flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all",
+                    "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all",
                     timeFilter === 'jour'
                       ? "bg-warm-blue text-white shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
@@ -255,7 +327,7 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
                 <button
                   onClick={() => setTimeFilter('actuel')}
                   className={cn(
-                    "flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all",
+                    "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all",
                     timeFilter === 'actuel'
                       ? "bg-warm-teal text-white shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
@@ -266,50 +338,39 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
                 </button>
               </div>
 
-              {/* Compteur de RDV */}
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 dark:bg-background/80 border border-border/50 shadow-sm">
-                <Calendar className="h-3.5 w-3.5 text-warm-blue" />
-                <span className="text-sm font-medium">
-                  {filteredRdvs.length} RDV
-                </span>
+              {/* RDV + Techs compact on one line */}
+              <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/80 dark:bg-background/80 border border-border/50 shadow-sm text-xs font-medium">
+                <Calendar className="h-3 w-3 text-warm-blue" />
+                <span>{filteredRdvs.length}</span>
+                <span className="text-muted-foreground mx-0.5">·</span>
+                <Users className="h-3 w-3 text-warm-purple" />
+                <span>{technicians.length}</span>
               </div>
 
-              {/* Compteur techniciens */}
-              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 dark:bg-background/80 border border-border/50 shadow-sm">
-                <Users className="h-3.5 w-3.5 text-warm-purple" />
-                <span className="text-sm font-medium">
-                  {technicians.length} techs
-                </span>
-              </div>
-
-              {/* Bouton agrandir */}
+              {/* Bouton agrandir — icône seule */}
               <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
                 <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 px-2 bg-white/80 dark:bg-background/80 border-border/50 hover:bg-white dark:hover:bg-background"
+                  <button
+                    className="flex items-center justify-center h-7 w-7 rounded-full bg-white/80 dark:bg-background/80 border border-border/50 shadow-sm hover:bg-white dark:hover:bg-background transition-colors"
                   >
-                    <Maximize2 className="h-4 w-4" />
-                    <span className="ml-1.5 hidden sm:inline">Agrandir</span>
-                  </Button>
+                    <Maximize2 className="h-3.5 w-3.5 text-foreground" />
+                  </button>
                 </DialogTrigger>
-                <DialogContent className="max-w-5xl h-[80vh] p-0">
-                  <DialogHeader className="px-6 py-4 border-b">
+                <DialogContent className="max-w-5xl h-[80vh] p-0 flex flex-col">
+                  <DialogHeader className="px-6 py-4 border-b shrink-0">
                     <DialogTitle className="flex items-center gap-2">
                       <MapPin className="h-5 w-5 text-warm-teal" />
                       Carte des RDV du jour
                     </DialogTitle>
                   </DialogHeader>
-                  <div className="relative flex-1 w-full h-full min-h-[500px]">
-                    <ExpandedMapContent
-                      rdvs={filteredRdvs}
-                      selectedRdv={selectedRdv}
-                      onSelectRdv={setSelectedRdv}
-                      mapboxToken={mapboxToken || ''}
-                      isOpen={isExpanded}
-                    />
-                  </div>
+                  <ExpandedMapContent
+                    rdvs={filteredRdvs}
+                    selectedRdv={selectedRdv}
+                    onSelectRdv={setSelectedRdv}
+                    mapboxToken={mapboxToken || ''}
+                    isOpen={isExpanded}
+                    technicians={technicians}
+                  />
                 </DialogContent>
               </Dialog>
             </div>
@@ -341,17 +402,26 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
                   </span>
                 </div>
               </div>
-              <div className="flex -space-x-1">
-                {selectedRdv.users.slice(0, 3).map(user => (
-                  <div
-                    key={user.id}
-                    className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold text-white"
-                    style={{ backgroundColor: user.color }}
-                    title={user.name}
-                  >
-                    {user.name.charAt(0)}
-                  </div>
-                ))}
+              <div className="flex items-center gap-2">
+                <div className="flex -space-x-1">
+                  {selectedRdv.users.slice(0, 3).map(user => (
+                    <div
+                      key={user.id}
+                      className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold text-white"
+                      style={{ backgroundColor: user.color }}
+                      title={user.name}
+                    >
+                      {user.name.charAt(0)}
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setSelectedRdv(null); }}
+                  className="p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Fermer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
             </div>
           </div>
@@ -384,7 +454,7 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
 }
 
 /**
- * Expanded map in dialog — separate instance, only mounts when dialog opens
+ * Expanded map in dialog — separate instance with tech filter + tour mode
  */
 function ExpandedMapContent({
   rdvs,
@@ -392,30 +462,58 @@ function ExpandedMapContent({
   onSelectRdv,
   mapboxToken,
   isOpen,
+  technicians,
 }: {
   rdvs: MapRdv[];
   selectedRdv: MapRdv | null;
   onSelectRdv: (rdv: MapRdv | null) => void;
   mapboxToken: string;
   isOpen: boolean;
+  technicians: { id: number; name: string; color: string }[];
 }) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const [mapReady, setMapReady] = useState(false);
+  const [selectedTechIds, setSelectedTechIds] = useState<number[]>([]);
+
+  // Filter rdvs by selected techs
+  const filteredRdvs = useMemo(() => {
+    if (selectedTechIds.length === 0) return rdvs;
+    return rdvs.filter(r => r.users.some(u => selectedTechIds.includes(u.id)));
+  }, [rdvs, selectedTechIds]);
+
+  // Tour mode
+  const isTourMode = selectedTechIds.length === 1;
+  const tourTech = isTourMode ? technicians.find(t => t.id === selectedTechIds[0]) : null;
+
+  const sortedRdvs = useMemo(() => {
+    if (!isTourMode) return filteredRdvs;
+    return [...filteredRdvs].sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime());
+  }, [filteredRdvs, isTourMode]);
+
+  // Route directions
+  const routeCoords = useMemo<[number, number][]>(() => {
+    if (!isTourMode || sortedRdvs.length < 2) return [];
+    return sortedRdvs.map(r => [r.lng, r.lat]);
+  }, [isTourMode, sortedRdvs]);
+
+  const { geometry: routeGeometry, distanceKm, durationMin, isLoading: routeLoading } =
+    useRouteDirections(routeCoords, mapboxToken, isTourMode && routeCoords.length >= 2);
 
   useEffect(() => {
     if (!isOpen) return;
     const container = mapContainerRef.current;
     if (!container || !mapboxToken) return;
 
-    // Small delay to let dialog animate open and get dimensions
+    let ro: ResizeObserver | null = null;
+
     const timer = setTimeout(() => {
       mapboxgl.accessToken = mapboxToken;
 
       const map = new mapboxgl.Map({
         container,
-        style: MAPBOX_STYLE,
+        style: PRIMARY_MAPBOX_STYLE,
         center: [2.3522, 48.8566],
         zoom: 10,
         attributionControl: true,
@@ -424,6 +522,8 @@ function ExpandedMapContent({
       map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
 
       map.on('load', () => map.resize());
+      enableStyleFallback(map);
+      ro = attachResizeObserver(container, map);
 
       mapRef.current = map;
       setMapReady(true);
@@ -432,6 +532,7 @@ function ExpandedMapContent({
     return () => {
       clearTimeout(timer);
       setMapReady(false);
+      ro?.disconnect();
       markersRef.current.forEach(m => m.remove());
       markersRef.current = [];
       if (mapRef.current) {
@@ -441,6 +542,7 @@ function ExpandedMapContent({
     };
   }, [isOpen, mapboxToken]);
 
+  // Update markers
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady) return;
@@ -448,11 +550,13 @@ function ExpandedMapContent({
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
 
-    rdvs.forEach(rdv => {
+    sortedRdvs.forEach((rdv, index) => {
       const isSelected = selectedRdv?.rdvId === rdv.rdvId;
+      const orderNumber = isTourMode ? index + 1 : undefined;
+
       const el = createPinMarkerElement(rdv.users, 40, isSelected, () => {
         onSelectRdv(isSelected ? null : rdv);
-      });
+      }, orderNumber);
 
       const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
         .setLngLat([rdv.lng, rdv.lat])
@@ -461,8 +565,8 @@ function ExpandedMapContent({
       markersRef.current.push(marker);
     });
 
-    const bounds = calculateBounds(rdvs);
-    if (bounds && rdvs.length > 0) {
+    const bounds = calculateBounds(sortedRdvs);
+    if (bounds && sortedRdvs.length > 0) {
       const doFit = () => {
         map.fitBounds(bounds as [[number, number], [number, number]], {
           padding: 60,
@@ -470,19 +574,102 @@ function ExpandedMapContent({
           duration: 500,
         });
       };
-      if (map.isStyleLoaded()) {
-        doFit();
-      } else {
-        map.once('load', doFit);
-      }
+      if (map.isStyleLoaded()) doFit();
+      else map.once('load', doFit);
     }
-  }, [rdvs, selectedRdv, onSelectRdv, mapReady]);
+  }, [sortedRdvs, selectedRdv, onSelectRdv, mapReady, isTourMode]);
+
+  // Draw/remove route layer
+  const TOUR_SRC = 'tour-route-src';
+  const TOUR_LYR = 'tour-route-lyr';
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady) return;
+
+    if (map.getLayer(TOUR_LYR)) map.removeLayer(TOUR_LYR);
+    if (map.getSource(TOUR_SRC)) map.removeSource(TOUR_SRC);
+
+    if (!isTourMode || !routeGeometry) return;
+
+    map.addSource(TOUR_SRC, {
+      type: 'geojson',
+      data: { type: 'Feature', properties: {}, geometry: routeGeometry },
+    });
+
+    map.addLayer({
+      id: TOUR_LYR,
+      type: 'line',
+      source: TOUR_SRC,
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': tourTech?.color || '#6366f1',
+        'line-width': 4,
+        'line-dasharray': [2, 3],
+        'line-opacity': 0.75,
+      },
+    });
+  }, [routeGeometry, isTourMode, mapReady, tourTech?.color]);
+
+  const toggleTech = useCallback((id: number) => {
+    setSelectedTechIds(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]);
+  }, []);
 
   return (
-    <div 
-      ref={mapContainerRef} 
-      className="absolute inset-0 w-full h-full"
-    />
+    <div className="flex flex-col w-full h-full min-h-0">
+      {/* Tech filter bar — above the map */}
+      {technicians.length > 0 && (
+        <div className="shrink-0 px-4 py-2.5 border-b bg-muted/30 flex flex-wrap items-center gap-1.5">
+          <span className="text-xs text-muted-foreground mr-1.5">Techniciens :</span>
+          {technicians.map(tech => {
+            const active = selectedTechIds.includes(tech.id);
+            return (
+              <button
+                key={tech.id}
+                onClick={() => toggleTech(tech.id)}
+                className={cn(
+                  "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all border",
+                  active
+                    ? "bg-foreground text-background border-foreground shadow-sm"
+                    : "bg-background text-foreground border-border hover:bg-muted"
+                )}
+              >
+                <span
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: tech.color }}
+                />
+                <span className="truncate max-w-[100px]">{tech.name}</span>
+              </button>
+            );
+          })}
+          {selectedTechIds.length > 0 && (
+            <button
+              onClick={() => setSelectedTechIds([])}
+              className="px-2.5 py-1 rounded-full text-xs text-muted-foreground hover:text-foreground bg-background border border-border hover:bg-muted transition-all"
+            >
+              ✕ Réinitialiser
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Map */}
+      <div className="relative flex-1 min-h-0">
+        <div ref={mapContainerRef} className="absolute inset-0 w-full h-full" />
+
+        {/* Tour summary bar */}
+        {isTourMode && tourTech && sortedRdvs.length >= 2 && (
+          <TourSummaryBar
+            techName={tourTech.name}
+            techColor={tourTech.color}
+            rdvCount={sortedRdvs.length}
+            distanceKm={distanceKm}
+            durationMin={durationMin}
+            isLoading={routeLoading}
+          />
+        )}
+      </div>
+    </div>
   );
 }
 

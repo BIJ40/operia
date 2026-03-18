@@ -123,9 +123,10 @@ export function NouvelleDemandeDialog({ open, onOpenChange }: NouvelleDemandeDia
       toast.success('Demande envoyée avec succès');
       resetForm();
       onOpenChange(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating request:', err);
-      toast.error('Erreur lors de la création de la demande');
+      const message = err?.message || 'Une erreur est survenue. Veuillez réessayer.';
+      toast.error(message);
     } finally {
       setLoading(false);
     }

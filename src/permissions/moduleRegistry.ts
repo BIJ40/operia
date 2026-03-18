@@ -45,8 +45,10 @@ export function getModuleOptions(moduleKey: ModuleKey): ModuleOptionDefinition[]
  * Vérifie si un path d'option est valide (ex: "pilotage_agence.carte_rdv")
  */
 export function isValidOptionPath(path: string): boolean {
-  const [moduleKey, optionKey] = path.split('.') as [ModuleKey, string];
-  
+  const lastDot = path.lastIndexOf('.');
+  if (lastDot <= 0) return false;
+  const moduleKey = path.substring(0, lastDot);
+  const optionKey = path.substring(lastDot + 1);
   if (!moduleKey || !optionKey) return false;
   if (!isValidModuleKey(moduleKey)) return false;
   
@@ -99,7 +101,7 @@ export function validateModuleDefinitions(
   
   for (const key of Object.keys(externalKeys)) {
     // Vérifier si c'est un module racine
-    if (validModuleKeys.has(key as ModuleKey)) {
+    if (isValidModuleKey(key)) {
       continue; // Module valide
     }
     
@@ -151,9 +153,39 @@ export function logValidationIssues(issues: ValidationIssue[]): void {
 export const PROTECTED_MODULES: ModuleKey[] = ['ticketing'];
 
 /**
+ * Modules qui sont en réalité des interfaces de rôle, pas des modules administrables.
+ * Ils restent dans MODULE_DEFINITIONS pour compatibilité technique mais ne doivent pas
+ * apparaître dans l'admin des modules standard.
+ */
+export const ROLE_INTERFACE_MODULES: ModuleKey[] = MODULE_DEFINITIONS
+  .filter(m => (m as any).roleInterface === true)
+  .map(m => m.key);
+
+/**
+ * Modules activables UNIQUEMENT par overwrite utilisateur (user_modules).
+ * Jamais activés par plan (plan_tier_modules) ni par rôle (DEFAULT_MODULES_BY_ROLE).
+ */
+export const OVERWRITE_ONLY_MODULES: ModuleKey[] = MODULE_DEFINITIONS
+  .filter(m => m.overwriteOnly === true)
+  .map(m => m.key);
+
+/**
+ * Vérifie si un module est overwrite-only (opt-in individuel uniquement)
+ */
+export function isOverwriteOnlyModule(moduleKey: ModuleKey): boolean {
+  return OVERWRITE_ONLY_MODULES.includes(moduleKey);
+}
+
+/**
  * Vérifie si un module est protégé
  */
 export function isProtectedModule(moduleKey: ModuleKey): boolean {
   return PROTECTED_MODULES.includes(moduleKey);
 }
 
+/**
+ * Vérifie si un module est une interface de rôle (pas administrable)
+ */
+export function isRoleInterfaceModule(moduleKey: ModuleKey): boolean {
+  return ROLE_INTERFACE_MODULES.includes(moduleKey);
+}

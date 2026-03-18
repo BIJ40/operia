@@ -204,4 +204,4 @@ export function useChargeTravauxAVenir() {
   };
 }
 
-export type { ChargeTravauxResult, ChargeTravauxProjet, ChargeTravauxUniversStats, ChargeParEtatStats } from '../shared/chargeTravauxEngine';
+export type { ChargeTravauxResult, ChargeTravauxProjet, ChargeTravauxUniversStats, ChargeParEtatStats, DataQualityInfo, PipelineMaturityInfo, PipelineAgingInfo, RiskProjectEntry, TechnicianCharge, WeeklyLoadEntry } from '../shared/chargeTravauxEngine';

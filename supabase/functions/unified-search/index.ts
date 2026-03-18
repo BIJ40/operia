@@ -922,6 +922,7 @@ serve(async (req) => {
         .from('user_modules')
         .select('module_key')
         .eq('user_id', user.id)
+        // legacy compat — 'help_academy' à supprimer après migration DB des user_modules/plan_tier_modules
         .in('module_key', ['guides', 'help_academy']);
       
       const moduleKeys = (userModules || []).map((m: any) => m.module_key);

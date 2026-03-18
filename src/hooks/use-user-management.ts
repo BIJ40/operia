@@ -38,6 +38,7 @@ export interface UserProfile {
   first_name: string | null;
   last_name: string | null;
   agence: string | null;
+  agency_id: string | null;
   global_role: GlobalRole | null;
   enabled_modules: EnabledModules | null;
   role_agence: string | null;
@@ -99,7 +100,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
   const queryClient = useQueryClient();
   const { globalRole, suggestedGlobalRole, isAdmin } = usePermissions();
   const { user } = useAuthCore();
-  const { agence: currentUserAgency } = useProfile();
+  const { agence: currentUserAgency, agencyId: currentUserAgencyId } = useProfile();
   
   // ✅ SOURCE DE VÉRITÉ : Permissions depuis roleMatrix.ts
   const effectiveUserRole = globalRole ?? suggestedGlobalRole;
@@ -179,16 +180,16 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       case 'self':
         return []; // Pas de gestion d'autres utilisateurs
       case 'ownAgency':
-        return currentUserAgency ? [currentUserAgency] : [];
+        return currentUserAgencyId ? [currentUserAgencyId] : [];
       case 'assignedAgencies':
-        // Utiliser les agences assignées, ou vide si aucune
+        // Utiliser les agences assignées (UUIDs), ou vide si aucune
         return assignedAgenciesRaw?.length ? assignedAgenciesRaw : [];
       case 'allAgencies':
         return null; // null = pas de filtre agence
       default:
         return [];
     }
-  }, [effectiveScope, restrictToAgencyId, currentUserAgency, assignedAgenciesRaw]);
+  }, [effectiveScope, restrictToAgencyId, currentUserAgencyId, assignedAgenciesRaw]);
 
   // ✅ Fetch users avec sélection explicite de colonnes + modules depuis user_modules
   const { data: users, isLoading: usersLoading } = useQuery({
@@ -201,7 +202,8 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
           email, 
           first_name, 
           last_name, 
-          agence, 
+          agence,
+          agency_id,
           global_role, 
           role_agence, 
           is_active, 
@@ -212,9 +214,9 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
           apogee_user_id
         `);
       
-      // Filtre agences
+      // Filtre agences — agency_id est la source unique de vérité
       if (manageableAgencyIds !== null) {
-        query = query.in('agence', manageableAgencyIds);
+        query = query.in('agency_id', manageableAgencyIds);
       }
       
       // Filtre statut
@@ -278,7 +280,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
   }, [agencies, manageableAgencyIds]);
 
   // Module check helper
-  const isModuleEnabledForUser = (modules: EnabledModules, moduleKey: ModuleKey): boolean => {
+  const isModuleEnabledForUser = (modules: EnabledModules, moduleKey: string): boolean => {
     const state = modules[moduleKey];
     if (typeof state === 'boolean') return state;
     if (typeof state === 'object') return state.enabled;
@@ -302,8 +304,10 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       }
       
       if (agencyFilter !== 'all') {
-        if (agencyFilter === 'none' && user.agence) return false;
-        if (agencyFilter !== 'none' && user.agence !== agencyFilter) return false;
+        const userAgencyId = user.agency_id;
+        const userAgenceSlug = user.agence;
+        if (agencyFilter === 'none' && (userAgencyId || userAgenceSlug)) return false;
+        if (agencyFilter !== 'none' && userAgenceSlug !== agencyFilter) return false;
       }
       
       if (roleFilter !== 'all') {
@@ -313,7 +317,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
 
       if (moduleFilter !== 'all') {
         const effectiveModules = modifiedUsers[user.id]?.enabled_modules ?? user.enabled_modules ?? {};
-        if (!isModuleEnabledForUser(effectiveModules, moduleFilter as ModuleKey)) return false;
+        if (!isModuleEnabledForUser(effectiveModules, moduleFilter)) return false;
       }
       
       return true;
@@ -403,8 +407,9 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       const { data, error } = await supabase.functions.invoke('create-user', { 
         body: { ...userData, globalRole: effectiveGlobalRole } 
       });
-      if (error) throw error;
+      // Check body error first (contains the explicit message from edge function)
       if (data?.error) throw new Error(data.error);
+      if (error) throw error;
       return data;
     },
     onSuccess: () => {
@@ -484,6 +489,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
         first_name?: string; 
         last_name?: string; 
         agence?: string; 
+        agency_id?: string | null;
         role_agence?: string; 
         support_level?: number; 
         global_role?: GlobalRole;
@@ -502,6 +508,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
         first_name: data.first_name,
         last_name: data.last_name,
         agence: data.agence,
+        agency_id: data.agency_id ?? null,
         role_agence: data.role_agence,
         global_role: effectiveGlobalRole,
         apogee_user_id: data.apogee_user_id,
@@ -603,6 +610,16 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
 
   const handleRoleChange = (userId: string, role: GlobalRole) => {
     setModifiedUsers(prev => ({ ...prev, [userId]: { ...prev[userId], global_role: role } }));
+    // Auto-save immédiatement : persister le rôle sans attendre un clic "Enregistrer"
+    const targetUser = visibleUsers.find(u => u.id === userId);
+    if (targetUser) {
+      const existingChanges = modifiedUsers[userId];
+      saveMutation.mutate({
+        userId,
+        globalRole: role,
+        enabledModules: existingChanges?.enabled_modules ?? targetUser.enabled_modules,
+      });
+    }
   };
 
   const handleModuleToggle = (userId: string, moduleKey: ModuleKey, enabled: boolean) => {
@@ -642,8 +659,8 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       newModuleState = { enabled: !!moduleState, options: { [optionKey]: enabled } };
     }
     
-    // 🛡️ P0.2 + P1: GESTION SPÉCIALE aide.agent
-    if (moduleKey === 'aide' && optionKey === 'agent') {
+    // 🛡️ P0.2 + P1: GESTION SPÉCIALE support.aide_en_ligne.agent
+    if (moduleKey === 'support.aide_en_ligne' && optionKey === 'agent') {
       const opts = (newModuleState.options ?? {}) as Record<string, unknown>;
       if (enabled) {
         // ✅ ACTIVATION agent support → forcer level: 1 (SA1) si absent

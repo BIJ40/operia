@@ -15,6 +15,8 @@ export interface ModuleTreeNode {
   nodeType: 'section' | 'screen' | 'feature';
   requiredPlan: 'STARTER' | 'PRO';
   deployed: boolean;
+  /** Si true, ce module n'est activé que par overwrite utilisateur */
+  overwriteOnly?: boolean;
   children?: ModuleTreeNode[];
 }
 
@@ -91,6 +93,7 @@ export const MODULE_TREE: ModuleTreeNode[] = [
       },
       { key: 'outils.performance', label: 'Performance', nodeType: 'screen', requiredPlan: 'PRO', deployed: false },
       { key: 'outils.commercial', label: 'Commercial', nodeType: 'screen', requiredPlan: 'PRO', deployed: false },
+      { key: 'outils.rentabilite', label: 'Rentabilité Dossier', nodeType: 'screen', requiredPlan: 'PRO', deployed: false },
     ],
   },
   {
@@ -124,8 +127,10 @@ export const MODULE_TREE: ModuleTreeNode[] = [
     nodeType: 'section',
     requiredPlan: 'STARTER',
     deployed: true,
+    overwriteOnly: true,
     children: [
       { key: 'ticketing.kanban', label: 'Kanban', nodeType: 'screen', requiredPlan: 'STARTER', deployed: true },
+      { key: 'ticketing.liste', label: 'Liste', nodeType: 'screen', requiredPlan: 'STARTER', deployed: true },
       { key: 'ticketing.create', label: 'Créer', nodeType: 'feature', requiredPlan: 'STARTER', deployed: true },
       { key: 'ticketing.manage', label: 'Gérer', nodeType: 'feature', requiredPlan: 'STARTER', deployed: true },
       { key: 'ticketing.import', label: 'Import', nodeType: 'feature', requiredPlan: 'PRO', deployed: false },

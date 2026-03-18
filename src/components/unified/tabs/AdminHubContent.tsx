@@ -6,7 +6,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Shield, Network, UserCheck, UserPlus, ScrollText } from 'lucide-react';
+import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Shield, Network, UserCheck, UserPlus, ScrollText, StickyNote } from 'lucide-react';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { 
   DraggableFolderTabsList, 
@@ -25,6 +25,8 @@ import { lazy, Suspense, useCallback, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useSessionState } from '@/hooks/useSessionState';
 import { usePersistedTab } from '@/hooks/usePersistedState';
+import { useNavigationMode } from '@/hooks/useNavigationMode';
+import { DomainAccentProvider } from '@/contexts/DomainAccentContext';
 
 // Lazy load des composants directs
 const TDRUsersPage = lazy(() => import('@/pages/TDRUsersPage'));
@@ -33,7 +35,7 @@ const FranchiseurView = lazy(() => import('@/components/unified/views/Franchiseu
 const ApporteurManagersAdminView = lazy(() => import('@/components/admin/views/ApporteurManagersAdminView'));
 const PendingRegistrationsList = lazy(() => import('@/components/admin/registrations/PendingRegistrationsList'));
 const ApporteurAuditLogView = lazy(() => import('@/components/admin/views/ApporteurAuditLogView'));
-
+const AdminNotesView = lazy(() => import('@/components/admin/views/AdminNotesView'));
 function LoadingFallback() {
   return (
     <div className="flex items-center justify-center h-64">
@@ -60,13 +62,15 @@ const GESTION_SUB_TABS: FolderTabConfig[] = [
   { id: 'audit-apporteurs', label: 'Audit Apporteurs', icon: ScrollText, accent: 'green' },
   { id: 'agences', label: 'Agences', icon: Building2, accent: 'purple' },
   { id: 'modules', label: 'Droits', icon: Shield, accent: 'orange' },
+  { id: 'notes', label: 'Notes', icon: StickyNote, accent: 'orange' },
   { id: 'activity', label: 'Activité', icon: Activity, accent: 'green' },
 ];
 
 const ADMIN_MAIN_TAB_IDS = ADMIN_MAIN_TABS.map(tab => tab.id);
-const DEFAULT_GESTION_ORDER = ['users', 'inscriptions', 'apporteurs', 'audit-apporteurs', 'agences', 'modules', 'activity'];
+const DEFAULT_GESTION_ORDER = ['users', 'inscriptions', 'apporteurs', 'audit-apporteurs', 'agences', 'modules', 'notes', 'activity'];
 
 export default function AdminHubContent() {
+  const { mode: navMode } = useNavigationMode();
   const [searchParams, setSearchParams] = useSearchParams();
   const [persistedMainTab, setPersistedMainTab] = usePersistedTab('admin_main_tab', 'gestion', ADMIN_MAIN_TAB_IDS);
   const activeTabParam = searchParams.get('adminTab');
@@ -118,10 +122,11 @@ export default function AdminHubContent() {
   const activeGestionAccent = activeGestionTab?.accent ? accentColors[activeGestionTab.accent] : undefined;
 
   return (
-    <div className="py-6 space-y-6">
+    <DomainAccentProvider accent="red">
+    <div className={navMode === 'header' ? 'pt-1 space-y-3' : 'py-6 space-y-6'}>
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        {/* Main Tabs - Style Pill */}
-        <PillTabsList tabs={ADMIN_MAIN_TABS} />
+        {/* Main Tabs - Style Pill or Switcher */}
+        <PillTabsList tabs={ADMIN_MAIN_TABS} variant={navMode === 'header' ? 'switcher' : 'pill'} />
 
         {/* Content Container */}
         <motion.div 
@@ -176,6 +181,12 @@ export default function AdminHubContent() {
                   <ModulesMasterView />
                 </TabsContent>
 
+                <TabsContent value="notes" className="mt-0 focus-visible:outline-none">
+                  <Suspense fallback={<LoadingFallback />}>
+                    <AdminNotesView />
+                  </Suspense>
+                </TabsContent>
+
                 <TabsContent value="activity" className="mt-0 focus-visible:outline-none">
                   <Suspense fallback={<LoadingFallback />}>
                     <AdminUserActivity />
@@ -209,5 +220,6 @@ export default function AdminHubContent() {
         </motion.div>
       </Tabs>
     </div>
+    </DomainAccentProvider>
   );
 }

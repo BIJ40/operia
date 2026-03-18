@@ -1,0 +1,50 @@
+
+-- Add 'module' to allowed node_type values
+ALTER TABLE module_registry DROP CONSTRAINT module_registry_node_type_check;
+ALTER TABLE module_registry ADD CONSTRAINT module_registry_node_type_check 
+  CHECK (node_type = ANY (ARRAY['module'::text, 'section'::text, 'screen'::text, 'feature'::text]));
+
+-- Insert 42 new granular permission nodes
+INSERT INTO module_registry (key, label, parent_key, node_type, sort_order, is_deployed, required_plan, min_role) VALUES
+('pilotage', 'Pilotage', NULL, 'module', 10, true, 'STARTER', 2),
+('pilotage.statistiques', 'Statistiques', 'pilotage', 'section', 10, true, 'STARTER', 2),
+('pilotage.statistiques.general', 'Général', 'pilotage.statistiques', 'screen', 10, true, 'STARTER', 2),
+('pilotage.statistiques.apporteurs', 'Apporteurs', 'pilotage.statistiques', 'screen', 20, true, 'PRO', 2),
+('pilotage.statistiques.techniciens', 'Techniciens', 'pilotage.statistiques', 'screen', 30, true, 'PRO', 2),
+('pilotage.statistiques.univers', 'Univers', 'pilotage.statistiques', 'screen', 40, true, 'PRO', 2),
+('pilotage.statistiques.sav', 'SAV', 'pilotage.statistiques', 'screen', 50, true, 'PRO', 2),
+('pilotage.statistiques.previsionnel', 'Prévisionnel', 'pilotage.statistiques', 'screen', 60, true, 'PRO', 2),
+('pilotage.statistiques.exports', 'Exports', 'pilotage.statistiques', 'feature', 70, true, 'PRO', 2),
+('pilotage.performance', 'Performance', 'pilotage', 'section', 20, true, 'STARTER', 2),
+('pilotage.actions_a_mener', 'Actions à mener', 'pilotage', 'section', 30, true, 'STARTER', 2),
+('pilotage.devis_acceptes', 'Devis acceptés', 'pilotage', 'section', 40, true, 'STARTER', 2),
+('pilotage.incoherences', 'Incohérences', 'pilotage', 'section', 50, true, 'STARTER', 2),
+('commercial', 'Commercial', NULL, 'module', 20, true, 'PRO', 1),
+('commercial.suivi_client', 'Suivi client', 'commercial', 'section', 10, true, 'PRO', 1),
+('commercial.comparateur', 'Comparateur', 'commercial', 'section', 20, true, 'PRO', 1),
+('commercial.veille', 'Veille', 'commercial', 'section', 30, true, 'PRO', 1),
+('commercial.prospects', 'Prospects', 'commercial', 'section', 40, true, 'PRO', 1),
+('commercial.realisations', 'Réalisations', 'commercial', 'section', 50, true, 'PRO', 2),
+('organisation', 'Organisation', NULL, 'module', 30, true, 'STARTER', 1),
+('organisation.salaries', 'Salariés', 'organisation', 'section', 10, true, 'STARTER', 1),
+('organisation.apporteurs', 'Apporteurs', 'organisation', 'section', 20, true, 'PRO', 1),
+('organisation.plannings', 'Plannings', 'organisation', 'section', 30, true, 'STARTER', 1),
+('organisation.reunions', 'Réunions', 'organisation', 'section', 40, true, 'PRO', 1),
+('organisation.parc', 'Parc', 'organisation', 'section', 50, true, 'PRO', 1),
+('organisation.documents_legaux', 'Documents légaux', 'organisation', 'section', 60, true, 'STARTER', 2),
+('mediatheque', 'Médiathèque', NULL, 'module', 40, true, 'STARTER', 2),
+('mediatheque.consulter', 'Consulter', 'mediatheque', 'feature', 10, true, 'STARTER', 2),
+('mediatheque.gerer', 'Gérer', 'mediatheque', 'feature', 20, true, 'STARTER', 2),
+('mediatheque.corbeille', 'Corbeille', 'mediatheque', 'feature', 30, true, 'PRO', 2),
+('support', 'Support', NULL, 'module', 50, true, 'STARTER', 0),
+('support.aide_en_ligne', 'Aide en ligne', 'support', 'section', 10, true, 'STARTER', 0),
+('support.guides', 'Guides', 'support', 'section', 20, true, 'STARTER', 1),
+('support.faq', 'FAQ', 'support', 'section', 30, true, 'STARTER', 0),
+('support.ticketing', 'Ticketing', 'support', 'section', 40, true, 'NONE', 0),
+('admin', 'Admin', NULL, 'module', 60, true, 'NONE', 5),
+('admin.gestion', 'Gestion', 'admin', 'section', 10, true, 'NONE', 5),
+('admin.franchiseur', 'Franchiseur', 'admin', 'section', 20, true, 'NONE', 3),
+('admin.ia', 'IA', 'admin', 'section', 30, true, 'NONE', 5),
+('admin.contenu', 'Contenu', 'admin', 'section', 40, true, 'NONE', 5),
+('admin.ops', 'Ops', 'admin', 'section', 50, true, 'NONE', 5),
+('admin.plateforme', 'Plateforme', 'admin', 'section', 60, true, 'NONE', 5);

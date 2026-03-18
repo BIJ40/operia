@@ -7,18 +7,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FolderOpen, Star, Trash2 } from 'lucide-react';
 import { MediaLibraryManager } from '@/components/media-library/MediaLibraryManager';
 import { usePermissions } from '@/contexts/PermissionsContext';
+import { DomainAccentProvider } from '@/contexts/DomainAccentContext';
 
 type DocumentsSubTab = 'library' | 'shortcuts' | 'trash';
 
 export default function DocumentsTabContent() {
   const [activeSubTab, setActiveSubTab] = useState<DocumentsSubTab>('library');
-  const { hasModuleOption } = usePermissions();
+  const { hasModule } = usePermissions();
   
-  // Vérifier les permissions granulaires
-  const canManage = hasModuleOption('divers_documents', 'gerer');
-  const canEmptyTrash = hasModuleOption('divers_documents', 'corbeille_vider');
+  // Clés COMPAT_MAP : mediatheque.gerer → divers_documents.gerer, mediatheque.corbeille → divers_documents.corbeille_vider
+  const canManage = hasModule('mediatheque.gerer' as any);
+  const canEmptyTrash = hasModule('mediatheque.corbeille' as any);
 
   return (
+    <DomainAccentProvider accent="teal">
     <div className="container mx-auto max-w-7xl px-4 py-6">
       <Tabs value={activeSubTab} onValueChange={(v) => setActiveSubTab(v as DocumentsSubTab)}>
         <div className="flex items-center justify-between mb-6">
@@ -75,5 +77,6 @@ export default function DocumentsTabContent() {
         )}
       </Tabs>
     </div>
+    </DomainAccentProvider>
   );
 }

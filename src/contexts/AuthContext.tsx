@@ -11,7 +11,7 @@ import { setSentryUser, clearSentryUser } from '@/lib/sentry';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { EnabledModules, ModuleKey, isModuleEnabled as checkModuleEnabled } from '@/types/modules';
 import { 
-  hasAccess, hasMinRole, 
+  hasAccess, hasMinRole,
   type PermissionContext,
 } from '@/permissions';
 import { userModulesToEnabledModules } from '@/lib/userModulesUtils';
@@ -63,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Permissions V2
   const [globalRole, setGlobalRole] = useState<GlobalRole | null>(null);
   const [enabledModules, setEnabledModules] = useState<EnabledModules | null>(null);
+  const [deployedModuleKeys, setDeployedModuleKeys] = useState<Set<string>>(new Set());
   
   const currentUserIdRef = useRef<string | null>(null);
 
@@ -72,10 +73,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const globalRoleLevel = globalRole ? GLOBAL_ROLES[globalRole] : 0;
   const isAdmin = globalRoleLevel >= GLOBAL_ROLES.platform_admin;
   const isFranchiseur = globalRoleLevel >= GLOBAL_ROLES.franchisor_user;
-  const isSupport = checkModuleEnabled(enabledModules, 'aide');
+  const isSupport = checkModuleEnabled(enabledModules, 'support.aide_en_ligne');
 
   // Support module
-  const supportModuleConfig = enabledModules?.aide;
+  const supportModuleConfig = enabledModules?.['support.aide_en_ligne'];
   const supportOptions: SupportModuleOptions = 
     (typeof supportModuleConfig === 'object' && supportModuleConfig !== null && 'options' in supportModuleConfig)
       ? (supportModuleConfig.options as SupportModuleOptions)
@@ -117,6 +118,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return hasAccess({ ...accessContext, moduleId: moduleKey, optionId: optionKey });
   }, [accessContext]);
 
+  const isDeployedModuleGuard = useCallback((moduleKey: ModuleKey): boolean => {
+    return deployedModuleKeys.has(moduleKey);
+  }, [deployedModuleKeys]);
+
   // ============================================================================
   // Chargement des données utilisateur
   // ============================================================================
@@ -130,7 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTimeout(() => reject(new Error('Timeout: chargement profil trop long')), PROFILE_TIMEOUT_MS);
       });
 
-      const [profileResult, modulesResult] = await Promise.race([
+      const [profileResult, modulesResult, deployedResult] = await Promise.race([
         Promise.all([
           supabase
             .from('profiles')
@@ -138,12 +143,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .eq('id', userId)
             .single(),
           supabase.rpc('get_user_effective_modules', { p_user_id: userId }),
+          supabase
+            .from('module_registry')
+            .select('key')
+            .eq('is_deployed', true),
         ]),
         timeoutPromise,
       ]);
 
       const { data: profile, error: profileError } = profileResult;
       const { data: effectiveModules, error: modulesError } = modulesResult;
+      const { data: deployedRows, error: deployedError } = deployedResult;
+
+      // Build deployed module keys set
+      if (!deployedError && Array.isArray(deployedRows)) {
+        setDeployedModuleKeys(new Set(deployedRows.map((r: any) => r.key)));
+      } else {
+        logAuth.warn('[AUTH] Failed to load deployed module keys', deployedError);
+      }
       
       if (profileError) {
         logAuth.error('Erreur requête profil:', profileError);
@@ -179,7 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let resolvedModules: EnabledModules = {};
       if (effectiveModules && Array.isArray(effectiveModules) && effectiveModules.length > 0) {
         for (const row of effectiveModules) {
-          const moduleKey = row.module_key as ModuleKey;
+          const moduleKey = row.module_key;
           resolvedModules[moduleKey] = {
             enabled: row.enabled === true,
             options: (typeof row.options === 'object' && row.options !== null) 
@@ -188,21 +205,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
         }
 
-        // PRO plan auto-enrichment
-        const parcModule = resolvedModules.parc as any;
-        const reseauModule = resolvedModules.reseau_franchiseur as any;
+        // PRO plan auto-enrichment (check hierarchical + legacy keys for safety)
+        // reseau_franchiseur retiré — interface de rôle, pas un indicateur de plan PRO
+        const parcModule = (resolvedModules['organisation.parc'] || resolvedModules.parc) as any;
         const isProAgency = !!(
-          (parcModule && typeof parcModule === 'object' && parcModule.enabled) ||
-          (reseauModule && typeof reseauModule === 'object' && reseauModule.enabled)
+          (parcModule && typeof parcModule === 'object' && parcModule.enabled)
         );
 
-        const agenceModule = resolvedModules.agence as any;
+        const agenceModule = (resolvedModules['pilotage.agence'] || resolvedModules.agence) as any;
         if (isProAgency && agenceModule && typeof agenceModule === 'object' && agenceModule.enabled) {
           const agenceOptions = (agenceModule.options && typeof agenceModule.options === 'object')
             ? agenceModule.options as Record<string, boolean>
             : {};
 
-          resolvedModules.agence = {
+          resolvedModules['pilotage.agence'] = {
             enabled: true,
             options: { ...agenceOptions, stats_hub: true },
           } as any;
@@ -342,6 +358,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsActive(true);
     setGlobalRole(null);
     setEnabledModules(null);
+    setDeployedModuleKeys(new Set());
     setIsReadOnly(false);
   }, []);
 
@@ -388,7 +405,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   /**
    * Scope-to-module mapping for legacy hasAccessToScope checks.
-   * Each scope maps to a module (and optionally a required role/option).
+   * Single source of truth — delegates to module/option guards.
    */
   const hasAccessToScope = useCallback((scope: string): boolean => {
     // Bypass for platform_admin and above
@@ -396,19 +413,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     switch (scope) {
       case 'mes_indicateurs':
-        return hasModuleGuard('agence' as ModuleKey);
+        return hasModuleGuard('pilotage.agence');
       case 'apporteurs':
-        return hasModuleGuard('apporteurs' as ModuleKey);
+        return hasModuleOptionGuard('support.guides', 'apporteurs');
       case 'helpconfort':
-        return hasModuleGuard('helpconfort' as ModuleKey);
+        return hasModuleOptionGuard('support.guides', 'helpconfort');
       case 'apogee':
-        return hasModuleGuard('guide_apogee' as ModuleKey);
+        return hasModuleOptionGuard('support.guides', 'apogee');
+      case 'ticketing':
+      case 'apogee_tickets':
+        return hasModuleGuard('ticketing');
       default:
-        // Unknown scope = deny by default (secure)
         logAuth.warn(`hasAccessToScope: unknown scope "${scope}", denying access`);
         return false;
     }
-  }, [isAdmin, hasModuleGuard]);
+  }, [isAdmin, hasModuleGuard, hasModuleOptionGuard]);
 
   // ============================================================================
   // Sub-context values (memoized independently to prevent cascading re-renders)
@@ -440,6 +459,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     hasGlobalRole: hasGlobalRoleGuard,
     hasModule: hasModuleGuard,
     hasModuleOption: hasModuleOptionGuard,
+    isDeployedModule: isDeployedModuleGuard,
     isAdmin,
     isSupport,
     isFranchiseur,
@@ -454,7 +474,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     suggestedGlobalRole: globalRole ?? 'base_user',
   }), [
     globalRole, enabledModules, accessContext,
-    hasGlobalRoleGuard, hasModuleGuard, hasModuleOptionGuard,
+    hasGlobalRoleGuard, hasModuleGuard, hasModuleOptionGuard, isDeployedModuleGuard,
     isAdmin, isSupport, isFranchiseur,
     canAccessSupportUser, hasSupportAgentRole, isSupportAdmin,
     canAccessSupportConsoleUI, canManageTickets,

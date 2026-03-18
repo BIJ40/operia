@@ -21,7 +21,7 @@ const PlanningHebdo = lazy(() => import("@/pages/PlanningTechniciensSemaine"));
 // Helper pour créer les layouts RH
 function RHLayout({ children }: { children: React.ReactNode }) {
   return (
-    <MinimalLayout backTab="salaries" backLabel="Retour aux Salariés">
+    <MinimalLayout backTab="organisation" backLabel="Retour à Organisation">
       {children}
     </MinimalLayout>
   );
@@ -33,22 +33,22 @@ export function RHRoutes() {
       {/* ============================================ */}
       {/* REDIRECTIONS VERS INTERFACE UNIFIEE */}
       {/* ============================================ */}
-      <Route path="/rh" element={<Navigate to="/?tab=salaries" replace />} />
-      <Route path="/rh/parc" element={<Navigate to="/?tab=parc" replace />} />
+      <Route path="/rh" element={<Navigate to="/?tab=organisation" replace />} />
+      <Route path="/rh/parc" element={<Navigate to="/?tab=organisation" replace />} />
 
       {/* ============================================ */}
       {/* SUIVI RH - COCKPIT (N2 back-office) */}
       {/* ============================================ */}
-      {/* LEGACY: /rh/suivi remplacé par onglet Salariés */}
-      <Route path="/rh/suivi" element={<Navigate to="/?tab=salaries" replace />} />
-      <Route path="/rh/suivi/:id" element={<Navigate to="/?tab=salaries" replace />} />
+      {/* LEGACY: /rh/suivi remplacé par onglet Organisation */}
+      <Route path="/rh/suivi" element={<Navigate to="/?tab=organisation" replace />} />
+      <Route path="/rh/suivi/:id" element={<Navigate to="/?tab=organisation" replace />} />
       
       <Route 
         path="/rh/suivi/plannings" 
         element={
           <RHLayout>
             <RoleGuard minRole="franchisee_admin">
-              <ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}>
+              <ModuleGuard moduleKey="organisation.salaries" requiredOptions={['rh_viewer', 'rh_admin']}>
                 <PlanningHebdo />
               </ModuleGuard>
             </RoleGuard>
@@ -57,7 +57,7 @@ export function RHRoutes() {
       />
 
       {/* Route /rh/epi supprimée - redirection vers onglet parc */}
-      <Route path="/rh/epi" element={<Navigate to="/?tab=parc" replace />} />
+      <Route path="/rh/epi" element={<Navigate to="/?tab=organisation" replace />} />
 
       {/* ============================================ */}
       {/* OUTILS RH (N2) */}
@@ -67,7 +67,7 @@ export function RHRoutes() {
         element={
           <RHLayout>
             <RoleGuard minRole="franchisee_admin">
-              <ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}>
+              <ModuleGuard moduleKey="organisation.salaries" requiredOptions={['rh_viewer', 'rh_admin']}>
                 <DocGenPage />
               </ModuleGuard>
             </RoleGuard>
@@ -79,7 +79,7 @@ export function RHRoutes() {
         element={
           <RHLayout>
             <RoleGuard minRole="franchisee_admin">
-              <ModuleGuard moduleKey="rh" requiredOptions={['rh_viewer', 'rh_admin']}>
+              <ModuleGuard moduleKey="organisation.salaries" requiredOptions={['rh_viewer', 'rh_admin']}>
                 <RHMeetingsPage />
               </ModuleGuard>
             </RoleGuard>

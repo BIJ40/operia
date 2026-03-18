@@ -29,9 +29,17 @@ export function StatusSelector({
     setLocalStatus(status);
   }, [status]);
   
+  // Statuts réservés à l'IA (pas de transition manuelle vers ces statuts)
+  const AI_ONLY_STATUSES = ['SUPPORT_RESOLU', 'IA_ESCALADE'];
+  
   const currentStatus = availableStatuses.find(s => s.id === localStatus);
   const statusColor = currentStatus?.color || '#6b7280';
   const statusLabel = currentStatus?.label || localStatus;
+  
+  // Filtrer les statuts réservés IA du sélecteur (sauf si c'est le statut actuel)
+  const selectableStatuses = availableStatuses.filter(
+    s => !AI_ONLY_STATUSES.includes(s.id) || s.id === localStatus
+  );
 
   // Calculate if we need dark text for light backgrounds
   const needsDarkText = (color: string) => {
@@ -77,7 +85,7 @@ export function StatusSelector({
         sideOffset={4}
       >
         <div className="grid gap-1 max-h-64 overflow-y-auto">
-          {availableStatuses.map((s) => {
+          {selectableStatuses.map((s) => {
             const isSelected = s.id === localStatus;
             const color = s.color || '#6b7280';
             

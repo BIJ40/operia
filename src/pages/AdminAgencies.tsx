@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Users, ChevronDown, ChevronUp, Eye, User, Crown } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, ChevronDown, ChevronUp, Eye, User, Crown, UserPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/config/routes';
 import {
@@ -57,7 +57,21 @@ interface UserProfile {
   last_name: string | null;
   email: string | null;
   agence: string | null;
+  agency_id: string | null;
   role_agence: string | null;
+}
+
+interface CollaboratorRow {
+  id: string;
+  user_id: string | null;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  role: string | null;
+  type: string | null;
+  agency_id: string;
+  leaving_date: string | null;
+  is_registered_user: boolean;
 }
 
 // Route protégée par RoleGuard dans App.tsx
@@ -66,6 +80,7 @@ export default function AdminAgencies() {
   const navigate = useNavigate();
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [collaborators, setCollaborators] = useState<CollaboratorRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAgency, setEditingAgency] = useState<Agency | null>(null);
@@ -88,16 +103,19 @@ export default function AdminAgencies() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [agenciesResult, usersResult] = await Promise.all([
+      const [agenciesResult, usersResult, collabsResult] = await Promise.all([
         supabase.from('apogee_agencies').select('*').order('label').limit(500),
-        supabase.from('profiles').select('id, first_name, last_name, email, agence, role_agence').order('first_name').limit(1000),
+        supabase.from('profiles').select('id, first_name, last_name, email, agence, agency_id, role_agence').order('first_name').limit(1000),
+        supabase.from('collaborators').select('id, user_id, first_name, last_name, email, role, type, agency_id, leaving_date, is_registered_user').order('last_name').limit(2000),
       ]);
 
       if (agenciesResult.error) throw agenciesResult.error;
       if (usersResult.error) throw usersResult.error;
+      if (collabsResult.error) throw collabsResult.error;
 
       setAgencies(agenciesResult.data || []);
       setUsers(usersResult.data || []);
+      setCollaborators(collabsResult.data || []);
     } catch (error) {
       logError('ADMIN_AGENCIES', 'Error loading data:', error);
       toast({
@@ -120,12 +138,33 @@ export default function AdminAgencies() {
     setExpandedAgencies(newExpanded);
   };
 
-  const getUsersForAgency = (slug: string) => {
-    return users.filter((user) => user.agence === slug);
+  const getUsersForAgency = (agencyId: string) => {
+    return users.filter((user) => user.agency_id === agencyId);
+  };
+
+  /** Get non-registered collaborators for an agency (not linked to any profile) */
+  const getUnregisteredCollaborators = (agencyId: string) => {
+    const registeredUserIds = new Set(users.filter(u => u.agency_id === agencyId).map(u => u.id));
+    return collaborators.filter(c => 
+      c.agency_id === agencyId && 
+      (!c.user_id || !registeredUserIds.has(c.user_id)) &&
+      !c.is_registered_user
+    );
+  };
+
+  const handleCreateUserFromCollab = (collab: CollaboratorRow, agencySlug: string) => {
+    const params = new URLSearchParams({
+      action: 'create',
+      firstName: collab.first_name,
+      lastName: collab.last_name,
+      email: collab.email || '',
+      agence: agencySlug,
+    });
+    navigate(`${ROUTES.admin.users}?${params.toString()}`);
   };
 
   const getUsersWithoutAgency = () => {
-    return users.filter((user) => !user.agence && user.role_agence === 'dirigeant');
+    return users.filter((user) => !user.agency_id && user.role_agence === 'dirigeant');
   };
 
   // Get current plan for an agency
@@ -221,9 +260,14 @@ export default function AdminAgencies() {
 
   const handleAssignUser = async (userId: string, agencySlug: string | null) => {
     try {
+      // Resolve agency_id from slug
+      const targetAgency = agencySlug ? agencies.find(a => a.slug === agencySlug) : null;
       const { error } = await supabase
         .from('profiles')
-        .update({ agence: agencySlug })
+        .update({ 
+          agence: agencySlug,
+          agency_id: targetAgency?.id ?? null,
+        })
         .eq('id', userId);
 
       if (error) throw error;
@@ -317,7 +361,9 @@ export default function AdminAgencies() {
           ) : (
             <div className="space-y-4">
               {agencies.map((agency) => {
-                const agencyUsers = getUsersForAgency(agency.slug);
+                const agencyUsers = getUsersForAgency(agency.id);
+                const unregistered = getUnregisteredCollaborators(agency.id);
+                const totalCount = agencyUsers.length + unregistered.length;
                 const isExpanded = expandedAgencies.has(agency.id);
 
                 return (
@@ -358,7 +404,7 @@ export default function AdminAgencies() {
                           </Select>
                           <Badge variant="outline">
                             <Users className="h-3 w-3 mr-1" />
-                            {agencyUsers.length}
+                            {totalCount}
                           </Badge>
                           <Button
                             variant="ghost"
@@ -399,9 +445,9 @@ export default function AdminAgencies() {
 
                     <Collapsible open={isExpanded}>
                       <CollapsibleContent>
-                        {agencyUsers.length === 0 ? (
+                        {totalCount === 0 ? (
                           <div className="p-4 text-center text-muted-foreground">
-                            Aucun utilisateur assigné à cette agence
+                            Aucun membre dans cette agence
                           </div>
                         ) : (
                           <Table>
@@ -410,10 +456,12 @@ export default function AdminAgencies() {
                                 <TableHead>Nom</TableHead>
                                 <TableHead>Email</TableHead>
                                 <TableHead>Rôle</TableHead>
+                                <TableHead>Statut</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
+                              {/* Registered users */}
                               {agencyUsers.map((user) => (
                                 <TableRow key={user.id}>
                                   <TableCell className="font-medium">
@@ -426,6 +474,11 @@ export default function AdminAgencies() {
                                     {user.role_agence && (
                                       <Badge variant="outline">{user.role_agence}</Badge>
                                     )}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge className="bg-emerald-600 hover:bg-emerald-700 text-xs">
+                                      Inscrit
+                                    </Badge>
                                   </TableCell>
                                   <TableCell className="text-right">
                                     <div className="flex gap-2 justify-end">
@@ -445,6 +498,38 @@ export default function AdminAgencies() {
                                         Retirer
                                       </Button>
                                     </div>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                              {/* Non-registered collaborators */}
+                              {unregistered.map((collab) => (
+                                <TableRow key={`collab-${collab.id}`} className="bg-muted/30">
+                                  <TableCell className="font-medium">
+                                    {collab.first_name} {collab.last_name}
+                                  </TableCell>
+                                  <TableCell className="text-sm text-muted-foreground">
+                                    {collab.email || '—'}
+                                  </TableCell>
+                                  <TableCell>
+                                    {(collab.role || collab.type) && (
+                                      <Badge variant="outline">{collab.role || collab.type}</Badge>
+                                    )}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge variant="secondary" className="text-xs text-amber-700 bg-amber-100">
+                                      Non inscrit
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="gap-1 text-primary"
+                                      onClick={() => handleCreateUserFromCollab(collab, agency.slug)}
+                                    >
+                                      <UserPlus className="h-4 w-4" />
+                                      Créer le compte
+                                    </Button>
                                   </TableCell>
                                 </TableRow>
                               ))}

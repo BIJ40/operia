@@ -233,6 +233,56 @@ export type Database = {
           },
         ]
       }
+      agency_overhead_rules: {
+        Row: {
+          agency_id: string
+          allocation_mode: Database["public"]["Enums"]["overhead_allocation_mode"]
+          allocation_value: number
+          amount_ht: number
+          cost_type: Database["public"]["Enums"]["overhead_cost_type"]
+          created_at: string
+          created_by: string | null
+          id: string
+          period_month: string | null
+          updated_at: string
+          validation_status: Database["public"]["Enums"]["cost_validation_type"]
+        }
+        Insert: {
+          agency_id: string
+          allocation_mode?: Database["public"]["Enums"]["overhead_allocation_mode"]
+          allocation_value?: number
+          amount_ht?: number
+          cost_type: Database["public"]["Enums"]["overhead_cost_type"]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          period_month?: string | null
+          updated_at?: string
+          validation_status?: Database["public"]["Enums"]["cost_validation_type"]
+        }
+        Update: {
+          agency_id?: string
+          allocation_mode?: Database["public"]["Enums"]["overhead_allocation_mode"]
+          allocation_value?: number
+          amount_ht?: number
+          cost_type?: Database["public"]["Enums"]["overhead_cost_type"]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          period_month?: string | null
+          updated_at?: string
+          validation_status?: Database["public"]["Enums"]["cost_validation_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_overhead_rules_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agency_rh_roles: {
         Row: {
           agency_id: string
@@ -1571,7 +1621,8 @@ export type Database = {
           agency_id: string
           apogee_project_id: number | null
           apporteur_id: string
-          apporteur_user_id: string
+          apporteur_manager_id: string | null
+          apporteur_user_id: string | null
           availability: string | null
           city: string | null
           comments: string | null
@@ -1595,7 +1646,8 @@ export type Database = {
           agency_id: string
           apogee_project_id?: number | null
           apporteur_id: string
-          apporteur_user_id: string
+          apporteur_manager_id?: string | null
+          apporteur_user_id?: string | null
           availability?: string | null
           city?: string | null
           comments?: string | null
@@ -1619,7 +1671,8 @@ export type Database = {
           agency_id?: string
           apogee_project_id?: number | null
           apporteur_id?: string
-          apporteur_user_id?: string
+          apporteur_manager_id?: string | null
+          apporteur_user_id?: string | null
           availability?: string | null
           city?: string | null
           comments?: string | null
@@ -1651,6 +1704,13 @@ export type Database = {
             columns: ["apporteur_id"]
             isOneToOne: false
             referencedRelation: "apporteurs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apporteur_intervention_requests_apporteur_manager_id_fkey"
+            columns: ["apporteur_manager_id"]
+            isOneToOne: false
+            referencedRelation: "apporteur_managers"
             referencedColumns: ["id"]
           },
           {
@@ -2864,6 +2924,159 @@ export type Database = {
             columns: ["agency_id"]
             isOneToOne: false
             referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_cost_profiles: {
+        Row: {
+          agency_id: string
+          collaborator_id: string
+          cost_source: Database["public"]["Enums"]["cost_source_type"]
+          created_at: string
+          created_by: string | null
+          effective_from: string
+          effective_to: string | null
+          employer_charges_rate: number | null
+          employer_monthly_cost: number | null
+          equipment_monthly_cost: number | null
+          fuel_monthly_cost: number | null
+          id: string
+          loaded_hourly_cost: number | null
+          monthly_paid_hours: number | null
+          monthly_productive_hours: number | null
+          other_monthly_costs: number | null
+          salary_gross_monthly: number | null
+          updated_at: string
+          vehicle_monthly_cost: number | null
+        }
+        Insert: {
+          agency_id: string
+          collaborator_id: string
+          cost_source?: Database["public"]["Enums"]["cost_source_type"]
+          created_at?: string
+          created_by?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          employer_charges_rate?: number | null
+          employer_monthly_cost?: number | null
+          equipment_monthly_cost?: number | null
+          fuel_monthly_cost?: number | null
+          id?: string
+          loaded_hourly_cost?: number | null
+          monthly_paid_hours?: number | null
+          monthly_productive_hours?: number | null
+          other_monthly_costs?: number | null
+          salary_gross_monthly?: number | null
+          updated_at?: string
+          vehicle_monthly_cost?: number | null
+        }
+        Update: {
+          agency_id?: string
+          collaborator_id?: string
+          cost_source?: Database["public"]["Enums"]["cost_source_type"]
+          created_at?: string
+          created_by?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          employer_charges_rate?: number | null
+          employer_monthly_cost?: number | null
+          equipment_monthly_cost?: number | null
+          fuel_monthly_cost?: number | null
+          id?: string
+          loaded_hourly_cost?: number | null
+          monthly_paid_hours?: number | null
+          monthly_productive_hours?: number | null
+          other_monthly_costs?: number | null
+          salary_gross_monthly?: number | null
+          updated_at?: string
+          vehicle_monthly_cost?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_cost_profiles_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_cost_profiles_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_salary_documents: {
+        Row: {
+          agency_id: string
+          collaborator_id: string
+          created_at: string
+          created_by: string | null
+          extracted_data_json: Json | null
+          extracted_employer_cost: number | null
+          extracted_gross_salary: number | null
+          extracted_hours: number | null
+          extracted_net_salary: number | null
+          extraction_status: Database["public"]["Enums"]["extraction_status_type"]
+          file_path: string
+          id: string
+          period_month: string | null
+          validated_at: string | null
+          validated_by: string | null
+          validation_status: Database["public"]["Enums"]["validation_status_type"]
+        }
+        Insert: {
+          agency_id: string
+          collaborator_id: string
+          created_at?: string
+          created_by?: string | null
+          extracted_data_json?: Json | null
+          extracted_employer_cost?: number | null
+          extracted_gross_salary?: number | null
+          extracted_hours?: number | null
+          extracted_net_salary?: number | null
+          extraction_status?: Database["public"]["Enums"]["extraction_status_type"]
+          file_path: string
+          id?: string
+          period_month?: string | null
+          validated_at?: string | null
+          validated_by?: string | null
+          validation_status?: Database["public"]["Enums"]["validation_status_type"]
+        }
+        Update: {
+          agency_id?: string
+          collaborator_id?: string
+          created_at?: string
+          created_by?: string | null
+          extracted_data_json?: Json | null
+          extracted_employer_cost?: number | null
+          extracted_gross_salary?: number | null
+          extracted_hours?: number | null
+          extracted_net_salary?: number | null
+          extraction_status?: Database["public"]["Enums"]["extraction_status_type"]
+          file_path?: string
+          id?: string
+          period_month?: string | null
+          validated_at?: string | null
+          validated_by?: string | null
+          validation_status?: Database["public"]["Enums"]["validation_status_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_salary_documents_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_salary_documents_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
             referencedColumns: ["id"]
           },
         ]
@@ -6034,6 +6247,254 @@ export type Database = {
           },
         ]
       }
+      project_cost_documents: {
+        Row: {
+          agency_id: string
+          created_at: string
+          created_by: string | null
+          extracted_data_json: Json | null
+          extracted_date: string | null
+          extracted_ht: number | null
+          extracted_supplier: string | null
+          extracted_ttc: number | null
+          extracted_vat: number | null
+          extraction_status: Database["public"]["Enums"]["extraction_status_type"]
+          file_path: string
+          id: string
+          linked_cost_id: string | null
+          project_id: string
+          validation_status: Database["public"]["Enums"]["validation_status_type"]
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          created_by?: string | null
+          extracted_data_json?: Json | null
+          extracted_date?: string | null
+          extracted_ht?: number | null
+          extracted_supplier?: string | null
+          extracted_ttc?: number | null
+          extracted_vat?: number | null
+          extraction_status?: Database["public"]["Enums"]["extraction_status_type"]
+          file_path: string
+          id?: string
+          linked_cost_id?: string | null
+          project_id: string
+          validation_status?: Database["public"]["Enums"]["validation_status_type"]
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          created_by?: string | null
+          extracted_data_json?: Json | null
+          extracted_date?: string | null
+          extracted_ht?: number | null
+          extracted_supplier?: string | null
+          extracted_ttc?: number | null
+          extracted_vat?: number | null
+          extraction_status?: Database["public"]["Enums"]["extraction_status_type"]
+          file_path?: string
+          id?: string
+          linked_cost_id?: string | null
+          project_id?: string
+          validation_status?: Database["public"]["Enums"]["validation_status_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_cost_documents_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_cost_documents_linked_cost_id_fkey"
+            columns: ["linked_cost_id"]
+            isOneToOne: false
+            referencedRelation: "project_costs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_costs: {
+        Row: {
+          agency_id: string
+          amount_ht: number
+          amount_ttc: number
+          cost_date: string | null
+          cost_type: Database["public"]["Enums"]["project_cost_type"]
+          created_at: string
+          created_by: string | null
+          description: string | null
+          document_path: string | null
+          extracted_data_json: Json | null
+          id: string
+          project_id: string
+          source: Database["public"]["Enums"]["cost_input_source"]
+          updated_at: string
+          validated_at: string | null
+          validated_by: string | null
+          validation_status: Database["public"]["Enums"]["cost_validation_type"]
+          vat_rate: number | null
+        }
+        Insert: {
+          agency_id: string
+          amount_ht?: number
+          amount_ttc?: number
+          cost_date?: string | null
+          cost_type: Database["public"]["Enums"]["project_cost_type"]
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          document_path?: string | null
+          extracted_data_json?: Json | null
+          id?: string
+          project_id: string
+          source?: Database["public"]["Enums"]["cost_input_source"]
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
+          validation_status?: Database["public"]["Enums"]["cost_validation_type"]
+          vat_rate?: number | null
+        }
+        Update: {
+          agency_id?: string
+          amount_ht?: number
+          amount_ttc?: number
+          cost_date?: string | null
+          cost_type?: Database["public"]["Enums"]["project_cost_type"]
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          document_path?: string | null
+          extracted_data_json?: Json | null
+          id?: string
+          project_id?: string
+          source?: Database["public"]["Enums"]["cost_input_source"]
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
+          validation_status?: Database["public"]["Enums"]["cost_validation_type"]
+          vat_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_costs_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_profitability_snapshots: {
+        Row: {
+          agency_id: string
+          apogee_data_hash: string | null
+          apogee_last_sync_at: string | null
+          ca_collected_ttc: number
+          ca_invoiced_ht: number
+          completeness_score: number
+          computed_at: string
+          cost_labor: number
+          cost_other: number
+          cost_overhead: number
+          cost_purchases: number
+          cost_subcontracting: number
+          cost_total: number
+          created_at: string
+          created_by: string | null
+          flags_json: Json | null
+          gross_margin: number
+          hours_total: number
+          id: string
+          margin_pct: number | null
+          net_margin: number
+          previous_snapshot_id: string | null
+          project_id: string
+          reliability_level: Database["public"]["Enums"]["reliability_level_type"]
+          validated_at: string | null
+          validated_by: string | null
+          validation_status: Database["public"]["Enums"]["cost_validation_type"]
+          version: number
+        }
+        Insert: {
+          agency_id: string
+          apogee_data_hash?: string | null
+          apogee_last_sync_at?: string | null
+          ca_collected_ttc?: number
+          ca_invoiced_ht?: number
+          completeness_score?: number
+          computed_at?: string
+          cost_labor?: number
+          cost_other?: number
+          cost_overhead?: number
+          cost_purchases?: number
+          cost_subcontracting?: number
+          cost_total?: number
+          created_at?: string
+          created_by?: string | null
+          flags_json?: Json | null
+          gross_margin?: number
+          hours_total?: number
+          id?: string
+          margin_pct?: number | null
+          net_margin?: number
+          previous_snapshot_id?: string | null
+          project_id: string
+          reliability_level?: Database["public"]["Enums"]["reliability_level_type"]
+          validated_at?: string | null
+          validated_by?: string | null
+          validation_status?: Database["public"]["Enums"]["cost_validation_type"]
+          version?: number
+        }
+        Update: {
+          agency_id?: string
+          apogee_data_hash?: string | null
+          apogee_last_sync_at?: string | null
+          ca_collected_ttc?: number
+          ca_invoiced_ht?: number
+          completeness_score?: number
+          computed_at?: string
+          cost_labor?: number
+          cost_other?: number
+          cost_overhead?: number
+          cost_purchases?: number
+          cost_subcontracting?: number
+          cost_total?: number
+          created_at?: string
+          created_by?: string | null
+          flags_json?: Json | null
+          gross_margin?: number
+          hours_total?: number
+          id?: string
+          margin_pct?: number | null
+          net_margin?: number
+          previous_snapshot_id?: string | null
+          project_id?: string
+          reliability_level?: Database["public"]["Enums"]["reliability_level_type"]
+          validated_at?: string | null
+          validated_by?: string | null
+          validation_status?: Database["public"]["Enums"]["cost_validation_type"]
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_profitability_snapshots_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_profitability_snapshots_previous_snapshot_id_fkey"
+            columns: ["previous_snapshot_id"]
+            isOneToOne: false
+            referencedRelation: "project_profitability_snapshots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prospect_cards: {
         Row: {
           adresse: string | null
@@ -6602,6 +7063,185 @@ export type Database = {
           key?: string
         }
         Relationships: []
+      }
+      realisation_activity_log: {
+        Row: {
+          action_payload: Json
+          action_type: string
+          actor_label: string | null
+          actor_type: string
+          actor_user_id: string | null
+          agency_id: string
+          created_at: string
+          id: string
+          realisation_id: string | null
+        }
+        Insert: {
+          action_payload?: Json
+          action_type: string
+          actor_label?: string | null
+          actor_type?: string
+          actor_user_id?: string | null
+          agency_id: string
+          created_at?: string
+          id?: string
+          realisation_id?: string | null
+        }
+        Update: {
+          action_payload?: Json
+          action_type?: string
+          actor_label?: string | null
+          actor_type?: string
+          actor_user_id?: string | null
+          agency_id?: string
+          created_at?: string
+          id?: string
+          realisation_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "realisation_activity_log_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "realisation_activity_log_realisation_id_fkey"
+            columns: ["realisation_id"]
+            isOneToOne: false
+            referencedRelation: "realisations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      realisation_media: {
+        Row: {
+          agency_id: string
+          alt_text: string | null
+          caption: string | null
+          created_at: string
+          file_name: string
+          file_size_bytes: number | null
+          height: number | null
+          id: string
+          media_role: string
+          media_type: string
+          mime_type: string
+          original_file_name: string | null
+          realisation_id: string
+          sequence_order: number
+          storage_path: string
+          updated_at: string
+          width: number | null
+        }
+        Insert: {
+          agency_id: string
+          alt_text?: string | null
+          caption?: string | null
+          created_at?: string
+          file_name: string
+          file_size_bytes?: number | null
+          height?: number | null
+          id?: string
+          media_role?: string
+          media_type?: string
+          mime_type?: string
+          original_file_name?: string | null
+          realisation_id: string
+          sequence_order?: number
+          storage_path: string
+          updated_at?: string
+          width?: number | null
+        }
+        Update: {
+          agency_id?: string
+          alt_text?: string | null
+          caption?: string | null
+          created_at?: string
+          file_name?: string
+          file_size_bytes?: number | null
+          height?: number | null
+          id?: string
+          media_role?: string
+          media_type?: string
+          mime_type?: string
+          original_file_name?: string | null
+          realisation_id?: string
+          sequence_order?: number
+          storage_path?: string
+          updated_at?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "realisation_media_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "realisation_media_realisation_id_fkey"
+            columns: ["realisation_id"]
+            isOneToOne: false
+            referencedRelation: "realisations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      realisations: {
+        Row: {
+          agency_id: string
+          created_at: string
+          created_by: string
+          external_sync_error: string | null
+          external_sync_last_at: string | null
+          external_sync_status: string
+          id: string
+          intervention_date: string
+          published_article_id: string | null
+          published_article_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          created_by: string
+          external_sync_error?: string | null
+          external_sync_last_at?: string | null
+          external_sync_status?: string
+          id?: string
+          intervention_date?: string
+          published_article_id?: string | null
+          published_article_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          created_by?: string
+          external_sync_error?: string | null
+          external_sync_last_at?: string | null
+          external_sync_status?: string
+          id?: string
+          intervention_date?: string
+          published_article_id?: string | null
+          published_article_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "realisations_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       report_settings: {
         Row: {
@@ -9394,6 +10034,9 @@ export type Database = {
         | "tete_de_reseau"
         | "externe"
         | "autre"
+      cost_input_source: "manual" | "invoice_upload"
+      cost_source_type: "manual" | "bulletin" | "computed"
+      cost_validation_type: "draft" | "validated"
       equipment_category:
         | "electroportatif"
         | "gros_outillage"
@@ -9402,6 +10045,7 @@ export type Database = {
         | "securite"
         | "autre"
       equipment_status: "fonctionnel" | "en_reparation" | "hs" | "perdu"
+      extraction_status_type: "pending" | "parsed" | "error"
       franchiseur_role: "animateur" | "directeur" | "dg"
       global_role:
         | "base_user"
@@ -9412,6 +10056,25 @@ export type Database = {
         | "platform_admin"
         | "superadmin"
       media_access_scope: "general" | "rh" | "rh_sensitive" | "admin"
+      overhead_allocation_mode:
+        | "per_project"
+        | "percentage_ca"
+        | "per_hour"
+        | "fixed"
+      overhead_cost_type:
+        | "rent"
+        | "vehicle"
+        | "fuel"
+        | "admin"
+        | "software"
+        | "insurance"
+        | "other"
+      project_cost_type:
+        | "purchase"
+        | "subcontract"
+        | "travel"
+        | "rental"
+        | "misc"
       rag_context_type:
         | "apogee"
         | "apporteurs"
@@ -9423,8 +10086,15 @@ export type Database = {
         | "marche_batiment"
         | "groupe_laposte_axeo"
         | "faq"
+      reliability_level_type:
+        | "insufficient"
+        | "low"
+        | "medium"
+        | "good"
+        | "excellent"
       support_role: "none" | "agent" | "admin"
       system_role: "visiteur" | "utilisateur" | "support" | "admin"
+      validation_status_type: "pending" | "validated" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -9565,6 +10235,9 @@ export const Constants = {
         "externe",
         "autre",
       ],
+      cost_input_source: ["manual", "invoice_upload"],
+      cost_source_type: ["manual", "bulletin", "computed"],
+      cost_validation_type: ["draft", "validated"],
       equipment_category: [
         "electroportatif",
         "gros_outillage",
@@ -9574,6 +10247,7 @@ export const Constants = {
         "autre",
       ],
       equipment_status: ["fonctionnel", "en_reparation", "hs", "perdu"],
+      extraction_status_type: ["pending", "parsed", "error"],
       franchiseur_role: ["animateur", "directeur", "dg"],
       global_role: [
         "base_user",
@@ -9585,6 +10259,28 @@ export const Constants = {
         "superadmin",
       ],
       media_access_scope: ["general", "rh", "rh_sensitive", "admin"],
+      overhead_allocation_mode: [
+        "per_project",
+        "percentage_ca",
+        "per_hour",
+        "fixed",
+      ],
+      overhead_cost_type: [
+        "rent",
+        "vehicle",
+        "fuel",
+        "admin",
+        "software",
+        "insurance",
+        "other",
+      ],
+      project_cost_type: [
+        "purchase",
+        "subcontract",
+        "travel",
+        "rental",
+        "misc",
+      ],
       rag_context_type: [
         "apogee",
         "apporteurs",
@@ -9597,8 +10293,16 @@ export const Constants = {
         "groupe_laposte_axeo",
         "faq",
       ],
+      reliability_level_type: [
+        "insufficient",
+        "low",
+        "medium",
+        "good",
+        "excellent",
+      ],
       support_role: ["none", "agent", "admin"],
       system_role: ["visiteur", "utilisateur", "support", "admin"],
+      validation_status_type: ["pending", "validated", "rejected"],
     },
   },
 } as const

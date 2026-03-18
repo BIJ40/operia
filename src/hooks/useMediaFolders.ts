@@ -134,11 +134,12 @@ export function useMediaFolders(parentId: string | null = null) {
       queryClient.invalidateQueries({ queryKey: ['media-folders', agencyId] });
       toast.success('Dossier créé');
     },
-    onError: (error: Error & { code?: string }) => {
+    onError: (error: Error & { code?: string; message?: string; details?: string }) => {
+      console.error('[createFolder] Error:', { code: error.code, message: error.message, details: error.details, error });
       if (error.code === '23505') {
         toast.error('Un dossier avec ce nom existe déjà');
       } else {
-        toast.error('Erreur lors de la création du dossier');
+        toast.error(`Erreur lors de la création du dossier: ${error.message || 'inconnue'}`);
       }
     },
   });

@@ -83,7 +83,7 @@ export function HcServicesEditorProvider({ children }: { children: ReactNode }) 
   const { user } = useAuthCore();
   const location = useLocation();
   
-  const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('guides', 'edition');
+  const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('support.guides', 'edition');
   const isEditMode = canEdit;
 
   const loadBlocks = useCallback(async () => {

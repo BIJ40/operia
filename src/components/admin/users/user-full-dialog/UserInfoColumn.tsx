@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ApogeeUserSelect } from '@/components/collaborators/ApogeeUserSelect';
 import { Agency, ROLE_AGENCE_LABELS, UserFormData } from './constants';
+import { getSuggestedGlobalRole, validateRoleAgenceCoherence } from '@/lib/roleAgenceMapping';
 
 interface UserInfoColumnProps {
   editMode: boolean;
@@ -75,9 +76,12 @@ export function UserInfoColumn({
   const [newPassword, setNewPassword] = useState('');
   const [sendEmail, setSendEmail] = useState(true);
 
+  const coherenceWarning = validateRoleAgenceCoherence(formData.roleAgence, formData.globalRole, formData.agence || null);
+
   const handleSaveUser = () => {
     if (!onSaveUser) return;
-    const normalizedSlug = (formData.agence || '').toLowerCase();
+    const normalizedAgence = formData.agence?.trim() || null;
+    const normalizedSlug = (normalizedAgence || '').toLowerCase();
     const resolvedAgencyId = normalizedSlug
       ? (agencies.find(a => a.slug?.toLowerCase() === normalizedSlug)?.id ?? null)
       : null;
@@ -86,7 +90,7 @@ export function UserInfoColumn({
       first_name: formData.firstName,
       last_name: formData.lastName,
       email: formData.email,
-      agence: formData.agence,
+      agence: normalizedAgence || '',
       agency_id: resolvedAgencyId,
       role_agence: formData.roleAgence,
       global_role: formData.globalRole,
@@ -223,7 +227,14 @@ export function UserInfoColumn({
           {editMode ? (
             <Select
               value={formData.roleAgence || ""}
-              onValueChange={v => setFormData(p => ({ ...p, roleAgence: v }))}
+              onValueChange={v => {
+                const suggested = getSuggestedGlobalRole(v);
+                setFormData(p => ({
+                  ...p,
+                  roleAgence: v,
+                  ...(suggested ? { globalRole: suggested } : {}),
+                }));
+              }}
             >
               <SelectTrigger className="rounded-lg"><SelectValue placeholder="Sélectionner" /></SelectTrigger>
               <SelectContent>
@@ -313,6 +324,14 @@ export function UserInfoColumn({
               />
               <label htmlFor="sendPwdEmail" className="text-xs">Envoyer par email</label>
             </div>
+          </div>
+        )}
+
+        {/* Coherence warning */}
+        {editMode && coherenceWarning && (
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+            <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+            <p className="text-sm text-amber-700 dark:text-amber-400">{coherenceWarning}</p>
           </div>
         )}
 

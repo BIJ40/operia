@@ -129,129 +129,148 @@ export function hasAccess(params: HasAccessParams): boolean {
 }
 
 /**
- * Obtient la liste des modules effectifs pour un utilisateur
- * Combine modules explicites + modules par défaut du rôle
+ * Obtient la liste des modules effectifs pour un utilisateur.
+ *
+ * V3.0 — La source primaire est `enabledModules` (données RPC).
+ * `MODULE_DEFINITIONS` n'est plus un filtre d'existence ; il sert uniquement
+ * à compléter les options par défaut et à fournir les clés pour le bypass N5+.
+ *
+ * Ordre de priorité :
+ * 1. Bypass N5+ → union des clés enabledModules + MODULE_DEFINITIONS, tout activé
+ * 2. Itération des clés de enabledModules (RPC) → source 'explicit'
+ *    - contrainte agency_required
+ *    - contrainte min_role (si connue, sinon pas de blocage)
+ *    - merge options defaults depuis MODULE_DEFINITIONS si disponible
+ * 3. Complément avec DEFAULT_MODULES_BY_ROLE pour les clés absentes du résultat
+ *    - même contraintes agency / min_role
  */
 export function getEffectiveModules(ctx: PermissionContext): EffectiveModule[] {
   const { globalRole, enabledModules, agencyId } = ctx;
   const result: EffectiveModule[] = [];
-  
-  // Si N5+, tous les modules sont accessibles
+  const processedKeys = new Set<string>();
+
+  // Helper: find MODULE_DEFINITIONS entry for a key (may be undefined for unknown keys)
+  const getModuleDef = (key: string) =>
+    MODULE_DEFINITIONS.find(d => d.key === key);
+
+  // Helper: build merged options for a key
+  const buildOptions = (
+    key: string,
+    rawOptions: Record<string, any> | undefined,
+    allEnabled: boolean,
+  ): Record<string, boolean> => {
+    const moduleDef = getModuleDef(key);
+    const merged: Record<string, boolean> = {};
+
+    if (moduleDef) {
+      // Start with MODULE_DEFINITIONS defaults
+      for (const optDef of moduleDef.options) {
+        merged[optDef.key] = allEnabled ? true : optDef.defaultEnabled;
+      }
+    }
+
+    // Override with explicit values from RPC / source
+    if (rawOptions) {
+      for (const [optKey, optVal] of Object.entries(rawOptions)) {
+        merged[optKey] = allEnabled ? true : Boolean(optVal);
+      }
+    }
+
+    return merged;
+  };
+
+  // Helper: check agency & min_role constraints, push result
+  const pushWithConstraints = (
+    key: string,
+    enabled: boolean,
+    source: 'explicit' | 'default' | 'bypass',
+    rawOptions: Record<string, any> | undefined,
+  ): void => {
+    const moduleKey = key as ModuleKey;
+
+    // Agency constraint
+    if (AGENCY_REQUIRED_MODULES.includes(moduleKey) && !agencyId) {
+      result.push({ id: moduleKey, enabled: false, source, options: {} });
+      processedKeys.add(key);
+      return;
+    }
+
+    // Min role constraint (only if known in MODULE_MIN_ROLES)
+    const minRole = MODULE_MIN_ROLES[moduleKey];
+    if (minRole && globalRole && !hasMinRole(globalRole, minRole)) {
+      result.push({ id: moduleKey, enabled: false, source, options: {} });
+      processedKeys.add(key);
+      return;
+    }
+
+    result.push({
+      id: moduleKey,
+      enabled,
+      source,
+      options: buildOptions(key, rawOptions, false),
+    });
+    processedKeys.add(key);
+  };
+
+  // ── CASE 1: Bypass N5+ ──────────────────────────────────────────────
   if (globalRole && isBypassRole(globalRole)) {
-    for (const moduleDef of MODULE_DEFINITIONS) {
+    // Union of all keys from enabledModules AND MODULE_DEFINITIONS
+    const allKeys = new Set<string>();
+    if (enabledModules) {
+      for (const k of Object.keys(enabledModules)) allKeys.add(k);
+    }
+    for (const def of MODULE_DEFINITIONS) allKeys.add(def.key);
+
+    for (const key of allKeys) {
+      const rpcModule = enabledModules?.[key as ModuleKey];
+      const rpcOptions = (typeof rpcModule === 'object' && rpcModule?.options)
+        ? rpcModule.options
+        : undefined;
+
       result.push({
-        id: moduleDef.key,
+        id: key as ModuleKey,
         enabled: true,
         source: 'bypass',
-        options: Object.fromEntries(
-          moduleDef.options.map(opt => [opt.key, true])
-        ),
+        options: buildOptions(key, rpcOptions as Record<string, any> | undefined, true),
       });
     }
     return result;
   }
-  
-  // Obtenir les modules par défaut du rôle
-  const defaultModules = globalRole 
-    ? DEFAULT_MODULES_BY_ROLE[globalRole] || {}
-    : {};
-  
-  // Fusionner explicites + défauts
-  for (const moduleDef of MODULE_DEFINITIONS) {
-    const moduleKey = moduleDef.key;
-    
-    // Vérifier si le module nécessite une agence
-    if (AGENCY_REQUIRED_MODULES.includes(moduleKey) && !agencyId) {
-      result.push({
-        id: moduleKey,
-        enabled: false,
-        source: 'explicit',
-        options: {},
-      });
-      continue;
-    }
-    
-    // Vérifier rôle minimum
-    const modMinRole = moduleDef.minRole;
-    if (globalRole && modMinRole && !hasMinRole(globalRole, modMinRole)) {
-      result.push({
-        id: moduleKey,
-        enabled: false,
-        source: 'explicit',
-        options: {},
-      });
-      continue;
-    }
-    
-    // Priorité: explicite > défaut
-    const explicitModule = enabledModules?.[moduleKey];
-    const defaultModule = defaultModules[moduleKey];
-    
-    if (explicitModule !== undefined) {
-      // Module explicitement configuré
-      const isEnabled = typeof explicitModule === 'boolean' 
-        ? explicitModule 
-        : explicitModule?.enabled ?? false;
-      
-      // IMPORTANT: Fusionner les options explicites avec les valeurs par défaut de MODULE_DEFINITIONS
-      // Cela garantit que si options est vide {}, on utilise les defaultEnabled
-      const explicitOptions = typeof explicitModule === 'object' && explicitModule?.options
-        ? explicitModule.options
-        : {};
-      
-      const mergedOptions: Record<string, boolean> = {};
-      for (const optDef of moduleDef.options) {
-        // Priorité: option explicite > defaultEnabled de la définition
-        if (explicitOptions[optDef.key] !== undefined) {
-          mergedOptions[optDef.key] = explicitOptions[optDef.key];
-        } else {
-          mergedOptions[optDef.key] = optDef.defaultEnabled;
-        }
-      }
-        
-      result.push({
-        id: moduleKey,
-        enabled: isEnabled,
-        source: 'explicit',
-        options: mergedOptions,
-      });
-    } else if (defaultModule !== undefined) {
-      // Fallback sur le défaut du rôle
-      const isEnabled = typeof defaultModule === 'boolean'
-        ? defaultModule
-        : defaultModule?.enabled ?? false;
-      
-      // Fusionner les options du défaut du rôle avec les valeurs de MODULE_DEFINITIONS
-      const defaultOptions = typeof defaultModule === 'object' && defaultModule?.options
-        ? defaultModule.options
-        : {};
-      
-      const mergedOptions: Record<string, boolean> = {};
-      for (const optDef of moduleDef.options) {
-        if (defaultOptions[optDef.key] !== undefined) {
-          mergedOptions[optDef.key] = defaultOptions[optDef.key];
-        } else {
-          mergedOptions[optDef.key] = optDef.defaultEnabled;
-        }
-      }
-        
-      result.push({
-        id: moduleKey,
-        enabled: isEnabled,
-        source: 'default',
-        options: mergedOptions,
-      });
-    } else {
-      // Module non configuré
-      result.push({
-        id: moduleKey,
-        enabled: false,
-        source: 'explicit',
-        options: {},
-      });
+
+  // ── CASE 2: Iterate enabledModules (RPC) as primary source ──────────
+  if (enabledModules && Object.keys(enabledModules).length > 0) {
+    for (const [key, moduleState] of Object.entries(enabledModules)) {
+      const isEnabled = typeof moduleState === 'boolean'
+        ? moduleState
+        : moduleState?.enabled ?? false;
+
+      const rawOptions = (typeof moduleState === 'object' && moduleState?.options)
+        ? moduleState.options as Record<string, any>
+        : undefined;
+
+      pushWithConstraints(key, isEnabled, 'explicit', rawOptions);
     }
   }
-  
+
+  // ── CASE 3: Complement with DEFAULT_MODULES_BY_ROLE for missing keys ─
+  const defaultModules = globalRole
+    ? DEFAULT_MODULES_BY_ROLE[globalRole] || {}
+    : {};
+
+  for (const [key, defaultModule] of Object.entries(defaultModules)) {
+    if (processedKeys.has(key)) continue; // RPC already provided this key
+
+    const isEnabled = typeof defaultModule === 'boolean'
+      ? defaultModule
+      : defaultModule?.enabled ?? false;
+
+    const rawOptions = (typeof defaultModule === 'object' && defaultModule?.options)
+      ? defaultModule.options as Record<string, any>
+      : undefined;
+
+    pushWithConstraints(key, isEnabled, 'default', rawOptions);
+  }
+
   return result;
 }
 
@@ -304,7 +323,7 @@ export function validateUserPermissions(ctx: PermissionContext): PermissionIssue
   
   // Règle 4: Support level sans agent option
   if (supportLevel && supportLevel > 0) {
-    const aideModule = enabledModules?.aide;
+    const aideModule = enabledModules?.['support.aide_en_ligne'] || enabledModules?.aide;
     const isAgentEnabled = typeof aideModule === 'object' 
       ? aideModule?.options?.agent === true
       : false;
@@ -314,8 +333,8 @@ export function validateUserPermissions(ctx: PermissionContext): PermissionIssue
         type: 'error',
         code: 'SUPPORT_LEVEL_NO_AGENT',
         message: `Niveau support SA${supportLevel} défini mais option agent non activée`,
-        fix: 'Activer aide.options.agent ou retirer support_level',
-        moduleId: 'aide',
+        fix: 'Activer support.aide_en_ligne.options.agent ou retirer support_level',
+        moduleId: 'support.aide_en_ligne' as ModuleKey,
       });
     }
   }

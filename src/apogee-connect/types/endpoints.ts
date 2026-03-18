@@ -28,6 +28,9 @@ export const APOGEE_ENDPOINTS = {
   
   /** Récupère les créneaux d'interventions (endpoint REST spécifique) */
   CRENEAUX: "getInterventionsCreneaux",
+
+  /** Récupère un projet par hash+zipCode (documents générés PDF) */
+  PROJECT_BY_HASH: "apiGetProjectByHashZipCode",
 } as const;
 
 export type ApogeeEndpoint = typeof APOGEE_ENDPOINTS[keyof typeof APOGEE_ENDPOINTS];

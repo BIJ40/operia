@@ -9,6 +9,8 @@ import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
 import { InternalApogeeLayout } from '@/components/guides/apogee/InternalApogeeLayout';
+import { useNavigationMode } from '@/hooks/useNavigationMode';
+import { DomainAccentProvider } from '@/contexts/DomainAccentContext';
 
 const ApporteurGuide = lazy(() => import('@/pages/ApporteurGuide'));
 const HelpConfort = lazy(() => import('@/pages/HelpConfort'));
@@ -30,11 +32,13 @@ function LoadingFallback() {
 
 export default function GuidesTabContent() {
   const [activeGuide, setActiveGuide] = useSessionState<GuideTab>('guides_sub_tab', 'apogee');
+  const { mode: navMode } = useNavigationMode();
 
   return (
-    <div className="py-3 px-2 sm:px-4 space-y-4">
+    <DomainAccentProvider accent="purple">
+    <div className={navMode === 'header' ? 'pt-1 px-2 sm:px-4 space-y-3' : 'py-3 px-2 sm:px-4 space-y-4'}>
       <Tabs value={activeGuide} onValueChange={(v) => setActiveGuide(v as GuideTab)}>
-        <PillTabsList tabs={GUIDE_TABS} />
+        <PillTabsList tabs={GUIDE_TABS} variant={navMode === 'header' ? 'switcher' : 'pill'} />
 
         {/* Apogée - Layout avec sidebar intégré (pas de Suspense car pas lazy) */}
         <TabsContent value="apogee" className="mt-4">
@@ -60,5 +64,6 @@ export default function GuidesTabContent() {
         </Suspense>
       </Tabs>
     </div>
+    </DomainAccentProvider>
   );
 }

@@ -236,10 +236,14 @@ export function ActionsConfigDialog({
   const [editedModules, setEditedModules] = useState<ApogeeModule[]>([]);
   const [editedPriorities, setEditedPriorities] = useState<ApogeePriority[]>([]);
   const [editedOwnerSides, setEditedOwnerSides] = useState<ApogeeOwnerSide[]>([]);
+  const [newStatusIds, setNewStatusIds] = useState<string[]>([]);
 
   // Sync when data is loaded
   useEffect(() => {
-    if (statuses.length > 0) setEditedStatuses([...statuses]);
+    if (statuses.length > 0) {
+      setEditedStatuses([...statuses]);
+      setNewStatusIds([]);
+    }
   }, [statuses]);
 
   useEffect(() => {
@@ -312,6 +316,27 @@ export function ActionsConfigDialog({
     const toDelete = existingIds.filter(id => !currentIds.includes(id));
     
     if (toDelete.length > 0) {
+      // Check if any tickets still use these statuses
+      const { count, error: countError } = await supabase
+        .from('apogee_tickets')
+        .select('id', { count: 'exact', head: true })
+        .in('kanban_status', toDelete);
+      
+      if (countError) {
+        logError('apogee-config', 'Error checking ticket references', countError);
+        errorToast('Erreur lors de la vérification des tickets liés');
+        return;
+      }
+      
+      if (count && count > 0) {
+        const deletedLabels = statuses
+          .filter((s) => toDelete.includes(s.id))
+          .map((s) => s.label)
+          .join(', ');
+        errorToast(`Impossible de supprimer le(s) statut(s) ${deletedLabels || toDelete.join(', ')} : ${count} ticket(s) les utilisent encore. Remettez l'ID technique d'origine ou déplacez les tickets vers un autre statut.`);
+        return;
+      }
+
       // First delete transitions that reference these statuses (FK constraint)
       const deleteTransitionsResult = await safeMutation(
         supabase.from('apogee_ticket_transitions')
@@ -357,6 +382,7 @@ export function ActionsConfigDialog({
     }
 
     queryClient.invalidateQueries({ queryKey: ['apogee-ticket-statuses'] });
+    setNewStatusIds([]);
     successToast('Statuts Kanban sauvegardés');
   };
 
@@ -488,6 +514,7 @@ export function ActionsConfigDialog({
       color: 'gray',
       created_at: new Date().toISOString(),
     }]);
+    setNewStatusIds((prev) => [...prev, newId]);
   };
 
   const addModule = () => {
@@ -591,10 +618,15 @@ export function ActionsConfigDialog({
                             <Input
                               value={status.id}
                               onChange={(e) => {
+                                if (!newStatusIds.includes(status.id)) return;
+                                const nextId = e.target.value.toUpperCase().replace(/\s/g, '_');
                                 const updated = [...editedStatuses];
-                                updated[idx] = { ...status, id: e.target.value.toUpperCase().replace(/\s/g, '_') };
+                                updated[idx] = { ...status, id: nextId };
                                 setEditedStatuses(updated);
+                                setNewStatusIds((prev) => prev.map((id) => (id === status.id ? nextId : id)));
                               }}
+                              disabled={!newStatusIds.includes(status.id)}
+                              title={!newStatusIds.includes(status.id) ? "L'ID technique des statuts existants est verrouillé" : undefined}
                               placeholder="BACKLOG"
                               className="h-9 text-xs font-mono"
                             />
@@ -648,7 +680,10 @@ export function ActionsConfigDialog({
                           variant="ghost"
                           size="icon"
                           className="shrink-0"
-                          onClick={() => setEditedStatuses(editedStatuses.filter((_, i) => i !== idx))}
+                          onClick={() => {
+                            setNewStatusIds((prev) => prev.filter((id) => id !== status.id));
+                            setEditedStatuses(editedStatuses.filter((_, i) => i !== idx));
+                          }}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>

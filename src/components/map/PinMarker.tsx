@@ -192,7 +192,8 @@ export function createPinMarkerElement(
   users: PinUser[],
   size: number = 40,
   selected: boolean = false,
-  onClick?: () => void
+  onClick?: () => void,
+  orderNumber?: number
 ): HTMLDivElement {
   const container = document.createElement('div');
   container.style.cursor = onClick ? 'pointer' : 'default';
@@ -224,7 +225,13 @@ export function createPinMarkerElement(
   const tailColor = users.length === 1 ? users[0].color : '#6366f1';
   svgContent += `<path d="${tailPath}" fill="${tailColor}" stroke="white" stroke-width="1.5"/>`;
   
-  if (users.length === 1) {
+  // Mode tournée avec numéro : cercle plein couleur + numéro blanc
+  if (orderNumber != null && users.length >= 1) {
+    const pinColor = users[0].color;
+    svgContent += `<circle cx="${headCx}" cy="${headCy}" r="${headRadius}" fill="${pinColor}" stroke="white" stroke-width="2"/>`;
+    const fontSize = orderNumber > 9 ? size * 0.22 : size * 0.28;
+    svgContent += `<text x="${headCx}" y="${headCy + fontSize * 0.35}" text-anchor="middle" font-size="${fontSize}" font-weight="bold" fill="white" style="pointer-events:none">${orderNumber}</text>`;
+  } else if (users.length === 1) {
     svgContent += `<circle cx="${headCx}" cy="${headCy}" r="${headRadius}" fill="${users[0].color}" stroke="white" stroke-width="2"/>`;
   } else {
     svgContent += `<circle cx="${headCx}" cy="${headCy}" r="${headRadius + 1}" fill="white"/>`;

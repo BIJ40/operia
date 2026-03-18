@@ -109,6 +109,14 @@
     --orange-accent: 43 100% 51%;
     --cyan: 200 100% 43%;
     --cyan-foreground: 0 0% 100%;
+
+    /* Unified Tile tokens */
+    --tile-border: hsl(var(--primary));
+    --tile-border-subtle: hsl(var(--primary) / 0.2);
+    --tile-bg-gradient: radial-gradient(ellipse at top left, hsl(var(--primary) / 0.1), transparent);
+    --tile-icon-bg: hsl(var(--background) / 0.5);
+    --tile-icon-border: hsl(var(--primary) / 0.3);
+    --tile-icon-color: hsl(var(--primary));
   }
 
   .dark {
@@ -1231,4 +1239,12 @@ body[data-read-only] [draggable="true"] {
 
 .apporteur-theme .bg-gradient-cta {
   background: var(--gradient-cta);
+}
+
+/* ============================================
+   MAPBOX — Hide logo & attribution
+   ============================================ */
+.mapboxgl-ctrl-logo,
+.mapboxgl-ctrl-attrib {
+  display: none !important;
 }

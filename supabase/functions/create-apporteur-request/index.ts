@@ -32,11 +32,11 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
     const supabaseAdmin = createClient(supabaseUrl, serviceKey);
 
-    // Find the apporteur_user record (for apporteur_user_id field)
-    // Try by manager first, then by apporteur_users
+    // Resolve apporteur_user or manager for the request
     let apporteurUserId: string | null = null;
+    let apporteurManagerId: string | null = null;
 
-    // For OTP auth, the "user" is actually a manager - find or create corresponding apporteur_users entry
+    // Try to find existing apporteur_users entry
     const { data: existingUser } = await supabaseAdmin
       .from('apporteur_users')
       .select('id')
@@ -49,11 +49,10 @@ Deno.serve(async (req) => {
     if (existingUser) {
       apporteurUserId = existingUser.id;
     } else {
-      // Use the manager ID as a fallback reference
-      // Create a minimal apporteur_users entry to satisfy FK constraint
+      // OTP auth: find the manager instead
       const { data: manager } = await supabaseAdmin
         .from('apporteur_managers')
-        .select('id, email, first_name, last_name')
+        .select('id')
         .eq('apporteur_id', auth.apporteurId)
         .eq('agency_id', auth.agencyId)
         .eq('is_active', true)
@@ -61,50 +60,43 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (manager) {
-        // Create apporteur_users entry linked to this manager (no user_id since OTP user)
-        const { data: newUser } = await supabaseAdmin
-          .from('apporteur_users')
-          .insert({
-            apporteur_id: auth.apporteurId,
-            agency_id: auth.agencyId,
-            email: manager.email,
-            first_name: manager.first_name,
-            last_name: manager.last_name,
-            role: 'manager',
-            is_active: true,
-          })
-          .select('id')
-          .single();
-
-        apporteurUserId = newUser?.id ?? null;
+        apporteurManagerId = manager.id;
       }
     }
 
-    if (!apporteurUserId) {
+    if (!apporteurUserId && !apporteurManagerId) {
       return withCors(req, new Response(JSON.stringify({ error: 'Impossible de résoudre l\'utilisateur apporteur' }), { status: 500 }));
     }
 
     // Insert the request using service role (bypasses RLS)
+    const insertPayload: Record<string, unknown> = {
+      agency_id: auth.agencyId,
+      apporteur_id: auth.apporteurId,
+      request_type,
+      urgency: urgency || 'normal',
+      tenant_name,
+      tenant_phone: tenant_phone || null,
+      tenant_email: tenant_email || null,
+      owner_name: owner_name || null,
+      address,
+      postal_code: postal_code || null,
+      city: city || null,
+      description,
+      availability: availability || null,
+      comments: comments || null,
+      status: 'pending',
+    };
+
+    if (apporteurUserId) {
+      insertPayload.apporteur_user_id = apporteurUserId;
+    }
+    if (apporteurManagerId) {
+      insertPayload.apporteur_manager_id = apporteurManagerId;
+    }
+
     const { data, error } = await supabaseAdmin
       .from('apporteur_intervention_requests')
-      .insert({
-        agency_id: auth.agencyId,
-        apporteur_id: auth.apporteurId,
-        apporteur_user_id: apporteurUserId,
-        request_type,
-        urgency: urgency || 'normal',
-        tenant_name,
-        tenant_phone: tenant_phone || null,
-        tenant_email: tenant_email || null,
-        owner_name: owner_name || null,
-        address,
-        postal_code: postal_code || null,
-        city: city || null,
-        description,
-        availability: availability || null,
-        comments: comments || null,
-        status: 'pending',
-      })
+      .insert(insertPayload)
       .select('id, reference')
       .single();
 

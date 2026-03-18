@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Clock, Calendar, FolderOpen, Layers, ChevronDown, ChevronUp, Users, Package, ShoppingCart, ClipboardList, Euro } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { motion } from 'framer-motion';
+import { Shield } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -18,6 +19,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { CAPlanifieCard } from '../CAPlanifieCard';
+import { PilotageAvanceSection } from '../previsionnel/PilotageAvanceSection';
 
 // Formatage monétaire
 const formatCurrency = (value: number): string => {
@@ -104,7 +106,7 @@ const UNIVERS_COLORS: Record<string, string> = {
   'Vitrerie': 'hsl(270, 60%, 65%)',       // warm-purple
   'Multiservice': 'hsl(340, 70%, 65%)',   // warm-pink
   'Rénovation': 'hsl(175, 60%, 50%)',     // warm-teal
-  'PMR': 'hsl(100, 55%, 55%)',            // soft lime
+  'Aménagement PMR': 'hsl(100, 55%, 55%)',            // soft lime
   'Recherche de fuite': 'hsl(350, 65%, 60%)', // coral
   'Non classé': 'hsl(210, 10%, 60%)',     // neutral gray
 };
@@ -214,12 +216,14 @@ export function PrevisionnelTab() {
           return (
             <motion.div key={etatStats.etat} variants={itemVariants}>
               <Card className={`border-l-4 ${config.bgClass}`} style={{ borderLeftColor: config.color }}>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">{etatStats.etatLabel}</CardTitle>
-                  <Icon className="h-5 w-5" style={{ color: config.color }} />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold" style={{ color: config.color }}>{etatStats.nbDossiers}</div>
+                {/* Header */}
+                <div className="flex items-start justify-between p-4 pb-2">
+                  <h4 className="text-sm font-medium text-muted-foreground">{etatStats.etatLabel}</h4>
+                  <Icon className="h-4 w-4" style={{ color: config.color }} />
+                </div>
+                {/* Content */}
+                <div className="px-4 pb-4">
+                  <div className="text-2xl font-bold" style={{ color: config.color }}>{etatStats.nbDossiers}</div>
                   <p className="text-sm text-muted-foreground mt-1">dossiers</p>
                   <div className="flex gap-4 mt-3 text-xs">
                     <div className="flex items-center gap-1">
@@ -232,7 +236,7 @@ export function PrevisionnelTab() {
                       <span className="font-medium">{formatCurrency(etatStats.devisHT)}</span>
                     </div>
                   </div>
-                </CardContent>
+                </div>
               </Card>
             </motion.div>
           );
@@ -311,10 +315,25 @@ export function PrevisionnelTab() {
                     </TooltipContent>
                   </Tooltip>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Layers className="h-5 w-5 text-purple-500" />
-                  <span className="text-lg font-semibold">{parUnivers.length}</span>
-                  <span className="text-muted-foreground">univers</span>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Layers className="h-5 w-5 text-purple-500" />
+                    <span className="text-lg font-semibold">{parUnivers.length}</span>
+                    <span className="text-muted-foreground">univers</span>
+                  </div>
+                  {data?.dataQuality && (
+                    <Badge
+                      variant="outline"
+                      className="text-xs"
+                      style={{
+                        borderColor: data.dataQuality.score >= 75 ? 'hsl(142, 76%, 36%)' : data.dataQuality.score >= 50 ? 'hsl(45, 93%, 47%)' : 'hsl(0, 84%, 60%)',
+                        color: data.dataQuality.score >= 75 ? 'hsl(142, 76%, 36%)' : data.dataQuality.score >= 50 ? 'hsl(45, 93%, 47%)' : 'hsl(0, 84%, 60%)',
+                      }}
+                    >
+                      <Shield className="h-3 w-3 mr-1" />
+                      Fiabilité {data.dataQuality.score}%
+                    </Badge>
+                  )}
                 </div>
               </div>
             </TooltipProvider>
@@ -593,9 +612,11 @@ export function PrevisionnelTab() {
                   <TableHead>Libellé</TableHead>
                   <TableHead>État</TableHead>
                   <TableHead>Univers</TableHead>
-                  <TableHead className="text-right">Durée</TableHead>
-                  <TableHead className="text-right">H. Homme</TableHead>
-                  <TableHead className="text-right">CA Devis</TableHead>
+                   <TableHead className="text-right">Durée</TableHead>
+                   <TableHead className="text-right">H. Homme</TableHead>
+                   <TableHead className="text-right">CA Devis</TableHead>
+                   <TableHead className="text-right">Âge</TableHead>
+                   <TableHead className="text-right">Risque</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -627,12 +648,40 @@ export function PrevisionnelTab() {
                       <TableCell className="text-right text-green-600 font-medium">
                         {d.devisHT > 0 ? formatCurrency(d.devisHT) : '—'}
                       </TableCell>
+                      <TableCell className="text-right">
+                        {d.ageDays === null ? (
+                          <span className="text-muted-foreground">—</span>
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] px-1.5 py-0"
+                            style={{
+                              borderColor: d.ageDays <= 7 ? 'hsl(142, 76%, 36%)' : d.ageDays <= 15 ? 'hsl(45, 93%, 47%)' : d.ageDays <= 30 ? 'hsl(25, 95%, 53%)' : 'hsl(0, 84%, 60%)',
+                              color: d.ageDays <= 7 ? 'hsl(142, 76%, 36%)' : d.ageDays <= 15 ? 'hsl(45, 93%, 47%)' : d.ageDays <= 30 ? 'hsl(25, 95%, 53%)' : 'hsl(0, 84%, 60%)',
+                            }}
+                          >
+                            {d.ageDays}j
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] px-1.5 py-0"
+                          style={{
+                            borderColor: d.riskScoreGlobal < 0.3 ? 'hsl(142, 76%, 36%)' : d.riskScoreGlobal < 0.6 ? 'hsl(45, 93%, 47%)' : 'hsl(0, 84%, 60%)',
+                            color: d.riskScoreGlobal < 0.3 ? 'hsl(142, 76%, 36%)' : d.riskScoreGlobal < 0.6 ? 'hsl(45, 93%, 47%)' : 'hsl(0, 84%, 60%)',
+                          }}
+                        >
+                          {Math.round(d.riskScoreGlobal * 100)}%
+                        </Badge>
+                      </TableCell>
                     </TableRow>
                   );
                 })}
                 {visibleDossiers.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                       Aucun dossier en attente
                     </TableCell>
                   </TableRow>
@@ -642,6 +691,13 @@ export function PrevisionnelTab() {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Pilotage avancé */}
+      {data && (
+        <motion.div variants={itemVariants}>
+          <PilotageAvanceSection data={data} />
+        </motion.div>
+      )}
 
       {/* Debug Info */}
       {debug && (

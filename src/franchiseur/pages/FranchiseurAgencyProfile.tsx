@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useState, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Building2, Euro, Calendar, Phone, Mail, MapPin, Users, Edit, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePersistedTab } from "@/hooks/usePersistedState";
 import { useAgency } from "../hooks/useAgencies";
 import { useRoyaltyHistory } from "../hooks/useRoyaltyConfig";
-import { useAgencyUsers } from "../hooks/useAgencyUsers";
+import { useAgencyFullTeam, type AgencyTeamMember } from "../hooks/useAgencyFullTeam";
 import { formatEuros } from "@/apogee-connect/utils/formatters";
 import { Separator } from "@/components/ui/separator";
 import { useFranchiseur } from "../contexts/FranchiseurContext";
@@ -18,35 +18,34 @@ import { AgencyMonthlyRoyaltiesTable } from "../components/AgencyMonthlyRoyaltie
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 import { AgencyStatsTab } from "../components/AgencyStatsTab";
+import { AgencyTeamList } from "../components/AgencyTeamList";
 import { ApiToggleProvider } from "@/apogee-connect/contexts/ApiToggleContext";
 import { AgencyProvider } from "@/apogee-connect/contexts/AgencyContext";
 import { FiltersProvider } from "@/apogee-connect/contexts/FiltersContext";
+import { ROUTES } from '@/config/routes';
 
 function FranchiseurAgencyProfileContent() {
   const { agencyId } = useParams<{ agencyId: string }>();
+  const navigate = useNavigate();
   const { data: agency, isLoading: agencyLoading } = useAgency(agencyId || null);
   const { data: royaltyHistory } = useRoyaltyHistory(agencyId || null);
-  const { data: agencyUsers, isLoading: usersLoading } = useAgencyUsers(agency?.slug || null);
+  const { data: teamMembers = [], isLoading: usersLoading } = useAgencyFullTeam(agencyId || null);
   const { franchiseurRole } = useFranchiseur();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = usePersistedTab(`franchiseur-agency-${agencyId}-tab`, 'info');
 
   const canManage = franchiseurRole === "directeur" || franchiseurRole === "dg";
 
-  // Liste des membres de l'équipe (utilisateurs inscrits uniquement)
-  const teamMembers = (agencyUsers || [])
-    .map((user) => ({
-      id: user.id,
-      first_name: user.first_name || "",
-      last_name: user.last_name || "",
-      email: user.email,
-      role: user.role_agence || "Utilisateur",
-      isActive: user.is_active !== false,
-      globalRole: user.global_role,
-    }))
-    .sort((a, b) => 
-      `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`)
-    );
+  const handleCreateUser = useCallback((member: AgencyTeamMember) => {
+    const params = new URLSearchParams({
+      action: 'create',
+      firstName: member.first_name,
+      lastName: member.last_name,
+      email: member.email || '',
+      agence: agency?.slug || '',
+    });
+    navigate(`${ROUTES.admin.users}?${params.toString()}`);
+  }, [navigate, agency?.slug]);
 
   if (agencyLoading) {
     return (
@@ -237,62 +236,16 @@ function FranchiseurAgencyProfileContent() {
                   Équipe ({teamMembers.length})
                 </CardTitle>
                 <CardDescription>
-                  Utilisateurs de l'agence
+                  Membres de l'agence — inscrits et salariés
                 </CardDescription>
               </div>
             </CardHeader>
             <CardContent>
-              {usersLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : teamMembers.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Users className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                  <p>Aucun utilisateur dans l'équipe</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {teamMembers.map((member) => (
-                    <div
-                      key={member.id}
-                      className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarFallback className="bg-primary/10">
-                            {member.first_name?.[0]}
-                            {member.last_name?.[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">
-                            {member.first_name} {member.last_name}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {member.email || "Pas d'email"}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">{member.role}</Badge>
-                        <Badge variant="default" className="bg-green-600">
-                          Compte actif
-                        </Badge>
-                        {member.globalRole && (
-                          <Badge variant="secondary">
-                            {VISIBLE_ROLE_LABELS[member.globalRole as keyof typeof VISIBLE_ROLE_LABELS] || member.globalRole}
-                          </Badge>
-                        )}
-                        {member.isActive === false && (
-                          <Badge variant="destructive">Inactif</Badge>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <AgencyTeamList
+                members={teamMembers}
+                isLoading={usersLoading}
+                onCreateUser={canManage ? handleCreateUser : undefined}
+              />
             </CardContent>
           </Card>
         </TabsContent>

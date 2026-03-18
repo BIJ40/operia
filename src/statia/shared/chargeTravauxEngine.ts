@@ -27,6 +27,17 @@ export interface ChargeTravauxProjet {
   totalHeuresTech: number;
   nbTechs: number;
   devisHT: number;
+  // Enrichissement pilotage avancé
+  createdAt: string | null;
+  ageDays: number | null;
+  riskFlux: number;
+  riskData: number;
+  riskValue: number;
+  riskScoreGlobal: number;
+  dataQualityFlags: string[];
+  includedInForecastCalc: boolean;
+  includedInChargeCalc: boolean;
+  technicianIds: string[];
 }
 
 export interface ChargeTravauxUniversStats {
@@ -53,6 +64,58 @@ export interface ChargeParEtatStats {
   devisHT: number;
 }
 
+export interface RiskProjectEntry {
+  projectId: number | string;
+  reference?: string;
+  label?: string;
+  riskScoreGlobal: number;
+  riskFlux: number;
+  riskData: number;
+  riskValue: number;
+  ageDays: number | null;
+  devisHT: number;
+  etatWorkflowLabel: string;
+}
+
+export interface TechnicianCharge {
+  technicianId: string;
+  hours: number;
+  projects: number;
+}
+
+export interface WeeklyLoadEntry {
+  weekLabel: string;
+  weekStart: string;
+  hours: number;
+  projects: number;
+}
+
+export interface DataQualityInfo {
+  score: number;
+  withHours: number;
+  withDevis: number;
+  withUnivers: number;
+  withPlannedDate: number;
+  total: number;
+  flags: Record<string, number>;
+}
+
+export interface PipelineMaturityInfo {
+  commercial: number;
+  a_commander: number;
+  pret_planification: number;
+  planifie: number;
+  bloque: number;
+}
+
+export interface PipelineAgingInfo {
+  bucket_0_7: number;
+  bucket_8_15: number;
+  bucket_16_30: number;
+  bucket_30_plus: number;
+  unknown: number;
+}
+
 export interface ChargeTravauxResult {
   parUnivers: ChargeTravauxUniversStats[];
   parEtat: ChargeParEtatStats[];
@@ -63,7 +126,7 @@ export interface ChargeTravauxResult {
     totalNbTechs: number;
     nbDossiers: number;
     totalDevisHT: number;
-    caPlanifie: number; // CA des devis "to order" uniquement (dossiers planifiés)
+    caPlanifie: number;
   };
   debug: {
     totalProjects: number;
@@ -79,6 +142,13 @@ export interface ChargeTravauxResult {
     caPlanifieDevisCount: number;
     sampleDevis: any;
   };
+  // Pilotage avancé
+  dataQuality: DataQualityInfo;
+  pipelineMaturity: PipelineMaturityInfo;
+  pipelineAging: PipelineAgingInfo;
+  riskProjects: RiskProjectEntry[];
+  chargeByTechnician: TechnicianCharge[];
+  weeklyLoad: WeeklyLoadEntry[];
 }
 
 /**
@@ -207,9 +277,9 @@ function parseNumericValue(value: any): number {
  */
 function normalizeUnivers(univers: string): string {
   const mapping: Record<string, string> = {
-    'ame_logement': 'PMR',
-    'amelioration_logement': 'PMR',
-    'pmr': 'PMR',
+    'ame_logement': 'Aménagement PMR',
+    'amelioration_logement': 'Aménagement PMR',
+    'pmr': 'Aménagement PMR',
     'renovation': 'Rénovation',
     'plomberie': 'Plomberie',
     'electricite': 'Électricité',
@@ -388,6 +458,77 @@ export function computeChargeTravauxAvenirParUnivers(
     const universes = (project?.data?.universes as string[]) || ['Non classé'];
     const normalizedUniverses = universes.map(normalizeUnivers);
 
+    // --- Enrichissement pilotage avancé ---
+    // createdAt & ageDays
+    const rawCreatedAt = project?.createdAt ?? project?.data?.createdAt ?? null;
+    const createdAtStr = rawCreatedAt ? String(rawCreatedAt) : null;
+    let ageDays: number | null = null;
+    if (createdAtStr) {
+      const createdDate = new Date(createdAtStr);
+      if (!isNaN(createdDate.getTime())) {
+        ageDays = Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+      }
+    }
+
+    // dataQualityFlags
+    const dataQualityFlags: string[] = [];
+    if (heuresTech === 0) dataQualityFlags.push('missing_hours');
+    if (totalDevisHTProjet === 0) dataQualityFlags.push('missing_devis');
+    if (normalizedUniverses.length === 1 && normalizedUniverses[0] === 'Non classé') dataQualityFlags.push('missing_univers');
+    if (ageDays === null) dataQualityFlags.push('missing_created_at');
+
+    // Check for planned date
+    let hasPlannedDate = false;
+    for (const itv of intervs) {
+      const d = itv?.dateReelle ?? itv?.date;
+      if (d) { hasPlannedDate = true; break; }
+      const visites = Array.isArray(itv?.visites) ? itv.visites : (Array.isArray(itv?.data?.visites) ? itv.data.visites : []);
+      for (const v of visites) {
+        if (v?.dateReelle ?? v?.date) { hasPlannedDate = true; break; }
+      }
+      if (hasPlannedDate) break;
+    }
+    if (!hasPlannedDate) dataQualityFlags.push('missing_planned_date');
+
+    // technicianIds
+    const techIdSet = new Set<string>();
+    for (const itv of intervs) {
+      const uid = itv?.userId ?? itv?.user_id;
+      if (uid) techIdSet.add(String(uid));
+      const uids = itv?.usersIds ?? itv?.data?.usersIds;
+      if (Array.isArray(uids)) {
+        for (const u of uids) if (u) techIdSet.add(String(u));
+      }
+    }
+    const technicianIds = Array.from(techIdSet);
+
+    // riskFlux
+    const riskFlux = ageDays === null ? 0.5 : ageDays > 30 ? 1.0 : ageDays > 15 ? 0.6 : ageDays > 7 ? 0.3 : 0;
+
+    // riskData
+    const riskData = dataQualityFlags.length / 5;
+
+    // riskValue
+    let riskValue = 0;
+    const isAdvanced = state === 'devis_to_order' || state === 'wait_fourn';
+    if (totalDevisHTProjet === 0 && isAdvanced) {
+      riskValue = 1.0;
+    } else if (totalDevisHTProjet > 5000 && ageDays !== null && ageDays > 15) {
+      riskValue = 0.8;
+    } else if (totalDevisHTProjet === 0 && state === 'to_planify_tvx') {
+      riskValue = 0.4;
+    } else if (totalDevisHTProjet > 0 && totalDevisHTProjet < 500) {
+      riskValue = 0.3;
+    }
+
+    const riskScoreGlobal = 0.25 * riskFlux + 0.40 * riskData + 0.35 * riskValue;
+
+    // includedInForecastCalc: devisHT > 0 et devis non draft/rejected/canceled (already filtered by calculateDevisHTForProject)
+    const includedInForecastCalc = totalDevisHTProjet > 0;
+
+    // includedInChargeCalc: heures > 0 et (technicien ou date planifiée)
+    const includedInChargeCalc = heuresTech > 0 && (technicianIds.length > 0 || hasPlannedDate);
+
     parProjet.push({
       projectId,
       reference: project.ref || project.reference,
@@ -398,7 +539,17 @@ export function computeChargeTravauxAvenirParUnivers(
       totalHeuresRdv: heuresRdv,
       totalHeuresTech: heuresTech,
       nbTechs: maxNbTechs,
-      devisHT: totalDevisHTProjet
+      devisHT: totalDevisHTProjet,
+      createdAt: createdAtStr,
+      ageDays,
+      riskFlux,
+      riskData,
+      riskValue,
+      riskScoreGlobal,
+      dataQualityFlags,
+      includedInForecastCalc,
+      includedInChargeCalc,
+      technicianIds,
     });
 
     // Mise à jour des stats par état
@@ -470,11 +621,179 @@ export function computeChargeTravauxAvenirParUnivers(
     caPlanifie: totalCAPlanifie
   };
 
+  // --- Agrégats pilotage avancé ---
+  const total = parProjet.length;
+
+  // dataQuality
+  const withHours = parProjet.filter(p => p.totalHeuresTech > 0).length;
+  const withDevis = parProjet.filter(p => p.devisHT > 0).length;
+  const withUnivers = parProjet.filter(p => !p.dataQualityFlags.includes('missing_univers')).length;
+  const withPlannedDate = parProjet.filter(p => !p.dataQualityFlags.includes('missing_planned_date')).length;
+  const flagCounts: Record<string, number> = {};
+  for (const p of parProjet) {
+    for (const f of p.dataQualityFlags) {
+      flagCounts[f] = (flagCounts[f] || 0) + 1;
+    }
+  }
+  const dataQuality: DataQualityInfo = {
+    score: total > 0 ? Math.round(100 * (withHours + withDevis + withUnivers + withPlannedDate) / (4 * total)) : 0,
+    withHours, withDevis, withUnivers, withPlannedDate, total,
+    flags: flagCounts,
+  };
+
+  // pipelineMaturity (priority: planifie > bloque > pret_planification > a_commander > commercial)
+  const pipelineMaturity: PipelineMaturityInfo = { commercial: 0, a_commander: 0, pret_planification: 0, planifie: 0, bloque: 0 };
+  for (const p of parProjet) {
+    const hasFuturePlannedDate = !p.dataQualityFlags.includes('missing_planned_date');
+    if (hasFuturePlannedDate) {
+      pipelineMaturity.planifie++;
+    } else if (p.etatWorkflow === 'wait_fourn') {
+      pipelineMaturity.bloque++;
+    } else if (p.etatWorkflow === 'to_planify_tvx' && p.includedInForecastCalc) {
+      pipelineMaturity.pret_planification++;
+    } else if (p.etatWorkflow === 'devis_to_order') {
+      pipelineMaturity.a_commander++;
+    } else {
+      pipelineMaturity.commercial++;
+    }
+  }
+
+  // pipelineAging
+  const pipelineAging: PipelineAgingInfo = { bucket_0_7: 0, bucket_8_15: 0, bucket_16_30: 0, bucket_30_plus: 0, unknown: 0 };
+  for (const p of parProjet) {
+    if (p.ageDays === null) { pipelineAging.unknown++; }
+    else if (p.ageDays <= 7) { pipelineAging.bucket_0_7++; }
+    else if (p.ageDays <= 15) { pipelineAging.bucket_8_15++; }
+    else if (p.ageDays <= 30) { pipelineAging.bucket_16_30++; }
+    else { pipelineAging.bucket_30_plus++; }
+  }
+
+  // riskProjects (filtered > 0.6, sorted desc)
+  const riskProjects: RiskProjectEntry[] = parProjet
+    .filter(p => p.riskScoreGlobal > 0.6)
+    .sort((a, b) => b.riskScoreGlobal - a.riskScoreGlobal)
+    .map(p => ({
+      projectId: p.projectId,
+      reference: p.reference,
+      label: p.label,
+      riskScoreGlobal: p.riskScoreGlobal,
+      riskFlux: p.riskFlux,
+      riskData: p.riskData,
+      riskValue: p.riskValue,
+      ageDays: p.ageDays,
+      devisHT: p.devisHT,
+      etatWorkflowLabel: p.etatWorkflowLabel,
+    }));
+
+  // chargeByTechnician (aggregation per intervention, split hours among techs)
+  const techMap = new Map<string, { hours: number; projectIds: Set<number | string> }>();
+  for (const p of parProjet) {
+    const intervs = byProjectId.get(Number(p.projectId)) || [];
+    for (const itv of intervs) {
+      const { heuresTech: hTech } = extractHoursFromIntervention(itv);
+      if (hTech === 0) continue;
+      const ids: string[] = [];
+      const uid = itv?.userId ?? itv?.user_id;
+      if (uid) ids.push(String(uid));
+      const uids = itv?.usersIds ?? itv?.data?.usersIds;
+      if (Array.isArray(uids)) for (const u of uids) { if (u && !ids.includes(String(u))) ids.push(String(u)); }
+      if (ids.length === 0) continue;
+      const share = hTech / ids.length;
+      for (const tid of ids) {
+        if (!techMap.has(tid)) techMap.set(tid, { hours: 0, projectIds: new Set() });
+        const entry = techMap.get(tid)!;
+        entry.hours += share;
+        entry.projectIds.add(p.projectId);
+      }
+    }
+  }
+  const chargeByTechnician: TechnicianCharge[] = Array.from(techMap.entries())
+    .map(([technicianId, v]) => ({ technicianId, hours: Math.round(v.hours * 10) / 10, projects: v.projectIds.size }))
+    .sort((a, b) => b.hours - a.hours);
+
+  // weeklyLoad (S to S+3 from today)
+  const nowDate = new Date();
+  nowDate.setHours(0, 0, 0, 0);
+  // Get monday of current week
+  const dayOfWeek = nowDate.getDay();
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const currentMonday = new Date(nowDate);
+  currentMonday.setDate(nowDate.getDate() + mondayOffset);
+
+  const weekBuckets: { start: Date; label: string; hours: number; projectIds: Set<number | string> }[] = [];
+  for (let w = 0; w < 4; w++) {
+    const weekStart = new Date(currentMonday);
+    weekStart.setDate(currentMonday.getDate() + w * 7);
+    const weekNum = getISOWeekNumber(weekStart);
+    weekBuckets.push({ start: weekStart, label: `S${weekNum}`, hours: 0, projectIds: new Set() });
+  }
+  const weekEndMs = new Date(weekBuckets[3].start);
+  weekEndMs.setDate(weekEndMs.getDate() + 7);
+
+  for (const p of parProjet) {
+    const intervs = byProjectId.get(Number(p.projectId)) || [];
+    for (const itv of intervs) {
+      const dates = getInterventionDates(itv);
+      const { heuresTech: hTech } = extractHoursFromIntervention(itv);
+      for (const d of dates) {
+        const dMs = d.getTime();
+        if (dMs < currentMonday.getTime() || dMs >= weekEndMs.getTime()) continue;
+        for (const bucket of weekBuckets) {
+          const bucketEnd = new Date(bucket.start);
+          bucketEnd.setDate(bucket.start.getDate() + 7);
+          if (dMs >= bucket.start.getTime() && dMs < bucketEnd.getTime()) {
+            bucket.hours += hTech;
+            bucket.projectIds.add(p.projectId);
+            break;
+          }
+        }
+      }
+    }
+  }
+  const weeklyLoad: WeeklyLoadEntry[] = weekBuckets.map(b => ({
+    weekLabel: b.label,
+    weekStart: b.start.toISOString().slice(0, 10),
+    hours: Math.round(b.hours * 10) / 10,
+    projects: b.projectIds.size,
+  }));
+
   return {
     parUnivers,
     parEtat,
     parProjet,
     totaux,
-    debug
+    debug,
+    dataQuality,
+    pipelineMaturity,
+    pipelineAging,
+    riskProjects,
+    chargeByTechnician,
+    weeklyLoad,
   };
+}
+
+/** Get ISO week number */
+function getISOWeekNumber(date: Date): number {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
+
+/** Extract all valid dates from an intervention */
+function getInterventionDates(itv: any): Date[] {
+  const dates: Date[] = [];
+  const tryAdd = (v: any) => {
+    if (!v) return;
+    const d = new Date(v);
+    if (!isNaN(d.getTime())) dates.push(d);
+  };
+  tryAdd(itv?.dateReelle);
+  tryAdd(itv?.date);
+  const visites = Array.isArray(itv?.visites) ? itv.visites : (Array.isArray(itv?.data?.visites) ? itv.data.visites : []);
+  for (const v of visites) {
+    tryAdd(v?.dateReelle);
+    tryAdd(v?.date);
+  }
+  return dates;
 }

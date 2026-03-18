@@ -15,6 +15,111 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.10.0",
+    title: "Mode Tournée Technicien — Carte des RDV",
+    date: "2026-03-18",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // MODE TOURNÉE CARTE
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Mode tournée technicien : sélectionner un seul tech sur la carte affiche ses RDV numérotés (1, 2, 3…) dans l\'ordre chronologique' },
+      { type: 'feature', description: 'Tracé du trajet routier réel en pointillés entre les RDV (API Mapbox Directions), couleur du technicien' },
+      { type: 'feature', description: 'Bandeau résumé de tournée : nom du tech, nombre de RDV, distance totale (km), durée estimée du trajet' },
+      { type: 'feature', description: 'Filtre technicien dans la carte agrandie du dashboard : pastilles cliquables par tech avec mode tournée intégré' },
+      { type: 'improvement', description: 'Hook useRouteDirections : appel API Mapbox Directions avec géométrie GeoJSON, distance et durée' },
+      { type: 'improvement', description: 'PinMarker enrichi : support du numéro d\'ordre dans la pastille (orderNumber) pour le mode tournée' },
+      { type: 'improvement', description: 'Mode tournée disponible sur CartePage, MapPlanningView et DashboardMapWidget (carte agrandie)' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // WIDGET CARTE DASHBOARD
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Header carte dashboard compacté : compteurs RDV et techs sur une seule ligne, bouton agrandir réduit à l\'icône' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // DROITS ÉQUIPE
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Toggle maître par catégorie dans les droits équipe : cocher/décocher une catégorie entière (Commercial, Pilotage…)' },
+      { type: 'improvement', description: 'Titres de catégories mis en évidence avec couleur et taille agrandie + compteur modules actifs' },
+      { type: 'improvement', description: 'État indéterminé (partiel) sur la checkbox catégorie quand certains modules sont cochés' },
+      { type: 'fix', description: 'Filtrage des modules non déployés dans l\'interface Droits équipe (cohérence avec les permissions réelles)' },
+    ],
+  },
+  {
+    version: "V0.9.9",
+    title: "Accessibilité modules & Granularité Commercial",
+    date: "2026-03-18",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // ACCESSIBILITÉ NAVIGATION
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Logique à 3 états dans la navigation : modules non déployés masqués, modules déployés sans accès grisés, modules accessibles cliquables' },
+      { type: 'feature', description: 'Les administrateurs (N5+) voient tous les modules déployés comme cliquables, mais les modules en développement restent masqués de la navigation' },
+      { type: 'feature', description: 'Accès admin aux modules en développement conservé via les liens directs de la page Droits (ModuleGuard bypass)' },
+      { type: 'improvement', description: 'Header dropdown : sous-modules inaccessibles affichés en grisé avec pointer-events désactivés' },
+      { type: 'improvement', description: 'Chargement des clés déployées depuis module_registry (is_deployed) dans AuthContext pour filtrage navigation' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // GRANULARITÉ COMMERCIAL
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Promotion des 4 sous-onglets Commercial en modules indépendants : commercial.suivi_client, commercial.comparateur, commercial.veille, commercial.prospects' },
+      { type: 'feature', description: 'Chaque sous-onglet Commercial est désormais individuellement déployable, activable par plan et overridable par utilisateur' },
+      { type: 'improvement', description: 'Migration automatique des plan_tier_modules : les options prospection existantes converties en entrées commercial.* correspondantes' },
+      { type: 'improvement', description: 'Remplacement de hasModuleOption(prospection, ...) par hasModule(commercial.*) dans CommercialTabContent et ProspectionTabContent' },
+      { type: 'improvement', description: 'Taxonomie des droits (rightsTaxonomy) enrichie avec les 4 nouvelles clés sous la catégorie Commercial' },
+      { type: 'improvement', description: 'Header navigation : scopes Commercial mis à jour vers les clés granulaires (commercial.suivi_client au lieu de prospection)' },
+    ],
+  },
+  {
+    version: "V0.9.8",
+    title: "Centre d'aide — Refonte UX & Permissions documentaires",
+    date: "2026-03-12",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // CENTRE D'AIDE
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Nouvelle page Centre d\'aide unifiée en grille 2×2 : Aide en ligne, Base documentaire, Mes demandes, FAQ' },
+      { type: 'feature', description: 'Bouton « Retour » ajouté à chaque étape du chat IA (orientation, conversation, capture d\'écran)' },
+      { type: 'improvement', description: 'Suppression du scroll automatique parasite lors du changement de domaine/étape dans le chat' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // BASE DOCUMENTAIRE & PERMISSIONS
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Bases documentaires liées aux permissions : sections accessibles cliquables, sections non autorisées grisées avec cadenas' },
+      { type: 'improvement', description: 'Contrôle d\'accès via hasModuleOption(support.guides, apogee|helpconfort|apporteurs)' },
+      { type: 'improvement', description: 'Renommage : HC Services → Operia, Base documentaire → Base documentaire HelpConfort' },
+    ],
+  },
+  {
+    version: "V0.9.7",
+    title: "Verrouillage Permissions — Fail-Closed & Anti-Régression",
+    date: "2026-03-12",
+    changes: [
+      { type: 'security', description: 'RPC get_user_effective_modules basculée en fail-closed : COALESCE(ptm.enabled, false) — tout accès non configuré est désormais refusé' },
+      { type: 'security', description: 'Isolation STARTER / PRO renforcée : commercial.realisations et organisation.reunions désactivés pour STARTER' },
+      { type: 'fix', description: 'Suppression de 4 clés fantômes sans effet runtime (commercial.suivi_client, comparateur, veille, prospects)' },
+      { type: 'feature', description: 'Insertion de 8 clés canoniques dans plan_tier_modules (6 sous-onglets statistiques + 2 clés médiathèque)' },
+      { type: 'improvement', description: 'Granularité stats par plan : general accessible STARTER, sous-onglets avancés réservés PRO' },
+      { type: 'audit', description: 'Suite anti-régression : 434 tests passants couvrant fail-closed, isolation plans, cohérence clés' },
+      { type: 'audit', description: 'Test fail-closed-regression : STARTER bloqué sur 8 clés PRO, PRO autorisé, overrides cohérents' },
+      { type: 'audit', description: 'Test coherence-audit : aucune clé fantôme, aucun deployed=false activé, alignement types/registry' },
+      { type: 'audit', description: 'Test fail-open-prevention : interdiction du pattern COALESCE(..., true) et fallback permissif' },
+      { type: 'audit', description: 'Test new-module-checklist : 10 règles structurelles bloquantes pour tout ajout futur de module' },
+      { type: 'improvement', description: 'Référence technique complète : docs/PERMISSIONS-REFERENCE.md (inventaire clés, cas spéciaux, procédure 9 étapes)' },
+      { type: 'improvement', description: 'Rapport de clôture exécutif : docs/PERMISSIONS-CLOSURE-REPORT.md (synthèse dirigeant, avant/après, gouvernance)' },
+    ],
+  },
+  {
+    version: "V0.9.6",
+    title: "Phase 4 — Audit & Plan de migration Permissions",
+    date: "2026-03-11",
+    changes: [
+      { type: 'audit', description: 'Inventaire complet des 165 guards de permissions (phase4-guards-inventory.md)' },
+      { type: 'audit', description: 'Plan de migration 4 vagues avec classement par risque (phase4-migration-plan.md)' },
+      { type: 'improvement', description: 'Identification de 15 clés legacy et mapping vers clés hiérarchiques Phase 4' },
+      { type: 'improvement', description: 'Premier lot exécutable identifié : 17 occurrences, 6 fichiers (Vague 1)' },
+    ],
+  },
+  {
     version: "V0.9.5",
     title: "Industrialisation & Observabilité (LOT 2)",
     date: "2026-03-08",

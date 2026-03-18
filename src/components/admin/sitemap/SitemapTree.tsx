@@ -32,7 +32,7 @@ import {
 } from "@/config/sitemapData";
 import { type GlobalRole } from "@/types/globalRoles";
 import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
-import { MODULE_LABELS } from "@/permissions/constants";
+import { useModuleLabels } from "@/hooks/useModuleLabels";
 import { getPlanLabel } from "@/config/planTiers";
 import { toast } from "sonner";
 
@@ -73,6 +73,7 @@ function getGuardColor(route: RouteMetadata): string {
 
 function RouteItem({ route }: { route: RouteMetadata }) {
   const [copied, setCopied] = useState(false);
+  const { getLabel } = useModuleLabels();
   const { roleGuard, moduleGuard, specialGuard } = route.guards;
 
   const copyPath = async () => {
@@ -169,14 +170,14 @@ function RouteItem({ route }: { route: RouteMetadata }) {
             <TooltipTrigger>
               <Badge variant="outline" className="bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300 border-violet-300 gap-1">
                 <Box className="w-3 h-3" />
-                {MODULE_LABELS[moduleGuard.moduleKey]?.split(' ')[0] || moduleGuard.moduleKey}
+                {getLabel(moduleGuard.moduleKey).split(' ')[0]}
                 {moduleGuard.requiredOption && (
                   <span className="text-[10px] opacity-75">.{moduleGuard.requiredOption}</span>
                 )}
               </Badge>
             </TooltipTrigger>
             <TooltipContent>
-              Module: {MODULE_LABELS[moduleGuard.moduleKey] || moduleGuard.moduleKey}
+              Module: {getLabel(moduleGuard.moduleKey)}
               {moduleGuard.requiredOption && <br />}
               {moduleGuard.requiredOption && `Option: ${moduleGuard.requiredOption}`}
               {moduleGuard.requiredOptions && <br />}

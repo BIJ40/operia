@@ -14,16 +14,16 @@
  * Seul N6 (superadmin) peut changer le statut is_deployed.
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, Fragment } from 'react';
 import {
   useModuleRegistry,
   useUpdateModuleNode,
   usePropagateToChildren,
-  flattenTree,
   getDescendantKeys,
   type RegistryNode,
   type PlanLevel,
 } from '@/hooks/access-rights/useModuleRegistry';
+import { RIGHTS_CATEGORIES, nodeMatchesCategory, nodeMatchesAnyCategory, getRightsDisplayLabel, type RightsCategory } from './rightsTaxonomy';
 import {
   useModuleOverrides,
   useAddOverride,
@@ -59,7 +59,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { Layers, Monitor, Zap, TreePine, ChevronRight, CornerDownRight, X, Search, Users, Construction, ExternalLink } from 'lucide-react';
+import { Layers, Monitor, Zap, TreePine, ChevronRight, CornerDownRight, X, Search, Users, Construction, ExternalLink, AlertTriangle, Trash2 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+import { GLOBAL_ROLES } from '@/types/globalRoles';
 import { useNavigate } from 'react-router-dom';
 
 // ============================================================================
@@ -172,6 +174,35 @@ function RoleBadge({
 }
 
 // ============================================================================
+// Redundancy check helper
+// ============================================================================
+
+const ROLE_LEVEL_MAP: Record<string, number> = {
+  base_user: 0, franchisee_user: 1, franchisee_admin: 2,
+  franchisor_user: 3, franchisor_admin: 4, platform_admin: 5, superadmin: 6,
+};
+
+function isOverrideRedundant(
+  override: UserOverride,
+  moduleMinRole: number,
+  moduleRequiredPlan: PlanLevel,
+): boolean {
+  // If module plan is NONE, override is the ONLY way to grant access → never redundant
+  if (moduleRequiredPlan === 'NONE') return false;
+
+  const userRoleLevel = override.globalRole ? (ROLE_LEVEL_MAP[override.globalRole] ?? 0) : 0;
+  const userTier = override.agencyTierKey ?? 'STARTER';
+
+  // Check role requirement
+  const meetsRole = userRoleLevel >= moduleMinRole || userRoleLevel >= 5;
+
+  // Check plan requirement
+  const meetsPlan = userTier === 'PRO' || moduleRequiredPlan === 'STARTER';
+
+  return meetsRole && meetsPlan;
+}
+
+// ============================================================================
 // Overrides Popover
 // ============================================================================
 
@@ -179,10 +210,14 @@ function OverridesPopover({
   moduleKey,
   overrides,
   dimmed,
+  moduleMinRole,
+  moduleRequiredPlan,
 }: {
   moduleKey: string;
   overrides: UserOverride[];
   dimmed: boolean;
+  moduleMinRole: number;
+  moduleRequiredPlan: PlanLevel;
 }) {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search, 300);
@@ -194,54 +229,110 @@ function OverridesPopover({
   const existingIds = new Set(overrides.map(o => o.userId));
   const filteredResults = (searchResults ?? []).filter(p => !existingIds.has(p.id));
 
+  const redundantOverrides = useMemo(() => 
+    overrides.filter(o => isOverrideRedundant(o, moduleMinRole, moduleRequiredPlan)),
+    [overrides, moduleMinRole, moduleRequiredPlan]
+  );
+  const redundantCount = redundantOverrides.length;
+
+  const handleCleanRedundant = () => {
+    for (const o of redundantOverrides) {
+      removeOverride.mutate({ userId: o.userId, moduleKey });
+    }
+  };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
         <button
           type="button"
           className={cn(
-            'inline-flex items-center rounded-full border text-[11px] cursor-pointer select-none transition-opacity font-medium px-2 py-0.5',
+            'inline-flex items-center gap-1 rounded-full border text-[11px] cursor-pointer select-none transition-opacity font-medium px-2 py-0.5',
             'hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1',
             dimmed && 'opacity-40',
             count > 0
-              ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700'
+              ? redundantCount === count
+                ? 'bg-muted text-muted-foreground border-border'
+                : 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700'
               : 'bg-muted text-muted-foreground border-border'
           )}
         >
           {count > 0 ? count : '—'}
+          {redundantCount > 0 && (
+            <AlertTriangle className="w-3 h-3 text-muted-foreground" />
+          )}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-0 z-50" align="end" sideOffset={5}>
+      <PopoverContent className="w-80 p-0 z-50" align="end" sideOffset={5}>
         <div className="p-3 pb-2">
           <p className="text-xs font-medium text-foreground mb-2">
             Privilèges — <span className="text-muted-foreground font-normal">{moduleKey}</span>
           </p>
 
+          {/* Cleanup button */}
+          {redundantCount > 0 && (
+            <div className="mb-2 p-2 rounded bg-muted/50 border border-border">
+              <p className="text-[10px] text-muted-foreground mb-1.5">
+                {redundantCount} privilège{redundantCount > 1 ? 's' : ''} redondant{redundantCount > 1 ? 's' : ''} — ces utilisateurs ont déjà accès via leur rôle et plan.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-6 text-[10px] gap-1"
+                onClick={handleCleanRedundant}
+                disabled={removeOverride.isPending}
+              >
+                <Trash2 className="w-3 h-3" />
+                Nettoyer {redundantCount} redondant{redundantCount > 1 ? 's' : ''}
+              </Button>
+            </div>
+          )}
+
           {/* Current overrides */}
           {count > 0 && (
             <ScrollArea className="max-h-48 overflow-y-auto mb-2">
               <div className="space-y-1">
-                {overrides.map(o => (
-                  <div key={o.userId} className="group flex items-center justify-between gap-2 text-xs py-1.5 px-2 rounded hover:bg-muted/50">
-                    <div className="min-w-0 flex-1">
-                      <span className="font-medium truncate block">
-                        {[o.firstName, o.lastName].filter(Boolean).join(' ') || 'Inconnu'}
-                      </span>
-                      {o.email && (
-                        <span className="text-muted-foreground text-[10px] truncate block">{o.email}</span>
-                      )}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                      title="Retirer ce privilège"
-                      onClick={() => removeOverride.mutate({ userId: o.userId, moduleKey })}
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-                ))}
+                <TooltipProvider delayDuration={200}>
+                  {overrides.map(o => {
+                    const redundant = isOverrideRedundant(o, moduleMinRole, moduleRequiredPlan);
+                    return (
+                      <div key={o.userId} className={cn(
+                        'group flex items-center justify-between gap-2 text-xs py-1.5 px-2 rounded hover:bg-muted/50',
+                        redundant && 'opacity-50'
+                      )}>
+                        <div className="min-w-0 flex-1">
+                          <span className="font-medium truncate block">
+                            {[o.firstName, o.lastName].filter(Boolean).join(' ') || 'Inconnu'}
+                          </span>
+                          {o.email && (
+                            <span className="text-muted-foreground text-[10px] truncate block">{o.email}</span>
+                          )}
+                        </div>
+                        {redundant && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge variant="outline" className="text-[9px] px-1 py-0 bg-muted text-muted-foreground border-border shrink-0">
+                                Redondant
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent side="left" className="text-xs max-w-[200px]">
+                              Accès déjà garanti par le rôle ({o.globalRole}) et le plan ({o.agencyTierKey})
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          title="Retirer ce privilège"
+                          onClick={() => removeOverride.mutate({ userId: o.userId, moduleKey })}
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </TooltipProvider>
               </div>
             </ScrollArea>
           )}
@@ -297,31 +388,90 @@ function OverridesPopover({
 // Row component
 // ============================================================================
 
-// Route mapping for module keys → app routes
+// Route mapping for module keys → app routes (canonical G3 keys)
 const MODULE_ROUTES: Record<string, string> = {
-  planning_v2: '/planning-v2',
-  agence: '/?tab=agence',
-  statistiques: '/?tab=stats',
-  commercial: '/commercial',
-  rh: '/rh',
-  parc: '/parc',
-  mediatheque: '/mediatheque',
-  apporteurs: '/apporteurs',
-  aide: '/aide',
-  ticketing: '/tickets',
-  apogee_tickets: '/tickets',
-  reseau_franchiseur: '/franchiseur',
+  // Accueil
+  accueil: '/',
+  // Pilotage
+  pilotage: '/?tab=pilotage',
+  'pilotage.statistiques': '/?tab=pilotage',
+  'pilotage.performance': '/?tab=pilotage',
+  'pilotage.actions_a_mener': '/?tab=pilotage',
+  'pilotage.devis_acceptes': '/?tab=pilotage',
+  'pilotage.incoherences': '/?tab=pilotage',
+  // Commercial
+  commercial: '/?tab=commercial',
+  prospection: '/?tab=commercial',
+  'commercial.realisations': '/?tab=commercial',
+  // Organisation
+  organisation: '/?tab=organisation',
+  'organisation.salaries': '/?tab=organisation',
+  'organisation.apporteurs': '/?tab=organisation',
+  'organisation.plannings': '/?tab=organisation',
+  'organisation.reunions': '/?tab=organisation',
+  'organisation.parc': '/?tab=organisation',
+  'organisation.docgen': '/?tab=organisation',
+  // Documents
+  mediatheque: '/?tab=documents',
+  'mediatheque.documents': '/?tab=documents',
+  'mediatheque.consulter': '/?tab=documents',
+  'mediatheque.gerer': '/?tab=documents',
+  // Support
+  support: '/?tab=support',
+  'support.aide_en_ligne': '/?tab=support',
+  'support.guides': '/?tab=support',
+  'support.faq': '/?tab=support',
+  ticketing: '/?tab=support',
+  'ticketing.kanban': '/?tab=support',
+  'ticketing.liste': '/?tab=support',
+  'ticketing.create': '/?tab=support',
+  'ticketing.manage': '/?tab=support',
+  // Admin
+  admin: '/?tab=admin',
+  admin_plateforme: '/?tab=admin',
+  'admin_plateforme.users': '/?tab=admin',
+  'admin_plateforme.agencies': '/?tab=admin',
+  'admin_plateforme.permissions': '/?tab=admin',
+  'admin.gestion': '/?tab=admin&adminTab=gestion',
+  // Franchiseur
+  reseau_franchiseur: '/?tab=franchiseur',
+  // Planning augmenté
+  planning_augmente: '/?tab=organisation',
+  // Legacy keys (backward compat)
+  agence: '/?tab=pilotage',
+  stats: '/?tab=pilotage',
+  rh: '/?tab=organisation',
+  realisations: '/?tab=commercial',
+  divers_apporteurs: '/?tab=organisation',
+  divers_plannings: '/?tab=organisation',
+  divers_reunions: '/?tab=organisation',
+  parc: '/?tab=organisation',
+  divers_documents: '/?tab=documents',
+  documents: '/?tab=documents',
+  aide: '/?tab=support',
+  guides: '/?tab=support',
 };
 
 function getModuleRoute(key: string): string | null {
-  // Check exact key first, then first segment
   if (MODULE_ROUTES[key]) return MODULE_ROUTES[key];
-  const root = key.split('.')[0];
-  if (MODULE_ROUTES[root]) return MODULE_ROUTES[root];
+  const parts = key.split('.');
+  while (parts.length > 1) {
+    parts.pop();
+    const parent = parts.join('.');
+    if (MODULE_ROUTES[parent]) return MODULE_ROUTES[parent];
+  }
   return null;
 }
 
-const GRID_COLS = 'grid-cols-[minmax(200px,max-content)_80px_60px_80px_80px_140px_80px_50px]';
+/** Navigate to a route string like "/?tab=pilotage" using proper path + search separation */
+function navigateToRoute(navigate: ReturnType<typeof useNavigate>, route: string) {
+  const [pathname, search] = route.split('?');
+  navigate({ pathname: pathname || '/', search: search ? `?${search}` : '' });
+}
+
+// Table-based layout for proper column alignment
+const TD_CLASS = 'py-2 px-3 text-sm whitespace-nowrap';
+const TD_CLASS_NAME = 'py-2 px-3 text-sm'; // name column can wrap
 
 interface ModuleRowProps {
   node: RegistryNode;
@@ -329,25 +479,41 @@ interface ModuleRowProps {
   onToggleDeploy: (node: RegistryNode) => void;
   onTogglePlan: (node: RegistryNode) => void;
   onChangeRole: (node: RegistryNode, newRole: number) => void;
+  onRenameLabel: (node: RegistryNode, newLabel: string) => void;
   isUpdating: boolean;
-  isCollapsed?: boolean;
-  onToggleCollapse?: () => void;
   canDeploy: boolean;
   isDevSection?: boolean;
 }
 
-function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole, isUpdating, isCollapsed, onToggleCollapse, canDeploy, isDevSection }: ModuleRowProps) {
+function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole, onRenameLabel, isUpdating, canDeploy, isDevSection }: ModuleRowProps) {
   const navigate = useNavigate();
   const route = getModuleRoute(node.key);
   const isNeutralized = !node.effectiveDeployed && node.is_deployed;
   const depthColors = ['text-primary', 'text-blue-500', 'text-violet-500', 'text-emerald-500'];
   const branchColor = depthColors[Math.min(node.depth, depthColors.length - 1)];
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftLabel, setDraftLabel] = useState(node.label);
+
+  useEffect(() => {
+    setDraftLabel(node.label);
+  }, [node.label]);
+
+  const commitRename = () => {
+    const trimmed = draftLabel.trim();
+    setIsEditing(false);
+
+    if (!trimmed || trimmed === node.label) {
+      setDraftLabel(node.label);
+      return;
+    }
+
+    onRenameLabel(node, trimmed);
+  };
 
   return (
-    <div
+    <tr
       className={cn(
-        `grid ${GRID_COLS} gap-2 items-center py-2 px-3 border-b border-border/50 text-sm`,
-        'hover:bg-muted/30 transition-colors',
+        'border-b border-border/50 hover:bg-muted/30 transition-colors text-sm',
         !node.effectiveDeployed && !isDevSection && 'opacity-50',
         isNeutralized && 'bg-destructive/5',
         node.depth === 0 && !isDevSection && 'bg-muted/20',
@@ -355,37 +521,70 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
       )}
     >
       {/* Name */}
-      <div
-        className={cn('flex items-center min-w-0', node.depth === 0 && !isDevSection && 'cursor-pointer select-none')}
-        style={{ paddingLeft: `${(isDevSection ? 0 : node.depth) * 16}px` }}
-        onClick={node.depth === 0 && !isDevSection ? onToggleCollapse : undefined}
-      >
-        {node.depth > 0 && !isDevSection && <CornerDownRight className={cn('w-3.5 h-3.5 mr-1.5 shrink-0', branchColor)} />}
-        {node.depth === 0 && !isDevSection && (
-          <ChevronRight className={cn('w-4 h-4 mr-1.5 shrink-0 transition-transform duration-200', branchColor, !isCollapsed && 'rotate-90')} />
-        )}
-        {isDevSection && (
-          <Construction className="w-3.5 h-3.5 mr-1.5 shrink-0 text-amber-500" />
-        )}
-        <span className={cn(
-          'truncate',
-          isDevSection && 'text-amber-700 dark:text-amber-400 font-medium',
-          !isDevSection && node.depth === 0 && 'font-semibold text-foreground uppercase tracking-wide',
-          !isDevSection && node.depth === 1 && 'font-medium text-blue-600 dark:text-blue-400',
-          !isDevSection && node.depth >= 2 && 'text-violet-600 dark:text-violet-400'
-        )}>
-          {node.label}
-        </span>
-        {isDevSection && node.parent_key && (
-          <span className="ml-2 text-[10px] text-muted-foreground">
-            ({node.parent_key})
+      <td className={TD_CLASS_NAME}>
+        <div
+          className="flex items-center min-w-0"
+          style={{ paddingLeft: `${(isDevSection ? 0 : node.depth) * 16}px` }}
+        >
+          {node.depth > 0 && !isDevSection && <CornerDownRight className={cn('w-3.5 h-3.5 mr-1.5 shrink-0', branchColor)} />}
+          {isDevSection && (
+            <Construction className="w-3.5 h-3.5 mr-1.5 shrink-0 text-amber-500" />
+          )}
+
+          {isEditing ? (
+            <div className="flex flex-col gap-0.5">
+              <Input
+                value={draftLabel}
+                onChange={(e) => setDraftLabel(e.target.value)}
+                onBlur={commitRename}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') commitRename();
+                  if (e.key === 'Escape') {
+                    setDraftLabel(node.label);
+                    setIsEditing(false);
+                  }
+                }}
+                autoFocus
+                className="h-7 text-xs"
+              />
+              <span className="text-[9px] text-muted-foreground">
+                Renommage visuel uniquement — ne modifie pas la clé technique ni les permissions.
+              </span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => !isUpdating && setIsEditing(true)}
+              className={cn(
+                'truncate text-left hover:underline underline-offset-2',
+                isUpdating && 'cursor-not-allowed opacity-70',
+                isDevSection && 'text-amber-700 dark:text-amber-400 font-medium',
+                !isDevSection && node.depth === 0 && 'font-semibold text-foreground uppercase tracking-wide',
+                !isDevSection && node.depth === 1 && 'font-medium text-blue-600 dark:text-blue-400',
+                !isDevSection && node.depth >= 2 && 'text-violet-600 dark:text-violet-400'
+              )}
+              title="Cliquer pour renommer le libellé (visuel uniquement)"
+            >
+              {node.label}
+            </button>
+          )}
+
+          {/* Clé technique (lecture seule) */}
+          <span className="ml-2 text-[10px] text-muted-foreground font-mono select-all whitespace-nowrap" title="Clé technique (immuable)">
+            {node.key}
           </span>
-        )}
-      </div>
 
-      <div><NodeTypeBadge nodeType={node.node_type} /></div>
+          {isDevSection && node.parent_key && (
+            <span className="ml-2 text-[10px] text-muted-foreground whitespace-nowrap">
+              ({node.parent_key})
+            </span>
+          )}
+        </div>
+      </td>
 
-      <div className="flex justify-center">
+      <td className={TD_CLASS}><NodeTypeBadge nodeType={node.node_type} /></td>
+
+      <td className={TD_CLASS}>
         <Switch
           checked={node.is_deployed}
           onCheckedChange={() => onToggleDeploy(node)}
@@ -393,42 +592,139 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
           className="scale-90"
           title={!canDeploy ? 'Seul un superadmin (N6) peut déployer' : undefined}
         />
-      </div>
+      </td>
 
-      <div className="flex justify-center">
+      <td className={TD_CLASS}>
         <PlanBadge plan={node.required_plan} onClick={() => onTogglePlan(node)} dimmed={!node.effectiveDeployed} />
-      </div>
+      </td>
 
-      <div className="flex justify-center">
+      <td className={TD_CLASS}>
         <PlanBadge plan={node.effectivePlan} readOnly dimmed={!node.effectiveDeployed} />
-      </div>
+      </td>
 
-      <div className="flex justify-center">
+      <td className={TD_CLASS}>
         <RoleBadge minRole={node.min_role} onChangeRole={(r) => onChangeRole(node, r)} dimmed={!node.effectiveDeployed} disabled={isUpdating} />
-      </div>
+      </td>
 
-      {/* Privilèges */}
-      <div className="flex justify-center relative z-10">
-        <OverridesPopover moduleKey={node.key} overrides={overrides} dimmed={!node.effectiveDeployed} />
-      </div>
+      <td className={cn(TD_CLASS, 'relative z-10')}>
+        <OverridesPopover moduleKey={node.key} overrides={overrides} dimmed={!node.effectiveDeployed} moduleMinRole={node.min_role} moduleRequiredPlan={node.required_plan} />
+      </td>
 
-      {/* Lien */}
-      <div className="flex justify-center">
+      <td className={TD_CLASS}>
         {route ? (
           <Button
             variant="ghost"
             size="icon"
             className="h-7 w-7 text-primary hover:text-primary/80 hover:bg-primary/10"
             title={`Ouvrir ${node.label}`}
-            onClick={() => navigate(route)}
+            onClick={() => navigateToRoute(navigate, route)}
           >
             <ExternalLink className="w-3.5 h-3.5" />
           </Button>
         ) : (
           <span className="text-muted-foreground/30 text-xs">—</span>
         )}
-      </div>
-    </div>
+      </td>
+    </tr>
+  );
+}
+
+function CategoryHeaderRow({
+  category,
+  collapsed,
+  onToggle,
+  moduleCount,
+  rootNode,
+  onRenameRoot,
+  isUpdating,
+}: {
+  category: RightsCategory;
+  collapsed: boolean;
+  onToggle: () => void;
+  moduleCount: number;
+  rootNode?: RegistryNode;
+  onRenameRoot?: (node: RegistryNode, newLabel: string) => void;
+  isUpdating?: boolean;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const displayLabel = rootNode ? getRightsDisplayLabel(rootNode.key, rootNode.label) : category.label;
+  const [draftLabel, setDraftLabel] = useState(displayLabel);
+
+  useEffect(() => {
+    setDraftLabel(displayLabel);
+  }, [displayLabel]);
+
+  const commitRename = () => {
+    const trimmed = draftLabel.trim();
+    setIsEditing(false);
+    if (!trimmed || trimmed === displayLabel) {
+      setDraftLabel(displayLabel);
+      return;
+    }
+    if (rootNode && onRenameRoot) {
+      onRenameRoot(rootNode, trimmed);
+    }
+  };
+
+  return (
+    <tr className="border-b border-border bg-muted/20">
+      <td className="py-2.5 px-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <button
+            type="button"
+            onClick={onToggle}
+            className="shrink-0"
+          >
+            <ChevronRight className={cn('w-4 h-4 transition-transform text-primary', !collapsed && 'rotate-90')} />
+          </button>
+
+          {isEditing && rootNode ? (
+            <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+              <Input
+                value={draftLabel}
+                onChange={(e) => setDraftLabel(e.target.value)}
+                onBlur={commitRename}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') commitRename();
+                  if (e.key === 'Escape') {
+                    setDraftLabel(displayLabel);
+                    setIsEditing(false);
+                  }
+                }}
+                autoFocus
+                className="h-7 text-xs font-semibold uppercase"
+              />
+              <span className="text-[9px] text-muted-foreground">
+                Renommage visuel uniquement — ne modifie pas la clé technique.
+              </span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => rootNode && !isUpdating && setIsEditing(true)}
+              className={cn(
+                'font-semibold uppercase tracking-wide text-foreground truncate text-left',
+                rootNode && 'hover:underline underline-offset-2 cursor-pointer',
+                !rootNode && 'cursor-default'
+              )}
+              title={rootNode ? 'Cliquer pour renommer le libellé (visuel uniquement)' : undefined}
+            >
+              {displayLabel}
+            </button>
+          )}
+
+          <Badge variant="secondary" className="text-[10px] shrink-0">{moduleCount}</Badge>
+          {rootNode && (
+            <span className="ml-1 text-[10px] text-muted-foreground font-mono select-all shrink-0" title="Clé technique (immuable)">
+              {rootNode.key}
+            </span>
+          )}
+        </div>
+      </td>
+      {Array.from({ length: 7 }).map((_, i) => (
+        <td key={i} className={cn(TD_CLASS, 'text-muted-foreground/30')}>—</td>
+      ))}
+    </tr>
   );
 }
 
@@ -442,13 +738,27 @@ interface PropagateDialogState {
   field: 'is_deployed' | 'required_plan' | 'min_role';
   newValue: boolean | PlanLevel | number;
   descendantCount: number;
+  nonDeployedCount: number;
+}
+
+function countNonDeployedDescendants(node: RegistryNode): number {
+  let count = 0;
+  function walk(n: RegistryNode) {
+    for (const child of n.children) {
+      if (!child.is_deployed) count++;
+      walk(child);
+    }
+  }
+  walk(node);
+  return count;
 }
 
 export function ModulesMasterView() {
-  const { tree, flatNodes, isLoading } = useModuleRegistry();
+  const { flatNodes, isLoading } = useModuleRegistry();
   const { overrides } = useModuleOverrides();
   const { hasGlobalRole } = usePermissions();
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+  const [showLegacy, setShowLegacy] = useState(false);
   const updateNode = useUpdateModuleNode();
   const propagate = usePropagateToChildren();
 
@@ -481,8 +791,59 @@ export function ModulesMasterView() {
     return { deployedNodes: deployed, devNodes: dev };
   }, [flatNodes]);
 
+  const toDisplayNode = useCallback((node: RegistryNode): RegistryNode => {
+    // Subtract 1 from depth since root container nodes are hidden
+    // (e.g., pilotage.statistiques is depth=1 in tree → display as depth=0)
+    return {
+      ...node,
+      depth: Math.max(0, node.depth),
+      label: getRightsDisplayLabel(node.key, node.label),
+    };
+  }, []);
+
+  // Root container nodes (node_type='module', parent_key=null) are structural —
+  // they map 1:1 to the category headers. We keep them for renaming but exclude from child rows.
+  const ROOT_CONTAINER_KEYS = new Set(['accueil', 'pilotage', 'commercial', 'organisation', 'mediatheque', 'support', 'admin']);
+
+  // Map category ID → root container node for renaming
+  const CATEGORY_ROOT_KEY: Record<string, string> = {
+    accueil: 'accueil',
+    pilotage: 'pilotage',
+    commercial: 'commercial',
+    organisation: 'organisation',
+    documents: 'mediatheque',
+    support: 'support',
+    admin: 'admin',
+  };
+
+  const rootNodesByKey = useMemo(() => {
+    const map = new Map<string, RegistryNode>();
+    for (const node of deployedNodes) {
+      if (ROOT_CONTAINER_KEYS.has(node.key)) {
+        map.set(node.key, node);
+      }
+    }
+    return map;
+  }, [deployedNodes]);
+
+  const groupedCategories = useMemo(() => {
+    return RIGHTS_CATEGORIES.map((category) => ({
+      category,
+      rootNode: rootNodesByKey.get(CATEGORY_ROOT_KEY[category.id]),
+      nodes: deployedNodes
+        .filter((node) => nodeMatchesCategory(node.key, category.moduleKeys) && !ROOT_CONTAINER_KEYS.has(node.key))
+        .map(toDisplayNode),
+    }));
+  }, [deployedNodes, toDisplayNode, rootNodesByKey]);
+
+  const legacyNodes = useMemo(() => {
+    return deployedNodes
+      .filter((node) => !nodeMatchesAnyCategory(node.key))
+      .map(toDisplayNode);
+  }, [deployedNodes, toDisplayNode]);
+
   const [dialog, setDialog] = useState<PropagateDialogState>({
-    open: false, node: null, field: 'is_deployed', newValue: false, descendantCount: 0,
+    open: false, node: null, field: 'is_deployed', newValue: false, descendantCount: 0, nonDeployedCount: 0,
   });
 
   const handleToggleDeploy = useCallback((node: RegistryNode) => {
@@ -490,7 +851,8 @@ export function ModulesMasterView() {
     const descendants = getDescendantKeys(node);
     updateNode.mutate({ key: node.key, updates: { is_deployed: newValue } });
     if (descendants.length > 0) {
-      setDialog({ open: true, node, field: 'is_deployed', newValue, descendantCount: descendants.length });
+      const nonDeployed = countNonDeployedDescendants(node);
+      setDialog({ open: true, node, field: 'is_deployed', newValue, descendantCount: descendants.length, nonDeployedCount: nonDeployed });
     }
   }, [updateNode]);
 
@@ -501,7 +863,8 @@ export function ModulesMasterView() {
     const descendants = getDescendantKeys(node);
     updateNode.mutate({ key: node.key, updates: { required_plan: newValue } });
     if (descendants.length > 0) {
-      setDialog({ open: true, node, field: 'required_plan', newValue, descendantCount: descendants.length });
+      const nonDeployed = countNonDeployedDescendants(node);
+      setDialog({ open: true, node, field: 'required_plan', newValue, descendantCount: descendants.length, nonDeployedCount: nonDeployed });
     }
   }, [updateNode]);
 
@@ -509,9 +872,23 @@ export function ModulesMasterView() {
     const descendants = getDescendantKeys(node);
     updateNode.mutate({ key: node.key, updates: { min_role: newRole } });
     if (descendants.length > 0) {
-      setDialog({ open: true, node, field: 'min_role', newValue: newRole, descendantCount: descendants.length });
+      const nonDeployed = countNonDeployedDescendants(node);
+      setDialog({ open: true, node, field: 'min_role', newValue: newRole, descendantCount: descendants.length, nonDeployedCount: nonDeployed });
     }
   }, [updateNode]);
+
+  const handleRenameLabel = useCallback((node: RegistryNode, newLabel: string) => {
+    updateNode.mutate({ key: node.key, updates: { label: newLabel } });
+  }, [updateNode]);
+
+  const toggleCategory = useCallback((categoryId: string) => {
+    setCollapsedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) next.delete(categoryId);
+      else next.add(categoryId);
+      return next;
+    });
+  }, []);
 
   const handlePropagate = useCallback(() => {
     if (!dialog.node) return;
@@ -524,16 +901,20 @@ export function ModulesMasterView() {
     setDialog(prev => ({ ...prev, open: false }));
   }, [dialog, propagate]);
 
+  const nonDeployedHint = dialog.nonDeployedCount > 0
+    ? ` (dont ${dialog.nonDeployedCount} non déployé${dialog.nonDeployedCount > 1 ? 's' : ''})`
+    : '';
+
   const getDialogDescription = () => {
     if (dialog.field === 'is_deployed') {
-      return `Appliquer "${dialog.newValue ? 'Déployé' : 'Non déployé'}" aux ${dialog.descendantCount} descendants de "${dialog.node?.label}" ?`;
+      return `Appliquer "${dialog.newValue ? 'Déployé' : 'Non déployé'}" aux ${dialog.descendantCount} descendants${nonDeployedHint} de "${dialog.node?.label}" ?`;
     }
     if (dialog.field === 'required_plan') {
       const planLabel = dialog.newValue === 'STARTER' ? 'Basique' : dialog.newValue === 'PRO' ? 'Pro' : 'Individuel';
-      return `Appliquer le plan "${planLabel}" aux ${dialog.descendantCount} descendants de "${dialog.node?.label}" ?`;
+      return `Appliquer le plan "${planLabel}" aux ${dialog.descendantCount} descendants${nonDeployedHint} de "${dialog.node?.label}" ?`;
     }
     const roleConfig = getRoleConfig(dialog.newValue as number);
-    return `Appliquer le rôle minimum "${roleConfig.label}" aux ${dialog.descendantCount} descendants de "${dialog.node?.label}" ?`;
+    return `Appliquer le rôle minimum "${roleConfig.label}" aux ${dialog.descendantCount} descendants${nonDeployedHint} de "${dialog.node?.label}" ?`;
   };
 
   if (isLoading) {
@@ -548,18 +929,18 @@ export function ModulesMasterView() {
   }
 
   const headerRow = (
-    <div className={cn(
-      `grid ${GRID_COLS} gap-2 items-center py-2 px-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide`
-    )}>
-      <div>Nom</div>
-      <div className="text-center">Type</div>
-      <div className="text-center">Déployé</div>
-      <div className="text-center">Plan min.</div>
-      <div className="text-center">Effectif</div>
-      <div className="text-center">Rôle min.</div>
-      <div className="text-center">Privil.</div>
-      <div className="text-center">Lien</div>
-    </div>
+    <thead>
+      <tr className="bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
+        <th className="py-2 px-3 text-left font-medium">Nom</th>
+        <th className="py-2 px-3 text-left font-medium whitespace-nowrap">Type</th>
+        <th className="py-2 px-3 text-left font-medium whitespace-nowrap">Déployé</th>
+        <th className="py-2 px-3 text-left font-medium whitespace-nowrap">Plan min.</th>
+        <th className="py-2 px-3 text-left font-medium whitespace-nowrap">Effectif</th>
+        <th className="py-2 px-3 text-left font-medium whitespace-nowrap">Rôle min.</th>
+        <th className="py-2 px-3 text-left font-medium whitespace-nowrap">Privil.</th>
+        <th className="py-2 px-3 text-left font-medium whitespace-nowrap">Lien</th>
+      </tr>
+    </thead>
   );
 
   return (
@@ -575,41 +956,86 @@ export function ModulesMasterView() {
             Source de vérité unique. Déploiement, plans, rôles et privilèges individuels sur chaque nœud.
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-0">
-          {headerRow}
+        <div className="overflow-x-auto">
+          <table className="w-full table-auto">
+            {headerRow}
+            <tbody>
+              {groupedCategories.map(({ category, rootNode, nodes }) => {
+                if (nodes.length === 0 && !rootNode) return null;
+                const isCategoryCollapsed = collapsedCategories.has(category.id);
 
-          {deployedNodes
-            .filter(node => {
-              if (node.depth === 0) return true;
-              const rootKey = node.key.split('.')[0];
-              return !collapsed.has(rootKey);
-            })
-            .map(node => (
-            <ModuleRow
-              key={node.key}
-              node={node}
-              overrides={overrides.get(node.key) ?? []}
-              onToggleDeploy={handleToggleDeploy}
-              onTogglePlan={handleTogglePlan}
-              onChangeRole={handleChangeRole}
-              isUpdating={updateNode.isPending || propagate.isPending}
-              canDeploy={canDeploy}
-              isCollapsed={node.depth === 0 ? collapsed.has(node.key) : undefined}
-              onToggleCollapse={node.depth === 0 ? () => setCollapsed(prev => {
-                const next = new Set(prev);
-                if (next.has(node.key)) next.delete(node.key);
-                else next.add(node.key);
-                return next;
-              }) : undefined}
-            />
-          ))}
+                return (
+                  <Fragment key={category.id}>
+                    <CategoryHeaderRow
+                      category={category}
+                      collapsed={isCategoryCollapsed}
+                      onToggle={() => toggleCategory(category.id)}
+                      moduleCount={nodes.filter((node) => node.depth === 1).length}
+                      rootNode={rootNode}
+                      onRenameRoot={handleRenameLabel}
+                      isUpdating={updateNode.isPending || propagate.isPending}
+                    />
 
-          {deployedNodes.length === 0 && (
+                    {!isCategoryCollapsed && nodes.map((node) => (
+                      <ModuleRow
+                        key={node.key}
+                        node={node}
+                        overrides={overrides.get(node.key) ?? []}
+                        onToggleDeploy={handleToggleDeploy}
+                        onTogglePlan={handleTogglePlan}
+                        onChangeRole={handleChangeRole}
+                        onRenameLabel={handleRenameLabel}
+                        isUpdating={updateNode.isPending || propagate.isPending}
+                        canDeploy={canDeploy}
+                      />
+                    ))}
+                  </Fragment>
+                );
+              })}
+
+              {legacyNodes.length > 0 && (
+                <>
+                  <tr className="border-b border-border bg-muted/10">
+                    <td className="py-2 px-3">
+                      <button
+                        type="button"
+                        onClick={() => setShowLegacy((prev) => !prev)}
+                        className="flex items-center gap-2 min-w-0 text-left"
+                      >
+                        <ChevronRight className={cn('w-4 h-4 shrink-0 transition-transform text-muted-foreground', showLegacy && 'rotate-90')} />
+                        <span className="font-medium text-muted-foreground truncate">Legacy / non classé</span>
+                        <Badge variant="outline" className="text-[10px]">{legacyNodes.filter((node) => node.depth === 1).length}</Badge>
+                      </button>
+                    </td>
+                    {Array.from({ length: 7 }).map((_, i) => (
+                      <td key={i} className={cn(TD_CLASS, 'text-muted-foreground/30')}>—</td>
+                    ))}
+                  </tr>
+
+                  {showLegacy && legacyNodes.map((node) => (
+                    <ModuleRow
+                      key={node.key}
+                      node={node}
+                      overrides={overrides.get(node.key) ?? []}
+                      onToggleDeploy={handleToggleDeploy}
+                      onTogglePlan={handleTogglePlan}
+                      onChangeRole={handleChangeRole}
+                      onRenameLabel={handleRenameLabel}
+                      isUpdating={updateNode.isPending || propagate.isPending}
+                      canDeploy={canDeploy}
+                    />
+                  ))}
+                </>
+              )}
+            </tbody>
+          </table>
+
+          {groupedCategories.every((group) => group.nodes.length === 0) && legacyNodes.length === 0 && (
             <div className="py-12 text-center text-muted-foreground">
               Aucun module déployé dans le registre.
             </div>
           )}
-        </CardContent>
+        </div>
       </Card>
 
       {/* Dev section — non-deployed modules */}
@@ -634,22 +1060,27 @@ export function ModulesMasterView() {
               )}
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-0">
-            {headerRow}
-            {devNodes.map(node => (
-              <ModuleRow
-                key={node.key}
-                node={node}
-                overrides={overrides.get(node.key) ?? []}
-                onToggleDeploy={handleToggleDeploy}
-                onTogglePlan={handleTogglePlan}
-                onChangeRole={handleChangeRole}
-                isUpdating={updateNode.isPending || propagate.isPending}
-                canDeploy={canDeploy}
-                isDevSection
-              />
-            ))}
-          </CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full table-auto">
+              {headerRow}
+              <tbody>
+                {devNodes.map(node => (
+                  <ModuleRow
+                    key={node.key}
+                    node={node}
+                    overrides={overrides.get(node.key) ?? []}
+                    onToggleDeploy={handleToggleDeploy}
+                    onTogglePlan={handleTogglePlan}
+                    onChangeRole={handleChangeRole}
+                    onRenameLabel={handleRenameLabel}
+                    isUpdating={updateNode.isPending || propagate.isPending}
+                    canDeploy={canDeploy}
+                    isDevSection
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
         </Card>
       )}
 

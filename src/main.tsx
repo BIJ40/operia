@@ -35,4 +35,29 @@ try {
   // ignore
 }
 
+// Safe SW registration — skip entirely in sandboxed iframes (Lovable preview)
+const canRegisterSW = () => {
+  try {
+    return !!navigator.serviceWorker;
+  } catch {
+    return false;
+  }
+};
+
+if (canRegisterSW()) {
+  // @ts-ignore - virtual module provided by vite-plugin-pwa
+  import('virtual:pwa-register').then(({ registerSW }: any) => {
+    registerSW({ immediate: true });
+  }).catch(() => {
+    // SW registration not available
+  });
+}
+
+// Suppress any remaining SW-related SecurityErrors
+window.addEventListener('unhandledrejection', (e) => {
+  if (e.reason?.message?.includes('insecure') || e.reason?.name === 'SecurityError') {
+    e.preventDefault();
+  }
+});
+
 createRoot(document.getElementById("root")!).render(<App />);

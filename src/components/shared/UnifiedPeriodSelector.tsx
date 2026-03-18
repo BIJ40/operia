@@ -5,6 +5,7 @@ import type { DateRange } from "react-day-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { useDomainAccent, type DomainAccent } from '@/contexts/DomainAccentContext';
 import { 
   format, 
   startOfToday, 
@@ -343,15 +344,38 @@ export function UnifiedPeriodSelector({
     );
   };
 
+  // Domain accent for active/hover colors
+  const accent = useDomainAccent();
+
+  const PERIOD_ACTIVE: Record<DomainAccent, string> = {
+    blue: 'bg-muted text-foreground shadow-sm border-border hover:bg-muted/80',
+    orange: 'bg-muted text-foreground shadow-sm border-border hover:bg-muted/80',
+    green: 'bg-muted text-foreground shadow-sm border-border hover:bg-muted/80',
+    purple: 'bg-muted text-foreground shadow-sm border-border hover:bg-muted/80',
+    pink: 'bg-muted text-foreground shadow-sm border-border hover:bg-muted/80',
+    teal: 'bg-muted text-foreground shadow-sm border-border hover:bg-muted/80',
+    red: 'bg-muted text-foreground shadow-sm border-border hover:bg-muted/80',
+  };
+
+  const PERIOD_HOVER: Record<DomainAccent, string> = {
+    blue: 'hover:bg-muted/60 hover:text-foreground hover:border-border',
+    orange: 'hover:bg-muted/60 hover:text-foreground hover:border-border',
+    green: 'hover:bg-muted/60 hover:text-foreground hover:border-border',
+    purple: 'hover:bg-muted/60 hover:text-foreground hover:border-border',
+    pink: 'hover:bg-muted/60 hover:text-foreground hover:border-border',
+    teal: 'hover:bg-muted/60 hover:text-foreground hover:border-border',
+    red: 'hover:bg-muted/60 hover:text-foreground hover:border-border',
+  };
+
   // Styles selon la variante
   const buttonStyles = {
     default: {
-      active: "bg-gradient-to-r from-warm-teal/90 to-warm-blue/80 text-white shadow-sm",
-      inactive: "bg-warm-teal/10 hover:bg-warm-teal/20 border-warm-teal/30 text-foreground"
+      active: PERIOD_ACTIVE[accent],
+      inactive: `bg-transparent border-border text-foreground ${PERIOD_HOVER[accent]}`
     },
     compact: {
-      active: "bg-gradient-to-r from-warm-teal/90 to-warm-blue/80 text-white shadow-sm",
-      inactive: "bg-warm-teal/10 hover:bg-warm-teal/20 border-warm-teal/30 text-foreground"
+      active: PERIOD_ACTIVE[accent],
+      inactive: `bg-transparent border-border text-foreground ${PERIOD_HOVER[accent]}`
     },
     franchiseur: {
       active: "bg-gradient-to-r from-helpconfort-blue to-warm-blue/80 text-white shadow-sm",
@@ -360,19 +384,23 @@ export function UnifiedPeriodSelector({
   };
 
   const styles = buttonStyles[variant];
+  const isCompact = variant === 'compact';
 
   return (
-    <div className={cn("flex flex-wrap gap-2 justify-center items-center", className)}>
+    <div className={cn(
+      "flex flex-wrap gap-1.5 justify-center items-center",
+      className
+    )}>
       {periods.filter(p => p.value !== 'custom' && p.value !== 'specific-month').map((period) => {
         const isActive = value === period.getDates().label || value === period.value;
         return (
           <Button
             key={period.value}
-            variant={isActive ? "default" : "outline"}
+            variant="outline"
             size="sm"
             onClick={() => handlePeriodClick(period)}
             className={cn(
-              "text-xs font-medium px-3 py-1.5 transition-all rounded-lg",
+              "text-xs font-medium px-3.5 py-1.5 rounded-full transition-all border",
               isActive ? styles.active : styles.inactive
             )}
           >

@@ -1,6 +1,6 @@
 /**
  * Phase 3 - Composant simplifié d'affichage des accès utilisateur
- * Remplace la matrice complexe par une vue épurée
+ * Affiche les modules effectifs (RPC) avec leurs sous-options activées.
  */
 
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Shield, Building2, Zap } from 'lucide-react';
 import { GlobalRole } from '@/types/globalRoles';
-import { EnabledModules, MODULE_DEFINITIONS } from '@/types/modules';
+import { EnabledModules, MODULE_DEFINITIONS, ModuleKey } from '@/types/modules';
 import { getVisibleRoleLabel, getVisibleRoleColor } from '@/lib/visibleRoleLabels';
 
 interface UserAccessSimpleProps {
@@ -19,28 +19,41 @@ interface UserAccessSimpleProps {
   planLabel?: string | null;
 }
 
-/**
- * Compte les modules actifs
- */
-function countActiveModules(modules: EnabledModules | null): number {
-  if (!modules) return 0;
-  return Object.values(modules).filter(m => 
-    (typeof m === 'boolean' && m) || (typeof m === 'object' && m?.enabled)
-  ).length;
+interface ActiveModule {
+  key: ModuleKey;
+  label: string;
+  activeOptions: string[];
 }
 
 /**
- * Liste les modules actifs avec leurs labels
+ * Liste les modules actifs avec leurs labels ET sous-options
  */
-function getActiveModuleLabels(modules: EnabledModules | null): string[] {
+function getActiveModulesWithOptions(modules: EnabledModules | null): ActiveModule[] {
   if (!modules) return [];
-  
+
   return MODULE_DEFINITIONS
     .filter(def => {
       const state = modules[def.key];
       return (typeof state === 'boolean' && state) || (typeof state === 'object' && state?.enabled);
     })
-    .map(def => def.label);
+    .map(def => {
+      const state = modules[def.key];
+      const activeOptions: string[] = [];
+
+      if (typeof state === 'object' && state?.options && def.options.length > 0) {
+        for (const optDef of def.options) {
+          if (state.options[optDef.key]) {
+            activeOptions.push(optDef.label);
+          }
+        }
+      }
+
+      return {
+        key: def.key,
+        label: def.label,
+        activeOptions,
+      };
+    });
 }
 
 export function UserAccessSimple({
@@ -50,8 +63,7 @@ export function UserAccessSimple({
   enabledModules,
   planLabel,
 }: UserAccessSimpleProps) {
-  const activeModuleCount = countActiveModules(enabledModules);
-  const activeModuleLabels = getActiveModuleLabels(enabledModules);
+  const activeModules = getActiveModulesWithOptions(enabledModules);
 
   return (
     <Card className="border-0 shadow-none">
@@ -96,31 +108,36 @@ export function UserAccessSimple({
 
         <Separator />
 
-        {/* Ligne 4: Modules */}
+        {/* Ligne 4: Modules avec sous-options */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Zap className="h-4 w-4" />
-              Modules activés
+              Modules configurés
             </div>
-            <Badge variant="outline">{activeModuleCount}</Badge>
+            <Badge variant="outline">{activeModules.length}</Badge>
           </div>
           
-          {activeModuleCount > 0 && (
-            <div className="flex flex-wrap gap-1 pt-1">
-              {activeModuleLabels.map(label => (
-                <Badge 
-                  key={label} 
-                  variant="secondary" 
-                  className="text-xs"
-                >
-                  {label}
-                </Badge>
+          {activeModules.length > 0 ? (
+            <div className="space-y-1.5 pt-1">
+              {activeModules.map(mod => (
+                <div key={mod.key}>
+                  <Badge variant="secondary" className="text-xs">
+                    {mod.label}
+                  </Badge>
+                  {mod.activeOptions.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1 ml-3">
+                      {mod.activeOptions.map(opt => (
+                        <Badge key={opt} variant="outline" className="text-[10px] text-muted-foreground">
+                          {opt}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
-          )}
-          
-          {activeModuleCount === 0 && (
+          ) : (
             <p className="text-xs text-muted-foreground italic">
               Aucun module individuel activé (utilise les modules du plan agence)
             </p>

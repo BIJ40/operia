@@ -2,6 +2,7 @@
  * Planning V2 — Vue Carte
  * Utilise l'edge function get-rdv-map (géocodage serveur) pour les coordonnées GPS
  * + les données technicians du planning V2 pour les couleurs
+ * Mode tournée: quand 1 seul tech filtré → numéros + trajet routier réel
  */
 
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
@@ -16,7 +17,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { createPinMarkerElement } from "@/components/map/PinMarker";
 import { RdvMiniPreview } from "@/components/map/RdvMiniPreview";
+import { TourSummaryBar } from "@/components/map/TourSummaryBar";
 import { useRdvMap, calculateBounds, type MapRdv } from "@/hooks/useRdvMap";
+import { useRouteDirections } from "@/hooks/useRouteDirections";
 import { useAgency } from "@/apogee-connect/contexts/AgencyContext";
 import { supabase } from "@/integrations/supabase/client";
 import type { PlanningTechnician } from "../../types";
@@ -24,6 +27,8 @@ import type { PlanningTechnician } from "../../types";
 const MAPBOX_STYLE = "mapbox://styles/bij40/cmjbi8grj000t01s3ajxo3amm";
 const DEFAULT_CENTER: [number, number] = [1.4442, 43.6047];
 const DEFAULT_ZOOM = 6;
+const TOUR_ROUTE_SOURCE = "tour-route-source";
+const TOUR_ROUTE_LAYER = "tour-route-layer";
 
 interface MapPlanningViewProps {
   technicians: PlanningTechnician[];
@@ -46,14 +51,13 @@ export function MapPlanningView({ technicians, selectedDate }: MapPlanningViewPr
   const [selectedTechIds, setSelectedTechIds] = useState<number[]>([]);
   const [techFilterOpen, setTechFilterOpen] = useState(false);
 
-  // Use the existing hook that calls get-rdv-map edge function (with server-side geocoding)
   const { rdvs: allRdvs, isLoading: rdvsLoading, technicians: rdvTechnicians } = useRdvMap({
     date: selectedDate,
     techIds: selectedTechIds.length > 0 ? selectedTechIds : undefined,
     agencySlug,
   });
 
-  // Merge tech colors from planning V2 data into rdv users
+  // Merge tech colors from planning V2 data
   const techColorMap = useMemo(() => {
     const m = new Map<number, string>();
     for (const t of technicians) m.set(t.id, t.color);
@@ -63,20 +67,31 @@ export function MapPlanningView({ technicians, selectedDate }: MapPlanningViewPr
   const rdvs = useMemo(() => {
     return allRdvs.map((rdv) => ({
       ...rdv,
-      users: rdv.users.map((u) => ({
-        ...u,
-        color: techColorMap.get(u.id) || u.color,
-      })),
+      users: rdv.users.map((u) => ({ ...u, color: techColorMap.get(u.id) || u.color })),
     }));
   }, [allRdvs, techColorMap]);
 
-  // Use planning V2 techs for filter list (richer data), fallback to rdv techs
   const filterTechs = useMemo(() => {
-    if (technicians.length > 0) {
-      return technicians.map((t) => ({ id: t.id, name: t.name, color: t.color }));
-    }
+    if (technicians.length > 0) return technicians.map((t) => ({ id: t.id, name: t.name, color: t.color }));
     return rdvTechnicians;
   }, [technicians, rdvTechnicians]);
+
+  // Tour mode
+  const isTourMode = selectedTechIds.length === 1;
+  const tourTech = isTourMode ? filterTechs.find(t => t.id === selectedTechIds[0]) : null;
+
+  const sortedRdvs = useMemo(() => {
+    if (!isTourMode) return rdvs;
+    return [...rdvs].sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime());
+  }, [rdvs, isTourMode]);
+
+  const routeCoords = useMemo<[number, number][]>(() => {
+    if (!isTourMode || sortedRdvs.length < 2) return [];
+    return sortedRdvs.map(r => [r.lng, r.lat]);
+  }, [isTourMode, sortedRdvs]);
+
+  const { geometry: routeGeometry, distanceKm, durationMin, isLoading: routeLoading } =
+    useRouteDirections(routeCoords, mapboxToken, isTourMode && routeCoords.length >= 2);
 
   const hasFittedRef = useRef(false);
   const lastCountRef = useRef(0);
@@ -86,19 +101,11 @@ export function MapPlanningView({ technicians, selectedDate }: MapPlanningViewPr
     const fetchToken = async () => {
       try {
         const envToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
-        if (envToken) {
-          setMapboxToken(envToken);
-          return;
-        }
+        if (envToken) { setMapboxToken(envToken); return; }
         const { data, error } = await supabase.functions.invoke("get-mapbox-token");
-        if (error || !data?.token) {
-          setTokenError("Token Mapbox non disponible");
-          return;
-        }
+        if (error || !data?.token) { setTokenError("Token Mapbox non disponible"); return; }
         setMapboxToken(data.token);
-      } catch {
-        setTokenError("Impossible de récupérer le token Mapbox");
-      }
+      } catch { setTokenError("Impossible de récupérer le token Mapbox"); }
     };
     fetchToken();
   }, []);
@@ -106,10 +113,7 @@ export function MapPlanningView({ technicians, selectedDate }: MapPlanningViewPr
   // Init map
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken || map.current) return;
-    if (!mapboxgl.supported()) {
-      setMapInitError("WebGL non supporté");
-      return;
-    }
+    if (!mapboxgl.supported()) { setMapInitError("WebGL non supporté"); return; }
 
     try {
       mapboxgl.accessToken = mapboxToken;
@@ -120,10 +124,7 @@ export function MapPlanningView({ technicians, selectedDate }: MapPlanningViewPr
         zoom: DEFAULT_ZOOM,
       });
 
-      const safeResize = () => {
-        try { map.current?.resize(); } catch { /* ignore */ }
-      };
-
+      const safeResize = () => { try { map.current?.resize(); } catch {} };
       map.current.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), "top-right");
 
       let ro: ResizeObserver | null = null;
@@ -136,82 +137,95 @@ export function MapPlanningView({ technicians, selectedDate }: MapPlanningViewPr
       setTimeout(safeResize, 50);
       setTimeout(safeResize, 250);
 
-      map.current.on("load", () => {
-        setMapReady(true);
-        requestAnimationFrame(safeResize);
-      });
-
+      map.current.on("load", () => { setMapReady(true); requestAnimationFrame(safeResize); });
       map.current.on("error", (e) => {
-        const msg = (e as any)?.error?.message || "Erreur Mapbox";
-        setMapInitError(String(msg));
+        setMapInitError(String((e as any)?.error?.message || "Erreur Mapbox"));
       });
 
-      return () => {
-        ro?.disconnect();
-        setMapReady(false);
-        map.current?.remove();
-        map.current = null;
-      };
+      return () => { ro?.disconnect(); setMapReady(false); map.current?.remove(); map.current = null; };
     } catch (err) {
       setMapInitError(err instanceof Error ? err.message : "Erreur initialisation carte");
       map.current = null;
     }
   }, [mapboxToken]);
 
-  // Track current date key to force marker refresh
   const currentDateKey = format(selectedDate, "yyyy-MM-dd");
   const lastDateKeyRef = useRef(currentDateKey);
 
   // Update markers
   useEffect(() => {
     if (!map.current || !mapReady) return;
-
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
 
-    rdvs.forEach((rdv) => {
+    sortedRdvs.forEach((rdv, index) => {
       const isSelected = selectedRdv?.rdvId === rdv.rdvId;
+      const orderNumber = isTourMode ? index + 1 : undefined;
+
       const el = createPinMarkerElement(rdv.users, 40, isSelected, () => {
         setSelectedRdv((prev) => (prev?.rdvId === rdv.rdvId ? null : rdv));
-      });
+      }, orderNumber);
 
       const marker = new mapboxgl.Marker({ element: el, anchor: "bottom" })
         .setLngLat([rdv.lng, rdv.lat])
         .addTo(map.current!);
-
       markersRef.current.push(marker);
     });
 
-    // Fit bounds when date changes or data changes
     const dateChanged = currentDateKey !== lastDateKeyRef.current;
-    const countChanged = rdvs.length !== lastCountRef.current;
+    const countChanged = sortedRdvs.length !== lastCountRef.current;
     lastDateKeyRef.current = currentDateKey;
-    lastCountRef.current = rdvs.length;
+    lastCountRef.current = sortedRdvs.length;
 
-    if ((dateChanged || countChanged || !hasFittedRef.current) && rdvs.length > 0) {
-      const bounds = calculateBounds(rdvs);
+    if ((dateChanged || countChanged || !hasFittedRef.current) && sortedRdvs.length > 0) {
+      const bounds = calculateBounds(sortedRdvs);
       if (bounds) {
         const container = map.current.getContainer();
         const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
         const padY = Math.max(56, Math.round((container.clientHeight || 600) * 0.12));
         map.current.fitBounds(bounds, {
-          padding: { top: padY, bottom: padY, left: padX, right: padX },
+          padding: { top: padY, bottom: padY + 60, left: padX, right: padX },
           maxZoom: 14,
           duration: 1000,
         });
         hasFittedRef.current = true;
       }
     }
-  }, [rdvs, selectedRdv, mapReady, currentDateKey]);
+  }, [sortedRdvs, selectedRdv, mapReady, currentDateKey, isTourMode]);
 
-  // Toggle tech filter
+  // Draw/remove route layer
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !mapReady) return;
+
+    if (m.getLayer(TOUR_ROUTE_LAYER)) m.removeLayer(TOUR_ROUTE_LAYER);
+    if (m.getSource(TOUR_ROUTE_SOURCE)) m.removeSource(TOUR_ROUTE_SOURCE);
+
+    if (!isTourMode || !routeGeometry) return;
+
+    m.addSource(TOUR_ROUTE_SOURCE, {
+      type: "geojson",
+      data: { type: "Feature", properties: {}, geometry: routeGeometry },
+    });
+
+    m.addLayer({
+      id: TOUR_ROUTE_LAYER,
+      type: "line",
+      source: TOUR_ROUTE_SOURCE,
+      layout: { "line-join": "round", "line-cap": "round" },
+      paint: {
+        "line-color": tourTech?.color || "#6366f1",
+        "line-width": 4,
+        "line-dasharray": [2, 3],
+        "line-opacity": 0.75,
+      },
+    });
+  }, [routeGeometry, isTourMode, mapReady, tourTech?.color]);
+
   const toggleTech = useCallback((id: number) => {
-    setSelectedTechIds((prev) =>
-      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
-    );
+    setSelectedTechIds((prev) => prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]);
   }, []);
 
-  // Error / loading states
   if (tokenError || mapInitError) {
     return (
       <div className="flex items-center justify-center h-full p-8">
@@ -225,8 +239,13 @@ export function MapPlanningView({ technicians, selectedDate }: MapPlanningViewPr
 
   return (
     <div className="relative w-full" style={{ height: "100%", minHeight: "400px" }}>
-      {/* Map container */}
       <div ref={mapContainer} className="absolute inset-0" style={{ minHeight: "400px" }} />
+
+      {/* Edge gradients */}
+      <div className="absolute top-0 left-0 right-0 h-16 z-[2] pointer-events-none bg-gradient-to-b from-white/90 to-white/0 dark:from-background/90 dark:to-background/0" />
+      <div className="absolute bottom-0 left-0 right-0 h-16 z-[2] pointer-events-none bg-gradient-to-t from-white/90 to-white/0 dark:from-background/90 dark:to-background/0" />
+      <div className="absolute top-0 bottom-0 left-0 w-10 z-[2] pointer-events-none bg-gradient-to-r from-white/70 to-white/0 dark:from-background/70 dark:to-background/0" />
+      <div className="absolute top-0 bottom-0 right-0 w-10 z-[2] pointer-events-none bg-gradient-to-l from-white/70 to-white/0 dark:from-background/70 dark:to-background/0" />
 
       {/* Loading overlay */}
       {(!mapReady || rdvsLoading) && (
@@ -239,11 +258,11 @@ export function MapPlanningView({ technicians, selectedDate }: MapPlanningViewPr
       )}
 
       {/* Stats bar */}
-      {mapReady && (
+      {mapReady && !isTourMode && (
         <div className="absolute top-4 right-16 z-10 flex items-center gap-2">
           <Badge variant="secondary" className="bg-background/90 backdrop-blur-sm shadow-sm">
             <MapPin className="h-3 w-3 mr-1" />
-            {rdvs.length} RDV géolocalisés
+            {sortedRdvs.length} RDV géolocalisés
           </Badge>
         </div>
       )}
@@ -271,19 +290,10 @@ export function MapPlanningView({ technicians, selectedDate }: MapPlanningViewPr
                   <CommandEmpty>Aucun technicien</CommandEmpty>
                   <CommandGroup>
                     {filterTechs.map((tech) => (
-                      <CommandItem
-                        key={tech.id}
-                        onSelect={() => toggleTech(tech.id)}
-                        className="cursor-pointer"
-                      >
-                        <span
-                          className="w-3 h-3 rounded-full mr-2 shrink-0 border"
-                          style={{ backgroundColor: tech.color, borderColor: tech.color }}
-                        />
+                      <CommandItem key={tech.id} onSelect={() => toggleTech(tech.id)} className="cursor-pointer">
+                        <span className="w-3 h-3 rounded-full mr-2 shrink-0 border" style={{ backgroundColor: tech.color, borderColor: tech.color }} />
                         <span className="truncate flex-1">{tech.name}</span>
-                        {selectedTechIds.includes(tech.id) && (
-                          <span className="text-primary font-bold ml-auto">✓</span>
-                        )}
+                        {selectedTechIds.includes(tech.id) && <span className="text-primary font-bold ml-auto">✓</span>}
                       </CommandItem>
                     ))}
                   </CommandGroup>
@@ -291,14 +301,7 @@ export function MapPlanningView({ technicians, selectedDate }: MapPlanningViewPr
               </Command>
               {selectedTechIds.length > 0 && (
                 <div className="p-2 border-t">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full text-xs"
-                    onClick={() => setSelectedTechIds([])}
-                  >
-                    Réinitialiser
-                  </Button>
+                  <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => setSelectedTechIds([])}>Réinitialiser</Button>
                 </div>
               )}
             </PopoverContent>
@@ -306,21 +309,28 @@ export function MapPlanningView({ technicians, selectedDate }: MapPlanningViewPr
         </div>
       )}
 
+      {/* Tour summary bar */}
+      {isTourMode && tourTech && sortedRdvs.length >= 2 && (
+        <TourSummaryBar
+          techName={tourTech.name}
+          techColor={tourTech.color}
+          rdvCount={sortedRdvs.length}
+          distanceKm={distanceKm}
+          durationMin={durationMin}
+          isLoading={routeLoading}
+        />
+      )}
+
       {/* Mini preview */}
-      <RdvMiniPreview
-        rdv={selectedRdv}
-        onClose={() => setSelectedRdv(null)}
-      />
+      <RdvMiniPreview rdv={selectedRdv} onClose={() => setSelectedRdv(null)} />
 
       {/* Empty state */}
-      {mapReady && !rdvsLoading && rdvs.length === 0 && (
+      {mapReady && !rdvsLoading && sortedRdvs.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="bg-background/90 backdrop-blur-sm rounded-lg p-6 shadow-lg text-center max-w-xs pointer-events-auto">
             <MapPin className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
             <p className="text-sm font-medium text-foreground">Aucun RDV géolocalisé</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {format(selectedDate, "EEEE d MMMM", { locale: fr })}
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">{format(selectedDate, "EEEE d MMMM", { locale: fr })}</p>
           </div>
         </div>
       )}

@@ -9,25 +9,63 @@ import { GlobalRole, GLOBAL_ROLES } from './globalRoles';
 
 // Définition des modules alignés avec les onglets UI
 export const MODULES = {
-  // Nouveaux modules V3 alignés avec les onglets
-  agence: 'agence',                       // Mon agence
-  stats: 'stats',                         // Stats
-  rh: 'rh',                               // Salariés (RH)
-  parc: 'parc',                           // Parc
-  divers_apporteurs: 'divers_apporteurs', // Divers > Apporteurs
-  divers_plannings: 'divers_plannings',   // Divers > Plannings
-  divers_reunions: 'divers_reunions',     // Divers > Réunions
-  divers_documents: 'divers_documents',   // Divers > Documents
-  guides: 'guides',                       // Guides
-  ticketing: 'ticketing',                 // Ticketing
-  aide: 'aide',                           // Aide
-  prospection: 'prospection',             // Prospection Apporteurs
-  planning_augmente: 'planning_augmente', // Planification Augmentée (IA)
-  // Modules réservés admin/réseau (non visibles dans les plans)
+  // Non-migrated legacy modules (still canonical)
+  ticketing: 'ticketing',
+  prospection: 'prospection',
+  planning_augmente: 'planning_augmente',
   reseau_franchiseur: 'reseau_franchiseur',
   admin_plateforme: 'admin_plateforme',
-  // Module utilitaire
   unified_search: 'unified_search',
+
+  // ── Phase 3 — Nouvelles clés fonctionnelles (sans racines) ──
+  // Pilotage
+  'pilotage.statistiques': 'pilotage.statistiques',
+  'pilotage.statistiques.general': 'pilotage.statistiques.general',
+  'pilotage.statistiques.apporteurs': 'pilotage.statistiques.apporteurs',
+  'pilotage.statistiques.techniciens': 'pilotage.statistiques.techniciens',
+  'pilotage.statistiques.univers': 'pilotage.statistiques.univers',
+  'pilotage.statistiques.sav': 'pilotage.statistiques.sav',
+  'pilotage.statistiques.previsionnel': 'pilotage.statistiques.previsionnel',
+  'pilotage.statistiques.exports': 'pilotage.statistiques.exports',
+  'pilotage.performance': 'pilotage.performance',
+  'pilotage.actions_a_mener': 'pilotage.actions_a_mener',
+  'pilotage.devis_acceptes': 'pilotage.devis_acceptes',
+  'pilotage.incoherences': 'pilotage.incoherences',
+  'pilotage.resultat': 'pilotage.resultat',
+  'pilotage.rentabilite': 'pilotage.rentabilite',
+  // (pilotage.dashboard removed — merged into pilotage.statistiques)
+  'pilotage.agence': 'pilotage.agence',
+  // Commercial
+  'commercial.suivi_client': 'commercial.suivi_client',
+  'commercial.comparateur': 'commercial.comparateur',
+  'commercial.veille': 'commercial.veille',
+  'commercial.prospects': 'commercial.prospects',
+  'commercial.realisations': 'commercial.realisations',
+  // Organisation
+  'organisation.salaries': 'organisation.salaries',
+  'organisation.apporteurs': 'organisation.apporteurs',
+  'organisation.plannings': 'organisation.plannings',
+  'organisation.reunions': 'organisation.reunions',
+  'organisation.parc': 'organisation.parc',
+  'organisation.zones': 'organisation.zones',
+  'organisation.documents_legaux': 'organisation.documents_legaux',
+  // Médiathèque
+  'mediatheque.consulter': 'mediatheque.consulter',
+  'mediatheque.gerer': 'mediatheque.gerer',
+  'mediatheque.corbeille': 'mediatheque.corbeille',
+  'mediatheque.documents': 'mediatheque.documents',
+  // Support
+  'support.aide_en_ligne': 'support.aide_en_ligne',
+  'support.guides': 'support.guides',
+  'support.faq': 'support.faq',
+  'support.ticketing': 'support.ticketing',
+  // Admin
+  'admin.gestion': 'admin.gestion',
+  'admin.franchiseur': 'admin.franchiseur',
+  'admin.ia': 'admin.ia',
+  'admin.contenu': 'admin.contenu',
+  'admin.ops': 'admin.ops',
+  'admin.plateforme': 'admin.plateforme',
 } as const;
 
 export type ModuleKey = keyof typeof MODULES;
@@ -35,40 +73,40 @@ export type ModuleKey = keyof typeof MODULES;
 
 // Sous-options par module
 export const MODULE_OPTIONS = {
-  agence: {
-    indicateurs: 'agence.indicateurs',
-    actions_a_mener: 'agence.actions_a_mener',
-    diffusion: 'agence.diffusion',
+  'pilotage.agence': {
+    indicateurs: 'pilotage.agence.indicateurs',
+    actions_a_mener: 'pilotage.agence.actions_a_mener',
+    diffusion: 'pilotage.agence.diffusion',
+    devis_acceptes: 'pilotage.agence.devis_acceptes',
   },
-  stats: {
-    stats_hub: 'stats.stats_hub',
-    exports: 'stats.exports',
+  // pilotage.dashboard options removed — merged into pilotage.statistiques
+  'organisation.salaries': {
+    rh_viewer: 'organisation.salaries.rh_viewer',
+    rh_admin: 'organisation.salaries.rh_admin',
   },
-  rh: {
-    rh_viewer: 'rh.rh_viewer',
-    rh_admin: 'rh.rh_admin',
+  'organisation.parc': {
+    vehicules: 'organisation.parc.vehicules',
+    epi: 'organisation.parc.epi',
+    equipements: 'organisation.parc.equipements',
   },
-  parc: {
-    vehicules: 'parc.vehicules',
-    epi: 'parc.epi',
-    equipements: 'parc.equipements',
+  'organisation.apporteurs': {
+    consulter: 'organisation.apporteurs.consulter',
+    gerer: 'organisation.apporteurs.gerer',
   },
-  divers_apporteurs: {
-    consulter: 'divers_apporteurs.consulter',
-    gerer: 'divers_apporteurs.gerer',
+  'organisation.plannings': {},
+  'organisation.reunions': {},
+  'organisation.zones': {},
+  'mediatheque.documents': {
+    consulter: 'mediatheque.documents.consulter',
+    gerer: 'mediatheque.documents.gerer',
+    corbeille_vider: 'mediatheque.documents.corbeille_vider',
   },
-  divers_plannings: {},
-  divers_reunions: {},
-  divers_documents: {
-    consulter: 'divers_documents.consulter',
-    gerer: 'divers_documents.gerer',
-    corbeille_vider: 'divers_documents.corbeille_vider',
-  },
-  guides: {
-    apogee: 'guides.apogee',
-    apporteurs: 'guides.apporteurs',
-    helpconfort: 'guides.helpconfort',
-    faq: 'guides.faq',
+  'support.guides': {
+    apogee: 'support.guides.apogee',
+    apporteurs: 'support.guides.apporteurs',
+    helpconfort: 'support.guides.helpconfort',
+    faq: 'support.guides.faq',
+    edition: 'support.guides.edition',
   },
   ticketing: {
     kanban: 'ticketing.kanban',
@@ -76,9 +114,9 @@ export const MODULE_OPTIONS = {
     manage: 'ticketing.manage',
     import: 'ticketing.import',
   },
-  aide: {
-    user: 'aide.user',
-    agent: 'aide.agent',
+  'support.aide_en_ligne': {
+    user: 'support.aide_en_ligne.user',
+    agent: 'support.aide_en_ligne.agent',
   },
   prospection: {
     dashboard: 'prospection.dashboard',
@@ -90,6 +128,14 @@ export const MODULE_OPTIONS = {
     suggest: 'planning_augmente.suggest',
     optimize: 'planning_augmente.optimize',
     admin: 'planning_augmente.admin',
+  },
+  'commercial.realisations': {
+    view: 'commercial.realisations.view',
+    create: 'commercial.realisations.create',
+    edit: 'commercial.realisations.edit',
+    validate: 'commercial.realisations.validate',
+    publish_prepare: 'commercial.realisations.publish_prepare',
+    export: 'commercial.realisations.export',
   },
   reseau_franchiseur: {
     dashboard: 'reseau_franchiseur.dashboard',
@@ -109,20 +155,20 @@ export const MODULE_OPTIONS = {
   },
 } as const;
 
-export type ModuleOptionPath = typeof MODULE_OPTIONS[ModuleKey][keyof typeof MODULE_OPTIONS[ModuleKey]];
+/** Legacy module keys (those with entries in MODULE_OPTIONS) */
+type LegacyModuleKey = keyof typeof MODULE_OPTIONS;
+export type ModuleOptionPath = typeof MODULE_OPTIONS[LegacyModuleKey][keyof typeof MODULE_OPTIONS[LegacyModuleKey]];
 
 // Métadonnées des modules pour l'UI
 // Les catégories correspondent EXACTEMENT aux onglets de niveau 1 du workspace
 export type ModuleCategory = 
-  | 'stats'       // Onglet "Stats"
-  | 'salaries'    // Onglet "Salariés"
-  | 'outils'      // Onglet "Outils" (Actions, Apporteurs, Administratif, Parc, Performance, Commercial)
-  | 'documents'   // Onglet "Documents" (Médiathèque)
-  | 'guides'      // Onglet "Guides" (Apogée, Apporteurs, HelpConfort, FAQ)
-  | 'ticketing'   // Onglet "Ticketing" (Liste, Kanban, Revue, Historique)
-  | 'aide'        // Onglet "Aide" (Support)
-  | 'reseau'      // Onglet "Franchiseur" (visible N3+)
-  | 'admin';      // Onglet "Admin" (visible N5+)
+  | 'pilotage'      // Onglet "Pilotage" (Stats, Performance, Actions)
+  | 'commercial'    // Onglet "Commercial" (Prospection, Devis acceptés, Incohérences)
+  | 'organisation'  // Onglet "Organisation" (Collaborateurs, Apporteurs, Plannings, Réunions, Parc, Conformité)
+  | 'documents'     // Onglet "Documents" (Médiathèque)
+  | 'support'       // Onglet "Support" (Aide en ligne, Guides, FAQ, Ticketing)
+  | 'reseau'        // Onglet "Franchiseur" (visible N3+)
+  | 'admin';        // Onglet "Admin" (visible N5+)
 
 export interface ModuleDefinition {
   key: ModuleKey;
@@ -140,6 +186,11 @@ export interface ModuleDefinition {
   adminOnly?: boolean;
   /** Si false, ce module est en développement et masqué des permissions/plans */
   deployed?: boolean;
+  /** Si true, ce module n'est activé que par overwrite utilisateur (user_modules), jamais par plan ou rôle */
+  overwriteOnly?: boolean;
+  /** Si true, ce "module" est en réalité une interface de rôle, pas un module standard administrable.
+   *  L'accès est piloté par le rôle global, pas par plan/overwrite. */
+  roleInterface?: boolean;
 }
 
 export interface ModuleOptionDefinition {
@@ -154,99 +205,99 @@ export interface ModuleOptionDefinition {
 // Configuration complète des modules
 export const MODULE_DEFINITIONS: ModuleDefinition[] = [
   {
-    key: 'agence',
+    key: 'pilotage.agence',
     label: 'Mon agence',
     description: 'Tableau de bord, KPIs et actions',
     icon: 'Building2',
-    category: 'outils',
+    category: 'pilotage',
     uiSubTab: 'actions',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
-      { key: 'indicateurs', path: 'agence.indicateurs', label: 'Indicateurs', description: 'KPIs principaux', defaultEnabled: true, routes: ['/'] },
-      { key: 'actions_a_mener', path: 'agence.actions_a_mener', label: 'Actions à mener', description: 'Liste des actions', defaultEnabled: true, routes: ['/'] },
-      { key: 'diffusion', path: 'agence.diffusion', label: 'Diffusion', description: 'Écran TV', defaultEnabled: true, routes: ['/diffusion'] },
+      { key: 'indicateurs', path: 'pilotage.agence.indicateurs', label: 'Indicateurs', description: 'KPIs principaux', defaultEnabled: true, routes: ['/'] },
+      { key: 'actions_a_mener', path: 'pilotage.agence.actions_a_mener', label: 'Actions à mener', description: 'Liste des actions', defaultEnabled: true, routes: ['/'] },
+      { key: 'diffusion', path: 'pilotage.agence.diffusion', label: 'Diffusion', description: 'Écran TV', defaultEnabled: true, routes: ['/diffusion'] },
+      { key: 'devis_acceptes', path: 'pilotage.agence.devis_acceptes', label: 'Devis acceptés', description: 'Visualisation des dossiers avec devis acceptés', defaultEnabled: true, routes: ['/?tab=commercial'] },
     ],
   },
+  // pilotage.dashboard definition removed — merged into pilotage.statistiques in module_registry
   {
-    key: 'stats',
-    label: 'Stats',
-    description: 'Statistiques et tableaux de bord',
-    icon: 'BarChart3',
-    category: 'stats',
-    defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
-    minRole: 'franchisee_admin',
-    options: [
-      { key: 'stats_hub', path: 'stats.stats_hub', label: 'Stats Hub', description: 'Tableaux avancés', defaultEnabled: true, routes: ['/?tab=stats'] },
-      { key: 'exports', path: 'stats.exports', label: 'Exports', description: 'Export des données', defaultEnabled: false, routes: ['/?tab=stats'] },
-    ],
-  },
-  {
-    key: 'rh',
+    key: 'organisation.salaries',
     label: 'Salariés',
     description: 'Gestion des ressources humaines',
     icon: 'Users',
-    category: 'salaries',
+    category: 'organisation',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
-      { key: 'rh_viewer', path: 'rh.rh_viewer', label: 'Gestionnaire', description: 'Vue équipe', defaultEnabled: true, routes: ['/?tab=rh'] },
-      { key: 'rh_admin', path: 'rh.rh_admin', label: 'Admin RH', description: 'Gestion complète', defaultEnabled: false, routes: ['/?tab=rh'] },
+      { key: 'rh_viewer', path: 'organisation.salaries.rh_viewer', label: 'Gestionnaire', description: 'Vue équipe', defaultEnabled: true, routes: ['/?tab=organisation'] },
+      { key: 'rh_admin', path: 'organisation.salaries.rh_admin', label: 'Admin RH', description: 'Gestion complète', defaultEnabled: false, routes: ['/?tab=organisation'] },
     ],
   },
   {
-    key: 'parc',
+    key: 'organisation.parc',
     label: 'Parc',
     description: 'Véhicules et équipements',
     icon: 'Truck',
-    category: 'outils',
+    category: 'organisation',
     uiSubTab: 'parc',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
-      { key: 'vehicules', path: 'parc.vehicules', label: 'Véhicules', description: 'Flotte véhicules', defaultEnabled: true, routes: ['/?tab=parc'] },
-      { key: 'epi', path: 'parc.epi', label: 'EPI', description: 'Équipements protection', defaultEnabled: true, routes: ['/?tab=parc'] },
-      { key: 'equipements', path: 'parc.equipements', label: 'Équipements', description: 'Autres équipements', defaultEnabled: true, routes: ['/?tab=parc'] },
+      { key: 'vehicules', path: 'organisation.parc.vehicules', label: 'Véhicules', description: 'Flotte véhicules', defaultEnabled: true, routes: ['/?tab=organisation'] },
+      { key: 'epi', path: 'organisation.parc.epi', label: 'EPI', description: 'Équipements protection', defaultEnabled: true, routes: ['/?tab=organisation'] },
+      { key: 'equipements', path: 'organisation.parc.equipements', label: 'Équipements', description: 'Autres équipements', defaultEnabled: true, routes: ['/?tab=organisation'] },
     ],
   },
   {
-    key: 'divers_apporteurs',
+    key: 'organisation.apporteurs',
     label: 'Apporteurs',
     description: 'Gestion des apporteurs',
     icon: 'Handshake',
-    category: 'outils',
+    category: 'organisation',
     uiSubTab: 'apporteurs',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
-      { key: 'consulter', path: 'divers_apporteurs.consulter', label: 'Consulter', description: 'Voir les apporteurs', defaultEnabled: true, routes: ['/?tab=divers'] },
-      { key: 'gerer', path: 'divers_apporteurs.gerer', label: 'Gérer', description: 'Créer/modifier', defaultEnabled: true, routes: ['/?tab=divers'] },
+      { key: 'consulter', path: 'organisation.apporteurs.consulter', label: 'Consulter', description: 'Voir les apporteurs', defaultEnabled: true, routes: ['/?tab=organisation'] },
+      { key: 'gerer', path: 'organisation.apporteurs.gerer', label: 'Gérer', description: 'Créer/modifier', defaultEnabled: true, routes: ['/?tab=organisation'] },
     ],
   },
   {
-    key: 'divers_plannings',
+    key: 'organisation.plannings',
     label: 'Plannings',
     description: 'Gestion des plannings',
     icon: 'Calendar',
-    category: 'outils',
+    category: 'organisation',
     uiSubTab: 'administratif',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [],
   },
   {
-    key: 'divers_reunions',
+    key: 'organisation.reunions',
     label: 'Réunions',
     description: 'Gestion des réunions',
     icon: 'Video',
-    category: 'outils',
+    category: 'organisation',
     uiSubTab: 'administratif',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [],
   },
   {
-    key: 'divers_documents',
+    key: 'organisation.zones',
+    label: 'Zones',
+    description: 'Récapitulatif mensuel des zones BTP par technicien',
+    icon: 'MapPin',
+    category: 'organisation',
+    uiSubTab: 'administratif',
+    defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
+    minRole: 'franchisee_admin',
+    options: [],
+  },
+  {
+    key: 'mediatheque.documents',
     label: 'Documents',
     description: 'Médiathèque centralisée style Finder',
     icon: 'FolderOpen',
@@ -254,24 +305,25 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
     options: [
-      { key: 'consulter', path: 'divers_documents.consulter', label: 'Consulter', description: 'Voir les documents', defaultEnabled: true, routes: ['/?tab=documents'] },
-      { key: 'gerer', path: 'divers_documents.gerer', label: 'Gérer', description: 'Créer, modifier, déplacer', defaultEnabled: true, routes: ['/?tab=documents'] },
-      { key: 'corbeille_vider', path: 'divers_documents.corbeille_vider', label: 'Vider corbeille', description: 'Suppression définitive', defaultEnabled: false, routes: ['/?tab=documents'] },
+      { key: 'consulter', path: 'mediatheque.documents.consulter', label: 'Consulter', description: 'Voir les documents', defaultEnabled: true, routes: ['/?tab=documents'] },
+      { key: 'gerer', path: 'mediatheque.documents.gerer', label: 'Gérer', description: 'Créer, modifier, déplacer', defaultEnabled: true, routes: ['/?tab=documents'] },
+      { key: 'corbeille_vider', path: 'mediatheque.documents.corbeille_vider', label: 'Vider corbeille', description: 'Suppression définitive', defaultEnabled: false, routes: ['/?tab=documents'] },
     ],
   },
   {
-    key: 'guides',
+    key: 'support.guides',
     label: 'Guides',
     description: 'Documentation et guides',
     icon: 'BookOpen',
-    category: 'guides',
+    category: 'support',
     defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
-    minRole: 'base_user',
+    minRole: 'franchisee_admin',
     options: [
-      { key: 'apogee', path: 'guides.apogee', label: 'Apogée', description: 'Guide Apogée', defaultEnabled: true, routes: ['/?tab=guides'] },
-      { key: 'apporteurs', path: 'guides.apporteurs', label: 'Apporteurs', description: 'Guide apporteurs', defaultEnabled: true, routes: ['/?tab=guides'] },
-      { key: 'helpconfort', path: 'guides.helpconfort', label: 'HelpConfort', description: 'Guide HelpConfort', defaultEnabled: true, routes: ['/?tab=guides'] },
-      { key: 'faq', path: 'guides.faq', label: 'FAQ', description: 'Questions fréquentes', defaultEnabled: true, routes: ['/?tab=guides'] },
+      { key: 'apogee', path: 'support.guides.apogee', label: 'Apogée', description: 'Guide Apogée', defaultEnabled: true, routes: ['/?tab=support'] },
+      { key: 'apporteurs', path: 'support.guides.apporteurs', label: 'Apporteurs', description: 'Guide apporteurs', defaultEnabled: true, routes: ['/?tab=support'] },
+      { key: 'helpconfort', path: 'support.guides.helpconfort', label: 'HelpConfort', description: 'Guide HelpConfort', defaultEnabled: true, routes: ['/?tab=support'] },
+      { key: 'faq', path: 'support.guides.faq', label: 'FAQ', description: 'Questions fréquentes', defaultEnabled: true, routes: ['/?tab=support'] },
+      { key: 'edition', path: 'support.guides.edition', label: 'Édition contenu', description: 'Modifier le contenu des guides', defaultEnabled: false, routes: ['/?tab=support'] },
     ],
   },
   {
@@ -279,27 +331,28 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Ticketing',
     description: 'Suivi des développements',
     icon: 'Kanban',
-    category: 'ticketing',
-    defaultForRoles: ['platform_admin', 'superadmin'],
+    category: 'support',
+    defaultForRoles: [],
     minRole: 'base_user',
+    overwriteOnly: true,
     options: [
-      { key: 'kanban', path: 'ticketing.kanban', label: 'Kanban', description: 'Vue tableau', defaultEnabled: true, routes: ['/?tab=ticketing'] },
-      { key: 'create', path: 'ticketing.create', label: 'Créer', description: 'Créer tickets', defaultEnabled: true, routes: ['/?tab=ticketing'] },
-      { key: 'manage', path: 'ticketing.manage', label: 'Gérer', description: 'Modifier tickets', defaultEnabled: true, routes: ['/?tab=ticketing'] },
-      { key: 'import', path: 'ticketing.import', label: 'Import', description: 'Import Excel', defaultEnabled: false, routes: ['/?tab=ticketing'] },
+      { key: 'kanban', path: 'ticketing.kanban', label: 'Kanban', description: 'Vue tableau', defaultEnabled: true, routes: ['/?tab=support'] },
+      { key: 'create', path: 'ticketing.create', label: 'Créer', description: 'Créer tickets', defaultEnabled: true, routes: ['/?tab=support'] },
+      { key: 'manage', path: 'ticketing.manage', label: 'Gérer', description: 'Modifier tickets', defaultEnabled: true, routes: ['/?tab=support'] },
+      { key: 'import', path: 'ticketing.import', label: 'Import', description: 'Import Excel', defaultEnabled: false, routes: ['/?tab=support'] },
     ],
   },
   {
-    key: 'aide',
+    key: 'support.aide_en_ligne',
     label: 'Aide',
     description: 'Support et assistance',
     icon: 'HelpCircle',
-    category: 'aide',
+    category: 'support',
     defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
     minRole: 'base_user',
     options: [
-      { key: 'user', path: 'aide.user', label: 'Utilisateur', description: 'Créer demandes', defaultEnabled: true, routes: ['/?tab=aide'] },
-      { key: 'agent', path: 'aide.agent', label: 'Agent', description: 'Répondre demandes', defaultEnabled: false, routes: ['/?tab=aide'] },
+      { key: 'user', path: 'support.aide_en_ligne.user', label: 'Utilisateur', description: 'Créer demandes', defaultEnabled: true, routes: ['/?tab=support'] },
+      { key: 'agent', path: 'support.aide_en_ligne.agent', label: 'Agent', description: 'Répondre demandes', defaultEnabled: false, routes: ['/?tab=support'] },
     ],
   },
   {
@@ -307,16 +360,16 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Commercial',
     description: 'Suivi commercial et prospection',
     icon: 'Target',
-    category: 'outils',
+    category: 'commercial',
     uiSubTab: 'prospection',
-    deployed: false, // Pas encore déployé officiellement
+    deployed: true,
     defaultForRoles: [],
-    minRole: 'franchisee_admin',
+    minRole: 'franchisee_user',
     options: [
-      { key: 'dashboard', path: 'prospection.dashboard', label: 'Suivi client', description: 'Fiche apporteur', defaultEnabled: true, routes: ['/?tab=prospection'] },
-      { key: 'comparateur', path: 'prospection.comparateur', label: 'Comparateur', description: 'Comparer apporteurs', defaultEnabled: true, routes: ['/?tab=prospection'] },
-      { key: 'veille', path: 'prospection.veille', label: 'Veille', description: 'Monitoring apporteurs', defaultEnabled: true, routes: ['/?tab=prospection'] },
-      { key: 'prospects', path: 'prospection.prospects', label: 'Prospects', description: 'Gestion prospects', defaultEnabled: true, routes: ['/?tab=prospection'] },
+      { key: 'dashboard', path: 'prospection.dashboard', label: 'Suivi client', description: 'Fiche apporteur', defaultEnabled: true, routes: ['/?tab=commercial'] },
+      { key: 'comparateur', path: 'prospection.comparateur', label: 'Comparateur', description: 'Comparer apporteurs', defaultEnabled: true, routes: ['/?tab=commercial'] },
+      { key: 'veille', path: 'prospection.veille', label: 'Veille', description: 'Monitoring apporteurs', defaultEnabled: true, routes: ['/?tab=commercial'] },
+      { key: 'prospects', path: 'prospection.prospects', label: 'Prospects', description: 'Gestion prospects', defaultEnabled: true, routes: ['/?tab=commercial'] },
     ],
   },
   {
@@ -324,8 +377,8 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Planification Augmentée',
     description: 'Optimisation intelligente du planning techniciens',
     icon: 'Brain',
-    category: 'outils',
-    deployed: false, // En cours de développement, pas dans les permissions/plans
+    category: 'organisation',
+    deployed: false,
     defaultForRoles: [],
     minRole: 'franchisee_admin',
     adminOnly: true,
@@ -335,16 +388,84 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'admin', path: 'planning_augmente.admin', label: 'Admin', description: 'Configuration pondérations', defaultEnabled: false, routes: [] },
     ],
   },
-  // Modules admin (non visibles dans les plans)
+  // Commercial sub-modules (promoted from prospection options)
+  {
+    key: 'commercial.suivi_client',
+    label: 'Suivi client',
+    description: 'Fiche apporteur et suivi',
+    icon: 'Users',
+    category: 'commercial',
+    uiSubTab: 'apporteurs',
+    defaultForRoles: [],
+    minRole: 'franchisee_user',
+    options: [],
+  },
+  {
+    key: 'commercial.comparateur',
+    label: 'Comparateur',
+    description: 'Comparer apporteurs',
+    icon: 'GitCompare',
+    category: 'commercial',
+    uiSubTab: 'comparateur',
+    defaultForRoles: [],
+    minRole: 'franchisee_user',
+    options: [],
+  },
+  {
+    key: 'commercial.veille',
+    label: 'Veille',
+    description: 'Monitoring apporteurs',
+    icon: 'Radar',
+    category: 'commercial',
+    uiSubTab: 'veille',
+    defaultForRoles: [],
+    minRole: 'franchisee_user',
+    options: [],
+  },
+  {
+    key: 'commercial.prospects',
+    label: 'Prospects',
+    description: 'Gestion prospects',
+    icon: 'UserSearch',
+    category: 'commercial',
+    uiSubTab: 'prospects',
+    defaultForRoles: [],
+    minRole: 'franchisee_user',
+    options: [],
+  },
+  // Module premium Réalisations
+  {
+    key: 'commercial.realisations',
+    label: 'Réalisations',
+    description: 'Gestion des réalisations terrain, photos avant/après, SEO',
+    icon: 'Camera',
+    category: 'commercial',
+    uiSubTab: 'realisations',
+    defaultForRoles: [],
+    minRole: 'franchisee_user',
+    options: [
+      { key: 'view', path: 'commercial.realisations.view', label: 'Consulter', description: 'Voir les réalisations', defaultEnabled: true, routes: ['/realisations'] },
+      { key: 'create', path: 'commercial.realisations.create', label: 'Créer', description: 'Créer des réalisations', defaultEnabled: true, routes: ['/realisations/new'] },
+      { key: 'edit', path: 'commercial.realisations.edit', label: 'Modifier', description: 'Modifier les réalisations', defaultEnabled: true, routes: ['/realisations'] },
+      { key: 'validate', path: 'commercial.realisations.validate', label: 'Valider', description: 'Valider / refuser', defaultEnabled: false, routes: ['/realisations'] },
+      { key: 'publish_prepare', path: 'commercial.realisations.publish_prepare', label: 'Publier', description: 'Préparer publication web', defaultEnabled: false, routes: ['/realisations'] },
+      { key: 'export', path: 'commercial.realisations.export', label: 'Exporter', description: 'Export des données', defaultEnabled: false, routes: ['/realisations'] },
+    ],
+  },
+  // reseau_franchiseur — INTERFACE DE RÔLE (N3+), pas un module standard.
+  // Conservé dans MODULE_DEFINITIONS pour compatibilité technique (EnabledModules, user_modules legacy)
+  // mais l'accès réel est piloté par src/permissions/franchisorAccess.ts
   {
     key: 'reseau_franchiseur',
     label: 'Réseau Franchiseur',
-    description: 'Vision multi-agences',
+    description: 'Interface de rôle — accès piloté par rôle global N3+, pas par module',
     icon: 'Network',
     category: 'reseau',
-    defaultForRoles: ['franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
+    defaultForRoles: [], // VIDÉ — l'accès n'est plus piloté par module
     minRole: 'franchisor_user',
     adminOnly: true,
+    /** Interface de rôle, pas un module administrable */
+    roleInterface: true,
     options: [
       { key: 'dashboard', path: 'reseau_franchiseur.dashboard', label: 'Dashboard', description: 'Vue réseau', defaultEnabled: true, routes: ['/?tab=hc-reseau'] },
       { key: 'stats', path: 'reseau_franchiseur.stats', label: 'Stats', description: 'KPIs réseau', defaultEnabled: true, routes: ['/?tab=hc-reseau'] },
@@ -387,7 +508,21 @@ export const PLAN_VISIBLE_MODULES: ModuleKey[] = MODULE_DEFINITIONS
   .map(m => m.key);
 
 
+/**
+ * EnabledModules interface.
+ * 
+ * TRANSITIONAL (Phase 8): Named properties for legacy keys are KEPT because:
+ * 1. The RPC still returns legacy keys alongside hierarchical ones
+ * 2. AuthContext.tsx PRO enrichment reads .parc, .agence, .reseau_franchiseur directly
+ * 3. Removing them would require migrating all direct property access patterns
+ * 4. The index signature handles hierarchical keys (`enabledModules['pilotage.agence']`)
+ * 
+ * These named props will be removed when:
+ * - The RPC stops returning legacy keys
+ * - All consumers migrate to bracket notation
+ */
 export interface EnabledModules {
+  // Legacy named props (transitional — see comment above)
   agence?: boolean | ModuleOptionsState;
   stats?: boolean | ModuleOptionsState;
   rh?: boolean | ModuleOptionsState;
@@ -401,9 +536,12 @@ export interface EnabledModules {
   aide?: boolean | ModuleOptionsState;
   prospection?: boolean | ModuleOptionsState;
   planning_augmente?: boolean | ModuleOptionsState;
+  realisations?: boolean | ModuleOptionsState;
   reseau_franchiseur?: boolean | ModuleOptionsState;
   admin_plateforme?: boolean | ModuleOptionsState;
   unified_search?: boolean | ModuleOptionsState;
+  /** Index signature for hierarchical keys and dynamic access */
+  [key: string]: boolean | ModuleOptionsState | undefined;
 }
 
 export interface ModuleOptionsState {
@@ -483,21 +621,52 @@ export function canAccessModule(role: GlobalRole | null, moduleKey: ModuleKey): 
 /**
  * Labels courts pour les modules (utilisés dans les badges)
  */
-export const MODULE_SHORT_LABELS: Record<ModuleKey, string> = {
-  agence: 'Agence',
-  stats: 'Stats',
-  rh: 'RH',
-  parc: 'Parc',
-  divers_apporteurs: 'Apporteurs',
-  divers_plannings: 'Plannings',
-  divers_reunions: 'Réunions',
-  divers_documents: 'Documents',
-  guides: 'Guides',
+export const MODULE_SHORT_LABELS: Partial<Record<ModuleKey, string>> = {
+  // Non-migrated legacy modules
   ticketing: 'Ticketing',
-  aide: 'Aide',
   prospection: 'Commercial',
   planning_augmente: 'Planif. IA',
   reseau_franchiseur: 'Réseau',
   admin_plateforme: 'Admin',
   unified_search: 'Recherche',
+  // Pilotage
+  'pilotage.agence': 'Agence',
+  // pilotage.dashboard removed
+  'pilotage.statistiques': 'Statistiques',
+  'pilotage.performance': 'Performance',
+  'pilotage.actions_a_mener': 'Actions',
+  'pilotage.devis_acceptes': 'Devis',
+  'pilotage.incoherences': 'Incohérences',
+  'pilotage.resultat': 'Résultat',
+  'pilotage.rentabilite': 'Rentabilité',
+  // Commercial
+  'commercial.suivi_client': 'Suivi client',
+  'commercial.comparateur': 'Comparateur',
+  'commercial.veille': 'Veille',
+  'commercial.prospects': 'Prospects',
+  'commercial.realisations': 'Réalisations',
+  // Organisation
+  'organisation.salaries': 'Salariés',
+  'organisation.apporteurs': 'Apporteurs',
+  'organisation.plannings': 'Plannings',
+  'organisation.reunions': 'Réunions',
+  'organisation.parc': 'Parc',
+  'organisation.documents_legaux': 'Documents légaux',
+  // Médiathèque
+  'mediatheque.documents': 'Documents',
+  'mediatheque.consulter': 'Consulter',
+  'mediatheque.gerer': 'Gérer',
+  'mediatheque.corbeille': 'Corbeille',
+  // Support
+  'support.aide_en_ligne': 'Aide',
+  'support.guides': 'Guides',
+  'support.faq': 'FAQ',
+  'support.ticketing': 'Ticketing',
+  // Admin
+  'admin.gestion': 'Gestion',
+  'admin.franchiseur': 'Franchiseur',
+  'admin.ia': 'IA',
+  'admin.contenu': 'Contenu',
+  'admin.ops': 'Ops',
+  'admin.plateforme': 'Plateforme',
 };

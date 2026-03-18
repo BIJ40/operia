@@ -127,8 +127,8 @@ export function formatUniverseLabel(slug: string | undefined | null): string {
   const universeMapping: Record<string, string> = {
     'volets': 'Volets roulants',
     'volet_roulant': 'Volets roulants',
-    'ame_logement': 'PMR',
-    'pmr': 'PMR',
+    'ame_logement': 'Aménagement PMR',
+    'pmr': 'Aménagement PMR',
     'renovation': 'Rénovation',
     'electricite': 'Électricité',
     'plomberie': 'Plomberie',

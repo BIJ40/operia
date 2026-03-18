@@ -359,6 +359,9 @@ export interface ApogeeProxy {
   getDevis: <T = any[]>(options?: ApogeeProxyOptions) => Promise<T>;
   getInterventionsCreneaux: <T = any[]>(options?: ApogeeProxyOptions) => Promise<T>;
   getPlanningCreneaux: <T = any[]>(options?: ApogeeProxyOptions) => Promise<T>;
+  getProjectByHash: <T = unknown>(options: ApogeeProxyOptions & {
+    filters: { ref: string; hash: string; zipCode: string };
+  }) => Promise<T>;
   
   // Utility methods
   clearCache: (agencySlug?: string) => void;
@@ -386,6 +389,13 @@ export const apogeeProxy: ApogeeProxy = {
   getDevis: (options = {}) => proxyRequest('apiGetDevis', options),
   getInterventionsCreneaux: (options = {}) => proxyRequest('getInterventionsCreneaux', options),
   getPlanningCreneaux: (options = {}) => proxyRequest('apiGetPlanningCreneaux', { ...options, filters: { refType: 'all' } }),
+  getProjectByHash: (options) => {
+    const filters = {
+      ...options.filters,
+      zipcode: options.filters.zipCode, // doublon lowercase pour compatibilité API
+    };
+    return proxyRequest('apiGetProjectByHashZipCode', { ...options, filters, skipCache: true });
+  },
   
   clearCache: clearApogeeCache,
   getCacheInfo: getApogeeCacheInfo,

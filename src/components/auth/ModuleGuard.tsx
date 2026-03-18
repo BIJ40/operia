@@ -7,8 +7,9 @@ import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
-import { hasAccess, MODULE_LABELS } from '@/permissions';
+import { hasAccess, isBypassRole } from '@/permissions';
 import { ModuleKey } from '@/types/modules';
+import { useModuleLabels } from '@/hooks/useModuleLabels';
 import { Loader2, Lock } from 'lucide-react';
 
 interface ModuleGuardProps {
@@ -72,27 +73,28 @@ export function ModuleGuard({
     agencyId,
   };
 
-  // Vérifier l'accès au module via le Permissions Engine
+  // Vérifier l'accès au module via le Permissions Engine + COMPAT_MAP fallback
+  const isBypass = isBypassRole(globalRole);
   let canAccessModule = false;
 
   if (requiredOptions && requiredOptions.length > 0) {
     // Logique OR : au moins une des options doit être accessible
     canAccessModule = requiredOptions.some(opt => 
       hasAccess({ ...permissionContext, moduleId: moduleKey, optionId: opt })
-    );
+    ) || isBypass;
   } else if (requiredOption) {
     // Option unique requise
     canAccessModule = hasAccess({ 
       ...permissionContext, 
       moduleId: moduleKey, 
       optionId: requiredOption 
-    });
+    }) || isBypass;
   } else {
-    // Juste le module
+    // Vérification module
     canAccessModule = hasAccess({ 
       ...permissionContext, 
       moduleId: moduleKey 
-    });
+    }) || isBypass;
   }
 
   if (!canAccessModule) {
@@ -120,6 +122,7 @@ function ModuleAccessDeniedPage({
   moduleKey: ModuleKey;
   message?: string;
 }) {
+  const { getLabel } = useModuleLabels();
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-8">
       <div className="flex items-center justify-center w-20 h-20 rounded-full bg-destructive/10 mb-6">
@@ -133,7 +136,7 @@ function ModuleAccessDeniedPage({
       </p>
       <p className="text-sm text-muted-foreground">
         Module requis : <span className="font-semibold text-foreground">
-          {MODULE_LABELS[moduleKey] || moduleKey}
+          {getLabel(moduleKey)}
         </span>
       </p>
     </div>

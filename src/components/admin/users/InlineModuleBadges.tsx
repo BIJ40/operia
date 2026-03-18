@@ -1,6 +1,8 @@
 /**
  * Badges inline pour les modules utilisateur - V3 aligné avec les plans
  * Affiche les modules activés pour un utilisateur sous forme de badges cliquables
+ * 
+ * Auto-dérivé de MODULE_DEFINITIONS pour rester synchronisé.
  */
 
 import { memo, useState } from 'react';
@@ -12,42 +14,50 @@ import { Separator } from '@/components/ui/separator';
 import { 
   Building2, BarChart3, Users, Truck, Handshake, Calendar, 
   Video, FileText, BookOpen, Kanban, HelpCircle, Plus, Crown,
+  Target, Camera, Brain,
   LucideIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { EnabledModules, ModuleKey } from '@/types/modules';
-import { PLAN_VISIBLE_MODULES, MODULE_SHORT_LABELS } from '@/types/modules';
+import { PLAN_VISIBLE_MODULES } from '@/types/modules';
+import { useModuleLabels } from '@/hooks/useModuleLabels';
 
-// Icônes pour chaque module (uniquement les modules de plan)
+// Icônes pour chaque module — doit inclure TOUS les modules visibles
 const MODULE_ICONS: Partial<Record<ModuleKey, LucideIcon>> = {
-  agence: Building2,
-  stats: BarChart3,
-  rh: Users,
-  parc: Truck,
-  divers_apporteurs: Handshake,
-  divers_plannings: Calendar,
-  divers_reunions: Video,
-  divers_documents: FileText,
-  guides: BookOpen,
+  'pilotage.agence': Building2,
+  'pilotage.statistiques': BarChart3,
+  'organisation.salaries': Users,
+  'organisation.parc': Truck,
+  'organisation.apporteurs': Handshake,
+  'organisation.plannings': Calendar,
+  'organisation.reunions': Video,
+  'mediatheque.documents': FileText,
+  'support.guides': BookOpen,
   ticketing: Kanban,
-  aide: HelpCircle,
+  'support.aide_en_ligne': HelpCircle,
+  prospection: Target,
+  'commercial.realisations': Camera,
+  planning_augmente: Brain,
   reseau_franchiseur: Crown,
   admin_plateforme: Crown,
 };
 
 // Couleurs pour les badges actifs
 const MODULE_COLORS: Partial<Record<ModuleKey, string>> = {
-  agence: 'bg-blue-500 text-white hover:bg-blue-600',
-  stats: 'bg-emerald-500 text-white hover:bg-emerald-600',
-  rh: 'bg-violet-500 text-white hover:bg-violet-600',
-  parc: 'bg-orange-500 text-white hover:bg-orange-600',
-  divers_apporteurs: 'bg-pink-500 text-white hover:bg-pink-600',
-  divers_plannings: 'bg-cyan-500 text-white hover:bg-cyan-600',
-  divers_reunions: 'bg-indigo-500 text-white hover:bg-indigo-600',
-  divers_documents: 'bg-amber-500 text-white hover:bg-amber-600',
-  guides: 'bg-teal-500 text-white hover:bg-teal-600',
+  'pilotage.agence': 'bg-blue-500 text-white hover:bg-blue-600',
+  'pilotage.statistiques': 'bg-emerald-500 text-white hover:bg-emerald-600',
+  'organisation.salaries': 'bg-violet-500 text-white hover:bg-violet-600',
+  'organisation.parc': 'bg-orange-500 text-white hover:bg-orange-600',
+  'organisation.apporteurs': 'bg-pink-500 text-white hover:bg-pink-600',
+  'organisation.plannings': 'bg-cyan-500 text-white hover:bg-cyan-600',
+  'organisation.reunions': 'bg-indigo-500 text-white hover:bg-indigo-600',
+  'mediatheque.documents': 'bg-amber-500 text-white hover:bg-amber-600',
+  'support.guides': 'bg-teal-500 text-white hover:bg-teal-600',
   ticketing: 'bg-purple-500 text-white hover:bg-purple-600',
-  aide: 'bg-rose-500 text-white hover:bg-rose-600',
+  'support.aide_en_ligne': 'bg-rose-500 text-white hover:bg-rose-600',
+  prospection: 'bg-orange-600 text-white hover:bg-orange-700',
+  'commercial.realisations': 'bg-sky-500 text-white hover:bg-sky-600',
+  planning_augmente: 'bg-fuchsia-500 text-white hover:bg-fuchsia-600',
   reseau_franchiseur: 'bg-slate-700 text-white hover:bg-slate-800',
   admin_plateforme: 'bg-slate-800 text-white hover:bg-slate-900',
 };
@@ -78,6 +88,7 @@ export const InlineModuleBadges = memo(function InlineModuleBadges({
   planModules = [],
 }: InlineModuleBadgesProps) {
   const [open, setOpen] = useState(false);
+  const { getShortLabel } = useModuleLabels();
   
   // Modules activés pour cet utilisateur
   const activeModules = PLAN_VISIBLE_MODULES.filter(key => 
@@ -105,7 +116,7 @@ export const InlineModuleBadges = memo(function InlineModuleBadges({
           return (
             <Badge key={key} className={cn("text-xs", MODULE_COLORS[key])}>
               <Icon className="w-3 h-3 mr-1" />
-              {MODULE_SHORT_LABELS[key]}
+              {getShortLabel(key)}
             </Badge>
           );
         })}
@@ -143,7 +154,7 @@ export const InlineModuleBadges = memo(function InlineModuleBadges({
                     title={isFromPlan ? "Inclus dans le plan" : "Override utilisateur"}
                   >
                     <Icon className="w-3 h-3 mr-1" />
-                    {MODULE_SHORT_LABELS[key]}
+                    {getShortLabel(key)}
                   </Badge>
                 );
               })}
@@ -166,9 +177,9 @@ export const InlineModuleBadges = memo(function InlineModuleBadges({
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="start">
         <div className="p-3 border-b">
-          <p className="text-sm font-medium">Modules utilisateur</p>
+          <p className="text-sm font-medium">Modules configurés</p>
           <p className="text-xs text-muted-foreground">
-            Cochez les modules accessibles pour cet utilisateur
+            Configuration individuelle — cochez les modules pour cet utilisateur
           </p>
         </div>
         <div className="p-3 max-h-[400px] overflow-y-auto">
@@ -195,7 +206,7 @@ export const InlineModuleBadges = memo(function InlineModuleBadges({
                       isEnabled ? "text-primary" : "text-muted-foreground"
                     )} />
                     <span className={cn(!isEnabled && "text-muted-foreground")}>
-                      {MODULE_SHORT_LABELS[key]}
+                      {getShortLabel(key)}
                     </span>
                     {isFromPlan && isEnabled && (
                       <span className="text-[10px] text-muted-foreground bg-muted px-1 rounded">

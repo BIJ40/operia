@@ -17,7 +17,7 @@ export function useUserFilters({ users, modifiedUsers, showDeactivated }: UseUse
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [moduleFilter, setModuleFilter] = useState<string>('all');
 
-  const isModuleEnabledForUser = (modules: EnabledModules, moduleKey: ModuleKey): boolean => {
+  const isModuleEnabledForUser = (modules: EnabledModules, moduleKey: string): boolean => {
     const state = modules[moduleKey];
     if (typeof state === 'boolean') return state;
     if (typeof state === 'object') return state.enabled;
@@ -40,8 +40,14 @@ export function useUserFilters({ users, modifiedUsers, showDeactivated }: UseUse
       }
       
       if (agencyFilter !== 'all') {
-        if (agencyFilter === 'none' && user.agence) return false;
-        if (agencyFilter !== 'none' && user.agence !== agencyFilter) return false;
+        // agency_id is the source of truth; agence slug used as fallback for display/search
+        const userAgencyId = user.agency_id;
+        const userAgenceSlug = user.agence;
+        if (agencyFilter === 'none' && (userAgencyId || userAgenceSlug)) return false;
+        if (agencyFilter !== 'none') {
+          // agencyFilter is a slug - match against agence slug
+          if (userAgenceSlug !== agencyFilter) return false;
+        }
       }
       
       if (roleFilter !== 'all') {
@@ -51,7 +57,7 @@ export function useUserFilters({ users, modifiedUsers, showDeactivated }: UseUse
 
       if (moduleFilter !== 'all') {
         const effectiveModules = modifiedUsers[user.id]?.enabled_modules ?? user.enabled_modules ?? {};
-        if (!isModuleEnabledForUser(effectiveModules, moduleFilter as ModuleKey)) return false;
+        if (!isModuleEnabledForUser(effectiveModules, moduleFilter)) return false;
       }
       
       return true;

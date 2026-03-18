@@ -1,3 +1,4 @@
+import { useEffect, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StatsHubProvider, useStatsHub } from '../components/stats-hub/StatsHubContext';
 import { TABS_CONFIG, TabId } from '../components/stats-hub/types';
@@ -13,6 +14,8 @@ import { PeriodDisplay } from '../components/filters/PeriodDisplay';
 import { Button } from '@/components/ui/button';
 import { openInNewTabPreservingPreviewToken } from '@/lib/openInNewTab';
 import { ROUTES } from '@/config/routes';
+import { usePermissions } from '@/contexts/PermissionsContext';
+import { ModuleKey } from '@/types/modules';
 
 const TAB_ICONS: Record<TabId, React.ReactNode> = {
   general: <LayoutDashboard className="h-4 w-4" />,
@@ -32,27 +35,46 @@ const TAB_COMPONENTS: Record<TabId, React.ComponentType> = {
   previsionnel: PrevisionnelTab,
 };
 
+const TAB_MODULE_KEYS: Record<TabId, ModuleKey> = {
+  general: 'pilotage.statistiques.general',
+  apporteurs: 'pilotage.statistiques.apporteurs',
+  techniciens: 'pilotage.statistiques.techniciens',
+  univers: 'pilotage.statistiques.univers',
+  sav: 'pilotage.statistiques.sav',
+  previsionnel: 'pilotage.statistiques.previsionnel',
+};
+
 function StatsHubContent() {
   const { activeTab, setActiveTab } = useStatsHub();
-  const TabComponent = TAB_COMPONENTS[activeTab];
+  const { hasModule } = usePermissions();
 
-  // Pour l'onglet Prévisionnel, le sélecteur de période est DANS la carte CA Planifié
-  // Donc on n'affiche pas le sélecteur global
-  const periodSelector = activeTab === 'previsionnel' 
+  const visibleTabs = useMemo(() => {
+    return TABS_CONFIG.filter(tab => hasModule(TAB_MODULE_KEYS[tab.id]));
+  }, [hasModule]);
+
+  const effectiveTab = visibleTabs.some(t => t.id === activeTab) ? activeTab : (visibleTabs[0]?.id as TabId ?? 'general');
+
+  useEffect(() => {
+    if (effectiveTab !== activeTab) {
+      setActiveTab(effectiveTab);
+    }
+  }, [effectiveTab, activeTab, setActiveTab]);
+
+  const TabComponent = TAB_COMPONENTS[effectiveTab];
+
+  const periodSelector = effectiveTab === 'previsionnel' 
     ? null 
     : <PeriodSelector />;
 
   const handleOpenDiffusion = () => {
-    // Nouvel onglet + préservation du token de preview si présent
     openInNewTabPreservingPreviewToken(ROUTES.agency.diffusion);
   };
 
   return (
     <div className="container mx-auto px-4 py-6 space-y-4">
-      {/* Ligne 1 : Sous-onglets centrés */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabId)}>
+      <Tabs value={effectiveTab} onValueChange={(v) => setActiveTab(v as TabId)}>
         <TabsList className="flex flex-wrap justify-center gap-2 bg-transparent h-auto p-0">
-          {TABS_CONFIG.map(tab => (
+          {visibleTabs.map(tab => (
             <TabsTrigger 
               key={tab.id} 
               value={tab.id} 
@@ -64,7 +86,6 @@ function StatsHubContent() {
           ))}
         </TabsList>
 
-      {/* Ligne 2 : Diffusion TV + Période affichée + Sélecteur */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
         <Button 
           variant="ghost" 
@@ -83,21 +104,20 @@ function StatsHubContent() {
 
         <AnimatePresence mode="wait">
           <motion.div
-            key={activeTab}
+            key={effectiveTab}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.2 }}
           >
-            {TABS_CONFIG.map(tab => (
+            {visibleTabs.map(tab => (
               <TabsContent key={tab.id} value={tab.id} className="mt-0">
-                {activeTab === tab.id && <TabComponent />}
+                {effectiveTab === tab.id && <TabComponent />}
               </TabsContent>
             ))}
           </motion.div>
         </AnimatePresence>
       </Tabs>
-
     </div>
   );
 }

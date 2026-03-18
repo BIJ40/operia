@@ -6,18 +6,18 @@ import { Page, expect } from '@playwright/test';
  */
 export const TEST_USERS = {
   base_user: {
-    email: 'test-base@operia.dev',
-    password: 'TestBase2024!',
-    role: 'base_user',
+    email: 'test-n1@helpconfort.test',
+    password: 'Test1234!',
+    role: 'franchisee_user',
   },
   franchisee_admin: {
-    email: 'test-admin@operia.dev',
-    password: 'TestAdmin2024!',
+    email: 'test-n2@helpconfort.test',
+    password: 'Test1234!',
     role: 'franchisee_admin',
   },
   platform_admin: {
-    email: 'test-platform@operia.dev',
-    password: 'TestPlatform2024!',
+    email: 'test-n5@helpconfort.test',
+    password: 'Test1234!',
     role: 'platform_admin',
   },
 } as const;

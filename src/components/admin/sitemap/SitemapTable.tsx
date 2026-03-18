@@ -32,13 +32,7 @@ import {
   type RouteMetadata,
 } from "@/config/sitemapData";
 import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
-import { MODULE_DEFINITIONS } from "@/types/modules";
-
-// Build MODULE_LABELS from definitions
-const MODULE_LABELS = MODULE_DEFINITIONS.reduce((acc, def) => {
-  acc[def.key] = def.label;
-  return acc;
-}, {} as Record<string, string>);
+import { useModuleLabels } from "@/hooks/useModuleLabels";
 import { toast } from "sonner";
 
 interface SitemapTableProps {
@@ -52,6 +46,7 @@ export function SitemapTable({ routes }: SitemapTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('path');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [copiedPath, setCopiedPath] = useState<string | null>(null);
+  const { getLabel } = useModuleLabels();
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -206,7 +201,7 @@ export function SitemapTable({ routes }: SitemapTableProps) {
                           <TooltipTrigger>
                             <Badge className="bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300 gap-1">
                               <Box className="w-3 h-3" />
-                              {MODULE_LABELS[route.guards.moduleGuard.moduleKey]?.split(' ')[0] || route.guards.moduleGuard.moduleKey}
+                              {getLabel(route.guards.moduleGuard.moduleKey).split(' ')[0]}
                             </Badge>
                           </TooltipTrigger>
                           <TooltipContent>

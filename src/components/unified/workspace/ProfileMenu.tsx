@@ -2,7 +2,7 @@
  * ProfileMenu - Dropdown menu for user profile, appearance, and logout
  */
 import { Link } from 'react-router-dom';
-import { User, Building2, Settings, LogOut, Palette, Leaf, Droplets, Moon, Monitor } from 'lucide-react';
+import { User, Building2, Settings, LogOut, Palette, Leaf, Droplets, Moon, Monitor, PanelTop, Columns } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { useAppTheme, type AppTheme } from '@/contexts/ThemeContext';
+import { useNavigationMode } from '@/hooks/useNavigationMode';
 
 interface ProfileMenuProps {
   tabButtonClass: string;
@@ -31,6 +32,7 @@ const THEME_OPTIONS: { key: AppTheme; label: string; icon: React.ElementType }[]
 export function ProfileMenu({ tabButtonClass }: ProfileMenuProps) {
   const { user, logout } = useAuthCore();
   const { theme, setTheme } = useAppTheme();
+  const { mode: navMode, toggleMode: toggleNavMode } = useNavigationMode();
 
   return (
     <div className="flex items-end gap-2 shrink-0">
@@ -97,6 +99,13 @@ export function ProfileMenu({ tabButtonClass }: ProfileMenuProps) {
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
+          <DropdownMenuItem
+            onClick={toggleNavMode}
+            className="flex items-center gap-2 cursor-pointer"
+          >
+            {navMode === 'tabs' ? <PanelTop className="w-4 h-4" /> : <Columns className="w-4 h-4" />}
+            {navMode === 'tabs' ? 'Navigation Header' : 'Navigation Onglets'}
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={logout}

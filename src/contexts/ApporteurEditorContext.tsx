@@ -31,7 +31,7 @@ export function ApporteurEditorProvider({ children }: { children: ReactNode }) {
   const { hasGlobalRole, hasModuleOption } = usePermissions();
   
   // V2: Remplace isAdmin par vérification de rôle + option module
-  const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('guides', 'edition');
+  const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('support.guides', 'edition');
   
   // Aligner avec EditorContext: isEditMode = canEdit automatiquement
   const isEditMode = canEdit;

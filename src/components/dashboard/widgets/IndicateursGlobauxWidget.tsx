@@ -26,6 +26,7 @@ const KPI_CONFIG: Array<{
   format: 'currency' | 'percent' | 'number' | 'days'; 
   accent: AccentThemeKey;
   icon: string;
+  tooltip: string;
   getValue: (result: any) => number | null;
 }> = [
   { 
@@ -35,6 +36,7 @@ const KPI_CONFIG: Array<{
     format: 'currency', 
     accent: 'blue',
     icon: '€',
+    tooltip: 'Chiffre d\'affaires HT total sur la période sélectionnée (somme des factures)',
     getValue: (r) => r?.value ?? null
   },
   { 
@@ -44,6 +46,7 @@ const KPI_CONFIG: Array<{
     format: 'percent', 
     accent: 'green',
     icon: '📈',
+    tooltip: 'Pourcentage de devis transformés en factures (nb factures / nb devis × 100)',
     getValue: (r) => r?.value ?? null
   },
   { 
@@ -53,6 +56,7 @@ const KPI_CONFIG: Array<{
     format: 'currency', 
     accent: 'pink',
     icon: '🛒',
+    tooltip: 'Montant moyen HT par dossier facturé (CA HT / nb factures)',
     getValue: (r) => r?.value ?? null
   },
   { 
@@ -62,6 +66,7 @@ const KPI_CONFIG: Array<{
     format: 'number', 
     accent: 'purple',
     icon: '📁',
+    tooltip: 'Nombre de dossiers créés sur la période',
     getValue: (r) => r?.value ?? null
   },
   { 
@@ -71,6 +76,7 @@ const KPI_CONFIG: Array<{
     format: 'number', 
     accent: 'orange',
     icon: '📄',
+    tooltip: 'Nombre total de devis émis sur la période',
     getValue: (r) => r?.value ?? null
   },
 ];
@@ -226,13 +232,13 @@ export function IndicateursGlobauxWidget() {
           const formatted = formatValue(value, kpi.format);
           
           return (
-            <Tooltip key={kpi.id} delayDuration={0}>
+            <Tooltip key={kpi.id} delayDuration={300}>
               <TooltipTrigger asChild>
                 <div 
                   className="bg-card/60 backdrop-blur-sm rounded-xl p-3 border border-border/50 hover:border-primary/30 hover:shadow-sm transition-all cursor-default"
                 >
                   <div className="flex items-center gap-2 mb-1.5">
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-primary-foreground text-xs font-bold shadow-sm bg-gradient-to-br ${accent.gradient}`}>
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-primary-foreground text-xs font-bold shadow-sm ${accent.solidBg}`}>
                       {kpi.icon}
                     </div>
                     <span className="text-[11px] text-muted-foreground font-medium truncate">{kpi.label}</span>
@@ -240,9 +246,8 @@ export function IndicateursGlobauxWidget() {
                   <p className={`text-lg font-bold ${accent.text} truncate`}>{formatted}</p>
                 </div>
               </TooltipTrigger>
-              <TooltipContent side="top" className="bg-popover border border-border shadow-lg">
-                <div className="text-sm font-semibold">{kpi.label}</div>
-                <div className={`text-lg font-bold ${accent.text}`}>{formatted}</div>
+              <TooltipContent side="top" className="max-w-[220px] text-xs">
+                {kpi.tooltip}
               </TooltipContent>
             </Tooltip>
           );

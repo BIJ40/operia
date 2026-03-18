@@ -15,10 +15,12 @@
 import { lazy, Suspense, useMemo, useState, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
-  Home, BarChart3, ClipboardList, 
-  MoreHorizontal, Ticket, HelpCircle,
-  Loader2, BookOpen, Shield, FolderOpen, FlaskConical,
+  Home, BarChart3, ShoppingCart, 
+  Users, Headphones,
+  Loader2, Shield, FolderOpen, Kanban,
 } from 'lucide-react';
+import { useNavigationMode } from '@/hooks/useNavigationMode';
+import { MainHeader } from '@/components/navigation/MainHeader';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Tabs } from '@/components/ui/tabs';
 import { useSessionState } from '@/hooks/useSessionState';
@@ -26,7 +28,9 @@ import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
-import { useEffectiveModules } from '@/hooks/access-rights/useEffectiveModules';
+import { filterWorkspaceTabs, isWorkspaceTabVisible } from '@/lib/filterNavigationByPermissions';
+import { useModuleLabels } from '@/hooks/useModuleLabels';
+
 import { useStorageQuota } from '@/hooks/use-storage-quota';
 import { useUserPresence } from '@/hooks/use-user-presence';
 import { useConnectionLogger } from '@/hooks/use-connection-logger';
@@ -34,7 +38,7 @@ import { LoginFormCard } from '@/components/LoginFormCard';
 import { LoginDialog } from '@/components/LoginDialog';
 import { ImageModal } from '@/components/ImageModal';
 import { AiUnifiedProvider } from '@/components/ai';
-import { SidebarChat } from '@/components/chat/SidebarChat';
+
 
 // Sub-components (Phase 2 split)
 import { LogoutOverlay } from '@/components/unified/workspace/LogoutOverlay';
@@ -62,12 +66,10 @@ function LoadingFallback() {
 
 function UnifiedWorkspaceContent() {
   const { isLoggingOut } = useAuthCore();
-  const { globalRole, isFranchiseur } = usePermissions();
+  const { globalRole, isFranchiseur, hasModule, hasModuleOption } = usePermissions();
   const { isImpersonating, isRealUserImpersonation } = useImpersonation();
   const effectiveAuth = useEffectiveAuth();
-  const { hasModule, hasModuleOption } = useEffectiveModules();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [tabOrder, setTabOrder] = useSessionState<UnifiedTab[]>('unified_workspace_tab_order', DEFAULT_TAB_ORDER);
   const [loginOpen, setLoginOpen] = useState(false);
   
   // Support URL ?tab=XXX pour navigation directe
@@ -103,89 +105,55 @@ function UnifiedWorkspaceContent() {
   const effectiveGlobalRole = effectiveAuth.globalRole;
   const effectiveIsPlatformAdmin = effectiveGlobalRole === 'superadmin' || effectiveGlobalRole === 'platform_admin';
   
-  // Configuration des onglets avec permissions
+  const { getShortLabel } = useModuleLabels();
+
+  // Configuration des onglets avec permissions — labels dynamiques depuis le registre
   const allTabs: TabConfig[] = useMemo(() => [
     { id: 'accueil', label: 'Accueil', icon: Home },
-    { id: 'stats', label: 'Stats', icon: BarChart3, requiresOption: { module: 'stats' } },
-    { id: 'salaries', label: 'Salariés', icon: ClipboardList, requiresOption: { module: 'rh' } },
-    { id: 'outils', label: 'Outils', icon: MoreHorizontal, requiresOption: { module: 'agence' }, altModules: ['prospection', 'parc', 'divers_apporteurs', 'divers_plannings', 'divers_reunions'] },
-    { id: 'documents', label: 'Documents', icon: FolderOpen, requiresOption: { module: 'divers_documents' } },
-    { id: 'guides', label: 'Guides', icon: BookOpen, requiresOption: { module: 'guides' } },
-    { id: 'ticketing', label: 'Ticketing', icon: Ticket, requiresOption: { module: 'ticketing' } },
-    { id: 'aide', label: 'Aide', icon: HelpCircle, requiresOption: { module: 'aide' } },
-    { id: 'admin', label: 'Admin', icon: Shield, requiresOption: { module: 'admin_plateforme' } },
-    ...(import.meta.env.DEV ? [{ id: 'test' as const, label: 'TEST', icon: FlaskConical }] : []),
-  ], []);
+    { id: 'pilotage', label: getShortLabel('pilotage', 'Pilotage'), icon: BarChart3, requiresOption: { module: 'pilotage.statistiques' }, altModules: ['pilotage.agence'] },
+    { id: 'commercial', label: getShortLabel('commercial', 'Commercial'), icon: ShoppingCart, requiresOption: { module: 'prospection' }, altModules: ['pilotage.agence', 'commercial.realisations'] },
+    { id: 'organisation', label: getShortLabel('organisation', 'Organisation'), icon: Users, requiresOption: { module: 'organisation.salaries' }, altModules: ['organisation.parc', 'organisation.apporteurs', 'organisation.plannings', 'organisation.reunions', 'pilotage.agence'] },
+    { id: 'documents', label: getShortLabel('mediatheque', 'Documents'), icon: FolderOpen, requiresOption: { module: 'mediatheque.documents' } },
+    { id: 'support', label: getShortLabel('support', 'Support'), icon: Headphones },
+    { id: 'ticketing', label: 'Ticketing', icon: Kanban, requiresOption: { module: 'ticketing' } },
+    { id: 'admin', label: getShortLabel('admin', 'Admin'), icon: Shield, requiresOption: { module: 'admin_plateforme' } },
+  ], [getShortLabel]);
   
-  // Tab accessibility checks
-  const isTabAccessibleForEffectiveUser = useCallback((tab: TabConfig): boolean => {
-    if (!tab.requiresOption) return true;
-    if (effectiveIsPlatformAdmin) return true;
-    
-    const { module, option } = tab.requiresOption;
-    if (option) {
-      if (hasModuleOption(module as any, option)) return true;
-    } else {
-      if (hasModule(module as any)) return true;
-    }
-    if (tab.altModules) {
-      for (const altModule of tab.altModules) {
-        if (hasModule(altModule as any)) return true;
-      }
-    }
-    return false;
-  }, [effectiveIsPlatformAdmin, hasModule, hasModuleOption]);
-  
+  // Tab accessibility checks — centralized via filterNavigationByPermissions
+  const permCheckers = useMemo(() => ({
+    hasModule: hasModule as (key: any) => boolean,
+    hasModuleOption: hasModuleOption as (key: any, opt: string) => boolean,
+    isPlatformAdmin: effectiveIsPlatformAdmin,
+  }), [hasModule, hasModuleOption, effectiveIsPlatformAdmin]);
+
   const isTabAccessible = useCallback((tab: TabConfig): boolean => {
     if (!tab.requiresOption) return true;
     if (realIsPlatformAdmin) return true;
-    return isTabAccessibleForEffectiveUser(tab);
-  }, [realIsPlatformAdmin, isTabAccessibleForEffectiveUser]);
-  
-  const isTabHidden = useCallback((tab: TabConfig): boolean => {
-    if (tab.id === 'admin' && !realIsPlatformAdmin) return true;
-    return false;
-  }, [realIsPlatformAdmin]);
+    return isWorkspaceTabVisible(tab, permCheckers);
+  }, [realIsPlatformAdmin, permCheckers]);
   
   const isTabVisuallyDisabled = useCallback((tab: TabConfig): boolean => {
-    if (isRealUserImpersonation) return !isTabAccessibleForEffectiveUser(tab);
+    if (isRealUserImpersonation) return !isWorkspaceTabVisible(tab, permCheckers);
     return !isTabAccessible(tab);
-  }, [isRealUserImpersonation, isTabAccessibleForEffectiveUser, isTabAccessible]);
+  }, [isRealUserImpersonation, permCheckers, isTabAccessible]);
   
-  // Filtrer les onglets masqués
-  const visibleTabs = useMemo(() => allTabs.filter(tab => !isTabHidden(tab)), [allTabs, isTabHidden]);
+  // Filter tabs: hide inaccessible tabs entirely (not greyed out)
+  const visibleTabs = useMemo(() => 
+    filterWorkspaceTabs(allTabs, permCheckers, realIsPlatformAdmin),
+    [allTabs, permCheckers, realIsPlatformAdmin]
+  );
 
-  // Auto-repair tab order
-  useEffect(() => {
-    const visibleIds = visibleTabs.filter(t => t.id !== 'accueil').map(t => t.id);
-    const cleaned = tabOrder.filter(id => visibleIds.includes(id));
-    const defaultVisible = DEFAULT_TAB_ORDER.filter(id => visibleIds.includes(id));
-    const missingFromDefault = defaultVisible.filter(id => !cleaned.includes(id));
-    const extraMissing = visibleIds.filter(id => !cleaned.includes(id) && !defaultVisible.includes(id));
-    const next = [...cleaned, ...missingFromDefault, ...extraMissing];
-    const isSame = next.length === tabOrder.length && next.every((v, i) => v === tabOrder[i]);
-    if (!isSame) setTabOrder(next);
-  }, [visibleTabs, tabOrder, setTabOrder]);
-  
-  // Onglets triés
+  // Onglets dans l'ordre fixe DEFAULT_TAB_ORDER
   const sortedTabs = useMemo(() => {
     const accueilTab = visibleTabs.find(t => t.id === 'accueil')!;
     const otherTabs = visibleTabs.filter(t => t.id !== 'accueil');
     const sorted = [...otherTabs].sort((a, b) => {
-      const indexA = tabOrder.indexOf(a.id);
-      const indexB = tabOrder.indexOf(b.id);
-      if (indexA === -1 && indexB === -1) return 0;
-      if (indexA === -1) return 1;
-      if (indexB === -1) return -1;
+      const indexA = DEFAULT_TAB_ORDER.indexOf(a.id);
+      const indexB = DEFAULT_TAB_ORDER.indexOf(b.id);
       return indexA - indexB;
     });
     return [accueilTab, ...sorted];
-  }, [visibleTabs, tabOrder]);
-
-  const sortableIds = useMemo(
-    () => sortedTabs.filter(t => t.id !== 'accueil').map(t => t.id),
-    [sortedTabs]
-  );
+  }, [visibleTabs]);
   
   // Effective N0 user check
   const effectiveIsN0User = !effectiveGlobalRole || effectiveGlobalRole === 'base_user';
@@ -218,6 +186,8 @@ function UnifiedWorkspaceContent() {
     data-[state=active]:z-20 data-[state=active]:-mb-[2px] data-[state=active]:pb-[calc(0.75rem+2px)] data-[state=active]:scale-[1.02]
   `;
   
+  const { mode: navMode } = useNavigationMode();
+  
   const topPadding = (isImpersonating || isRealUserImpersonation) ? 'pt-10' : '';
   
   // Vue Franchiseur
@@ -236,16 +206,23 @@ function UnifiedWorkspaceContent() {
         
         <div className={`min-h-screen bg-background ${topPadding}`}>
           <Tabs value={validActiveTab} onValueChange={(v) => setActiveTab(v as UnifiedTab)} className="flex flex-col h-screen">
-            <WorkspaceTabBar
-              sortedTabs={sortedTabs}
-              sortableIds={sortableIds}
-              activeTab={validActiveTab}
-              tabButtonClass={tabButtonClass}
-              isTabAccessible={isTabAccessible}
-              isTabVisuallyDisabled={isTabVisuallyDisabled}
-              setActiveTab={setActiveTab}
-              setTabOrder={setTabOrder}
-            />
+            {navMode === 'header' ? (
+              <MainHeader
+                activeTab={validActiveTab}
+                setActiveTab={setActiveTab}
+                visibleTabs={visibleTabs}
+                tabButtonClass={tabButtonClass}
+              />
+            ) : (
+              <WorkspaceTabBar
+                tabs={sortedTabs}
+                activeTab={validActiveTab}
+                tabButtonClass={tabButtonClass}
+                isTabAccessible={isTabAccessible}
+                isTabVisuallyDisabled={isTabVisuallyDisabled}
+                setActiveTab={setActiveTab}
+              />
+            )}
             
             <WorkspaceTabContent isN0User={isN0User} />
           </Tabs>
@@ -253,7 +230,7 @@ function UnifiedWorkspaceContent() {
         
         <ImageModal />
         <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
-        <SidebarChat />
+        
       </TooltipProvider>
     </AiUnifiedProvider>
   );

@@ -5,7 +5,7 @@ import { RoleGuard } from "@/components/auth/RoleGuard";
 import { ModuleGuard } from "@/components/auth/ModuleGuard";
 
 // Lazy loaded pages
-const ProjectsIndex = lazy(() => import("@/pages/ProjectsIndex"));
+
 const ApogeeTicketsKanban = lazy(() => import("@/apogee-tickets/pages/ApogeeTicketsKanban"));
 const ApogeeTicketsHistory = lazy(() => import("@/apogee-tickets/pages/ApogeeTicketsHistory"));
 const ApogeeTicketsList = lazy(() => import("@/apogee-tickets/pages/ApogeeTicketsList"));
@@ -28,7 +28,7 @@ export function ProjectsRoutes() {
       {/* Index - redirect to ticketing tab */}
       <Route path="/projects" element={<Navigate to="/?tab=ticketing" replace />} />
       
-      {/* Detail pages keep their routes */}
+      {/* Detail pages — Ticketing strictement protégé par module overwrite-only */}
       <Route path="/projects/kanban" element={<ProjectsLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="ticketing"><ApogeeTicketsKanban /></ModuleGuard></RoleGuard></ProjectsLayout>} />
       <Route path="/projects/historique" element={<ProjectsLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="ticketing"><ApogeeTicketsHistory /></ModuleGuard></RoleGuard></ProjectsLayout>} />
       <Route path="/projects/list" element={<ProjectsLayout><RoleGuard minRole="base_user"><ModuleGuard moduleKey="ticketing"><ApogeeTicketsList /></ModuleGuard></RoleGuard></ProjectsLayout>} />

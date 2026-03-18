@@ -64,7 +64,18 @@ export {
   logValidationIssues,
   PROTECTED_MODULES,
   isProtectedModule,
+  ROLE_INTERFACE_MODULES,
+  isRoleInterfaceModule,
 } from './moduleRegistry';
+
+// Franchisor Interface Access (role-based, not module-based)
+export {
+  canAccessFranchisorInterface,
+  canAccessFranchisorSection,
+  getAccessibleSections,
+  isNativeFranchisorRole,
+} from './franchisorAccess';
+export type { FranchisorSection } from './franchisorAccess';
 
 // Dev Validator (COMMIT 2)
 export { runDevValidation } from './devValidator';

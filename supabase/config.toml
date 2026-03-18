@@ -37,7 +37,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.seed-test-users]
-verify_jwt = true
+verify_jwt = false
 
 [functions.compute-metric]
 verify_jwt = true
@@ -46,7 +46,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.proxy-apogee]
-verify_jwt = true
+verify_jwt = false
 
 [functions.export-rh-documents]
 verify_jwt = true
@@ -201,3 +201,12 @@ verify_jwt = false
 
 [functions.apporteur-dossier-action]
 verify_jwt = false
+
+[functions.content-api]
+verify_jwt = false
+
+[functions.dispatch-realisation-webhook]
+verify_jwt = false
+
+[functions.get-zones-deplacement]
+verify_jwt = true
