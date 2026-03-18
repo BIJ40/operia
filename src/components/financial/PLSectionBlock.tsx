@@ -204,7 +204,7 @@ export function PLSectionBlock({
                       <span className={`text-xs truncate ${item.bold ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
                         {item.label}
                       </span>
-                      {getSourceBadge(item.source_type, item.autoSource, !!(item.month_field && autoValues[item.month_field]))}
+                      {getSourceBadge(item.source_type, item.autoSource, !!(autoValues[item.month_field || item.key]))}
                     </div>
 
                     <div className="flex items-center gap-1 flex-shrink-0 ml-2">
