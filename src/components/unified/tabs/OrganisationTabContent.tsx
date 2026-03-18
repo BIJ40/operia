@@ -4,7 +4,7 @@
  */
 
 import { lazy, Suspense, useMemo } from 'react';
-import { Users, Handshake, CalendarDays, Users2, Car, FileText, Shield, Loader2 } from 'lucide-react';
+import { Users, Handshake, CalendarDays, Users2, Car, FileText, Shield, MapPin, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
