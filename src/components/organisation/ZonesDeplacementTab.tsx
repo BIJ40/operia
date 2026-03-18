@@ -209,6 +209,7 @@ export default function ZonesDeplacementTab() {
                     <TableCell key={z} className="text-center font-bold">{totals.sums[z]}</TableCell>
                   ))}
                   <TableCell className="text-center font-bold text-primary">{totals.total}</TableCell>
+                  <TableCell className="text-center font-bold">{totals.paniers}</TableCell>
                 </TableRow>
               </TableFooter>
             )}
