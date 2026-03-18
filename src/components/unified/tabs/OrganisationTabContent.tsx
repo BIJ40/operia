@@ -22,7 +22,7 @@ const RHMeetingsPage = lazy(() => import('@/pages/rh/RHMeetingsPage'));
 const VehiculesTabContent = lazy(() => import('@/components/unified/tabs/VehiculesTabContent'));
 const AgencyAdminDocuments = lazy(() => import('@/components/outils/AgencyAdminDocuments').then(m => ({ default: m.AgencyAdminDocuments })));
 
-type OrganisationSubTab = 'collaborateurs' | 'apporteurs' | 'plannings' | 'reunions' | 'parc' | 'conformite';
+type OrganisationSubTab = 'collaborateurs' | 'apporteurs' | 'plannings' | 'reunions' | 'parc' | 'conformite' | 'droits-equipe';
 
 function LoadingFallback() {
   return (

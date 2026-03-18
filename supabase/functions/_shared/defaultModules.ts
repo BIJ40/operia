@@ -130,6 +130,17 @@ export function getDefaultModulesForRole(role: string): EnabledModules {
  * Un commercial N2 ne doit PAS avoir les mêmes modules qu'un dirigeant N2
  */
 export function getDefaultModulesForCreation(globalRole: string, roleAgence: string | null): EnabledModules {
+  // N1 avec poste connu → preset par poste
+  if (globalRole === 'franchisee_user' && roleAgence) {
+    const normalizedRole = roleAgence.toLowerCase().trim();
+    const preset = N1_ROLE_PRESETS[normalizedRole];
+    if (preset) {
+      console.log(`[defaultModules] N1 avec poste "${roleAgence}" → preset spécifique (${preset.length} modules)`);
+      return presetToEnabledModules(preset);
+    }
+  }
+
+  // N2 : dirigeant vs employé agence
   if (globalRole === 'franchisee_admin' && roleAgence) {
     const normalizedRole = roleAgence.toLowerCase().trim();
     if (!DIRIGEANT_ROLES.includes(normalizedRole)) {
