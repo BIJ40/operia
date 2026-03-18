@@ -50,7 +50,7 @@ function ApporteursTabInner() {
 }
 
 function ProspectionInner() {
-  const { hasModuleOption, hasModule } = usePermissions();
+  const { hasModule } = usePermissions();
   const { openApporteur } = useApporteurTabs();
   const { getShortLabel } = useModuleLabels();
 
