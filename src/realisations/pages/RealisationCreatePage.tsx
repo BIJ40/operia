@@ -78,6 +78,11 @@ export default function RealisationCreatePage() {
         });
       }
 
+      // Auto-suggest before/after based on EXIF dates
+      if (pendingFiles.length >= 2) {
+        autoSuggestRoles.mutate(created.id);
+      }
+
       // Auto-dispatch webhook (fire and forget, once only)
       if (!webhookDispatched) {
         setWebhookDispatched(true);
