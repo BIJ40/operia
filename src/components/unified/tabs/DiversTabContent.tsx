@@ -3,12 +3,10 @@
  * 
  * Navigation à deux niveaux :
  * - Niveau 1 (Pill tabs colorés) : Apporteurs, Administratif, Parc
- * - Niveau 2 (Folder tabs) : Sous-onglets spécifiques avec drag-and-drop
- * 
- * Design: Warm Pastel theme avec navigation folder
+ * - Niveau 2 (Folder tabs) : Sous-onglets spécifiques (ordre fixe)
  */
 
-import { lazy, Suspense, useCallback, useMemo } from 'react';
+import { lazy, Suspense, useMemo } from 'react';
 import { 
   FileText, Users2, Loader2, Users, CalendarDays, 
   Car, FolderOpen, Settings, Eye, Activity, Target, FileCheck, AlertTriangle, MapPin
@@ -16,28 +14,11 @@ import {
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { ModuleKey } from '@/types/modules';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
-
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  horizontalListSortingStrategy,
-  arrayMove,
-} from '@dnd-kit/sortable';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
 import { cn } from '@/lib/utils';
 import { ActionsAMenerTab } from '@/components/pilotage/ActionsAMenerTab';
-import { DraggableTab } from '@/components/unified/DraggableTab';
 
 // Lazy loaded components
 const RHMeetingsPage = lazy(() => import('@/pages/rh/RHMeetingsPage'));
