@@ -76,22 +76,28 @@ function UnifiedWorkspaceContent() {
   const urlTab = searchParams.get('tab') as UnifiedTab | null;
   const [activeTab, setActiveTabState] = useSessionState<UnifiedTab>('unified_workspace_tab', urlTab || 'accueil');
   
-  // Synchroniser l'URL quand l'onglet change
+  // Synchroniser l'URL quand l'onglet change en préservant les autres params (adminTab, adminView, etc.)
   const setActiveTab = useCallback((tab: UnifiedTab) => {
     setActiveTabState(tab);
+    const next = new URLSearchParams(searchParams);
+
     if (tab === 'accueil') {
-      setSearchParams({}, { replace: true });
+      next.delete('tab');
+      next.delete('adminTab');
+      next.delete('adminView');
     } else {
-      setSearchParams({ tab }, { replace: true });
+      next.set('tab', tab);
     }
-  }, [setActiveTabState, setSearchParams]);
+
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setActiveTabState, setSearchParams]);
   
-  // Sync depuis URL au mount
+  // Sync depuis URL
   useEffect(() => {
     if (urlTab && urlTab !== activeTab) {
       setActiveTabState(urlTab);
     }
-  }, [urlTab]);
+  }, [urlTab, activeTab, setActiveTabState]);
   
   // Hooks for tracking
   useStorageQuota();

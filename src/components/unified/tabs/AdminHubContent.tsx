@@ -73,12 +73,16 @@ export default function AdminHubContent() {
   const { mode: navMode } = useNavigationMode();
   const [searchParams, setSearchParams] = useSearchParams();
   const [persistedMainTab, setPersistedMainTab] = usePersistedTab('admin_main_tab', 'gestion', ADMIN_MAIN_TAB_IDS);
+  const workspaceTabParam = searchParams.get('tab');
+  const isAdminRoute = workspaceTabParam === 'admin';
   const activeTabParam = searchParams.get('adminTab');
   const activeTab = activeTabParam && ADMIN_MAIN_TAB_IDS.includes(activeTabParam) ? activeTabParam : persistedMainTab;
   const activeSubTab = searchParams.get('adminView') || 'users';
   const [gestionTabOrder, setGestionTabOrder] = useSessionState<string[]>('admin_gestion_tab_order', DEFAULT_GESTION_ORDER);
 
   useEffect(() => {
+    if (!isAdminRoute) return;
+
     if (activeTabParam && ADMIN_MAIN_TAB_IDS.includes(activeTabParam)) {
       if (activeTabParam !== persistedMainTab) {
         setPersistedMainTab(activeTabParam);
@@ -90,7 +94,7 @@ export default function AdminHubContent() {
     next.set('tab', 'admin');
     next.set('adminTab', persistedMainTab);
     setSearchParams(next, { replace: true });
-  }, [activeTabParam, persistedMainTab, searchParams, setSearchParams, setPersistedMainTab]);
+  }, [activeTabParam, isAdminRoute, persistedMainTab, searchParams, setSearchParams, setPersistedMainTab]);
 
   const handleTabChange = (value: string) => {
     setPersistedMainTab(value);
@@ -103,6 +107,8 @@ export default function AdminHubContent() {
 
   const handleSubTabChange = (value: string) => {
     const next = new URLSearchParams(searchParams);
+    next.set('tab', 'admin');
+    next.set('adminTab', activeTab);
     next.set('adminView', value);
     setSearchParams(next, { replace: true });
   };
