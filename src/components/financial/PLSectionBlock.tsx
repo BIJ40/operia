@@ -227,7 +227,7 @@ export function PLSectionBlock({
                       {getSourceBadge(item.source_type, item.autoSource, !!(autoValues[item.month_field || item.key]))}
                     </div>
 
-                    <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                    <div className="w-32 text-right flex-shrink-0 ml-2">
                       {editing ? (
                         <Input
                           ref={inputRef}
@@ -235,7 +235,7 @@ export function PLSectionBlock({
                           step={item.key.includes('nb_') || item.key.includes('salaries') ? 1 : 0.01}
                           value={editValue}
                           onChange={e => setEditValue(e.target.value)}
-                          className="w-28 h-6 text-xs tabular-nums text-right"
+                          className="w-full h-6 text-xs tabular-nums text-right"
                           autoFocus
                           onKeyDown={e => {
                             if (e.key === 'Tab') {
@@ -252,7 +252,6 @@ export function PLSectionBlock({
                             }
                           }}
                           onBlur={() => {
-                            // Save on blur (clicking away)
                             if (editingKey === item.key) {
                               saveAndMoveNext(item, false);
                             }
