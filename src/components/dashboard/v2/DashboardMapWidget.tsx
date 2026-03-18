@@ -309,13 +309,13 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
               size="md"
             />
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               {/* Toggle Jour / Actuel */}
               <div className="flex items-center rounded-full bg-white/80 dark:bg-background/80 border border-border/50 shadow-sm p-0.5">
                 <button
                   onClick={() => setTimeFilter('jour')}
                   className={cn(
-                    "flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all",
+                    "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all",
                     timeFilter === 'jour'
                       ? "bg-warm-blue text-white shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
@@ -327,7 +327,7 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
                 <button
                   onClick={() => setTimeFilter('actuel')}
                   className={cn(
-                    "flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all",
+                    "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all",
                     timeFilter === 'actuel'
                       ? "bg-warm-teal text-white shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
@@ -338,33 +338,23 @@ export function DashboardMapWidget({ className, agencySlug }: DashboardMapWidget
                 </button>
               </div>
 
-              {/* Compteur de RDV */}
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 dark:bg-background/80 border border-border/50 shadow-sm">
-                <Calendar className="h-3.5 w-3.5 text-warm-blue" />
-                <span className="text-sm font-medium">
-                  {filteredRdvs.length} RDV
-                </span>
+              {/* RDV + Techs compact on one line */}
+              <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/80 dark:bg-background/80 border border-border/50 shadow-sm text-xs font-medium">
+                <Calendar className="h-3 w-3 text-warm-blue" />
+                <span>{filteredRdvs.length}</span>
+                <span className="text-muted-foreground mx-0.5">·</span>
+                <Users className="h-3 w-3 text-warm-purple" />
+                <span>{technicians.length}</span>
               </div>
 
-              {/* Compteur techniciens */}
-              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 dark:bg-background/80 border border-border/50 shadow-sm">
-                <Users className="h-3.5 w-3.5 text-warm-purple" />
-                <span className="text-sm font-medium">
-                  {technicians.length} techs
-                </span>
-              </div>
-
-              {/* Bouton agrandir */}
+              {/* Bouton agrandir — icône seule */}
               <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
                 <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 px-2 bg-white/80 dark:bg-background/80 border-border/50 hover:bg-white dark:hover:bg-background"
+                  <button
+                    className="flex items-center justify-center h-7 w-7 rounded-full bg-white/80 dark:bg-background/80 border border-border/50 shadow-sm hover:bg-white dark:hover:bg-background transition-colors"
                   >
-                    <Maximize2 className="h-4 w-4" />
-                    <span className="ml-1.5 hidden sm:inline">Agrandir</span>
-                  </Button>
+                    <Maximize2 className="h-3.5 w-3.5 text-foreground" />
+                  </button>
                 </DialogTrigger>
                 <DialogContent className="max-w-5xl h-[80vh] p-0">
                   <DialogHeader className="px-6 py-4 border-b">
