@@ -26,7 +26,7 @@ interface Props {
   isDeployedModule: (key: ModuleKey) => boolean;
 }
 
-export function TeamMemberModules({ userId, roleAgence, n2HasModule }: Props) {
+export function TeamMemberModules({ userId, roleAgence, n2HasModule, isDeployedModule }: Props) {
   const { data: userModules, isLoading } = useUserModules(userId);
   const toggleModule = useToggleModule();
   const queryClient = useQueryClient();
