@@ -401,22 +401,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Debug: log time info for techs with name containing "BROCHARD"
-    for (const [techId, timeMap] of techDayTime.entries()) {
-      const name = usersById.get(techId) || '';
-      if (name.toUpperCase().includes('BROCHARD')) {
-        for (const [day, info] of timeMap.entries()) {
-          console.log(`[ZONES-DEBUG] BROCHARD time: day=${day}, startMin=${info.startMin} (${Math.floor(info.startMin/60)}:${String(info.startMin%60).padStart(2,'0')}), endMax=${info.endMax} (${Math.floor(info.endMax/60)}:${String(info.endMax%60).padStart(2,'0')}), totalMin=${info.totalMinutes}`);
-        }
-      }
-    }
-    // Also log if BROCHARD has no time data
-    for (const [techId] of techDayMax.entries()) {
-      const name = usersById.get(techId) || '';
-      if (name.toUpperCase().includes('BROCHARD') && !techDayTime.has(techId)) {
-        console.log(`[ZONES-DEBUG] BROCHARD has zone data but NO time data at all`);
-      }
-    }
 
     // 9. Aggregate into zone counts per tech + panier calculation
     const ZONE_LABELS: ZoneLabel[] = ['1A', '1B', '2', '3', '4', '5'];
