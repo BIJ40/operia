@@ -552,7 +552,7 @@ export default function ApporteurGuide() {
             items={filteredCategories.map(c => c.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
               {filteredCategories.map(category => {
                 const { isEmpty } = getCategoryStatus(category.id, category);
                 return (
