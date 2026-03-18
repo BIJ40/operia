@@ -35,8 +35,8 @@ export function TeamMemberModules({ userId, roleAgence, n2HasModule, isDeployedM
 
   // Only show modules that the N2 has access to
   const assignableModules = useMemo(() => {
-    return N2_ASSIGNABLE_MODULES.filter(m => n2HasModule(m.key));
-  }, [n2HasModule]);
+    return N2_ASSIGNABLE_MODULES.filter(m => isDeployedModule(m.key) && n2HasModule(m.key));
+  }, [n2HasModule, isDeployedModule]);
 
   // Group by category
   const grouped = useMemo(() => {
