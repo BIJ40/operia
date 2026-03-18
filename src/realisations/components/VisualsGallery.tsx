@@ -127,7 +127,7 @@ export function VisualsGallery() {
                   );
                 }}
               >
-                {dispatchVisual.isPending ? (
+                {sendingId === v.id ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
                 ) : (
                   <Send className="w-3 h-3" />
