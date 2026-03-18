@@ -21,14 +21,6 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
-import { PL_SECTIONS } from '@/config/financialLineItems';
-import { useFinancialMonth } from '@/hooks/useFinancialMonth';
-import { useFinancialCharges } from '@/hooks/useFinancialCharges';
-import { useFinancialSummary } from '@/hooks/useFinancialSummary';
-import { useCollaboratorCount } from '@/hooks/useCollaboratorCount';
-import { useStatiaFinancialBridge } from '@/hooks/useStatiaFinancialBridge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useToast } from '@/hooks/use-toast';
 
 export default function ResultatTabContent() {
   const now = new Date();
