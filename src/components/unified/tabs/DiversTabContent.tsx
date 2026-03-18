@@ -300,6 +300,11 @@ function AdministratifSection() {
             <AgencyAdminDocuments />
           </Suspense>
         )}
+        {effectiveSubTab === 'zones' && (
+          <Suspense fallback={<LoadingFallback />}>
+            <ZonesDeplacementTab />
+          </Suspense>
+        )}
       </div>
     </div>
   );
