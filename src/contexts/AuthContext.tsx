@@ -131,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTimeout(() => reject(new Error('Timeout: chargement profil trop long')), PROFILE_TIMEOUT_MS);
       });
 
-      const [profileResult, modulesResult] = await Promise.race([
+      const [profileResult, modulesResult, deployedResult] = await Promise.race([
         Promise.all([
           supabase
             .from('profiles')
@@ -139,6 +139,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .eq('id', userId)
             .single(),
           supabase.rpc('get_user_effective_modules', { p_user_id: userId }),
+          supabase
+            .from('module_registry')
+            .select('key')
+            .eq('is_deployed', true),
         ]),
         timeoutPromise,
       ]);
