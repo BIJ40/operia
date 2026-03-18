@@ -34,24 +34,33 @@ function classifyZone(km: number): ZoneLabel | null {
 }
 
 async function geocodeAddress(address: string, postalCode: string, city: string): Promise<{ lat: number; lng: number } | null> {
-  try {
-    const textQuery = `${address} ${city}`.trim();
-    const params = [`q=${encodeURIComponent(textQuery)}`, 'limit=1'];
-    if (postalCode?.length >= 2) params.push(`postcode=${encodeURIComponent(postalCode)}`);
-    
-    const url = `https://api-adresse.data.gouv.fr/search/?${params.join('&')}`;
-    const response = await fetch(url);
-    if (!response.ok) return null;
-    
-    const data = await response.json();
-    if (data.features?.length > 0) {
-      const [lng, lat] = data.features[0].geometry.coordinates;
-      return { lat, lng };
+  // Try multiple strategies in order of precision
+  const queries = [
+    `${address} ${city}`.trim(),
+    `${address} ${postalCode} ${city}`.trim(),
+    city ? `${postalCode} ${city}`.trim() : '',
+    postalCode || '',
+  ].filter(q => q.length > 2);
+
+  for (const textQuery of queries) {
+    try {
+      const params = [`q=${encodeURIComponent(textQuery)}`, 'limit=1'];
+      if (postalCode?.length >= 2) params.push(`postcode=${encodeURIComponent(postalCode)}`);
+      
+      const url = `https://api-adresse.data.gouv.fr/search/?${params.join('&')}`;
+      const response = await fetch(url);
+      if (!response.ok) continue;
+      
+      const data = await response.json();
+      if (data.features?.length > 0) {
+        const [lng, lat] = data.features[0].geometry.coordinates;
+        return { lat, lng };
+      }
+    } catch {
+      continue;
     }
-    return null;
-  } catch {
-    return null;
   }
+  return null;
 }
 
 function getDaysInMonth(monthStr: string): string[] {
@@ -159,9 +168,10 @@ Deno.serve(async (req) => {
 
     const depot = await geocodeAddress(agency.adresse, agency.code_postal || '', agency.ville || '');
     if (!depot) {
+      console.warn('[ZONES] Could not geocode agency address, returning empty data');
       return withCors(req, new Response(
-        JSON.stringify({ success: false, error: 'Impossible de géocoder l\'adresse de l\'agence' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: true, data: [], warning: 'Impossible de géocoder l\'adresse de l\'agence. Vérifiez l\'adresse dans les paramètres.' }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
       ));
     }
 
