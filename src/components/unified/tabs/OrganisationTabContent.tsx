@@ -21,6 +21,7 @@ const PlanningHebdo = lazy(() => import('@/pages/PlanningTechniciensSemaine'));
 const RHMeetingsPage = lazy(() => import('@/pages/rh/RHMeetingsPage'));
 const VehiculesTabContent = lazy(() => import('@/components/unified/tabs/VehiculesTabContent'));
 const AgencyAdminDocuments = lazy(() => import('@/components/outils/AgencyAdminDocuments').then(m => ({ default: m.AgencyAdminDocuments })));
+const AgencyTeamRightsPanel = lazy(() => import('@/components/agency/AgencyTeamRightsPanel').then(m => ({ default: m.AgencyTeamRightsPanel })));
 
 type OrganisationSubTab = 'collaborateurs' | 'apporteurs' | 'plannings' | 'reunions' | 'parc' | 'conformite' | 'droits-equipe';
 
