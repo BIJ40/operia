@@ -14,6 +14,25 @@ import { MEDIA_ROLE_LABELS, SYNC_STATUS_LABELS, SYNC_STATUS_COLORS, type MediaRo
 import { BeforeAfterGenerator } from '../components/BeforeAfterGenerator';
 import { useCommercialProfile } from '@/commercial/hooks/useCommercialProfile';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+
+function useAgencyInfo(agencyId: string | null) {
+  return useQuery({
+    queryKey: ['agency-info', agencyId],
+    queryFn: async () => {
+      if (!agencyId) return null;
+      const { data, error } = await supabase
+        .from('apogee_agencies')
+        .select('slug, adresse, ville, code_postal, contact_phone, contact_email')
+        .eq('id', agencyId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!agencyId,
+  });
+}
 
 export default function RealisationDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -22,6 +41,7 @@ export default function RealisationDetailPage() {
   const { data: media = [] } = useRealisationMedia(id);
   const { agencyId } = useEffectiveAuth();
   const { data: commercialProfile } = useCommercialProfile(agencyId ?? null);
+  const { data: agencyInfo } = useAgencyInfo(agencyId ?? null);
   const uploadMedia = useUploadMedia();
   const deleteMedia = useDeleteMedia();
   const updateMediaRole = useUpdateMediaRole();
@@ -168,6 +188,12 @@ export default function RealisationDetailPage() {
                   logoUrl={commercialProfile?.logo_agence_url}
                   agencyName={commercialProfile?.agence_nom_long || undefined}
                   phone={commercialProfile?.phone_contact || undefined}
+                  agencySlug={agencyInfo?.slug}
+                  agencyAddress={agencyInfo?.adresse}
+                  agencyCity={agencyInfo?.ville}
+                  agencyPostalCode={agencyInfo?.code_postal}
+                  agencyPhone={agencyInfo?.contact_phone}
+                  agencyEmail={agencyInfo?.contact_email}
                   onCardSaved={() => {
                     // Refresh media list after card saved
                   }}

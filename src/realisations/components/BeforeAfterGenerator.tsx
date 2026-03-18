@@ -19,6 +19,12 @@ interface BeforeAfterGeneratorProps {
   logoUrl?: string | null;
   agencyName?: string;
   phone?: string;
+  agencySlug?: string;
+  agencyAddress?: string | null;
+  agencyCity?: string | null;
+  agencyPostalCode?: string | null;
+  agencyPhone?: string | null;
+  agencyEmail?: string | null;
   onCardSaved?: (url: string) => void;
 }
 
@@ -31,6 +37,12 @@ export function BeforeAfterGenerator({
   logoUrl,
   agencyName,
   phone,
+  agencySlug,
+  agencyAddress,
+  agencyCity,
+  agencyPostalCode,
+  agencyPhone,
+  agencyEmail,
   onCardSaved,
 }: BeforeAfterGeneratorProps) {
   const [step, setStep] = useState<SelectionStep>('idle');
@@ -219,6 +231,12 @@ export function BeforeAfterGenerator({
                 phone={phone}
                 realisationId={realisationId}
                 agencyId={agencyId}
+                agencySlug={agencySlug}
+                agencyAddress={agencyAddress}
+                agencyCity={agencyCity}
+                agencyPostalCode={agencyPostalCode}
+                agencyPhone={agencyPhone}
+                agencyEmail={agencyEmail}
                 onCardSaved={handleCardSaved}
               />
             </div>
