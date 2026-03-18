@@ -24,6 +24,7 @@ export default function RealisationCreatePage() {
   const navigate = useNavigate();
   const createRealisation = useCreateRealisation();
   const uploadMedia = useUploadMedia();
+  const autoSuggestRoles = useAutoSuggestRoles();
   const dispatchWebhook = useDispatchWebhook();
   const { agencyId } = useEffectiveAuth();
   const [isSaving, setIsSaving] = useState(false);
