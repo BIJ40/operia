@@ -63,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Permissions V2
   const [globalRole, setGlobalRole] = useState<GlobalRole | null>(null);
   const [enabledModules, setEnabledModules] = useState<EnabledModules | null>(null);
+  const [deployedModuleKeys, setDeployedModuleKeys] = useState<Set<string>>(new Set());
   
   const currentUserIdRef = useRef<string | null>(null);
 
