@@ -72,15 +72,6 @@ export default function ZonesDeplacementTab() {
       return row;
     });
 
-    // Add totals row
-    if (totals) {
-      const totalRow: Record<string, string | number> = { 'Technicien': 'TOTAL' };
-      ZONE_LABELS.forEach(z => { totalRow[`Zone ${z}`] = totals.sums[z]; });
-      totalRow['Total'] = totals.total;
-      totalRow['Paniers'] = totals.paniers;
-      rows.push(totalRow);
-    }
-
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Zones');
