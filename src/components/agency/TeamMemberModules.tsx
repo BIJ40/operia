@@ -23,9 +23,10 @@ interface Props {
   userId: string;
   roleAgence: string | null;
   n2HasModule: (key: ModuleKey) => boolean;
+  isDeployedModule: (key: ModuleKey) => boolean;
 }
 
-export function TeamMemberModules({ userId, roleAgence, n2HasModule }: Props) {
+export function TeamMemberModules({ userId, roleAgence, n2HasModule, isDeployedModule }: Props) {
   const { data: userModules, isLoading } = useUserModules(userId);
   const toggleModule = useToggleModule();
   const queryClient = useQueryClient();
@@ -34,8 +35,8 @@ export function TeamMemberModules({ userId, roleAgence, n2HasModule }: Props) {
 
   // Only show modules that the N2 has access to
   const assignableModules = useMemo(() => {
-    return N2_ASSIGNABLE_MODULES.filter(m => n2HasModule(m.key));
-  }, [n2HasModule]);
+    return N2_ASSIGNABLE_MODULES.filter(m => isDeployedModule(m.key) && n2HasModule(m.key));
+  }, [n2HasModule, isDeployedModule]);
 
   // Group by category
   const grouped = useMemo(() => {
