@@ -161,6 +161,8 @@ function InlineFaq() {
   );
 }
 
+const GuidesTabContent = lazy(() => import('@/components/unified/tabs/GuidesTabContent'));
+
 // ─── Main component ─────────────────────────────────────────────
 export default function SupportHubTabContent() {
   const queryClient = useQueryClient();
@@ -168,6 +170,7 @@ export default function SupportHubTabContent() {
   const { tickets: combinedTickets, isLoading: combinedLoading } = useCombinedUserTickets();
   const { unreadCount: totalUnreadCount } = useUserProjectUnreadCount();
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+  const [guideView, setGuideView] = useState<GuideViewId>(null);
 
   const handleTicketCreated = (_ticketId: string) => {
     queryClient.invalidateQueries({ queryKey: ['user-project-tickets'] });
