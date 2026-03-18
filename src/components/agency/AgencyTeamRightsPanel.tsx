@@ -117,6 +117,7 @@ export function AgencyTeamRightsPanel() {
                   userId={member.id}
                   roleAgence={member.role_agence}
                   n2HasModule={hasModule}
+                  isDeployedModule={isDeployedModule}
                 />
               </CardContent>
             )}
