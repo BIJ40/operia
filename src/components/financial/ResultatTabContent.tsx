@@ -237,7 +237,7 @@ export default function ResultatTabContent() {
       )}
 
       {/* KPIs */}
-      <KpiRow summary={summary} isLoading={summaryLoading} />
+      <KpiRow summary={summary} isLoading={summaryLoading} autoValues={autoValues} />
 
       {/* P&L Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
