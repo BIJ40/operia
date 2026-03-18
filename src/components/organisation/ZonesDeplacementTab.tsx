@@ -155,6 +155,12 @@ export default function ZonesDeplacementTab() {
                   </TableHead>
                 ))}
                 <TableHead className="text-center w-20 font-bold">Total</TableHead>
+                <TableHead className="text-center w-20">
+                  <div className="flex items-center justify-center gap-1">
+                    <UtensilsCrossed className="h-3.5 w-3.5" />
+                    <span className="font-semibold">Paniers</span>
+                  </div>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
