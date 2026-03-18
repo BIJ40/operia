@@ -51,18 +51,13 @@ export default function ZonesDeplacementTab() {
 
   const totals = useMemo(() => {
     if (!data?.length) return null;
-    const sums: Record<string, number> = {};
-    ZONE_LABELS.forEach(z => { sums[z] = 0; });
-    let total = 0;
     let paniers = 0;
     let paniersExclus = 0;
     data.forEach(t => {
-      ZONE_LABELS.forEach(z => { sums[z] += t.zones[z] || 0; });
-      total += t.total;
       paniers += t.paniers ?? t.total;
       paniersExclus += t.paniersExclus ?? 0;
     });
-    return { sums, total, paniers, paniersExclus };
+    return { paniers, paniersExclus };
   }, [data]);
 
   const exportToExcel = async () => {
@@ -76,15 +71,6 @@ export default function ZonesDeplacementTab() {
       row['Paniers'] = tech.paniers ?? tech.total;
       return row;
     });
-
-    // Add totals row
-    if (totals) {
-      const totalRow: Record<string, string | number> = { 'Technicien': 'TOTAL' };
-      ZONE_LABELS.forEach(z => { totalRow[`Zone ${z}`] = totals.sums[z]; });
-      totalRow['Total'] = totals.total;
-      totalRow['Paniers'] = totals.paniers;
-      rows.push(totalRow);
-    }
 
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
@@ -201,18 +187,6 @@ export default function ZonesDeplacementTab() {
                 </TableRow>
               ))}
             </TableBody>
-            {totals && (
-              <TableFooter>
-                <TableRow>
-                  <TableCell className="font-bold">Total</TableCell>
-                  {ZONE_LABELS.map(z => (
-                    <TableCell key={z} className="text-center font-bold">{totals.sums[z]}</TableCell>
-                  ))}
-                  <TableCell className="text-center font-bold text-primary">{totals.total}</TableCell>
-                  <TableCell className="text-center font-bold">{totals.paniers}</TableCell>
-                </TableRow>
-              </TableFooter>
-            )}
           </Table>
         </div>
       )}
