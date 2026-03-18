@@ -30,6 +30,7 @@ export function VisualsGallery() {
   const { hasModule } = usePermissions();
   const canValidate = hasModule('commercial.realisations.valider_envoyer');
   const [sendingId, setSendingId] = useState<string | null>(null);
+  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [lightboxTitle, setLightboxTitle] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; realisation_id: string; storage_path: string } | null>(null);
