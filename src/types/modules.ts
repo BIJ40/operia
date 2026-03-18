@@ -95,6 +95,7 @@ export const MODULE_OPTIONS = {
   },
   'organisation.plannings': {},
   'organisation.reunions': {},
+  'organisation.zones': {},
   'mediatheque.documents': {
     consulter: 'mediatheque.documents.consulter',
     gerer: 'mediatheque.documents.gerer',
