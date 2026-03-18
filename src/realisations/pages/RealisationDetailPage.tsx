@@ -154,12 +154,25 @@ export default function RealisationDetailPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">Photos</CardTitle>
-              <label className="cursor-pointer">
-                <Button size="sm" asChild>
-                  <span><Upload className="w-4 h-4 mr-1" /> Ajouter</span>
-                </Button>
-                <input type="file" multiple accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileUpload} />
-              </label>
+              <div className="flex items-center gap-2">
+                <BeforeAfterGenerator
+                  media={media}
+                  realisationId={r.id}
+                  agencyId={r.agency_id}
+                  logoUrl={commercialProfile?.logo_agence_url}
+                  agencyName={commercialProfile?.agence_nom_long || undefined}
+                  phone={commercialProfile?.phone_contact || undefined}
+                  onCardSaved={() => {
+                    // Refresh media list after card saved
+                  }}
+                />
+                <label className="cursor-pointer">
+                  <Button size="sm" asChild>
+                    <span><Upload className="w-4 h-4 mr-1" /> Ajouter</span>
+                  </Button>
+                  <input type="file" multiple accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileUpload} />
+                </label>
+              </div>
             </div>
           </CardHeader>
         </Card>
