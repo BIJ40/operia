@@ -208,7 +208,7 @@ export function BeforeAfterGenerator({
                           : 'border-border hover:border-primary/50 cursor-pointer'
                       }`}
                     >
-                      <img src={m.signedUrl} alt="" className="w-full h-full object-cover" />
+                      <img src={m.signedUrl} alt="" className="w-full h-full object-cover" data-no-modal />
                       {m.media_role && ['before', 'after'].includes(m.media_role) && (
                         <span className="absolute top-1 left-1 text-[10px] font-bold bg-black/60 text-white px-1.5 py-0.5 rounded">
                           {MEDIA_ROLE_LABELS[m.media_role]}
