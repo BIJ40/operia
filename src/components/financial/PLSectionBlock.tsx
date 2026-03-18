@@ -84,6 +84,32 @@ export function PLSectionBlock({
     [section.items, isLocked]
   );
 
+  // Map calculated subtotal keys to summary view field names
+  const CALC_KEY_MAP: Record<string, string> = {
+    total_charges_agence: 'charges_agence',
+    total_locations: 'charges_location',
+    total_charges_externes: 'charges_externes',
+    total_autres: 'charges_autres',
+    total_charges_hors_ms: 'total_charges_hors_ms_productifs',
+  };
+
+  function getCalculatedValue(item: LineItem): number {
+    if (!summary) {
+      // Fallback: sum charge amounts for subtotal rows
+      const sectionChargeItems = section.items.filter(i => i.charge_key);
+      if (item.isSubtotal && sectionChargeItems.length > 0) {
+        return sectionChargeItems.reduce((sum, i) => {
+          const charge = charges.find(c => c.charge_type === i.charge_key);
+          return sum + (charge?.amount ?? 0);
+        }, 0);
+      }
+      return 0;
+    }
+    // Try mapped key first, then original key
+    const mappedKey = CALC_KEY_MAP[item.key] || item.key;
+    return (summary as any)[mappedKey] ?? (summary as any)[item.key] ?? 0;
+  }
+
   function getValue(item: LineItem): number {
     if (item.displayOnly) {
       return autoValues[item.key] ?? 0;
@@ -104,8 +130,8 @@ export function PLSectionBlock({
       const charge = charges.find(c => c.charge_type === item.charge_key);
       return charge?.amount ?? 0;
     }
-    if (item.source_type === 'calculated' && summary) {
-      return (summary as any)[item.key] ?? 0;
+    if (item.source_type === 'calculated') {
+      return getCalculatedValue(item);
     }
     return 0;
   }
