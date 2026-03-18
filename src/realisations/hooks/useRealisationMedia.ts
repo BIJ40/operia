@@ -111,11 +111,16 @@ export function useUpdateMediaRole() {
 
   return useMutation({
     mutationFn: async ({ mediaId, realisationId, newRole }: { mediaId: string; realisationId: string; newRole: MediaRole }) => {
-      const { error } = await db
+      const { data, error, count } = await db
         .from('realisation_media')
         .update({ media_role: newRole })
-        .eq('id', mediaId);
+        .eq('id', mediaId)
+        .select('id, media_role');
+      console.log('[updateMediaRole] result:', { mediaId, newRole, data, error, count });
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error('Mise à jour refusée — vérifiez les permissions RLS sur realisation_media');
+      }
       return { mediaId, realisationId, newRole };
     },
     onMutate: async (vars) => {
