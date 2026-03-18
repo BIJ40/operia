@@ -118,7 +118,7 @@ export function PLSectionBlock({
   }
 
   function isEditable(item: LineItem): boolean {
-    if (isLocked) return false;
+    if (isLocked || item.displayOnly) return false;
     return item.source_type === 'manual_monthly' || item.source_type === 'manual_fixed' || item.source_type === 'manual_variable';
   }
 
