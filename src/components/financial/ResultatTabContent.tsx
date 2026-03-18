@@ -3,11 +3,24 @@
  */
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Lock, AlertTriangle, Keyboard, Calculator, Zap, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Lock, AlertTriangle, Keyboard, Calculator, Zap, Users, RotateCcw } from 'lucide-react';
 import { MonthSelector } from './MonthSelector';
 import { CompletionIndicator } from './CompletionIndicator';
 import { KpiRow } from './KpiRow';
 import { PLSectionBlock } from './PLSectionBlock';
+import { PL_SECTIONS } from '@/config/financialLineItems';
+import { useFinancialMonth } from '@/hooks/useFinancialMonth';
+import { useFinancialCharges } from '@/hooks/useFinancialCharges';
+import { useFinancialSummary } from '@/hooks/useFinancialSummary';
+import { useCollaboratorCount } from '@/hooks/useCollaboratorCount';
+import { useStatiaFinancialBridge } from '@/hooks/useStatiaFinancialBridge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
 import { PL_SECTIONS } from '@/config/financialLineItems';
 import { useFinancialMonth } from '@/hooks/useFinancialMonth';
 import { useFinancialCharges } from '@/hooks/useFinancialCharges';
