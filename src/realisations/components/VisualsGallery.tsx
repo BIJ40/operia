@@ -4,7 +4,7 @@
  */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, Image, Trash2, X, Send, Loader2 } from 'lucide-react';
+import { Download, Image, Trash2, X, Send, Loader2, RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useGeneratedVisuals } from '../hooks/useGeneratedVisuals';
@@ -30,6 +30,7 @@ export function VisualsGallery() {
   const { hasModule } = usePermissions();
   const canValidate = hasModule('commercial.realisations.valider_envoyer');
   const [sendingId, setSendingId] = useState<string | null>(null);
+  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [lightboxTitle, setLightboxTitle] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; realisation_id: string; storage_path: string } | null>(null);
@@ -117,28 +118,37 @@ export function VisualsGallery() {
                 </button>
               </div>
               {/* Validate + push button — only if permission granted */}
-              {canValidate && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="w-full h-7 text-xs gap-1.5"
-                  disabled={sendingId === v.id}
-                  onClick={() => {
-                    setSendingId(v.id);
-                    dispatchVisual.mutate(
-                      { mediaId: v.id, realisationId: v.realisation_id },
-                      { onSettled: () => setSendingId(null) },
-                    );
-                  }}
-                >
-                  {sendingId === v.id ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                  ) : (
-                    <Send className="w-3 h-3" />
-                  )}
-                  Valider & Envoyer
-                </Button>
-              )}
+              {canValidate && (() => {
+                const wasSent = sentIds.has(v.id);
+                const isSending = sendingId === v.id;
+                return (
+                  <Button
+                    size="sm"
+                    variant={wasSent ? 'ghost' : 'outline'}
+                    className={`w-full h-7 text-xs gap-1.5 ${wasSent ? 'text-muted-foreground' : ''}`}
+                    disabled={isSending}
+                    onClick={() => {
+                      setSendingId(v.id);
+                      dispatchVisual.mutate(
+                        { mediaId: v.id, realisationId: v.realisation_id },
+                        {
+                          onSuccess: () => setSentIds(prev => new Set(prev).add(v.id)),
+                          onSettled: () => setSendingId(null),
+                        },
+                      );
+                    }}
+                  >
+                    {isSending ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : wasSent ? (
+                      <RefreshCw className="w-3 h-3" />
+                    ) : (
+                      <Send className="w-3 h-3" />
+                    )}
+                    {wasSent ? 'Renvoyer' : 'Valider & Envoyer'}
+                  </Button>
+                );
+              })()}
             </div>
           </div>
         ))}
