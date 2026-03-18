@@ -1,5 +1,5 @@
 /**
- * RealisationDetailPage — Photos + sync status
+ * RealisationDetailPage — Photos + sync status + Before/After generator
  */
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -11,12 +11,17 @@ import { useRealisation } from '../hooks/useRealisations';
 import { useRealisationMedia, useUploadMedia, useDeleteMedia, useUpdateMediaRole } from '../hooks/useRealisationMedia';
 import { useDispatchWebhook } from '../hooks/useDispatchWebhook';
 import { MEDIA_ROLE_LABELS, SYNC_STATUS_LABELS, SYNC_STATUS_COLORS, type MediaRole, type ExternalSyncStatus } from '../types';
+import { BeforeAfterGenerator } from '../components/BeforeAfterGenerator';
+import { useCommercialProfile } from '@/commercial/hooks/useCommercialProfile';
+import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 
 export default function RealisationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: realisation, isLoading } = useRealisation(id);
   const { data: media = [] } = useRealisationMedia(id);
+  const { agencyId } = useEffectiveAuth();
+  const { data: commercialProfile } = useCommercialProfile(agencyId ?? null);
   const uploadMedia = useUploadMedia();
   const deleteMedia = useDeleteMedia();
   const updateMediaRole = useUpdateMediaRole();
@@ -149,12 +154,25 @@ export default function RealisationDetailPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">Photos</CardTitle>
-              <label className="cursor-pointer">
-                <Button size="sm" asChild>
-                  <span><Upload className="w-4 h-4 mr-1" /> Ajouter</span>
-                </Button>
-                <input type="file" multiple accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileUpload} />
-              </label>
+              <div className="flex items-center gap-2">
+                <BeforeAfterGenerator
+                  media={media}
+                  realisationId={r.id}
+                  agencyId={r.agency_id}
+                  logoUrl={commercialProfile?.logo_agence_url}
+                  agencyName={commercialProfile?.agence_nom_long || undefined}
+                  phone={commercialProfile?.phone_contact || undefined}
+                  onCardSaved={() => {
+                    // Refresh media list after card saved
+                  }}
+                />
+                <label className="cursor-pointer">
+                  <Button size="sm" asChild>
+                    <span><Upload className="w-4 h-4 mr-1" /> Ajouter</span>
+                  </Button>
+                  <input type="file" multiple accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileUpload} />
+                </label>
+              </div>
             </div>
           </CardHeader>
         </Card>
