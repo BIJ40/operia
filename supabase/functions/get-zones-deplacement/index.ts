@@ -194,7 +194,7 @@ Deno.serve(async (req) => {
       ));
     }
 
-    // 3. Fetch users for names/colors
+    // 3. Fetch users and cross-check with agency collaborators to identify technicians reliably
     const usersUrl = `https://${targetAgency}.hc-apogee.fr/api/apiGetUsers`;
     const usersResp = await fetch(usersUrl, {
       method: 'POST',
@@ -202,15 +202,47 @@ Deno.serve(async (req) => {
       body: JSON.stringify({ API_KEY: apiKey }),
     });
     const allUsers = usersResp.ok ? await usersResp.json() : [];
+
+    const { data: agencyRow } = await supabase
+      .from('apogee_agencies')
+      .select('id')
+      .eq('slug', targetAgency)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    const { data: collaborators } = agencyRow
+      ? await supabase
+          .from('collaborators')
+          .select('apogee_user_id, first_name, last_name, type, role, leaving_date')
+          .eq('agency_id', agencyRow.id)
+          .not('apogee_user_id', 'is', null)
+          .is('leaving_date', null)
+      : { data: [] as Array<{ apogee_user_id: number | null; first_name: string | null; last_name: string | null; type: string | null; role: string | null; leaving_date: string | null }> };
+
+    const technicianIds = new Set<number>();
+    const technicianNames = new Map<number, string>();
+    for (const c of collaborators || []) {
+      const apogeeId = Number(c.apogee_user_id);
+      const type = String(c.type || '').toUpperCase();
+      const role = String(c.role || '').toLowerCase();
+      const isTech = type.includes('TECH') || role.includes('menuis') || role.includes('peintr') || role.includes('plomb') || role.includes('polyval');
+      if (!Number.isFinite(apogeeId) || !isTech) continue;
+      technicianIds.add(apogeeId);
+      technicianNames.set(apogeeId, `${c.first_name || ''} ${c.last_name || ''}`.trim() || `Tech ${apogeeId}`);
+    }
+
     const usersById = new Map<number, string>();
     for (const u of allUsers) {
-      // Only include technicians (is_on and type check)
-      const data = u.data || {};
-      const isTech = u.is_on && (data.type === 'Technicien' || data.isTechnicien === true || u.type === 'Technicien');
-      if (isTech) {
-        usersById.set(u.id, `${u.firstname || ''} ${u.lastname || u.name || ''}`.trim() || `Tech ${u.id}`);
-      }
+      const apogeeId = Number(u?.id);
+      if (!Number.isFinite(apogeeId) || !technicianIds.has(apogeeId)) continue;
+      if (u?.is_on === false) continue;
+      usersById.set(
+        apogeeId,
+        technicianNames.get(apogeeId) || `${u?.firstname || ''} ${u?.lastname || u?.name || ''}`.trim() || `Tech ${apogeeId}`
+      );
     }
+
+    console.log(`[ZONES] ${collaborators?.length || 0} collaborators matched, ${usersById.size} active techs retained`);
 
     // 4. Fetch clients for addresses
     const clientsUrl = `https://${targetAgency}.hc-apogee.fr/api/apiGetClients`;
