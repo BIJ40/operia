@@ -113,7 +113,7 @@ export function TeamMemberModules({ userId, roleAgence, n2HasModule }: Props) {
                 key={mod.key}
                 className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-muted/50 transition-colors"
               >
-                <span className="text-sm">{mod.label}</span>
+                <span className="text-sm">{getShortLabel(mod.key, mod.fallbackLabel)}</span>
                 <Switch
                   checked={isModuleEnabled(mod.key)}
                   onCheckedChange={(checked) => handleToggle(mod.key, checked)}
