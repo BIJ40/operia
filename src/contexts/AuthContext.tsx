@@ -9,7 +9,7 @@ import { setSentryUser, clearSentryUser } from '@/lib/sentry';
 // SYSTÈME V2.0 - Imports des types et fonctions
 // ============================================================================
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
-import { EnabledModules, ModuleKey, isModuleEnabled as checkModuleEnabled } from '@/types/modules';
+import { EnabledModules, ModuleKey, MODULE_DEFINITIONS, isModuleEnabled as checkModuleEnabled } from '@/types/modules';
 import { 
   hasAccess, hasMinRole,
   type PermissionContext,
