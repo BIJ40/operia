@@ -35,19 +35,57 @@ try {
   // ignore
 }
 
-// Safe SW registration — skip entirely in sandboxed iframes (Lovable preview)
+// Safe SW registration — disabled in Lovable preview and sandboxed frames
+const isLovablePreview = () => {
+  try {
+    return window.location.hostname.startsWith('id-preview--') || window.self !== window.top;
+  } catch {
+    return window.location.hostname.startsWith('id-preview--');
+  }
+};
+
+const clearPreviewRuntimeCaches = async () => {
+  try {
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+    }
+
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+    }
+  } catch {
+    // ignore preview cleanup failures
+  }
+};
+
 const canRegisterSW = () => {
   try {
-    return !!navigator.serviceWorker;
+    return !!navigator.serviceWorker && window.isSecureContext && !isLovablePreview();
   } catch {
     return false;
   }
 };
 
+if (isLovablePreview()) {
+  void clearPreviewRuntimeCaches();
+}
+
 if (canRegisterSW()) {
   // @ts-ignore - virtual module provided by vite-plugin-pwa
   import('virtual:pwa-register').then(({ registerSW }: any) => {
-    registerSW({ immediate: true });
+    let updateSW: ((reloadPage?: boolean) => Promise<void>) | undefined;
+
+    updateSW = registerSW({
+      immediate: true,
+      onNeedRefresh() {
+        void updateSW?.(true);
+      },
+      onRegisteredSW(_swUrl: string, registration: ServiceWorkerRegistration | undefined) {
+        void registration?.update();
+      },
+    });
   }).catch(() => {
     // SW registration not available
   });

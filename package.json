@@ -5,16 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "build:dev": "vite build --mode development",
+    "build": "node scripts/generate-version.mjs && vite build",
+    "build:dev": "node scripts/generate-version.mjs && vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
     "test:e2e": "playwright test --config tests/e2e/playwright.config.ts",
     "test:e2e:smoke": "playwright test --config tests/e2e/playwright.config.ts --grep @smoke",
     "health:check": "node -e \"fetch(process.env.HEALTH_URL || 'https://qvrankgpfltadxegeiky.supabase.co/functions/v1/health-check', {headers:{'apikey': process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2cmFua2dwZmx0YWR4ZWdlaWt5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0OTEyNzcsImV4cCI6MjA4MTA2NzI3N30.EQh-5XEX2uywoIWI-pXbJja8cTPZDuRs0w3zbMmzHbI'}}).then(r=>r.json()).then(d=>{console.log(JSON.stringify(d,null,2));process.exit(d.status==='ok'?0:1)}).catch(e=>{console.error(e);process.exit(1)})\"",
     "typecheck": "tsc --noEmit",
-    "ci:check": "tsc --noEmit && npx vitest run && vite build",
-    "prepublish:check": "vite build && echo '✅ Build succeeded — ready to publish'"
+    "ci:check": "tsc --noEmit && npx vitest run && npm run build",
+    "prepublish:check": "npm run build && echo '✅ Build succeeded — ready to publish'"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
