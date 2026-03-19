@@ -67,26 +67,54 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const generateMutation = useGenerateSocialVisual();
 
   const latestAsset = assets[0] || null;
+  const hasPreview = Boolean(previewUrl);
+  const showPreviewSkeleton = (assetsLoading || loadingPreview) && !hasPreview;
 
   // Load signed URL for latest asset
   useEffect(() => {
     if (!latestAsset) {
       setPreviewUrl(null);
+      setLoadingPreview(false);
       return;
     }
+
     let cancelled = false;
-    setLoadingPreview(true);
-    getSignedVisualUrl(latestAsset.storage_path).then(url => {
-      if (!cancelled) {
-        setPreviewUrl(url);
-        setLoadingPreview(false);
-      }
-    });
-    return () => { cancelled = true; };
-  }, [latestAsset?.id]);
+    setLoadingPreview(!previewUrl);
+
+    getSignedVisualUrl(latestAsset.storage_path)
+      .then((url) => {
+        if (!cancelled) {
+          setPreviewUrl(url);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setPreviewUrl((current) => current);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoadingPreview(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [latestAsset?.id, latestAsset?.storage_path, previewUrl]);
 
   const handleGenerate = useCallback(() => {
-    generateMutation.mutate({ suggestionId: suggestion.id });
+    generateMutation.mutate(
+      { suggestionId: suggestion.id },
+      {
+        onSuccess: (data) => {
+          if (data?.signed_url) {
+            setPreviewUrl(data.signed_url);
+            setLoadingPreview(false);
+          }
+        },
+      }
+    );
   }, [suggestion.id, generateMutation]);
 
   const handleDownload = useCallback(() => {
@@ -120,7 +148,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
         </div>
 
         {/* Preview image */}
-        {assetsLoading || loadingPreview ? (
+        {showPreviewSkeleton ? (
           <Skeleton className="w-full aspect-square rounded-lg" />
         ) : previewUrl ? (
           <div className="relative rounded-lg overflow-hidden border border-border">
