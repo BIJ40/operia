@@ -75,7 +75,7 @@ export async function drawBrandCard(ctx: CanvasRenderingContext2D, payload: Soci
     y: hookY,
     fontSize: 60,
     maxWidth: SIZE - 160,
-    align: 'center',
+    align: 'left',
     color: HC.white,
   });
 
