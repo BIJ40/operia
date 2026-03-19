@@ -417,6 +417,7 @@ Deno.serve(async (req) => {
     const agencyId = body.agency_id ? validateUUID(body.agency_id, 'agency_id') : context.agencyId;
     const regenerateSingle = body.regenerate_single === true;
     const singleSuggestionId = body.suggestion_id || null;
+    const userPromptParams = body.prompt || null;
 
     if (!agencyId) {
       return new Response(JSON.stringify({ error: 'agency_id requis' }), {
