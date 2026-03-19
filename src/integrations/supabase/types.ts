@@ -8334,6 +8334,286 @@ export type Database = {
         }
         Relationships: []
       }
+      social_calendar_entries: {
+        Row: {
+          agency_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          platform: string
+          published_at: string | null
+          scheduled_for: string
+          status: string
+          suggestion_id: string
+          updated_at: string
+          variant_id: string | null
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          platform: string
+          published_at?: string | null
+          scheduled_for: string
+          status?: string
+          suggestion_id: string
+          updated_at?: string
+          variant_id?: string | null
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          platform?: string
+          published_at?: string | null
+          scheduled_for?: string
+          status?: string
+          suggestion_id?: string
+          updated_at?: string
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_calendar_entries_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_calendar_entries_suggestion_id_fkey"
+            columns: ["suggestion_id"]
+            isOneToOne: false
+            referencedRelation: "social_content_suggestions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_calendar_entries_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "social_post_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_content_suggestions: {
+        Row: {
+          agency_id: string
+          ai_payload: Json | null
+          caption_base_fr: string
+          content_angle: string | null
+          created_at: string
+          generation_batch_id: string | null
+          hashtags: string[] | null
+          id: string
+          is_user_edited: boolean
+          month_key: string
+          platform_targets: Json
+          realisation_id: string | null
+          relevance_score: number | null
+          source_type: string
+          status: string
+          suggestion_date: string
+          title: string
+          topic_key: string | null
+          topic_type: string
+          universe: string | null
+          updated_at: string
+          visual_type: string
+        }
+        Insert: {
+          agency_id: string
+          ai_payload?: Json | null
+          caption_base_fr: string
+          content_angle?: string | null
+          created_at?: string
+          generation_batch_id?: string | null
+          hashtags?: string[] | null
+          id?: string
+          is_user_edited?: boolean
+          month_key: string
+          platform_targets?: Json
+          realisation_id?: string | null
+          relevance_score?: number | null
+          source_type?: string
+          status?: string
+          suggestion_date: string
+          title: string
+          topic_key?: string | null
+          topic_type: string
+          universe?: string | null
+          updated_at?: string
+          visual_type: string
+        }
+        Update: {
+          agency_id?: string
+          ai_payload?: Json | null
+          caption_base_fr?: string
+          content_angle?: string | null
+          created_at?: string
+          generation_batch_id?: string | null
+          hashtags?: string[] | null
+          id?: string
+          is_user_edited?: boolean
+          month_key?: string
+          platform_targets?: Json
+          realisation_id?: string | null
+          relevance_score?: number | null
+          source_type?: string
+          status?: string
+          suggestion_date?: string
+          title?: string
+          topic_key?: string | null
+          topic_type?: string
+          universe?: string | null
+          updated_at?: string
+          visual_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_content_suggestions_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_post_variants: {
+        Row: {
+          agency_id: string
+          caption_fr: string
+          created_at: string
+          cta: string | null
+          format: string | null
+          hashtags: string[] | null
+          id: string
+          platform: string
+          platform_notes: string | null
+          recommended_dimensions: string | null
+          status: string
+          suggestion_id: string
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          caption_fr: string
+          created_at?: string
+          cta?: string | null
+          format?: string | null
+          hashtags?: string[] | null
+          id?: string
+          platform: string
+          platform_notes?: string | null
+          recommended_dimensions?: string | null
+          status?: string
+          suggestion_id: string
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          caption_fr?: string
+          created_at?: string
+          cta?: string | null
+          format?: string | null
+          hashtags?: string[] | null
+          id?: string
+          platform?: string
+          platform_notes?: string | null
+          recommended_dimensions?: string | null
+          status?: string
+          suggestion_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_post_variants_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_post_variants_suggestion_id_fkey"
+            columns: ["suggestion_id"]
+            isOneToOne: false
+            referencedRelation: "social_content_suggestions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_visual_assets: {
+        Row: {
+          agency_id: string
+          created_at: string
+          generation_meta: Json | null
+          height: number
+          id: string
+          mime_type: string
+          storage_path: string
+          suggestion_id: string
+          theme_key: string | null
+          variant_id: string | null
+          visual_type: string
+          width: number
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          generation_meta?: Json | null
+          height: number
+          id?: string
+          mime_type: string
+          storage_path: string
+          suggestion_id: string
+          theme_key?: string | null
+          variant_id?: string | null
+          visual_type: string
+          width: number
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          generation_meta?: Json | null
+          height?: number
+          id?: string
+          mime_type?: string
+          storage_path?: string
+          suggestion_id?: string
+          theme_key?: string | null
+          variant_id?: string | null
+          visual_type?: string
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_visual_assets_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_visual_assets_suggestion_id_fkey"
+            columns: ["suggestion_id"]
+            isOneToOne: false
+            referencedRelation: "social_content_suggestions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_visual_assets_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "social_post_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       statia_custom_metrics: {
         Row: {
           agency_slug: string | null
