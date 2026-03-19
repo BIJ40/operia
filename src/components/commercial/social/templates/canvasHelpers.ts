@@ -1,6 +1,6 @@
 /**
- * Canvas helpers réutilisables pour les templates social visuels.
- * V2 — Branding Help Confort fort + univers métier.
+ * Canvas helpers — V3 "Ad-Ready" Social Media Creatives
+ * Composants réutilisables pour visuels publicitaires prêts à poster.
  */
 
 export const SIZE = 1080;
@@ -21,7 +21,7 @@ export interface ServiceTheme {
   bg: string;
   accent: string;
   labelColor: string;
-  overlayTint: string; // overlay color for universe branding
+  overlayTint: string;
 }
 
 export const SERVICE_THEMES: Record<string, ServiceTheme> = {
@@ -121,25 +121,21 @@ export function drawUniverseOverlay(ctx: CanvasRenderingContext2D, theme: Servic
 /** Bandeau signature bas "Help Confort – Dépannage & Travaux" */
 export function drawHCFooterBar(ctx: CanvasRenderingContext2D, theme: ServiceTheme, height = 90) {
   const y = SIZE - height;
-  // Blue HC bar
   ctx.fillStyle = HC.blue;
   ctx.fillRect(0, y, SIZE, height);
-  // Accent line top
   ctx.fillStyle = HC.orange;
   ctx.fillRect(0, y, SIZE, 4);
-  // Text
   ctx.fillStyle = HC.white;
   ctx.font = 'bold 26px sans-serif';
   ctx.textAlign = 'left';
   ctx.fillText('Help Confort — Dépannage & Travaux', 50, y + height / 2 + 9);
-  // Universe label right
   ctx.textAlign = 'right';
   ctx.font = '22px sans-serif';
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
   ctx.fillText(theme.label, SIZE - 50, y + height / 2 + 8);
 }
 
-/** Logo HC en haut (bannière) */
+/** Logo HC en haut */
 export async function drawHCLogo(ctx: CanvasRenderingContext2D, logoSrc: string, position: 'top-left' | 'top-center' = 'top-left') {
   try {
     const img = await loadImage(logoSrc);
@@ -162,10 +158,10 @@ export async function drawHCLogo(ctx: CanvasRenderingContext2D, logoSrc: string,
       ctx.fill();
       drawContain(ctx, img, 42, 33, w, h);
     }
-  } catch { /* logo optional but logged */ }
+  } catch { /* logo optional */ }
 }
 
-/** Bloc titre HC style — fond bleu/accent + texte blanc uppercase */
+/** Bloc titre HC style */
 export function drawHCTitleBlock(
   ctx: CanvasRenderingContext2D,
   title: string,
@@ -185,7 +181,6 @@ export function drawHCTitleBlock(
   const pad = 20;
   const blockH = lines.length * lineH + pad * 2;
 
-  // Background block
   if (align === 'center') {
     const blockW = Math.min(maxWidth + pad * 2, SIZE - 60);
     const bx = (SIZE - blockW) / 2;
@@ -198,14 +193,12 @@ export function drawHCTitleBlock(
       ctx.fillText(line, SIZE / 2, y + pad + i * lineH);
     });
   } else {
-    // Measure widest line for block width
     let maxLineW = 0;
     lines.forEach(l => { maxLineW = Math.max(maxLineW, ctx.measureText(l).width); });
     const blockW = maxLineW + pad * 3;
     ctx.fillStyle = bgColor;
     roundRect(ctx, 30, y - pad, blockW, blockH, 8);
     ctx.fill();
-    // Orange accent left edge
     ctx.fillStyle = HC.orange;
     ctx.fillRect(30, y - pad, 6, blockH);
     ctx.fillStyle = HC.white;
@@ -226,4 +219,215 @@ export function drawBottomGradient(ctx: CanvasRenderingContext2D, height = 400, 
   grad.addColorStop(1, color);
   ctx.fillStyle = grad;
   ctx.fillRect(0, SIZE - height, SIZE, height);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// V3 — AD-READY CREATIVE COMPONENTS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+/**
+ * HOOK TEXT — Le texte d'accroche GROS et CONTRASTÉ.
+ * 3 à 6 mots max, majuscules, très lisible.
+ * Rend le texte avec ombre portée pour contraste garanti.
+ */
+export function drawHookText(
+  ctx: CanvasRenderingContext2D,
+  hook: string,
+  options: {
+    y?: number;
+    fontSize?: number;
+    maxWidth?: number;
+    color?: string;
+    align?: 'left' | 'center';
+    shadowColor?: string;
+  } = {}
+) {
+  const {
+    y = 500,
+    fontSize = 72,
+    maxWidth = SIZE - 140,
+    color = HC.white,
+    align = 'left',
+    shadowColor = 'rgba(0,0,0,0.6)',
+  } = options;
+
+  const text = hook.toUpperCase();
+  ctx.font = `900 ${fontSize}px sans-serif`;
+  ctx.textAlign = align;
+  const lines = wrapText(ctx, text, maxWidth);
+  const lineH = fontSize * 1.15;
+
+  const xPos = align === 'center' ? SIZE / 2 : 70;
+
+  // Draw text shadow for contrast
+  lines.slice(0, 3).forEach((line, i) => {
+    const ly = y + i * lineH;
+    ctx.fillStyle = shadowColor;
+    ctx.fillText(line, xPos + 3, ly + 3);
+    ctx.fillStyle = color;
+    ctx.fillText(line, xPos, ly);
+  });
+
+  ctx.textAlign = 'left';
+  return { bottomY: y + lines.slice(0, 3).length * lineH };
+}
+
+/**
+ * SOUS-TEXTE — Texte secondaire plus petit sous le hook.
+ * Renforce le message. 1-2 lignes max.
+ */
+export function drawSubText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  options: {
+    y?: number;
+    fontSize?: number;
+    maxWidth?: number;
+    color?: string;
+    align?: 'left' | 'center';
+  } = {}
+) {
+  const {
+    y = 700,
+    fontSize = 30,
+    maxWidth = SIZE - 160,
+    color = 'rgba(255,255,255,0.92)',
+    align = 'left',
+  } = options;
+
+  ctx.font = `500 ${fontSize}px sans-serif`;
+  ctx.fillStyle = color;
+  ctx.textAlign = align;
+  const lines = wrapText(ctx, text, maxWidth);
+  const lineH = fontSize * 1.35;
+  const xPos = align === 'center' ? SIZE / 2 : 70;
+
+  lines.slice(0, 2).forEach((line, i) => {
+    ctx.fillText(line, xPos, y + i * lineH);
+  });
+
+  ctx.textAlign = 'left';
+  return { bottomY: y + lines.slice(0, 2).length * lineH };
+}
+
+/**
+ * CTA BUTTON — Bouton d'appel à l'action.
+ * Visible, contrasté, avec coin arrondi.
+ */
+export function drawCTAButton(
+  ctx: CanvasRenderingContext2D,
+  cta: string,
+  options: {
+    y?: number;
+    align?: 'left' | 'center';
+    bgColor?: string;
+    textColor?: string;
+    fontSize?: number;
+  } = {}
+) {
+  if (!cta) return;
+
+  const {
+    y = 830,
+    align = 'left',
+    bgColor = HC.orange,
+    textColor = HC.grayDark,
+    fontSize = 26,
+  } = options;
+
+  const text = cta.toUpperCase();
+  ctx.font = `bold ${fontSize}px sans-serif`;
+  const textW = ctx.measureText(text).width;
+  const padX = 32;
+  const padY = 16;
+  const btnW = textW + padX * 2;
+  const btnH = fontSize + padY * 2;
+
+  const x = align === 'center' ? (SIZE - btnW) / 2 : 70;
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  roundRect(ctx, x + 3, y + 3, btnW, btnH, btnH / 2);
+  ctx.fill();
+
+  // Button
+  ctx.fillStyle = bgColor;
+  roundRect(ctx, x, y, btnW, btnH, btnH / 2);
+  ctx.fill();
+
+  // Text
+  ctx.fillStyle = textColor;
+  ctx.textAlign = 'center';
+  ctx.fillText(text, x + btnW / 2, y + btnH / 2 + fontSize / 3);
+  ctx.textAlign = 'left';
+}
+
+/**
+ * CINEMATIC DARK OVERLAY — Overlay fort pour lisibilité publicitaire.
+ * Gradient du haut ET du bas, laissant le centre plus visible.
+ */
+export function drawCinematicOverlay(ctx: CanvasRenderingContext2D, strength = 0.7) {
+  // Bottom gradient (strongest — text area)
+  const gradBot = ctx.createLinearGradient(0, SIZE * 0.3, 0, SIZE);
+  gradBot.addColorStop(0, 'rgba(0,0,0,0)');
+  gradBot.addColorStop(0.3, `rgba(0,0,0,${strength * 0.3})`);
+  gradBot.addColorStop(0.6, `rgba(0,0,0,${strength * 0.6})`);
+  gradBot.addColorStop(1, `rgba(0,0,0,${strength})`);
+  ctx.fillStyle = gradBot;
+  ctx.fillRect(0, SIZE * 0.3, SIZE, SIZE * 0.7);
+
+  // Top gradient (subtle — logo area)
+  const gradTop = ctx.createLinearGradient(0, 0, 0, SIZE * 0.25);
+  gradTop.addColorStop(0, `rgba(0,0,0,${strength * 0.5})`);
+  gradTop.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = gradTop;
+  ctx.fillRect(0, 0, SIZE, SIZE * 0.25);
+}
+
+/**
+ * UNIVERSE ACCENT BAR — Barre colorée verticale à gauche (accent métier).
+ */
+export function drawAccentBar(ctx: CanvasRenderingContext2D, theme: ServiceTheme, width = 8) {
+  ctx.fillStyle = theme.bg;
+  ctx.fillRect(0, 0, width, SIZE);
+}
+
+/**
+ * UNIVERSE PILL — Badge univers discret en haut à droite.
+ */
+export function drawUniversePill(ctx: CanvasRenderingContext2D, theme: ServiceTheme, y = 40) {
+  ctx.font = 'bold 20px sans-serif';
+  const pillText = theme.label.toUpperCase();
+  const pillW = ctx.measureText(pillText).width + 36;
+  ctx.fillStyle = theme.bg;
+  roundRect(ctx, SIZE - pillW - 40, y, pillW, 40, 20);
+  ctx.fill();
+  ctx.fillStyle = HC.white;
+  ctx.textAlign = 'center';
+  ctx.fillText(pillText, SIZE - pillW / 2 - 40, y + 27);
+  ctx.textAlign = 'left';
+}
+
+/**
+ * TOPIC BADGE — Badge "CONSEIL" / "SENSIBILISATION" / etc.
+ */
+export function drawTopicBadge(
+  ctx: CanvasRenderingContext2D,
+  label: string,
+  options: { x?: number; y?: number; bgColor?: string; textColor?: string } = {}
+) {
+  const { x = 70, y = 130, bgColor = HC.orange, textColor = HC.grayDark } = options;
+  ctx.font = 'bold 18px sans-serif';
+  const text = label.toUpperCase();
+  const tw = ctx.measureText(text).width;
+  const padX = 20;
+  const padY = 10;
+  const bw = tw + padX * 2;
+  const bh = 18 + padY * 2;
+  ctx.fillStyle = bgColor;
+  roundRect(ctx, x, y, bw, bh, 6);
+  ctx.fill();
+  ctx.fillStyle = textColor;
+  ctx.textAlign = 'left';
+  ctx.fillText(text, x + padX, y + bh / 2 + 6);
 }

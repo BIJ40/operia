@@ -1,9 +1,11 @@
 /**
  * social-visual-generate — Génère un visuel IA pour un post social.
  * 
- * V2 : Priorité photos réelles des réalisations, fallback image IA.
- * Layout : image plein cadre + titre court + bandeau HelpConfort.
- * INTERDIT : fond dégradé seul, emoji, visuel sans image.
+ * V3 : Génération d'images optimisées comme FOND DE CRÉA PUBLICITAIRE.
+ * L'image est pensée pour recevoir un overlay texte (hook + CTA) côté client.
+ * 
+ * Composition : sujet centré/haut, zone sombre naturelle en bas pour texte.
+ * INTERDIT : texte, logo, emoji, illustration, 3D, cartoon.
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
@@ -98,21 +100,18 @@ Deno.serve(async (req) => {
     let realPhotoUrl: string | null = null;
 
     if (suggestion.realisation_id) {
-      // Get 'after' media first, fallback to any media
       const { data: media } = await adminSupabase
         .from('realisation_media')
         .select('id, storage_path, media_role')
         .eq('realisation_id', suggestion.realisation_id)
-        .order('media_role', { ascending: false }) // 'after' comes first alphabetically reversed... let's filter
+        .order('media_role', { ascending: false })
         .limit(10);
 
       if (media && media.length > 0) {
-        // Prefer 'after' photo
         const afterMedia = media.find((m: any) => m.media_role === 'after');
         const bestMedia = afterMedia || media[0];
 
         if (bestMedia?.storage_path) {
-          // Get signed URL from realisation-media bucket
           const bucket = 'realisation-media';
           const { data: signedData } = await adminSupabase.storage
             .from(bucket)
@@ -135,23 +134,50 @@ Deno.serve(async (req) => {
     let imagePrompt: string;
     const messages: any[] = [];
 
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // PROMPT V3 : IMAGE = FOND DE CRÉA PUBLICITAIRE
+    // Le texte sera superposé côté client par le canvas engine.
+    // L'image doit être COMPOSÉE pour recevoir du texte en bas.
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    const AD_COMPOSITION_RULES = `
+CRITICAL COMPOSITION RULES — THIS IMAGE IS A BACKGROUND FOR A SOCIAL MEDIA AD:
+
+1. COMPOSITION: The main subject must be positioned in the UPPER 60% of the frame.
+   Leave the BOTTOM 40% relatively dark or simple — text will be overlaid there.
+
+2. NATURAL DARK ZONE: Create a natural gradient toward darker tones at the bottom
+   (dark floor, shadow area, low-light zone). This is where ad text will appear.
+
+3. NO TEXT: Absolutely ZERO text, letters, words, logos, watermarks, numbers on the image.
+
+4. CONTRAST: High contrast between the subject and its environment. 
+   Dramatic lighting preferred (side light, backlighting, spotlight effect).
+
+5. EMOTIONAL IMPACT: The viewer must FEEL a problem or need within 1 second.
+   Close-up on the issue. Make it relatable to French homeowners.
+
+6. FORMAT: Square 1080x1080. Fill the entire frame edge to edge.
+
+7. STYLE: Realistic professional photograph. NOT illustration, NOT 3D, NOT cartoon.
+   Think "stock photo for a premium ad campaign" but more authentic.
+
+8. FORBIDDEN: emoji, clip art, gradients, banners, overlays, borders, logos, ANY text.
+`;
+
     if (realPhotoUrl) {
-      // ─── MODE 1: Edit real photo ───
-      imagePrompt = `Take this real photo and create a premium social media visual (1080x1080 square).
+      // ─── MODE 1: Edit real photo for ad background ───
+      imagePrompt = `Transform this real photo into a premium social media ad background (1080x1080 square).
 
-The photo should fill the ENTIRE canvas (full bleed, edge to edge).
-Apply a slight professional color grade to make it look polished.
-Add a subtle dark gradient overlay at the bottom (transparent to 40% black) for contrast.
+${AD_COMPOSITION_RULES}
 
-ABSOLUTELY NO TEXT ON THE IMAGE. Zero text, zero letters, zero words, zero logos.
-The image must be PURELY PHOTOGRAPHIC — text will be added separately later.
-
-- Square 1080x1080
-- NO text of any kind
-- NO logos
-- NO banners
-- NO emojis, NO clip art
-- Just the photo, full frame, professionally graded`;
+SPECIFIC FOR THIS REAL PHOTO:
+- Keep the authentic feel of the real work/repair shown
+- Apply a cinematic color grade (slightly desaturated, high contrast)
+- Ensure the bottom portion naturally darkens (vignette effect)
+- Make the main subject POP with enhanced contrast
+- The result must look like a professional "before/after" hero shot
+- Full bleed, edge to edge, no borders`;
 
       messages.push({
         role: 'user',
@@ -161,31 +187,25 @@ The image must be PURELY PHOTOGRAPHIC — text will be added separately later.
         ],
       });
     } else {
-      // ─── MODE 2: Generate full image from scratch ───
+      // ─── MODE 2: Generate image from scratch as ad background ───
       const sceneDescription = visualPrompt ||
-        `Professional French home ${getSceneForUniverse(universe)}, realistic close-up showing a real problem or situation, dramatic natural lighting`;
+        `Professional French home ${getSceneForUniverse(universe)}, realistic close-up showing a real problem or urgent situation`;
 
-      imagePrompt = `Generate a REALISTIC PHOTOGRAPH for a social media post (1080x1080 square).
+      imagePrompt = `Generate a REALISTIC PHOTOGRAPH designed as a SOCIAL MEDIA AD BACKGROUND (1080x1080 square).
 
-SCENE:
+SCENE TO PHOTOGRAPH:
 ${sceneDescription}
 
-This must look like a REAL PHOTOGRAPH taken on-site. Close-up on the problem. Dramatic natural lighting.
-The viewer must immediately think "I've had this problem at home."
+${AD_COMPOSITION_RULES}
 
-ABSOLUTELY NO TEXT ON THE IMAGE. Zero text, zero letters, zero words, zero logos, zero watermarks.
-The image must be PURELY PHOTOGRAPHIC — text will be added separately later.
-
-STYLE:
-- Realistic photo, NOT illustration, NOT cartoon, NOT 3D render
-- Close-up framing on the problem (not the whole house)
-- Natural lighting with slight dramatic mood
-- Professional quality, high resolution feel
-- Square 1080x1080
-- NO text of any kind anywhere on the image
-- NO logos, NO banners, NO overlays
-- NO emojis, NO clip art, NO gradients
-- Just a pure, realistic photograph of the scene`;
+ADDITIONAL REQUIREMENTS:
+- This must look like a REAL PHOTOGRAPH taken on-site by a professional photographer
+- Close-up framing on the problem (NOT the whole building/house)
+- Dramatic natural lighting with a cinematic feel
+- The bottom third should naturally be darker (floor, shadow, dark surface)
+- Color palette should feel warm and urgent for home repair context
+- The viewer must immediately think "I need to fix this at home"
+- High resolution feel, sharp details on the main subject`;
 
       messages.push({ role: 'user', content: imagePrompt });
     }
@@ -273,8 +293,9 @@ STYLE:
           platform: 'base',
           universe,
           generated_at: now.toISOString(),
-          source: realPhotoUrl ? 'ai_photo_edit_v2' : 'ai_generated_v2',
+          source: realPhotoUrl ? 'ai_photo_edit_v3' : 'ai_generated_v3',
           mode,
+          prompt_version: 'v3_ad_ready',
           prompt_used: imagePrompt.substring(0, 500),
         },
       })
@@ -309,22 +330,17 @@ STYLE:
 
 // ─── Helpers ────────────────────────────────────────────────
 
-function truncateText(text: string, maxLen: number): string {
-  if (text.length <= maxLen) return text;
-  return text.substring(0, maxLen - 1).trim() + '…';
-}
-
 function getSceneForUniverse(universe: string): string {
   const scenes: Record<string, string> = {
-    plomberie: 'repair scene showing modern bathroom or kitchen plumbing work, clean pipes, professional tools, blue accent tones',
-    electricite: 'electrical work scene with modern electrical panel, clean wiring, professional electrician tools, warm orange lighting',
-    serrurerie: 'door security installation, modern lock system, professional locksmith work, residential entrance',
-    menuiserie: 'woodwork installation, custom carpentry, beautiful wooden finish, warm natural tones',
-    vitrerie: 'window glass replacement or installation, clean transparent glass, modern French windows',
-    volets: 'roller shutter installation on French building facade, modern motorized shutters',
-    pmr: 'accessible bathroom renovation with walk-in shower, grab bars, accessibility features',
-    renovation: 'home renovation in progress, modern French apartment transformation, clean construction site',
-    general: 'professional home repair service, French residential interior, clean and organized workspace',
+    plomberie: 'bathroom with visible water leak under sink, dripping pipes, water puddle on tile floor, urgency feeling, blue-tinted lighting',
+    electricite: 'exposed electrical panel with sparking wires or burnt outlet, dangerous situation, warm orange dramatic lighting',
+    serrurerie: 'front door with broken lock or someone locked out at night, residential entrance, security urgency, dark moody lighting',
+    menuiserie: 'damaged wooden window frame or broken cabinet door, splintered wood, visible damage needing repair',
+    vitrerie: 'cracked window glass in French apartment, broken pane with spider web crack pattern, cold light coming through',
+    volets: 'stuck roller shutter on French building facade, half-open jammed shutter, visible mechanism problem',
+    pmr: 'narrow bathroom with accessibility barriers, elderly person context, need for walk-in shower and grab bars',
+    renovation: 'apartment mid-renovation with exposed walls, messy construction site needing professional finish',
+    general: 'French home interior showing multiple maintenance issues, general repair needed atmosphere',
   };
   return scenes[universe] || scenes.general;
 }
