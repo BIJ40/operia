@@ -1,7 +1,9 @@
 /**
- * social-visual-generate — Génère un visuel IA pour un post social via Nano Banana.
+ * social-visual-generate — Génère un visuel IA pour un post social.
  * 
- * Flux : auth → load suggestion + ai_payload → build prompt → call AI image → upload storage → persist asset → return URL.
+ * V2 : Priorité photos réelles des réalisations, fallback image IA.
+ * Layout : image plein cadre + titre court + bandeau HelpConfort.
+ * INTERDIT : fond dégradé seul, emoji, visuel sans image.
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
@@ -45,7 +47,6 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: jsonHeaders });
     }
 
-    // Auth
     const authResult = await getUserContext(req);
     if (!authResult.success) {
       return new Response(JSON.stringify({ error: authResult.error }), { status: authResult.status, headers: jsonHeaders });
@@ -83,43 +84,121 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Suggestion non trouvée' }), { status: 404, headers: jsonHeaders });
     }
 
-    // Extract V5 visual data from ai_payload
     const aiPayload = (suggestion.ai_payload as Record<string, any>) || {};
-    const visualPrompt = aiPayload.visual_prompt || '';
-    const visualStrategy = aiPayload.visual_strategy || 'illustration_generee';
-    const brandingGuidelines = aiPayload.branding_guidelines || '';
-    const visualComposition = aiPayload.visual_composition || '';
-    const hook = aiPayload.hook || suggestion.title;
-    const cta = aiPayload.cta || '';
-
     const universe = suggestion.universe || 'general';
     const color = SERVICE_COLORS[universe] || SERVICE_COLORS.general;
     const serviceLabel = SERVICE_LABELS[universe] || SERVICE_LABELS.general;
+    const title = suggestion.title || '';
+    const hook = aiPayload.hook || title;
+    const cta = aiPayload.cta || '';
+    const visualPrompt = aiPayload.visual_prompt || '';
+    const topicType = suggestion.topic_type || 'seasonal_tip';
 
-    // Build the image generation prompt
-    const imagePrompt = buildImagePrompt({
-      title: suggestion.title,
-      hook,
-      cta,
-      universe,
-      color,
-      serviceLabel,
-      visualPrompt,
-      visualStrategy,
-      visualComposition,
-      brandingGuidelines,
-      topicType: suggestion.topic_type,
-    });
+    // ─── PRIORITY 1: Try to get real photo from realisation ───
+    let realPhotoUrl: string | null = null;
 
-    console.log('[social-visual-generate] Generating image for suggestion:', suggestionId);
-    console.log('[social-visual-generate] Prompt:', imagePrompt.substring(0, 200) + '...');
+    if (suggestion.realisation_id) {
+      // Get 'after' media first, fallback to any media
+      const { data: media } = await adminSupabase
+        .from('realisation_media')
+        .select('id, storage_path, media_role')
+        .eq('realisation_id', suggestion.realisation_id)
+        .order('media_role', { ascending: false }) // 'after' comes first alphabetically reversed... let's filter
+        .limit(10);
 
-    // Call AI image generation
+      if (media && media.length > 0) {
+        // Prefer 'after' photo
+        const afterMedia = media.find((m: any) => m.media_role === 'after');
+        const bestMedia = afterMedia || media[0];
+
+        if (bestMedia?.storage_path) {
+          // Get signed URL from realisation-media bucket
+          const bucket = 'realisation-media';
+          const { data: signedData } = await adminSupabase.storage
+            .from(bucket)
+            .createSignedUrl(bestMedia.storage_path, 600);
+          
+          if (signedData?.signedUrl) {
+            realPhotoUrl = signedData.signedUrl;
+            console.log('[social-visual-generate] Using real photo from realisation:', bestMedia.storage_path);
+          }
+        }
+      }
+    }
+
+    // ─── Build AI image prompt ───
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       return new Response(JSON.stringify({ error: 'Service IA non configuré' }), { status: 500, headers: jsonHeaders });
     }
 
+    let imagePrompt: string;
+    const messages: any[] = [];
+
+    if (realPhotoUrl) {
+      // ─── MODE 1: Edit real photo with branding overlay ───
+      imagePrompt = `Take this real photo and create a premium social media visual (1080x1080 square).
+
+LAYOUT (STRICT):
+- The photo fills 75-80% of the canvas (top portion)
+- Below the photo: a clean branded bar with "${serviceLabel}" service indicator
+- At the very bottom: a solid ${color} branded banner with "Help Confort – Dépannage & Travaux" in white text
+- Title overlay on the photo (top or center): "${truncateText(title, 50)}" in bold white text with dark shadow for readability
+
+RULES:
+- Keep the original photo as the HERO visual — it must dominate
+- Title text: max 2 lines, large, bold, white with dark drop shadow
+- Brand bar at bottom: solid ${color} background, white text "Help Confort"
+- Clean, modern, professional
+- Square 1080x1080
+- NO emojis, NO clip art
+- French text only`;
+
+      messages.push({
+        role: 'user',
+        content: [
+          { type: 'text', text: imagePrompt },
+          { type: 'image_url', image_url: { url: realPhotoUrl } },
+        ],
+      });
+    } else {
+      // ─── MODE 2: Generate full image from scratch ───
+      const sceneDescription = visualPrompt ||
+        `Professional French home ${getSceneForUniverse(universe)}, modern interior, realistic natural lighting, clean and well-maintained environment`;
+
+      imagePrompt = `Create a premium social media visual (1080x1080 square) for a French home repair company.
+
+SCENE TO GENERATE:
+${sceneDescription}
+
+The image must look like a REAL PHOTOGRAPH — realistic, professional, high quality.
+
+LAYOUT (STRICT):
+- Generated photo fills 75-80% of the canvas (top portion) — this is a REAL scene, not an illustration
+- Title overlay on the photo: "${truncateText(title, 50)}" in bold white text with dark shadow
+- At the bottom: solid ${color} branded banner with "Help Confort – Dépannage & Travaux" in white text
+
+COLOR SCHEME:
+- Accent color: ${color} (${serviceLabel})
+- Brand bar: solid ${color} background
+
+RULES:
+- MUST look like a real photograph, NOT a cartoon or illustration
+- Title: max 2 lines, large bold white text with shadow
+- Bottom brand bar: ${color} background, "Help Confort" in white
+- Square 1080x1080
+- Professional quality
+- NO emojis, NO clip art, NO gradients as main visual
+- NO empty backgrounds — there MUST be a realistic scene
+- French text only`;
+
+      messages.push({ role: 'user', content: imagePrompt });
+    }
+
+    console.log('[social-visual-generate] Mode:', realPhotoUrl ? 'REAL_PHOTO_EDIT' : 'AI_GENERATED');
+    console.log('[social-visual-generate] Prompt preview:', imagePrompt.substring(0, 200) + '...');
+
+    // Call AI image generation
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -128,7 +207,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         model: 'google/gemini-3.1-flash-image-preview',
-        messages: [{ role: 'user', content: imagePrompt }],
+        messages,
         modalities: ['image', 'text'],
       }),
     });
@@ -150,7 +229,7 @@ Deno.serve(async (req) => {
 
     if (!imageUrl || !imageUrl.startsWith('data:image')) {
       console.error('[social-visual-generate] No image in AI response');
-      return new Response(JSON.stringify({ error: 'Aucune image générée par l\'IA' }), { status: 502, headers: jsonHeaders });
+      return new Response(JSON.stringify({ error: "Aucune image générée par l'IA" }), { status: 502, headers: jsonHeaders });
     }
 
     // Convert base64 to Uint8Array
@@ -164,10 +243,11 @@ Deno.serve(async (req) => {
     // Build storage path
     const now = new Date();
     const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const monthStr = String(now.getMonth() + 1).padStart(2, '0');
     const timestamp = Math.floor(now.getTime() / 1000);
-    const filename = `ai-visual-${timestamp}.png`;
-    const storagePath = `${agencyId}/${year}/${month}/${suggestionId}/${filename}`;
+    const mode = realPhotoUrl ? 'photo' : 'generated';
+    const filename = `${mode}-${timestamp}.png`;
+    const storagePath = `${agencyId}/${year}/${monthStr}/${suggestionId}/${filename}`;
 
     // Upload
     const { error: uploadError } = await adminSupabase.storage
@@ -180,6 +260,7 @@ Deno.serve(async (req) => {
     }
 
     // Persist asset
+    const visualStrategy = realPhotoUrl ? 'photo_realisation' : 'illustration_generee';
     const { data: asset, error: insertError } = await adminSupabase
       .from('social_visual_assets')
       .insert({
@@ -197,7 +278,8 @@ Deno.serve(async (req) => {
           platform: 'base',
           universe,
           generated_at: now.toISOString(),
-          source: 'ai_nanobana_v1',
+          source: realPhotoUrl ? 'ai_photo_edit_v2' : 'ai_generated_v2',
+          mode,
           prompt_used: imagePrompt.substring(0, 500),
         },
       })
@@ -214,13 +296,14 @@ Deno.serve(async (req) => {
       .from('social-visuals')
       .createSignedUrl(storagePath, 3600);
 
-    console.log('[social-visual-generate] Success:', asset.id);
+    console.log('[social-visual-generate] Success:', asset.id, 'mode:', mode);
 
     return new Response(JSON.stringify({
       success: true,
       asset_id: asset.id,
       storage_path: storagePath,
       signed_url: signedData?.signedUrl || null,
+      mode,
     }), { status: 200, headers: jsonHeaders });
 
   } catch (err) {
@@ -229,73 +312,24 @@ Deno.serve(async (req) => {
   }
 });
 
-// ─── Prompt builder ─────────────────────────────────────────
-function buildImagePrompt(params: {
-  title: string;
-  hook: string;
-  cta: string;
-  universe: string;
-  color: string;
-  serviceLabel: string;
-  visualPrompt: string;
-  visualStrategy: string;
-  visualComposition: string;
-  brandingGuidelines: string;
-  topicType: string;
-}): string {
-  const {
-    title, hook, cta, universe, color, serviceLabel,
-    visualPrompt, visualComposition, brandingGuidelines, topicType,
-  } = params;
+// ─── Helpers ────────────────────────────────────────────────
 
-  // Base visual description from AI payload or fallback
-  const sceneDescription = visualPrompt ||
-    `Professional French home repair scene related to ${serviceLabel.toLowerCase()}, modern interior, realistic lighting, clean environment`;
+function truncateText(text: string, maxLen: number): string {
+  if (text.length <= maxLen) return text;
+  return text.substring(0, maxLen - 1).trim() + '…';
+}
 
-  // Topic-specific style guidance
-  let styleGuidance = '';
-  switch (topicType) {
-    case 'realisation':
-      styleGuidance = 'Style: before/after home repair showcase, professional result, clean finish, satisfaction visible';
-      break;
-    case 'seasonal_tip':
-      styleGuidance = 'Style: educational infographic feel, clear visual hierarchy, helpful and approachable';
-      break;
-    case 'awareness_day':
-      styleGuidance = 'Style: prevention/awareness poster, impactful, editorial feel, serious but accessible';
-      break;
-    case 'local_branding':
-      styleGuidance = 'Style: brand confidence, local proximity, professional team, trustworthy';
-      break;
-    default:
-      styleGuidance = 'Style: professional, modern, trustworthy';
-  }
-
-  return `Create a premium social media visual (1080x1080 pixels, square format) for a French home repair company called "Help Confort".
-
-SCENE: ${sceneDescription}
-
-TITLE TEXT ON IMAGE: "${title}"
-${cta ? `CTA TEXT: "${cta}"` : ''}
-
-BRAND REQUIREMENTS:
-- Primary color: ${color} (${serviceLabel})
-- Include "Help Confort" branding text at the bottom
-- Clean, modern, mobile-readable design
-- Professional typography hierarchy
-- ${brandingGuidelines || `Use ${color} as accent color throughout`}
-
-${visualComposition ? `COMPOSITION: ${visualComposition}` : 'COMPOSITION: Main visual centered, title at top or center with high contrast, branding bar at bottom'}
-
-${styleGuidance}
-
-CRITICAL RULES:
-- Square 1080x1080 format
-- Text must be legible on mobile
-- Professional quality, NOT clip art or cartoon
-- Realistic or editorial photography style
-- French language for all text
-- NO emojis in the visual
-- Color scheme must use ${color} prominently
-- Clean white or dark background sections for text readability`;
+function getSceneForUniverse(universe: string): string {
+  const scenes: Record<string, string> = {
+    plomberie: 'repair scene showing modern bathroom or kitchen plumbing work, clean pipes, professional tools, blue accent tones',
+    electricite: 'electrical work scene with modern electrical panel, clean wiring, professional electrician tools, warm orange lighting',
+    serrurerie: 'door security installation, modern lock system, professional locksmith work, residential entrance',
+    menuiserie: 'woodwork installation, custom carpentry, beautiful wooden finish, warm natural tones',
+    vitrerie: 'window glass replacement or installation, clean transparent glass, modern French windows',
+    volets: 'roller shutter installation on French building facade, modern motorized shutters',
+    pmr: 'accessible bathroom renovation with walk-in shower, grab bars, accessibility features',
+    renovation: 'home renovation in progress, modern French apartment transformation, clean construction site',
+    general: 'professional home repair service, French residential interior, clean and organized workspace',
+  };
+  return scenes[universe] || scenes.general;
 }

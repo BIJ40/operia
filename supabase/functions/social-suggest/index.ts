@@ -1,7 +1,6 @@
 /**
  * social-suggest — Edge Function pour générer des suggestions de posts social media.
- * 
- * Flux : auth → load context → call AI (tool calling) → validate → persist suggestions + variants → return IDs.
+ * V6 : Lead engine, localisation, scoring, urgency levels.
  * 
  * Conventions figées :
  * - Storage path : {agency_id}/{year}/{month}/{suggestion_id}/{filename}
@@ -15,7 +14,7 @@ import { getUserContext, assertAgencyAccess } from '../_shared/auth.ts';
 import { validateUUID } from '../_shared/validation.ts';
 import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 
-// ─── Awareness days dataset (embedded subset for edge function) ───
+// ─── Awareness days dataset ───
 const AWARENESS_DAYS = [
   { month: 1, day: 15, label: "Prévention gel canalisations", tags: ["eau","urgence","plomberie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie"], ctaHint: "urgence_gel" },
   { month: 2, day: 10, label: "Économies d'énergie", tags: ["energie","habitat"], contentTypeHint: "pedagogique", preferredUniverses: ["electricite","plomberie"], ctaHint: "audit_energetique" },
@@ -37,6 +36,9 @@ const AWARENESS_DAYS = [
 const NORMALIZED_UNIVERSES = ['plomberie', 'electricite', 'serrurerie', 'vitrerie', 'menuiserie', 'renovation', 'volets', 'pmr', 'general'] as const;
 const VALID_PLATFORMS = ['facebook', 'instagram', 'google_business', 'linkedin'] as const;
 const VALID_TOPIC_TYPES = ['awareness_day', 'seasonal_tip', 'realisation', 'local_branding'] as const;
+const VALID_LEAD_TYPES = ['urgence', 'prevention', 'amelioration', 'preuve_sociale', 'saisonnier'] as const;
+const VALID_TARGET_INTENTS = ['besoin_immediat', 'besoin_latent', 'curiosite', 'education'] as const;
+const VALID_URGENCY_LEVELS = ['low', 'medium', 'high'] as const;
 
 // ─── Universe keyword inference ───
 const UNIVERSE_KEYWORDS: Record<string, string[]> = {
@@ -84,6 +86,10 @@ interface ValidatedSuggestion {
   visual_prompt: string | null;
   visual_composition: string | null;
   branding_guidelines: string | null;
+  lead_score: number;
+  lead_type: string | null;
+  urgency_level: string;
+  target_intent: string | null;
   platform_variants: Record<string, { caption: string; cta: string | null }>;
 }
 
@@ -103,51 +109,46 @@ function validateAndNormalizeSuggestions(
   for (const s of raw) {
     if (!s || typeof s !== 'object') continue;
 
-    // 1. Validate date is in target month
+    // 1. Validate date
     let date = String(s.suggestion_date || '');
     if (!date.startsWith(monthKey)) {
-      // Force date into target month
       const day = Math.min(Math.max(parseInt(date.split('-')[2]) || 15, 1), daysInMonth);
       date = `${monthKey}-${String(day).padStart(2, '0')}`;
     }
     const dayNum = parseInt(date.split('-')[2]);
-    if (dayNum < 1 || dayNum > daysInMonth) {
-      date = `${monthKey}-15`;
-    }
+    if (dayNum < 1 || dayNum > daysInMonth) date = `${monthKey}-15`;
 
-    // 2. Validate topic_type
-    const topicType = (VALID_TOPIC_TYPES as readonly string[]).includes(s.topic_type)
-      ? s.topic_type : 'seasonal_tip';
+    // 2. topic_type
+    const topicType = (VALID_TOPIC_TYPES as readonly string[]).includes(s.topic_type) ? s.topic_type : 'seasonal_tip';
 
-    // 3. Validate topic_key (deduplicate)
+    // 3. topic_key dedup
     const topicKey = String(s.topic_key || `${topicType}_${date}`);
     if (seenTopicKeys.has(topicKey) || existingTopicKeys.has(topicKey)) continue;
     seenTopicKeys.add(topicKey);
 
-    // 4. Validate universe
-    const universe = (NORMALIZED_UNIVERSES as readonly string[]).includes(s.universe)
-      ? s.universe : 'general';
+    // 4. universe
+    const universe = (NORMALIZED_UNIVERSES as readonly string[]).includes(s.universe) ? s.universe : 'general';
 
-    // 5. Validate realisation_id coherence
+    // 5. realisation_id
     let realisationId: string | null = null;
     if (topicType === 'realisation' && s.realisation_id && validRealisationIds.has(s.realisation_id)) {
       realisationId = s.realisation_id;
     }
 
-    // 6. Validate caption length
+    // 6. caption
     const captionBase = String(s.caption_base_fr || '').substring(0, 2000);
-    if (captionBase.length < 10) continue; // Too short, skip
+    if (captionBase.length < 10) continue;
 
-    // 7. Validate title
+    // 7. title
     const title = String(s.title || '').substring(0, 200);
     if (title.length < 3) continue;
 
-    // 8. Validate hashtags
+    // 8. hashtags
     const hashtags = Array.isArray(s.hashtags)
       ? s.hashtags.filter((h: any) => typeof h === 'string' && h.length > 0).slice(0, 10)
       : [];
 
-    // 9. Validate platform variants (only allowed platforms)
+    // 9. platform variants
     const platformVariants: Record<string, { caption: string; cta: string | null }> = {};
     const rawVariants = s.platform_variants || {};
     for (const p of VALID_PLATFORMS) {
@@ -160,7 +161,7 @@ function validateAndNormalizeSuggestions(
       }
     }
 
-    // 10. Extract V5 fields
+    // 10. V5 fields
     const hook = String(s.hook || '').substring(0, 500) || title;
     const cta = String(s.cta || 'Contactez-nous').substring(0, 200);
     const storytellingType = s.storytelling_type ? String(s.storytelling_type).substring(0, 50) : null;
@@ -169,6 +170,12 @@ function validateAndNormalizeSuggestions(
     const visualPrompt = s.visual_prompt ? String(s.visual_prompt).substring(0, 1000) : null;
     const visualComposition = s.visual_composition ? String(s.visual_composition).substring(0, 500) : null;
     const brandingGuidelines = s.branding_guidelines ? String(s.branding_guidelines).substring(0, 500) : null;
+
+    // 11. V6 lead engine fields
+    const leadScore = Math.min(100, Math.max(0, Number(s.lead_score) || 50));
+    const leadType = (VALID_LEAD_TYPES as readonly string[]).includes(s.lead_type) ? s.lead_type : null;
+    const urgencyLevel = (VALID_URGENCY_LEVELS as readonly string[]).includes(s.urgency_level) ? s.urgency_level : 'medium';
+    const targetIntent = (VALID_TARGET_INTENTS as readonly string[]).includes(s.target_intent) ? s.target_intent : null;
 
     result.push({
       suggestion_date: date,
@@ -189,15 +196,17 @@ function validateAndNormalizeSuggestions(
       visual_prompt: visualPrompt,
       visual_composition: visualComposition,
       branding_guidelines: brandingGuidelines,
+      lead_score: leadScore,
+      lead_type: leadType,
+      urgency_level: urgencyLevel,
+      target_intent: targetIntent,
       platform_variants: platformVariants,
     });
   }
 
-  // 10. Enforce no 2 consecutive posts same universe (reorder if needed)
-  // Simple pass: if same universe appears consecutively, swap with next different
+  // Anti-repetition: no 2 consecutive same universe
   for (let i = 1; i < result.length; i++) {
     if (result[i].universe === result[i - 1].universe && result[i].universe !== 'general') {
-      // Find next different
       for (let j = i + 1; j < result.length; j++) {
         if (result[j].universe !== result[i].universe) {
           [result[i], result[j]] = [result[j], result[i]];
@@ -210,12 +219,12 @@ function validateAndNormalizeSuggestions(
   return result;
 }
 
-// ─── AI tool schema for structured output ───
+// ─── AI tool schema ───
 const SUGGEST_TOOL = {
   type: 'function' as const,
   function: {
     name: 'generate_social_suggestions',
-    description: 'Génère des suggestions de posts social media premium orientés conversion pour le mois cible.',
+    description: 'Génère des suggestions de posts social media premium orientés conversion et leads pour le mois cible.',
     parameters: {
       type: 'object',
       properties: {
@@ -226,33 +235,37 @@ const SUGGEST_TOOL = {
             properties: {
               suggestion_date: { type: 'string', description: 'Date YYYY-MM-DD dans le mois cible' },
               title: { type: 'string', description: 'Titre court et accrocheur (max 200 car.)' },
-              hook: { type: 'string', description: 'Première ligne STOP-SCROLL : choc, curiosité, problème concret. Ex: "Cette fuite coûtait 300€/mois sans que le client s\'en rende compte."' },
+              hook: { type: 'string', description: "Première ligne STOP-SCROLL : choc, curiosité, problème concret. Ex: \"Cette fuite coûtait 300€/mois sans que le client s'en rende compte.\"" },
               content_angle: { type: 'string', description: 'Angle éditorial en 1 phrase' },
               caption_base_fr: { type: 'string', description: 'Texte complet du post : hook + storytelling (situation → problème → intervention → résultat) + CTA. Publiable sans modification.' },
-              cta: { type: 'string', description: 'Call-to-action business naturel et fluide. Ex: "Besoin d\'un diagnostic ?", "Contactez-nous avant que ça empire"' },
+              cta: { type: 'string', description: "CTA business naturel et fluide. Ex: \"Besoin d'un diagnostic ?\", \"Contactez-nous avant que ça empire\"" },
               hashtags: { type: 'array', items: { type: 'string' }, description: 'Hashtags (max 10)' },
               topic_type: { type: 'string', enum: ['awareness_day', 'seasonal_tip', 'realisation', 'local_branding'] },
               topic_key: { type: 'string', description: 'Identifiant unique du sujet' },
               visual_type: { type: 'string', enum: ['photo', 'illustration', 'before_after', 'quote'] },
               universe: { type: 'string', enum: ['plomberie', 'electricite', 'serrurerie', 'vitrerie', 'menuiserie', 'renovation', 'volets', 'pmr', 'general'] },
               realisation_id: { type: 'string', description: 'UUID de la réalisation liée ou null' },
-              storytelling_type: { type: 'string', enum: ['situation_probleme_solution', 'avant_apres', 'temoignage_client', 'conseil_expert', 'prevention_urgence', 'proximite_locale'], description: 'Structure narrative du post' },
-              emotional_trigger: { type: 'string', enum: ['securite', 'economie', 'confort', 'tranquillite', 'urgence', 'confiance'], description: 'Levier émotionnel principal activé' },
-              visual_strategy: { type: 'string', enum: ['photo_realisation', 'illustration_generee', 'photo_stock_contextualisee', 'visuel_typo_only'], description: 'Stratégie visuelle. photo_realisation OBLIGATOIRE si réalisation disponible.' },
-              visual_prompt: { type: 'string', description: 'Prompt descriptif pour générer/trouver le visuel. Réaliste, précis, orienté habitat français. Ex: "Modern French bathroom with water leak under sink, realistic lighting, professional repair context, blue tones"' },
-              visual_composition: { type: 'string', description: 'Description du placement : image, titre, hiérarchie visuelle, zone branding. Ex: "Image en fond, titre en haut, sous-texte centré, bandeau marque en bas"' },
-              branding_guidelines: { type: 'string', description: 'Directives branding spécifiques : couleur univers, placement logo, style. Ex: "Bleu plomberie #2D8BC9, bandeau HelpConfort en bas, design moderne lisible mobile"' },
+              storytelling_type: { type: 'string', enum: ['situation_probleme_solution', 'avant_apres', 'temoignage_client', 'conseil_expert', 'prevention_urgence', 'proximite_locale'] },
+              emotional_trigger: { type: 'string', enum: ['securite', 'economie', 'confort', 'tranquillite', 'urgence', 'confiance'] },
+              visual_strategy: { type: 'string', enum: ['photo_realisation', 'illustration_generee', 'photo_stock_contextualisee', 'visuel_typo_only'] },
+              visual_prompt: { type: 'string', description: "Prompt descriptif pour générer le visuel. Réaliste, précis, orienté habitat français. Ex: \"Modern French bathroom with water leak under sink, realistic lighting\"" },
+              visual_composition: { type: 'string', description: "Placement : image, titre, branding. Ex: \"Image en fond, titre en haut, bandeau marque en bas\"" },
+              branding_guidelines: { type: 'string', description: "Directives branding : couleur univers, style. Ex: \"Bleu plomberie #2D8BC9, bandeau HelpConfort en bas\"" },
+              lead_score: { type: 'number', description: 'Score lead 0-100. >80=fort potentiel, 60-80=bon, <60=faible. Basé sur urgence, clarté besoin, force hook, qualité CTA.' },
+              lead_type: { type: 'string', enum: ['urgence', 'prevention', 'amelioration', 'preuve_sociale', 'saisonnier'], description: 'Type de lead visé' },
+              urgency_level: { type: 'string', enum: ['low', 'medium', 'high'], description: 'high=problème critique, medium=amélioration, low=conseil' },
+              target_intent: { type: 'string', enum: ['besoin_immediat', 'besoin_latent', 'curiosite', 'education'], description: "Intention client ciblée" },
               platform_variants: {
                 type: 'object',
                 properties: {
-                  facebook: { type: 'object', properties: { caption: { type: 'string', description: 'Storytelling + proximité' }, cta: { type: 'string' } }, required: ['caption'] },
-                  instagram: { type: 'object', properties: { caption: { type: 'string', description: 'Impact visuel + caption court' }, cta: { type: 'string' } }, required: ['caption'] },
-                  google_business: { type: 'object', properties: { caption: { type: 'string', description: 'Direct + utile + local' }, cta: { type: 'string' } }, required: ['caption'] },
-                  linkedin: { type: 'object', properties: { caption: { type: 'string', description: 'Crédibilité + expertise' }, cta: { type: 'string' } }, required: ['caption'] },
+                  facebook: { type: 'object', properties: { caption: { type: 'string' }, cta: { type: 'string' } }, required: ['caption'] },
+                  instagram: { type: 'object', properties: { caption: { type: 'string' }, cta: { type: 'string' } }, required: ['caption'] },
+                  google_business: { type: 'object', properties: { caption: { type: 'string' }, cta: { type: 'string' } }, required: ['caption'] },
+                  linkedin: { type: 'object', properties: { caption: { type: 'string' }, cta: { type: 'string' } }, required: ['caption'] },
                 },
               },
             },
-            required: ['suggestion_date', 'title', 'hook', 'caption_base_fr', 'cta', 'topic_type', 'topic_key', 'universe', 'storytelling_type', 'emotional_trigger', 'visual_strategy', 'visual_prompt'],
+            required: ['suggestion_date', 'title', 'hook', 'caption_base_fr', 'cta', 'topic_type', 'topic_key', 'universe', 'storytelling_type', 'emotional_trigger', 'visual_strategy', 'visual_prompt', 'lead_score', 'lead_type', 'urgency_level', 'target_intent'],
             additionalProperties: false,
           },
         },
@@ -264,7 +277,6 @@ const SUGGEST_TOOL = {
 };
 
 Deno.serve(async (req) => {
-  // CORS
   const corsResult = handleCorsPreflightOrReject(req);
   if (corsResult) return corsResult;
 
@@ -274,29 +286,24 @@ Deno.serve(async (req) => {
   try {
     if (req.method !== 'POST') {
       return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-        status: 405,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Auth
     const authResult = await getUserContext(req);
     if (!authResult.success) {
       return new Response(JSON.stringify({ error: authResult.error }), {
-        status: authResult.status,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: authResult.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     const { context, supabase: userSupabase } = authResult;
 
-    // Rate limit: 5 generations per hour per user
     const rlResult = await checkRateLimit(`social-suggest:${context.userId}`, { limit: 5, windowMs: 3600_000 });
     if (!rlResult.allowed) {
       return rateLimitResponse(rlResult.retryAfter!, corsHeaders);
     }
 
-    // Parse body
     const body = await req.json();
     const month = Number(body.month);
     const year = Number(body.year);
@@ -316,7 +323,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Agency access
     const accessCheck = assertAgencyAccess(context, agencyId);
     if (!accessCheck.allowed) {
       return new Response(JSON.stringify({ error: accessCheck.error }), {
@@ -326,7 +332,6 @@ Deno.serve(async (req) => {
 
     const monthKey = `${year}-${String(month).padStart(2, '0')}`;
 
-    // Admin supabase for writes
     const adminSupabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
@@ -334,10 +339,20 @@ Deno.serve(async (req) => {
     );
 
     // ─── Load context data ───────────────────────────
-    // 1. Awareness days for this month
     const monthAwareness = AWARENESS_DAYS.filter(d => d.month === month);
 
-    // 2. Realisations with media (last 6 months, exploitable)
+    // Load agency info for localization
+    const { data: agency } = await adminSupabase
+      .from('apogee_agencies')
+      .select('label, ville, code_postal')
+      .eq('id', agencyId)
+      .single();
+
+    const agencyName = agency?.label || 'Help Confort';
+    const agencyCity = agency?.ville || '';
+    const agencyZone = agencyCity ? `${agencyCity} (${agency?.code_postal || ''})` : '';
+
+    // Realisations with media
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
     
@@ -367,7 +382,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Filter to exploitable realisations (have before+after or at least 1 media)
     const exploitableReals = (realisations || [])
       .filter(r => {
         const mp = realisationMedia[r.id];
@@ -388,7 +402,7 @@ Deno.serve(async (req) => {
       .eq('agency_id', agencyId)
       .eq('month_key', monthKey);
 
-    // 4. Calendar entries to protect scheduled/published suggestions
+    // Calendar protection
     const protectedSuggestionIds = new Set<string>();
     const { data: calendarEntries } = await adminSupabase
       .from('social_calendar_entries')
@@ -400,7 +414,6 @@ Deno.serve(async (req) => {
       if (ce.suggestion_id) protectedSuggestionIds.add(ce.suggestion_id);
     }
 
-    // Build existing topic keys set for dedup
     const existingTopicKeys = new Set(
       (existingSuggestions || [])
         .filter(s => s.status === 'approved' || protectedSuggestionIds.has(s.id))
@@ -409,18 +422,16 @@ Deno.serve(async (req) => {
     );
 
     // ─── Regeneration logic ──────────────────────────
+    let singleContext: any = null;
     if (regenerateSingle && singleSuggestionId) {
-      // Check if protected by calendar
       if (protectedSuggestionIds.has(singleSuggestionId)) {
         return new Response(JSON.stringify({ error: 'Cette suggestion est liée à une publication planifiée ou publiée et ne peut pas être régénérée.' }), {
           status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
-      // Load original context for targeted regeneration
       const originalSuggestion = (existingSuggestions || []).find(s => s.id === singleSuggestionId);
 
-      // Archive only the single draft/rejected suggestion
       await adminSupabase
         .from('social_content_suggestions')
         .update({ status: 'archived' })
@@ -428,22 +439,19 @@ Deno.serve(async (req) => {
         .eq('agency_id', agencyId)
         .in('status', ['draft', 'rejected']);
 
-      // Archive its variants
       await adminSupabase
         .from('social_post_variants')
         .update({ status: 'archived' })
         .eq('suggestion_id', singleSuggestionId)
         .eq('agency_id', agencyId);
 
-      // Build regeneration context from original
-      var singleContext = originalSuggestion ? {
+      singleContext = originalSuggestion ? {
         original_date: originalSuggestion.suggestion_date,
         original_topic_type: originalSuggestion.topic_type,
         original_universe: originalSuggestion.universe,
         original_realisation_id: originalSuggestion.realisation_id,
       } : null;
     } else {
-      // Full month regeneration: archive draft/rejected only, EXCLUDING protected
       const toArchiveIds = (existingSuggestions || [])
         .filter(s => (s.status === 'draft' || s.status === 'rejected') && !protectedSuggestionIds.has(s.id))
         .map(s => s.id);
@@ -461,15 +469,12 @@ Deno.serve(async (req) => {
           .in('suggestion_id', toArchiveIds)
           .eq('agency_id', agencyId);
       }
-
-      var singleContext = null;
     }
 
-    // Count approved/protected suggestions that remain
     const approvedCount = (existingSuggestions || []).filter(s => s.status === 'approved' || protectedSuggestionIds.has(s.id)).length;
     const targetPostCount = regenerateSingle ? 1 : Math.max(4, 12 - approvedCount);
 
-    // ─── AI Generation via tool calling ──────────────
+    // ─── AI Generation ──────────────────────────────
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       return new Response(JSON.stringify({ error: 'Service IA non configuré' }), {
@@ -477,9 +482,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    const systemPrompt = `Tu es simultanément directeur éditorial, copywriter expert conversion, social media strategist local et directeur artistique. Tu travailles pour HelpConfort (réseau dépannage & rénovation habitat).
+    const systemPrompt = `Tu es simultanément directeur éditorial, copywriter expert conversion locale, growth marketer et directeur artistique.
+Tu travailles pour HelpConfort (dépannage & rénovation habitat).
 
-Tu produis du contenu social media PREMIUM orienté visibilité, engagement et conversion client. Chaque post doit pouvoir générer un appel ou une prise de contact.
+Tu produis des posts social media PREMIUM orientés :
+→ visibilité locale
+→ engagement
+→ génération de leads
+Chaque post doit pouvoir générer une prise de contact.
 
 EXIGENCE ABSOLUE :
 - Chaque post doit être publiable sans modification
@@ -487,31 +497,44 @@ EXIGENCE ABSOLUE :
 - Être crédible immédiatement
 - Être compréhensible en 2-3 secondes
 
+LEAD ENGINE (CRITIQUE) :
+Tu dois produire des posts qui captent des INTENTIONS RÉELLES.
+- lead_type : urgence (panne/fuite/sécurité), prevention (éviter problème), amelioration (confort/rénovation), preuve_sociale (réalisation), saisonnier
+- target_intent : besoin_immediat, besoin_latent, curiosite, education
+- lead_score 0-100 : basé sur urgence du problème, clarté du besoin, proximité cas réel, force du hook, qualité du CTA. >80=fort potentiel, 60-80=bon, <60=à améliorer
+- urgency_level : high=problème critique (fuite, électricité, serrure), medium=amélioration importante, low=conseil léger
+
 HOOK (STOP SCROLL — OBLIGATOIRE) :
 La première ligne doit créer un choc ou une curiosité, être spécifique, parler d'un vrai problème.
 Exemples : "Cette fuite coûtait 300€ par mois sans que le client s'en rende compte.", "Ce tableau électrique pouvait déclencher un incendie."
 
 CTA (OBLIGATOIRE — BUSINESS) :
 Chaque post contient un CTA naturel et fluide, jamais agressif :
-"Besoin d'un diagnostic ?", "Contactez-nous avant que ça empire", "Un doute ? On vérifie pour vous"
+"Besoin d'un diagnostic ?", "Contactez-nous avant que ça empire", "Intervention rapide dans votre secteur"
 
 STORYTELLING OBLIGATOIRE :
 1. situation réelle → 2. problème → 3. intervention → 4. résultat / bénéfice
 
 EMOTIONAL TRIGGER :
-Chaque post active : sécurité (incendie, fuite, panne), économie (facture, dégâts), confort ou tranquillité.
+Chaque post active : securite, economie, confort, tranquillite, urgence ou confiance.
 
 RÉPARTITION BUSINESS :
 - 50% RÉALISATIONS (preuve sociale)
-- 20% CONSEILS (valeur)
-- 20% PRÉVENTION (urgence implicite)
-- 10% CRÉATIF / VIRAL (visibilité)
+- 25% URGENCE / PROBLÈMES
+- 15% CONSEILS
+- 10% CRÉATIF
+
+LOCALISATION (OBLIGATOIRE) :
+${agencyZone ? `Zone d'intervention : ${agencyZone}. Adapter le contenu : mention subtile de la zone, contexte local (climat, habitat), proximité client.` : "Adapter le contenu avec proximité locale."}
+${agencyName ? `Nom de l'agence : ${agencyName}.` : ''}
+Exemples : "Intervention récente à [ville]", "Dans notre secteur, on voit souvent ce problème…"
 
 VISUEL — EXIGENCE MAX :
 - SI réalisation existe → FORCER photo_realisation
 - SINON → illustration_generee de qualité
-- INTERDIT : emoji comme visuel, visuel vide
+- INTERDIT : emoji comme visuel, visuel vide, fond dégradé seul
 - visual_prompt = réaliste, précis, professionnel, orienté habitat français
+- UN VISUEL SANS IMAGE EST INTERDIT
 
 BRANDING STRICT :
 - Couleurs : plomberie=#2D8BC9, electricite=#F8A73C, serrurerie=#E22673, menuiserie=#EF8531, vitrerie=#90C14E, volets=#A23189, pmr=#3C64A2, renovation=#B79D84, general=#37474F
@@ -533,12 +556,11 @@ CRÉATIVITÉ CONTRÔLÉE (10% max) : humour léger, détournement, saisonnalité
 UNIVERS MÉTIER AUTORISÉS : ${NORMALIZED_UNIVERSES.join(', ')}
 Toutes les dates doivent être dans le mois cible ${month}/${year}.
 
-TU NE FAIS PAS DU CONTENU. TU CRÉES UN LEVIER D'ACQUISITION CLIENT.`;
+TU NE CRÉES PAS DU CONTENU. TU CRÉES DES OPPORTUNITÉS CLIENTS.`;
 
     let userPrompt: string;
 
     if (regenerateSingle && singleContext) {
-      // Targeted regeneration: preserve context
       userPrompt = `Génère 1 suggestion de post pour le ${singleContext.original_date || `${year}-${String(month).padStart(2, '0')}-15`}.
 
 CONTRAINTES :
@@ -552,17 +574,18 @@ ${monthAwareness.map(a => `- ${a.day}/${month}: ${a.label}`).join('\n')}
 
 RÉALISATIONS EXPLOITABLES :
 ${exploitableReals.length > 0 
-  ? exploitableReals.map(r => `- "${r.title}" (ID: ${r.id}, univers: ${r.universe || 'inconnu'})`).join('\n')
+  ? exploitableReals.map(r => `- "${r.title}" (ID: ${r.id}, univers: ${r.universe || 'inconnu'}, avant/après: ${r.hasBeforeAfter ? 'oui' : 'non'})`).join('\n')
   : '(aucune)'}
 
-Propose un angle DIFFÉRENT du post précédent, tout en gardant le même contexte thématique.`;
+Propose un angle DIFFÉRENT du post précédent, tout en gardant le même contexte thématique.
+IMPORTANT : lead_score doit refléter le potentiel réel de conversion client.`;
     } else {
       userPrompt = `Génère ${targetPostCount} suggestions de posts social media PREMIUM pour le mois ${month}/${year}.
 
 RÉPARTITION BUSINESS OBLIGATOIRE sur ${targetPostCount} posts :
 - ~50% RÉALISATIONS (preuve sociale, cas clients réels)
-- ~20% CONSEILS SAISONNIERS (valeur ajoutée habitat)
-- ~20% PRÉVENTION / JOURNÉES THÉMATIQUES (urgence implicite)
+- ~25% URGENCE / PROBLÈMES (leads directs)
+- ~15% CONSEILS SAISONNIERS (valeur ajoutée habitat)
 - ~10% CRÉATIF / BRANDING LOCAL (visibilité, proximité)
 
 JOURNÉES THÉMATIQUES DU MOIS :
@@ -576,7 +599,12 @@ ${exploitableReals.length > 0
 SUJETS DÉJÀ EXISTANTS (à ne pas dupliquer) :
 ${[...existingTopicKeys].join(', ') || '(aucun)'}
 
-RAPPEL : chaque post DOIT avoir un hook stop-scroll en première ligne, un CTA business naturel, et un visual_prompt exploitable pour la génération de visuel.`;
+RAPPEL CRITIQUE :
+- Chaque post DOIT avoir un hook stop-scroll, un CTA business, un visual_prompt exploitable
+- lead_score DOIT refléter le potentiel réel de conversion
+- Posts urgence (fuite, panne, sécurité) → lead_score > 80, urgency_level = high
+- Posts réalisation avec photos → lead_score > 70
+- visual_prompt = scène RÉALISTE habitat français, JAMAIS un fond vide`;
     }
 
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -618,7 +646,6 @@ RAPPEL : chaque post DOIT avoir un hook stop-scroll en première ligne, un CTA b
 
     const aiData = await aiResponse.json();
 
-    // Extract from tool call response
     let rawSuggestions: any[];
     try {
       const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
@@ -626,7 +653,6 @@ RAPPEL : chaque post DOIT avoir un hook stop-scroll en première ligne, un CTA b
         const parsed = JSON.parse(toolCall.function.arguments);
         rawSuggestions = parsed.suggestions;
       } else {
-        // Fallback: try content as JSON (some models may not honor tool_choice)
         const rawContent = aiData.choices?.[0]?.message?.content || '';
         const jsonStr = rawContent.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
         const parsed = JSON.parse(jsonStr);
@@ -640,7 +666,6 @@ RAPPEL : chaque post DOIT avoir un hook stop-scroll en première ligne, un CTA b
       });
     }
 
-    // ─── Validate post-AI ────────────────────────────
     const validatedSuggestions = validateAndNormalizeSuggestions(
       rawSuggestions, month, year, exploitableReals, existingTopicKeys
     );
@@ -656,13 +681,11 @@ RAPPEL : chaque post DOIT avoir un hook stop-scroll en première ligne, un CTA b
     const persistedSuggestions: any[] = [];
 
     for (const s of validatedSuggestions) {
-      // Determine source_type
       let sourceType = 'ai_seasonal';
       if (s.topic_type === 'awareness_day') sourceType = 'ai_awareness';
       else if (s.topic_type === 'realisation') sourceType = 'ai_realisation';
       if (regenerateSingle) sourceType = 'regenerated';
 
-      // Build ai_payload with V5 editorial & visual data
       const aiPayload = {
         hook: s.hook,
         cta: s.cta,
@@ -672,10 +695,13 @@ RAPPEL : chaque post DOIT avoir un hook stop-scroll en première ligne, un CTA b
         visual_prompt: s.visual_prompt,
         visual_composition: s.visual_composition,
         branding_guidelines: s.branding_guidelines,
-        generation_version: 'v5',
+        lead_score: s.lead_score,
+        lead_type: s.lead_type,
+        urgency_level: s.urgency_level,
+        target_intent: s.target_intent,
+        generation_version: 'v6',
       };
 
-      // Insert suggestion
       const { data: inserted, error: insertErr } = await adminSupabase
         .from('social_content_suggestions')
         .insert({
@@ -692,7 +718,7 @@ RAPPEL : chaque post DOIT avoir un hook stop-scroll en première ligne, un CTA b
           topic_key: s.topic_key,
           realisation_id: s.realisation_id,
           universe: s.universe,
-          relevance_score: null,
+          relevance_score: s.lead_score,
           status: 'draft',
           generation_batch_id: batchId,
           source_type: sourceType,
