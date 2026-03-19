@@ -7,7 +7,7 @@ import {
   getTheme, HC, roundRect,
   drawGradientBg, drawHCFooterBar, drawHCLogo,
   drawContain, drawHookText, drawSubText, drawCTAButton,
-  drawCinematicOverlay,
+  drawCinematicOverlay, drawUniversePill,
 } from './canvasHelpers';
 import bannerSrc from '@/assets/banniere_helpconfort.jpg';
 import logoSrc from '@/assets/help-confort-services-logo.png';
