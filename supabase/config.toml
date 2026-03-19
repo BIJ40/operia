@@ -210,3 +210,6 @@ verify_jwt = false
 
 [functions.get-zones-deplacement]
 verify_jwt = true
+
+[functions.social-suggest]
+verify_jwt = true
