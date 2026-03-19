@@ -39,30 +39,18 @@ export async function drawRealisationCard(ctx: CanvasRenderingContext2D, payload
     return;
   }
 
-  // ─── Full-bleed image or branded background ───
-  if (payload.mediaUrl) {
-    try {
-      const img = await loadImage(payload.mediaUrl);
-      drawCover(ctx, img, 0, 0, SIZE, SIZE);
-    } catch { /* fallback below */ }
-  }
-
-  // If no media, draw branded gradient
-  if (!payload.mediaUrl) {
+  // ─── Full-bleed real photo ───
+  try {
+    const img = await loadImage(payload.mediaUrl);
+    drawCover(ctx, img, 0, 0, SIZE, SIZE);
+  } catch {
+    // Photo failed to load — show error state
     ctx.fillStyle = HC.grayDark;
     ctx.fillRect(0, 0, SIZE, SIZE);
-    // Decorative circle
-    ctx.fillStyle = theme.bg;
-    ctx.globalAlpha = 0.15;
-    ctx.beginPath();
-    ctx.arc(SIZE * 0.7, SIZE * 0.35, 300, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-    // Placeholder icon
-    ctx.font = 'bold 140px sans-serif';
+    ctx.fillStyle = HC.white;
+    ctx.font = '28px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(255,255,255,0.12)';
-    ctx.fillText('🔧', SIZE / 2, SIZE * 0.45);
+    ctx.fillText('Photo introuvable', SIZE / 2, SIZE / 2);
   }
 
   // ─── Universe overlay tint ───
