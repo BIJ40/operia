@@ -531,20 +531,26 @@ ${exploitableReals.length > 0
 
 Propose un angle DIFFÉRENT du post précédent, tout en gardant le même contexte thématique.`;
     } else {
-      userPrompt = `Génère ${targetPostCount} suggestions de posts social media pour le mois ${month}/${year}.
+      userPrompt = `Génère ${targetPostCount} suggestions de posts social media PREMIUM pour le mois ${month}/${year}.
+
+RÉPARTITION BUSINESS OBLIGATOIRE sur ${targetPostCount} posts :
+- ~50% RÉALISATIONS (preuve sociale, cas clients réels)
+- ~20% CONSEILS SAISONNIERS (valeur ajoutée habitat)
+- ~20% PRÉVENTION / JOURNÉES THÉMATIQUES (urgence implicite)
+- ~10% CRÉATIF / BRANDING LOCAL (visibilité, proximité)
 
 JOURNÉES THÉMATIQUES DU MOIS :
 ${monthAwareness.map(a => `- ${a.day}/${month}: ${a.label} (tags: ${a.tags.join(', ')})`).join('\n')}
 
-RÉALISATIONS EXPLOITABLES :
+RÉALISATIONS EXPLOITABLES (PRIORITÉ ABSOLUE pour les posts réalisation) :
 ${exploitableReals.length > 0 
   ? exploitableReals.map(r => `- "${r.title}" (ID: ${r.id}, ${r.intervention_date}, univers: ${r.universe || 'inconnu'}, avant/après: ${r.hasBeforeAfter ? 'oui' : 'non'})`).join('\n')
-  : '(aucune réalisation exploitable ce mois-ci)'}
+  : '(aucune réalisation exploitable — remplacer par conseils concrets terrain)'}
 
 SUJETS DÉJÀ EXISTANTS (à ne pas dupliquer) :
 ${[...existingTopicKeys].join(', ') || '(aucun)'}
 
-RÉPARTITION CIBLE par semaine : 1 réalisation + 1 conseil saisonnier + 1 opportunité calendrier/prévention.`;
+RAPPEL : chaque post DOIT avoir un hook stop-scroll en première ligne, un CTA business naturel, et un visual_prompt exploitable pour la génération de visuel.`;
     }
 
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
