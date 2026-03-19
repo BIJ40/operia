@@ -169,9 +169,33 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
           )}
         </div>
 
-        {/* Preview image */}
+        <div className="flex items-center gap-1 mb-1">
+          <Button
+            size="sm"
+            variant={renderMode === 'canvas' ? 'default' : 'ghost'}
+            className="h-5 text-[10px] px-2"
+            onClick={() => setRenderMode('canvas')}
+          >
+            Canvas
+          </Button>
+          <Button
+            size="sm"
+            variant={renderMode === 'image' ? 'default' : 'ghost'}
+            className="h-5 text-[10px] px-2"
+            onClick={() => setRenderMode('image')}
+          >
+            Image brute
+          </Button>
+        </div>
+
+        {/* Preview */}
         {showPreviewSkeleton ? (
           <Skeleton className="w-full aspect-square rounded-lg" />
+        ) : renderMode === 'canvas' ? (
+          <SocialVisualCanvas
+            payload={canvasPayload}
+            templateId={templateId}
+          />
         ) : previewUrl ? (
           <div className="relative rounded-lg overflow-hidden border border-border">
             <img src={previewUrl} alt="Aperçu visuel" className="w-full h-auto" />
