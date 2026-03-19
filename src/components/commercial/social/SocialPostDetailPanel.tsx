@@ -4,13 +4,15 @@
  * Phase 3 V2 : génération IA via edge function (plus de canvas client).
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Share2, ExternalLink, ImagePlus, Download, RefreshCw, Loader2, Sparkles } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SocialPostCard } from './SocialPostCard';
+import { SocialVisualCanvas, canvasToBlob, type SocialTemplatePayload } from './SocialVisualCanvas';
+import { resolveSocialTemplate } from './templateResolver';
 import { useSocialVisualAssets, useGenerateSocialVisual, downloadSocialVisual, getSignedVisualUrl } from '@/hooks/useSocialVisualAssets';
 import type { SocialSuggestion } from '@/hooks/useSocialSuggestions';
 
@@ -61,6 +63,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const hasVariants = suggestion.variants && suggestion.variants.length > 0;
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
+  const [renderMode, setRenderMode] = useState<'canvas' | 'image'>('canvas');
 
   // Visual assets
   const { data: assets = [], isLoading: assetsLoading } = useSocialVisualAssets(suggestion.id);
@@ -69,6 +72,25 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const latestAsset = assets[0] || null;
   const hasPreview = Boolean(previewUrl);
   const showPreviewSkeleton = (assetsLoading || loadingPreview) && !hasPreview;
+
+  // Build canvas payload from suggestion + AI image as background
+  const aiPayload = (suggestion as any).ai_payload || {};
+  const canvasPayload: SocialTemplatePayload = useMemo(() => ({
+    title: suggestion.title,
+    caption: suggestion.caption_base_fr || '',
+    universe: suggestion.universe,
+    platform: suggestion.platform_targets?.[0] || null,
+    date: suggestion.suggestion_date,
+    mediaUrl: previewUrl || null,
+    hook: aiPayload.hook || suggestion.title,
+    cta: aiPayload.cta || null,
+  }), [suggestion, previewUrl, aiPayload]);
+
+  const templateId = useMemo(() => resolveSocialTemplate({
+    topic_type: suggestion.topic_type,
+    hasMedia: !!previewUrl,
+    universe: suggestion.universe,
+  }), [suggestion.topic_type, previewUrl, suggestion.universe]);
 
   // Load signed URL for latest asset
   useEffect(() => {
@@ -147,9 +169,33 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
           )}
         </div>
 
-        {/* Preview image */}
+        <div className="flex items-center gap-1 mb-1">
+          <Button
+            size="sm"
+            variant={renderMode === 'canvas' ? 'default' : 'ghost'}
+            className="h-5 text-[10px] px-2"
+            onClick={() => setRenderMode('canvas')}
+          >
+            Canvas
+          </Button>
+          <Button
+            size="sm"
+            variant={renderMode === 'image' ? 'default' : 'ghost'}
+            className="h-5 text-[10px] px-2"
+            onClick={() => setRenderMode('image')}
+          >
+            Image brute
+          </Button>
+        </div>
+
+        {/* Preview */}
         {showPreviewSkeleton ? (
           <Skeleton className="w-full aspect-square rounded-lg" />
+        ) : renderMode === 'canvas' ? (
+          <SocialVisualCanvas
+            payload={canvasPayload}
+            templateId={templateId}
+          />
         ) : previewUrl ? (
           <div className="relative rounded-lg overflow-hidden border border-border">
             <img src={previewUrl} alt="Aperçu visuel" className="w-full h-auto" />
