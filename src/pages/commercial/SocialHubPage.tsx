@@ -1,9 +1,14 @@
 /**
  * SocialHubPage — Page principale du module Social Hub (HC Social)
- * Phase 1 : Squelette avec sélecteur mois, filtres, layout 2 colonnes, toggle calendrier/liste.
+ * Phase 2 : Fonctionnel avec génération IA, CRUD, calendrier et liste.
+ *
+ * Conventions figées :
+ * - Storage path : {agency_id}/{year}/{month}/{suggestion_id}/{filename}
+ * - Univers normalisés : plomberie, electricite, serrurerie, vitrerie, menuiserie, renovation, volets, pmr, general
+ * - Statuts : suggestion = validation éditoriale, variant = statut plateforme, calendar = exécution planning
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { format, addMonths, subMonths, startOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Share2, ChevronLeft, ChevronRight, CalendarDays, List, Sparkles, Loader2 } from 'lucide-react';
@@ -11,7 +16,11 @@ import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { getAwarenessDaysForMonth } from '@/data/socialAwarenessDays';
+
+import { useSocialSuggestions, useGenerateSuggestions, useUpdateSuggestionStatus } from '@/hooks/useSocialSuggestions';
+import { SocialCalendarView } from '@/components/commercial/social/SocialCalendarView';
+import { SocialListView } from '@/components/commercial/social/SocialListView';
+import { SocialPostDetailPanel } from '@/components/commercial/social/SocialPostDetailPanel';
 
 type ViewMode = 'calendar' | 'list';
 type TopicFilter = 'all' | 'awareness_day' | 'seasonal_tip' | 'realisation' | 'local_branding';
@@ -38,21 +47,60 @@ export default function SocialHubPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   const [topicFilter, setTopicFilter] = useState<TopicFilter>('all');
   const [platformFilter, setPlatformFilter] = useState<PlatformFilter>('all');
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedSuggestionId, setSelectedSuggestionId] = useState<string | null>(null);
 
   const monthKey = format(currentMonth, 'yyyy-MM');
   const monthLabel = format(currentMonth, 'MMMM yyyy', { locale: fr });
+  const month = currentMonth.getMonth() + 1;
+  const year = currentMonth.getFullYear();
 
-  const awarenessForMonth = useMemo(
-    () => getAwarenessDaysForMonth(currentMonth.getMonth() + 1),
-    [currentMonth]
+  // Data hooks
+  const { data: suggestions = [], isLoading } = useSocialSuggestions(monthKey);
+  const generateMutation = useGenerateSuggestions();
+  const updateStatusMutation = useUpdateSuggestionStatus();
+
+  // Filter suggestions
+  const filteredSuggestions = useMemo(() => {
+    return suggestions.filter(s => {
+      if (topicFilter !== 'all' && s.topic_type !== topicFilter) return false;
+      if (platformFilter !== 'all') {
+        const targets = Array.isArray(s.platform_targets) ? s.platform_targets : [];
+        if (!targets.includes(platformFilter)) return false;
+      }
+      return true;
+    });
+  }, [suggestions, topicFilter, platformFilter]);
+
+  // Selected suggestion
+  const selectedSuggestion = useMemo(
+    () => filteredSuggestions.find(s => s.id === selectedSuggestionId) || null,
+    [filteredSuggestions, selectedSuggestionId]
   );
 
-  const handleGenerate = async () => {
-    setIsGenerating(true);
-    // Phase 2: invoke edge function social-suggest
-    setTimeout(() => setIsGenerating(false), 1500);
-  };
+  // Actions
+  const handleGenerate = useCallback(() => {
+    generateMutation.mutate({ month, year });
+  }, [generateMutation, month, year]);
+
+  const handleApprove = useCallback((id: string) => {
+    updateStatusMutation.mutate({ id, status: 'approved', monthKey });
+  }, [updateStatusMutation, monthKey]);
+
+  const handleReject = useCallback((id: string) => {
+    updateStatusMutation.mutate({ id, status: 'rejected', monthKey });
+  }, [updateStatusMutation, monthKey]);
+
+  const handleRegenerate = useCallback((id: string) => {
+    generateMutation.mutate({ month, year, regenerateSingle: true, suggestionId: id });
+  }, [generateMutation, month, year]);
+
+  // Stats
+  const stats = useMemo(() => {
+    const total = suggestions.length;
+    const approved = suggestions.filter(s => s.status === 'approved').length;
+    const draft = suggestions.filter(s => s.status === 'draft').length;
+    return { total, approved, draft };
+  }, [suggestions]);
 
   return (
     <div className="space-y-4">
@@ -62,14 +110,20 @@ export default function SocialHubPage() {
           <Share2 className="w-5 h-5 text-primary" />
           <h2 className="text-lg font-semibold text-foreground">Social Hub</h2>
           <Badge variant="outline" className="text-xs">Beta</Badge>
+          {stats.total > 0 && (
+            <div className="flex gap-1.5 ml-2">
+              <Badge variant="secondary" className="text-[10px]">{stats.total} posts</Badge>
+              <Badge className="text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">{stats.approved} approuvés</Badge>
+            </div>
+          )}
         </div>
 
         <Button
           onClick={handleGenerate}
-          disabled={isGenerating}
+          disabled={generateMutation.isPending}
           variant="default"
         >
-          {isGenerating ? (
+          {generateMutation.isPending ? (
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
           ) : (
             <Sparkles className="w-4 h-4 mr-2" />
@@ -135,68 +189,63 @@ export default function SocialHubPage() {
       </div>
 
       {/* ─── Main content area ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-[500px]">
-        {/* Left: Calendar or List */}
-        <div className="lg:col-span-2 rounded-lg border border-border bg-card p-4">
-          {viewMode === 'calendar' ? (
-            <CalendarPlaceholder monthKey={monthKey} awarenessCount={awarenessForMonth.length} />
-          ) : (
-            <ListPlaceholder monthKey={monthKey} />
-          )}
+      {isLoading ? (
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-[500px]">
+          {/* Left: Calendar or List */}
+          <div className="lg:col-span-2 rounded-lg border border-border bg-card p-4">
+            {filteredSuggestions.length === 0 ? (
+              <EmptyState viewMode={viewMode} monthKey={monthKey} />
+            ) : viewMode === 'calendar' ? (
+              <SocialCalendarView
+                currentMonth={currentMonth}
+                suggestions={filteredSuggestions}
+                selectedId={selectedSuggestionId}
+                onSelect={setSelectedSuggestionId}
+              />
+            ) : (
+              <SocialListView
+                suggestions={filteredSuggestions}
+                selectedId={selectedSuggestionId}
+                onSelect={setSelectedSuggestionId}
+              />
+            )}
+          </div>
 
-        {/* Right: Detail panel */}
-        <div className="rounded-lg border border-border bg-card p-4">
-          <DetailPanelPlaceholder />
+          {/* Right: Detail panel */}
+          <div className="rounded-lg border border-border bg-card p-4">
+            <SocialPostDetailPanel
+              suggestion={selectedSuggestion}
+              onApprove={handleApprove}
+              onReject={handleReject}
+              onRegenerate={handleRegenerate}
+              isRegenerating={generateMutation.isPending}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
 
-// ─── Placeholder sub-components (Phase 2 will replace) ───────
-
-function CalendarPlaceholder({ monthKey, awarenessCount }: { monthKey: string; awarenessCount: number }) {
+function EmptyState({ viewMode, monthKey }: { viewMode: ViewMode; monthKey: string }) {
+  const Icon = viewMode === 'calendar' ? CalendarDays : List;
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center space-y-3">
-      <CalendarDays className="w-12 h-12 text-muted-foreground/40" />
+    <div className="flex flex-col items-center justify-center h-full text-center space-y-3 py-12">
+      <Icon className="w-12 h-12 text-muted-foreground/40" />
       <div>
-        <p className="text-sm font-medium text-muted-foreground">Calendrier éditorial</p>
+        <p className="text-sm font-medium text-muted-foreground">
+          {viewMode === 'calendar' ? 'Calendrier éditorial' : 'Pipeline éditorial'}
+        </p>
         <p className="text-xs text-muted-foreground/60 mt-1">
-          Mois : {monthKey} — {awarenessCount} journées pertinentes détectées
+          Aucune suggestion pour {monthKey}.
         </p>
       </div>
       <p className="text-xs text-muted-foreground/50 max-w-sm">
         Cliquez sur « Générer les suggestions » pour remplir le calendrier avec des idées de posts adaptées à votre agence.
-      </p>
-    </div>
-  );
-}
-
-function ListPlaceholder({ monthKey }: { monthKey: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center h-full text-center space-y-3">
-      <List className="w-12 h-12 text-muted-foreground/40" />
-      <div>
-        <p className="text-sm font-medium text-muted-foreground">Pipeline éditorial</p>
-        <p className="text-xs text-muted-foreground/60 mt-1">
-          Vue par statut : Brouillons → Approuvés → Planifiés → Publiés
-        </p>
-      </div>
-      <p className="text-xs text-muted-foreground/50 max-w-sm">
-        Aucune suggestion pour {monthKey}. Générez des idées pour commencer.
-      </p>
-    </div>
-  );
-}
-
-function DetailPanelPlaceholder() {
-  return (
-    <div className="flex flex-col items-center justify-center h-full text-center space-y-3">
-      <Share2 className="w-10 h-10 text-muted-foreground/30" />
-      <p className="text-sm text-muted-foreground">Sélectionnez un post</p>
-      <p className="text-xs text-muted-foreground/50 max-w-[200px]">
-        Le détail du post s'affichera ici avec les variantes par plateforme et l'aperçu visuel.
       </p>
     </div>
   );
