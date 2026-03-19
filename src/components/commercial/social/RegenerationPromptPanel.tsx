@@ -58,9 +58,11 @@ export function RegenerationPromptPanel({ onRegenerate, isRegenerating, disabled
   const [audience, setAudience] = useState('tous');
   const [length, setLength] = useState<RegenerationPrompt['length']>('moyen');
 
+  const [freePrompt, setFreePrompt] = useState('');
+
   const handleRegenerate = useCallback(() => {
-    onRegenerate({ tone, keywords: keywords.trim(), audience, length });
-  }, [onRegenerate, tone, keywords, audience, length]);
+    onRegenerate({ tone, keywords: keywords.trim(), audience, length, freePrompt: freePrompt.trim() });
+  }, [onRegenerate, tone, keywords, audience, length, freePrompt]);
 
   if (disabled) return null;
 
