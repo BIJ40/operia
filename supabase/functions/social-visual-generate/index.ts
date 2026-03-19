@@ -137,19 +137,26 @@ Deno.serve(async (req) => {
 
     if (realPhotoUrl) {
       // ─── MODE 1: Edit real photo with branding overlay ───
+      const displayText = hook.length <= 40 ? hook : truncateText(hook, 35);
       imagePrompt = `Take this real photo and create a premium social media visual (1080x1080 square).
 
 LAYOUT (STRICT):
-- The photo fills 75-80% of the canvas (top portion)
-- Below the photo: a clean branded bar with "${serviceLabel}" service indicator
-- At the very bottom: a solid ${color} branded banner with "Help Confort – Dépannage & Travaux" in white text
-- Title overlay on the photo (top or center): "${truncateText(title, 50)}" in bold white text with dark shadow for readability
+- The photo fills 80% of the canvas (top portion)
+- Title overlay on the photo (top-left or center): "${displayText}" in bold white text with dark shadow for readability
+- Small subtitle below title: "${truncateText(cta || 'Help Confort à votre service', 40)}" in smaller white text
+- At the very bottom: a thin ${color} branded banner (max 80px height) with small "Help Confort" logo text in white
+
+TEXT RULES (CRITICAL — NEVER VIOLATE):
+- ALL text must be FULLY VISIBLE — no text may be cut off, truncated, or extend beyond canvas edges
+- Title: max 1 line, LARGE bold white text with dark drop shadow
+- Subtitle: max 1 line, smaller text
+- Leave 40px margin from all edges for any text
+- If text is too long to fit, REDUCE font size — NEVER let text overflow
 
 RULES:
 - Keep the original photo as the HERO visual — it must dominate
-- Title text: max 2 lines, large, bold, white with dark drop shadow
-- Brand bar at bottom: solid ${color} background, white text "Help Confort"
-- Clean, modern, professional
+- Brand bar at bottom: thin, solid ${color} background, small white text "Help Confort"
+- Clean, modern, professional — NOT a cheap template look
 - Square 1080x1080
 - NO emojis, NO clip art
 - French text only`;
@@ -163,33 +170,41 @@ RULES:
       });
     } else {
       // ─── MODE 2: Generate full image from scratch ───
+      const displayText = hook.length <= 40 ? hook : truncateText(hook, 35);
       const sceneDescription = visualPrompt ||
-        `Professional French home ${getSceneForUniverse(universe)}, modern interior, realistic natural lighting, clean and well-maintained environment`;
+        `Professional French home ${getSceneForUniverse(universe)}, realistic close-up showing a real problem or situation, dramatic natural lighting`;
 
       imagePrompt = `Create a premium social media visual (1080x1080 square) for a French home repair company.
 
 SCENE TO GENERATE:
 ${sceneDescription}
 
-The image must look like a REAL PHOTOGRAPH — realistic, professional, high quality.
+The image must look like a REAL PHOTOGRAPH — realistic, professional, close-up on the problem.
+ZOOM on the problem (not the whole house). Dramatic lighting. The viewer must think "I've had this problem."
 
 LAYOUT (STRICT):
-- Generated photo fills 75-80% of the canvas (top portion) — this is a REAL scene, not an illustration
-- Title overlay on the photo: "${truncateText(title, 50)}" in bold white text with dark shadow
-- At the bottom: solid ${color} branded banner with "Help Confort – Dépannage & Travaux" in white text
+- Generated photo fills 80% of the canvas (top portion) — this is a REAL scene, not illustration
+- Title overlay on the photo: "${displayText}" in bold white text with dark shadow
+- Subtitle: "${truncateText(cta || 'Intervention rapide', 35)}" in smaller white text below title
+- At the bottom: thin ${color} branded banner (max 80px) with "Help Confort" in small white text
+
+TEXT RULES (CRITICAL — NEVER VIOLATE):
+- ALL text must be COMPLETELY VISIBLE and READABLE — absolutely NO text cut off or truncated
+- Title: max 1 line, fits entirely within canvas with 40px margins on all sides
+- If text would overflow, REDUCE the font size — NEVER let any character be cut off
+- Every single letter must be visible
 
 COLOR SCHEME:
 - Accent color: ${color} (${serviceLabel})
-- Brand bar: solid ${color} background
+- Brand bar: thin solid ${color} background — NOT a massive banner
 
 RULES:
-- MUST look like a real photograph, NOT a cartoon or illustration
-- Title: max 2 lines, large bold white text with shadow
-- Bottom brand bar: ${color} background, "Help Confort" in white
+- MUST look like a real photograph, NOT cartoon or illustration
+- Professional quality, modern, clean
 - Square 1080x1080
-- Professional quality
 - NO emojis, NO clip art, NO gradients as main visual
-- NO empty backgrounds — there MUST be a realistic scene
+- NO empty backgrounds — realistic scene of a PROBLEM
+- NO massive branding banners — keep it subtle and classy
 - French text only`;
 
       messages.push({ role: 'user', content: imagePrompt });
