@@ -41,6 +41,7 @@ export const MODULES = {
   'commercial.veille': 'commercial.veille',
   'commercial.prospects': 'commercial.prospects',
   'commercial.realisations': 'commercial.realisations',
+  'commercial.social': 'commercial.social',
   'commercial.realisations.photos': 'commercial.realisations.photos',
   'commercial.realisations.generer_avap': 'commercial.realisations.generer_avap',
   'commercial.realisations.onglet_avap': 'commercial.realisations.onglet_avap',

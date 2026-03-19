@@ -59,7 +59,7 @@ export default function SocialHubPage() {
       {/* ─── Header ─── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Share2 className="w-5 h-5 text-orange-500" />
+          <Share2 className="w-5 h-5 text-primary" />
           <h2 className="text-lg font-semibold text-foreground">Social Hub</h2>
           <Badge variant="outline" className="text-xs">Beta</Badge>
         </div>
