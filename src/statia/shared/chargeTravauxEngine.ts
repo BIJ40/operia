@@ -732,6 +732,9 @@ export function computeChargeTravauxAvenirParUnivers(
 
   for (const p of parProjet) {
     const intervs = byProjectId.get(Number(p.projectId)) || [];
+    let placedByDate = false;
+
+    // Try to place by real intervention date first
     for (const itv of intervs) {
       const dates = getInterventionDates(itv);
       const { heuresTech: hTech } = extractHoursFromIntervention(itv);
@@ -744,9 +747,25 @@ export function computeChargeTravauxAvenirParUnivers(
           if (dMs >= bucket.start.getTime() && dMs < bucketEnd.getTime()) {
             bucket.hours += hTech;
             bucket.projectIds.add(p.projectId);
+            placedByDate = true;
             break;
           }
         }
+      }
+    }
+
+    // If no date found, distribute by workflow status
+    if (!placedByDate && p.totalHeuresTech > 0) {
+      let targetWeekIdx: number;
+      switch (p.etatWorkflow) {
+        case 'to_planify_tvx': targetWeekIdx = 1; break; // S+1
+        case 'devis_to_order': targetWeekIdx = 2; break;  // S+2
+        case 'wait_fourn': targetWeekIdx = 3; break;       // S+3
+        default: targetWeekIdx = 2; break;
+      }
+      if (targetWeekIdx < weekBuckets.length) {
+        weekBuckets[targetWeekIdx].hours += p.totalHeuresTech;
+        weekBuckets[targetWeekIdx].projectIds.add(p.projectId);
       }
     }
   }
