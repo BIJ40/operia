@@ -92,12 +92,13 @@ function UnifiedWorkspaceContent() {
     setSearchParams(next, { replace: true });
   }, [searchParams, setActiveTabState, setSearchParams]);
   
-  // Sync depuis URL
+  // Sync depuis URL (only when urlTab changes, not activeTab — avoids race condition)
   useEffect(() => {
-    if (urlTab && urlTab !== activeTab) {
+    if (urlTab) {
       setActiveTabState(urlTab);
     }
-  }, [urlTab, activeTab, setActiveTabState]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlTab]);
   
   // Hooks for tracking
   useStorageQuota();

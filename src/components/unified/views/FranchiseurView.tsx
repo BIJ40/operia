@@ -7,7 +7,7 @@
 
 import { lazy, Suspense, useMemo, useState, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { 
+import {
   Home, GitCompare, Building2, Coins, BarChart3,
   MoreHorizontal, BookOpen, Ticket, HelpCircle, Loader2
 } from 'lucide-react';
@@ -33,15 +33,17 @@ const FranchiseurStats = lazy(() => import('@/franchiseur/pages/FranchiseurStats
 const DiversTabContent = lazy(() => import('@/components/unified/tabs/DiversTabContent'));
 const GuidesTabContent = lazy(() => import('@/components/unified/tabs/GuidesTabContent'));
 const SupportHubTabContent = lazy(() => import('@/components/unified/tabs/AideTabContent'));
+const TicketingTabContent = lazy(() => import('@/components/unified/tabs/TicketingTabContent'));
 
-type FranchiseurTab = 
-  | 'accueil' 
-  | 'periode' 
-  | 'agences' 
-  | 'redevances' 
-  | 'statistiques' 
-  | 'divers' 
+type FranchiseurTab =
+  | 'accueil'
+  | 'periode'
+  | 'agences'
+  | 'redevances'
+  | 'statistiques'
+  | 'divers'
   | 'guides'
+  | 'ticketing'
   | 'support';
 
 interface TabConfig {
@@ -51,7 +53,7 @@ interface TabConfig {
 }
 
 // Ordre fixe des onglets (hors Accueil qui est toujours premier)
-const FIXED_TAB_ORDER: FranchiseurTab[] = ['periode', 'agences', 'redevances', 'statistiques', 'divers', 'guides', 'support'];
+const FIXED_TAB_ORDER: FranchiseurTab[] = ['periode', 'agences', 'redevances', 'statistiques', 'divers', 'guides', 'ticketing', 'support'];
 
 const ALL_TABS: TabConfig[] = [
   { id: 'accueil', label: 'Accueil', icon: Home },
@@ -61,6 +63,7 @@ const ALL_TABS: TabConfig[] = [
   { id: 'statistiques', label: 'Statistiques', icon: BarChart3 },
   { id: 'divers', label: 'Divers', icon: MoreHorizontal },
   { id: 'guides', label: 'Guides', icon: BookOpen },
+  { id: 'ticketing', label: 'Ticketing', icon: Ticket },
   { id: 'support', label: 'Support', icon: HelpCircle },
 ];
 
@@ -77,11 +80,11 @@ function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
   const [searchParams, setSearchParams] = useSearchParams();
   // Use a different URL param when embedded inside AdminHub to avoid conflict with parent's ?tab=
   const urlParamKey = embedded ? 'fTab' : 'tab';
-  
+
   // Support URL ?tab=XXX (standalone) or ?fTab=XXX (embedded) pour navigation directe
   const urlTab = searchParams.get(urlParamKey) as FranchiseurTab | null;
   const [activeTab, setActiveTabState] = useSessionState<FranchiseurTab>('franchiseur_view_tab', urlTab || 'accueil');
-  
+
   // Synchroniser l'URL quand l'onglet change
   const setActiveTab = useCallback((tab: FranchiseurTab) => {
     setActiveTabState(tab);
@@ -93,14 +96,14 @@ function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
     }
     setSearchParams(newParams, { replace: true });
   }, [setActiveTabState, setSearchParams, searchParams, urlParamKey]);
-  
+
   // Sync depuis URL au mount
   useEffect(() => {
     if (urlTab && urlTab !== activeTab) {
       setActiveTabState(urlTab);
     }
   }, [urlTab]);
-  
+
   // Onglets dans l'ordre fixe (Accueil toujours premier)
   const sortedTabs = useMemo(() => {
     const accueilTab = ALL_TABS.find(t => t.id === 'accueil')!;
@@ -110,14 +113,14 @@ function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
     });
     return [accueilTab, ...sorted];
   }, []);
-  
+
   // Mettre à jour le titre de la page selon l'onglet actif
   useEffect(() => {
     const activeTabConfig = sortedTabs.find(t => t.id === activeTab);
     const tabLabel = activeTabConfig?.label || 'Accueil';
     document.title = `${tabLabel} - Réseau HelpConfort`;
   }, [activeTab, sortedTabs]);
-  
+
   // Palette pastel tokenisée (même identité visuelle que les tuiles)
   const tabAccent: Record<FranchiseurTab, AccentThemeKey> = {
     accueil: 'blue',
@@ -127,20 +130,21 @@ function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
     statistiques: 'pink',
     divers: 'neutral',
     guides: 'teal',
+    ticketing: 'cyan',
     support: 'cyan',
   };
-  
+
   const tabButtonClass = (_tabId: FranchiseurTab, isActive: boolean) => `
     relative px-3 py-2.5 rounded-t-2xl border-2 border-b-0 transition-all duration-300 whitespace-nowrap shrink-0 min-w-0
-    ${isActive 
-      ? 'bg-background border-primary/50 border-b-background z-20 -mb-[2px] scale-[1.02] shadow-sm' 
+    ${isActive
+      ? 'bg-background border-primary/50 border-b-background z-20 -mb-[2px] scale-[1.02] shadow-sm'
       : 'bg-muted/40 border-border/50 text-muted-foreground hover:bg-background hover:border-primary/40 hover:scale-105 hover:-translate-y-0.5 hover:shadow-sm'
     }
   `;
-  
+
   // Calculer le padding top selon les bandeaux actifs
   const topPadding = isImpersonating ? 'pt-10' : '';
-  
+
   return (
     <div className={`min-h-screen bg-background ${topPadding}`}>
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FranchiseurTab)} className="flex flex-col h-screen">
@@ -182,38 +186,42 @@ function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
             <div className="border-t-2 border-primary/50 bg-background"></div>
           </div>
         </div>
-        
+
         {/* Contenu des onglets */}
         <main id="main-content" className="flex-1 overflow-auto" role="main">
           <Suspense fallback={<LoadingFallback />}>
             <TabsContent value="accueil" className="mt-0 h-full">
               <FranchiseurHome />
             </TabsContent>
-            
+
             <TabsContent value="periode" className="mt-0">
               <FranchiseurComparison />
             </TabsContent>
-            
+
             <TabsContent value="agences" className="mt-0">
               <FranchiseurAgencies />
             </TabsContent>
-            
+
             <TabsContent value="redevances" className="mt-0">
               <FranchiseurRoyalties />
             </TabsContent>
-            
+
             <TabsContent value="statistiques" className="mt-0">
               <FranchiseurStats />
             </TabsContent>
-            
+
             <TabsContent value="divers" className="mt-0">
               <DiversTabContent />
             </TabsContent>
-            
+
             <TabsContent value="guides" className="mt-0">
               <GuidesTabContent />
             </TabsContent>
-            
+
+            <TabsContent value="ticketing" className="mt-0">
+              <TicketingTabContent />
+            </TabsContent>
+
             <TabsContent value="support" className="mt-0">
               <SupportHubTabContent />
             </TabsContent>

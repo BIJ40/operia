@@ -9,7 +9,7 @@ import { setSentryUser, clearSentryUser } from '@/lib/sentry';
 // SYSTÈME V2.0 - Imports des types et fonctions
 // ============================================================================
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
-import { EnabledModules, ModuleKey, isModuleEnabled as checkModuleEnabled } from '@/types/modules';
+import { EnabledModules, ModuleKey, MODULE_DEFINITIONS, isModuleEnabled as checkModuleEnabled } from '@/types/modules';
 import { 
   hasAccess, hasMinRole,
   type PermissionContext,
@@ -159,7 +159,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!deployedError && Array.isArray(deployedRows)) {
         setDeployedModuleKeys(new Set(deployedRows.map((r: any) => r.key)));
       } else {
-        logAuth.warn('[AUTH] Failed to load deployed module keys', deployedError);
+        logAuth.warn('[AUTH] Failed to load deployed module keys, fallback to local definitions', deployedError);
+        setDeployedModuleKeys(new Set(MODULE_DEFINITIONS.filter(def => def.deployed !== false).map(def => def.key)));
       }
       
       if (profileError) {
