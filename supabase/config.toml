@@ -216,3 +216,6 @@ verify_jwt = true
 
 [functions.social-visual-generate]
 verify_jwt = true
+
+[functions.dispatch-scheduled-social]
+verify_jwt = false
