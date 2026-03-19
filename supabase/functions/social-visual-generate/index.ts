@@ -289,34 +289,22 @@ DESIGN RULES:
 
 CRITICAL: The text must be correctly spelled and perfectly readable. This is a professional ad.`;
 
-    const compResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-3.1-flash-image-preview',
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'text', text: compositionPrompt },
-            { type: 'image_url', image_url: { url: bgImageUrl } },
-          ],
-        }],
-        modalities: ['image', 'text'],
-      }),
-    });
+    const compMessages = [{
+      role: 'user',
+      content: [
+        { type: 'text', text: compositionPrompt },
+        { type: 'image_url', image_url: { url: bgImageUrl } },
+      ],
+    }];
 
-    if (!compResponse.ok) {
-      const errText = await compResponse.text();
-      console.error('[social-visual-generate] Composition error:', compResponse.status, errText);
-      // Fallback: save the background image without composition
-      console.warn('[social-visual-generate] Falling back to background-only image');
+    const compResult = await callImageAIWithFallback(LOVABLE_API_KEY, compMessages);
+
+    if (!compResult.ok) {
+      console.warn('[social-visual-generate] Composition failed, falling back to background-only image');
       return await saveAndReturn(adminSupabase, bgImageUrl, agencyId, suggestionId, universe, realPhotoUrl, 'bg_only', jsonHeaders);
     }
 
-    const compData = await compResponse.json();
+    const compData = compResult.data;
     const finalImageUrl = compData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
     if (!finalImageUrl || !finalImageUrl.startsWith('data:image')) {
