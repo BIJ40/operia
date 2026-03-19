@@ -236,7 +236,7 @@ ADDITIONAL REQUIREMENTS:
     // 2e passe IA : on envoie l'image de fond + instructions de composition
     // pour que l'IA intègre le texte marketing directement dans l'image.
 
-    const hookText = (hook || title || 'Help Confort').toUpperCase().slice(0, 60);
+    const hookText = (hook || title || 'HelpConfort').toUpperCase().slice(0, 60);
     const subText = caption ? caption.slice(0, 90) : '';
     const ctaText = (cta || 'Demandez un devis gratuit').toUpperCase();
 
@@ -268,7 +268,7 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
 4. FOOTER BAR:
    - Position: Very bottom of the image (last 80-90px)
    - Style: Solid blue bar (#0092DD) full width
-   - Text: "Help Confort — Dépannage & Travaux" in white, left-aligned
+   - Text: "HelpConfort — DEPAN40" in white, left-aligned
    - Right side: "${serviceLabel}" in smaller white text
    - Thin orange (#FFB705) line at the top of the blue bar
 
@@ -279,7 +279,7 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
 
 6. BRANDING (top-left):
    - Small white rounded rectangle with subtle shadow
-   - Text "HC" or "Help Confort" logo placeholder in blue (#0092DD)
+   - Text "HC" or "HelpConfort" logo placeholder in blue (#0092DD)
    - Keep it discreet, don't dominate
 
 DESIGN RULES:
