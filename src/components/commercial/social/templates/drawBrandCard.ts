@@ -7,7 +7,7 @@ import {
   getTheme, HC, roundRect,
   drawGradientBg, drawHCFooterBar, drawHCLogo,
   drawContain, drawHookText, drawSubText, drawCTAButton,
-  drawCinematicOverlay,
+  drawCinematicOverlay, drawUniversePill,
 } from './canvasHelpers';
 import bannerSrc from '@/assets/banniere_helpconfort.jpg';
 import logoSrc from '@/assets/help-confort-services-logo.png';
@@ -48,8 +48,11 @@ export async function drawBrandCard(ctx: CanvasRenderingContext2D, payload: Soci
   ctx.fillStyle = HC.orange;
   ctx.fillRect(0, 0, SIZE, 6);
 
-  // ─── 3. Logo HC top-center ───
-  await drawHCLogo(ctx, logoSrc, 'top-center');
+  // ─── 3. Logo HC top-left ───
+  await drawHCLogo(ctx, logoSrc, 'top-left');
+
+  // ─── 3b. Universe pill top-right (if applicable) ───
+  drawUniversePill(ctx, theme, 35);
 
   // ─── 4. Banner (only on solid bg, skip on image bg) ───
   if (!payload.mediaUrl) {
@@ -72,7 +75,7 @@ export async function drawBrandCard(ctx: CanvasRenderingContext2D, payload: Soci
     y: hookY,
     fontSize: 60,
     maxWidth: SIZE - 160,
-    align: 'center',
+    align: 'left',
     color: HC.white,
   });
 
@@ -82,13 +85,13 @@ export async function drawBrandCard(ctx: CanvasRenderingContext2D, payload: Soci
       y: hookBottom + 20,
       fontSize: 28,
       maxWidth: SIZE - 200,
-      align: 'center',
+      align: 'left',
       color: 'rgba(255,255,255,0.88)',
     });
   }
 
   // ─── 7. CTA BUTTON centré ───
-  drawCTAButton(ctx, cta, { y: SIZE - 170, align: 'center' });
+  drawCTAButton(ctx, cta, { y: SIZE - 170, align: 'left' });
 
   // ─── 8. FOOTER ───
   drawHCFooterBar(ctx, theme);
