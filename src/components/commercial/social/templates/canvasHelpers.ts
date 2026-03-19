@@ -92,17 +92,38 @@ export function truncateText(text: string, maxLen: number): string {
   return (lastSpace > maxLen * 0.5 ? truncated.slice(0, lastSpace) : truncated) + '…';
 }
 
-export function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+/**
+ * Word-wrap text to fit within maxWidth.
+ * Optional maxLines param: if set, truncates the last visible line with "…" instead of cutting mid-word.
+ */
+export function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, maxLines?: number): string[] {
   if (!text) return [];
   const words = text.split(' ');
   const lines: string[] = [];
   let currentLine = '';
   for (const word of words) {
     const test = currentLine ? `${currentLine} ${word}` : word;
-    if (ctx.measureText(test).width > maxWidth && currentLine) { lines.push(currentLine); currentLine = word; }
-    else { currentLine = test; }
+    if (ctx.measureText(test).width > maxWidth && currentLine) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = test;
+    }
   }
   if (currentLine) lines.push(currentLine);
+
+  // If maxLines specified and text overflows, add ellipsis to last visible line
+  if (maxLines && lines.length > maxLines) {
+    const truncatedLines = lines.slice(0, maxLines);
+    let lastLine = truncatedLines[maxLines - 1];
+    // Add ellipsis, trimming words until it fits
+    while (ctx.measureText(lastLine + '…').width > maxWidth && lastLine.includes(' ')) {
+      lastLine = lastLine.slice(0, lastLine.lastIndexOf(' '));
+    }
+    truncatedLines[maxLines - 1] = lastLine + '…';
+    return truncatedLines;
+  }
+
   return lines;
 }
 
