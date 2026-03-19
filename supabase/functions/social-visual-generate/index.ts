@@ -37,6 +37,64 @@ const SERVICE_LABELS: Record<string, string> = {
   general: 'Multi-services',
 };
 
+// ─── Multi-model fallback for image generation ─────────────
+const IMAGE_MODELS = [
+  'google/gemini-3.1-flash-image-preview',  // Nano Banana 2 (fast + quality)
+  'google/gemini-2.5-flash-image',           // Nano Banana 1 (fallback)
+  'google/gemini-3-pro-image-preview',       // Pro (last resort, slower)
+];
+
+async function callImageAIWithFallback(
+  apiKey: string,
+  messages: any[],
+): Promise<{ ok: true; data: any; model: string } | { ok: false; status: number; error: string }> {
+  let lastStatus = 502;
+  let lastError = 'All models failed';
+
+  for (const model of IMAGE_MODELS) {
+    console.log(`[social-visual-generate] Trying model: ${model}`);
+    try {
+      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ model, messages, modalities: ['image', 'text'] }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`[social-visual-generate] Success with model: ${model}`);
+        return { ok: true, data, model };
+      }
+
+      const errText = await response.text();
+      console.warn(`[social-visual-generate] ${model} returned ${response.status}: ${errText.slice(0, 200)}`);
+      lastStatus = response.status;
+      lastError = errText;
+
+      // 402 = no credits → same billing, stop
+      if (response.status === 402) {
+        return { ok: false, status: 402, error: 'Crédits IA insuffisants.' };
+      }
+
+      // 429 = rate limited → try next model
+      if (response.status === 429) {
+        console.log(`[social-visual-generate] ${model} rate limited, trying next...`);
+        continue;
+      }
+
+      continue;
+    } catch (err) {
+      console.error(`[social-visual-generate] ${model} fetch error:`, err);
+      continue;
+    }
+  }
+
+  return { ok: false, status: lastStatus, error: lastError };
+}
+
 Deno.serve(async (req) => {
   const corsResult = handleCorsPreflightOrReject(req);
   if (corsResult) return corsResult;
@@ -206,32 +264,16 @@ ADDITIONAL REQUIREMENTS:
 
     console.log('[social-visual-generate] Generating background image...');
 
-    const bgResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-3.1-flash-image-preview',
-        messages: bgMessages,
-        modalities: ['image', 'text'],
-      }),
-    });
+    const bgResult = await callImageAIWithFallback(LOVABLE_API_KEY, bgMessages);
 
-    if (!bgResponse.ok) {
-      const errText = await bgResponse.text();
-      console.error('[social-visual-generate] BG generation error:', bgResponse.status, errText);
-      if (bgResponse.status === 429) {
-        return new Response(JSON.stringify({ error: 'Trop de requêtes IA, réessayez dans quelques minutes.' }), { status: 429, headers: jsonHeaders });
-      }
-      if (bgResponse.status === 402) {
+    if (!bgResult.ok) {
+      if (bgResult.status === 402) {
         return new Response(JSON.stringify({ error: 'Crédits IA insuffisants.' }), { status: 402, headers: jsonHeaders });
       }
-      return new Response(JSON.stringify({ error: 'Erreur du service IA image' }), { status: 502, headers: jsonHeaders });
+      return new Response(JSON.stringify({ error: bgResult.error || 'Erreur du service IA image' }), { status: bgResult.status || 502, headers: jsonHeaders });
     }
 
-    const bgData = await bgResponse.json();
+    const bgData = bgResult.data;
     const bgImageUrl = bgData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
     if (!bgImageUrl || !bgImageUrl.startsWith('data:image')) {
@@ -239,7 +281,7 @@ ADDITIONAL REQUIREMENTS:
       return new Response(JSON.stringify({ error: "Aucune image de fond générée" }), { status: 502, headers: jsonHeaders });
     }
 
-    console.log('[social-visual-generate] Background image generated. Starting composition pass...');
+    console.log('[social-visual-generate] Background image generated via', bgResult.model, '. Starting composition pass...');
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // ÉTAPE 3 : COMPOSITION FINALE — SUPERPOSER TEXTE + BRANDING
@@ -305,34 +347,22 @@ DESIGN RULES:
 
 CRITICAL: The text must be correctly spelled and perfectly readable. This is a professional ad.`;
 
-    const compResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-3.1-flash-image-preview',
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'text', text: compositionPrompt },
-            { type: 'image_url', image_url: { url: bgImageUrl } },
-          ],
-        }],
-        modalities: ['image', 'text'],
-      }),
-    });
+    const compMessages = [{
+      role: 'user',
+      content: [
+        { type: 'text', text: compositionPrompt },
+        { type: 'image_url', image_url: { url: bgImageUrl } },
+      ],
+    }];
 
-    if (!compResponse.ok) {
-      const errText = await compResponse.text();
-      console.error('[social-visual-generate] Composition error:', compResponse.status, errText);
-      // Fallback: save the background image without composition
-      console.warn('[social-visual-generate] Falling back to background-only image');
+    const compResult = await callImageAIWithFallback(LOVABLE_API_KEY, compMessages);
+
+    if (!compResult.ok) {
+      console.warn('[social-visual-generate] Composition failed, falling back to background-only image');
       return await saveAndReturn(adminSupabase, bgImageUrl, agencyId, suggestionId, universe, realPhotoUrl, 'bg_only', jsonHeaders);
     }
 
-    const compData = await compResponse.json();
+    const compData = compResult.data;
     const finalImageUrl = compData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
     if (!finalImageUrl || !finalImageUrl.startsWith('data:image')) {
