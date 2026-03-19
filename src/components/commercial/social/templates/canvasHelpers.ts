@@ -153,7 +153,7 @@ export function drawHCFooterBar(ctx: CanvasRenderingContext2D, theme: ServiceThe
   ctx.fillStyle = HC.white;
   ctx.font = 'bold 26px sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText('Help Confort — Dépannage & Travaux', 50, y + height / 2 + 9);
+  ctx.fillText('HelpConfort — DEPAN40', 50, y + height / 2 + 9);
   ctx.textAlign = 'right';
   ctx.font = '22px sans-serif';
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
