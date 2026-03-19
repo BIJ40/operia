@@ -63,6 +63,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const hasVariants = suggestion.variants && suggestion.variants.length > 0;
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
+  const [renderMode, setRenderMode] = useState<'canvas' | 'image'>('canvas');
 
   // Visual assets
   const { data: assets = [], isLoading: assetsLoading } = useSocialVisualAssets(suggestion.id);
@@ -71,6 +72,25 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const latestAsset = assets[0] || null;
   const hasPreview = Boolean(previewUrl);
   const showPreviewSkeleton = (assetsLoading || loadingPreview) && !hasPreview;
+
+  // Build canvas payload from suggestion + AI image as background
+  const aiPayload = (suggestion as any).ai_payload || {};
+  const canvasPayload: SocialTemplatePayload = useMemo(() => ({
+    title: suggestion.title,
+    caption: suggestion.caption_base_fr || '',
+    universe: suggestion.universe,
+    platform: suggestion.platform_targets?.[0] || null,
+    date: suggestion.suggestion_date,
+    mediaUrl: previewUrl || null,
+    hook: aiPayload.hook || suggestion.title,
+    cta: aiPayload.cta || null,
+  }), [suggestion, previewUrl, aiPayload]);
+
+  const templateId = useMemo(() => resolveSocialTemplate({
+    topic_type: suggestion.topic_type,
+    hasMedia: !!previewUrl,
+    universe: suggestion.universe,
+  }), [suggestion.topic_type, previewUrl, suggestion.universe]);
 
   // Load signed URL for latest asset
   useEffect(() => {
