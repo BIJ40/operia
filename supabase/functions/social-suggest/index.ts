@@ -68,14 +68,22 @@ function inferUniverse(title: string): string | null {
 interface ValidatedSuggestion {
   suggestion_date: string;
   title: string;
+  hook: string;
   content_angle: string | null;
   caption_base_fr: string;
+  cta: string;
   hashtags: string[];
   topic_type: string;
   topic_key: string;
   visual_type: string;
   universe: string;
   realisation_id: string | null;
+  storytelling_type: string | null;
+  emotional_trigger: string | null;
+  visual_strategy: string | null;
+  visual_prompt: string | null;
+  visual_composition: string | null;
+  branding_guidelines: string | null;
   platform_variants: Record<string, { caption: string; cta: string | null }>;
 }
 
