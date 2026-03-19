@@ -1,6 +1,6 @@
 /**
  * CAPlanifieCard - Carte CA Planifié avec sélecteur de mois intégré
- * Le sélecteur de période est DANS la carte pour éviter toute confusion
+ * Clic → ouvre le détail dans une popup
  */
 
 import { useState, useMemo } from 'react';
@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 import { format, startOfMonth, endOfMonth, setMonth, setYear, addMonths } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
+import { CAPlanifieDetailDialog } from './CAPlanifieDetailDialog';
 
 const formatCurrency = (value: number): string => {
   if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M€`;
@@ -18,18 +19,11 @@ const formatCurrency = (value: number): string => {
   return `${Math.round(value)}€`;
 };
 
-// Helpers pour le calcul du CA Planifié
 const toDate = (v: unknown): Date | null => {
   if (!v) return null;
   if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
-  if (typeof v === 'number') {
-    const d = new Date(v);
-    return isNaN(d.getTime()) ? null : d;
-  }
-  if (typeof v === 'string') {
-    const d = new Date(v);
-    return isNaN(d.getTime()) ? null : d;
-  }
+  if (typeof v === 'number') { const d = new Date(v); return isNaN(d.getTime()) ? null : d; }
+  if (typeof v === 'string') { const d = new Date(v); return isNaN(d.getTime()) ? null : d; }
   return null;
 };
 
@@ -51,10 +45,6 @@ const getInterventionPlanningDate = (itv: any): Date | null => {
   return null;
 };
 
-// Note: on ne filtre PAS par type/state d'intervention ici.
-// Le CA planifié est basé sur: devis "to_order" + existence d'une intervention planifiée dans la période.
-// (On garde en plus la règle "J+0 minimum" : pas de planifié sur du passé.)
-
 const isDevisToOrder = (d: any): boolean => {
   const state = String(d?.state ?? d?.status ?? d?.data?.state ?? '').trim().toLowerCase();
   return state === 'to order' || state === 'to_order' || state === 'order';
@@ -63,11 +53,7 @@ const isDevisToOrder = (d: any): boolean => {
 const parseNumericValue = (value: any): number => {
   if (value == null) return 0;
   if (typeof value === 'number') return isNaN(value) ? 0 : value;
-  if (typeof value === 'string') {
-    const cleaned = value.replace(',', '.').trim();
-    const num = parseFloat(cleaned);
-    return isNaN(num) ? 0 : num;
-  }
+  if (typeof value === 'string') { const n = parseFloat(value.replace(',', '.').trim()); return isNaN(n) ? 0 : n; }
   return 0;
 };
 
@@ -79,18 +65,10 @@ interface CAPlanifieCardProps {
 }
 
 const MONTHS = [
-  { value: 0, label: 'Janvier' },
-  { value: 1, label: 'Février' },
-  { value: 2, label: 'Mars' },
-  { value: 3, label: 'Avril' },
-  { value: 4, label: 'Mai' },
-  { value: 5, label: 'Juin' },
-  { value: 6, label: 'Juillet' },
-  { value: 7, label: 'Août' },
-  { value: 8, label: 'Septembre' },
-  { value: 9, label: 'Octobre' },
-  { value: 10, label: 'Novembre' },
-  { value: 11, label: 'Décembre' },
+  { value: 0, label: 'Janvier' }, { value: 1, label: 'Février' }, { value: 2, label: 'Mars' },
+  { value: 3, label: 'Avril' }, { value: 4, label: 'Mai' }, { value: 5, label: 'Juin' },
+  { value: 6, label: 'Juillet' }, { value: 7, label: 'Août' }, { value: 8, label: 'Septembre' },
+  { value: 9, label: 'Octobre' }, { value: 10, label: 'Novembre' }, { value: 11, label: 'Décembre' },
 ];
 
 const itemVariants = {
@@ -102,8 +80,8 @@ export function CAPlanifieCard({ projects, interventions, devis, factures }: CAP
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [dialogOpen, setDialogOpen] = useState(false);
 
-  // Calculer la période sélectionnée
   const selectedPeriod = useMemo(() => {
     const targetDate = setYear(setMonth(new Date(), selectedMonth), selectedYear);
     return {
@@ -113,46 +91,21 @@ export function CAPlanifieCard({ projects, interventions, devis, factures }: CAP
     };
   }, [selectedMonth, selectedYear]);
 
-  // Calculer le CA Planifié pour la période sélectionnée
   const { caPlanifie, caPlanifieDevisCount } = useMemo(() => {
     const startMs = selectedPeriod.start.getTime();
     const endMs = selectedPeriod.end.getTime();
-
-    // Date du jour à minuit pour le filtre J+0 minimum
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
     const todayMs = today.getTime();
+    const isInRangeAndFuture = (d: Date) => { const t = d.getTime(); return t >= startMs && t <= endMs && t >= todayMs; };
 
-    // Doit être dans la période ET >= aujourd'hui (prévisionnel uniquement)
-    const isInRangeAndFuture = (d: Date) => {
-      const t = d.getTime();
-      return t >= startMs && t <= endMs && t >= todayMs;
-    };
-
-    // Créer un Set des projectIds déjà facturés
     const facturedProjectIds = new Set<number>();
-    for (const f of factures) {
-      const pid = getProjectId(f);
-      if (pid != null) facturedProjectIds.add(pid);
-    }
+    for (const f of factures) { const pid = getProjectId(f); if (pid != null) facturedProjectIds.add(pid); }
 
-    // Indexer les interventions par projectId
     const interventionsByProjectId = new Map<number, any[]>();
-    for (const itv of interventions) {
-      const pid = getProjectId(itv);
-      if (pid == null) continue;
-      if (!interventionsByProjectId.has(pid)) interventionsByProjectId.set(pid, []);
-      interventionsByProjectId.get(pid)!.push(itv);
-    }
+    for (const itv of interventions) { const pid = getProjectId(itv); if (pid == null) continue; if (!interventionsByProjectId.has(pid)) interventionsByProjectId.set(pid, []); interventionsByProjectId.get(pid)!.push(itv); }
 
-    // Indexer les devis par projectId
     const devisByProjectId = new Map<number, any[]>();
-    for (const d of devis) {
-      const pid = getProjectId(d);
-      if (pid == null) continue;
-      if (!devisByProjectId.has(pid)) devisByProjectId.set(pid, []);
-      devisByProjectId.get(pid)!.push(d);
-    }
+    for (const d of devis) { const pid = getProjectId(d); if (pid == null) continue; if (!devisByProjectId.has(pid)) devisByProjectId.set(pid, []); devisByProjectId.get(pid)!.push(d); }
 
     let total = 0;
     let count = 0;
@@ -160,11 +113,8 @@ export function CAPlanifieCard({ projects, interventions, devis, factures }: CAP
     for (const project of projects) {
       const projectId = Number(project?.id);
       if (!Number.isFinite(projectId)) continue;
-
-      // Exclure les projets déjà facturés
       if (facturedProjectIds.has(projectId)) continue;
 
-     // Vérifier si ce projet a une intervention planifiée dans la période
       const projectInterventions = interventionsByProjectId.get(projectId) || [];
       const hasInterventionInPeriod = projectInterventions.some((itv) => {
         const planningDate = getInterventionPlanningDate(itv);
@@ -173,89 +123,92 @@ export function CAPlanifieCard({ projects, interventions, devis, factures }: CAP
 
       if (!hasInterventionInPeriod) continue;
 
-      // Chercher un devis "to order" pour ce projet
       const projectDevis = devisByProjectId.get(projectId) || [];
       for (const d of projectDevis) {
         if (!isDevisToOrder(d)) continue;
-        const montant =
-          parseNumericValue(d.data?.totalHT) ||
-          parseNumericValue(d.totalHT) ||
-          parseNumericValue(d.amount) ||
-          0;
-        if (montant > 0) {
-          total += montant;
-          count++;
-          break; // 1 seul devis to_order par projet
-        }
+        const montant = parseNumericValue(d.data?.totalHT) || parseNumericValue(d.totalHT) || parseNumericValue(d.amount) || 0;
+        if (montant > 0) { total += montant; count++; break; }
       }
     }
 
     return { caPlanifie: total, caPlanifieDevisCount: count };
   }, [projects, interventions, devis, factures, selectedPeriod.start, selectedPeriod.end]);
 
-  const handlePrevMonth = () => {
+  const handlePrevMonth = (e: React.MouseEvent) => {
+    e.stopPropagation();
     const newDate = addMonths(setYear(setMonth(new Date(), selectedMonth), selectedYear), -1);
     setSelectedMonth(newDate.getMonth());
     setSelectedYear(newDate.getFullYear());
   };
 
-  const handleNextMonth = () => {
+  const handleNextMonth = (e: React.MouseEvent) => {
+    e.stopPropagation();
     const newDate = addMonths(setYear(setMonth(new Date(), selectedMonth), selectedYear), 1);
     setSelectedMonth(newDate.getMonth());
     setSelectedYear(newDate.getFullYear());
   };
 
   return (
-    <motion.div variants={itemVariants}>
-      <TooltipProvider delayDuration={200}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Card className="border-l-4 bg-warm-green/10 cursor-help" style={{ borderLeftColor: 'hsl(145, 60%, 55%)' }}>
-              {/* Header */}
-              <div className="flex items-start justify-between p-4 pb-2">
-                <h4 className="text-sm font-medium text-muted-foreground">CA Planifié</h4>
-                <Euro className="h-4 w-4 text-warm-green" />
-              </div>
-
-              {/* Content */}
-              <div className="px-4 pb-4">
-                {/* Sélecteur inline ultra-compact */}
-                <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground mb-1">
-                  <Button variant="ghost" size="icon" className="h-4 w-4 p-0" onClick={(e) => { e.stopPropagation(); handlePrevMonth(); }}>
-                    <ChevronLeft className="h-2.5 w-2.5" />
-                  </Button>
-                  <span className="font-medium">{MONTHS[selectedMonth].label.slice(0, 3)}. {selectedYear}</span>
-                  <Button variant="ghost" size="icon" className="h-4 w-4 p-0" onClick={(e) => { e.stopPropagation(); handleNextMonth(); }}>
-                    <ChevronRight className="h-2.5 w-2.5" />
-                  </Button>
+    <>
+      <motion.div variants={itemVariants}>
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Card
+                className="border-l-4 bg-warm-green/10 cursor-pointer hover:shadow-md transition-shadow"
+                style={{ borderLeftColor: 'hsl(145, 60%, 55%)' }}
+                onClick={() => setDialogOpen(true)}
+              >
+                <div className="flex items-start justify-between p-4 pb-2">
+                  <h4 className="text-sm font-medium text-muted-foreground">CA Planifié</h4>
+                  <Euro className="h-4 w-4 text-warm-green" />
                 </div>
-
-                {/* Value + Mini info */}
-                <div className="flex items-end justify-between">
-                  <div className="flex-1">
-                    <div className="text-2xl font-bold text-foreground">{formatCurrency(caPlanifie)}</div>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                      <FolderOpen className="h-3 w-3" />
-                      <span>{caPlanifieDevisCount} dossiers</span>
-                    </div>
+                <div className="px-4 pb-4">
+                  <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground mb-1">
+                    <Button variant="ghost" size="icon" className="h-4 w-4 p-0" onClick={handlePrevMonth}>
+                      <ChevronLeft className="h-2.5 w-2.5" />
+                    </Button>
+                    <span className="font-medium">{MONTHS[selectedMonth].label.slice(0, 3)}. {selectedYear}</span>
+                    <Button variant="ghost" size="icon" className="h-4 w-4 p-0" onClick={handleNextMonth}>
+                      <ChevronRight className="h-2.5 w-2.5" />
+                    </Button>
                   </div>
-                  {/* Empty placeholder pour équilibrer avec les mini-graphs des autres cartes */}
-                  <div className="w-24 h-14 flex-shrink-0" />
+                  <div className="flex items-end justify-between">
+                    <div className="flex-1">
+                      <div className="text-2xl font-bold text-foreground">{formatCurrency(caPlanifie)}</div>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                        <FolderOpen className="h-3 w-3" />
+                        <span>{caPlanifieDevisCount} dossiers</span>
+                      </div>
+                    </div>
+                    <div className="w-24 h-14 flex-shrink-0" />
+                  </div>
                 </div>
+              </Card>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="p-4 max-w-xs">
+              <div className="space-y-2">
+                <p className="font-medium">CA Planifié = Σ devis "to order"</p>
+                <p className="text-xs text-muted-foreground">
+                  Cliquez pour voir le détail des dossiers planifiés sur <strong>{selectedPeriod.label}</strong>.
+                </p>
               </div>
-            </Card>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="p-4 max-w-xs">
-            <div className="space-y-2">
-              <p className="font-medium">CA Planifié = Σ devis "to order"</p>
-              <p className="text-xs text-muted-foreground">
-                Somme des montants HT des devis acceptés (status = "to order") 
-                pour les dossiers avec interventions planifiées sur <strong>{selectedPeriod.label}</strong>.
-              </p>
-            </div>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    </motion.div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </motion.div>
+
+      <CAPlanifieDetailDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        projects={projects}
+        interventions={interventions}
+        devis={devis}
+        factures={factures}
+        periodStart={selectedPeriod.start}
+        periodEnd={selectedPeriod.end}
+        periodLabel={selectedPeriod.label}
+      />
+    </>
   );
 }
