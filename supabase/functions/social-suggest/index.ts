@@ -160,17 +160,35 @@ function validateAndNormalizeSuggestions(
       }
     }
 
+    // 10. Extract V5 fields
+    const hook = String(s.hook || '').substring(0, 500) || title;
+    const cta = String(s.cta || 'Contactez-nous').substring(0, 200);
+    const storytellingType = s.storytelling_type ? String(s.storytelling_type).substring(0, 50) : null;
+    const emotionalTrigger = s.emotional_trigger ? String(s.emotional_trigger).substring(0, 50) : null;
+    const visualStrategy = s.visual_strategy ? String(s.visual_strategy).substring(0, 50) : null;
+    const visualPrompt = s.visual_prompt ? String(s.visual_prompt).substring(0, 1000) : null;
+    const visualComposition = s.visual_composition ? String(s.visual_composition).substring(0, 500) : null;
+    const brandingGuidelines = s.branding_guidelines ? String(s.branding_guidelines).substring(0, 500) : null;
+
     result.push({
       suggestion_date: date,
       title,
+      hook,
       content_angle: s.content_angle ? String(s.content_angle).substring(0, 500) : null,
       caption_base_fr: captionBase,
+      cta,
       hashtags,
       topic_type: topicType,
       topic_key: topicKey,
       visual_type: s.visual_type || 'photo',
       universe,
       realisation_id: realisationId,
+      storytelling_type: storytellingType,
+      emotional_trigger: emotionalTrigger,
+      visual_strategy: visualStrategy,
+      visual_prompt: visualPrompt,
+      visual_composition: visualComposition,
+      branding_guidelines: brandingGuidelines,
       platform_variants: platformVariants,
     });
   }
