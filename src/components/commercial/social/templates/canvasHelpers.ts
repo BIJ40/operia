@@ -160,30 +160,46 @@ export function drawHCFooterBar(ctx: CanvasRenderingContext2D, theme: ServiceThe
   ctx.fillText(theme.label, SIZE - 50, y + height / 2 + 8);
 }
 
-/** Logo HC en haut */
+/** Logo HC en haut — icône maison + texte "Help Confort" */
 export async function drawHCLogo(ctx: CanvasRenderingContext2D, logoSrc: string, position: 'top-left' | 'top-center' = 'top-left') {
+  const iconH = 50;
+  const text = 'Help Confort';
+  ctx.font = 'bold 22px sans-serif';
+  const textW = ctx.measureText(text).width;
+  const totalW = iconH + 10 + textW;
+  const padX = 16;
+  const padY = 10;
+  const bgW = totalW + padX * 2;
+  const bgH = iconH + padY * 2;
+
+  const x = position === 'top-center' ? (SIZE - bgW) / 2 : 30;
+  const y = 25;
+
+  // Background pill
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  roundRect(ctx, x, y, bgW, bgH, 10);
+  ctx.fill();
+
+  // Try to load house icon
   try {
     const img = await loadImage(logoSrc);
-    const maxH = 70;
-    const ratio = img.naturalWidth / img.naturalHeight;
-    const h = maxH;
-    const w = h * ratio;
+    const iconRatio = img.naturalWidth / img.naturalHeight;
+    const iconW = iconH * iconRatio;
+    drawContain(ctx, img, x + padX, y + padY, iconW, iconH);
 
-    if (position === 'top-center') {
-      const bgW = w + 30;
-      const bgH = h + 20;
-      const bx = (SIZE - bgW) / 2;
-      ctx.fillStyle = 'rgba(255,255,255,0.92)';
-      roundRect(ctx, bx, 20, bgW, bgH, 10);
-      ctx.fill();
-      drawContain(ctx, img, bx + 15, 30, w, h);
-    } else {
-      ctx.fillStyle = 'rgba(255,255,255,0.92)';
-      roundRect(ctx, 30, 25, w + 24, h + 16, 10);
-      ctx.fill();
-      drawContain(ctx, img, 42, 33, w, h);
-    }
-  } catch { /* logo optional */ }
+    // Text next to icon
+    ctx.fillStyle = HC.blue;
+    ctx.font = 'bold 22px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(text, x + padX + iconW + 8, y + bgH / 2 + 7);
+  } catch {
+    // Fallback: just text
+    ctx.fillStyle = HC.blue;
+    ctx.font = 'bold 24px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(text, x + padX, y + bgH / 2 + 8);
+  }
+  ctx.textAlign = 'left';
 }
 
 /** Bloc titre HC style */
