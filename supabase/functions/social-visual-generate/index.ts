@@ -206,29 +206,13 @@ ADDITIONAL REQUIREMENTS:
 
     console.log('[social-visual-generate] Generating background image...');
 
-    const bgResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-3.1-flash-image-preview',
-        messages: bgMessages,
-        modalities: ['image', 'text'],
-      }),
-    });
+    const bgResult = await callImageAIWithFallback(LOVABLE_API_KEY, bgMessages);
 
-    if (!bgResponse.ok) {
-      const errText = await bgResponse.text();
-      console.error('[social-visual-generate] BG generation error:', bgResponse.status, errText);
-      if (bgResponse.status === 429) {
-        return new Response(JSON.stringify({ error: 'Trop de requêtes IA, réessayez dans quelques minutes.' }), { status: 429, headers: jsonHeaders });
-      }
-      if (bgResponse.status === 402) {
+    if (!bgResult.ok) {
+      if (bgResult.status === 402) {
         return new Response(JSON.stringify({ error: 'Crédits IA insuffisants.' }), { status: 402, headers: jsonHeaders });
       }
-      return new Response(JSON.stringify({ error: 'Erreur du service IA image' }), { status: 502, headers: jsonHeaders });
+      return new Response(JSON.stringify({ error: bgResult.error || 'Erreur du service IA image' }), { status: bgResult.status || 502, headers: jsonHeaders });
     }
 
     const bgData = await bgResponse.json();
