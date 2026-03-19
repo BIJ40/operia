@@ -1,13 +1,15 @@
 /**
  * SocialPostCard — Carte de suggestion dans le panneau détail.
- * Actions : approuver, rejeter, régénérer (avec prompt personnalisé), copier le texte.
+ * Actions : approuver, rejeter, régénérer (avec prompt personnalisé), copier le texte, renvoyer webhook.
  */
 
-import { Check, X, Copy, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { Check, X, Copy, Loader2, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import type { SocialSuggestion } from '@/hooks/useSocialSuggestions';
 import { RegenerationPromptPanel, type RegenerationPrompt } from './RegenerationPromptPanel';
 
@@ -35,6 +37,7 @@ interface SocialPostCardProps {
 
 export function SocialPostCard({ suggestion, onApprove, onReject, onRegenerate, isRegenerating }: SocialPostCardProps) {
   const statusInfo = STATUS_LABELS[suggestion.status] || STATUS_LABELS.draft;
+  const [isSendingWebhook, setIsSendingWebhook] = useState(false);
 
   const handleCopy = async () => {
     try {
@@ -42,6 +45,24 @@ export function SocialPostCard({ suggestion, onApprove, onReject, onRegenerate, 
       toast.success('Texte copié');
     } catch {
       toast.error('Impossible de copier');
+    }
+  };
+
+  const handleResendWebhook = async () => {
+    setIsSendingWebhook(true);
+    try {
+      const { error, data } = await supabase.functions.invoke('dispatch-social-webhook', {
+        body: { suggestion_id: suggestion.id, agency_id: suggestion.agency_id },
+      });
+      if (error || data?.error) {
+        toast.error('Échec de l\'envoi webhook : ' + (error?.message || data?.error));
+      } else {
+        toast.success('Webhook renvoyé avec succès (PUBLI)');
+      }
+    } catch (err: any) {
+      toast.error('Erreur webhook : ' + err.message);
+    } finally {
+      setIsSendingWebhook(false);
     }
   };
 
@@ -113,7 +134,7 @@ export function SocialPostCard({ suggestion, onApprove, onReject, onRegenerate, 
       )}
 
       {/* Actions */}
-      <div className="flex gap-1.5 pt-1 border-t border-border">
+      <div className="flex flex-wrap gap-1.5 pt-1 border-t border-border">
         {suggestion.status === 'draft' && (
           <>
             <Button size="sm" variant="default" className="h-7 text-xs gap-1" onClick={() => onApprove(suggestion.id)}>
@@ -127,6 +148,18 @@ export function SocialPostCard({ suggestion, onApprove, onReject, onRegenerate, 
         <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={handleCopy}>
           <Copy className="w-3 h-3" /> Copier
         </Button>
+        {suggestion.status === 'approved' && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs gap-1"
+            onClick={handleResendWebhook}
+            disabled={isSendingWebhook}
+          >
+            {isSendingWebhook ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+            Renvoyer webhook
+          </Button>
+        )}
       </div>
 
       {/* Regeneration prompt panel */}
