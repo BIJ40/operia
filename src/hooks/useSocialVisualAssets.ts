@@ -64,8 +64,18 @@ export function useGenerateSocialVisual() {
         },
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error) {
+        // supabase-js wraps non-2xx as FunctionsHttpError
+        const status = (error as any)?.context?.status;
+        if (status === 429) throw new Error('Trop de requêtes — attendez 1-2 minutes puis réessayez.');
+        if (status === 402) throw new Error('Crédits IA insuffisants. Rechargez votre solde dans les paramètres.');
+        throw error;
+      }
+      if (data?.error) {
+        if (data.error.includes('requêtes')) throw new Error('Trop de requêtes — attendez 1-2 minutes puis réessayez.');
+        if (data.error.includes('Crédits')) throw new Error('Crédits IA insuffisants. Rechargez votre solde.');
+        throw new Error(data.error);
+      }
       return data as { success: boolean; asset_id: string; storage_path: string; signed_url: string | null };
     },
     onSuccess: (data, variables) => {
