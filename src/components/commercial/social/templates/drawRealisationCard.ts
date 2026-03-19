@@ -1,94 +1,83 @@
 /**
  * Template : realisation_card — Visuel réalisation métier 1080x1080
+ * V2 — Branding HC fort, overlay univers, logo, bandeau signature.
  */
-import { SIZE, loadImage, drawCover, drawContain, roundRect, truncateText, wrapText, getTheme, drawGradientBg } from './canvasHelpers';
+import {
+  SIZE, loadImage, drawCover, drawContain, roundRect, truncateText, wrapText,
+  getTheme, HC, drawUniverseOverlay, drawHCFooterBar, drawHCLogo,
+  drawHCTitleBlock, drawBottomGradient,
+} from './canvasHelpers';
 import bannerSrc from '@/assets/banniere_helpconfort.jpg';
+import logoSrc from '@/assets/help-confort-services-logo.png';
 import type { SocialTemplatePayload } from '../SocialVisualCanvas';
 
 export async function drawRealisationCard(ctx: CanvasRenderingContext2D, payload: SocialTemplatePayload) {
   const theme = getTheme(payload.universe);
-  const title = truncateText(payload.title || 'Réalisation', 60);
-  const caption = truncateText(payload.caption || '', 160);
+  const title = truncateText(payload.title || 'Réalisation', 50);
+  const caption = truncateText(payload.caption || '', 120);
 
-  // Background
-  drawGradientBg(ctx, theme.bg, theme.accent);
-
-  // Banner top
-  try {
-    const imgBanner = await loadImage(bannerSrc);
-    const bannerPad = 12;
-    const bannerW = SIZE - bannerPad * 2;
-    const bannerH = Math.round(bannerW / (imgBanner.naturalWidth / imgBanner.naturalHeight));
-    const topH = Math.min(bannerH + bannerPad * 2, 220);
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(bannerPad, bannerPad, bannerW, topH - bannerPad * 2);
-    drawContain(ctx, imgBanner, bannerPad, bannerPad, bannerW, topH - bannerPad * 2);
-  } catch { /* banner optional */ }
-
-  // Main image if available
-  const photoY = 240;
-  const photoH = 520;
+  // ─── Full-bleed image or branded background ───
   if (payload.mediaUrl) {
     try {
       const img = await loadImage(payload.mediaUrl);
-      ctx.save();
-      roundRect(ctx, 40, photoY, SIZE - 80, photoH, 20);
-      ctx.clip();
-      drawCover(ctx, img, 40, photoY, SIZE - 80, photoH);
-      ctx.restore();
-
-      // Overlay gradient bottom
-      const grad = ctx.createLinearGradient(0, photoY + photoH - 140, 0, photoY + photoH);
-      grad.addColorStop(0, 'rgba(0,0,0,0)');
-      grad.addColorStop(1, 'rgba(0,0,0,0.6)');
-      ctx.fillStyle = grad;
-      ctx.save();
-      roundRect(ctx, 40, photoY, SIZE - 80, photoH, 20);
-      ctx.clip();
-      ctx.fillRect(40, photoY + photoH - 140, SIZE - 80, 140);
-      ctx.restore();
-    } catch { /* proceed without image */ }
-  } else {
-    // No image — large decorative element
-    ctx.fillStyle = 'rgba(255,255,255,0.08)';
-    roundRect(ctx, 40, photoY, SIZE - 80, photoH, 20);
-    ctx.fill();
-
-    // Placeholder icon
-    ctx.fillStyle = 'rgba(255,255,255,0.15)';
-    ctx.font = 'bold 120px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('🔧', SIZE / 2, photoY + photoH / 2 + 40);
+      drawCover(ctx, img, 0, 0, SIZE, SIZE);
+    } catch { /* fallback below */ }
   }
 
-  // Title bar
-  const titleY = 790;
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 44px sans-serif';
-  ctx.textAlign = 'left';
-  const titleLines = wrapText(ctx, title, SIZE - 100);
-  titleLines.slice(0, 2).forEach((line, i) => {
-    ctx.fillText(line, 50, titleY + i * 52);
-  });
+  // If no media, draw branded gradient
+  if (!payload.mediaUrl) {
+    ctx.fillStyle = HC.grayDark;
+    ctx.fillRect(0, 0, SIZE, SIZE);
+    // Decorative circle
+    ctx.fillStyle = theme.bg;
+    ctx.globalAlpha = 0.15;
+    ctx.beginPath();
+    ctx.arc(SIZE * 0.7, SIZE * 0.35, 300, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    // Placeholder icon
+    ctx.font = 'bold 140px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.fillText('🔧', SIZE / 2, SIZE * 0.45);
+  }
 
-  // Caption
-  ctx.font = '26px sans-serif';
-  ctx.fillStyle = theme.labelColor;
-  const capLines = wrapText(ctx, caption, SIZE - 100);
-  capLines.slice(0, 2).forEach((line, i) => {
-    ctx.fillText(line, 50, titleY + titleLines.length * 52 + 10 + i * 34);
-  });
+  // ─── Universe overlay tint ───
+  drawUniverseOverlay(ctx, theme);
 
-  // Bottom accent bar
-  const bottomY = SIZE - 80;
-  ctx.fillStyle = theme.accent;
-  ctx.fillRect(0, bottomY, SIZE, 80);
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 26px sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText(theme.label, 50, bottomY + 50);
-  ctx.textAlign = 'right';
-  ctx.font = '22px sans-serif';
-  ctx.fillStyle = theme.labelColor;
-  ctx.fillText('Help Confort', SIZE - 50, bottomY + 50);
+  // ─── Bottom gradient for readability ───
+  drawBottomGradient(ctx, 500);
+
+  // ─── Logo HC top-left ───
+  await drawHCLogo(ctx, logoSrc, 'top-left');
+
+  // ─── Universe pill top-right ───
+  ctx.font = 'bold 20px sans-serif';
+  const pillText = theme.label.toUpperCase();
+  const pillW = ctx.measureText(pillText).width + 36;
+  ctx.fillStyle = theme.bg;
+  roundRect(ctx, SIZE - pillW - 40, 35, pillW, 40, 20);
+  ctx.fill();
+  ctx.fillStyle = HC.white;
+  ctx.textAlign = 'center';
+  ctx.fillText(pillText, SIZE - pillW / 2 - 40, 62);
+
+  // ─── Title block ───
+  drawHCTitleBlock(ctx, title, { y: SIZE - 320, align: 'left', bgColor: HC.blue, fontSize: 48 });
+
+  // ─── Caption ───
+  if (caption) {
+    ctx.font = '26px sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.textAlign = 'left';
+    const capLines = wrapText(ctx, caption, SIZE - 120);
+    let cy = SIZE - 170;
+    capLines.slice(0, 2).forEach((line) => {
+      ctx.fillText(line, 50, cy);
+      cy += 34;
+    });
+  }
+
+  // ─── HC Footer Bar ───
+  drawHCFooterBar(ctx, theme);
 }

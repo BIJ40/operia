@@ -1,82 +1,87 @@
 /**
  * Template : awareness_card — Journée de sensibilisation 1080x1080
+ * V2 — Branding HC fort, overlay univers, logo, bandeau signature.
  */
-import { SIZE, truncateText, wrapText, getTheme, roundRect } from './canvasHelpers';
+import {
+  SIZE, truncateText, wrapText, getTheme, HC, roundRect,
+  drawHCFooterBar, drawHCLogo, drawHCTitleBlock,
+} from './canvasHelpers';
+import logoSrc from '@/assets/help-confort-services-logo.png';
 import type { SocialTemplatePayload } from '../SocialVisualCanvas';
 
 export async function drawAwarenessCard(ctx: CanvasRenderingContext2D, payload: SocialTemplatePayload) {
   const theme = getTheme(payload.universe);
-  const title = truncateText(payload.title || 'Journée thématique', 80);
-  const caption = truncateText(payload.caption || '', 250);
+  const title = truncateText(payload.title || 'Journée thématique', 70);
+  const caption = truncateText(payload.caption || '', 220);
   const date = payload.date || '';
 
-  // Background — darker, editorial feel
+  // ─── Background: dark editorial + HC accent ───
   ctx.fillStyle = '#1A1A2E';
   ctx.fillRect(0, 0, SIZE, SIZE);
 
-  // Accent stripe left
-  ctx.fillStyle = theme.bg;
-  ctx.fillRect(0, 0, 16, SIZE);
+  // Blue HC accent stripe left
+  ctx.fillStyle = HC.blue;
+  ctx.fillRect(0, 0, 10, SIZE);
 
-  // Accent circle top-right
+  // Decorative accent circle top-right
   ctx.fillStyle = theme.bg;
-  ctx.globalAlpha = 0.12;
+  ctx.globalAlpha = 0.10;
   ctx.beginPath();
-  ctx.arc(SIZE + 60, -60, 350, 0, Math.PI * 2);
+  ctx.arc(SIZE + 40, -40, 340, 0, Math.PI * 2);
   ctx.fill();
   ctx.globalAlpha = 1;
 
-  // Date badge
-  if (date) {
-    ctx.fillStyle = theme.bg;
-    roundRect(ctx, 60, 60, ctx.measureText(date).width * 2.5 + 40, 50, 25);
+  // Orange accent dots
+  ctx.fillStyle = HC.orange;
+  ctx.globalAlpha = 0.15;
+  for (let i = 0; i < 5; i++) {
+    ctx.beginPath();
+    ctx.arc(SIZE - 80 - i * 60, SIZE - 180, 4, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 24px sans-serif';
+  }
+  ctx.globalAlpha = 1;
+
+  // ─── Logo HC top-left ───
+  await drawHCLogo(ctx, logoSrc, 'top-left');
+
+  // ─── Date badge ───
+  if (date) {
+    ctx.font = 'bold 22px sans-serif';
+    const dateW = ctx.measureText(date).width + 36;
+    ctx.fillStyle = HC.orange;
+    roundRect(ctx, 50, 120, dateW, 44, 22);
+    ctx.fill();
+    ctx.fillStyle = HC.grayDark;
     ctx.textAlign = 'left';
-    ctx.fillText(date, 80, 94);
+    ctx.fillText(date, 68, 149);
   }
 
-  // Large title
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 56px sans-serif';
+  // ─── Title block HC ───
+  const titleY = date ? 220 : 180;
+  drawHCTitleBlock(ctx, title, { y: titleY, align: 'left', bgColor: HC.blue, fontSize: 50 });
+
+  // ─── Divider ───
+  const divY = titleY + 160;
+  ctx.fillStyle = HC.orange;
+  ctx.fillRect(50, divY, 100, 4);
+
+  // ─── Caption ───
+  ctx.fillStyle = 'rgba(255,255,255,0.82)';
+  ctx.font = '27px sans-serif';
   ctx.textAlign = 'left';
-  const titleLines = wrapText(ctx, title, SIZE - 140);
-  let y = 220;
-  titleLines.slice(0, 3).forEach((line) => {
-    ctx.fillText(line, 60, y);
-    y += 68;
-  });
-
-  // Divider line
-  y += 10;
-  ctx.fillStyle = theme.bg;
-  ctx.fillRect(60, y, 120, 4);
-  y += 40;
-
-  // Caption
-  ctx.fillStyle = 'rgba(255,255,255,0.8)';
-  ctx.font = '28px sans-serif';
   const capLines = wrapText(ctx, caption, SIZE - 140);
+  let y = divY + 40;
   capLines.slice(0, 6).forEach((line) => {
-    ctx.fillText(line, 60, y);
+    ctx.fillText(line, 50, y);
     y += 38;
   });
 
-  // Universe label
-  ctx.fillStyle = theme.labelColor;
-  ctx.font = '22px sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText(theme.label, 60, SIZE - 140);
-
-  // Bottom bar
-  const bottomY = SIZE - 80;
-  ctx.fillStyle = theme.accent;
-  ctx.fillRect(0, bottomY, SIZE, 80);
-  ctx.fillStyle = '#FFFFFF';
+  // ─── Universe label ───
+  ctx.fillStyle = theme.bg;
   ctx.font = 'bold 22px sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText('Prévention & Habitat', 60, bottomY + 48);
-  ctx.textAlign = 'right';
-  ctx.fillText('Help Confort', SIZE - 60, bottomY + 48);
+  ctx.fillText(theme.label, 50, SIZE - 130);
+
+  // ─── HC Footer Bar ───
+  drawHCFooterBar(ctx, theme);
 }
