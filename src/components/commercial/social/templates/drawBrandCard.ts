@@ -48,8 +48,11 @@ export async function drawBrandCard(ctx: CanvasRenderingContext2D, payload: Soci
   ctx.fillStyle = HC.orange;
   ctx.fillRect(0, 0, SIZE, 6);
 
-  // ─── 3. Logo HC top-center ───
-  await drawHCLogo(ctx, logoSrc, 'top-center');
+  // ─── 3. Logo HC top-left ───
+  await drawHCLogo(ctx, logoSrc, 'top-left');
+
+  // ─── 3b. Universe pill top-right (if applicable) ───
+  drawUniversePill(ctx, theme, 35);
 
   // ─── 4. Banner (only on solid bg, skip on image bg) ───
   if (!payload.mediaUrl) {
