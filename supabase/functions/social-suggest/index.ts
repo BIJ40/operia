@@ -666,6 +666,50 @@ Toutes les dates doivent être dans le mois cible ${month}/${year}.
 
 TU NE CRÉES PAS DU CONTENU. TU CRÉES DES OPPORTUNITÉS CLIENTS.`;
 
+    // Build user prompt customization from prompt params
+    const toneMap: Record<string, string> = {
+      professionnel: 'Ton professionnel, expert, crédible',
+      humour: 'Ton humoristique, léger, décalé — tout en restant professionnel',
+      bienveillant: 'Ton bienveillant, chaleureux, empathique',
+      urgent: 'Ton alarmant, urgent — créer un sentiment de nécessité',
+      inspirant: 'Ton inspirant, motivant, positif',
+      decontracte: 'Ton décontracté, sympa, accessible',
+      pedagogue: 'Ton pédagogique, didactique, explicatif',
+      rassurant: 'Ton rassurant, de confiance, apaisant',
+    };
+    const lengthMap: Record<string, string> = {
+      court: 'Caption COURT (2-3 lignes max, accroche percutante, impact immédiat)',
+      moyen: 'Caption MOYEN (5-8 lignes, storytelling standard)',
+      long: 'Caption LONG (10-15 lignes, storytelling développé, récit immersif)',
+    };
+    const audienceMap: Record<string, string> = {
+      proprietaires: 'Cible : propriétaires occupants (entretien, valorisation patrimoine)',
+      locataires: 'Cible : locataires (confort, urgences, bon réflexes)',
+      syndics: 'Cible : syndics de copropriété (fiabilité, réactivité, contrats)',
+      agences_immo: 'Cible : agences immobilières (partenariat, disponibilité, qualité)',
+      tous: 'Cible : tous publics',
+    };
+
+    let promptCustomization = '';
+    if (userPromptParams) {
+      const parts: string[] = [];
+      if (userPromptParams.tone && toneMap[userPromptParams.tone]) {
+        parts.push(toneMap[userPromptParams.tone]);
+      }
+      if (userPromptParams.keywords) {
+        parts.push(`Mots-clés à intégrer obligatoirement : ${userPromptParams.keywords}`);
+      }
+      if (userPromptParams.audience && audienceMap[userPromptParams.audience]) {
+        parts.push(audienceMap[userPromptParams.audience]);
+      }
+      if (userPromptParams.length && lengthMap[userPromptParams.length]) {
+        parts.push(lengthMap[userPromptParams.length]);
+      }
+      if (parts.length > 0) {
+        promptCustomization = `\n\nDIRECTIVES UTILISATEUR (PRIORITÉ HAUTE) :\n${parts.map(p => `- ${p}`).join('\n')}`;
+      }
+    }
+
     let userPrompt: string;
 
     if (regenerateSingle && singleContext) {
@@ -676,6 +720,7 @@ CONTRAINTES :
 - Type de contenu préféré : ${singleContext.original_topic_type || 'au choix'}
 - Univers préféré : ${singleContext.original_universe || 'au choix'}
 ${singleContext.original_realisation_id ? `- Réalisation liée : ${singleContext.original_realisation_id}` : ''}
+${promptCustomization}
 
 JOURNÉES THÉMATIQUES DU MOIS :
 ${monthAwareness.map(a => `- ${a.day}/${month}: ${a.label}`).join('\n')}
