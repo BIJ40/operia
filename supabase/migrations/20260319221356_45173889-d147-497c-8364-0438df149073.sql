@@ -1,0 +1,1 @@
+ALTER TABLE public.social_content_suggestions ADD COLUMN IF NOT EXISTS webhook_sent_at timestamptz DEFAULT NULL; CREATE INDEX IF NOT EXISTS idx_social_suggestions_webhook_pending ON public.social_content_suggestions (suggestion_date, status) WHERE webhook_sent_at IS NULL AND status = 'approved';

@@ -8425,6 +8425,7 @@ export type Database = {
           universe: string | null
           updated_at: string
           visual_type: string
+          webhook_sent_at: string | null
         }
         Insert: {
           agency_id: string
@@ -8449,6 +8450,7 @@ export type Database = {
           universe?: string | null
           updated_at?: string
           visual_type: string
+          webhook_sent_at?: string | null
         }
         Update: {
           agency_id?: string
@@ -8473,6 +8475,7 @@ export type Database = {
           universe?: string | null
           updated_at?: string
           visual_type?: string
+          webhook_sent_at?: string | null
         }
         Relationships: [
           {

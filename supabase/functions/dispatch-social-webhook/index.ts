@@ -156,6 +156,12 @@ Deno.serve(async (req: Request) => {
 
     await webhookResponse.text() // consume body
 
+    // Mark suggestion as webhook-sent
+    await adminClient
+      .from('social_content_suggestions')
+      .update({ webhook_sent_at: new Date().toISOString() })
+      .eq('id', suggestion_id)
+
     console.log('[dispatch-social-webhook] Success for suggestion:', suggestion_id)
 
     return json({
