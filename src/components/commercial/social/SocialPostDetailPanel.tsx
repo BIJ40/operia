@@ -1,19 +1,16 @@
 /**
  * SocialPostDetailPanel — Panneau latéral droit.
  * Affiche le détail complet du post sélectionné avec variantes, hashtags, actions.
- * Phase 3 : intègre la génération et l'aperçu de visuels Canvas.
+ * Phase 3 V2 : génération IA via edge function (plus de canvas client).
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { Share2, ExternalLink, ImagePlus, Download, RefreshCw, Loader2 } from 'lucide-react';
+import { useState, useCallback, useEffect } from 'react';
+import { Share2, ExternalLink, ImagePlus, Download, RefreshCw, Loader2, Sparkles } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
 import { SocialPostCard } from './SocialPostCard';
-import { SocialVisualCanvas, type SocialTemplatePayload } from './SocialVisualCanvas';
-import { resolveSocialTemplate } from './templateResolver';
 import { useSocialVisualAssets, useGenerateSocialVisual, downloadSocialVisual, getSignedVisualUrl } from '@/hooks/useSocialVisualAssets';
 import type { SocialSuggestion } from '@/hooks/useSocialSuggestions';
 
@@ -62,8 +59,6 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   isRegenerating?: boolean;
 }) {
   const hasVariants = suggestion.variants && suggestion.variants.length > 0;
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [showCanvas, setShowCanvas] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
 
@@ -90,44 +85,9 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
     return () => { cancelled = true; };
   }, [latestAsset?.id]);
 
-  // Template resolution
-  const templateId = resolveSocialTemplate({
-    topic_type: suggestion.topic_type,
-    hasMedia: false, // V1: no media auto-load
-    hasRealisation: !!suggestion.realisation_id,
-    universe: suggestion.universe,
-  });
-
-  const payload: SocialTemplatePayload = {
-    title: suggestion.title,
-    caption: suggestion.caption_base_fr,
-    universe: suggestion.universe,
-    date: suggestion.suggestion_date,
-  };
-
-  const handleCanvasRendered = useCallback((canvas: HTMLCanvasElement) => {
-    canvasRef.current = canvas;
-  }, []);
-
-  const handleGenerate = useCallback(async () => {
-    if (!canvasRef.current) {
-      setShowCanvas(true);
-      // Wait for canvas to render
-      setTimeout(() => {
-        if (canvasRef.current) {
-          generateMutation.mutate({
-            suggestion,
-            canvas: canvasRef.current,
-          });
-        }
-      }, 800);
-      return;
-    }
-    generateMutation.mutate({
-      suggestion,
-      canvas: canvasRef.current,
-    });
-  }, [suggestion, generateMutation]);
+  const handleGenerate = useCallback(() => {
+    generateMutation.mutate({ suggestionId: suggestion.id });
+  }, [suggestion.id, generateMutation]);
 
   const handleDownload = useCallback(() => {
     if (latestAsset) {
@@ -152,26 +112,25 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
           <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
             Aperçu visuel
           </p>
-          <Badge variant="outline" className="text-[9px] capitalize">{templateId.replace('_', ' ')}</Badge>
+          {latestAsset?.generation_meta?.source && (
+            <Badge variant="outline" className="text-[9px]">
+              {latestAsset.generation_meta.source === 'ai_nanobana_v1' ? '✨ IA' : 'Canvas'}
+            </Badge>
+          )}
         </div>
 
-        {/* Preview image or canvas */}
+        {/* Preview image */}
         {assetsLoading || loadingPreview ? (
           <Skeleton className="w-full aspect-square rounded-lg" />
         ) : previewUrl ? (
           <div className="relative rounded-lg overflow-hidden border border-border">
             <img src={previewUrl} alt="Aperçu visuel" className="w-full h-auto" />
           </div>
-        ) : showCanvas ? (
-          <SocialVisualCanvas
-            payload={payload}
-            templateId={templateId}
-            onRendered={handleCanvasRendered}
-          />
         ) : (
           <div className="flex flex-col items-center justify-center py-8 bg-muted/30 rounded-lg border border-dashed border-border">
-            <ImagePlus className="w-8 h-8 text-muted-foreground/30 mb-2" />
+            <Sparkles className="w-8 h-8 text-muted-foreground/30 mb-2" />
             <p className="text-xs text-muted-foreground">Aucun visuel généré</p>
+            <p className="text-[10px] text-muted-foreground/50 mt-1">Cliquez pour générer un visuel IA</p>
           </div>
         )}
 
@@ -185,13 +144,21 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
             disabled={generateMutation.isPending}
           >
             {generateMutation.isPending ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
+              <>
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Génération IA…
+              </>
             ) : latestAsset ? (
-              <RefreshCw className="w-3 h-3" />
+              <>
+                <RefreshCw className="w-3 h-3" />
+                Régénérer
+              </>
             ) : (
-              <ImagePlus className="w-3 h-3" />
+              <>
+                <Sparkles className="w-3 h-3" />
+                Générer le visuel IA
+              </>
             )}
-            {latestAsset ? 'Régénérer' : 'Générer le visuel'}
           </Button>
           {latestAsset && (
             <Button

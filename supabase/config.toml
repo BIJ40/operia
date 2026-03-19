@@ -213,3 +213,6 @@ verify_jwt = true
 
 [functions.social-suggest]
 verify_jwt = true
+
+[functions.social-visual-generate]
+verify_jwt = true
