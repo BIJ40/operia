@@ -67,7 +67,7 @@ export default function SocialHubPage() {
         <Button
           onClick={handleGenerate}
           disabled={isGenerating}
-          className="bg-orange-500 hover:bg-orange-600 text-white"
+          variant="default"
         >
           {isGenerating ? (
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />

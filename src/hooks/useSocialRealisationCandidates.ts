@@ -78,8 +78,7 @@ function computeScore(
 }
 
 export function useSocialRealisationCandidates(minScore = 50) {
-  const { profile } = useAuth();
-  const agencyId = profile?.agency_id;
+  const { agencyId } = useAuth();
 
   return useQuery({
     queryKey: ['social-realisation-candidates', agencyId],

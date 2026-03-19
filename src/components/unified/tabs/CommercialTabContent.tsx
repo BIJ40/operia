@@ -133,6 +133,12 @@ function CommercialInner() {
             <RealisationsPage />
           </Suspense>
         </TabsContent>
+
+        <TabsContent value="social" className="mt-4">
+          <Suspense fallback={<LoadingFallback />}>
+            <SocialHubPage />
+          </Suspense>
+        </TabsContent>
       </Tabs>
     </div>
   );
