@@ -1,87 +1,81 @@
 /**
- * Template : tip_card — Conseil saisonnier 1080x1080
- * V2 — Branding HC fort, overlay univers, logo, bandeau signature.
+ * Template : tip_card — Créa publicitaire conseil saisonnier 1080x1080
+ * V3 — Ad-Ready : hook gros, CTA, composition publicitaire.
  */
 import {
-  SIZE, truncateText, wrapText, getTheme, HC, roundRect,
-  drawGradientBg, drawUniverseOverlay, drawHCFooterBar, drawHCLogo,
-  drawHCTitleBlock,
+  SIZE, truncateText, loadImage, drawCover,
+  getTheme, HC,
+  drawGradientBg, drawHCFooterBar, drawHCLogo,
+  drawCinematicOverlay, drawHookText, drawSubText,
+  drawCTAButton, drawUniversePill, drawTopicBadge, drawAccentBar,
 } from './canvasHelpers';
 import logoSrc from '@/assets/help-confort-services-logo.png';
 import type { SocialTemplatePayload } from '../SocialVisualCanvas';
 
-const TIP_ICONS: Record<string, string> = {
-  plomberie: '🔧', electricite: '⚡', serrurerie: '🔑',
-  vitrerie: '🪟', menuiserie: '🪚', renovation: '🏠',
-  volets: '🪟', pmr: '♿', general: '💡',
-};
-
 export async function drawTipCard(ctx: CanvasRenderingContext2D, payload: SocialTemplatePayload) {
   const theme = getTheme(payload.universe);
-  const title = truncateText(payload.title || 'Conseil', 60);
-  const caption = truncateText(payload.caption || '', 250);
-  const icon = TIP_ICONS[payload.universe || 'general'] || '💡';
+  const hook = truncateText(payload.hook || payload.title || 'Conseil', 50);
+  const subText = truncateText(payload.caption || '', 100);
+  const cta = payload.cta || 'En savoir plus';
 
-  // ─── Background: HC dark with universe accent ───
-  drawGradientBg(ctx, HC.grayDark, '#1A1A2E');
+  // ─── 1. FOND : image IA ou gradient HC foncé ───
+  if (payload.mediaUrl) {
+    try {
+      const img = await loadImage(payload.mediaUrl);
+      drawCover(ctx, img, 0, 0, SIZE, SIZE);
+      drawCinematicOverlay(ctx, 0.72);
+    } catch {
+      drawGradientBg(ctx, HC.grayDark, '#1A1A2E');
+    }
+  } else {
+    drawGradientBg(ctx, HC.grayDark, '#1A1A2E');
 
-  // Decorative accent shapes
-  ctx.fillStyle = theme.bg;
-  ctx.globalAlpha = 0.10;
-  ctx.beginPath();
-  ctx.arc(SIZE - 100, 180, 280, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.globalAlpha = 0.06;
-  ctx.beginPath();
-  ctx.arc(100, SIZE - 200, 200, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.globalAlpha = 1;
+    // Decorative accent shapes (only on solid bg)
+    ctx.fillStyle = theme.bg;
+    ctx.globalAlpha = 0.10;
+    ctx.beginPath();
+    ctx.arc(SIZE - 100, 180, 280, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 0.06;
+    ctx.beginPath();
+    ctx.arc(100, SIZE - 200, 200, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
 
-  // Blue HC accent stripe left
-  ctx.fillStyle = HC.blue;
-  ctx.fillRect(0, 0, 8, SIZE);
+  // ─── 2. Accent bar gauche ───
+  drawAccentBar(ctx, theme, 8);
 
-  // ─── Logo HC top-left ───
+  // ─── 3. Logo HC top-left ───
   await drawHCLogo(ctx, logoSrc, 'top-left');
 
-  // ─── "CONSEIL" label top ───
-  ctx.fillStyle = HC.orange;
-  ctx.font = 'bold 20px sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText('CONSEIL', 50, 130);
-  // Orange underline
-  ctx.fillRect(50, 138, 90, 3);
+  // ─── 4. Badge "CONSEIL" ───
+  drawTopicBadge(ctx, '💡 Conseil', { x: 70, y: 130 });
 
-  // ─── Universe pill ───
-  ctx.fillStyle = theme.bg;
-  const pillText = theme.label.toUpperCase();
-  ctx.font = 'bold 18px sans-serif';
-  const pillW = ctx.measureText(pillText).width + 32;
-  roundRect(ctx, 160, 112, pillW, 34, 17);
-  ctx.fill();
-  ctx.fillStyle = HC.white;
-  ctx.textAlign = 'center';
-  ctx.fillText(pillText, 160 + pillW / 2, 135);
+  // ─── 5. Universe pill top-right ───
+  drawUniversePill(ctx, theme, 35);
 
-  // ─── Large icon ───
-  ctx.font = '140px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(icon, SIZE / 2, 340);
-
-  // ─── Title block HC style ───
-  drawHCTitleBlock(ctx, title, { y: 420, align: 'center', bgColor: HC.blue, fontSize: 46 });
-
-  // ─── Caption ───
-  ctx.font = '26px sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,0.85)';
-  ctx.textAlign = 'center';
-  const capLines = wrapText(ctx, caption, SIZE - 160);
-  let y = 620;
-  capLines.slice(0, 5).forEach((line) => {
-    ctx.fillText(line, SIZE / 2, y);
-    y += 36;
+  // ─── 6. HOOK TEXT : accroche publicitaire ───
+  const { bottomY: hookBottom } = drawHookText(ctx, hook, {
+    y: SIZE - 420,
+    fontSize: 62,
+    maxWidth: SIZE - 160,
+    align: 'left',
   });
 
-  // ─── HC Footer Bar ───
+  // ─── 7. SOUS-TEXTE ───
+  if (subText) {
+    drawSubText(ctx, subText, {
+      y: hookBottom + 16,
+      fontSize: 28,
+      maxWidth: SIZE - 180,
+      align: 'left',
+    });
+  }
+
+  // ─── 8. CTA BUTTON ───
+  drawCTAButton(ctx, cta, { y: SIZE - 160, align: 'left' });
+
+  // ─── 9. FOOTER SIGNATURE ───
   drawHCFooterBar(ctx, theme);
 }
