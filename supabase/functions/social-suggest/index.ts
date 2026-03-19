@@ -14,23 +14,54 @@ import { getUserContext, assertAgencyAccess } from '../_shared/auth.ts';
 import { validateUUID } from '../_shared/validation.ts';
 import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 
-// ─── Awareness days dataset ───
+// ─── Awareness days dataset (enrichi — toutes les dates clés) ───
 const AWARENESS_DAYS = [
+  // ── Janvier ──
+  { month: 1, day: 1,  label: "Bonne année — résolutions habitat", tags: ["habitat","renovation"], contentTypeHint: "lifestyle", preferredUniverses: ["renovation","general"], ctaHint: "devis_renovation" },
   { month: 1, day: 15, label: "Prévention gel canalisations", tags: ["eau","urgence","plomberie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie"], ctaHint: "urgence_gel" },
+  { month: 1, day: 27, label: "Vérification détecteurs de fumée", tags: ["securite","electricite"], contentTypeHint: "prevention", preferredUniverses: ["electricite"], ctaHint: "securite_incendie" },
+  // ── Février ──
   { month: 2, day: 10, label: "Économies d'énergie", tags: ["energie","habitat"], contentTypeHint: "pedagogique", preferredUniverses: ["electricite","plomberie"], ctaHint: "audit_energetique" },
+  { month: 2, day: 14, label: "Saint-Valentin — cocooning maison", tags: ["confort","habitat"], contentTypeHint: "lifestyle", preferredUniverses: ["renovation","general"], ctaHint: "ambiance_maison" },
+  // ── Mars ──
+  { month: 3, day: 8,  label: "Printemps — check-up plomberie", tags: ["entretien","plomberie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie"], ctaHint: "entretien_printemps" },
   { month: 3, day: 22, label: "Journée mondiale de l'eau", tags: ["eau","plomberie"], contentTypeHint: "pedagogique", preferredUniverses: ["plomberie"], ctaHint: "diagnostic_fuite" },
-  { month: 4, day: 22, label: "Jour de la Terre", tags: ["energie","renovation"], contentTypeHint: "pedagogique", preferredUniverses: ["renovation"], ctaHint: "renovation_ecologique" },
+  { month: 3, day: 30, label: "Changement d'heure — vérifier programmateurs", tags: ["electricite","confort"], contentTypeHint: "pedagogique", preferredUniverses: ["electricite","volets"], ctaHint: "programmateur_volets" },
+  // ── Avril ──
+  { month: 4, day: 1,  label: "1er avril — anecdotes dépannage insolites", tags: ["humour","engagement"], contentTypeHint: "decale", preferredUniverses: ["general"], ctaHint: "engagement_communaute" },
+  { month: 4, day: 7,  label: "Grand ménage de printemps — check-up maison", tags: ["entretien","habitat"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","electricite","renovation"], ctaHint: "check_up_maison" },
+  { month: 4, day: 15, label: "Préparation terrasse & extérieurs", tags: ["habitat","menuiserie"], contentTypeHint: "pedagogique", preferredUniverses: ["menuiserie","volets","renovation"], ctaHint: "amenagement_exterieur" },
+  { month: 4, day: 20, label: "Pâques — votre maison prête pour recevoir", tags: ["confort","habitat","famille"], contentTypeHint: "lifestyle", preferredUniverses: ["renovation","general"], ctaHint: "maison_accueillante" },
+  { month: 4, day: 22, label: "Jour de la Terre — rénovation éco-responsable", tags: ["energie","renovation"], contentTypeHint: "pedagogique", preferredUniverses: ["renovation"], ctaHint: "renovation_ecologique" },
+  // ── Mai ──
+  { month: 5, day: 1,  label: "1er mai — sécuriser sa maison pour le pont", tags: ["securite","serrurerie"], contentTypeHint: "prevention", preferredUniverses: ["serrurerie"], ctaHint: "securisation_pont" },
   { month: 5, day: 10, label: "Entretien climatisation", tags: ["entretien","confort"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","electricite"], ctaHint: "entretien_clim" },
-  { month: 6, day: 15, label: "Canicule — Fraîcheur", tags: ["confort","urgence"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","electricite"], ctaHint: "installation_clim" },
-  { month: 6, day: 21, label: "Sécuriser avant vacances", tags: ["securite","serrurerie"], contentTypeHint: "prevention", preferredUniverses: ["serrurerie"], ctaHint: "securisation_vacances" },
-  { month: 7, day: 20, label: "Stores & volets roulants", tags: ["confort","habitat"], contentTypeHint: "pedagogique", preferredUniverses: ["volets"], ctaHint: "installation_volets" },
-  { month: 8, day: 1, label: "Urgences estivales", tags: ["urgence","plomberie","serrurerie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","serrurerie"], ctaHint: "numero_urgence" },
-  { month: 9, day: 1, label: "Remise en route chauffage", tags: ["entretien","energie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie"], ctaHint: "revision_chauffage" },
-  { month: 10, day: 1, label: "Anticiper l'hiver", tags: ["entretien","energie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","renovation"], ctaHint: "preparation_hiver" },
-  { month: 10, day: 13, label: "Prévention catastrophes", tags: ["securite","urgence"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","electricite"], ctaHint: "prevention_degats_eaux" },
-  { month: 11, day: 1, label: "Purge radiateurs", tags: ["entretien","plomberie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie"], ctaHint: "purge_radiateurs" },
-  { month: 12, day: 1, label: "Risques gel canalisations", tags: ["urgence","plomberie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie"], ctaHint: "prevention_gel" },
-  { month: 12, day: 10, label: "Sécurité électrique fêtes", tags: ["securite","electricite"], contentTypeHint: "prevention", preferredUniverses: ["electricite"], ctaHint: "securite_electrique_noel" },
+  { month: 5, day: 25, label: "Journée du bricolage — quand appeler un pro ?", tags: ["pedagogique","habitat"], contentTypeHint: "pedagogique", preferredUniverses: ["general"], ctaHint: "appeler_un_pro" },
+  // ── Juin ──
+  { month: 6, day: 5,  label: "Journée de l'environnement — éco-gestes maison", tags: ["energie","habitat"], contentTypeHint: "pedagogique", preferredUniverses: ["electricite","plomberie"], ctaHint: "eco_gestes" },
+  { month: 6, day: 15, label: "Canicule — fraîcheur & ventilation", tags: ["confort","urgence"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","electricite"], ctaHint: "installation_clim" },
+  { month: 6, day: 21, label: "Sécuriser avant vacances d'été", tags: ["securite","serrurerie"], contentTypeHint: "prevention", preferredUniverses: ["serrurerie"], ctaHint: "securisation_vacances" },
+  // ── Juillet ──
+  { month: 7, day: 14, label: "14 juillet — sécurité électrique festive", tags: ["securite","electricite"], contentTypeHint: "prevention", preferredUniverses: ["electricite"], ctaHint: "securite_electrique" },
+  { month: 7, day: 20, label: "Stores & volets roulants contre la chaleur", tags: ["confort","habitat"], contentTypeHint: "pedagogique", preferredUniverses: ["volets"], ctaHint: "installation_volets" },
+  // ── Août ──
+  { month: 8, day: 1,  label: "Urgences estivales — on reste ouvert", tags: ["urgence","plomberie","serrurerie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","serrurerie"], ctaHint: "numero_urgence" },
+  { month: 8, day: 20, label: "Rentrée — préparer la maison", tags: ["entretien","habitat"], contentTypeHint: "prevention", preferredUniverses: ["renovation","general"], ctaHint: "preparation_rentree" },
+  // ── Septembre ──
+  { month: 9, day: 1,  label: "Remise en route chauffage", tags: ["entretien","energie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie"], ctaHint: "revision_chauffage" },
+  { month: 9, day: 15, label: "Rentrée — vérifier tableau électrique", tags: ["securite","electricite"], contentTypeHint: "prevention", preferredUniverses: ["electricite"], ctaHint: "diagnostic_electrique" },
+  // ── Octobre ──
+  { month: 10, day: 1,  label: "Anticiper l'hiver — isolation & chauffage", tags: ["entretien","energie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","renovation"], ctaHint: "preparation_hiver" },
+  { month: 10, day: 13, label: "Prévention catastrophes naturelles", tags: ["securite","urgence"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","electricite"], ctaHint: "prevention_degats_eaux" },
+  { month: 10, day: 31, label: "Halloween — les pannes qui font peur", tags: ["humour","engagement"], contentTypeHint: "decale", preferredUniverses: ["general","electricite"], ctaHint: "engagement_communaute" },
+  // ── Novembre ──
+  { month: 11, day: 1,  label: "Purge radiateurs avant le froid", tags: ["entretien","plomberie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie"], ctaHint: "purge_radiateurs" },
+  { month: 11, day: 15, label: "Journée accessibilité — adaptation PMR", tags: ["pmr","habitat"], contentTypeHint: "pedagogique", preferredUniverses: ["pmr"], ctaHint: "adaptation_logement" },
+  // ── Décembre ──
+  { month: 12, day: 1,  label: "Risques gel canalisations", tags: ["urgence","plomberie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie"], ctaHint: "prevention_gel" },
+  { month: 12, day: 10, label: "Sécurité électrique pour les fêtes", tags: ["securite","electricite"], contentTypeHint: "prevention", preferredUniverses: ["electricite"], ctaHint: "securite_electrique_noel" },
+  { month: 12, day: 24, label: "Joyeuses fêtes — Help Confort à vos côtés", tags: ["branding","engagement"], contentTypeHint: "lifestyle", preferredUniverses: ["general"], ctaHint: "branding_fetes" },
+  { month: 12, day: 31, label: "Bilan de l'année — vos projets 2026", tags: ["branding","habitat"], contentTypeHint: "lifestyle", preferredUniverses: ["general","renovation"], ctaHint: "projets_nouvelle_annee" },
 ];
 
 const NORMALIZED_UNIVERSES = ['plomberie', 'electricite', 'serrurerie', 'vitrerie', 'menuiserie', 'renovation', 'volets', 'pmr', 'general'] as const;
