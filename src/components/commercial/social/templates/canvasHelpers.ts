@@ -201,7 +201,6 @@ export async function drawHCLogo(ctx: CanvasRenderingContext2D, logoSrc: string,
   }
   ctx.textAlign = 'left';
 }
-}
 
 /** Bloc titre HC style */
 export function drawHCTitleBlock(
