@@ -460,7 +460,7 @@ export function computeChargeTravauxAvenirParUnivers(
 
     // --- Enrichissement pilotage avancé ---
     // createdAt & ageDays
-    const rawCreatedAt = project?.createdAt ?? project?.data?.createdAt ?? null;
+    const rawCreatedAt = project?.created_at ?? project?.date ?? project?.createdAt ?? project?.data?.createdAt ?? null;
     const createdAtStr = rawCreatedAt ? String(rawCreatedAt) : null;
     let ageDays: number | null = null;
     if (createdAtStr) {
