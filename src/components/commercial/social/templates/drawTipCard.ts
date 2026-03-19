@@ -1,7 +1,13 @@
 /**
  * Template : tip_card — Conseil saisonnier 1080x1080
+ * V2 — Branding HC fort, overlay univers, logo, bandeau signature.
  */
-import { SIZE, truncateText, wrapText, getTheme, drawGradientBg, roundRect } from './canvasHelpers';
+import {
+  SIZE, truncateText, wrapText, getTheme, HC, roundRect,
+  drawGradientBg, drawUniverseOverlay, drawHCFooterBar, drawHCLogo,
+  drawHCTitleBlock,
+} from './canvasHelpers';
+import logoSrc from '@/assets/help-confort-services-logo.png';
 import type { SocialTemplatePayload } from '../SocialVisualCanvas';
 
 const TIP_ICONS: Record<string, string> = {
@@ -12,64 +18,70 @@ const TIP_ICONS: Record<string, string> = {
 
 export async function drawTipCard(ctx: CanvasRenderingContext2D, payload: SocialTemplatePayload) {
   const theme = getTheme(payload.universe);
-  const title = truncateText(payload.title || 'Conseil', 80);
-  const caption = truncateText(payload.caption || '', 300);
+  const title = truncateText(payload.title || 'Conseil', 60);
+  const caption = truncateText(payload.caption || '', 250);
   const icon = TIP_ICONS[payload.universe || 'general'] || '💡';
 
-  // Background
-  drawGradientBg(ctx, theme.bg, theme.accent);
+  // ─── Background: HC dark with universe accent ───
+  drawGradientBg(ctx, HC.grayDark, '#1A1A2E');
 
-  // Decorative circle
-  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  // Decorative accent shapes
+  ctx.fillStyle = theme.bg;
+  ctx.globalAlpha = 0.10;
   ctx.beginPath();
-  ctx.arc(SIZE - 150, 200, 300, 0, Math.PI * 2);
+  ctx.arc(SIZE - 100, 180, 280, 0, Math.PI * 2);
   ctx.fill();
+  ctx.globalAlpha = 0.06;
+  ctx.beginPath();
+  ctx.arc(100, SIZE - 200, 200, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
 
-  // Top label
-  ctx.fillStyle = theme.labelColor;
-  ctx.font = 'bold 22px sans-serif';
+  // Blue HC accent stripe left
+  ctx.fillStyle = HC.blue;
+  ctx.fillRect(0, 0, 8, SIZE);
+
+  // ─── Logo HC top-left ───
+  await drawHCLogo(ctx, logoSrc, 'top-left');
+
+  // ─── "CONSEIL" label top ───
+  ctx.fillStyle = HC.orange;
+  ctx.font = 'bold 20px sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText('CONSEIL', 60, 80);
+  ctx.fillText('CONSEIL', 50, 130);
+  // Orange underline
+  ctx.fillRect(50, 138, 90, 3);
 
-  // Service pill
-  ctx.fillStyle = 'rgba(255,255,255,0.15)';
-  roundRect(ctx, 200, 56, ctx.measureText(theme.label).width + 40, 36, 18);
+  // ─── Universe pill ───
+  ctx.fillStyle = theme.bg;
+  const pillText = theme.label.toUpperCase();
+  ctx.font = 'bold 18px sans-serif';
+  const pillW = ctx.measureText(pillText).width + 32;
+  roundRect(ctx, 160, 112, pillW, 34, 17);
   ctx.fill();
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = '20px sans-serif';
-  ctx.fillText(theme.label, 220, 80);
-
-  // Large icon
-  ctx.font = '160px sans-serif';
+  ctx.fillStyle = HC.white;
   ctx.textAlign = 'center';
-  ctx.fillText(icon, SIZE / 2, 320);
+  ctx.fillText(pillText, 160 + pillW / 2, 135);
 
-  // Title
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 52px sans-serif';
+  // ─── Large icon ───
+  ctx.font = '140px sans-serif';
   ctx.textAlign = 'center';
-  const titleLines = wrapText(ctx, title, SIZE - 140);
-  let y = 440;
-  titleLines.slice(0, 3).forEach((line) => {
-    ctx.fillText(line, SIZE / 2, y);
-    y += 62;
-  });
+  ctx.fillText(icon, SIZE / 2, 340);
 
-  // Caption
-  ctx.font = '28px sans-serif';
+  // ─── Title block HC style ───
+  drawHCTitleBlock(ctx, title, { y: 420, align: 'center', bgColor: HC.blue, fontSize: 46 });
+
+  // ─── Caption ───
+  ctx.font = '26px sans-serif';
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.textAlign = 'center';
   const capLines = wrapText(ctx, caption, SIZE - 160);
+  let y = 620;
   capLines.slice(0, 5).forEach((line) => {
-    ctx.fillText(line, SIZE / 2, y + 20);
-    y += 38;
+    ctx.fillText(line, SIZE / 2, y);
+    y += 36;
   });
 
-  // Bottom branding bar
-  const bottomY = SIZE - 80;
-  ctx.fillStyle = 'rgba(0,0,0,0.3)';
-  ctx.fillRect(0, bottomY, SIZE, 80);
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 24px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('Help Confort — Dépannage & Travaux', SIZE / 2, bottomY + 50);
+  // ─── HC Footer Bar ───
+  drawHCFooterBar(ctx, theme);
 }
