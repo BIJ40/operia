@@ -17,6 +17,7 @@ export interface RegenerationPrompt {
   keywords: string;
   audience: string;
   length: 'court' | 'moyen' | 'long';
+  freePrompt: string;
 }
 
 const TONE_OPTIONS = [
