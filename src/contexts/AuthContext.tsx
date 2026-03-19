@@ -173,8 +173,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       setFirstName(profile?.first_name || null);
       setLastName(profile?.last_name || null);
-      setAgence(profile?.agence || null);
       setAgencyId(profile?.agency_id || null);
+      setRoleAgence(profile?.role_agence || null);
+      
+      // Resolve agence slug: use profile.agence, or fallback to apogee_agencies.slug via agency_id
+      let resolvedAgence = profile?.agence || null;
+      if (!resolvedAgence && profile?.agency_id) {
+        try {
+          const { data: agency } = await supabase
+            .from('apogee_agencies')
+            .select('slug')
+            .eq('id', profile.agency_id)
+            .single();
+          if (agency?.slug) {
+            resolvedAgence = agency.slug;
+            logAuth.info(`[AUTH] Resolved agence slug from agency_id: ${agency.slug}`);
+          }
+        } catch (e) {
+          logAuth.warn('[AUTH] Failed to resolve agence slug from agency_id', e);
+        }
+      }
+      setAgence(resolvedAgence);
       setRoleAgence(profile?.role_agence || null);
       setMustChangePassword(profile?.must_change_password || false);
       setIsReadOnly(profile?.is_read_only === true);
