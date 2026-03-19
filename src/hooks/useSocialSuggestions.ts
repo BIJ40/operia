@@ -166,20 +166,36 @@ export function useUpdateSuggestionStatus() {
           .eq('agency_id', agencyId);
       }
 
-      // If approved → dispatch to webhook with label PUBLI (fire-and-forget)
+      // If approved → check if suggestion_date is today or past → send webhook immediately
+      // If future date → webhook will be dispatched by daily cron job
       if (status === 'approved' && agencyId) {
-        supabase.functions.invoke('dispatch-social-webhook', {
-          body: { suggestion_id: id, agency_id: agencyId },
-        }).then(({ error: whErr, data: whData }) => {
-          if (whErr || whData?.error) {
-            console.warn('[social-webhook] Dispatch PUBLI failed:', whErr?.message || whData?.error);
-            toast.error('Post approuvé mais l\'envoi webhook a échoué');
-          } else {
-            toast.success('Post approuvé & envoyé (PUBLI)');
-          }
-        }).catch((err: any) => {
-          console.warn('[social-webhook] Dispatch PUBLI error:', err);
-        });
+        // Fetch the suggestion to get its date
+        const { data: suggData } = await supabase
+          .from('social_content_suggestions')
+          .select('suggestion_date')
+          .eq('id', id)
+          .single();
+
+        const suggestionDate = suggData?.suggestion_date;
+        const today = new Date().toISOString().slice(0, 10);
+        const isPastOrToday = !suggestionDate || suggestionDate <= today;
+
+        if (isPastOrToday) {
+          supabase.functions.invoke('dispatch-social-webhook', {
+            body: { suggestion_id: id, agency_id: agencyId },
+          }).then(({ error: whErr, data: whData }) => {
+            if (whErr || whData?.error) {
+              console.warn('[social-webhook] Dispatch PUBLI failed:', whErr?.message || whData?.error);
+              toast.error('Post approuvé mais l\'envoi webhook a échoué');
+            } else {
+              toast.success('Post approuvé & envoyé (PUBLI)');
+            }
+          }).catch((err: any) => {
+            console.warn('[social-webhook] Dispatch PUBLI error:', err);
+          });
+        } else {
+          toast.success(`Post approuvé — publication programmée le ${new Date(suggestionDate).toLocaleDateString('fr-FR')}`);
+        }
       }
 
       return { id, status, monthKey };
