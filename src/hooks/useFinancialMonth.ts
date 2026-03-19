@@ -12,10 +12,23 @@ export interface FinancialMonth {
   month: number;
   nb_interventions: number;
   nb_factures: number;
+  nb_salaries: number;
   heures_facturees: number;
+  nb_heures_payees_productifs: number;
+  nb_heures_payees_improductifs: number;
   ca_total: number;
   achats: number;
   sous_traitance: number;
+  salaires_brut_intervenants: number;
+  charges_patronales_intervenants: number;
+  frais_personnel_intervenants: number;
+  aides_emploi: number;
+  salaires_brut_improductifs: number;
+  charges_patronales_improductifs: number;
+  frais_personnel_improductifs: number;
+  salaires_brut_franchise: number;
+  charges_patronales_franchise: number;
+  frais_franchise: number;
   synced_at: string | null;
   sync_version: number;
   locked_at: string | null;
@@ -23,6 +36,10 @@ export interface FinancialMonth {
   notes: string | null;
   created_at: string;
   updated_at: string;
+}
+
+function isTableNotFoundError(error: any): boolean {
+  return error?.code === 'PGRST205' || error?.message?.includes('Could not find the table');
 }
 
 export function useFinancialMonth(year: number, month: number) {
@@ -33,6 +50,10 @@ export function useFinancialMonth(year: number, month: number) {
   const query = useQuery({
     queryKey,
     enabled: !!agencyId && year > 0 && month >= 1 && month <= 12,
+    retry: (failureCount, error: any) => {
+      if (isTableNotFoundError(error)) return false;
+      return failureCount < 3;
+    },
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('agency_financial_months')
@@ -41,7 +62,10 @@ export function useFinancialMonth(year: number, month: number) {
         .eq('year', year)
         .eq('month', month)
         .maybeSingle();
-      if (error) throw error;
+      if (error) {
+        if (isTableNotFoundError(error)) return null;
+        throw error;
+      }
       return data as FinancialMonth | null;
     },
   });
@@ -70,6 +94,7 @@ export function useFinancialMonth(year: number, month: number) {
   return {
     financialMonth: query.data ?? null,
     isLoading: query.isLoading,
+    isError: query.isError,
     isLocked: !!query.data?.locked_at,
     upsertMonth,
     refetch: query.refetch,

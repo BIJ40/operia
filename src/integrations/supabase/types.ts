@@ -233,6 +233,163 @@ export type Database = {
           },
         ]
       }
+      agency_financial_charges: {
+        Row: {
+          agency_id: string
+          amount: number
+          category: string
+          charge_type: string
+          created_at: string | null
+          end_month: string | null
+          id: string
+          label: string | null
+          notes: string | null
+          start_month: string
+          updated_at: string | null
+        }
+        Insert: {
+          agency_id: string
+          amount?: number
+          category: string
+          charge_type: string
+          created_at?: string | null
+          end_month?: string | null
+          id?: string
+          label?: string | null
+          notes?: string | null
+          start_month: string
+          updated_at?: string | null
+        }
+        Update: {
+          agency_id?: string
+          amount?: number
+          category?: string
+          charge_type?: string
+          created_at?: string | null
+          end_month?: string | null
+          id?: string
+          label?: string | null
+          notes?: string | null
+          start_month?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_financial_charges_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agency_financial_months: {
+        Row: {
+          achats: number | null
+          agency_id: string
+          aides_emploi: number | null
+          ca_total: number | null
+          charges_patronales_franchise: number | null
+          charges_patronales_improductifs: number | null
+          charges_patronales_intervenants: number | null
+          created_at: string | null
+          frais_franchise: number | null
+          frais_personnel_improductifs: number | null
+          frais_personnel_intervenants: number | null
+          heures_facturees: number | null
+          id: string
+          locked_at: string | null
+          locked_by: string | null
+          month: number
+          nb_factures: number | null
+          nb_heures_payees_improductifs: number | null
+          nb_heures_payees_productifs: number | null
+          nb_interventions: number | null
+          nb_salaries: number | null
+          notes: string | null
+          salaires_brut_franchise: number | null
+          salaires_brut_improductifs: number | null
+          salaires_brut_intervenants: number | null
+          sous_traitance: number | null
+          sync_version: number | null
+          synced_at: string | null
+          updated_at: string | null
+          year: number
+        }
+        Insert: {
+          achats?: number | null
+          agency_id: string
+          aides_emploi?: number | null
+          ca_total?: number | null
+          charges_patronales_franchise?: number | null
+          charges_patronales_improductifs?: number | null
+          charges_patronales_intervenants?: number | null
+          created_at?: string | null
+          frais_franchise?: number | null
+          frais_personnel_improductifs?: number | null
+          frais_personnel_intervenants?: number | null
+          heures_facturees?: number | null
+          id?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          month: number
+          nb_factures?: number | null
+          nb_heures_payees_improductifs?: number | null
+          nb_heures_payees_productifs?: number | null
+          nb_interventions?: number | null
+          nb_salaries?: number | null
+          notes?: string | null
+          salaires_brut_franchise?: number | null
+          salaires_brut_improductifs?: number | null
+          salaires_brut_intervenants?: number | null
+          sous_traitance?: number | null
+          sync_version?: number | null
+          synced_at?: string | null
+          updated_at?: string | null
+          year: number
+        }
+        Update: {
+          achats?: number | null
+          agency_id?: string
+          aides_emploi?: number | null
+          ca_total?: number | null
+          charges_patronales_franchise?: number | null
+          charges_patronales_improductifs?: number | null
+          charges_patronales_intervenants?: number | null
+          created_at?: string | null
+          frais_franchise?: number | null
+          frais_personnel_improductifs?: number | null
+          frais_personnel_intervenants?: number | null
+          heures_facturees?: number | null
+          id?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          month?: number
+          nb_factures?: number | null
+          nb_heures_payees_improductifs?: number | null
+          nb_heures_payees_productifs?: number | null
+          nb_interventions?: number | null
+          nb_salaries?: number | null
+          notes?: string | null
+          salaires_brut_franchise?: number | null
+          salaires_brut_improductifs?: number | null
+          salaires_brut_intervenants?: number | null
+          sous_traitance?: number | null
+          sync_version?: number | null
+          synced_at?: string | null
+          updated_at?: string | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_financial_months_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agency_overhead_rules: {
         Row: {
           agency_id: string
@@ -7121,6 +7278,7 @@ export type Database = {
           alt_text: string | null
           caption: string | null
           created_at: string
+          exif_taken_at: string | null
           file_name: string
           file_size_bytes: number | null
           height: number | null
@@ -7140,6 +7298,7 @@ export type Database = {
           alt_text?: string | null
           caption?: string | null
           created_at?: string
+          exif_taken_at?: string | null
           file_name: string
           file_size_bytes?: number | null
           height?: number | null
@@ -7159,6 +7318,7 @@ export type Database = {
           alt_text?: string | null
           caption?: string | null
           created_at?: string
+          exif_taken_at?: string | null
           file_name?: string
           file_size_bytes?: number | null
           height?: number | null
@@ -8173,6 +8333,286 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      social_calendar_entries: {
+        Row: {
+          agency_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          platform: string
+          published_at: string | null
+          scheduled_for: string
+          status: string
+          suggestion_id: string
+          updated_at: string
+          variant_id: string | null
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          platform: string
+          published_at?: string | null
+          scheduled_for: string
+          status?: string
+          suggestion_id: string
+          updated_at?: string
+          variant_id?: string | null
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          platform?: string
+          published_at?: string | null
+          scheduled_for?: string
+          status?: string
+          suggestion_id?: string
+          updated_at?: string
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_calendar_entries_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_calendar_entries_suggestion_id_fkey"
+            columns: ["suggestion_id"]
+            isOneToOne: false
+            referencedRelation: "social_content_suggestions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_calendar_entries_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "social_post_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_content_suggestions: {
+        Row: {
+          agency_id: string
+          ai_payload: Json | null
+          caption_base_fr: string
+          content_angle: string | null
+          created_at: string
+          generation_batch_id: string | null
+          hashtags: string[] | null
+          id: string
+          is_user_edited: boolean
+          month_key: string
+          platform_targets: Json
+          realisation_id: string | null
+          relevance_score: number | null
+          source_type: string
+          status: string
+          suggestion_date: string
+          title: string
+          topic_key: string | null
+          topic_type: string
+          universe: string | null
+          updated_at: string
+          visual_type: string
+        }
+        Insert: {
+          agency_id: string
+          ai_payload?: Json | null
+          caption_base_fr: string
+          content_angle?: string | null
+          created_at?: string
+          generation_batch_id?: string | null
+          hashtags?: string[] | null
+          id?: string
+          is_user_edited?: boolean
+          month_key: string
+          platform_targets?: Json
+          realisation_id?: string | null
+          relevance_score?: number | null
+          source_type?: string
+          status?: string
+          suggestion_date: string
+          title: string
+          topic_key?: string | null
+          topic_type: string
+          universe?: string | null
+          updated_at?: string
+          visual_type: string
+        }
+        Update: {
+          agency_id?: string
+          ai_payload?: Json | null
+          caption_base_fr?: string
+          content_angle?: string | null
+          created_at?: string
+          generation_batch_id?: string | null
+          hashtags?: string[] | null
+          id?: string
+          is_user_edited?: boolean
+          month_key?: string
+          platform_targets?: Json
+          realisation_id?: string | null
+          relevance_score?: number | null
+          source_type?: string
+          status?: string
+          suggestion_date?: string
+          title?: string
+          topic_key?: string | null
+          topic_type?: string
+          universe?: string | null
+          updated_at?: string
+          visual_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_content_suggestions_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_post_variants: {
+        Row: {
+          agency_id: string
+          caption_fr: string
+          created_at: string
+          cta: string | null
+          format: string | null
+          hashtags: string[] | null
+          id: string
+          platform: string
+          platform_notes: string | null
+          recommended_dimensions: string | null
+          status: string
+          suggestion_id: string
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          caption_fr: string
+          created_at?: string
+          cta?: string | null
+          format?: string | null
+          hashtags?: string[] | null
+          id?: string
+          platform: string
+          platform_notes?: string | null
+          recommended_dimensions?: string | null
+          status?: string
+          suggestion_id: string
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          caption_fr?: string
+          created_at?: string
+          cta?: string | null
+          format?: string | null
+          hashtags?: string[] | null
+          id?: string
+          platform?: string
+          platform_notes?: string | null
+          recommended_dimensions?: string | null
+          status?: string
+          suggestion_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_post_variants_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_post_variants_suggestion_id_fkey"
+            columns: ["suggestion_id"]
+            isOneToOne: false
+            referencedRelation: "social_content_suggestions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_visual_assets: {
+        Row: {
+          agency_id: string
+          created_at: string
+          generation_meta: Json | null
+          height: number
+          id: string
+          mime_type: string
+          storage_path: string
+          suggestion_id: string
+          theme_key: string | null
+          variant_id: string | null
+          visual_type: string
+          width: number
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          generation_meta?: Json | null
+          height: number
+          id?: string
+          mime_type: string
+          storage_path: string
+          suggestion_id: string
+          theme_key?: string | null
+          variant_id?: string | null
+          visual_type: string
+          width: number
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          generation_meta?: Json | null
+          height?: number
+          id?: string
+          mime_type?: string
+          storage_path?: string
+          suggestion_id?: string
+          theme_key?: string | null
+          variant_id?: string | null
+          visual_type?: string
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_visual_assets_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_visual_assets_suggestion_id_fkey"
+            columns: ["suggestion_id"]
+            isOneToOne: false
+            referencedRelation: "social_content_suggestions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_visual_assets_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "social_post_variants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       statia_custom_metrics: {
         Row: {
@@ -9622,7 +10062,64 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      agency_financial_summary: {
+        Row: {
+          achats: number | null
+          agency_id: string | null
+          aides_emploi: number | null
+          ca_net: number | null
+          ca_total: number | null
+          charges_agence: number | null
+          charges_autres: number | null
+          charges_externes: number | null
+          charges_fixes: number | null
+          charges_location: number | null
+          charges_patronales_franchise: number | null
+          charges_patronales_improductifs: number | null
+          charges_patronales_intervenants: number | null
+          charges_variables: number | null
+          frais_franchise: number | null
+          frais_personnel_improductifs: number | null
+          frais_personnel_intervenants: number | null
+          heures_facturees: number | null
+          id: string | null
+          locked_at: string | null
+          marge_brute: number | null
+          marge_contributive: number | null
+          marge_sur_achats: number | null
+          masse_salariale_productifs: number | null
+          month: number | null
+          month_date: string | null
+          nb_factures: number | null
+          nb_heures_payees_improductifs: number | null
+          nb_heures_payees_productifs: number | null
+          nb_interventions: number | null
+          nb_salaries: number | null
+          resultat_avant_is: number | null
+          resultat_exploitation: number | null
+          salaires_brut_franchise: number | null
+          salaires_brut_improductifs: number | null
+          salaires_brut_intervenants: number | null
+          sous_traitance: number | null
+          sync_version: number | null
+          synced_at: string | null
+          taux_marge_achats: number | null
+          taux_marge_brute: number | null
+          total_charges: number | null
+          total_charges_hors_ms_productifs: number | null
+          total_improductifs: number | null
+          year: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_financial_months_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       auto_generate_monthly_epi_acks: { Args: never; Returns: number }
@@ -10020,6 +10517,15 @@ export type Database = {
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       unlock_document_request: { Args: { p_request_id: string }; Returns: Json }
+      update_financial_charge: {
+        Args: {
+          p_charge_id: string
+          p_new_amount: number
+          p_new_start_month: string
+          p_notes?: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       activity_actor_type: "user" | "apporteur" | "system" | "ai"

@@ -41,6 +41,11 @@ export const MODULES = {
   'commercial.veille': 'commercial.veille',
   'commercial.prospects': 'commercial.prospects',
   'commercial.realisations': 'commercial.realisations',
+  'commercial.social': 'commercial.social',
+  'commercial.realisations.photos': 'commercial.realisations.photos',
+  'commercial.realisations.generer_avap': 'commercial.realisations.generer_avap',
+  'commercial.realisations.onglet_avap': 'commercial.realisations.onglet_avap',
+  'commercial.realisations.valider_envoyer': 'commercial.realisations.valider_envoyer',
   // Organisation
   'organisation.salaries': 'organisation.salaries',
   'organisation.apporteurs': 'organisation.apporteurs',
@@ -450,6 +455,22 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'validate', path: 'commercial.realisations.validate', label: 'Valider', description: 'Valider / refuser', defaultEnabled: false, routes: ['/realisations'] },
       { key: 'publish_prepare', path: 'commercial.realisations.publish_prepare', label: 'Publier', description: 'Préparer publication web', defaultEnabled: false, routes: ['/realisations'] },
       { key: 'export', path: 'commercial.realisations.export', label: 'Exporter', description: 'Export des données', defaultEnabled: false, routes: ['/realisations'] },
+    ],
+  },
+  // Module Social Hub
+  {
+    key: 'commercial.social',
+    label: 'Social',
+    description: 'Calendrier éditorial social media intelligent avec génération IA',
+    icon: 'Share2',
+    category: 'commercial',
+    uiSubTab: 'social',
+    defaultForRoles: [],
+    minRole: 'franchisee_admin',
+    options: [
+      { key: 'view', path: 'commercial.social.view', label: 'Consulter', description: 'Voir les suggestions', defaultEnabled: true, routes: [] },
+      { key: 'generate', path: 'commercial.social.generate', label: 'Générer', description: 'Générer des suggestions IA', defaultEnabled: true, routes: [] },
+      { key: 'publish', path: 'commercial.social.publish', label: 'Publier', description: 'Planifier et publier', defaultEnabled: true, routes: [] },
     ],
   },
   // reseau_franchiseur — INTERFACE DE RÔLE (N3+), pas un module standard.

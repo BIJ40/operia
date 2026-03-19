@@ -214,6 +214,29 @@ Deno.serve(async (req) => {
     // 6. Déterminer l'agence cible avec contrôle d'accès
     let targetAgency = profile?.agence || null;
     
+    // FALLBACK: Si agence slug est null mais agency_id existe dans le profil, résoudre le slug
+    if (!targetAgency && profile) {
+      const { data: profileWithAgency } = await supabase
+        .from('profiles')
+        .select('agency_id')
+        .eq('id', user.id)
+        .single();
+      
+      if (profileWithAgency?.agency_id) {
+        const { data: resolvedAgency } = await supabase
+          .from('apogee_agencies')
+          .select('slug')
+          .eq('id', profileWithAgency.agency_id)
+          .eq('is_active', true)
+          .maybeSingle();
+        
+        if (resolvedAgency?.slug) {
+          console.log(`[PROXY-APOGEE] Resolved agency slug from agency_id: ${resolvedAgency.slug} for user ${user.id.substring(0, 8)}...`);
+          targetAgency = resolvedAgency.slug;
+        }
+      }
+    }
+    
     // APPORTEUR: Les utilisateurs apporteurs accèdent à leur agence associée
     if (isApporteurUser && apporteurAgencyId) {
       // Récupérer le slug de l'agence à partir de l'ID

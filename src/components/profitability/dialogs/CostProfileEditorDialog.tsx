@@ -83,14 +83,17 @@ export function CostProfileEditorDialog({
   const values = form.watch();
 
   const computedHourlyCost = useMemo(() => {
-    const employer = values.employer_monthly_cost ?? 0;
-    const vehicle = values.vehicle_monthly_cost ?? 0;
-    const fuel = values.fuel_monthly_cost ?? 0;
-    const equipment = values.equipment_monthly_cost ?? 0;
-    const other = values.other_monthly_costs ?? 0;
-    const hours = values.monthly_productive_hours ?? 1;
+    const employer = Number(values.employer_monthly_cost) || 0;
+    const vehicle = Number(values.vehicle_monthly_cost) || 0;
+    const fuel = Number(values.fuel_monthly_cost) || 0;
+    const equipment = Number(values.equipment_monthly_cost) || 0;
+    const other = Number(values.other_monthly_costs) || 0;
+    const hours = Number(values.monthly_productive_hours) || 1;
     if (hours <= 0) return 0;
-    return (employer + vehicle + fuel + equipment + other) / hours;
+    const result = (employer + vehicle + fuel + equipment + other) / hours;
+    // Sanity check: hourly cost should never exceed 500€/h
+    if (!isFinite(result) || result > 500) return 0;
+    return result;
   }, [values]);
 
   const handleRecalculate = () => {

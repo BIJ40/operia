@@ -17,7 +17,7 @@ export function useActivityLogPaginated(filters?: ActivityLogFilters) {
     pageSize: filters?.limit || 50,
     enabled: true,
     staleTime: 30_000,
-    filters: (query) => {
+    filters: (query: any) => {
       let q = query;
       if (filters?.module) q = q.eq('module', filters.module);
       if (filters?.entityType) q = q.eq('entity_type', filters.entityType);

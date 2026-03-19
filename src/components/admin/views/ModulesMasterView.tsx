@@ -388,71 +388,99 @@ function OverridesPopover({
 // Row component
 // ============================================================================
 
-// Route mapping for module keys → app routes (canonical G3 keys)
-const MODULE_ROUTES: Record<string, string> = {
+/**
+ * Route mapping for module keys → app routes + optional sub-tab targeting.
+ * When subTabKey/subTabValue are set, navigateToRoute will persist the sub-tab
+ * in sessionStorage and dispatch 'session-state-change' so the target tab
+ * content component picks it up immediately.
+ */
+interface ModuleRouteEntry {
+  route: string;
+  subTabKey?: string;
+  subTabValue?: string;
+}
+
+const MODULE_ROUTES: Record<string, ModuleRouteEntry> = {
   // Accueil
-  accueil: '/',
+  accueil: { route: '/' },
+
   // Pilotage
-  pilotage: '/?tab=pilotage',
-  'pilotage.statistiques': '/?tab=pilotage',
-  'pilotage.performance': '/?tab=pilotage',
-  'pilotage.actions_a_mener': '/?tab=pilotage',
-  'pilotage.devis_acceptes': '/?tab=pilotage',
-  'pilotage.incoherences': '/?tab=pilotage',
+  pilotage: { route: '/?tab=pilotage' },
+  'pilotage.statistiques': { route: '/?tab=pilotage', subTabKey: 'pilotage_sub_tab', subTabValue: 'stats' },
+  'pilotage.performance': { route: '/?tab=pilotage', subTabKey: 'pilotage_sub_tab', subTabValue: 'performance' },
+  'pilotage.actions_a_mener': { route: '/?tab=pilotage', subTabKey: 'pilotage_sub_tab', subTabValue: 'actions' },
+  'pilotage.devis_acceptes': { route: '/?tab=pilotage', subTabKey: 'pilotage_sub_tab', subTabValue: 'devis-acceptes' },
+  'pilotage.incoherences': { route: '/?tab=pilotage', subTabKey: 'pilotage_sub_tab', subTabValue: 'anomalies' },
+  'pilotage.resultat': { route: '/?tab=pilotage', subTabKey: 'pilotage_sub_tab', subTabValue: 'resultat' },
+  'pilotage.rentabilite': { route: '/?tab=pilotage', subTabKey: 'pilotage_sub_tab', subTabValue: 'rentabilite' },
+
   // Commercial
-  commercial: '/?tab=commercial',
-  prospection: '/?tab=commercial',
-  'commercial.realisations': '/?tab=commercial',
+  commercial: { route: '/?tab=commercial' },
+  prospection: { route: '/?tab=commercial' },
+  'commercial.suivi_client': { route: '/?tab=commercial', subTabKey: 'commercial_sub_tab', subTabValue: 'apporteurs' },
+  'commercial.comparateur': { route: '/?tab=commercial', subTabKey: 'commercial_sub_tab', subTabValue: 'comparateur' },
+  'commercial.veille': { route: '/?tab=commercial', subTabKey: 'commercial_sub_tab', subTabValue: 'veille' },
+  'commercial.prospects': { route: '/?tab=commercial', subTabKey: 'commercial_sub_tab', subTabValue: 'prospects' },
+  'commercial.realisations': { route: '/?tab=commercial', subTabKey: 'commercial_sub_tab', subTabValue: 'realisations' },
+
   // Organisation
-  organisation: '/?tab=organisation',
-  'organisation.salaries': '/?tab=organisation',
-  'organisation.apporteurs': '/?tab=organisation',
-  'organisation.plannings': '/?tab=organisation',
-  'organisation.reunions': '/?tab=organisation',
-  'organisation.parc': '/?tab=organisation',
-  'organisation.docgen': '/?tab=organisation',
+  organisation: { route: '/?tab=organisation' },
+  'organisation.salaries': { route: '/?tab=organisation', subTabKey: 'organisation_sub_tab', subTabValue: 'collaborateurs' },
+  'organisation.apporteurs': { route: '/?tab=organisation', subTabKey: 'organisation_sub_tab', subTabValue: 'apporteurs' },
+  'organisation.plannings': { route: '/?tab=organisation', subTabKey: 'organisation_sub_tab', subTabValue: 'plannings' },
+  'organisation.zones': { route: '/?tab=organisation', subTabKey: 'organisation_sub_tab', subTabValue: 'zones' },
+  'organisation.reunions': { route: '/?tab=organisation', subTabKey: 'organisation_sub_tab', subTabValue: 'reunions' },
+  'organisation.parc': { route: '/?tab=organisation', subTabKey: 'organisation_sub_tab', subTabValue: 'parc' },
+  'organisation.documents_legaux': { route: '/?tab=organisation', subTabKey: 'organisation_sub_tab', subTabValue: 'conformite' },
+  'organisation.docgen': { route: '/?tab=organisation' },
+
   // Documents
-  mediatheque: '/?tab=documents',
-  'mediatheque.documents': '/?tab=documents',
-  'mediatheque.consulter': '/?tab=documents',
-  'mediatheque.gerer': '/?tab=documents',
+  mediatheque: { route: '/?tab=documents' },
+  'mediatheque.documents': { route: '/?tab=documents' },
+  'mediatheque.consulter': { route: '/?tab=documents' },
+  'mediatheque.gerer': { route: '/?tab=documents' },
+
   // Support
-  support: '/?tab=support',
-  'support.aide_en_ligne': '/?tab=support',
-  'support.guides': '/?tab=support',
-  'support.faq': '/?tab=support',
-  ticketing: '/?tab=support',
-  'ticketing.kanban': '/?tab=support',
-  'ticketing.liste': '/?tab=support',
-  'ticketing.create': '/?tab=support',
-  'ticketing.manage': '/?tab=support',
+  support: { route: '/?tab=support' },
+  'support.aide_en_ligne': { route: '/?tab=support' },
+  'support.guides': { route: '/?tab=support' },
+  'support.faq': { route: '/?tab=support' },
+  ticketing: { route: '/?tab=support' },
+  'ticketing.kanban': { route: '/?tab=support' },
+  'ticketing.liste': { route: '/?tab=support' },
+  'ticketing.create': { route: '/?tab=support' },
+  'ticketing.manage': { route: '/?tab=support' },
+
   // Admin
-  admin: '/?tab=admin',
-  admin_plateforme: '/?tab=admin',
-  'admin_plateforme.users': '/?tab=admin',
-  'admin_plateforme.agencies': '/?tab=admin',
-  'admin_plateforme.permissions': '/?tab=admin',
-  'admin.gestion': '/?tab=admin&adminTab=gestion',
+  admin: { route: '/?tab=admin' },
+  admin_plateforme: { route: '/?tab=admin' },
+  'admin_plateforme.users': { route: '/?tab=admin' },
+  'admin_plateforme.agencies': { route: '/?tab=admin' },
+  'admin_plateforme.permissions': { route: '/?tab=admin' },
+  'admin.gestion': { route: '/?tab=admin&adminTab=gestion' },
+
   // Franchiseur
-  reseau_franchiseur: '/?tab=franchiseur',
+  reseau_franchiseur: { route: '/?tab=franchiseur' },
+
   // Planning augmenté
-  planning_augmente: '/?tab=organisation',
+  planning_augmente: { route: '/?tab=organisation', subTabKey: 'organisation_sub_tab', subTabValue: 'plannings' },
+
   // Legacy keys (backward compat)
-  agence: '/?tab=pilotage',
-  stats: '/?tab=pilotage',
-  rh: '/?tab=organisation',
-  realisations: '/?tab=commercial',
-  divers_apporteurs: '/?tab=organisation',
-  divers_plannings: '/?tab=organisation',
-  divers_reunions: '/?tab=organisation',
-  parc: '/?tab=organisation',
-  divers_documents: '/?tab=documents',
-  documents: '/?tab=documents',
-  aide: '/?tab=support',
-  guides: '/?tab=support',
+  agence: { route: '/?tab=pilotage' },
+  stats: { route: '/?tab=pilotage' },
+  rh: { route: '/?tab=organisation' },
+  realisations: { route: '/?tab=commercial', subTabKey: 'commercial_sub_tab', subTabValue: 'realisations' },
+  divers_apporteurs: { route: '/?tab=organisation', subTabKey: 'organisation_sub_tab', subTabValue: 'apporteurs' },
+  divers_plannings: { route: '/?tab=organisation', subTabKey: 'organisation_sub_tab', subTabValue: 'plannings' },
+  divers_reunions: { route: '/?tab=organisation', subTabKey: 'organisation_sub_tab', subTabValue: 'reunions' },
+  parc: { route: '/?tab=organisation', subTabKey: 'organisation_sub_tab', subTabValue: 'parc' },
+  divers_documents: { route: '/?tab=documents' },
+  documents: { route: '/?tab=documents' },
+  aide: { route: '/?tab=support' },
+  guides: { route: '/?tab=support' },
 };
 
-function getModuleRoute(key: string): string | null {
+function getModuleRoute(key: string): ModuleRouteEntry | null {
   if (MODULE_ROUTES[key]) return MODULE_ROUTES[key];
   const parts = key.split('.');
   while (parts.length > 1) {
@@ -463,9 +491,23 @@ function getModuleRoute(key: string): string | null {
   return null;
 }
 
-/** Navigate to a route string like "/?tab=pilotage" using proper path + search separation */
-function navigateToRoute(navigate: ReturnType<typeof useNavigate>, route: string) {
-  const [pathname, search] = route.split('?');
+/**
+ * Navigate to a module route.
+ * Sets the sub-tab in sessionStorage + dispatches event BEFORE navigating,
+ * so the target tab content picks it up on mount.
+ */
+function navigateToRoute(navigate: ReturnType<typeof useNavigate>, entry: ModuleRouteEntry) {
+  // Set sub-tab in sessionStorage before navigation
+  if (entry.subTabKey && entry.subTabValue) {
+    try {
+      sessionStorage.setItem(entry.subTabKey, JSON.stringify(entry.subTabValue));
+      window.dispatchEvent(new CustomEvent('session-state-change', {
+        detail: { key: entry.subTabKey, value: entry.subTabValue },
+      }));
+    } catch {}
+  }
+
+  const [pathname, search] = entry.route.split('?');
   navigate({ pathname: pathname || '/', search: search ? `?${search}` : '' });
 }
 

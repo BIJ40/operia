@@ -1,10 +1,10 @@
 /**
  * CommercialTabContent - Onglet "Commercial"
- * Sous-onglets : Suivi client, Comparateur, Veille, Prospects, Réalisations
+ * Sous-onglets : Suivi client, Comparateur, Veille, Prospects, Réalisations, Social
  */
 
 import { lazy, Suspense, useState, useCallback, useMemo } from 'react';
-import { Building2, GitCompare, UserSearch, Radar, Camera, Loader2 } from 'lucide-react';
+import { Building2, GitCompare, UserSearch, Radar, Camera, Share2, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, type PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
@@ -22,6 +22,7 @@ import { ProspectsUnifiedPage } from '@/prospection/pages/ProspectsUnifiedPage';
 import { VeilleApporteursTab } from '@/prospection/pages/VeilleApporteursTab';
 
 const RealisationsPage = lazy(() => import('@/realisations/pages/RealisationsPage'));
+const SocialHubPage = lazy(() => import('@/pages/commercial/SocialHubPage'));
 
 /** Mapping tab id → module key */
 const TAB_MODULE_MAP: Record<string, ModuleKey> = {
@@ -30,6 +31,7 @@ const TAB_MODULE_MAP: Record<string, ModuleKey> = {
   veille: 'commercial.veille',
   prospects: 'commercial.prospects',
   realisations: 'commercial.realisations',
+  social: 'commercial.social',
 };
 
 function LoadingFallback() {
@@ -60,7 +62,7 @@ function ApporteursTabInner() {
 }
 
 function CommercialInner() {
-  const { hasModule, isDeployedModule } = usePermissions();
+  const { hasModule, isDeployedModule, isAdmin } = usePermissions();
   const { openApporteur } = useApporteurTabs();
   const { getShortLabel } = useModuleLabels();
   const { mode: navMode } = useNavigationMode();
@@ -73,6 +75,7 @@ function CommercialInner() {
     { id: 'veille', label: 'Veille', icon: Radar },
     { id: 'prospects', label: 'Prospects', icon: UserSearch },
     { id: 'realisations', label: getShortLabel('commercial.realisations', 'Réalisations'), icon: Camera },
+    { id: 'social', label: getShortLabel('commercial.social', 'Social'), icon: Share2 },
   ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {
@@ -84,14 +87,16 @@ function CommercialInner() {
       })
       .map(tab => {
         const moduleKey = TAB_MODULE_MAP[tab.id];
-        if (moduleKey) return { ...tab, disabled: !hasModule(moduleKey) };
+        if (moduleKey) return { ...tab, disabled: !isAdmin && !hasModule(moduleKey) };
         return tab;
       });
-  }, [hasModule, isDeployedModule, allTabs]);
+  }, [allTabs, hasModule, isAdmin, isDeployedModule]);
 
   const defaultTab = visibleTabs.find(t => !t.disabled)?.id ?? 'apporteurs';
   const [activeTab, setActiveTab] = useSessionState<string>('commercial_sub_tab', defaultTab);
-  const effectiveTab = (visibleTabs.find(t => t.id === activeTab && !t.disabled)) ? activeTab : defaultTab;
+  const effectiveTab = isAdmin && allTabs.some(t => t.id === activeTab)
+    ? activeTab
+    : ((visibleTabs.find(t => t.id === activeTab && !t.disabled)) ? activeTab : defaultTab);
 
   const handleVeilleSelectApporteur = useCallback((id: string, name: string) => {
     openApporteur(id, name);
@@ -126,6 +131,12 @@ function CommercialInner() {
         <TabsContent value="realisations" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
             <RealisationsPage />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="social" className="mt-4">
+          <Suspense fallback={<LoadingFallback />}>
+            <SocialHubPage />
           </Suspense>
         </TabsContent>
       </Tabs>

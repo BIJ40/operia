@@ -35,7 +35,7 @@ function LoadingFallback() {
 }
 
 export default function OrganisationTabContent() {
-  const { hasModule, isDeployedModule, globalRole } = usePermissions();
+  const { hasModule, isDeployedModule, globalRole, isAdmin } = usePermissions();
   const { getShortLabel } = useModuleLabels();
   const { mode: navMode } = useNavigationMode();
 
@@ -47,7 +47,6 @@ export default function OrganisationTabContent() {
     { id: 'reunions', label: getShortLabel('organisation.reunions', 'Réunions'), icon: Users2, accent: 'orange', requiresModule: 'organisation.reunions' },
     { id: 'parc', label: getShortLabel('organisation.parc', 'Parc'), icon: Car, accent: 'pink', requiresModule: 'organisation.parc' },
     { id: 'conformite', label: getShortLabel('organisation.documents_legaux', 'Documents légaux'), icon: FileText, accent: 'teal', requiresModule: 'organisation.documents_legaux' },
-    // Droits équipe : visible uniquement pour N2+ (franchisee_admin et au-dessus)
     ...(globalRole && ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(globalRole)
       ? [{ id: 'droits-equipe', label: 'Droits équipe', icon: Shield, accent: 'blue' as const, requiresModule: 'organisation.salaries' as ModuleKey }]
       : []),
@@ -61,13 +60,15 @@ export default function OrganisationTabContent() {
       })
       .map(tab => {
         if (!tab.requiresModule) return tab;
-        return { ...tab, disabled: !hasModule(tab.requiresModule) };
+        return { ...tab, disabled: !isAdmin && !hasModule(tab.requiresModule) };
       });
-  }, [hasModule, isDeployedModule, allTabs]);
+  }, [allTabs, hasModule, isAdmin, isDeployedModule]);
 
   const defaultTab = (visibleTabs.find(t => !t.disabled)?.id as OrganisationSubTab) ?? 'collaborateurs';
   const [activeTab, setActiveTab] = useSessionState<OrganisationSubTab>('organisation_sub_tab', defaultTab);
-  const effectiveTab = (visibleTabs.find(t => t.id === activeTab && !t.disabled)) ? activeTab : defaultTab;
+  const effectiveTab = isAdmin && allTabs.some(t => t.id === activeTab)
+    ? activeTab
+    : ((visibleTabs.find(t => t.id === activeTab && !t.disabled)) ? activeTab : defaultTab);
 
   return (
     <DomainAccentProvider accent="green">

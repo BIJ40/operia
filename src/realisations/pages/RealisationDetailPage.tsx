@@ -1,5 +1,5 @@
 /**
- * RealisationDetailPage — Photos + sync status
+ * RealisationDetailPage — Photos + sync status + Before/After generator
  */
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -8,18 +8,49 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useRealisation } from '../hooks/useRealisations';
-import { useRealisationMedia, useUploadMedia, useDeleteMedia } from '../hooks/useRealisationMedia';
+import { useRealisationMedia, useUploadMedia, useDeleteMedia, useUpdateMediaRole, useAutoSuggestRoles } from '../hooks/useRealisationMedia';
 import { useDispatchWebhook } from '../hooks/useDispatchWebhook';
 import { MEDIA_ROLE_LABELS, SYNC_STATUS_LABELS, SYNC_STATUS_COLORS, type MediaRole, type ExternalSyncStatus } from '../types';
+import { BeforeAfterGenerator } from '../components/BeforeAfterGenerator';
+import { useCommercialProfile } from '@/commercial/hooks/useCommercialProfile';
+import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
+import { usePermissions } from '@/contexts/PermissionsContext';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+
+function useAgencyInfo(agencyId: string | null) {
+  return useQuery({
+    queryKey: ['agency-info', agencyId],
+    queryFn: async () => {
+      if (!agencyId) return null;
+      const { data, error } = await supabase
+        .from('apogee_agencies')
+        .select('slug, adresse, ville, code_postal, contact_phone, contact_email')
+        .eq('id', agencyId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!agencyId,
+  });
+}
 
 export default function RealisationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: realisation, isLoading } = useRealisation(id);
   const { data: media = [] } = useRealisationMedia(id);
+  const { agencyId } = useEffectiveAuth();
+  const { data: commercialProfile } = useCommercialProfile(agencyId ?? null);
+  const { data: agencyInfo } = useAgencyInfo(agencyId ?? null);
   const uploadMedia = useUploadMedia();
   const deleteMedia = useDeleteMedia();
+  const updateMediaRole = useUpdateMediaRole();
+  const autoSuggestRoles = useAutoSuggestRoles();
   const dispatchWebhook = useDispatchWebhook();
+  const { hasModule } = usePermissions();
+  const canAddPhotos = hasModule('commercial.realisations.photos');
+  const canGenerateAvap = hasModule('commercial.realisations.generer_avap');
 
   if (isLoading) {
     return (
@@ -43,13 +74,18 @@ export default function RealisationDetailPage() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-    for (const file of Array.from(files)) {
+    const fileList = Array.from(files);
+    for (const file of fileList) {
       await uploadMedia.mutateAsync({
         realisationId: r.id,
         agencyId: r.agency_id,
         file,
         mediaRole: 'before',
       });
+    }
+    // Auto-suggest roles after batch upload
+    if (fileList.length >= 2 || (media.length + fileList.length) >= 2) {
+      autoSuggestRoles.mutate(r.id);
     }
     e.target.value = '';
   };
@@ -148,36 +184,80 @@ export default function RealisationDetailPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">Photos</CardTitle>
-              <label className="cursor-pointer">
-                <Button size="sm" asChild>
-                  <span><Upload className="w-4 h-4 mr-1" /> Ajouter</span>
-                </Button>
-                <input type="file" multiple accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileUpload} />
-              </label>
+              <div className="flex items-center gap-2">
+                {canGenerateAvap && (
+                  <BeforeAfterGenerator
+                    media={media}
+                    realisationId={r.id}
+                    agencyId={r.agency_id}
+                    logoUrl={commercialProfile?.logo_agence_url}
+                    agencyName={commercialProfile?.agence_nom_long || undefined}
+                    phone={commercialProfile?.phone_contact || undefined}
+                    agencySlug={agencyInfo?.slug}
+                    agencyAddress={agencyInfo?.adresse}
+                    agencyCity={agencyInfo?.ville}
+                    agencyPostalCode={agencyInfo?.code_postal}
+                    agencyPhone={agencyInfo?.contact_phone}
+                    agencyEmail={agencyInfo?.contact_email}
+                    onCardSaved={() => {
+                      // Refresh media list after card saved
+                    }}
+                  />
+                )}
+                {canAddPhotos && (
+                  <label className="cursor-pointer">
+                    <Button size="sm" asChild>
+                      <span><Upload className="w-4 h-4 mr-1" /> Ajouter</span>
+                    </Button>
+                    <input type="file" multiple accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileUpload} />
+                  </label>
+                )}
+              </div>
             </div>
           </CardHeader>
         </Card>
 
-        {/* Gallery */}
+        {/* Gallery — stable order by created_at, no reorder on tag change */}
         {media.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {media.map(m => (
-              <div key={m.id} className="relative group rounded-xl overflow-hidden border border-border bg-muted aspect-square">
-                {m.signedUrl ? (
-                  <img src={m.signedUrl} alt={m.file_name} className="w-full h-full object-cover" loading="lazy" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Image className="w-8 h-8 text-muted-foreground/30" />
+            {[...media].sort((a, b) => a.created_at.localeCompare(b.created_at)).map(m => {
+              const ROLE_TAGS: MediaRole[] = ['before', 'after'];
+              return (
+                <div key={m.id} className="relative group rounded-xl overflow-hidden border border-border bg-muted">
+                  <div className="aspect-square">
+                    {m.signedUrl ? (
+                      <img src={m.signedUrl} alt={m.file_name} className="w-full h-full object-cover" loading="lazy" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Image className="w-8 h-8 text-muted-foreground/30" />
+                      </div>
+                    )}
+                    <button
+                      onClick={() => deleteMedia.mutate(m)}
+                      className="absolute top-2 right-2 w-7 h-7 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                )}
-                <button
-                  onClick={() => deleteMedia.mutate(m)}
-                  className="absolute top-2 right-2 w-7 h-7 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ))}
+                  {/* Role tag selector */}
+                  <div className="flex gap-1 p-1.5 bg-card border-t border-border">
+                    {ROLE_TAGS.map(role => (
+                      <button
+                        key={role}
+                        onClick={() => updateMediaRole.mutate({ mediaId: m.id, realisationId: r.id, newRole: role })}
+                        className={`flex-1 text-[11px] font-medium py-1 rounded-md transition-colors ${
+                          m.media_role === role
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-muted-foreground hover:bg-accent'
+                        }`}
+                      >
+                        {MEDIA_ROLE_LABELS[role]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-12 text-muted-foreground">
