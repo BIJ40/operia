@@ -7,6 +7,7 @@
 
 import { lazy, Suspense, useMemo, useState, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import {
   Home, GitCompare, Building2, Coins, BarChart3,
   MoreHorizontal, BookOpen, Ticket, HelpCircle, Loader2
