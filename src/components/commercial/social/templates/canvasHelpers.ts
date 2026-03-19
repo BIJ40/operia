@@ -323,16 +323,16 @@ export function drawSubText(
   ctx.font = `500 ${fontSize}px sans-serif`;
   ctx.fillStyle = color;
   ctx.textAlign = align;
-  const lines = wrapText(ctx, text, maxWidth);
+  const lines = wrapText(ctx, text, maxWidth, 2);
   const lineH = fontSize * 1.35;
   const xPos = align === 'center' ? SIZE / 2 : 70;
 
-  lines.slice(0, 2).forEach((line, i) => {
+  lines.forEach((line, i) => {
     ctx.fillText(line, xPos, y + i * lineH);
   });
 
   ctx.textAlign = 'left';
-  return { bottomY: y + lines.slice(0, 2).length * lineH };
+  return { bottomY: y + lines.length * lineH };
 }
 
 /**
