@@ -107,11 +107,12 @@ export function useGenerateSuggestions() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ month, year, regenerateSingle, suggestionId }: {
+    mutationFn: async ({ month, year, regenerateSingle, suggestionId, prompt }: {
       month: number;
       year: number;
       regenerateSingle?: boolean;
       suggestionId?: string;
+      prompt?: { tone?: string; keywords?: string; audience?: string; length?: string };
     }) => {
       const { data, error } = await supabase.functions.invoke('social-suggest', {
         body: {
