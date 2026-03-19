@@ -166,10 +166,29 @@ export function useUpdateSuggestionStatus() {
           .eq('agency_id', agencyId);
       }
 
+      // If approved → dispatch to webhook with label PUBLI (fire-and-forget)
+      if (status === 'approved' && agencyId) {
+        supabase.functions.invoke('dispatch-social-webhook', {
+          body: { suggestion_id: id, agency_id: agencyId },
+        }).then(({ error: whErr, data: whData }) => {
+          if (whErr || whData?.error) {
+            console.warn('[social-webhook] Dispatch PUBLI failed:', whErr?.message || whData?.error);
+            toast.error('Post approuvé mais l\'envoi webhook a échoué');
+          } else {
+            toast.success('Post approuvé & envoyé (PUBLI)');
+          }
+        }).catch((err: any) => {
+          console.warn('[social-webhook] Dispatch PUBLI error:', err);
+        });
+      }
+
       return { id, status, monthKey };
     },
-    onSuccess: ({ monthKey }) => {
+    onSuccess: ({ status, monthKey }) => {
       queryClient.invalidateQueries({ queryKey: ['social-suggestions', agencyId, monthKey] });
+      if (status !== 'approved') {
+        // For approved, the toast is handled by the webhook callback above
+      }
     },
     onError: () => {
       toast.error('Erreur lors de la mise à jour');
