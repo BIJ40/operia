@@ -63,13 +63,16 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const hasVariants = suggestion.variants && suggestion.variants.length > 0;
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
-  const [renderMode, setRenderMode] = useState<'canvas' | 'image'>('canvas');
+  const [renderModeOverride, setRenderModeOverride] = useState<'canvas' | 'image' | null>(null);
 
   // Visual assets
   const { data: assets = [], isLoading: assetsLoading } = useSocialVisualAssets(suggestion.id);
   const generateMutation = useGenerateSocialVisual();
 
   const latestAsset = assets[0] || null;
+  // When AI asset exists, default to 'image' (already composed with text+branding — no double layer)
+  const renderMode = renderModeOverride ?? (latestAsset ? 'image' : 'canvas');
+  const setRenderMode = setRenderModeOverride;
   const hasPreview = Boolean(previewUrl);
   const showPreviewSkeleton = (assetsLoading || loadingPreview) && !hasPreview;
 
