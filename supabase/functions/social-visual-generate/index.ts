@@ -87,6 +87,17 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Suggestion non trouvée' }), { status: 404, headers: jsonHeaders });
     }
 
+    // Load agency info for signature
+    const { data: agency } = await adminSupabase
+      .from('apogee_agencies')
+      .select('label, adresse, ville, code_postal')
+      .eq('id', agencyId)
+      .single();
+
+    const agencyAddress = agency?.ville
+      ? `${agency.ville}${agency.code_postal ? ' (' + agency.code_postal + ')' : ''}`
+      : '';
+
     const aiPayload = (suggestion.ai_payload as Record<string, any>) || {};
     const universe = suggestion.universe || 'general';
     const color = SERVICE_COLORS[universe] || SERVICE_COLORS.general;
