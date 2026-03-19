@@ -457,6 +457,22 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'export', path: 'commercial.realisations.export', label: 'Exporter', description: 'Export des données', defaultEnabled: false, routes: ['/realisations'] },
     ],
   },
+  // Module Social Hub
+  {
+    key: 'commercial.social',
+    label: 'Social',
+    description: 'Calendrier éditorial social media intelligent avec génération IA',
+    icon: 'Share2',
+    category: 'commercial',
+    uiSubTab: 'social',
+    defaultForRoles: [],
+    minRole: 'franchisee_admin',
+    options: [
+      { key: 'view', path: 'commercial.social.view', label: 'Consulter', description: 'Voir les suggestions', defaultEnabled: true, routes: [] },
+      { key: 'generate', path: 'commercial.social.generate', label: 'Générer', description: 'Générer des suggestions IA', defaultEnabled: true, routes: [] },
+      { key: 'publish', path: 'commercial.social.publish', label: 'Publier', description: 'Planifier et publier', defaultEnabled: true, routes: [] },
+    ],
+  },
   // reseau_franchiseur — INTERFACE DE RÔLE (N3+), pas un module standard.
   // Conservé dans MODULE_DEFINITIONS pour compatibilité technique (EnabledModules, user_modules legacy)
   // mais l'accès réel est piloté par src/permissions/franchisorAccess.ts
