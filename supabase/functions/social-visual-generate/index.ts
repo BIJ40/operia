@@ -268,7 +268,7 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
 4. FOOTER BAR:
    - Position: Very bottom of the image (last 80-90px)
    - Style: Solid blue bar (#0092DD) full width
-   - Text: "Help Confort — Dépannage & Travaux" in white, left-aligned
+   - Text: "HelpConfort — DEPAN40" in white, left-aligned
    - Right side: "${serviceLabel}" in smaller white text
    - Thin orange (#FFB705) line at the top of the blue bar
 
