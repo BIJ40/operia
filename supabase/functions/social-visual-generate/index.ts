@@ -1,11 +1,12 @@
 /**
- * social-visual-generate — Génère un visuel IA pour un post social.
+ * social-visual-generate — Génère un visuel IA COMPLET pour un post social.
  * 
- * V3 : Génération d'images optimisées comme FOND DE CRÉA PUBLICITAIRE.
- * L'image est pensée pour recevoir un overlay texte (hook + CTA) côté client.
+ * V4 : Pipeline en 2 passes :
+ *   1. Génération structurée (hook, CTA, subtext) → JSON marketing
+ *   2. Génération image de fond (photo réaliste sans texte)
+ *   3. Composition finale : 2e passe IA pour intégrer texte + branding sur l'image
  * 
- * Composition : sujet centré/haut, zone sombre naturelle en bas pour texte.
- * INTERDIT : texte, logo, emoji, illustration, 3D, cartoon.
+ * RÉSULTAT : image 1080x1080 prête à poster avec hook, CTA et branding intégrés.
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
@@ -92,11 +93,20 @@ Deno.serve(async (req) => {
     const serviceLabel = SERVICE_LABELS[universe] || SERVICE_LABELS.general;
     const title = suggestion.title || '';
     const hook = aiPayload.hook || title;
-    const cta = aiPayload.cta || '';
+    const cta = aiPayload.cta || 'Demandez un devis gratuit';
     const visualPrompt = aiPayload.visual_prompt || '';
     const topicType = suggestion.topic_type || 'seasonal_tip';
+    const caption = suggestion.caption_base_fr || '';
 
-    // ─── PRIORITY 1: Try to get real photo from realisation ───
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      return new Response(JSON.stringify({ error: 'Service IA non configuré' }), { status: 500, headers: jsonHeaders });
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ÉTAPE 1 : TROUVER UNE VRAIE PHOTO SI DISPONIBLE
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
     let realPhotoUrl: string | null = null;
 
     if (suggestion.realisation_id) {
@@ -112,9 +122,8 @@ Deno.serve(async (req) => {
         const bestMedia = afterMedia || media[0];
 
         if (bestMedia?.storage_path) {
-          const bucket = 'realisation-media';
           const { data: signedData } = await adminSupabase.storage
-            .from(bucket)
+            .from('realisation-media')
             .createSignedUrl(bestMedia.storage_path, 600);
           
           if (signedData?.signedUrl) {
@@ -125,19 +134,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ─── Build AI image prompt ───
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: 'Service IA non configuré' }), { status: 500, headers: jsonHeaders });
-    }
-
-    let imagePrompt: string;
-    const messages: any[] = [];
-
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // PROMPT V3 : IMAGE = FOND DE CRÉA PUBLICITAIRE
-    // Le texte sera superposé côté client par le canvas engine.
-    // L'image doit être COMPOSÉE pour recevoir du texte en bas.
+    // ÉTAPE 2 : GÉNÉRER L'IMAGE DE FOND (SANS TEXTE)
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     const AD_COMPOSITION_RULES = `
@@ -155,43 +153,31 @@ CRITICAL COMPOSITION RULES — THIS IMAGE IS A BACKGROUND FOR A SOCIAL MEDIA AD:
    Dramatic lighting preferred (side light, backlighting, spotlight effect).
 
 5. EMOTIONAL IMPACT: The viewer must FEEL a problem or need within 1 second.
-   Close-up on the issue. Make it relatable to French homeowners.
 
 6. FORMAT: Square 1080x1080. Fill the entire frame edge to edge.
 
 7. STYLE: Realistic professional photograph. NOT illustration, NOT 3D, NOT cartoon.
-   Think "stock photo for a premium ad campaign" but more authentic.
 
 8. FORBIDDEN: emoji, clip art, gradients, banners, overlays, borders, logos, ANY text.
 `;
 
+    let bgMessages: any[];
+
     if (realPhotoUrl) {
-      // ─── MODE 1: Edit real photo for ad background ───
-      imagePrompt = `Transform this real photo into a premium social media ad background (1080x1080 square).
-
-${AD_COMPOSITION_RULES}
-
-SPECIFIC FOR THIS REAL PHOTO:
-- Keep the authentic feel of the real work/repair shown
-- Apply a cinematic color grade (slightly desaturated, high contrast)
-- Ensure the bottom portion naturally darkens (vignette effect)
-- Make the main subject POP with enhanced contrast
-- The result must look like a professional "before/after" hero shot
-- Full bleed, edge to edge, no borders`;
-
-      messages.push({
+      bgMessages = [{
         role: 'user',
         content: [
-          { type: 'text', text: imagePrompt },
+          { type: 'text', text: `Transform this real photo into a premium social media ad background (1080x1080 square).\n\n${AD_COMPOSITION_RULES}\n\nKeep the authentic feel. Apply cinematic color grade. Ensure bottom 40% naturally darkens. Full bleed, no borders.` },
           { type: 'image_url', image_url: { url: realPhotoUrl } },
         ],
-      });
+      }];
     } else {
-      // ─── MODE 2: Generate image from scratch as ad background ───
       const sceneDescription = visualPrompt ||
         `Professional French home ${getSceneForUniverse(universe)}, realistic close-up showing a real problem or urgent situation`;
 
-      imagePrompt = `Generate a REALISTIC PHOTOGRAPH designed as a SOCIAL MEDIA AD BACKGROUND (1080x1080 square).
+      bgMessages = [{
+        role: 'user',
+        content: `Generate a REALISTIC PHOTOGRAPH designed as a SOCIAL MEDIA AD BACKGROUND (1080x1080 square).
 
 SCENE TO PHOTOGRAPH:
 ${sceneDescription}
@@ -203,18 +189,13 @@ ADDITIONAL REQUIREMENTS:
 - Close-up framing on the problem (NOT the whole building/house)
 - Dramatic natural lighting with a cinematic feel
 - The bottom third should naturally be darker (floor, shadow, dark surface)
-- Color palette should feel warm and urgent for home repair context
-- The viewer must immediately think "I need to fix this at home"
-- High resolution feel, sharp details on the main subject`;
-
-      messages.push({ role: 'user', content: imagePrompt });
+- High resolution feel, sharp details on the main subject`,
+      }];
     }
 
-    console.log('[social-visual-generate] Mode:', realPhotoUrl ? 'REAL_PHOTO_EDIT' : 'AI_GENERATED');
-    console.log('[social-visual-generate] Prompt preview:', imagePrompt.substring(0, 200) + '...');
+    console.log('[social-visual-generate] Generating background image...');
 
-    // Call AI image generation
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const bgResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${LOVABLE_API_KEY}`,
@@ -222,111 +203,228 @@ ADDITIONAL REQUIREMENTS:
       },
       body: JSON.stringify({
         model: 'google/gemini-3.1-flash-image-preview',
-        messages,
+        messages: bgMessages,
         modalities: ['image', 'text'],
       }),
     });
 
-    if (!aiResponse.ok) {
-      const errText = await aiResponse.text();
-      console.error('[social-visual-generate] AI error:', aiResponse.status, errText);
-      if (aiResponse.status === 429) {
+    if (!bgResponse.ok) {
+      const errText = await bgResponse.text();
+      console.error('[social-visual-generate] BG generation error:', bgResponse.status, errText);
+      if (bgResponse.status === 429) {
         return new Response(JSON.stringify({ error: 'Trop de requêtes IA, réessayez dans quelques minutes.' }), { status: 429, headers: jsonHeaders });
       }
-      if (aiResponse.status === 402) {
+      if (bgResponse.status === 402) {
         return new Response(JSON.stringify({ error: 'Crédits IA insuffisants.' }), { status: 402, headers: jsonHeaders });
       }
       return new Response(JSON.stringify({ error: 'Erreur du service IA image' }), { status: 502, headers: jsonHeaders });
     }
 
-    const aiData = await aiResponse.json();
-    const imageUrl = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    const bgData = await bgResponse.json();
+    const bgImageUrl = bgData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
-    if (!imageUrl || !imageUrl.startsWith('data:image')) {
-      console.error('[social-visual-generate] No image in AI response');
-      return new Response(JSON.stringify({ error: "Aucune image générée par l'IA" }), { status: 502, headers: jsonHeaders });
+    if (!bgImageUrl || !bgImageUrl.startsWith('data:image')) {
+      console.error('[social-visual-generate] No background image generated');
+      return new Response(JSON.stringify({ error: "Aucune image de fond générée" }), { status: 502, headers: jsonHeaders });
     }
 
-    // Convert base64 to Uint8Array
-    const base64Data = imageUrl.split(',')[1];
-    const binaryStr = atob(base64Data);
-    const bytes = new Uint8Array(binaryStr.length);
-    for (let i = 0; i < binaryStr.length; i++) {
-      bytes[i] = binaryStr.charCodeAt(i);
+    console.log('[social-visual-generate] Background image generated. Starting composition pass...');
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ÉTAPE 3 : COMPOSITION FINALE — SUPERPOSER TEXTE + BRANDING
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 2e passe IA : on envoie l'image de fond + instructions de composition
+    // pour que l'IA intègre le texte marketing directement dans l'image.
+
+    const hookText = (hook || title || 'Help Confort').toUpperCase().slice(0, 60);
+    const subText = caption ? caption.slice(0, 90) : '';
+    const ctaText = (cta || 'Demandez un devis gratuit').toUpperCase();
+
+    const compositionPrompt = `You are a professional social media graphic designer. Take this background image and create a FINAL SOCIAL MEDIA AD CREATIVE (1080x1080) by adding the following text overlay elements.
+
+MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
+
+1. HOOK TEXT (MAIN MESSAGE — BIG, BOLD, HIGH CONTRAST):
+   "${hookText}"
+   - Position: Lower-center area of the image (bottom 40%)
+   - Style: VERY LARGE white bold text, ALL CAPS
+   - Must have a dark semi-transparent backdrop/shadow for readability
+   - Maximum 2-3 lines
+   - This is the MOST IMPORTANT element — must be instantly readable
+
+2. SUB-TEXT (Secondary message — smaller):
+   "${subText}"
+   - Position: Just below the hook text
+   - Style: Smaller white text, regular weight
+   - 1-2 lines maximum
+   - Semi-transparent white or light gray
+
+3. CTA BUTTON:
+   "${ctaText}"
+   - Position: Bottom area, above the footer
+   - Style: Rounded button shape, bright orange (#FFB705) background, dark text
+   - Bold, compact, eye-catching
+
+4. FOOTER BAR:
+   - Position: Very bottom of the image (last 80-90px)
+   - Style: Solid blue bar (#0092DD) full width
+   - Text: "Help Confort — Dépannage & Travaux" in white, left-aligned
+   - Right side: "${serviceLabel}" in smaller white text
+   - Thin orange (#FFB705) line at the top of the blue bar
+
+5. UNIVERSE BADGE (top-right corner):
+   - Small rounded pill/badge
+   - Background color: ${color}
+   - Text: "${serviceLabel}" in white, small font
+
+6. BRANDING (top-left):
+   - Small white rounded rectangle with subtle shadow
+   - Text "HC" or "Help Confort" logo placeholder in blue (#0092DD)
+   - Keep it discreet, don't dominate
+
+DESIGN RULES:
+- The background image must remain FULLY VISIBLE behind all overlays
+- Use semi-transparent dark gradients behind text areas for readability
+- Text must be PERFECTLY LEGIBLE at phone screen size
+- Color palette: White text, Blue #0092DD, Orange #FFB705, Dark gray #2F2F2F
+- The result must look like a PROFESSIONAL social media advertisement
+- NO extra decorative elements beyond what's specified
+- Keep the square 1080x1080 format
+- The final result must be IMMEDIATELY PUBLISHABLE on Facebook/Instagram
+
+CRITICAL: The text must be correctly spelled and perfectly readable. This is a professional ad.`;
+
+    const compResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-3.1-flash-image-preview',
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'text', text: compositionPrompt },
+            { type: 'image_url', image_url: { url: bgImageUrl } },
+          ],
+        }],
+        modalities: ['image', 'text'],
+      }),
+    });
+
+    if (!compResponse.ok) {
+      const errText = await compResponse.text();
+      console.error('[social-visual-generate] Composition error:', compResponse.status, errText);
+      // Fallback: save the background image without composition
+      console.warn('[social-visual-generate] Falling back to background-only image');
+      return await saveAndReturn(adminSupabase, bgImageUrl, agencyId, suggestionId, universe, realPhotoUrl, 'bg_only', jsonHeaders);
     }
 
-    // Build storage path
-    const now = new Date();
-    const year = now.getFullYear();
-    const monthStr = String(now.getMonth() + 1).padStart(2, '0');
-    const timestamp = Math.floor(now.getTime() / 1000);
-    const mode = realPhotoUrl ? 'photo' : 'generated';
-    const filename = `${mode}-${timestamp}.png`;
-    const storagePath = `${agencyId}/${year}/${monthStr}/${suggestionId}/${filename}`;
+    const compData = await compResponse.json();
+    const finalImageUrl = compData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
-    // Upload
-    const { error: uploadError } = await adminSupabase.storage
-      .from('social-visuals')
-      .upload(storagePath, bytes, { contentType: 'image/png', upsert: false });
-
-    if (uploadError) {
-      console.error('[social-visual-generate] Upload error:', uploadError);
-      return new Response(JSON.stringify({ error: 'Erreur upload: ' + uploadError.message }), { status: 500, headers: jsonHeaders });
+    if (!finalImageUrl || !finalImageUrl.startsWith('data:image')) {
+      console.warn('[social-visual-generate] Composition pass returned no image, using background');
+      return await saveAndReturn(adminSupabase, bgImageUrl, agencyId, suggestionId, universe, realPhotoUrl, 'bg_only', jsonHeaders);
     }
 
-    // Persist asset
-    const visualStrategy = realPhotoUrl ? 'photo_realisation' : 'illustration_generee';
-    const { data: asset, error: insertError } = await adminSupabase
-      .from('social_visual_assets')
-      .insert({
-        agency_id: agencyId,
-        suggestion_id: suggestionId,
-        variant_id: null,
-        visual_type: visualStrategy,
-        storage_path: storagePath,
-        mime_type: 'image/png',
-        width: 1080,
-        height: 1080,
-        theme_key: universe,
-        generation_meta: {
-          template_id: visualStrategy,
-          platform: 'base',
-          universe,
-          generated_at: now.toISOString(),
-          source: realPhotoUrl ? 'ai_photo_edit_v3' : 'ai_generated_v3',
-          mode,
-          prompt_version: 'v3_ad_ready',
-          prompt_used: imagePrompt.substring(0, 500),
-        },
-      })
-      .select('id, storage_path, created_at')
-      .single();
+    console.log('[social-visual-generate] Composition complete! Saving final creative...');
 
-    if (insertError) {
-      console.error('[social-visual-generate] Insert error:', insertError);
-      return new Response(JSON.stringify({ error: 'Erreur persistance asset' }), { status: 500, headers: jsonHeaders });
-    }
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ÉTAPE 4 : SAUVEGARDER LE VISUEL FINAL COMPOSÉ
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    // Generate signed URL for immediate display
-    const { data: signedData } = await adminSupabase.storage
-      .from('social-visuals')
-      .createSignedUrl(storagePath, 3600);
-
-    console.log('[social-visual-generate] Success:', asset.id, 'mode:', mode);
-
-    return new Response(JSON.stringify({
-      success: true,
-      asset_id: asset.id,
-      storage_path: storagePath,
-      signed_url: signedData?.signedUrl || null,
-      mode,
-    }), { status: 200, headers: jsonHeaders });
+    return await saveAndReturn(adminSupabase, finalImageUrl, agencyId, suggestionId, universe, realPhotoUrl, 'composed', jsonHeaders);
 
   } catch (err) {
     console.error('[social-visual-generate] Unhandled error:', err);
     return new Response(JSON.stringify({ error: 'Erreur interne' }), { status: 500, headers: jsonHeaders });
   }
 });
+
+// ─── Save image to storage and return response ─────────────
+async function saveAndReturn(
+  adminSupabase: any,
+  imageDataUrl: string,
+  agencyId: string,
+  suggestionId: string,
+  universe: string,
+  realPhotoUrl: string | null,
+  compositionMode: 'composed' | 'bg_only',
+  headers: Record<string, string>,
+) {
+  const base64Data = imageDataUrl.split(',')[1];
+  const binaryStr = atob(base64Data);
+  const bytes = new Uint8Array(binaryStr.length);
+  for (let i = 0; i < binaryStr.length; i++) {
+    bytes[i] = binaryStr.charCodeAt(i);
+  }
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const monthStr = String(now.getMonth() + 1).padStart(2, '0');
+  const timestamp = Math.floor(now.getTime() / 1000);
+  const mode = realPhotoUrl ? 'photo' : 'generated';
+  const filename = `${mode}-${compositionMode}-${timestamp}.png`;
+  const storagePath = `${agencyId}/${year}/${monthStr}/${suggestionId}/${filename}`;
+
+  const { error: uploadError } = await adminSupabase.storage
+    .from('social-visuals')
+    .upload(storagePath, bytes, { contentType: 'image/png', upsert: false });
+
+  if (uploadError) {
+    console.error('[social-visual-generate] Upload error:', uploadError);
+    return new Response(JSON.stringify({ error: 'Erreur upload: ' + uploadError.message }), { status: 500, headers });
+  }
+
+  const visualStrategy = realPhotoUrl ? 'photo_realisation' : 'illustration_generee';
+  const { data: asset, error: insertError } = await adminSupabase
+    .from('social_visual_assets')
+    .insert({
+      agency_id: agencyId,
+      suggestion_id: suggestionId,
+      variant_id: null,
+      visual_type: visualStrategy,
+      storage_path: storagePath,
+      mime_type: 'image/png',
+      width: 1080,
+      height: 1080,
+      theme_key: universe,
+      generation_meta: {
+        template_id: visualStrategy,
+        platform: 'base',
+        universe,
+        generated_at: now.toISOString(),
+        source: realPhotoUrl ? 'ai_photo_edit_v4' : 'ai_generated_v4',
+        mode,
+        composition_mode: compositionMode,
+        prompt_version: 'v4_composed',
+      },
+    })
+    .select('id, storage_path, created_at')
+    .single();
+
+  if (insertError) {
+    console.error('[social-visual-generate] Insert error:', insertError);
+    return new Response(JSON.stringify({ error: 'Erreur persistance asset' }), { status: 500, headers });
+  }
+
+  const { data: signedData } = await adminSupabase.storage
+    .from('social-visuals')
+    .createSignedUrl(storagePath, 3600);
+
+  console.log('[social-visual-generate] Success:', asset.id, 'mode:', mode, 'composition:', compositionMode);
+
+  return new Response(JSON.stringify({
+    success: true,
+    asset_id: asset.id,
+    storage_path: storagePath,
+    signed_url: signedData?.signedUrl || null,
+    mode,
+    composition_mode: compositionMode,
+  }), { status: 200, headers });
+}
 
 // ─── Helpers ────────────────────────────────────────────────
 
