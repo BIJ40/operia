@@ -75,6 +75,7 @@ function CommercialInner() {
     { id: 'veille', label: 'Veille', icon: Radar },
     { id: 'prospects', label: 'Prospects', icon: UserSearch },
     { id: 'realisations', label: getShortLabel('commercial.realisations', 'Réalisations'), icon: Camera },
+    { id: 'social', label: getShortLabel('commercial.social', 'Social'), icon: Share2 },
   ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {
