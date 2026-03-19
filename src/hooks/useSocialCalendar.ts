@@ -56,6 +56,7 @@ export function useSocialCalendar(monthKey: string) {
 }
 
 // ─── Schedule a suggestion ───────────────────────────────────
+// GUARD: suggestion must be approved before scheduling
 export function useScheduleSuggestion() {
   const { agencyId, user } = useAuth();
   const queryClient = useQueryClient();
@@ -68,6 +69,20 @@ export function useScheduleSuggestion() {
       scheduledFor: string;
       monthKey: string;
     }) => {
+      // 1. Verify suggestion is approved
+      const { data: suggestion, error: fetchErr } = await supabase
+        .from('social_content_suggestions')
+        .select('status')
+        .eq('id', suggestionId)
+        .eq('agency_id', agencyId)
+        .single();
+
+      if (fetchErr || !suggestion) throw new Error('Suggestion introuvable');
+      if (suggestion.status !== 'approved') {
+        throw new Error('Seules les suggestions approuvées peuvent être planifiées');
+      }
+
+      // 2. Insert calendar entry
       const { error } = await supabase
         .from('social_calendar_entries')
         .insert({
@@ -81,14 +96,25 @@ export function useScheduleSuggestion() {
         });
 
       if (error) throw error;
+
+      // 3. Propagate: variant → scheduled
+      if (variantId) {
+        await supabase
+          .from('social_post_variants')
+          .update({ status: 'scheduled' })
+          .eq('id', variantId)
+          .eq('agency_id', agencyId);
+      }
+
       return { monthKey };
     },
     onSuccess: ({ monthKey }) => {
       queryClient.invalidateQueries({ queryKey: ['social-calendar', agencyId, monthKey] });
+      queryClient.invalidateQueries({ queryKey: ['social-suggestions', agencyId, monthKey] });
       toast.success('Publication planifiée');
     },
-    onError: () => {
-      toast.error('Erreur lors de la planification');
+    onError: (err: any) => {
+      toast.error(err?.message || 'Erreur lors de la planification');
     },
   });
 }

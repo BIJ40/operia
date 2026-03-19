@@ -1,6 +1,9 @@
 /**
  * SocialListView — Vue pipeline éditorial (alternative au calendrier).
  * Colonnes : Brouillons | Approuvés | Planifiés | Publiés
+ *
+ * La colonne "Planifiés" regroupe les suggestions approved ayant au moins
+ * une variante scheduled. "Publiés" = au moins une variante published.
  */
 
 import { useMemo } from 'react';
@@ -11,7 +14,8 @@ import type { SocialSuggestion } from '@/hooks/useSocialSuggestions';
 const STATUS_COLUMNS = [
   { key: 'draft', label: 'Brouillons', color: 'bg-muted' },
   { key: 'approved', label: 'Approuvés', color: 'bg-emerald-50 dark:bg-emerald-950/20' },
-  { key: 'rejected', label: 'Rejetés', color: 'bg-red-50 dark:bg-red-950/20' },
+  { key: 'scheduled', label: 'Planifiés', color: 'bg-amber-50 dark:bg-amber-950/20' },
+  { key: 'published', label: 'Publiés', color: 'bg-sky-50 dark:bg-sky-950/20' },
 ] as const;
 
 const TOPIC_BADGE_VARIANTS: Record<string, string> = {
@@ -34,19 +38,34 @@ interface SocialListViewProps {
   onSelect: (id: string) => void;
 }
 
+/**
+ * Derive pipeline column from suggestion + variant statuses.
+ * Priority: published > scheduled > suggestion.status
+ */
+function derivePipelineColumn(s: SocialSuggestion): string {
+  const variants = s.variants || [];
+  if (variants.some(v => v.status === 'published')) return 'published';
+  if (variants.some(v => v.status === 'scheduled')) return 'scheduled';
+  if (s.status === 'approved') return 'approved';
+  return 'draft'; // draft + rejected both go here
+}
+
 export function SocialListView({ suggestions, selectedId, onSelect }: SocialListViewProps) {
   const grouped = useMemo(() => {
-    const map: Record<string, SocialSuggestion[]> = { draft: [], approved: [], rejected: [] };
+    const map: Record<string, SocialSuggestion[]> = {
+      draft: [], approved: [], scheduled: [], published: [],
+    };
     for (const s of suggestions) {
-      if (map[s.status]) {
-        map[s.status].push(s);
-      }
+      // Skip rejected in pipeline view (they're archived conceptually)
+      if (s.status === 'rejected') continue;
+      const col = derivePipelineColumn(s);
+      if (map[col]) map[col].push(s);
     }
     return map;
   }, [suggestions]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 h-full">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-3 h-full">
       {STATUS_COLUMNS.map(col => (
         <div key={col.key} className={cn('rounded-lg p-2', col.color)}>
           <div className="flex items-center justify-between mb-2 px-1">

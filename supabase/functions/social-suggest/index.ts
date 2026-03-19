@@ -1,7 +1,7 @@
 /**
  * social-suggest — Edge Function pour générer des suggestions de posts social media.
  * 
- * Flux : auth → load context → call AI → persist suggestions + variants → return IDs.
+ * Flux : auth → load context → call AI (tool calling) → validate → persist suggestions + variants → return IDs.
  * 
  * Conventions figées :
  * - Storage path : {agency_id}/{year}/{month}/{suggestion_id}/{filename}
@@ -35,8 +35,10 @@ const AWARENESS_DAYS = [
 ];
 
 const NORMALIZED_UNIVERSES = ['plomberie', 'electricite', 'serrurerie', 'vitrerie', 'menuiserie', 'renovation', 'volets', 'pmr', 'general'] as const;
+const VALID_PLATFORMS = ['facebook', 'instagram', 'google_business', 'linkedin'] as const;
+const VALID_TOPIC_TYPES = ['awareness_day', 'seasonal_tip', 'realisation', 'local_branding'] as const;
 
-// ─── Universe keyword inference (duplicated from frontend for server-side use) ───
+// ─── Universe keyword inference ───
 const UNIVERSE_KEYWORDS: Record<string, string[]> = {
   plomberie: ['plomberie', 'fuite', 'canalisation', 'robinet', 'chauffe-eau', 'ballon', 'wc', 'sanitaire', 'radiateur', 'chauffage'],
   electricite: ['électricité', 'electrique', 'prise', 'tableau', 'disjoncteur', 'éclairage', 'interrupteur'],
@@ -61,6 +63,171 @@ function inferUniverse(title: string): string | null {
   }
   return best;
 }
+
+// ─── Post-AI validation ───
+interface ValidatedSuggestion {
+  suggestion_date: string;
+  title: string;
+  content_angle: string | null;
+  caption_base_fr: string;
+  hashtags: string[];
+  topic_type: string;
+  topic_key: string;
+  visual_type: string;
+  universe: string;
+  realisation_id: string | null;
+  platform_variants: Record<string, { caption: string; cta: string | null }>;
+}
+
+function validateAndNormalizeSuggestions(
+  raw: any[],
+  month: number,
+  year: number,
+  exploitableReals: { id: string }[],
+  existingTopicKeys: Set<string>,
+): ValidatedSuggestion[] {
+  const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const validRealisationIds = new Set(exploitableReals.map(r => r.id));
+  const seenTopicKeys = new Set<string>();
+  const result: ValidatedSuggestion[] = [];
+
+  for (const s of raw) {
+    if (!s || typeof s !== 'object') continue;
+
+    // 1. Validate date is in target month
+    let date = String(s.suggestion_date || '');
+    if (!date.startsWith(monthKey)) {
+      // Force date into target month
+      const day = Math.min(Math.max(parseInt(date.split('-')[2]) || 15, 1), daysInMonth);
+      date = `${monthKey}-${String(day).padStart(2, '0')}`;
+    }
+    const dayNum = parseInt(date.split('-')[2]);
+    if (dayNum < 1 || dayNum > daysInMonth) {
+      date = `${monthKey}-15`;
+    }
+
+    // 2. Validate topic_type
+    const topicType = (VALID_TOPIC_TYPES as readonly string[]).includes(s.topic_type)
+      ? s.topic_type : 'seasonal_tip';
+
+    // 3. Validate topic_key (deduplicate)
+    const topicKey = String(s.topic_key || `${topicType}_${date}`);
+    if (seenTopicKeys.has(topicKey) || existingTopicKeys.has(topicKey)) continue;
+    seenTopicKeys.add(topicKey);
+
+    // 4. Validate universe
+    const universe = (NORMALIZED_UNIVERSES as readonly string[]).includes(s.universe)
+      ? s.universe : 'general';
+
+    // 5. Validate realisation_id coherence
+    let realisationId: string | null = null;
+    if (topicType === 'realisation' && s.realisation_id && validRealisationIds.has(s.realisation_id)) {
+      realisationId = s.realisation_id;
+    }
+
+    // 6. Validate caption length
+    const captionBase = String(s.caption_base_fr || '').substring(0, 2000);
+    if (captionBase.length < 10) continue; // Too short, skip
+
+    // 7. Validate title
+    const title = String(s.title || '').substring(0, 200);
+    if (title.length < 3) continue;
+
+    // 8. Validate hashtags
+    const hashtags = Array.isArray(s.hashtags)
+      ? s.hashtags.filter((h: any) => typeof h === 'string' && h.length > 0).slice(0, 10)
+      : [];
+
+    // 9. Validate platform variants (only allowed platforms)
+    const platformVariants: Record<string, { caption: string; cta: string | null }> = {};
+    const rawVariants = s.platform_variants || {};
+    for (const p of VALID_PLATFORMS) {
+      const v = rawVariants[p];
+      if (v && typeof v === 'object') {
+        platformVariants[p] = {
+          caption: String(v.caption || captionBase).substring(0, 2000),
+          cta: v.cta ? String(v.cta).substring(0, 200) : null,
+        };
+      }
+    }
+
+    result.push({
+      suggestion_date: date,
+      title,
+      content_angle: s.content_angle ? String(s.content_angle).substring(0, 500) : null,
+      caption_base_fr: captionBase,
+      hashtags,
+      topic_type: topicType,
+      topic_key: topicKey,
+      visual_type: s.visual_type || 'photo',
+      universe,
+      realisation_id: realisationId,
+      platform_variants: platformVariants,
+    });
+  }
+
+  // 10. Enforce no 2 consecutive posts same universe (reorder if needed)
+  // Simple pass: if same universe appears consecutively, swap with next different
+  for (let i = 1; i < result.length; i++) {
+    if (result[i].universe === result[i - 1].universe && result[i].universe !== 'general') {
+      // Find next different
+      for (let j = i + 1; j < result.length; j++) {
+        if (result[j].universe !== result[i].universe) {
+          [result[i], result[j]] = [result[j], result[i]];
+          break;
+        }
+      }
+    }
+  }
+
+  return result;
+}
+
+// ─── AI tool schema for structured output ───
+const SUGGEST_TOOL = {
+  type: 'function' as const,
+  function: {
+    name: 'generate_social_suggestions',
+    description: 'Génère des suggestions de posts social media pour le mois cible.',
+    parameters: {
+      type: 'object',
+      properties: {
+        suggestions: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              suggestion_date: { type: 'string', description: 'Date YYYY-MM-DD dans le mois cible' },
+              title: { type: 'string', description: 'Titre court et accrocheur (max 200 car.)' },
+              content_angle: { type: 'string', description: 'Angle éditorial en 1 phrase' },
+              caption_base_fr: { type: 'string', description: 'Texte du post principal (2-4 phrases)' },
+              hashtags: { type: 'array', items: { type: 'string' }, description: 'Hashtags (max 10)' },
+              topic_type: { type: 'string', enum: ['awareness_day', 'seasonal_tip', 'realisation', 'local_branding'] },
+              topic_key: { type: 'string', description: 'Identifiant unique du sujet' },
+              visual_type: { type: 'string', enum: ['photo', 'illustration', 'before_after', 'quote'] },
+              universe: { type: 'string', enum: ['plomberie', 'electricite', 'serrurerie', 'vitrerie', 'menuiserie', 'renovation', 'volets', 'pmr', 'general'] },
+              realisation_id: { type: 'string', description: 'UUID de la réalisation liée ou null' },
+              platform_variants: {
+                type: 'object',
+                properties: {
+                  facebook: { type: 'object', properties: { caption: { type: 'string' }, cta: { type: 'string' } }, required: ['caption'] },
+                  instagram: { type: 'object', properties: { caption: { type: 'string' }, cta: { type: 'string' } }, required: ['caption'] },
+                  google_business: { type: 'object', properties: { caption: { type: 'string' }, cta: { type: 'string' } }, required: ['caption'] },
+                  linkedin: { type: 'object', properties: { caption: { type: 'string' }, cta: { type: 'string' } }, required: ['caption'] },
+                },
+              },
+            },
+            required: ['suggestion_date', 'title', 'caption_base_fr', 'topic_type', 'topic_key', 'universe'],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ['suggestions'],
+      additionalProperties: false,
+    },
+  },
+};
 
 Deno.serve(async (req) => {
   // CORS
@@ -183,13 +350,43 @@ Deno.serve(async (req) => {
     // 3. Existing suggestions for anti-duplication
     const { data: existingSuggestions } = await adminSupabase
       .from('social_content_suggestions')
-      .select('id, topic_key, topic_type, status, realisation_id')
+      .select('id, topic_key, topic_type, status, realisation_id, suggestion_date, universe')
       .eq('agency_id', agencyId)
       .eq('month_key', monthKey);
 
+    // 4. Calendar entries to protect scheduled/published suggestions
+    const protectedSuggestionIds = new Set<string>();
+    const { data: calendarEntries } = await adminSupabase
+      .from('social_calendar_entries')
+      .select('suggestion_id, status')
+      .eq('agency_id', agencyId)
+      .in('status', ['scheduled', 'published']);
+
+    for (const ce of calendarEntries || []) {
+      if (ce.suggestion_id) protectedSuggestionIds.add(ce.suggestion_id);
+    }
+
+    // Build existing topic keys set for dedup
+    const existingTopicKeys = new Set(
+      (existingSuggestions || [])
+        .filter(s => s.status === 'approved' || protectedSuggestionIds.has(s.id))
+        .map(s => s.topic_key)
+        .filter(Boolean) as string[]
+    );
+
     // ─── Regeneration logic ──────────────────────────
     if (regenerateSingle && singleSuggestionId) {
-      // Archive only the single draft suggestion
+      // Check if protected by calendar
+      if (protectedSuggestionIds.has(singleSuggestionId)) {
+        return new Response(JSON.stringify({ error: 'Cette suggestion est liée à une publication planifiée ou publiée et ne peut pas être régénérée.' }), {
+          status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Load original context for targeted regeneration
+      const originalSuggestion = (existingSuggestions || []).find(s => s.id === singleSuggestionId);
+
+      // Archive only the single draft/rejected suggestion
       await adminSupabase
         .from('social_content_suggestions')
         .update({ status: 'archived' })
@@ -203,10 +400,18 @@ Deno.serve(async (req) => {
         .update({ status: 'archived' })
         .eq('suggestion_id', singleSuggestionId)
         .eq('agency_id', agencyId);
+
+      // Build regeneration context from original
+      var singleContext = originalSuggestion ? {
+        original_date: originalSuggestion.suggestion_date,
+        original_topic_type: originalSuggestion.topic_type,
+        original_universe: originalSuggestion.universe,
+        original_realisation_id: originalSuggestion.realisation_id,
+      } : null;
     } else {
-      // Full month regeneration: archive draft/rejected only
+      // Full month regeneration: archive draft/rejected only, EXCLUDING protected
       const toArchiveIds = (existingSuggestions || [])
-        .filter(s => s.status === 'draft' || s.status === 'rejected')
+        .filter(s => (s.status === 'draft' || s.status === 'rejected') && !protectedSuggestionIds.has(s.id))
         .map(s => s.id);
 
       if (toArchiveIds.length > 0) {
@@ -222,13 +427,15 @@ Deno.serve(async (req) => {
           .in('suggestion_id', toArchiveIds)
           .eq('agency_id', agencyId);
       }
+
+      var singleContext = null;
     }
 
-    // Count approved suggestions that remain (to plan around them)
-    const approvedCount = (existingSuggestions || []).filter(s => s.status === 'approved').length;
-    const targetPostCount = Math.max(4, 12 - approvedCount); // Generate enough to fill ~12 posts/month
+    // Count approved/protected suggestions that remain
+    const approvedCount = (existingSuggestions || []).filter(s => s.status === 'approved' || protectedSuggestionIds.has(s.id)).length;
+    const targetPostCount = regenerateSingle ? 1 : Math.max(4, 12 - approvedCount);
 
-    // ─── AI Generation ───────────────────────────────
+    // ─── AI Generation via tool calling ──────────────
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       return new Response(JSON.stringify({ error: 'Service IA non configuré' }), {
@@ -244,7 +451,7 @@ RÈGLES STRICTES :
 - Pas de doublon thématique dans le mois
 - Pas 2 posts consécutifs sur le même univers métier
 - Chaque post doit avoir une valeur concrète pour le lecteur
-- Format JSON strict demandé
+- Toutes les dates doivent être dans le mois cible ${month}/${year}
 
 UNIVERS MÉTIER AUTORISÉS : ${NORMALIZED_UNIVERSES.join(', ')}
 
@@ -254,37 +461,43 @@ TYPES DE CONTENU :
 - realisation : valorisation d'une intervention réelle
 - local_branding : confiance, proximité, équipe`;
 
-    const userPrompt = `Génère ${targetPostCount} suggestions de posts social media pour le mois ${month}/${year}.
+    let userPrompt: string;
+
+    if (regenerateSingle && singleContext) {
+      // Targeted regeneration: preserve context
+      userPrompt = `Génère 1 suggestion de post pour le ${singleContext.original_date || `${year}-${String(month).padStart(2, '0')}-15`}.
+
+CONTRAINTES :
+- Date : ${singleContext.original_date || 'au choix dans le mois'}
+- Type de contenu préféré : ${singleContext.original_topic_type || 'au choix'}
+- Univers préféré : ${singleContext.original_universe || 'au choix'}
+${singleContext.original_realisation_id ? `- Réalisation liée : ${singleContext.original_realisation_id}` : ''}
+
+JOURNÉES THÉMATIQUES DU MOIS :
+${monthAwareness.map(a => `- ${a.day}/${month}: ${a.label}`).join('\n')}
+
+RÉALISATIONS EXPLOITABLES :
+${exploitableReals.length > 0 
+  ? exploitableReals.map(r => `- "${r.title}" (ID: ${r.id}, univers: ${r.universe || 'inconnu'})`).join('\n')
+  : '(aucune)'}
+
+Propose un angle DIFFÉRENT du post précédent, tout en gardant le même contexte thématique.`;
+    } else {
+      userPrompt = `Génère ${targetPostCount} suggestions de posts social media pour le mois ${month}/${year}.
 
 JOURNÉES THÉMATIQUES DU MOIS :
 ${monthAwareness.map(a => `- ${a.day}/${month}: ${a.label} (tags: ${a.tags.join(', ')})`).join('\n')}
 
 RÉALISATIONS EXPLOITABLES :
 ${exploitableReals.length > 0 
-  ? exploitableReals.map(r => `- "${r.title}" (${r.intervention_date}, univers: ${r.universe || 'inconnu'}, avant/après: ${r.hasBeforeAfter ? 'oui' : 'non'})`).join('\n')
+  ? exploitableReals.map(r => `- "${r.title}" (ID: ${r.id}, ${r.intervention_date}, univers: ${r.universe || 'inconnu'}, avant/après: ${r.hasBeforeAfter ? 'oui' : 'non'})`).join('\n')
   : '(aucune réalisation exploitable ce mois-ci)'}
 
-RÉPARTITION CIBLE par semaine : 1 réalisation + 1 conseil saisonnier + 1 opportunité calendrier/prévention.
+SUJETS DÉJÀ EXISTANTS (à ne pas dupliquer) :
+${[...existingTopicKeys].join(', ') || '(aucun)'}
 
-Réponds UNIQUEMENT avec un JSON array. Chaque élément :
-{
-  "suggestion_date": "YYYY-MM-DD",
-  "title": "Titre court et accrocheur",
-  "content_angle": "L'angle éditorial en 1 phrase",
-  "caption_base_fr": "Le texte du post principal (2-4 phrases max)",
-  "hashtags": ["hashtag1", "hashtag2"],
-  "topic_type": "awareness_day|seasonal_tip|realisation|local_branding",
-  "topic_key": "identifiant unique du sujet",
-  "visual_type": "photo|illustration|before_after|quote",
-  "universe": "plomberie|electricite|...|general",
-  "realisation_id": "UUID ou null",
-  "platform_variants": {
-    "facebook": { "caption": "...", "cta": "..." },
-    "instagram": { "caption": "...", "cta": "..." },
-    "google_business": { "caption": "...", "cta": "..." },
-    "linkedin": { "caption": "...", "cta": "..." }
-  }
-}`;
+RÉPARTITION CIBLE par semaine : 1 réalisation + 1 conseil saisonnier + 1 opportunité calendrier/prévention.`;
+    }
 
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -293,13 +506,14 @@ Réponds UNIQUEMENT avec un JSON array. Chaque élément :
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'google/gemini-3-flash-preview',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
+        tools: [SUGGEST_TOOL],
+        tool_choice: { type: 'function', function: { name: 'generate_social_suggestions' } },
         stream: false,
-        max_tokens: 8000,
         temperature: 0.7,
       }),
     });
@@ -307,23 +521,52 @@ Réponds UNIQUEMENT avec un JSON array. Chaque élément :
     if (!aiResponse.ok) {
       const errText = await aiResponse.text();
       console.error('[social-suggest] AI error:', aiResponse.status, errText);
+      if (aiResponse.status === 429) {
+        return new Response(JSON.stringify({ error: 'Trop de requêtes, réessayez dans quelques minutes.' }), {
+          status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      if (aiResponse.status === 402) {
+        return new Response(JSON.stringify({ error: 'Crédits IA insuffisants.' }), {
+          status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
       return new Response(JSON.stringify({ error: 'Erreur du service IA', details: aiResponse.status }), {
         status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     const aiData = await aiResponse.json();
-    const rawContent = aiData.choices?.[0]?.message?.content || '';
 
-    // Parse JSON from response (handle markdown code blocks)
-    let suggestions: any[];
+    // Extract from tool call response
+    let rawSuggestions: any[];
     try {
-      const jsonStr = rawContent.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-      suggestions = JSON.parse(jsonStr);
-      if (!Array.isArray(suggestions)) throw new Error('Not an array');
+      const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+      if (toolCall?.function?.arguments) {
+        const parsed = JSON.parse(toolCall.function.arguments);
+        rawSuggestions = parsed.suggestions;
+      } else {
+        // Fallback: try content as JSON (some models may not honor tool_choice)
+        const rawContent = aiData.choices?.[0]?.message?.content || '';
+        const jsonStr = rawContent.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+        const parsed = JSON.parse(jsonStr);
+        rawSuggestions = Array.isArray(parsed) ? parsed : parsed.suggestions;
+      }
+      if (!Array.isArray(rawSuggestions)) throw new Error('Not an array');
     } catch (parseErr) {
-      console.error('[social-suggest] JSON parse error:', parseErr, 'Raw:', rawContent.substring(0, 500));
+      console.error('[social-suggest] Parse error:', parseErr);
       return new Response(JSON.stringify({ error: 'Réponse IA invalide, réessayez' }), {
+        status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // ─── Validate post-AI ────────────────────────────
+    const validatedSuggestions = validateAndNormalizeSuggestions(
+      rawSuggestions, month, year, exploitableReals, existingTopicKeys
+    );
+
+    if (validatedSuggestions.length === 0) {
+      return new Response(JSON.stringify({ error: 'Aucune suggestion valide générée, réessayez' }), {
         status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -332,24 +575,12 @@ Réponds UNIQUEMENT avec un JSON array. Chaque élément :
     const batchId = crypto.randomUUID();
     const persistedSuggestions: any[] = [];
 
-    for (const s of suggestions) {
-      // Validate and normalize
-      const suggestionDate = s.suggestion_date || `${year}-${String(month).padStart(2, '0')}-15`;
-      const universe = NORMALIZED_UNIVERSES.includes(s.universe) ? s.universe : 'general';
-      const topicType = ['awareness_day', 'seasonal_tip', 'realisation', 'local_branding'].includes(s.topic_type)
-        ? s.topic_type : 'seasonal_tip';
-
+    for (const s of validatedSuggestions) {
       // Determine source_type
       let sourceType = 'ai_seasonal';
-      if (topicType === 'awareness_day') sourceType = 'ai_awareness';
-      else if (topicType === 'realisation') sourceType = 'ai_realisation';
-
-      // Match realisation_id if topic_type is realisation
-      let realisationId: string | null = null;
-      if (topicType === 'realisation' && s.realisation_id) {
-        const validReal = exploitableReals.find(r => r.id === s.realisation_id);
-        if (validReal) realisationId = validReal.id;
-      }
+      if (s.topic_type === 'awareness_day') sourceType = 'ai_awareness';
+      else if (s.topic_type === 'realisation') sourceType = 'ai_realisation';
+      if (regenerateSingle) sourceType = 'regenerated';
 
       // Insert suggestion
       const { data: inserted, error: insertErr } = await adminSupabase
@@ -357,19 +588,18 @@ Réponds UNIQUEMENT avec un JSON array. Chaque élément :
         .insert({
           agency_id: agencyId,
           month_key: monthKey,
-          suggestion_date: suggestionDate,
-          title: String(s.title || 'Sans titre').substring(0, 200),
-          content_angle: s.content_angle || null,
-          caption_base_fr: String(s.caption_base_fr || '').substring(0, 2000),
-          hashtags: Array.isArray(s.hashtags) ? s.hashtags.slice(0, 10) : [],
-          platform_targets: s.platform_variants ? Object.keys(s.platform_variants) : ['facebook', 'instagram'],
-          visual_type: s.visual_type || 'photo',
-          topic_type: topicType,
-          topic_key: s.topic_key || null,
-          realisation_id: realisationId,
-          universe,
-          relevance_score: null, // Scored client-side
-          ai_payload: { raw: s },
+          suggestion_date: s.suggestion_date,
+          title: s.title,
+          content_angle: s.content_angle,
+          caption_base_fr: s.caption_base_fr,
+          hashtags: s.hashtags,
+          platform_targets: Object.keys(s.platform_variants).length > 0 ? Object.keys(s.platform_variants) : ['facebook', 'instagram'],
+          visual_type: s.visual_type,
+          topic_type: s.topic_type,
+          topic_key: s.topic_key,
+          realisation_id: s.realisation_id,
+          universe: s.universe,
+          relevance_score: null,
           status: 'draft',
           generation_batch_id: batchId,
           source_type: sourceType,
@@ -383,18 +613,17 @@ Réponds UNIQUEMENT avec un JSON array. Chaque élément :
       }
 
       // Insert platform variants
-      const variants = s.platform_variants || {};
       const variantRows: any[] = [];
-      for (const platform of ['facebook', 'instagram', 'google_business', 'linkedin']) {
-        const v = variants[platform];
+      for (const platform of VALID_PLATFORMS) {
+        const v = s.platform_variants[platform];
         if (!v) continue;
         variantRows.push({
           suggestion_id: inserted.id,
           agency_id: agencyId,
           platform,
-          caption_fr: String(v.caption || s.caption_base_fr || '').substring(0, 2000),
-          cta: v.cta || null,
-          hashtags: Array.isArray(s.hashtags) ? s.hashtags : [],
+          caption_fr: v.caption,
+          cta: v.cta,
+          hashtags: s.hashtags,
           format: '1080x1080',
           recommended_dimensions: '1080x1080',
           status: 'draft',
