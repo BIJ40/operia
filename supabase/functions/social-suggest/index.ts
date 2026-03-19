@@ -751,16 +751,32 @@ RAPPEL CRITIQUE :
       });
     }
 
-    const aiData = await aiResponse.json();
+    const aiText = await aiResponse.text();
+    let aiData: any;
+    try {
+      aiData = JSON.parse(aiText);
+    } catch {
+      console.error('[social-suggest] AI returned non-JSON:', aiText.slice(0, 500));
+      return new Response(JSON.stringify({ error: 'Réponse IA invalide (non-JSON), réessayez' }), {
+        status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     let rawSuggestions: any[];
     try {
       const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
       if (toolCall?.function?.arguments) {
-        const parsed = JSON.parse(toolCall.function.arguments);
+        const args = typeof toolCall.function.arguments === 'string'
+          ? toolCall.function.arguments
+          : JSON.stringify(toolCall.function.arguments);
+        const parsed = JSON.parse(args);
         rawSuggestions = parsed.suggestions;
       } else {
         const rawContent = aiData.choices?.[0]?.message?.content || '';
+        if (!rawContent.trim()) {
+          console.error('[social-suggest] AI returned empty content, no tool_calls. finish_reason:', aiData.choices?.[0]?.finish_reason);
+          throw new Error('Empty AI response');
+        }
         const jsonStr = rawContent.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
         const parsed = JSON.parse(jsonStr);
         rawSuggestions = Array.isArray(parsed) ? parsed : parsed.suggestions;
@@ -768,6 +784,7 @@ RAPPEL CRITIQUE :
       if (!Array.isArray(rawSuggestions)) throw new Error('Not an array');
     } catch (parseErr) {
       console.error('[social-suggest] Parse error:', parseErr);
+      console.error('[social-suggest] AI response preview:', JSON.stringify(aiData).slice(0, 1000));
       return new Response(JSON.stringify({ error: 'Réponse IA invalide, réessayez' }), {
         status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
