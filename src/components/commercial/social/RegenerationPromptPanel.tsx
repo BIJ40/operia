@@ -7,6 +7,7 @@ import { useState, useCallback } from 'react';
 import { Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
@@ -16,6 +17,7 @@ export interface RegenerationPrompt {
   keywords: string;
   audience: string;
   length: 'court' | 'moyen' | 'long';
+  freePrompt: string;
 }
 
 const TONE_OPTIONS = [
@@ -56,9 +58,11 @@ export function RegenerationPromptPanel({ onRegenerate, isRegenerating, disabled
   const [audience, setAudience] = useState('tous');
   const [length, setLength] = useState<RegenerationPrompt['length']>('moyen');
 
+  const [freePrompt, setFreePrompt] = useState('');
+
   const handleRegenerate = useCallback(() => {
-    onRegenerate({ tone, keywords: keywords.trim(), audience, length });
-  }, [onRegenerate, tone, keywords, audience, length]);
+    onRegenerate({ tone, keywords: keywords.trim(), audience, length, freePrompt: freePrompt.trim() });
+  }, [onRegenerate, tone, keywords, audience, length, freePrompt]);
 
   if (disabled) return null;
 
@@ -93,6 +97,23 @@ export function RegenerationPromptPanel({ onRegenerate, isRegenerating, disabled
                 </Badge>
               ))}
             </div>
+          </div>
+
+          {/* Idée libre / prompt */}
+          <div className="space-y-1.5">
+            <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+              💡 Votre idée (prompt libre)
+            </Label>
+            <Textarea
+              placeholder={'Ex: "Un volet roulant à moitié ouvert, il fait encore nuit, texte : C\'était pas l\'heure ! Ce weekend on avance d\'une heure"'}
+              value={freePrompt}
+              onChange={e => setFreePrompt(e.target.value)}
+              className="text-xs min-h-[60px] resize-y"
+              rows={3}
+            />
+            <p className="text-[10px] text-muted-foreground/60">
+              Décrivez précisément ce que vous voulez : scène visuelle, texte du post, angle, ton…
+            </p>
           </div>
 
           {/* Mots-clés */}

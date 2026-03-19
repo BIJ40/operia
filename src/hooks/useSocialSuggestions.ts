@@ -112,7 +112,7 @@ export function useGenerateSuggestions() {
       year: number;
       regenerateSingle?: boolean;
       suggestionId?: string;
-      prompt?: { tone?: string; keywords?: string; audience?: string; length?: string };
+      prompt?: { tone?: string; keywords?: string; audience?: string; length?: string; freePrompt?: string };
     }) => {
       const { data, error } = await supabase.functions.invoke('social-suggest', {
         body: {

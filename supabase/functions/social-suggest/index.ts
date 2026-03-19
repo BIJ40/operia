@@ -779,6 +779,9 @@ Chaque post doit faire penser au lecteur : "Tiens, j'ai ce problème chez moi �
       if (userPromptParams.length && lengthMap[userPromptParams.length]) {
         parts.push(lengthMap[userPromptParams.length]);
       }
+      if (userPromptParams.freePrompt) {
+        parts.push(`IDÉE CRÉATIVE DE L'UTILISATEUR (PRIORITÉ MAXIMALE — suivre cette direction) :\n"${userPromptParams.freePrompt}"\nAdapte le hook, le caption, le visuel et le ton selon cette idée. Le visual_prompt doit correspondre exactement à la scène décrite.`);
+      }
       if (parts.length > 0) {
         promptCustomization = `\n\nDIRECTIVES UTILISATEUR (PRIORITÉ HAUTE) :\n${parts.map(p => `- ${p}`).join('\n')}`;
       }
