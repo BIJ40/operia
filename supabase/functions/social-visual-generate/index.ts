@@ -236,7 +236,7 @@ ADDITIONAL REQUIREMENTS:
     // 2e passe IA : on envoie l'image de fond + instructions de composition
     // pour que l'IA intègre le texte marketing directement dans l'image.
 
-    const hookText = (hook || title || 'Help Confort').toUpperCase().slice(0, 60);
+    const hookText = (hook || title || 'HelpConfort').toUpperCase().slice(0, 60);
     const subText = caption ? caption.slice(0, 90) : '';
     const ctaText = (cta || 'Demandez un devis gratuit').toUpperCase();
 
