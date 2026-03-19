@@ -279,7 +279,7 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
 
 6. BRANDING (top-left):
    - Small white rounded rectangle with subtle shadow
-   - Text "HC" or "Help Confort" logo placeholder in blue (#0092DD)
+   - Text "HC" or "HelpConfort" logo placeholder in blue (#0092DD)
    - Keep it discreet, don't dominate
 
 DESIGN RULES:
