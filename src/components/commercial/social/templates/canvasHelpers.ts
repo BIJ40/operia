@@ -279,13 +279,13 @@ export function drawHookText(
   const text = hook.toUpperCase();
   ctx.font = `900 ${fontSize}px sans-serif`;
   ctx.textAlign = align;
-  const lines = wrapText(ctx, text, maxWidth);
+  const lines = wrapText(ctx, text, maxWidth, 3);
   const lineH = fontSize * 1.15;
 
   const xPos = align === 'center' ? SIZE / 2 : 70;
 
   // Draw text shadow for contrast
-  lines.slice(0, 3).forEach((line, i) => {
+  lines.forEach((line, i) => {
     const ly = y + i * lineH;
     ctx.fillStyle = shadowColor;
     ctx.fillText(line, xPos + 3, ly + 3);
@@ -294,7 +294,7 @@ export function drawHookText(
   });
 
   ctx.textAlign = 'left';
-  return { bottomY: y + lines.slice(0, 3).length * lineH };
+  return { bottomY: y + lines.length * lineH };
 }
 
 /**
