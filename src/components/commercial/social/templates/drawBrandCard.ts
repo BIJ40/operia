@@ -1,13 +1,13 @@
 /**
  * Template : brand_card — Créa branding / fallback 1080x1080
- * V3 — Ad-Ready : hook gros centré, branding fort, prêt à poster.
+ * V4 — Zone-based layout: no overflow, no collision.
  */
 import {
-  SIZE, truncateText, loadImage, drawCover,
-  getTheme, HC, roundRect,
+  SIZE, loadImage, drawCover,
+  getTheme, HC, ZONES,
   drawGradientBg, drawHCFooterBar, drawHCLogo,
   drawContain, drawHookText, drawSubText, drawCTAButton,
-  drawCinematicOverlay, drawUniversePill,
+  drawCinematicOverlay, drawUniversePill, roundRect,
 } from './canvasHelpers';
 import bannerSrc from '@/assets/banniere_helpconfort.jpg';
 import logoSrc from '@/assets/help-confort-services-logo.png';
@@ -15,13 +15,10 @@ import type { SocialTemplatePayload } from '../SocialVisualCanvas';
 
 export async function drawBrandCard(ctx: CanvasRenderingContext2D, payload: SocialTemplatePayload) {
   const theme = getTheme(payload.universe);
-  const hook = truncateText(payload.hook || payload.title || 'Help Confort', 50);
-  const subText = truncateText(payload.caption || '', 100);
   const cta = payload.cta || 'Appelez-nous';
 
-  // ─── 1. FOND ───
+  // ─── ZONE 2: Background ───
   if (payload.mediaUrl) {
-    // Si une image IA est disponible, l'utiliser en fond
     try {
       const img = await loadImage(payload.mediaUrl);
       drawCover(ctx, img, 0, 0, SIZE, SIZE);
@@ -30,9 +27,7 @@ export async function drawBrandCard(ctx: CanvasRenderingContext2D, payload: Soci
       drawGradientBg(ctx, HC.blue, HC.blueDark);
     }
   } else {
-    // Gradient HC fort
     drawGradientBg(ctx, HC.blue, HC.blueDark);
-
     // Subtle diagonal pattern
     ctx.strokeStyle = 'rgba(255,255,255,0.04)';
     ctx.lineWidth = 1;
@@ -44,17 +39,13 @@ export async function drawBrandCard(ctx: CanvasRenderingContext2D, payload: Soci
     }
   }
 
-  // ─── 2. Orange accent bar top ───
+  // ─── ZONE 1: Top bar ───
   ctx.fillStyle = HC.orange;
   ctx.fillRect(0, 0, SIZE, 6);
-
-  // ─── 3. Logo HC top-left ───
   await drawHCLogo(ctx, logoSrc, 'top-left');
-
-  // ─── 3b. Universe pill top-right (if applicable) ───
   drawUniversePill(ctx, theme, 35);
 
-  // ─── 4. Banner (only on solid bg, skip on image bg) ───
+  // Banner image (only on solid bg, inside ZONE 2)
   if (!payload.mediaUrl) {
     try {
       const imgBanner = await loadImage(bannerSrc);
@@ -69,30 +60,24 @@ export async function drawBrandCard(ctx: CanvasRenderingContext2D, payload: Soci
     } catch { /* banner optional */ }
   }
 
-  // ─── 5. HOOK TEXT — accroche GROS centré ───
-  const hookY = payload.mediaUrl ? SIZE - 400 : 460;
-  const { bottomY: hookBottom } = drawHookText(ctx, hook, {
-    y: hookY,
-    fontSize: 60,
-    maxWidth: SIZE - 160,
+  // ─── ZONE 3: Hook + subtext ───
+  const { bottomY: hookBottom } = drawHookText(ctx, payload.hook || payload.title || 'Help Confort', {
+    y: ZONES.TEXT_START,
     align: 'left',
     color: HC.white,
   });
 
-  // ─── 6. SOUS-TEXTE ───
-  if (subText) {
-    drawSubText(ctx, subText, {
-      y: hookBottom + 20,
-      fontSize: 28,
-      maxWidth: SIZE - 200,
+  if (payload.caption) {
+    drawSubText(ctx, payload.caption, {
+      y: hookBottom + 14,
       align: 'left',
       color: 'rgba(255,255,255,0.88)',
     });
   }
 
-  // ─── 7. CTA BUTTON centré ───
-  drawCTAButton(ctx, cta, { y: SIZE - 170, align: 'left' });
+  // ─── ZONE 4: CTA ───
+  drawCTAButton(ctx, cta, { align: 'left' });
 
-  // ─── 8. FOOTER ───
+  // ─── ZONE 5: Footer ───
   drawHCFooterBar(ctx, theme);
 }
