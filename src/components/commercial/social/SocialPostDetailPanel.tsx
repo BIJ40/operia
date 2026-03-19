@@ -124,7 +124,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   }, [latestAsset]);
 
   return (
-    <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-280px)]">
+    <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-200px)] pr-1">
       {/* Main card */}
       <SocialPostCard
         suggestion={suggestion}
