@@ -78,6 +78,7 @@ function LoadingFallback() {
 
 function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
   const { isImpersonating } = useImpersonation();
+  const { hasModule } = usePermissions();
   const [searchParams, setSearchParams] = useSearchParams();
   // Use a different URL param when embedded inside AdminHub to avoid conflict with parent's ?tab=
   const urlParamKey = embedded ? 'fTab' : 'tab';
@@ -105,15 +106,19 @@ function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
     }
   }, [urlTab]);
 
-  // Onglets dans l'ordre fixe (Accueil toujours premier)
+  // Filtrer les onglets selon les permissions (ticketing = opt-in)
   const sortedTabs = useMemo(() => {
-    const accueilTab = ALL_TABS.find(t => t.id === 'accueil')!;
-    const otherTabs = ALL_TABS.filter(t => t.id !== 'accueil');
+    const filtered = ALL_TABS.filter(t => {
+      if (t.id === 'ticketing') return hasModule('ticketing');
+      return true;
+    });
+    const accueilTab = filtered.find(t => t.id === 'accueil')!;
+    const otherTabs = filtered.filter(t => t.id !== 'accueil');
     const sorted = [...otherTabs].sort((a, b) => {
       return FIXED_TAB_ORDER.indexOf(a.id) - FIXED_TAB_ORDER.indexOf(b.id);
     });
     return [accueilTab, ...sorted];
-  }, []);
+  }, [hasModule]);
 
   // Mettre à jour le titre de la page selon l'onglet actif
   useEffect(() => {
