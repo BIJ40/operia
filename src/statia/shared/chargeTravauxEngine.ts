@@ -490,14 +490,27 @@ export function computeChargeTravauxAvenirParUnivers(
     }
     if (!hasPlannedDate) dataQualityFlags.push('missing_planned_date');
 
-    // technicianIds
+    // technicianIds — comprehensive extraction (aligned with caParTechnicienCore)
     const techIdSet = new Set<string>();
     for (const itv of intervs) {
       const uid = itv?.userId ?? itv?.user_id;
       if (uid) techIdSet.add(String(uid));
       const uids = itv?.usersIds ?? itv?.data?.usersIds;
-      if (Array.isArray(uids)) {
-        for (const u of uids) if (u) techIdSet.add(String(u));
+      if (Array.isArray(uids)) for (const u of uids) { if (u) techIdSet.add(String(u)); }
+      // From visites
+      const visites = itv?.visites ?? itv?.data?.visites ?? [];
+      if (Array.isArray(visites)) {
+        for (const v of visites) {
+          const vIds = v?.usersIds ?? v?.userIds ?? [];
+          if (Array.isArray(vIds)) for (const u of vIds) { if (u) techIdSet.add(String(u)); }
+        }
+      }
+      // From biV3.items
+      const biV3Items = itv?.data?.biV3?.items;
+      if (Array.isArray(biV3Items)) {
+        for (const item of biV3Items) {
+          if (Array.isArray(item?.usersIds)) for (const u of item.usersIds) { if (u) techIdSet.add(String(u)); }
+        }
       }
     }
     const technicianIds = Array.from(techIdSet);
@@ -697,6 +710,21 @@ export function computeChargeTravauxAvenirParUnivers(
       if (uid) ids.push(String(uid));
       const uids = itv?.usersIds ?? itv?.data?.usersIds;
       if (Array.isArray(uids)) for (const u of uids) { if (u && !ids.includes(String(u))) ids.push(String(u)); }
+      // From visites
+      const visites = itv?.visites ?? itv?.data?.visites ?? [];
+      if (Array.isArray(visites)) {
+        for (const v of visites) {
+          const vIds = v?.usersIds ?? v?.userIds ?? [];
+          if (Array.isArray(vIds)) for (const u of vIds) { const s = String(u); if (u && !ids.includes(s)) ids.push(s); }
+        }
+      }
+      // From biV3.items
+      const biV3Items = itv?.data?.biV3?.items;
+      if (Array.isArray(biV3Items)) {
+        for (const item of biV3Items) {
+          if (Array.isArray(item?.usersIds)) for (const u of item.usersIds) { const s = String(u); if (u && !ids.includes(s)) ids.push(s); }
+        }
+      }
       if (ids.length === 0) continue;
       const share = hTech / ids.length;
       for (const tid of ids) {
