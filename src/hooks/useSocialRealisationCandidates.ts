@@ -21,6 +21,44 @@ export interface RealisationCandidate {
   score: number;
 }
 
+// ─── Universe inference from title keywords ──────────────────
+const UNIVERSE_KEYWORDS: Record<string, string[]> = {
+  plomberie: ['plomberie', 'plombier', 'fuite', 'canalisation', 'robinet', 'chauffe-eau', 'ballon', 'wc', 'sanitaire', 'tuyau', 'siphon', 'chasse d\'eau', 'cumulus', 'radiateur', 'chauffage', 'eau chaude'],
+  electricite: ['électricité', 'electricite', 'électrique', 'electrique', 'prise', 'tableau', 'disjoncteur', 'câblage', 'cablage', 'interrupteur', 'éclairage', 'eclairage', 'luminaire', 'court-circuit'],
+  serrurerie: ['serrurerie', 'serrurier', 'serrure', 'porte', 'blindage', 'clé', 'cle', 'verrou', 'cylindre', 'ouverture'],
+  vitrerie: ['vitrerie', 'vitrier', 'vitre', 'vitrage', 'fenêtre', 'fenetre', 'double vitrage', 'carreau', 'baie vitrée'],
+  menuiserie: ['menuiserie', 'menuisier', 'bois', 'parquet', 'porte intérieure', 'placard', 'agencement'],
+  renovation: ['rénovation', 'renovation', 'travaux', 'salle de bain', 'cuisine', 'carrelage', 'peinture', 'aménagement', 'amenagement', 'sol', 'mur'],
+  volets: ['volet', 'store', 'volet roulant', 'motorisation', 'persienne'],
+  pmr: ['pmr', 'accessibilité', 'accessibilite', 'handicap', 'douche italienne', 'barre d\'appui', 'rampe'],
+};
+
+/**
+ * Infer universe from realisation title using keyword matching.
+ * Returns the best-matching universe or null.
+ */
+function inferUniverseFromTitle(title: string): string | null {
+  const normalized = title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  let bestMatch: string | null = null;
+  let bestScore = 0;
+
+  for (const [universe, keywords] of Object.entries(UNIVERSE_KEYWORDS)) {
+    let matchCount = 0;
+    for (const kw of keywords) {
+      const normalizedKw = kw.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      if (normalized.includes(normalizedKw)) {
+        matchCount++;
+      }
+    }
+    if (matchCount > bestScore) {
+      bestScore = matchCount;
+      bestMatch = universe;
+    }
+  }
+
+  return bestMatch;
+}
+
 // ─── Season → universe affinity ──────────────────────────────
 const SEASON_UNIVERSE_MAP: Record<string, string[]> = {
   winter: ['plomberie', 'electricite', 'renovation'],
@@ -57,7 +95,7 @@ function computeScore(
   else if (daysSince < 90) recency = 75;
   else if (daysSince < 180) recency = 50;
 
-  // universe_match (0-100)
+  // universe_match (0-100) — identified universe scores much higher
   const universeMatch = universe ? 100 : 30;
 
   // seasonal_fit (0-100)
@@ -133,8 +171,8 @@ export function useSocialRealisationCandidates(minScore = 50) {
         .map(r => {
           const mp = mediaMap.get(r.id) || { count: 0, hasBefore: false, hasAfter: false };
           const hasBeforeAfter = mp.hasBefore && mp.hasAfter;
-          // We don't have universe on realisations table directly — infer from title or null
-          const universe: string | null = null; // Will be enhanced when universe field is added
+          // Infer universe from title keywords
+          const universe = inferUniverseFromTitle(r.title);
           const score = computeScore(
             hasBeforeAfter, mp.count, r.intervention_date, universe, recentlyUsedIds, r.id
           );
@@ -157,3 +195,6 @@ export function useSocialRealisationCandidates(minScore = 50) {
     },
   });
 }
+
+/** Export for edge function reuse */
+export { inferUniverseFromTitle, UNIVERSE_KEYWORDS };
