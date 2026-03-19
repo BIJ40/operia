@@ -85,20 +85,45 @@ export function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w
 
 export function truncateText(text: string, maxLen: number): string {
   if (!text) return '';
-  return text.length > maxLen ? text.slice(0, maxLen - 1) + '…' : text;
+  if (text.length <= maxLen) return text;
+  // Cut at last space before maxLen to avoid mid-word truncation
+  const truncated = text.slice(0, maxLen);
+  const lastSpace = truncated.lastIndexOf(' ');
+  return (lastSpace > maxLen * 0.5 ? truncated.slice(0, lastSpace) : truncated) + '…';
 }
 
-export function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+/**
+ * Word-wrap text to fit within maxWidth.
+ * Optional maxLines param: if set, truncates the last visible line with "…" instead of cutting mid-word.
+ */
+export function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, maxLines?: number): string[] {
   if (!text) return [];
   const words = text.split(' ');
   const lines: string[] = [];
   let currentLine = '';
   for (const word of words) {
     const test = currentLine ? `${currentLine} ${word}` : word;
-    if (ctx.measureText(test).width > maxWidth && currentLine) { lines.push(currentLine); currentLine = word; }
-    else { currentLine = test; }
+    if (ctx.measureText(test).width > maxWidth && currentLine) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = test;
+    }
   }
   if (currentLine) lines.push(currentLine);
+
+  // If maxLines specified and text overflows, add ellipsis to last visible line
+  if (maxLines && lines.length > maxLines) {
+    const truncatedLines = lines.slice(0, maxLines);
+    let lastLine = truncatedLines[maxLines - 1];
+    // Add ellipsis, trimming words until it fits
+    while (ctx.measureText(lastLine + '…').width > maxWidth && lastLine.includes(' ')) {
+      lastLine = lastLine.slice(0, lastLine.lastIndexOf(' '));
+    }
+    truncatedLines[maxLines - 1] = lastLine + '…';
+    return truncatedLines;
+  }
+
   return lines;
 }
 
@@ -254,13 +279,13 @@ export function drawHookText(
   const text = hook.toUpperCase();
   ctx.font = `900 ${fontSize}px sans-serif`;
   ctx.textAlign = align;
-  const lines = wrapText(ctx, text, maxWidth);
+  const lines = wrapText(ctx, text, maxWidth, 3);
   const lineH = fontSize * 1.15;
 
   const xPos = align === 'center' ? SIZE / 2 : 70;
 
   // Draw text shadow for contrast
-  lines.slice(0, 3).forEach((line, i) => {
+  lines.forEach((line, i) => {
     const ly = y + i * lineH;
     ctx.fillStyle = shadowColor;
     ctx.fillText(line, xPos + 3, ly + 3);
@@ -269,7 +294,7 @@ export function drawHookText(
   });
 
   ctx.textAlign = 'left';
-  return { bottomY: y + lines.slice(0, 3).length * lineH };
+  return { bottomY: y + lines.length * lineH };
 }
 
 /**
@@ -298,16 +323,16 @@ export function drawSubText(
   ctx.font = `500 ${fontSize}px sans-serif`;
   ctx.fillStyle = color;
   ctx.textAlign = align;
-  const lines = wrapText(ctx, text, maxWidth);
+  const lines = wrapText(ctx, text, maxWidth, 2);
   const lineH = fontSize * 1.35;
   const xPos = align === 'center' ? SIZE / 2 : 70;
 
-  lines.slice(0, 2).forEach((line, i) => {
+  lines.forEach((line, i) => {
     ctx.fillText(line, xPos, y + i * lineH);
   });
 
   ctx.textAlign = 'left';
-  return { bottomY: y + lines.slice(0, 2).length * lineH };
+  return { bottomY: y + lines.length * lineH };
 }
 
 /**
