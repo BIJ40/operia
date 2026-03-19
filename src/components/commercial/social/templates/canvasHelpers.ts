@@ -85,7 +85,11 @@ export function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w
 
 export function truncateText(text: string, maxLen: number): string {
   if (!text) return '';
-  return text.length > maxLen ? text.slice(0, maxLen - 1) + '…' : text;
+  if (text.length <= maxLen) return text;
+  // Cut at last space before maxLen to avoid mid-word truncation
+  const truncated = text.slice(0, maxLen);
+  const lastSpace = truncated.lastIndexOf(' ');
+  return (lastSpace > maxLen * 0.5 ? truncated.slice(0, lastSpace) : truncated) + '…';
 }
 
 export function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
