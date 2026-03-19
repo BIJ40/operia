@@ -1,6 +1,13 @@
 /**
- * Canvas helpers — V3 "Ad-Ready" Social Media Creatives
- * Composants réutilisables pour visuels publicitaires prêts à poster.
+ * Canvas helpers — V4 "Zone-Based Layout Engine"
+ * Strict zone system preventing text overflow, collision, and truncation.
+ * 
+ * ZONES (1080x1080):
+ *   ZONE 1 — Top bar: 0–100px (logo + universe pill) 
+ *   ZONE 2 — Image/visual center: 100–640px (no text)
+ *   ZONE 3 — Text block: 640–920px (hook + subtext)
+ *   ZONE 4 — CTA: 920–990px (button only)
+ *   ZONE 5 — Footer: 990–1080px (brand signature)
  */
 
 export const SIZE = 1080;
@@ -14,6 +21,36 @@ export const HC = {
   grayDark:  '#2F2F2F',
   white:     '#FFFFFF',
 } as const;
+
+// ─── Zone boundaries (Y coordinates) ────────────────────────
+export const ZONES = {
+  TOP_START: 0,
+  TOP_END: 100,       // Logo + pills
+  IMAGE_START: 100,
+  IMAGE_END: 620,     // Pure image zone
+  TEXT_START: 630,     // Hook + subtext
+  TEXT_END: 910,       // Max bottom of text
+  CTA_START: 915,     // CTA button
+  CTA_END: 980,
+  FOOTER_START: 990,
+  FOOTER_HEIGHT: 90,
+  MARGIN_X: 70,       // Left/right margin for text
+  TEXT_WIDTH: 940,     // SIZE - 2*MARGIN_X
+} as const;
+
+// ─── Text constraints ───────────────────────────────────────
+const HOOK_MAX_CHARS = 45;
+const HOOK_MAX_WORDS = 8;
+const HOOK_MAX_LINES = 2;
+const HOOK_FONT_MAX = 62;
+const HOOK_FONT_MIN = 42;
+
+const SUB_MAX_CHARS = 70;
+const SUB_MAX_LINES = 1;
+const SUB_FONT = 26;
+
+const CTA_MAX_CHARS = 30;
+const CTA_FONT = 24;
 
 // ─── Universe Style Map ─────────────────────────────────────
 export interface ServiceTheme {
@@ -40,7 +77,76 @@ export function getTheme(universe?: string | null): ServiceTheme {
   return SERVICE_THEMES[universe || 'general'] || SERVICE_THEMES.general;
 }
 
-// ─── Image helpers ──────────────────────────────────────────
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// TEXT SANITIZATION — Auto-optimize copy for canvas
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+/** Sanitize hook: max words, max chars, no truncation marks */
+export function sanitizeHook(raw: string): string {
+  if (!raw) return '';
+  let text = raw.trim();
+  // Remove trailing ellipsis/dots
+  text = text.replace(/[…\.]+$/, '').trim();
+  // Limit words
+  const words = text.split(/\s+/);
+  if (words.length > HOOK_MAX_WORDS) {
+    text = words.slice(0, HOOK_MAX_WORDS).join(' ');
+  }
+  // Limit chars
+  if (text.length > HOOK_MAX_CHARS) {
+    const cut = text.slice(0, HOOK_MAX_CHARS);
+    const lastSpace = cut.lastIndexOf(' ');
+    text = lastSpace > HOOK_MAX_CHARS * 0.5 ? cut.slice(0, lastSpace) : cut;
+  }
+  // Remove trailing punctuation artifacts
+  text = text.replace(/[\s,;:]+$/, '').trim();
+  return text;
+}
+
+/** Sanitize subtext: single complete sentence, no truncation */
+export function sanitizeSubText(raw: string): string {
+  if (!raw) return '';
+  let text = raw.trim();
+  // Remove trailing ellipsis
+  text = text.replace(/[…]+$/, '').trim();
+  // Limit chars — cut at last complete word
+  if (text.length > SUB_MAX_CHARS) {
+    const cut = text.slice(0, SUB_MAX_CHARS);
+    const lastSpace = cut.lastIndexOf(' ');
+    text = lastSpace > SUB_MAX_CHARS * 0.4 ? cut.slice(0, lastSpace) : cut;
+    // Ensure it ends cleanly
+    text = text.replace(/[\s,;:]+$/, '').trim();
+    // Add period if doesn't end with punctuation
+    if (!/[.!?]$/.test(text)) text += '.';
+  }
+  return text;
+}
+
+/** Sanitize CTA: short action text */
+export function sanitizeCTA(raw: string): string {
+  if (!raw) return '';
+  let text = raw.trim();
+  if (text.length > CTA_MAX_CHARS) {
+    text = text.slice(0, CTA_MAX_CHARS).trim();
+    const lastSpace = text.lastIndexOf(' ');
+    if (lastSpace > CTA_MAX_CHARS * 0.5) text = text.slice(0, lastSpace);
+  }
+  return text;
+}
+
+// Legacy compat
+export function truncateText(text: string, maxLen: number): string {
+  if (!text) return '';
+  if (text.length <= maxLen) return text;
+  const truncated = text.slice(0, maxLen);
+  const lastSpace = truncated.lastIndexOf(' ');
+  return (lastSpace > maxLen * 0.5 ? truncated.slice(0, lastSpace) : truncated) + '…';
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// IMAGE HELPERS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 export function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new window.Image();
@@ -83,18 +189,9 @@ export function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w
   ctx.closePath();
 }
 
-export function truncateText(text: string, maxLen: number): string {
-  if (!text) return '';
-  if (text.length <= maxLen) return text;
-  // Cut at last space before maxLen to avoid mid-word truncation
-  const truncated = text.slice(0, maxLen);
-  const lastSpace = truncated.lastIndexOf(' ');
-  return (lastSpace > maxLen * 0.5 ? truncated.slice(0, lastSpace) : truncated) + '…';
-}
-
 /**
  * Word-wrap text to fit within maxWidth.
- * Optional maxLines param: if set, truncates the last visible line with "…" instead of cutting mid-word.
+ * Never produces "…" — instead drops words to keep text complete.
  */
 export function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, maxLines?: number): string[] {
   if (!text) return [];
@@ -112,16 +209,9 @@ export function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: 
   }
   if (currentLine) lines.push(currentLine);
 
-  // If maxLines specified and text overflows, add ellipsis to last visible line
+  // Hard limit lines — drop overflow (no ellipsis)
   if (maxLines && lines.length > maxLines) {
-    const truncatedLines = lines.slice(0, maxLines);
-    let lastLine = truncatedLines[maxLines - 1];
-    // Add ellipsis, trimming words until it fits
-    while (ctx.measureText(lastLine + '…').width > maxWidth && lastLine.includes(' ')) {
-      lastLine = lastLine.slice(0, lastLine.lastIndexOf(' '));
-    }
-    truncatedLines[maxLines - 1] = lastLine + '…';
-    return truncatedLines;
+    return lines.slice(0, maxLines);
   }
 
   return lines;
@@ -135,30 +225,9 @@ export function drawGradientBg(ctx: CanvasRenderingContext2D, color1: string, co
   ctx.fillRect(0, 0, SIZE, SIZE);
 }
 
-// ─── HC Branded Components ──────────────────────────────────
-
-/** Overlay teinté univers sur toute l'image */
-export function drawUniverseOverlay(ctx: CanvasRenderingContext2D, theme: ServiceTheme, x = 0, y = 0, w = SIZE, h = SIZE) {
-  ctx.fillStyle = theme.overlayTint;
-  ctx.fillRect(x, y, w, h);
-}
-
-/** Bandeau signature bas "Help Confort – Dépannage & Travaux" */
-export function drawHCFooterBar(ctx: CanvasRenderingContext2D, theme: ServiceTheme, height = 90) {
-  const y = SIZE - height;
-  ctx.fillStyle = HC.blue;
-  ctx.fillRect(0, y, SIZE, height);
-  ctx.fillStyle = HC.orange;
-  ctx.fillRect(0, y, SIZE, 4);
-  ctx.fillStyle = HC.white;
-  ctx.font = 'bold 26px sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText('HelpConfort — DEPAN40', 50, y + height / 2 + 9);
-  ctx.textAlign = 'right';
-  ctx.font = '22px sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,0.85)';
-  ctx.fillText(theme.label, SIZE - 50, y + height / 2 + 8);
-}
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ZONE 1 — TOP BAR COMPONENTS (0–100px)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 /** Logo HC en haut — logo complet Help Confort */
 export async function drawHCLogo(ctx: CanvasRenderingContext2D, logoSrc: string, position: 'top-left' | 'top-center' = 'top-left') {
@@ -197,78 +266,77 @@ export async function drawHCLogo(ctx: CanvasRenderingContext2D, logoSrc: string,
   ctx.textAlign = 'left';
 }
 
-/** Bloc titre HC style */
-export function drawHCTitleBlock(
-  ctx: CanvasRenderingContext2D,
-  title: string,
-  options: {
-    y?: number;
-    align?: 'left' | 'center';
-    bgColor?: string;
-    maxWidth?: number;
-    fontSize?: number;
-  } = {}
-) {
-  const { y = 400, align = 'left', bgColor = HC.blue, maxWidth = SIZE - 120, fontSize = 52 } = options;
-  const upperTitle = title.toUpperCase();
-  ctx.font = `bold ${fontSize}px sans-serif`;
-  const lines = wrapText(ctx, upperTitle, maxWidth);
-  const lineH = fontSize + 14;
-  const pad = 20;
-  const blockH = lines.length * lineH + pad * 2;
-
-  if (align === 'center') {
-    const blockW = Math.min(maxWidth + pad * 2, SIZE - 60);
-    const bx = (SIZE - blockW) / 2;
-    ctx.fillStyle = bgColor;
-    roundRect(ctx, bx, y - pad, blockW, blockH, 12);
-    ctx.fill();
-    ctx.fillStyle = HC.white;
-    ctx.textAlign = 'center';
-    lines.slice(0, 3).forEach((line, i) => {
-      ctx.fillText(line, SIZE / 2, y + pad + i * lineH);
-    });
-  } else {
-    let maxLineW = 0;
-    lines.forEach(l => { maxLineW = Math.max(maxLineW, ctx.measureText(l).width); });
-    const blockW = maxLineW + pad * 3;
-    ctx.fillStyle = bgColor;
-    roundRect(ctx, 30, y - pad, blockW, blockH, 8);
-    ctx.fill();
-    ctx.fillStyle = HC.orange;
-    ctx.fillRect(30, y - pad, 6, blockH);
-    ctx.fillStyle = HC.white;
-    ctx.textAlign = 'left';
-    lines.slice(0, 3).forEach((line, i) => {
-      ctx.fillText(line, 56, y + pad + i * lineH);
-    });
-  }
+/** Universe pill — top right, inside ZONE 1 */
+export function drawUniversePill(ctx: CanvasRenderingContext2D, theme: ServiceTheme, y = 40) {
+  ctx.font = 'bold 20px sans-serif';
+  const pillText = theme.label.toUpperCase();
+  const pillW = ctx.measureText(pillText).width + 36;
+  ctx.fillStyle = theme.bg;
+  roundRect(ctx, SIZE - pillW - 40, y, pillW, 40, 20);
+  ctx.fill();
+  ctx.fillStyle = HC.white;
+  ctx.textAlign = 'center';
+  ctx.fillText(pillText, SIZE - pillW / 2 - 40, y + 27);
   ctx.textAlign = 'left';
-  return { bottomY: y + blockH };
 }
 
-/** Gradient overlay bottom (for readability over images) */
-export function drawBottomGradient(ctx: CanvasRenderingContext2D, height = 400, color = 'rgba(0,0,0,0.6)') {
-  const grad = ctx.createLinearGradient(0, SIZE - height, 0, SIZE);
-  grad.addColorStop(0, 'rgba(0,0,0,0)');
-  grad.addColorStop(0.5, 'rgba(0,0,0,0.3)');
-  grad.addColorStop(1, color);
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, SIZE - height, SIZE, height);
+/** Topic badge (e.g. "CONSEIL", "SENSIBILISATION") — in ZONE 1 */
+export function drawTopicBadge(
+  ctx: CanvasRenderingContext2D,
+  label: string,
+  options: { x?: number; y?: number; bgColor?: string; textColor?: string } = {}
+) {
+  const { x = ZONES.MARGIN_X, y = ZONES.TOP_END + 20, bgColor = HC.orange, textColor = HC.grayDark } = options;
+  ctx.font = 'bold 18px sans-serif';
+  const text = label.toUpperCase();
+  const tw = ctx.measureText(text).width;
+  const padX = 20;
+  const padY = 10;
+  const bw = tw + padX * 2;
+  const bh = 18 + padY * 2;
+  ctx.fillStyle = bgColor;
+  roundRect(ctx, x, y, bw, bh, 6);
+  ctx.fill();
+  ctx.fillStyle = textColor;
+  ctx.textAlign = 'left';
+  ctx.fillText(text, x + padX, y + bh / 2 + 6);
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// V3 — AD-READY CREATIVE COMPONENTS
+// ZONE 5 — FOOTER (990–1080px)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+/** Bandeau signature bas "HelpConfort — DEPAN40" */
+export function drawHCFooterBar(ctx: CanvasRenderingContext2D, theme: ServiceTheme) {
+  const height = ZONES.FOOTER_HEIGHT;
+  const y = ZONES.FOOTER_START;
+  ctx.fillStyle = HC.blue;
+  ctx.fillRect(0, y, SIZE, height);
+  ctx.fillStyle = HC.orange;
+  ctx.fillRect(0, y, SIZE, 4);
+  ctx.fillStyle = HC.white;
+  ctx.font = 'bold 26px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('HelpConfort — DEPAN40', 50, y + height / 2 + 9);
+  ctx.textAlign = 'right';
+  ctx.font = '22px sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.fillText(theme.label, SIZE - 50, y + height / 2 + 8);
+  ctx.textAlign = 'left';
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ZONE 3 — TEXT BLOCK (auto-fit, zone-safe)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 /**
- * HOOK TEXT — Le texte d'accroche GROS et CONTRASTÉ.
- * 3 à 6 mots max, majuscules, très lisible.
- * Rend le texte avec ombre portée pour contraste garanti.
+ * AUTO-FIT HOOK TEXT — Zone-safe rendering.
+ * Adapts font size to fit within ZONE 3.
+ * Never overflows, never truncates with "…".
  */
 export function drawHookText(
   ctx: CanvasRenderingContext2D,
-  hook: string,
+  rawHook: string,
   options: {
     y?: number;
     fontSize?: number;
@@ -279,23 +347,34 @@ export function drawHookText(
   } = {}
 ) {
   const {
-    y = 500,
-    fontSize = 72,
-    maxWidth = SIZE - 140,
+    y = ZONES.TEXT_START,
+    maxWidth = ZONES.TEXT_WIDTH,
     color = HC.white,
     align = 'left',
     shadowColor = 'rgba(0,0,0,0.6)',
   } = options;
 
+  const hook = sanitizeHook(rawHook);
   const text = hook.toUpperCase();
+  
+  // Auto-fit: try decreasing font sizes until text fits in max lines
+  let fontSize = options.fontSize || HOOK_FONT_MAX;
+  let lines: string[] = [];
+  
+  while (fontSize >= HOOK_FONT_MIN) {
+    ctx.font = `900 ${fontSize}px sans-serif`;
+    lines = wrapText(ctx, text, maxWidth, HOOK_MAX_LINES);
+    const totalH = lines.length * (fontSize * 1.15);
+    // Check it fits within zone
+    if (y + totalH <= ZONES.TEXT_END - 80) break; // Leave 80px for subtext
+    fontSize -= 4;
+  }
+
   ctx.font = `900 ${fontSize}px sans-serif`;
   ctx.textAlign = align;
-  const lines = wrapText(ctx, text, maxWidth, 3);
   const lineH = fontSize * 1.15;
+  const xPos = align === 'center' ? SIZE / 2 : ZONES.MARGIN_X;
 
-  const xPos = align === 'center' ? SIZE / 2 : 70;
-
-  // Draw text shadow for contrast
   lines.forEach((line, i) => {
     const ly = y + i * lineH;
     ctx.fillStyle = shadowColor;
@@ -305,16 +384,16 @@ export function drawHookText(
   });
 
   ctx.textAlign = 'left';
-  return { bottomY: y + lines.length * lineH };
+  return { bottomY: y + lines.length * lineH, fontSize };
 }
 
 /**
- * SOUS-TEXTE — Texte secondaire plus petit sous le hook.
- * Renforce le message. 1-2 lignes max.
+ * SUBTEXT — Single line, zone-safe.
+ * Placed right below hook with gap, never overlaps CTA.
  */
 export function drawSubText(
   ctx: CanvasRenderingContext2D,
-  text: string,
+  rawText: string,
   options: {
     y?: number;
     fontSize?: number;
@@ -324,35 +403,46 @@ export function drawSubText(
   } = {}
 ) {
   const {
-    y = 700,
-    fontSize = 30,
-    maxWidth = SIZE - 160,
+    y = 780,
+    fontSize = SUB_FONT,
+    maxWidth = ZONES.TEXT_WIDTH,
     color = 'rgba(255,255,255,0.92)',
     align = 'left',
   } = options;
 
+  // Don't render if would overlap CTA zone
+  if (y >= ZONES.CTA_START - 10) return { bottomY: y };
+
+  const text = sanitizeSubText(rawText);
   ctx.font = `500 ${fontSize}px sans-serif`;
   ctx.fillStyle = color;
   ctx.textAlign = align;
-  const lines = wrapText(ctx, text, maxWidth, 2);
+  const lines = wrapText(ctx, text, maxWidth, SUB_MAX_LINES);
   const lineH = fontSize * 1.35;
-  const xPos = align === 'center' ? SIZE / 2 : 70;
+  const xPos = align === 'center' ? SIZE / 2 : ZONES.MARGIN_X;
 
   lines.forEach((line, i) => {
-    ctx.fillText(line, xPos, y + i * lineH);
+    const drawY = y + i * lineH;
+    // Safety: don't draw into CTA zone
+    if (drawY < ZONES.CTA_START - 10) {
+      ctx.fillText(line, xPos, drawY);
+    }
   });
 
   ctx.textAlign = 'left';
   return { bottomY: y + lines.length * lineH };
 }
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ZONE 4 — CTA BUTTON (fixed position, never overlaps)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 /**
- * CTA BUTTON — Bouton d'appel à l'action.
- * Visible, contrasté, avec coin arrondi.
+ * CTA BUTTON — Fixed in ZONE 4. Never collides with text or footer.
  */
 export function drawCTAButton(
   ctx: CanvasRenderingContext2D,
-  cta: string,
+  rawCta: string,
   options: {
     y?: number;
     align?: 'left' | 'center';
@@ -361,25 +451,26 @@ export function drawCTAButton(
     fontSize?: number;
   } = {}
 ) {
-  if (!cta) return;
+  if (!rawCta) return;
 
+  const cta = sanitizeCTA(rawCta);
   const {
-    y = 830,
+    y = ZONES.CTA_START,
     align = 'left',
     bgColor = HC.orange,
     textColor = HC.grayDark,
-    fontSize = 26,
+    fontSize = CTA_FONT,
   } = options;
 
   const text = cta.toUpperCase();
   ctx.font = `bold ${fontSize}px sans-serif`;
   const textW = ctx.measureText(text).width;
-  const padX = 32;
-  const padY = 16;
+  const padX = 28;
+  const padY = 14;
   const btnW = textW + padX * 2;
   const btnH = fontSize + padY * 2;
 
-  const x = align === 'center' ? (SIZE - btnW) / 2 : 70;
+  const x = align === 'center' ? (SIZE - btnW) / 2 : ZONES.MARGIN_X;
 
   // Shadow
   ctx.fillStyle = 'rgba(0,0,0,0.3)';
@@ -398,72 +489,100 @@ export function drawCTAButton(
   ctx.textAlign = 'left';
 }
 
-/**
- * CINEMATIC DARK OVERLAY — Overlay fort pour lisibilité publicitaire.
- * Gradient du haut ET du bas, laissant le centre plus visible.
- */
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// VISUAL OVERLAYS & DECORATIONS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+/** Overlay teinté univers sur toute l'image */
+export function drawUniverseOverlay(ctx: CanvasRenderingContext2D, theme: ServiceTheme, x = 0, y = 0, w = SIZE, h = SIZE) {
+  ctx.fillStyle = theme.overlayTint;
+  ctx.fillRect(x, y, w, h);
+}
+
+/** Cinematic dark overlay — strong gradient for text readability */
 export function drawCinematicOverlay(ctx: CanvasRenderingContext2D, strength = 0.7) {
-  // Bottom gradient (strongest — text area)
-  const gradBot = ctx.createLinearGradient(0, SIZE * 0.3, 0, SIZE);
+  // Bottom gradient (strongest — covers ZONE 3+4+5)
+  const gradBot = ctx.createLinearGradient(0, ZONES.IMAGE_END - 100, 0, SIZE);
   gradBot.addColorStop(0, 'rgba(0,0,0,0)');
-  gradBot.addColorStop(0.3, `rgba(0,0,0,${strength * 0.3})`);
-  gradBot.addColorStop(0.6, `rgba(0,0,0,${strength * 0.6})`);
+  gradBot.addColorStop(0.2, `rgba(0,0,0,${strength * 0.3})`);
+  gradBot.addColorStop(0.5, `rgba(0,0,0,${strength * 0.65})`);
   gradBot.addColorStop(1, `rgba(0,0,0,${strength})`);
   ctx.fillStyle = gradBot;
-  ctx.fillRect(0, SIZE * 0.3, SIZE, SIZE * 0.7);
+  ctx.fillRect(0, ZONES.IMAGE_END - 100, SIZE, SIZE - ZONES.IMAGE_END + 100);
 
-  // Top gradient (subtle — logo area)
-  const gradTop = ctx.createLinearGradient(0, 0, 0, SIZE * 0.25);
+  // Top gradient (subtle — ZONE 1)
+  const gradTop = ctx.createLinearGradient(0, 0, 0, ZONES.TOP_END + 40);
   gradTop.addColorStop(0, `rgba(0,0,0,${strength * 0.5})`);
   gradTop.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = gradTop;
-  ctx.fillRect(0, 0, SIZE, SIZE * 0.25);
+  ctx.fillRect(0, 0, SIZE, ZONES.TOP_END + 40);
 }
 
-/**
- * UNIVERSE ACCENT BAR — Barre colorée verticale à gauche (accent métier).
- */
+/** Accent bar gauche (couleur métier) */
 export function drawAccentBar(ctx: CanvasRenderingContext2D, theme: ServiceTheme, width = 8) {
   ctx.fillStyle = theme.bg;
   ctx.fillRect(0, 0, width, SIZE);
 }
 
-/**
- * UNIVERSE PILL — Badge univers discret en haut à droite.
- */
-export function drawUniversePill(ctx: CanvasRenderingContext2D, theme: ServiceTheme, y = 40) {
-  ctx.font = 'bold 20px sans-serif';
-  const pillText = theme.label.toUpperCase();
-  const pillW = ctx.measureText(pillText).width + 36;
-  ctx.fillStyle = theme.bg;
-  roundRect(ctx, SIZE - pillW - 40, y, pillW, 40, 20);
-  ctx.fill();
-  ctx.fillStyle = HC.white;
-  ctx.textAlign = 'center';
-  ctx.fillText(pillText, SIZE - pillW / 2 - 40, y + 27);
-  ctx.textAlign = 'left';
+/** Bottom gradient (legacy compat) */
+export function drawBottomGradient(ctx: CanvasRenderingContext2D, height = 400, color = 'rgba(0,0,0,0.6)') {
+  const grad = ctx.createLinearGradient(0, SIZE - height, 0, SIZE);
+  grad.addColorStop(0, 'rgba(0,0,0,0)');
+  grad.addColorStop(0.5, 'rgba(0,0,0,0.3)');
+  grad.addColorStop(1, color);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, SIZE - height, SIZE, height);
 }
 
-/**
- * TOPIC BADGE — Badge "CONSEIL" / "SENSIBILISATION" / etc.
- */
-export function drawTopicBadge(
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// LEGACY COMPAT — drawHCTitleBlock
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+export function drawHCTitleBlock(
   ctx: CanvasRenderingContext2D,
-  label: string,
-  options: { x?: number; y?: number; bgColor?: string; textColor?: string } = {}
+  title: string,
+  options: {
+    y?: number;
+    align?: 'left' | 'center';
+    bgColor?: string;
+    maxWidth?: number;
+    fontSize?: number;
+  } = {}
 ) {
-  const { x = 70, y = 130, bgColor = HC.orange, textColor = HC.grayDark } = options;
-  ctx.font = 'bold 18px sans-serif';
-  const text = label.toUpperCase();
-  const tw = ctx.measureText(text).width;
-  const padX = 20;
-  const padY = 10;
-  const bw = tw + padX * 2;
-  const bh = 18 + padY * 2;
-  ctx.fillStyle = bgColor;
-  roundRect(ctx, x, y, bw, bh, 6);
-  ctx.fill();
-  ctx.fillStyle = textColor;
+  const { y = 400, align = 'left', bgColor = HC.blue, maxWidth = SIZE - 120, fontSize = 52 } = options;
+  const upperTitle = title.toUpperCase();
+  ctx.font = `bold ${fontSize}px sans-serif`;
+  const lines = wrapText(ctx, upperTitle, maxWidth, 3);
+  const lineH = fontSize + 14;
+  const pad = 20;
+  const blockH = lines.length * lineH + pad * 2;
+
+  if (align === 'center') {
+    const blockW = Math.min(maxWidth + pad * 2, SIZE - 60);
+    const bx = (SIZE - blockW) / 2;
+    ctx.fillStyle = bgColor;
+    roundRect(ctx, bx, y - pad, blockW, blockH, 12);
+    ctx.fill();
+    ctx.fillStyle = HC.white;
+    ctx.textAlign = 'center';
+    lines.forEach((line, i) => {
+      ctx.fillText(line, SIZE / 2, y + pad + i * lineH);
+    });
+  } else {
+    let maxLineW = 0;
+    lines.forEach(l => { maxLineW = Math.max(maxLineW, ctx.measureText(l).width); });
+    const blockW = maxLineW + pad * 3;
+    ctx.fillStyle = bgColor;
+    roundRect(ctx, 30, y - pad, blockW, blockH, 8);
+    ctx.fill();
+    ctx.fillStyle = HC.orange;
+    ctx.fillRect(30, y - pad, 6, blockH);
+    ctx.fillStyle = HC.white;
+    ctx.textAlign = 'left';
+    lines.forEach((line, i) => {
+      ctx.fillText(line, 56, y + pad + i * lineH);
+    });
+  }
   ctx.textAlign = 'left';
-  ctx.fillText(text, x + padX, y + bh / 2 + 6);
+  return { bottomY: y + blockH };
 }

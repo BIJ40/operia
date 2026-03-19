@@ -1,10 +1,10 @@
 /**
  * Template : tip_card — Créa publicitaire conseil saisonnier 1080x1080
- * V3 — Ad-Ready : hook gros, CTA, composition publicitaire.
+ * V4 — Zone-based layout: no overflow, no collision.
  */
 import {
-  SIZE, truncateText, loadImage, drawCover,
-  getTheme, HC,
+  SIZE, loadImage, drawCover,
+  getTheme, HC, ZONES,
   drawGradientBg, drawHCFooterBar, drawHCLogo,
   drawCinematicOverlay, drawHookText, drawSubText,
   drawCTAButton, drawUniversePill, drawTopicBadge, drawAccentBar,
@@ -14,11 +14,9 @@ import type { SocialTemplatePayload } from '../SocialVisualCanvas';
 
 export async function drawTipCard(ctx: CanvasRenderingContext2D, payload: SocialTemplatePayload) {
   const theme = getTheme(payload.universe);
-  const hook = truncateText(payload.hook || payload.title || 'Conseil', 50);
-  const subText = truncateText(payload.caption || '', 100);
   const cta = payload.cta || 'En savoir plus';
 
-  // ─── 1. FOND : image IA ou gradient HC foncé ───
+  // ─── ZONE 2: Background ───
   if (payload.mediaUrl) {
     try {
       const img = await loadImage(payload.mediaUrl);
@@ -29,7 +27,6 @@ export async function drawTipCard(ctx: CanvasRenderingContext2D, payload: Social
     }
   } else {
     drawGradientBg(ctx, HC.grayDark, '#1A1A2E');
-
     // Decorative accent shapes (only on solid bg)
     ctx.fillStyle = theme.bg;
     ctx.globalAlpha = 0.10;
@@ -43,39 +40,28 @@ export async function drawTipCard(ctx: CanvasRenderingContext2D, payload: Social
     ctx.globalAlpha = 1;
   }
 
-  // ─── 2. Accent bar gauche ───
+  // ─── ZONE 1: Top bar ───
   drawAccentBar(ctx, theme, 8);
-
-  // ─── 3. Logo HC top-left ───
   await drawHCLogo(ctx, logoSrc, 'top-left');
-
-  // ─── 4. Badge "CONSEIL" ───
-  drawTopicBadge(ctx, '💡 Conseil', { x: 70, y: 130 });
-
-  // ─── 5. Universe pill top-right ───
+  drawTopicBadge(ctx, '💡 Conseil');
   drawUniversePill(ctx, theme, 35);
 
-  // ─── 6. HOOK TEXT : accroche publicitaire ───
-  const { bottomY: hookBottom } = drawHookText(ctx, hook, {
-    y: SIZE - 420,
-    fontSize: 62,
-    maxWidth: SIZE - 160,
+  // ─── ZONE 3: Hook + subtext ───
+  const { bottomY: hookBottom } = drawHookText(ctx, payload.hook || payload.title || 'Conseil', {
+    y: ZONES.TEXT_START,
     align: 'left',
   });
 
-  // ─── 7. SOUS-TEXTE ───
-  if (subText) {
-    drawSubText(ctx, subText, {
-      y: hookBottom + 16,
-      fontSize: 28,
-      maxWidth: SIZE - 180,
+  if (payload.caption) {
+    drawSubText(ctx, payload.caption, {
+      y: hookBottom + 14,
       align: 'left',
     });
   }
 
-  // ─── 8. CTA BUTTON ───
-  drawCTAButton(ctx, cta, { y: SIZE - 160, align: 'left' });
+  // ─── ZONE 4: CTA ───
+  drawCTAButton(ctx, cta, { align: 'left' });
 
-  // ─── 9. FOOTER SIGNATURE ───
+  // ─── ZONE 5: Footer ───
   drawHCFooterBar(ctx, theme);
 }
