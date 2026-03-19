@@ -662,6 +662,19 @@ RAPPEL : chaque post DOIT avoir un hook stop-scroll en première ligne, un CTA b
       else if (s.topic_type === 'realisation') sourceType = 'ai_realisation';
       if (regenerateSingle) sourceType = 'regenerated';
 
+      // Build ai_payload with V5 editorial & visual data
+      const aiPayload = {
+        hook: s.hook,
+        cta: s.cta,
+        storytelling_type: s.storytelling_type,
+        emotional_trigger: s.emotional_trigger,
+        visual_strategy: s.visual_strategy,
+        visual_prompt: s.visual_prompt,
+        visual_composition: s.visual_composition,
+        branding_guidelines: s.branding_guidelines,
+        generation_version: 'v5',
+      };
+
       // Insert suggestion
       const { data: inserted, error: insertErr } = await adminSupabase
         .from('social_content_suggestions')
@@ -683,6 +696,7 @@ RAPPEL : chaque post DOIT avoir un hook stop-scroll en première ligne, un CTA b
           status: 'draft',
           generation_batch_id: batchId,
           source_type: sourceType,
+          ai_payload: aiPayload,
         })
         .select('id, title, suggestion_date, topic_type, universe, status')
         .single();
