@@ -839,18 +839,13 @@ IMPORTANT : lead_score doit refléter le potentiel réel de conversion client.`;
       userPrompt = `Génère ${targetPostCount} suggestions de posts social media PREMIUM pour le mois ${month}/${year}.
 
 RÉPARTITION BUSINESS OBLIGATOIRE sur ${targetPostCount} posts :
-- ~50% RÉALISATIONS (preuve sociale, cas clients réels)
-- ~25% URGENCE / PROBLÈMES (leads directs)
-- ~15% CONSEILS SAISONNIERS (valeur ajoutée habitat)
+- ~40% PROBLÈMES CONCRETS (leads directs, urgences habitat)
+- ~30% CONSEILS EXPERTS (valeur ajoutée, toujours via un problème)
+- ~20% SAISONNIERS (anticipation, prévention liée au calendrier)
 - ~10% CRÉATIF / BRANDING LOCAL (visibilité, proximité)
 
 JOURNÉES THÉMATIQUES DU MOIS :
 ${monthAwareness.map(a => `- ${a.day}/${month}: ${a.label} (tags: ${a.tags.join(', ')})`).join('\n')}
-
-RÉALISATIONS EXPLOITABLES (PRIORITÉ ABSOLUE pour les posts réalisation) :
-${exploitableReals.length > 0 
-  ? exploitableReals.map(r => `- "${r.title}" (ID: ${r.id}, ${r.intervention_date}, univers: ${r.universe || 'inconnu'}, avant/après: ${r.hasBeforeAfter ? 'oui' : 'non'})`).join('\n')
-  : '(aucune réalisation exploitable — remplacer par conseils concrets terrain)'}
 
 SUJETS DÉJÀ EXISTANTS (à ne pas dupliquer) :
 ${[...existingTopicKeys].join(', ') || '(aucun)'}
@@ -859,8 +854,10 @@ RAPPEL CRITIQUE :
 - Chaque post DOIT avoir un hook stop-scroll, un CTA business, un visual_prompt exploitable
 - lead_score DOIT refléter le potentiel réel de conversion
 - Posts urgence (fuite, panne, sécurité) → lead_score > 80, urgency_level = high
-- Posts réalisation avec photos → lead_score > 70
-- visual_prompt = scène RÉALISTE habitat français, JAMAIS un fond vide`;
+- visual_prompt = scène RÉALISTE habitat français, JAMAIS un fond vide
+- JAMAIS inventer de faux cas client ou fausse intervention — rester GÉNÉRAL et EXPERT
+- Le topic_type "realisation" est INTERDIT sauf s'il y a de vraies photos (realisation_id valide)`;
+
     }
 
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
