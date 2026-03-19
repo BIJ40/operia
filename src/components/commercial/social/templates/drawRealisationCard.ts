@@ -11,35 +11,46 @@ import bannerSrc from '@/assets/banniere_helpconfort.jpg';
 import logoSrc from '@/assets/help-confort-services-logo.png';
 import type { SocialTemplatePayload } from '../SocialVisualCanvas';
 
+/**
+ * RÈGLE : Ce template nécessite OBLIGATOIREMENT une vraie photo (mediaUrl).
+ * Si appelé sans photo, il affiche un message d'erreur — le templateResolver
+ * ne devrait jamais router ici sans hasMedia=true.
+ */
 export async function drawRealisationCard(ctx: CanvasRenderingContext2D, payload: SocialTemplatePayload) {
   const theme = getTheme(payload.universe);
   const title = truncateText(payload.title || 'Réalisation', 50);
   const caption = truncateText(payload.caption || '', 120);
 
-  // ─── Full-bleed image or branded background ───
-  if (payload.mediaUrl) {
-    try {
-      const img = await loadImage(payload.mediaUrl);
-      drawCover(ctx, img, 0, 0, SIZE, SIZE);
-    } catch { /* fallback below */ }
-  }
-
-  // If no media, draw branded gradient
+  // GUARD: Ce template exige une vraie photo. Sans mediaUrl, on refuse.
   if (!payload.mediaUrl) {
+    console.warn('[drawRealisationCard] Appelé sans mediaUrl — ce template requiert une vraie photo APRÈS.');
+    // Render a clear error state rather than fake content
     ctx.fillStyle = HC.grayDark;
     ctx.fillRect(0, 0, SIZE, SIZE);
-    // Decorative circle
-    ctx.fillStyle = theme.bg;
-    ctx.globalAlpha = 0.15;
-    ctx.beginPath();
-    ctx.arc(SIZE * 0.7, SIZE * 0.35, 300, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-    // Placeholder icon
-    ctx.font = 'bold 140px sans-serif';
+    ctx.fillStyle = HC.orange;
+    ctx.font = 'bold 36px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(255,255,255,0.12)';
-    ctx.fillText('🔧', SIZE / 2, SIZE * 0.45);
+    ctx.fillText('⚠ PHOTO RÉELLE REQUISE', SIZE / 2, SIZE / 2 - 20);
+    ctx.fillStyle = HC.white;
+    ctx.font = '24px sans-serif';
+    ctx.fillText('Ce template nécessite une photo APRÈS', SIZE / 2, SIZE / 2 + 30);
+    ctx.fillText('de la partie Réalisations', SIZE / 2, SIZE / 2 + 60);
+    drawHCFooterBar(ctx, theme);
+    return;
+  }
+
+  // ─── Full-bleed real photo ───
+  try {
+    const img = await loadImage(payload.mediaUrl);
+    drawCover(ctx, img, 0, 0, SIZE, SIZE);
+  } catch {
+    // Photo failed to load — show error state
+    ctx.fillStyle = HC.grayDark;
+    ctx.fillRect(0, 0, SIZE, SIZE);
+    ctx.fillStyle = HC.white;
+    ctx.font = '28px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Photo introuvable', SIZE / 2, SIZE / 2);
   }
 
   // ─── Universe overlay tint ───
