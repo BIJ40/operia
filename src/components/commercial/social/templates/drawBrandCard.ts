@@ -91,7 +91,7 @@ export async function drawBrandCard(ctx: CanvasRenderingContext2D, payload: Soci
   }
 
   // ─── 7. CTA BUTTON centré ───
-  drawCTAButton(ctx, cta, { y: SIZE - 170, align: 'center' });
+  drawCTAButton(ctx, cta, { y: SIZE - 170, align: 'left' });
 
   // ─── 8. FOOTER ───
   drawHCFooterBar(ctx, theme);
