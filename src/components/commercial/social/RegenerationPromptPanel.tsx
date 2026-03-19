@@ -99,6 +99,23 @@ export function RegenerationPromptPanel({ onRegenerate, isRegenerating, disabled
             </div>
           </div>
 
+          {/* Idée libre / prompt */}
+          <div className="space-y-1.5">
+            <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+              💡 Votre idée (prompt libre)
+            </Label>
+            <Textarea
+              placeholder={'Ex: "Un volet roulant à moitié ouvert, il fait encore nuit, texte : C\'était pas l\'heure ! Ce weekend on avance d\'une heure"'}
+              value={freePrompt}
+              onChange={e => setFreePrompt(e.target.value)}
+              className="text-xs min-h-[60px] resize-y"
+              rows={3}
+            />
+            <p className="text-[10px] text-muted-foreground/60">
+              Décrivez précisément ce que vous voulez : scène visuelle, texte du post, angle, ton…
+            </p>
+          </div>
+
           {/* Mots-clés */}
           <div className="space-y-1.5">
             <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
