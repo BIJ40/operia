@@ -63,8 +63,10 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const hasVariants = suggestion.variants && suggestion.variants.length > 0;
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
-  // Default to 'image' when AI asset exists (already composed), 'canvas' only as fallback
   const [renderModeOverride, setRenderModeOverride] = useState<'canvas' | 'image' | null>(null);
+  // When AI asset exists, default to 'image' (already composed with text+branding)
+  const renderMode = renderModeOverride ?? (latestAsset ? 'image' : 'canvas');
+  const setRenderMode = setRenderModeOverride;
 
   // Visual assets
   const { data: assets = [], isLoading: assetsLoading } = useSocialVisualAssets(suggestion.id);
