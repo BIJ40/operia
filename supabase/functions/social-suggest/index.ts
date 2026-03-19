@@ -68,14 +68,22 @@ function inferUniverse(title: string): string | null {
 interface ValidatedSuggestion {
   suggestion_date: string;
   title: string;
+  hook: string;
   content_angle: string | null;
   caption_base_fr: string;
+  cta: string;
   hashtags: string[];
   topic_type: string;
   topic_key: string;
   visual_type: string;
   universe: string;
   realisation_id: string | null;
+  storytelling_type: string | null;
+  emotional_trigger: string | null;
+  visual_strategy: string | null;
+  visual_prompt: string | null;
+  visual_composition: string | null;
+  branding_guidelines: string | null;
   platform_variants: Record<string, { caption: string; cta: string | null }>;
 }
 
@@ -152,17 +160,35 @@ function validateAndNormalizeSuggestions(
       }
     }
 
+    // 10. Extract V5 fields
+    const hook = String(s.hook || '').substring(0, 500) || title;
+    const cta = String(s.cta || 'Contactez-nous').substring(0, 200);
+    const storytellingType = s.storytelling_type ? String(s.storytelling_type).substring(0, 50) : null;
+    const emotionalTrigger = s.emotional_trigger ? String(s.emotional_trigger).substring(0, 50) : null;
+    const visualStrategy = s.visual_strategy ? String(s.visual_strategy).substring(0, 50) : null;
+    const visualPrompt = s.visual_prompt ? String(s.visual_prompt).substring(0, 1000) : null;
+    const visualComposition = s.visual_composition ? String(s.visual_composition).substring(0, 500) : null;
+    const brandingGuidelines = s.branding_guidelines ? String(s.branding_guidelines).substring(0, 500) : null;
+
     result.push({
       suggestion_date: date,
       title,
+      hook,
       content_angle: s.content_angle ? String(s.content_angle).substring(0, 500) : null,
       caption_base_fr: captionBase,
+      cta,
       hashtags,
       topic_type: topicType,
       topic_key: topicKey,
       visual_type: s.visual_type || 'photo',
       universe,
       realisation_id: realisationId,
+      storytelling_type: storytellingType,
+      emotional_trigger: emotionalTrigger,
+      visual_strategy: visualStrategy,
+      visual_prompt: visualPrompt,
+      visual_composition: visualComposition,
+      branding_guidelines: brandingGuidelines,
       platform_variants: platformVariants,
     });
   }
@@ -189,7 +215,7 @@ const SUGGEST_TOOL = {
   type: 'function' as const,
   function: {
     name: 'generate_social_suggestions',
-    description: 'Génère des suggestions de posts social media pour le mois cible.',
+    description: 'Génère des suggestions de posts social media premium orientés conversion pour le mois cible.',
     parameters: {
       type: 'object',
       properties: {
@@ -200,25 +226,33 @@ const SUGGEST_TOOL = {
             properties: {
               suggestion_date: { type: 'string', description: 'Date YYYY-MM-DD dans le mois cible' },
               title: { type: 'string', description: 'Titre court et accrocheur (max 200 car.)' },
+              hook: { type: 'string', description: 'Première ligne STOP-SCROLL : choc, curiosité, problème concret. Ex: "Cette fuite coûtait 300€/mois sans que le client s\'en rende compte."' },
               content_angle: { type: 'string', description: 'Angle éditorial en 1 phrase' },
-              caption_base_fr: { type: 'string', description: 'Texte du post principal (2-4 phrases)' },
+              caption_base_fr: { type: 'string', description: 'Texte complet du post : hook + storytelling (situation → problème → intervention → résultat) + CTA. Publiable sans modification.' },
+              cta: { type: 'string', description: 'Call-to-action business naturel et fluide. Ex: "Besoin d\'un diagnostic ?", "Contactez-nous avant que ça empire"' },
               hashtags: { type: 'array', items: { type: 'string' }, description: 'Hashtags (max 10)' },
               topic_type: { type: 'string', enum: ['awareness_day', 'seasonal_tip', 'realisation', 'local_branding'] },
               topic_key: { type: 'string', description: 'Identifiant unique du sujet' },
               visual_type: { type: 'string', enum: ['photo', 'illustration', 'before_after', 'quote'] },
               universe: { type: 'string', enum: ['plomberie', 'electricite', 'serrurerie', 'vitrerie', 'menuiserie', 'renovation', 'volets', 'pmr', 'general'] },
               realisation_id: { type: 'string', description: 'UUID de la réalisation liée ou null' },
+              storytelling_type: { type: 'string', enum: ['situation_probleme_solution', 'avant_apres', 'temoignage_client', 'conseil_expert', 'prevention_urgence', 'proximite_locale'], description: 'Structure narrative du post' },
+              emotional_trigger: { type: 'string', enum: ['securite', 'economie', 'confort', 'tranquillite', 'urgence', 'confiance'], description: 'Levier émotionnel principal activé' },
+              visual_strategy: { type: 'string', enum: ['photo_realisation', 'illustration_generee', 'photo_stock_contextualisee', 'visuel_typo_only'], description: 'Stratégie visuelle. photo_realisation OBLIGATOIRE si réalisation disponible.' },
+              visual_prompt: { type: 'string', description: 'Prompt descriptif pour générer/trouver le visuel. Réaliste, précis, orienté habitat français. Ex: "Modern French bathroom with water leak under sink, realistic lighting, professional repair context, blue tones"' },
+              visual_composition: { type: 'string', description: 'Description du placement : image, titre, hiérarchie visuelle, zone branding. Ex: "Image en fond, titre en haut, sous-texte centré, bandeau marque en bas"' },
+              branding_guidelines: { type: 'string', description: 'Directives branding spécifiques : couleur univers, placement logo, style. Ex: "Bleu plomberie #2D8BC9, bandeau HelpConfort en bas, design moderne lisible mobile"' },
               platform_variants: {
                 type: 'object',
                 properties: {
-                  facebook: { type: 'object', properties: { caption: { type: 'string' }, cta: { type: 'string' } }, required: ['caption'] },
-                  instagram: { type: 'object', properties: { caption: { type: 'string' }, cta: { type: 'string' } }, required: ['caption'] },
-                  google_business: { type: 'object', properties: { caption: { type: 'string' }, cta: { type: 'string' } }, required: ['caption'] },
-                  linkedin: { type: 'object', properties: { caption: { type: 'string' }, cta: { type: 'string' } }, required: ['caption'] },
+                  facebook: { type: 'object', properties: { caption: { type: 'string', description: 'Storytelling + proximité' }, cta: { type: 'string' } }, required: ['caption'] },
+                  instagram: { type: 'object', properties: { caption: { type: 'string', description: 'Impact visuel + caption court' }, cta: { type: 'string' } }, required: ['caption'] },
+                  google_business: { type: 'object', properties: { caption: { type: 'string', description: 'Direct + utile + local' }, cta: { type: 'string' } }, required: ['caption'] },
+                  linkedin: { type: 'object', properties: { caption: { type: 'string', description: 'Crédibilité + expertise' }, cta: { type: 'string' } }, required: ['caption'] },
                 },
               },
             },
-            required: ['suggestion_date', 'title', 'caption_base_fr', 'topic_type', 'topic_key', 'universe'],
+            required: ['suggestion_date', 'title', 'hook', 'caption_base_fr', 'cta', 'topic_type', 'topic_key', 'universe', 'storytelling_type', 'emotional_trigger', 'visual_strategy', 'visual_prompt'],
             additionalProperties: false,
           },
         },
@@ -443,23 +477,63 @@ Deno.serve(async (req) => {
       });
     }
 
-    const systemPrompt = `Tu es un expert en communication locale pour une agence de dépannage et rénovation à domicile (réseau HelpConfort). Tu génères des idées de posts pour les réseaux sociaux.
+    const systemPrompt = `Tu es simultanément directeur éditorial, copywriter expert conversion, social media strategist local et directeur artistique. Tu travailles pour HelpConfort (réseau dépannage & rénovation habitat).
 
-RÈGLES STRICTES :
-- Ton professionnel, local, concret, en français
-- Pas de blabla marketing générique
-- Pas de doublon thématique dans le mois
-- Pas 2 posts consécutifs sur le même univers métier
-- Chaque post doit avoir une valeur concrète pour le lecteur
-- Toutes les dates doivent être dans le mois cible ${month}/${year}
+Tu produis du contenu social media PREMIUM orienté visibilité, engagement et conversion client. Chaque post doit pouvoir générer un appel ou une prise de contact.
+
+EXIGENCE ABSOLUE :
+- Chaque post doit être publiable sans modification
+- Donner envie de cliquer / appeler
+- Être crédible immédiatement
+- Être compréhensible en 2-3 secondes
+
+HOOK (STOP SCROLL — OBLIGATOIRE) :
+La première ligne doit créer un choc ou une curiosité, être spécifique, parler d'un vrai problème.
+Exemples : "Cette fuite coûtait 300€ par mois sans que le client s'en rende compte.", "Ce tableau électrique pouvait déclencher un incendie."
+
+CTA (OBLIGATOIRE — BUSINESS) :
+Chaque post contient un CTA naturel et fluide, jamais agressif :
+"Besoin d'un diagnostic ?", "Contactez-nous avant que ça empire", "Un doute ? On vérifie pour vous"
+
+STORYTELLING OBLIGATOIRE :
+1. situation réelle → 2. problème → 3. intervention → 4. résultat / bénéfice
+
+EMOTIONAL TRIGGER :
+Chaque post active : sécurité (incendie, fuite, panne), économie (facture, dégâts), confort ou tranquillité.
+
+RÉPARTITION BUSINESS :
+- 50% RÉALISATIONS (preuve sociale)
+- 20% CONSEILS (valeur)
+- 20% PRÉVENTION (urgence implicite)
+- 10% CRÉATIF / VIRAL (visibilité)
+
+VISUEL — EXIGENCE MAX :
+- SI réalisation existe → FORCER photo_realisation
+- SINON → illustration_generee de qualité
+- INTERDIT : emoji comme visuel, visuel vide
+- visual_prompt = réaliste, précis, professionnel, orienté habitat français
+
+BRANDING STRICT :
+- Couleurs : plomberie=#2D8BC9, electricite=#F8A73C, serrurerie=#E22673, menuiserie=#EF8531, vitrerie=#90C14E, volets=#A23189, pmr=#3C64A2, renovation=#B79D84, general=#37474F
+- Présence obligatoire du branding HelpConfort (bandeau/signature en bas)
+- Design propre, moderne, lisible mobile
+- INTERDIT : couleurs aléatoires, styles incohérents, visuels "cheap"
+
+ANTI-RÉPÉTITION :
+- Pas 2 posts identiques, pas même angle, pas même hook, pas même univers consécutif
+
+PLATFORM VARIANTS :
+- Facebook → storytelling + proximité
+- Instagram → impact visuel + caption court
+- Google Business → direct + utile + local
+- LinkedIn → crédibilité + expertise
+
+CRÉATIVITÉ CONTRÔLÉE (10% max) : humour léger, détournement, saisonnalité. Toujours professionnel, jamais gadget.
 
 UNIVERS MÉTIER AUTORISÉS : ${NORMALIZED_UNIVERSES.join(', ')}
+Toutes les dates doivent être dans le mois cible ${month}/${year}.
 
-TYPES DE CONTENU :
-- awareness_day : lié à une journée thématique
-- seasonal_tip : conseil saisonnier habitat
-- realisation : valorisation d'une intervention réelle
-- local_branding : confiance, proximité, équipe`;
+TU NE FAIS PAS DU CONTENU. TU CRÉES UN LEVIER D'ACQUISITION CLIENT.`;
 
     let userPrompt: string;
 
@@ -483,20 +557,26 @@ ${exploitableReals.length > 0
 
 Propose un angle DIFFÉRENT du post précédent, tout en gardant le même contexte thématique.`;
     } else {
-      userPrompt = `Génère ${targetPostCount} suggestions de posts social media pour le mois ${month}/${year}.
+      userPrompt = `Génère ${targetPostCount} suggestions de posts social media PREMIUM pour le mois ${month}/${year}.
+
+RÉPARTITION BUSINESS OBLIGATOIRE sur ${targetPostCount} posts :
+- ~50% RÉALISATIONS (preuve sociale, cas clients réels)
+- ~20% CONSEILS SAISONNIERS (valeur ajoutée habitat)
+- ~20% PRÉVENTION / JOURNÉES THÉMATIQUES (urgence implicite)
+- ~10% CRÉATIF / BRANDING LOCAL (visibilité, proximité)
 
 JOURNÉES THÉMATIQUES DU MOIS :
 ${monthAwareness.map(a => `- ${a.day}/${month}: ${a.label} (tags: ${a.tags.join(', ')})`).join('\n')}
 
-RÉALISATIONS EXPLOITABLES :
+RÉALISATIONS EXPLOITABLES (PRIORITÉ ABSOLUE pour les posts réalisation) :
 ${exploitableReals.length > 0 
   ? exploitableReals.map(r => `- "${r.title}" (ID: ${r.id}, ${r.intervention_date}, univers: ${r.universe || 'inconnu'}, avant/après: ${r.hasBeforeAfter ? 'oui' : 'non'})`).join('\n')
-  : '(aucune réalisation exploitable ce mois-ci)'}
+  : '(aucune réalisation exploitable — remplacer par conseils concrets terrain)'}
 
 SUJETS DÉJÀ EXISTANTS (à ne pas dupliquer) :
 ${[...existingTopicKeys].join(', ') || '(aucun)'}
 
-RÉPARTITION CIBLE par semaine : 1 réalisation + 1 conseil saisonnier + 1 opportunité calendrier/prévention.`;
+RAPPEL : chaque post DOIT avoir un hook stop-scroll en première ligne, un CTA business naturel, et un visual_prompt exploitable pour la génération de visuel.`;
     }
 
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -582,6 +662,19 @@ RÉPARTITION CIBLE par semaine : 1 réalisation + 1 conseil saisonnier + 1 oppor
       else if (s.topic_type === 'realisation') sourceType = 'ai_realisation';
       if (regenerateSingle) sourceType = 'regenerated';
 
+      // Build ai_payload with V5 editorial & visual data
+      const aiPayload = {
+        hook: s.hook,
+        cta: s.cta,
+        storytelling_type: s.storytelling_type,
+        emotional_trigger: s.emotional_trigger,
+        visual_strategy: s.visual_strategy,
+        visual_prompt: s.visual_prompt,
+        visual_composition: s.visual_composition,
+        branding_guidelines: s.branding_guidelines,
+        generation_version: 'v5',
+      };
+
       // Insert suggestion
       const { data: inserted, error: insertErr } = await adminSupabase
         .from('social_content_suggestions')
@@ -603,6 +696,7 @@ RÉPARTITION CIBLE par semaine : 1 réalisation + 1 conseil saisonnier + 1 oppor
           status: 'draft',
           generation_batch_id: batchId,
           source_type: sourceType,
+          ai_payload: aiPayload,
         })
         .select('id, title, suggestion_date, topic_type, universe, status')
         .single();
