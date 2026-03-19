@@ -25,7 +25,7 @@ interface SocialPostDetailPanelProps {
   suggestion: SocialSuggestion | null;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
-  onRegenerate: (id: string) => void;
+  onRegenerate: (id: string, prompt?: any) => void;
   isRegenerating?: boolean;
 }
 
@@ -55,7 +55,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   suggestion: SocialSuggestion;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
-  onRegenerate: (id: string) => void;
+  onRegenerate: (id: string, prompt?: any) => void;
   isRegenerating?: boolean;
 }) {
   const hasVariants = suggestion.variants && suggestion.variants.length > 0;

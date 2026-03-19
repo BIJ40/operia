@@ -1,15 +1,15 @@
 /**
  * SocialPostCard — Carte de suggestion dans le panneau détail.
- * Actions : approuver, rejeter, régénérer, copier le texte, planifier.
+ * Actions : approuver, rejeter, régénérer (avec prompt personnalisé), copier le texte.
  */
 
-import { useState } from 'react';
-import { Check, X, RefreshCw, Copy, Calendar, Loader2 } from 'lucide-react';
+import { Check, X, Copy, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { SocialSuggestion } from '@/hooks/useSocialSuggestions';
+import { RegenerationPromptPanel, type RegenerationPrompt } from './RegenerationPromptPanel';
 
 const STATUS_LABELS: Record<string, { label: string; variant: string }> = {
   draft: { label: 'Brouillon', variant: 'bg-muted text-muted-foreground' },
@@ -29,7 +29,7 @@ interface SocialPostCardProps {
   suggestion: SocialSuggestion;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
-  onRegenerate: (id: string) => void;
+  onRegenerate: (id: string, prompt?: RegenerationPrompt) => void;
   isRegenerating?: boolean;
 }
 
@@ -124,20 +124,17 @@ export function SocialPostCard({ suggestion, onApprove, onReject, onRegenerate, 
             </Button>
           </>
         )}
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-7 text-xs gap-1"
-          onClick={() => onRegenerate(suggestion.id)}
-          disabled={isRegenerating || suggestion.status === 'approved'}
-        >
-          {isRegenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-          Régénérer
-        </Button>
         <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={handleCopy}>
           <Copy className="w-3 h-3" /> Copier
         </Button>
       </div>
+
+      {/* Regeneration prompt panel */}
+      <RegenerationPromptPanel
+        onRegenerate={(prompt) => onRegenerate(suggestion.id, prompt)}
+        isRegenerating={isRegenerating}
+        disabled={suggestion.status === 'approved'}
+      />
     </div>
   );
 }

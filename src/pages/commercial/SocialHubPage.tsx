@@ -90,8 +90,8 @@ export default function SocialHubPage() {
     updateStatusMutation.mutate({ id, status: 'rejected', monthKey });
   }, [updateStatusMutation, monthKey]);
 
-  const handleRegenerate = useCallback((id: string) => {
-    generateMutation.mutate({ month, year, regenerateSingle: true, suggestionId: id });
+  const handleRegenerate = useCallback((id: string, prompt?: { tone?: string; keywords?: string; audience?: string; length?: string }) => {
+    generateMutation.mutate({ month, year, regenerateSingle: true, suggestionId: id, prompt });
   }, [generateMutation, month, year]);
 
   // Stats
