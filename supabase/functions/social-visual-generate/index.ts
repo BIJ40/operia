@@ -136,30 +136,22 @@ Deno.serve(async (req) => {
     const messages: any[] = [];
 
     if (realPhotoUrl) {
-      // ─── MODE 1: Edit real photo with branding overlay ───
-      const displayText = hook.length <= 40 ? hook : truncateText(hook, 35);
+      // ─── MODE 1: Edit real photo ───
       imagePrompt = `Take this real photo and create a premium social media visual (1080x1080 square).
 
-LAYOUT (STRICT):
-- The photo fills 80% of the canvas (top portion)
-- Title overlay on the photo (top-left or center): "${displayText}" in bold white text with dark shadow for readability
-- Small subtitle below title: "${truncateText(cta || 'Help Confort à votre service', 40)}" in smaller white text
-- At the very bottom: a thin ${color} branded banner (max 80px height) with small "Help Confort" logo text in white
+The photo should fill the ENTIRE canvas (full bleed, edge to edge).
+Apply a slight professional color grade to make it look polished.
+Add a subtle dark gradient overlay at the bottom (transparent to 40% black) for contrast.
 
-TEXT RULES (CRITICAL — NEVER VIOLATE):
-- ALL text must be FULLY VISIBLE — no text may be cut off, truncated, or extend beyond canvas edges
-- Title: max 1 line, LARGE bold white text with dark drop shadow
-- Subtitle: max 1 line, smaller text
-- Leave 40px margin from all edges for any text
-- If text is too long to fit, REDUCE font size — NEVER let text overflow
+ABSOLUTELY NO TEXT ON THE IMAGE. Zero text, zero letters, zero words, zero logos.
+The image must be PURELY PHOTOGRAPHIC — text will be added separately later.
 
-RULES:
-- Keep the original photo as the HERO visual — it must dominate
-- Brand bar at bottom: thin, solid ${color} background, small white text "Help Confort"
-- Clean, modern, professional — NOT a cheap template look
 - Square 1080x1080
+- NO text of any kind
+- NO logos
+- NO banners
 - NO emojis, NO clip art
-- French text only`;
+- Just the photo, full frame, professionally graded`;
 
       messages.push({
         role: 'user',
@@ -170,42 +162,30 @@ RULES:
       });
     } else {
       // ─── MODE 2: Generate full image from scratch ───
-      const displayText = hook.length <= 40 ? hook : truncateText(hook, 35);
       const sceneDescription = visualPrompt ||
         `Professional French home ${getSceneForUniverse(universe)}, realistic close-up showing a real problem or situation, dramatic natural lighting`;
 
-      imagePrompt = `Create a premium social media visual (1080x1080 square) for a French home repair company.
+      imagePrompt = `Generate a REALISTIC PHOTOGRAPH for a social media post (1080x1080 square).
 
-SCENE TO GENERATE:
+SCENE:
 ${sceneDescription}
 
-The image must look like a REAL PHOTOGRAPH — realistic, professional, close-up on the problem.
-ZOOM on the problem (not the whole house). Dramatic lighting. The viewer must think "I've had this problem."
+This must look like a REAL PHOTOGRAPH taken on-site. Close-up on the problem. Dramatic natural lighting.
+The viewer must immediately think "I've had this problem at home."
 
-LAYOUT (STRICT):
-- Generated photo fills 80% of the canvas (top portion) — this is a REAL scene, not illustration
-- Title overlay on the photo: "${displayText}" in bold white text with dark shadow
-- Subtitle: "${truncateText(cta || 'Intervention rapide', 35)}" in smaller white text below title
-- At the bottom: thin ${color} branded banner (max 80px) with "Help Confort" in small white text
+ABSOLUTELY NO TEXT ON THE IMAGE. Zero text, zero letters, zero words, zero logos, zero watermarks.
+The image must be PURELY PHOTOGRAPHIC — text will be added separately later.
 
-TEXT RULES (CRITICAL — NEVER VIOLATE):
-- ALL text must be COMPLETELY VISIBLE and READABLE — absolutely NO text cut off or truncated
-- Title: max 1 line, fits entirely within canvas with 40px margins on all sides
-- If text would overflow, REDUCE the font size — NEVER let any character be cut off
-- Every single letter must be visible
-
-COLOR SCHEME:
-- Accent color: ${color} (${serviceLabel})
-- Brand bar: thin solid ${color} background — NOT a massive banner
-
-RULES:
-- MUST look like a real photograph, NOT cartoon or illustration
-- Professional quality, modern, clean
+STYLE:
+- Realistic photo, NOT illustration, NOT cartoon, NOT 3D render
+- Close-up framing on the problem (not the whole house)
+- Natural lighting with slight dramatic mood
+- Professional quality, high resolution feel
 - Square 1080x1080
-- NO emojis, NO clip art, NO gradients as main visual
-- NO empty backgrounds — realistic scene of a PROBLEM
-- NO massive branding banners — keep it subtle and classy
-- French text only`;
+- NO text of any kind anywhere on the image
+- NO logos, NO banners, NO overlays
+- NO emojis, NO clip art, NO gradients
+- Just a pure, realistic photograph of the scene`;
 
       messages.push({ role: 'user', content: imagePrompt });
     }
