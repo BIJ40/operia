@@ -215,7 +215,7 @@ ADDITIONAL REQUIREMENTS:
       return new Response(JSON.stringify({ error: bgResult.error || 'Erreur du service IA image' }), { status: bgResult.status || 502, headers: jsonHeaders });
     }
 
-    const bgData = await bgResponse.json();
+    const bgData = bgResult.data;
     const bgImageUrl = bgData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
     if (!bgImageUrl || !bgImageUrl.startsWith('data:image')) {
@@ -223,7 +223,7 @@ ADDITIONAL REQUIREMENTS:
       return new Response(JSON.stringify({ error: "Aucune image de fond générée" }), { status: 502, headers: jsonHeaders });
     }
 
-    console.log('[social-visual-generate] Background image generated. Starting composition pass...');
+    console.log('[social-visual-generate] Background image generated via', bgResult.model, '. Starting composition pass...');
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // ÉTAPE 3 : COMPOSITION FINALE — SUPERPOSER TEXTE + BRANDING
