@@ -160,44 +160,39 @@ export function drawHCFooterBar(ctx: CanvasRenderingContext2D, theme: ServiceThe
   ctx.fillText(theme.label, SIZE - 50, y + height / 2 + 8);
 }
 
-/** Logo HC en haut — icône maison + texte "Help Confort" */
+/** Logo HC en haut — logo complet Help Confort */
 export async function drawHCLogo(ctx: CanvasRenderingContext2D, logoSrc: string, position: 'top-left' | 'top-center' = 'top-left') {
-  const iconH = 50;
-  const text = 'Help Confort';
-  ctx.font = 'bold 22px sans-serif';
-  const textW = ctx.measureText(text).width;
-  const totalW = iconH + 10 + textW;
-  const padX = 16;
-  const padY = 10;
-  const bgW = totalW + padX * 2;
-  const bgH = iconH + padY * 2;
+  const logoH = 52;
+  const padX = 12;
+  const padY = 8;
 
-  const x = position === 'top-center' ? (SIZE - bgW) / 2 : 30;
-  const y = 25;
-
-  // Background pill
-  ctx.fillStyle = 'rgba(255,255,255,0.92)';
-  roundRect(ctx, x, y, bgW, bgH, 10);
-  ctx.fill();
-
-  // Try to load house icon
   try {
     const img = await loadImage(logoSrc);
-    const iconRatio = img.naturalWidth / img.naturalHeight;
-    const iconW = iconH * iconRatio;
-    drawContain(ctx, img, x + padX, y + padY, iconW, iconH);
+    const logoRatio = img.naturalWidth / img.naturalHeight;
+    const logoW = logoH * logoRatio;
+    const bgW = logoW + padX * 2;
+    const bgH = logoH + padY * 2;
 
-    // Text next to icon
-    ctx.fillStyle = HC.blue;
-    ctx.font = 'bold 22px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText(text, x + padX + iconW + 8, y + bgH / 2 + 7);
+    const x = position === 'top-center' ? (SIZE - bgW) / 2 : 30;
+    const y = 25;
+
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    roundRect(ctx, x, y, bgW, bgH, 10);
+    ctx.fill();
+
+    drawContain(ctx, img, x + padX, y + padY, logoW, logoH);
   } catch {
-    // Fallback: just text
+    const bgW = 180;
+    const bgH = logoH + padY * 2;
+    const x = position === 'top-center' ? (SIZE - bgW) / 2 : 30;
+    const y = 25;
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    roundRect(ctx, x, y, bgW, bgH, 10);
+    ctx.fill();
     ctx.fillStyle = HC.blue;
     ctx.font = 'bold 24px sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText(text, x + padX, y + bgH / 2 + 8);
+    ctx.fillText('Help Confort', x + padX, y + bgH / 2 + 8);
   }
   ctx.textAlign = 'left';
 }

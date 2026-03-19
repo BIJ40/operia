@@ -9,7 +9,7 @@ import {
   drawGradientBg, drawCinematicOverlay, drawHookText, drawSubText,
   drawCTAButton, drawAccentBar, drawTopicBadge,
 } from './canvasHelpers';
-import logoSrc from '@/assets/help-confort-house-icon.png';
+import logoSrc from '@/assets/help-confort-services-logo.png';
 import type { SocialTemplatePayload } from '../SocialVisualCanvas';
 
 export async function drawAwarenessCard(ctx: CanvasRenderingContext2D, payload: SocialTemplatePayload) {

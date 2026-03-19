@@ -9,7 +9,7 @@ import {
   drawCinematicOverlay, drawHookText, drawSubText,
   drawCTAButton, drawUniversePill, drawAccentBar,
 } from './canvasHelpers';
-import logoSrc from '@/assets/help-confort-house-icon.png';
+import logoSrc from '@/assets/help-confort-services-logo.png';
 import type { SocialTemplatePayload } from '../SocialVisualCanvas';
 
 /**
