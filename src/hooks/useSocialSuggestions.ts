@@ -121,6 +121,7 @@ export function useGenerateSuggestions() {
           year,
           regenerate_single: regenerateSingle || false,
           suggestion_id: suggestionId || null,
+          prompt: prompt || null,
         },
       });
 
