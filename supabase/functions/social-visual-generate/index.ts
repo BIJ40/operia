@@ -87,6 +87,17 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Suggestion non trouvée' }), { status: 404, headers: jsonHeaders });
     }
 
+    // Load agency info for signature
+    const { data: agency } = await adminSupabase
+      .from('apogee_agencies')
+      .select('label, adresse, ville, code_postal')
+      .eq('id', agencyId)
+      .single();
+
+    const agencyAddress = agency?.ville
+      ? `${agency.ville}${agency.code_postal ? ' (' + agency.code_postal + ')' : ''}`
+      : '';
+
     const aiPayload = (suggestion.ai_payload as Record<string, any>) || {};
     const universe = suggestion.universe || 'general';
     const color = SERVICE_COLORS[universe] || SERVICE_COLORS.general;
@@ -268,8 +279,8 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
 4. FOOTER BAR:
    - Position: Very bottom of the image (last 80-90px)
    - Style: Solid blue bar (#0092DD) full width
-   - Text: "HelpConfort — DEPAN40" in white, left-aligned
-   - Right side: "${serviceLabel}" in smaller white text
+    - Text: "HelpConfort — DEPAN40${agencyAddress ? ' — ' + agencyAddress : ''}" in white, left-aligned
+    - Right side: "${serviceLabel}" in smaller white text
    - Thin orange (#FFB705) line at the top of the blue bar
 
 5. UNIVERSE BADGE (top-right corner):
