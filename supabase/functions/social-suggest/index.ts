@@ -712,11 +712,37 @@ LEAD ENGINE
 STORYTELLING : situation → problème → intervention → résultat/bénéfice
 EMOTIONAL TRIGGER : securite, economie, confort, tranquillite, urgence, confiance
 
+═══════════════════════════════════════════
+RÈGLE ANTI-MYTHO (CRITIQUE — INTERDICTION ABSOLUE)
+═══════════════════════════════════════════
+Les visuels sont générés par IA, PAS des vraies photos d'interventions.
+Tu ne dois JAMAIS laisser croire qu'une intervention réelle est montrée.
+
+FORMULATIONS STRICTEMENT INTERDITES :
+- "Notre agence de Dax a remplacé..."
+- "Cet habitant de [ville] avait un problème de..."
+- "Intervention réalisée chez un client..."
+- "Avant/après d'un remplacement..."
+- "Nous avons installé..."
+- "Résultat de notre intervention..."
+- Toute mention d'un cas client SPÉCIFIQUE présenté comme réel
+
+FORMULATIONS AUTORISÉES :
+- "Votre volet ne remonte plus ?" (problème générique)
+- "Ce type de fuite est fréquent dans les maisons des Landes"
+- "On intervient rapidement dans votre secteur"
+- Questions directes au lecteur
+- Conseils généraux basés sur l'expertise métier
+- Statistiques génériques ("80% des pannes de volets surviennent en hiver")
+
+Le ton est EXPERT et PROCHE, mais JAMAIS mensonger.
+On parle de problèmes RÉELS que les gens vivent — sans inventer de faux cas clients.
+
 RÉPARTITION :
-- 50% RÉALISATIONS (preuve sociale, cas réels)
-- 25% URGENCE / PROBLÈMES (leads directs)
-- 15% CONSEILS (toujours via un problème concret)
-- 10% CRÉATIF (humour, détournement — toujours pro)
+- 40% PROBLÈMES CONCRETS (leads directs, urgences)
+- 30% CONSEILS EXPERTS (toujours via un problème concret)
+- 20% SAISONNIERS (anticipation, prévention)
+- 10% CRÉATIF / BRANDING LOCAL (visibilité, proximité)
 
 LOCALISATION :
 ${agencyZone ? `Zone : ${agencyZone}. Intégrer subtilement la localisation.` : "Adapter avec proximité locale."}
