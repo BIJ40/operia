@@ -1,10 +1,10 @@
 /**
  * CommercialTabContent - Onglet "Commercial"
- * Sous-onglets : Suivi client, Comparateur, Veille, Prospects, Réalisations
+ * Sous-onglets : Suivi client, Comparateur, Veille, Prospects, Réalisations, Social
  */
 
 import { lazy, Suspense, useState, useCallback, useMemo } from 'react';
-import { Building2, GitCompare, UserSearch, Radar, Camera, Loader2 } from 'lucide-react';
+import { Building2, GitCompare, UserSearch, Radar, Camera, Share2, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, type PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
@@ -22,6 +22,7 @@ import { ProspectsUnifiedPage } from '@/prospection/pages/ProspectsUnifiedPage';
 import { VeilleApporteursTab } from '@/prospection/pages/VeilleApporteursTab';
 
 const RealisationsPage = lazy(() => import('@/realisations/pages/RealisationsPage'));
+const SocialHubPage = lazy(() => import('@/pages/commercial/SocialHubPage'));
 
 /** Mapping tab id → module key */
 const TAB_MODULE_MAP: Record<string, ModuleKey> = {
@@ -30,6 +31,7 @@ const TAB_MODULE_MAP: Record<string, ModuleKey> = {
   veille: 'commercial.veille',
   prospects: 'commercial.prospects',
   realisations: 'commercial.realisations',
+  social: 'commercial.social',
 };
 
 function LoadingFallback() {
