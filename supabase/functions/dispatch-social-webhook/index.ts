@@ -102,13 +102,18 @@ Deno.serve(async (req: Request) => {
         hashtags: suggestion.hashtags || [],
         hook: aiPayload.hook || suggestion.title,
         cta: aiPayload.cta || '',
+        content_angle: suggestion.content_angle || '',
         universe: suggestion.universe,
         topic_type: suggestion.topic_type,
+        topic_key: suggestion.topic_key || '',
+        source_type: suggestion.source_type,
         suggestion_date: suggestion.suggestion_date,
         month_key: suggestion.month_key,
         visual_type: suggestion.visual_type,
         relevance_score: suggestion.relevance_score,
         platform_targets: suggestion.platform_targets,
+        // Full AI-generated text payload (descriptions, angles, prompts, etc.)
+        ai_generated_text: aiPayload,
       },
       variants: (variants || []).map((v: any) => ({
         id: v.id,
@@ -119,6 +124,7 @@ Deno.serve(async (req: Request) => {
         format: v.format,
         dimensions: v.recommended_dimensions,
         notes: v.platform_notes,
+        status: v.status,
       })),
       visual: visualUrl ? {
         url: visualUrl,
