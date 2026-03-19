@@ -5,6 +5,8 @@ import "./index.css";
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { initSentry } from "./lib/sentry";
 import { verifySecurityHeaders, auditExposedSecrets } from "./lib/observability/security-headers-check";
+import { APP_VERSION } from './config/version';
+import { FORCE_UPDATE_SESSION_KEY, VERSION_CHECK_KEY } from './hooks/useVersionCheck';
 
 // Initialize Sentry before rendering
 initSentry();
@@ -35,6 +37,8 @@ try {
   // ignore
 }
 
+const PREVIEW_BUILD_REFRESH_KEY = '__lovable_preview_build_refresh__';
+
 // Safe SW registration — disabled in Lovable preview and sandboxed frames
 const isLovablePreview = () => {
   try {
@@ -55,6 +59,9 @@ const clearPreviewRuntimeCaches = async () => {
       const cacheNames = await caches.keys();
       await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
     }
+
+    sessionStorage.removeItem(FORCE_UPDATE_SESSION_KEY);
+    localStorage.removeItem(VERSION_CHECK_KEY);
   } catch {
     // ignore preview cleanup failures
   }
@@ -69,7 +76,22 @@ const canRegisterSW = () => {
 };
 
 if (isLovablePreview()) {
-  void clearPreviewRuntimeCaches();
+  const previewBuildKey = `preview:${APP_VERSION}`;
+
+  try {
+    const lastPreviewBuild = sessionStorage.getItem(PREVIEW_BUILD_REFRESH_KEY);
+
+    if (lastPreviewBuild !== previewBuildKey) {
+      sessionStorage.setItem(PREVIEW_BUILD_REFRESH_KEY, previewBuildKey);
+      void clearPreviewRuntimeCaches().finally(() => {
+        window.location.replace(window.location.href);
+      });
+    } else {
+      void clearPreviewRuntimeCaches();
+    }
+  } catch {
+    void clearPreviewRuntimeCaches();
+  }
 }
 
 if (canRegisterSW()) {
