@@ -960,14 +960,24 @@ L'univers détermine le badge, la couleur et le picto du visuel final.
 Si l'événement a un univers spécifique (plomberie, electricite, serrurerie, volets...), le post DOIT être dans cet univers.
 Si l'événement est "general" → utilise "general".
 
-RÈGLE CRITIQUE — COHÉRENCE THÈME / CONTENU :
+RÈGLE CRITIQUE — COHÉRENCE THÈME / CONTENU (ZÉRO TOLÉRANCE) :
 Le hook, la caption, le visual_prompt et le CTA doivent être EN RAPPORT DIRECT avec l'événement calendaire.
-Exemples :
-- 1er avril → humour, blagues, pannes insolites, poisson d'avril (PAS un sujet sérieux sans rapport)
-- Pâques → famille, recevoir à la maison, préparation (PAS un sujet technique déconnecté)
-- Journée de l'eau → fuites, économies d'eau (PAS un problème électrique)
+Le LABEL de chaque journée contient le SUJET EXACT — tu DOIS t'en inspirer directement.
+Si le label mentionne "Pâques", "famille", "repas" → le post DOIT parler de Pâques, famille, fête.
+Si le label mentionne "pont pascal", "petits travaux" → le post DOIT parler du pont, week-end prolongé, bricolage.
+Un post awareness_day dont le contenu n'a AUCUN rapport avec le label est un ÉCHEC.
+
+Exemples BONS :
+- 🐣 Pâques → "PANNE DE CHAUFFE-EAU LA VEILLE DU REPAS DE PÂQUES ?" (lié à la fête)
+- 🐰 Lundi de Pâques → "CE PONT DE PÂQUES, RÉPAREZ ENFIN CE QUI TRAÎNE !" (lié au pont)
+- 1er avril → humour, poisson d'avril, pannes insolites
+- Journée de l'eau → fuites, économies d'eau
 - Halloween → pannes effrayantes, ambiance sombre
-Le visual_prompt DOIT illustrer l'ambiance de l'événement, pas un sujet métier générique.
+
+Exemples MAUVAIS (INTERDITS) :
+- Pâques → post sur une fuite sans mention de Pâques → REJETÉ
+- Lundi de Pâques → post sur un disjoncteur sans mention du pont → REJETÉ
+Le visual_prompt DOIT aussi illustrer l'ambiance de l'événement (Pâques = ambiance familiale, déco, etc.).
 
 JOURNÉES THÉMATIQUES DU MOIS (TOUTES doivent être couvertes) :
 ${monthAwareness.map(a => `- ${a.day}/${month}: ${a.label} | UNIVERS OBLIGATOIRE: ${a.preferredUniverses[0]} | tags: ${a.tags.join(', ')}`).join('\n')}
