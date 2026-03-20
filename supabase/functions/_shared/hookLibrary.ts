@@ -9,7 +9,7 @@
 
 // ─── Types ───────────────────────────────────────────────
 export type HookTrigger = 'peur' | 'argent' | 'urgence' | 'gain' | 'simplicite';
-export type HookIntent = 'urgence' | 'prevention' | 'amelioration' | 'securite' | 'saisonnier';
+export type HookIntent = 'urgence' | 'prevention' | 'amelioration' | 'securite' | 'saisonnier' | 'conseil' | 'preuve' | 'contre_exemple' | 'pedagogique';
 export type HookSeason = 'hiver' | 'ete' | 'printemps' | 'automne' | 'all';
 
 export interface HookEntry {
