@@ -10,6 +10,8 @@ import { BD_STORY_CHARACTERS } from '../data/characters';
 // TYPES
 // ============================================================================
 
+export type BubbleSafeZone = 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
+
 export interface CharacterPlacement {
   slug: string;
   placement: 'left' | 'center' | 'right' | 'background';
@@ -25,6 +27,13 @@ export interface EnvironmentBrief {
   timeOfDay: string;
 }
 
+export interface CompositionRules {
+  bubbleSafeZone: BubbleSafeZone;
+  subjectSafeZone: 'center' | 'left' | 'right';
+  mustLeaveNegativeSpace: boolean;
+  negativeSpacePosition: 'top' | 'bottom';
+}
+
 export interface PanelRenderPlan {
   panelNumber: number;
   imagePrompt: string;
@@ -38,6 +47,7 @@ export interface PanelRenderPlan {
   environment: EnvironmentBrief;
   colorNotes: string;
   forbiddenElements: string[];
+  composition: CompositionRules;
 }
 
 // ============================================================================
@@ -75,24 +85,82 @@ const CAMERA_BY_FUNCTION: Record<NarrativeFunction, { angle: string; shot: strin
 };
 
 // ============================================================================
+// COMPOSITION & SAFE ZONES
+// ============================================================================
+
+/**
+ * Determine safe zones for bubble placement and subject positioning.
+ * Alternates positions to avoid visual monotony and prevent bubbles from
+ * covering important content.
+ */
+function getCompositionRules(panelNumber: number, narrativeFunction: NarrativeFunction): CompositionRules {
+  // Alternate bubble position: rows 1&3 use bottom, rows 2&4 use top
+  // Within each row, alternate left/center/right
+  const row = Math.ceil(panelNumber / 3); // 1-4
+  const col = ((panelNumber - 1) % 3); // 0-2
+
+  const verticalPos = (row % 2 === 1) ? 'bottom' : 'top';
+  const horizontalPos = (['left', 'center', 'right'] as const)[col];
+
+  const bubbleSafeZone: BubbleSafeZone = `${verticalPos}-${horizontalPos}`;
+
+  // Subject should avoid the bubble zone
+  const subjectSafeZone: 'center' | 'left' | 'right' =
+    narrativeFunction === 'repair_action' || narrativeFunction === 'inspection_diagnosis'
+      ? 'center'
+      : horizontalPos === 'left' ? 'right'
+      : horizontalPos === 'right' ? 'left'
+      : 'center';
+
+  // Close-ups and detail shots need less negative space
+  const needsSpace = narrativeFunction !== 'repair_action' && narrativeFunction !== 'problem_worsens';
+
+  return {
+    bubbleSafeZone,
+    subjectSafeZone,
+    mustLeaveNegativeSpace: needsSpace,
+    negativeSpacePosition: verticalPos,
+  };
+}
+
+// ============================================================================
 // CHARACTER DESCRIPTION FOR PROMPTS
 // ============================================================================
 
-function buildCharacterDescription(slug: string): string {
+function buildCharacterDescription(slug: string, isMainCharacter: boolean = false): string {
   const char = BD_STORY_CHARACTERS.find(c => c.slug === slug);
   if (!char) {
-    if (slug === 'client') return 'French homeowner, casual everyday clothes';
+    if (slug === 'client') return 'French homeowner, casual everyday clothes, expressive face';
     return slug;
   }
+
   const vi = char.visualIdentity;
-  const parts = [
-    char.firstName,
-    `(${char.role})`,
-    `hair: ${vi.hair}`,
-    `build: ${vi.silhouette}`,
-    `wearing: ${vi.clothes}`,
-    ...vi.facialTraits.map(t => t),
-  ];
+  const parts: string[] = [];
+
+  // Strong identity anchor
+  parts.push(`${char.firstName}`);
+  parts.push(`(${char.role})`);
+
+  // Physical traits — more descriptive for main characters
+  parts.push(`${vi.hair} hair`);
+  parts.push(`${vi.silhouette} build`);
+
+  if (vi.facialTraits.length > 0) {
+    parts.push(vi.facialTraits.join(', '));
+  }
+
+  // Outfit
+  parts.push(`wearing ${vi.clothes}`);
+
+  if (vi.accessories.length > 0) {
+    parts.push(`accessories: ${vi.accessories.join(', ')}`);
+  }
+
+  // Consistency emphasis for main characters
+  if (isMainCharacter) {
+    parts.push('MUST maintain exact same facial features and body proportions across all panels');
+  }
+
   return parts.join(', ');
 }
 
@@ -156,20 +224,33 @@ export function generatePanelRenderPlan(panel: GeneratedPanel, story: GeneratedS
   const characters = getCharacterPlacement(panel.actors, panel.narrativeFunction);
   const environment = buildEnvironment(story, panel.location);
   const expression = EXPRESSION_BY_FUNCTION[panel.narrativeFunction] || 'neutral';
+  const composition = getCompositionRules(panel.number, panel.narrativeFunction);
+
+  // Determine main characters (technician + amandine)
+  const techSlug = story.assignedCharacters.technician;
+  const mainSlugs = new Set([techSlug, 'amandine']);
 
   // Build continuity notes
   const continuityNotes: string[] = [
-    'same client appearance across all panels',
-    'same house interior style and palette',
+    'CRITICAL: same client appearance (face, hair, clothes) across ALL 12 panels',
+    'CRITICAL: same house interior style, wall colors, furniture across ALL panels',
+    `This is panel ${panel.number} of 12 — visual consistency is paramount`,
   ];
-  const techSlug = story.assignedCharacters.technician;
+
   const techChar = BD_STORY_CHARACTERS.find(c => c.slug === techSlug);
   if (techChar && panel.actors.includes(techSlug)) {
-    continuityNotes.push(`${techChar.firstName} must look identical to reference photos`);
-    continuityNotes.push(`${techChar.firstName} wears HelpConfort branded work clothes`);
+    continuityNotes.push(
+      `${techChar.firstName}: ${techChar.visualIdentity.hair} hair, ${techChar.visualIdentity.silhouette} build, ${techChar.visualIdentity.facialTraits.join(', ')}`,
+      `${techChar.firstName} ALWAYS wears HelpConfort branded professional work clothes`,
+      `${techChar.firstName} must look IDENTICAL in every panel they appear in`
+    );
   }
   if (panel.actors.includes('amandine')) {
-    continuityNotes.push('Amandine is at office desk, never on site');
+    const amandine = BD_STORY_CHARACTERS.find(c => c.slug === 'amandine');
+    continuityNotes.push(
+      'Amandine is ONLY at office desk, NEVER on site',
+      amandine ? `Amandine: ${amandine.visualIdentity.hair} hair, ${amandine.visualIdentity.facialTraits.join(', ')}` : ''
+    );
   }
 
   // Forbidden elements
@@ -177,25 +258,31 @@ export function generatePanelRenderPlan(panel: GeneratedPanel, story: GeneratedS
     'text or letters in the image',
     'speech bubbles in the generated image',
     'logos or watermarks',
+    'words or captions rendered in the illustration',
   ];
   if (panel.narrativeFunction !== 'cta_moral') {
     forbiddenElements.push('promotional text');
   }
 
-  // Build the full image prompt
+  // Build the full image prompt with composition rules
   const charDescriptions = characters.map(c => 
-    `${buildCharacterDescription(c.slug)} (${c.placement}, ${c.expression})`
+    `${buildCharacterDescription(c.slug, mainSlugs.has(c.slug))} (${c.placement}, ${c.expression})`
   ).join('; ');
+
+  const compositionInstruction = composition.mustLeaveNegativeSpace
+    ? `COMPOSITION: Leave clear empty space at the ${composition.negativeSpacePosition} of the image for text overlay. Main subject positioned ${composition.subjectSafeZone}.`
+    : `COMPOSITION: Main subject positioned ${composition.subjectSafeZone}.`;
 
   const imagePrompt = [
     `Comic panel ${panel.number}/12, Franco-Belgian style comic book illustration.`,
     `Camera: ${camera.angle}, ${camera.shot}.`,
+    compositionInstruction,
     charDescriptions ? `Characters: ${charDescriptions}.` : '',
     `Setting: ${environment.room}, ${environment.mood} atmosphere, ${environment.lighting}.`,
     `Time: ${environment.timeOfDay}.`,
-    `Style: Clean line art, warm professional colors, expressive faces, readable composition.`,
-    `HelpConfort brand colors (blue, white). Professional service company.`,
-    `NO text, NO speech bubbles, NO watermarks in the image.`,
+    `Style: Clean line art, warm professional colors, highly expressive faces, readable composition, consistent character design.`,
+    `HelpConfort brand colors (blue, white). Professional home repair service company.`,
+    `IMPORTANT: NO text, NO speech bubbles, NO watermarks, NO written words anywhere in the image.`,
   ].filter(Boolean).join(' ');
 
   // Color notes based on universe
@@ -216,11 +303,12 @@ export function generatePanelRenderPlan(panel: GeneratedPanel, story: GeneratedS
     cameraAngle: camera.angle,
     shotSize: camera.shot,
     expressionNotes: expression,
-    continuityNotes,
+    continuityNotes: continuityNotes.filter(Boolean),
     characters,
     environment,
     colorNotes: universeColors[story.universe] || 'warm professional tones',
     forbiddenElements,
+    composition,
   };
 }
 

@@ -1,13 +1,13 @@
 /**
  * BdStoryVisualBoard — Final comic board assembly (3×4 grid)
- * Renders generated images with speech bubble overlays
+ * Renders generated images with speech bubble overlays using safe zones
  */
 import { useRef, useCallback, useState } from 'react';
 import { Download, RefreshCw, Loader2, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { PanelRenderResult } from '../engine/imageRenderService';
 import html2canvas from 'html2canvas';
+import type { BubbleSafeZone } from '../engine/panelRenderPlan';
 
 interface Props {
   title: string;
@@ -23,24 +23,41 @@ interface Props {
   className?: string;
 }
 
-// Speech bubble component
-function SpeechBubble({ text, position = 'bottom' }: { text: string; position?: 'top' | 'bottom' }) {
+/**
+ * Determine bubble safe zone based on panel position in the 3x4 grid.
+ * Mirrors the logic from panelRenderPlan composition rules.
+ */
+function getBubbleSafeZone(panelNumber: number): { vertical: 'top' | 'bottom'; horizontal: 'left' | 'center' | 'right' } {
+  const row = Math.ceil(panelNumber / 3);
+  const col = ((panelNumber - 1) % 3);
+  const vertical = (row % 2 === 1) ? 'bottom' : 'top';
+  const horizontal = (['left', 'center', 'right'] as const)[col];
+  return { vertical, horizontal };
+}
+
+// Speech bubble component with safe zone awareness
+function SpeechBubble({ text, safeZone }: { text: string; safeZone: { vertical: 'top' | 'bottom'; horizontal: 'left' | 'center' | 'right' } }) {
   if (!text) return null;
+
+  const posClasses = cn(
+    'absolute z-10 pointer-events-none max-w-[85%]',
+    safeZone.vertical === 'top' ? 'top-1.5' : 'bottom-1.5',
+    safeZone.horizontal === 'left' ? 'left-1.5' : safeZone.horizontal === 'right' ? 'right-1.5' : 'left-1/2 -translate-x-1/2'
+  );
+
   return (
-    <div className={cn(
-      'absolute left-2 right-2 z-10 pointer-events-none',
-      position === 'top' ? 'top-1.5' : 'bottom-1.5'
-    )}>
+    <div className={posClasses}>
       <div className="bg-white/95 backdrop-blur-sm rounded-xl px-2.5 py-1.5 shadow-md border border-border/30 relative">
         <p className="text-[10px] sm:text-xs font-medium text-foreground leading-tight text-center">
           {text}
         </p>
         {/* Bubble tail */}
         <div className={cn(
-          'absolute left-1/2 -translate-x-1/2 w-0 h-0',
-          position === 'top'
-            ? 'top-full border-l-[6px] border-r-[6px] border-t-[6px] border-transparent border-t-white/95'
-            : 'bottom-full border-l-[6px] border-r-[6px] border-b-[6px] border-transparent border-b-white/95'
+          'absolute w-0 h-0',
+          safeZone.horizontal === 'left' ? 'left-3' : safeZone.horizontal === 'right' ? 'right-3' : 'left-1/2 -translate-x-1/2',
+          safeZone.vertical === 'top'
+            ? 'top-full border-l-[5px] border-r-[5px] border-t-[5px] border-transparent border-t-white/95'
+            : 'bottom-full border-l-[5px] border-r-[5px] border-b-[5px] border-transparent border-b-white/95'
         )} />
       </div>
     </div>
@@ -58,9 +75,7 @@ function PanelCell({
   const hasImage = panel.status === 'success' && panel.imageUrl;
   const isPending = panel.status === 'pending';
   const isError = panel.status === 'error';
-
-  // Choose bubble position based on panel narrative position
-  const bubblePosition = panel.number <= 4 ? 'bottom' : panel.number >= 9 ? 'top' : 'bottom';
+  const safeZone = getBubbleSafeZone(panel.number);
 
   return (
     <div className="relative aspect-square bg-muted/20 border border-border/50 rounded-md overflow-hidden group">
@@ -93,8 +108,8 @@ function PanelCell({
         </div>
       )}
 
-      {/* Speech bubble */}
-      <SpeechBubble text={panel.text} position={bubblePosition} />
+      {/* Speech bubble with safe zone */}
+      <SpeechBubble text={panel.text} safeZone={safeZone} />
 
       {/* Regenerate button on hover */}
       {onRegenerate && (
