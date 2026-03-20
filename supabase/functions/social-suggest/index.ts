@@ -847,8 +847,8 @@ RÉPARTITION :
 - 10% CRÉATIF / BRANDING LOCAL (visibilité, proximité)
 
 LOCALISATION :
-${agencyZone ? `Zone : ${agencyZone}. Intégrer subtilement la localisation.` : "Adapter avec proximité locale."}
-${agencyName ? `Agence : ${agencyName}.` : ''}
+Zone : Landes & Pays Basque. TOUJOURS utiliser "Landes & Pays Basque", JAMAIS "Dax" seul.
+${agencyName ? `Agence : ${agencyName.replace(/Dax/gi, 'Landes & Pays Basque')}.` : ''}
 
 PLATFORM VARIANTS :
 - Facebook → storytelling + proximité + émotion
