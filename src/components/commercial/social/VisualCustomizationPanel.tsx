@@ -3,16 +3,17 @@
  * Les paramètres saisis ici sont envoyés directement au prompt de génération d'image.
  */
 
-import { useState, useCallback, useEffect } from 'react';
-import { Palette, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Palette, ChevronDown, ChevronUp, Truck } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
+import { Switch } from '@/components/ui/switch';
 
 export interface VisualCustomization {
   freePrompt: string;
   keywords: string;
+  includeVan?: boolean;
   tone?: string;
   audience?: string;
 }
@@ -26,17 +27,20 @@ export function VisualCustomizationPanel({ onCustomize, disabled }: VisualCustom
   const [isOpen, setIsOpen] = useState(false);
   const [freePrompt, setFreePrompt] = useState('');
   const [keywords, setKeywords] = useState('');
+  const [includeVan, setIncludeVan] = useState(false);
 
   // Notify parent whenever values change
   useEffect(() => {
     const trimmedPrompt = freePrompt.trim();
     const trimmedKeywords = keywords.trim();
-    if (trimmedPrompt || trimmedKeywords) {
-      onCustomize({ freePrompt: trimmedPrompt, keywords: trimmedKeywords });
+    if (trimmedPrompt || trimmedKeywords || includeVan) {
+      onCustomize({ freePrompt: trimmedPrompt, keywords: trimmedKeywords, includeVan });
     } else {
       onCustomize(null);
     }
-  }, [freePrompt, keywords, onCustomize]);
+  }, [freePrompt, keywords, includeVan, onCustomize]);
+
+  const hasCustomization = freePrompt.trim() || keywords.trim() || includeVan;
 
   return (
     <div className="space-y-2">
@@ -47,7 +51,7 @@ export function VisualCustomizationPanel({ onCustomize, disabled }: VisualCustom
       >
         <Palette className="w-3 h-3" />
         <span className="font-medium">Personnaliser le visuel</span>
-        {(freePrompt.trim() || keywords.trim()) && (
+        {hasCustomization && (
           <span className="w-1.5 h-1.5 rounded-full bg-primary ml-1" />
         )}
         {isOpen ? <ChevronUp className="w-3 h-3 ml-auto" /> : <ChevronDown className="w-3 h-3 ml-auto" />}
@@ -61,7 +65,7 @@ export function VisualCustomizationPanel({ onCustomize, disabled }: VisualCustom
               🎨 Directive visuelle (prioritaire)
             </Label>
             <Textarea
-              placeholder={'Ex: "spot LED encastré remplaçant une vieille ampoule, image moderne et lumineuse" ou "robinet qui fuit avec gouttes d\'eau visibles"'}
+              placeholder={'Ex: "spot LED encastré remplaçant une vieille ampoule, image moderne et lumineuse"'}
               value={freePrompt}
               onChange={e => setFreePrompt(e.target.value)}
               className="text-xs min-h-[60px] resize-y"
@@ -83,6 +87,24 @@ export function VisualCustomizationPanel({ onCustomize, disabled }: VisualCustom
               value={keywords}
               onChange={e => setKeywords(e.target.value)}
               className="h-7 text-xs"
+              disabled={disabled}
+            />
+          </div>
+
+          {/* Include van toggle */}
+          <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/50">
+            <div className="flex items-center gap-1.5">
+              <Truck className="w-3.5 h-3.5 text-muted-foreground" />
+              <div>
+                <p className="text-[11px] font-medium">Inclure le véhicule HC</p>
+                <p className="text-[10px] text-muted-foreground/60">
+                  Photo réelle du van Help Confort intégrée au visuel
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={includeVan}
+              onCheckedChange={setIncludeVan}
               disabled={disabled}
             />
           </div>

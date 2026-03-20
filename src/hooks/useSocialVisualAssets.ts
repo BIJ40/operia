@@ -59,6 +59,7 @@ export function useGenerateSocialVisual() {
       visualCustomization?: {
         freePrompt?: string;
         keywords?: string;
+        includeVan?: boolean;
         tone?: string;
         audience?: string;
       };
