@@ -1,13 +1,14 @@
 /**
  * Template : realisation_card — Créa publicitaire réalisation 1080x1080
- * V4 — Zone-based layout: no overflow, no collision.
+ * V5 — STRICT layout: logo top-left, universe top-right, CTA centered, footer always.
+ * NO parasitic elements (no accent bar).
  */
 import {
   SIZE, loadImage, drawCover,
   getTheme, HC, ZONES,
   drawUniverseOverlay, drawHCFooterBar, drawHCLogo,
   drawCinematicOverlay, drawHookText, drawSubText,
-  drawCTAButton, drawUniversePill, drawAccentBar,
+  drawCTAButton, drawUniversePill,
 } from './canvasHelpers';
 import logoSrc from '@/assets/help-confort-house-icon.png';
 import type { SocialTemplatePayload } from '../SocialVisualCanvas';
@@ -43,8 +44,7 @@ export async function drawRealisationCard(ctx: CanvasRenderingContext2D, payload
   drawUniverseOverlay(ctx, theme);
   drawCinematicOverlay(ctx, 0.75);
 
-  // ─── ZONE 1: Top bar ───
-  drawAccentBar(ctx, theme, 10);
+  // ─── ZONE 1: Top bar — Logo left, Universe right ───
   await drawHCLogo(ctx, logoSrc, 'top-left');
   drawUniversePill(ctx, theme, 35);
 
@@ -61,9 +61,9 @@ export async function drawRealisationCard(ctx: CanvasRenderingContext2D, payload
     });
   }
 
-  // ─── ZONE 4: CTA ───
-  drawCTAButton(ctx, cta, { align: 'left' });
+  // ─── ZONE 4: CTA — CENTRÉ horizontalement ───
+  drawCTAButton(ctx, cta, { align: 'center' });
 
-  // ─── ZONE 5: Footer ───
+  // ─── ZONE 5: Footer — TOUJOURS présent ───
   drawHCFooterBar(ctx, theme);
 }

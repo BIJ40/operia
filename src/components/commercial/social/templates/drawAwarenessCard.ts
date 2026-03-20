@@ -1,20 +1,20 @@
 /**
  * Template : awareness_card — Créa journée sensibilisation 1080x1080
- * V4 — Zone-based layout: no overflow, no collision.
+ * V5 — STRICT layout: logo top-left, universe top-right, CTA centered, footer always.
+ * NO parasitic elements (no topic badge, no date badge, no accent bar).
  */
 import {
   SIZE, loadImage, drawCover,
-  getTheme, HC, ZONES, roundRect,
+  getTheme, HC, ZONES,
   drawHCFooterBar, drawHCLogo,
   drawGradientBg, drawCinematicOverlay, drawHookText, drawSubText,
-  drawCTAButton, drawAccentBar, drawTopicBadge,
+  drawCTAButton, drawUniversePill,
 } from './canvasHelpers';
 import logoSrc from '@/assets/help-confort-house-icon.png';
 import type { SocialTemplatePayload } from '../SocialVisualCanvas';
 
 export async function drawAwarenessCard(ctx: CanvasRenderingContext2D, payload: SocialTemplatePayload) {
   const theme = getTheme(payload.universe);
-  const date = payload.date || '';
   const cta = payload.cta || 'Contactez-nous';
 
   // ─── ZONE 2: Background ───
@@ -37,22 +37,9 @@ export async function drawAwarenessCard(ctx: CanvasRenderingContext2D, payload: 
     ctx.globalAlpha = 1;
   }
 
-  // ─── ZONE 1: Top bar ───
-  drawAccentBar(ctx, theme, 10);
+  // ─── ZONE 1: Top bar — Logo left, Universe right ───
   await drawHCLogo(ctx, logoSrc, 'top-left');
-  drawTopicBadge(ctx, '🎗️ Sensibilisation');
-
-  // Date badge (inside ZONE 1 extended)
-  if (date) {
-    ctx.font = 'bold 22px sans-serif';
-    const dateW = ctx.measureText(date).width + 36;
-    ctx.fillStyle = HC.orange;
-    roundRect(ctx, ZONES.MARGIN_X, 185, dateW, 44, 22);
-    ctx.fill();
-    ctx.fillStyle = HC.grayDark;
-    ctx.textAlign = 'left';
-    ctx.fillText(date, ZONES.MARGIN_X + 18, 214);
-  }
+  drawUniversePill(ctx, theme, 35);
 
   // ─── ZONE 3: Hook + subtext ───
   const { bottomY: hookBottom } = drawHookText(ctx, payload.hook || payload.title || 'Journée thématique', {
@@ -67,9 +54,9 @@ export async function drawAwarenessCard(ctx: CanvasRenderingContext2D, payload: 
     });
   }
 
-  // ─── ZONE 4: CTA ───
-  drawCTAButton(ctx, cta, { align: 'left' });
+  // ─── ZONE 4: CTA — CENTRÉ horizontalement ───
+  drawCTAButton(ctx, cta, { align: 'center' });
 
-  // ─── ZONE 5: Footer ───
+  // ─── ZONE 5: Footer — TOUJOURS présent ───
   drawHCFooterBar(ctx, theme);
 }
