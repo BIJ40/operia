@@ -127,7 +127,7 @@ export function SocialCalendarView({
                     }}
                     className={cn(
                       'w-full text-left text-[10px] leading-tight px-1 py-0.5 rounded border truncate transition-all',
-                      TOPIC_COLORS[s.topic_type] || TOPIC_COLORS.seasonal_tip,
+                      TOPIC_COLORS[s.topic_type] || TOPIC_COLORS.conseil,
                       selectedId === s.id && 'ring-1 ring-primary ring-offset-1',
                     )}
                     title={s.title}

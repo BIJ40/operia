@@ -101,7 +101,7 @@ export function SocialListView({ suggestions, selectedId, onSelect }: SocialList
                 <div className="flex items-center gap-1 flex-wrap">
                   <span className={cn(
                     'inline-flex text-[9px] px-1.5 py-0.5 rounded-full font-medium',
-                    TOPIC_BADGE_VARIANTS[s.topic_type] || TOPIC_BADGE_VARIANTS.seasonal_tip,
+                    TOPIC_BADGE_VARIANTS[s.topic_type] || TOPIC_BADGE_VARIANTS.conseil,
                   )}>
                     {TOPIC_LABELS[s.topic_type] || s.topic_type}
                   </span>
