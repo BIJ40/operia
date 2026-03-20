@@ -370,11 +370,34 @@ CRITICAL COMPOSITION RULES — THIS IMAGE IS A BACKGROUND FOR A SOCIAL MEDIA AD:
 
     let bgMessages: any[];
 
-    if (realPhotoUrl) {
+    if (hasBeforeAfter && beforePhotoUrl && afterPhotoUrl) {
+      // BEFORE/AFTER LAYOUT: Use both real photos side by side
+      console.log('[social-visual-generate] Using BEFORE/AFTER layout with real photos');
       bgMessages = [{
         role: 'user',
         content: [
-          { type: 'text', text: `Transform this real photo into a premium social media ad background (1080x1080 square).\n\n${AD_COMPOSITION_RULES}\n\nKeep the authentic feel. Apply cinematic color grade. Ensure bottom 40% naturally darkens. Full bleed, no borders.` },
+          { type: 'text', text: `Create a professional BEFORE/AFTER comparison for a social media ad (1080x1080 square).
+
+INSTRUCTIONS:
+- Place the BEFORE photo on the LEFT half and the AFTER photo on the RIGHT half
+- Add a subtle vertical divider between them
+- Add "AVANT" label on the left side and "APRÈS" label on the right side (small, discrete, white text with shadow)
+- Apply professional color grading to both images for consistency
+- The bottom 30% should naturally darken for text overlay
+- Keep the authentic feel of both photos — these are REAL intervention photos
+- NO other text, NO logos, NO watermarks
+- Square format 1080x1080, edge to edge
+
+${HELPCONFORT_VISUAL_IDENTITY}` },
+          { type: 'image_url', image_url: { url: beforePhotoUrl } },
+          { type: 'image_url', image_url: { url: afterPhotoUrl } },
+        ],
+      }];
+    } else if (realPhotoUrl) {
+      bgMessages = [{
+        role: 'user',
+        content: [
+          { type: 'text', text: `Transform this real intervention photo into a premium social media ad background (1080x1080 square).\n\n${AD_COMPOSITION_RULES}\n\nThis is a REAL photo from an actual intervention — keep the authentic feel. Apply cinematic color grade. Ensure bottom 40% naturally darkens. Full bleed, no borders.` },
           { type: 'image_url', image_url: { url: realPhotoUrl } },
         ],
       }];
