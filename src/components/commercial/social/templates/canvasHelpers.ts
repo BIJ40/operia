@@ -233,7 +233,7 @@ export function drawGradientBg(ctx: CanvasRenderingContext2D, color1: string, co
 // ZONE 1 — TOP BAR COMPONENTS (0–100px)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-/** Logo HC en haut — logo complet Help Confort */
+/** Logo HC en haut — logo image officiel UNIQUEMENT, jamais de fallback texte */
 export async function drawHCLogo(ctx: CanvasRenderingContext2D, logoSrc: string, position: 'top-left' | 'top-center' = 'top-left') {
   const logoH = 52;
   const padX = 12;
@@ -255,17 +255,8 @@ export async function drawHCLogo(ctx: CanvasRenderingContext2D, logoSrc: string,
 
     drawContain(ctx, img, x + padX, y + padY, logoW, logoH);
   } catch {
-    const bgW = 180;
-    const bgH = logoH + padY * 2;
-    const x = position === 'top-center' ? (SIZE - bgW) / 2 : 30;
-    const y = 25;
-    ctx.fillStyle = 'rgba(255,255,255,0.92)';
-    roundRect(ctx, x, y, bgW, bgH, 10);
-    ctx.fill();
-    ctx.fillStyle = HC.blue;
-    ctx.font = 'bold 24px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText('Help Confort', x + padX, y + bgH / 2 + 8);
+    // ❌ LOGO NON DISPONIBLE → ne rien afficher (jamais de fallback texte)
+    console.warn('[drawHCLogo] Logo image failed to load — skipping (no text fallback)');
   }
   ctx.textAlign = 'left';
 }

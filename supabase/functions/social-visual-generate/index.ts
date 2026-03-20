@@ -289,9 +289,36 @@ ADDITIONAL REQUIREMENTS:
     // 2e passe IA : on envoie l'image de fond + instructions de composition
     // pour que l'IA intègre le texte marketing directement dans l'image.
 
-    const hookText = (hook || title || 'HelpConfort').toUpperCase().slice(0, 60);
-    const subText = caption ? caption.slice(0, 90) : '';
-    const ctaText = (cta || 'Demandez un devis gratuit').toUpperCase();
+    // ── Sanitize texts: enforce strict copywriting rules ──
+    const sanitizeHookForAI = (raw: string): string => {
+      let t = raw.trim().replace(/[…\.]+$/, '').trim();
+      const words = t.split(/\s+/);
+      if (words.length > 6) t = words.slice(0, 6).join(' ');
+      if (t.length > 40) {
+        const cut = t.slice(0, 40);
+        const ls = cut.lastIndexOf(' ');
+        t = ls > 15 ? cut.slice(0, ls) : cut;
+      }
+      return t.replace(/[\s,;:]+$/, '').trim().toUpperCase();
+    };
+
+    const sanitizeSubForAI = (raw: string): string => {
+      let t = raw.trim().replace(/[…]+$/, '').trim();
+      const words = t.split(/\s+/);
+      if (words.length > 12) t = words.slice(0, 12).join(' ');
+      if (t.length > 60) {
+        const cut = t.slice(0, 60);
+        const ls = cut.lastIndexOf(' ');
+        t = ls > 20 ? cut.slice(0, ls) : cut;
+      }
+      t = t.replace(/[\s,;:]+$/, '').trim();
+      if (t && !/[.!?]$/.test(t)) t += '.';
+      return t;
+    };
+
+    const hookText = sanitizeHookForAI(hook || title || 'Votre maison mérite le meilleur');
+    const subText = sanitizeSubForAI(caption || '');
+    const ctaText = (cta || 'Demandez un devis gratuit').toUpperCase().slice(0, 30);
 
     const compositionPrompt = `You are a professional social media graphic designer. Take this background image and create a FINAL SOCIAL MEDIA AD CREATIVE (1080x1080) by adding the following text overlay elements.
 
@@ -302,15 +329,16 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
    - Position: Lower-center area of the image (bottom 40%)
    - Style: VERY LARGE white bold text, ALL CAPS
    - Must have a dark semi-transparent backdrop/shadow for readability
-   - Maximum 2-3 lines
+   - Maximum 2 lines
    - This is the MOST IMPORTANT element — must be instantly readable
+   - CRITICAL: Write this text EXACTLY as provided. Do NOT modify, truncate, or split it.
 
 2. SUB-TEXT (Secondary message — smaller):
    "${subText}"
    - Position: Just below the hook text
    - Style: Smaller white text, regular weight
-   - 1-2 lines maximum
-   - Semi-transparent white or light gray
+   - 1 line only — MUST fit on a single line
+   - CRITICAL: Write this text EXACTLY as provided. Do NOT truncate or add "…"
 
 3. CTA BUTTON:
    "${ctaText}"
@@ -321,8 +349,8 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
 4. FOOTER BAR:
    - Position: Very bottom of the image (last 80-90px)
    - Style: Solid blue bar (#0092DD) full width
-    - Text: "HelpConfort — DEPAN40${agencyAddress ? ' — ' + agencyAddress : ''}" in white, left-aligned
-    - Right side: "${serviceLabel}" in smaller white text
+   - Text: "HelpConfort — DEPAN40${agencyAddress ? ' — ' + agencyAddress : ''}" in white, left-aligned
+   - Right side: "${serviceLabel}" in smaller white text
    - Thin orange (#FFB705) line at the top of the blue bar
 
 5. UNIVERSE BADGE (top-right corner):
@@ -331,9 +359,10 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
    - Text: "${serviceLabel}" in white, small font
 
 6. BRANDING (top-left):
-   - Small white rounded rectangle with subtle shadow
-   - Text "HC" or "HelpConfort" logo placeholder in blue (#0092DD)
-   - Keep it discreet, don't dominate
+   - Use the official Help Confort logo if visible in the composition
+   - If no logo available: leave the top-left area EMPTY
+   - NEVER write "HC" or "HelpConfort" as text in the logo area
+   - NEVER create a fake/invented logo
 
 DESIGN RULES:
 - The background image must remain FULLY VISIBLE behind all overlays
@@ -343,9 +372,12 @@ DESIGN RULES:
 - The result must look like a PROFESSIONAL social media advertisement
 - NO extra decorative elements beyond what's specified
 - Keep the square 1080x1080 format
-- The final result must be IMMEDIATELY PUBLISHABLE on Facebook/Instagram
 
-CRITICAL: The text must be correctly spelled and perfectly readable. This is a professional ad.`;
+CRITICAL QUALITY CHECK — The AI MUST verify before outputting:
+✅ Hook text is COMPLETE (no "…", no truncation, exactly as provided)
+✅ Sub-text is COMPLETE and fits on 1 line (no "…", no truncation)
+✅ No text marked "HC" or fake logo — use only the official logo or leave empty
+✅ All text is correctly spelled and perfectly readable`;
 
     const compMessages = [{
       role: 'user',
