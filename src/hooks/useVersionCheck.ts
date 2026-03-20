@@ -5,6 +5,7 @@ import { logInfo, logWarn } from '@/lib/logger';
 export const VERSION_CHECK_KEY = 'hc_last_version_check';
 const CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes minimum between checks
 export const FORCE_UPDATE_SESSION_KEY = 'hc_force_update_in_progress';
+const FORCE_UPDATE_QUERY_PARAM = 'hc_refresh';
 
 interface VersionInfo {
   version: string;
@@ -17,6 +18,12 @@ function isLovablePreview() {
   } catch {
     return window.location.hostname.startsWith('id-preview--');
   }
+}
+
+function buildHardReloadUrl() {
+  const url = new URL(window.location.href);
+  url.searchParams.set(FORCE_UPDATE_QUERY_PARAM, String(Date.now()));
+  return url.toString();
 }
 
 /**
@@ -32,20 +39,21 @@ export function useVersionCheck() {
     hasChecked.current = true;
 
     const previewMode = isLovablePreview();
+    if (previewMode) {
+      logInfo('[VERSION] Preview detected, skipping build-version polling');
+      return;
+    }
 
     const checkVersion = async () => {
       try {
-        // Rate limit checks in normal app runtime, but NEVER in Lovable preview.
-        if (!previewMode) {
-          const lastCheck = localStorage.getItem(VERSION_CHECK_KEY);
-          const now = Date.now();
+        const lastCheck = localStorage.getItem(VERSION_CHECK_KEY);
+        const now = Date.now();
 
-          if (lastCheck && now - parseInt(lastCheck, 10) < CHECK_INTERVAL_MS) {
-            return;
-          }
-
-          localStorage.setItem(VERSION_CHECK_KEY, now.toString());
+        if (lastCheck && now - parseInt(lastCheck, 10) < CHECK_INTERVAL_MS) {
+          return;
         }
+
+        localStorage.setItem(VERSION_CHECK_KEY, now.toString());
 
         const response = await fetch(`/version.json?t=${Date.now()}`, {
           cache: 'no-store',
@@ -60,17 +68,14 @@ export function useVersionCheck() {
         const serverVersion: VersionInfo = await response.json();
 
         if (serverVersion.version !== APP_VERSION) {
-          // Guard against loops in regular runtime only.
-          if (!previewMode) {
-            try {
-              const inProgress = sessionStorage.getItem(FORCE_UPDATE_SESSION_KEY);
-              if (inProgress) {
-                logWarn(`[VERSION] Update already attempted in this tab session (since ${inProgress}). Skipping forceUpdate to avoid reload loop.`);
-                return;
-              }
-            } catch {
-              // ignore
+          try {
+            const inProgress = sessionStorage.getItem(FORCE_UPDATE_SESSION_KEY);
+            if (inProgress) {
+              logWarn(`[VERSION] Update already attempted in this tab session (since ${inProgress}). Skipping forceUpdate to avoid reload loop.`);
+              return;
             }
+          } catch {
+            // ignore
           }
 
           logInfo(`[VERSION] Update detected: ${APP_VERSION} → ${serverVersion.version}`);
@@ -120,10 +125,10 @@ async function forceUpdate(): Promise<void> {
       logInfo('[VERSION] Caches cleared');
     }
 
-    window.location.reload();
+    window.location.replace(buildHardReloadUrl());
   } catch (error) {
     logWarn('[VERSION] Force update failed, attempting basic reload:', error);
-    window.location.reload();
+    window.location.replace(buildHardReloadUrl());
   }
 }
 
