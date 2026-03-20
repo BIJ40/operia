@@ -548,7 +548,9 @@ ${HELPCONFORT_VISUAL_IDENTITY}` },
 
       const baseScene = userDirective
         ? userDirective
-        : (visualPrompt || `Professional French home ${getSceneForUniverse(universe)}, realistic close-up showing a real problem or urgent situation`);
+        : visualStyle === 'creatif'
+          ? `Creative, humorous, intentionally unrealistic scene related to ${getSceneForUniverse(universe)}. Fun, memorable, clearly fictional (e.g. cartoon mascot, superhero technician, robot plumber). Must be OBVIOUSLY fantasy.`
+          : (visualPrompt || `Professional French home ${getSceneForUniverse(universe)}, realistic close-up showing a real problem or urgent situation`);
       
       const sceneDescription = customOverride
         ? `${baseScene}\n\n${customOverride}`
