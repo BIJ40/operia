@@ -54,13 +54,22 @@ export function useGenerateSocialVisual() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ suggestionId }: { suggestionId: string }) => {
+    mutationFn: async ({ suggestionId, visualCustomization }: {
+      suggestionId: string;
+      visualCustomization?: {
+        freePrompt?: string;
+        keywords?: string;
+        tone?: string;
+        audience?: string;
+      };
+    }) => {
       if (!agencyId) throw new Error('Agence non identifiée');
 
       const { data, error } = await supabase.functions.invoke('social-visual-generate', {
         body: {
           suggestion_id: suggestionId,
           agency_id: agencyId,
+          ...(visualCustomization ? { visual_customization: visualCustomization } : {}),
         },
       });
 

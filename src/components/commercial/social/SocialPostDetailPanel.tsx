@@ -259,6 +259,12 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
           </div>
         )}
 
+        {/* Visual customization panel */}
+        <VisualCustomizationPanel
+          onCustomize={setVisualCustomization}
+          disabled={generateMutation.isPending}
+        />
+
         {/* Actions */}
         <div className="flex gap-1.5">
           <Button
@@ -276,7 +282,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
             ) : composedAsset || rawAsset ? (
               <>
                 <RefreshCw className="w-3 h-3" />
-                Régénérer
+                Régénérer{visualCustomization ? ' (personnalisé)' : ''}
               </>
             ) : (
               <>
