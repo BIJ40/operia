@@ -224,7 +224,7 @@ function selectLocation(
     moyenne: ['calme', 'degrade'],
     faible: ['calme', 'cosy', 'lumineux'],
   };
-  const visualMood = pickRandom(moodMap[problem.urgencyLevel] || ['calme']);
+  const visualMood = pickRandom(moodMap[problem.urgencyLevel] || ['calme']) as LocationContext['visualMood'];
 
   return { propertyType: property, room, time, season, weather, occupancy, visualMood };
 }
