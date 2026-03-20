@@ -76,7 +76,7 @@ export const SERVICE_THEMES: Record<string, ServiceTheme> = {
 
 /** Topic-based labels when universe is 'general' (no specific métier) */
 const GENERAL_TOPIC_LABELS: Record<string, string> = {
-  awareness_day: 'Sensibilisation',
+  awareness_day: 'Prévention',
   seasonal_tip: 'Conseil',
   realisation: 'Réalisation',
   local_branding: 'Votre agence',
