@@ -142,6 +142,10 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
       {
         onSuccess: (data) => {
           if (data?.signed_url) setComposedPreviewUrl(data.signed_url);
+          setLoadingPreview(false);
+        },
+        onError: () => {
+          setLoadingPreview(false);
         },
       }
     );
