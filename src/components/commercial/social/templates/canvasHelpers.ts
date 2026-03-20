@@ -364,7 +364,7 @@ export function drawHCFooterBar(ctx: CanvasRenderingContext2D, theme: ServiceThe
   ctx.fillStyle = HC.white;
   ctx.font = 'bold 26px sans-serif';
   ctx.textAlign = 'left';
-  const defaultAddress = 'Dax (40100)';
+  const defaultAddress = 'Saint Paul lès Dax (40990)';
   const address = agencyAddress || defaultAddress;
   const signature = `HelpConfort — DEPAN40 — ${address}`;
   ctx.fillText(signature, 50, y + height / 2 + 9);
