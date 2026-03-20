@@ -488,10 +488,13 @@ Deno.serve(async (req) => {
     const userPromptParams = body.prompt || null;
     const targetDates: string[] = Array.isArray(body.target_dates) ? body.target_dates : [];
 
+    const isTargetDatesMode = targetDates.length > 0 && !regenerateSingle;
     const rateLimitKey = regenerateSingle
       ? `social-suggest:single:${context.userId}:${singleSuggestionId || 'unknown'}`
-      : `social-suggest:month:${context.userId}:${agencyId || 'unknown'}:${year}-${String(month).padStart(2, '0')}`;
-    const rlResult = await checkRateLimit(rateLimitKey, regenerateSingle
+      : isTargetDatesMode
+        ? `social-suggest:dates:${context.userId}:${agencyId || 'unknown'}:${targetDates.join(',')}`
+        : `social-suggest:month:${context.userId}:${agencyId || 'unknown'}:${year}-${String(month).padStart(2, '0')}`;
+    const rlResult = await checkRateLimit(rateLimitKey, regenerateSingle || isTargetDatesMode
       ? { limit: 6, windowMs: 10 * 60_000 }
       : { limit: 2, windowMs: 10 * 60_000 });
     if (!rlResult.allowed) {
