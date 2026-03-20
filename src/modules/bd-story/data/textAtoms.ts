@@ -1,60 +1,146 @@
 /**
- * BD Story — Banque de micro-phrases structurée
- * Organisation : universe > narrativeFunction > tone
+ * BD Story — Banque de micro-phrases industrielle (500+)
+ * Structure : universe × narrativeFunction × tone × urgencyLevel
  * Chaque phrase : 3-8 mots
  */
 
 import { TextAtomEntry, NarrativeFunction, ProblemUniverse } from '../types/bdStory.types';
 
 // ============================================================================
-// PHRASES GÉNÉRIQUES (toutes univers)
+// GENERIC — client_setup (toutes univers)
 // ============================================================================
 
-const GENERIC: TextAtomEntry[] = [
-  // client_setup
-  { text: 'Ce matin, tout semblait normal.', narrativeFunction: 'client_setup', universe: 'general' },
-  { text: 'Un début de journée tranquille.', narrativeFunction: 'client_setup', universe: 'general' },
-  { text: 'La maison est calme.', narrativeFunction: 'client_setup', universe: 'general' },
-  { text: 'Rien ne laissait prévoir ça.', narrativeFunction: 'client_setup', universe: 'general' },
-  { text: 'Une soirée comme les autres.', narrativeFunction: 'client_setup', universe: 'general' },
+const GENERIC_CLIENT_SETUP: TextAtomEntry[] = [
+  // rassurant
+  { text: 'Ce matin, tout semblait normal.', narrativeFunction: 'client_setup', universe: 'general', tone: 'rassurant' },
+  { text: 'Un début de journée tranquille.', narrativeFunction: 'client_setup', universe: 'general', tone: 'rassurant' },
+  { text: 'La maison est calme.', narrativeFunction: 'client_setup', universe: 'general', tone: 'rassurant' },
+  { text: 'Le soleil entre dans la pièce.', narrativeFunction: 'client_setup', universe: 'general', tone: 'rassurant' },
+  { text: 'Le café du matin, comme d\'habitude.', narrativeFunction: 'client_setup', universe: 'general', tone: 'rassurant' },
+  { text: 'La routine suit son cours.', narrativeFunction: 'client_setup', universe: 'general', tone: 'rassurant' },
+  // reactif
+  { text: 'Rien ne laissait prévoir ça.', narrativeFunction: 'client_setup', universe: 'general', tone: 'reactif' },
+  { text: 'Tout allait bien jusque-là.', narrativeFunction: 'client_setup', universe: 'general', tone: 'reactif' },
+  { text: 'Personne n\'avait rien remarqué.', narrativeFunction: 'client_setup', universe: 'general', tone: 'reactif' },
+  { text: 'En rentrant, rien d\'anormal.', narrativeFunction: 'client_setup', universe: 'general', tone: 'reactif' },
+  // proximite
+  { text: 'Une soirée comme les autres.', narrativeFunction: 'client_setup', universe: 'general', tone: 'proximite' },
+  { text: 'Le quartier dort tranquille.', narrativeFunction: 'client_setup', universe: 'general', tone: 'proximite' },
+  { text: 'On profite du week-end.', narrativeFunction: 'client_setup', universe: 'general', tone: 'proximite' },
+  { text: 'La famille est réunie.', narrativeFunction: 'client_setup', universe: 'general', tone: 'proximite' },
+  { text: 'On ne pense à rien.', narrativeFunction: 'client_setup', universe: 'general', tone: 'proximite' },
+  // pedagogique
+  { text: 'L\'hiver arrive doucement.', narrativeFunction: 'client_setup', universe: 'general', tone: 'pedagogique' },
+  { text: 'La saison change, tout vieillit.', narrativeFunction: 'client_setup', universe: 'general', tone: 'pedagogique' },
+  { text: 'Ça faisait des mois sans vérifier.', narrativeFunction: 'client_setup', universe: 'general', tone: 'pedagogique' },
+];
 
-  // client_context
-  { text: 'Le quotidien suit son cours.', narrativeFunction: 'client_context', universe: 'general' },
-  { text: 'Les enfants jouent à côté.', narrativeFunction: 'client_context', universe: 'general' },
-  { text: 'Le repas est presque prêt.', narrativeFunction: 'client_context', universe: 'general' },
-  { text: 'Le week-end vient de commencer.', narrativeFunction: 'client_context', universe: 'general' },
-  { text: 'Retour après une longue journée.', narrativeFunction: 'client_context', universe: 'general' },
+// ============================================================================
+// GENERIC — client_context
+// ============================================================================
 
-  // decision_to_call
-  { text: 'Il faut appeler un pro.', narrativeFunction: 'decision_to_call', universe: 'general' },
-  { text: 'Mieux vaut ne pas attendre.', narrativeFunction: 'decision_to_call', universe: 'general' },
-  { text: 'On appelle HelpConfort.', narrativeFunction: 'decision_to_call', universe: 'general' },
-  { text: 'Pas le choix, on appelle.', narrativeFunction: 'decision_to_call', universe: 'general' },
-  { text: 'Vite, un professionnel.', narrativeFunction: 'decision_to_call', universe: 'general' },
+const GENERIC_CLIENT_CONTEXT: TextAtomEntry[] = [
+  { text: 'Le quotidien suit son cours.', narrativeFunction: 'client_context', universe: 'general', tone: 'rassurant' },
+  { text: 'Les enfants jouent à côté.', narrativeFunction: 'client_context', universe: 'general', tone: 'proximite' },
+  { text: 'Le repas est presque prêt.', narrativeFunction: 'client_context', universe: 'general', tone: 'proximite' },
+  { text: 'Le week-end vient de commencer.', narrativeFunction: 'client_context', universe: 'general', tone: 'rassurant' },
+  { text: 'Retour après une longue journée.', narrativeFunction: 'client_context', universe: 'general', tone: 'rassurant' },
+  { text: 'Le chat dort sur le canapé.', narrativeFunction: 'client_context', universe: 'general', tone: 'proximite' },
+  { text: 'Les invités arrivent ce soir.', narrativeFunction: 'client_context', universe: 'general', tone: 'reactif' },
+  { text: 'On s\'apprête à sortir.', narrativeFunction: 'client_context', universe: 'general', tone: 'reactif' },
+  { text: 'Un dimanche matin paisible.', narrativeFunction: 'client_context', universe: 'general', tone: 'rassurant' },
+  { text: 'Le petit dort encore.', narrativeFunction: 'client_context', universe: 'general', tone: 'proximite' },
+  { text: 'On rentre juste de vacances.', narrativeFunction: 'client_context', universe: 'general', tone: 'reactif' },
+  { text: 'La maison est prête pour l\'hiver.', narrativeFunction: 'client_context', universe: 'general', tone: 'pedagogique' },
+  { text: 'On avait tout vérifié… ou presque.', narrativeFunction: 'client_context', universe: 'general', tone: 'pedagogique' },
+  { text: 'La journée s\'annonçait tranquille.', narrativeFunction: 'client_context', universe: 'general', tone: 'rassurant' },
+  { text: 'Rien de spécial au programme.', narrativeFunction: 'client_context', universe: 'general', tone: 'rassurant' },
+];
 
-  // call_received
+// ============================================================================
+// GENERIC — decision_to_call
+// ============================================================================
+
+const GENERIC_DECISION: TextAtomEntry[] = [
+  { text: 'Il faut appeler un pro.', narrativeFunction: 'decision_to_call', universe: 'general', tone: 'rassurant' },
+  { text: 'Mieux vaut ne pas attendre.', narrativeFunction: 'decision_to_call', universe: 'general', tone: 'rassurant' },
+  { text: 'On appelle HelpConfort.', narrativeFunction: 'decision_to_call', universe: 'general', tone: 'proximite' },
+  { text: 'Pas le choix, on appelle.', narrativeFunction: 'decision_to_call', universe: 'general', tone: 'reactif' },
+  { text: 'Vite, un professionnel.', narrativeFunction: 'decision_to_call', universe: 'general', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'On ne va pas bricoler ça.', narrativeFunction: 'decision_to_call', universe: 'general', tone: 'pedagogique' },
+  { text: 'On ne touche à rien, on appelle.', narrativeFunction: 'decision_to_call', universe: 'general', tone: 'rassurant', urgencyLevel: 'forte' },
+  { text: 'C\'est pas du bricolage, ça.', narrativeFunction: 'decision_to_call', universe: 'general', tone: 'pedagogique' },
+  { text: 'Direction le téléphone.', narrativeFunction: 'decision_to_call', universe: 'general', tone: 'reactif' },
+  { text: 'On sait qui appeler.', narrativeFunction: 'decision_to_call', universe: 'general', tone: 'proximite' },
+  { text: 'Il faut réagir maintenant.', narrativeFunction: 'decision_to_call', universe: 'general', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'Un coup de fil suffira.', narrativeFunction: 'decision_to_call', universe: 'general', tone: 'rassurant', urgencyLevel: 'faible' },
+];
+
+// ============================================================================
+// GENERIC — call_received
+// ============================================================================
+
+const GENERIC_CALL: TextAtomEntry[] = [
   { text: 'HelpConfort, bonjour !', narrativeFunction: 'call_received', universe: 'general' },
   { text: 'Amandine prend l\'appel.', narrativeFunction: 'call_received', universe: 'general' },
-  { text: 'Amandine décroche aussitôt.', narrativeFunction: 'call_received', universe: 'general' },
-  { text: 'L\'accueil est immédiat.', narrativeFunction: 'call_received', universe: 'general' },
+  { text: 'Amandine décroche aussitôt.', narrativeFunction: 'call_received', universe: 'general', tone: 'reactif' },
+  { text: 'L\'accueil est immédiat.', narrativeFunction: 'call_received', universe: 'general', tone: 'reactif' },
+  { text: 'Amandine rassure le client.', narrativeFunction: 'call_received', universe: 'general', tone: 'rassurant' },
+  { text: 'L\'appel est pris en charge.', narrativeFunction: 'call_received', universe: 'general', tone: 'rassurant' },
+  { text: 'On vous écoute, pas de panique.', narrativeFunction: 'call_received', universe: 'general', tone: 'rassurant', urgencyLevel: 'forte' },
+  { text: 'Amandine note les détails.', narrativeFunction: 'call_received', universe: 'general', tone: 'pedagogique' },
+  { text: 'Au standard, réponse rapide.', narrativeFunction: 'call_received', universe: 'general', tone: 'reactif' },
+];
 
-  // scheduling
-  { text: 'On envoie quelqu\'un rapidement.', narrativeFunction: 'scheduling', universe: 'general' },
-  { text: 'Intervention planifiée aujourd\'hui.', narrativeFunction: 'scheduling', universe: 'general' },
-  { text: 'Un technicien est disponible.', narrativeFunction: 'scheduling', universe: 'general' },
-  { text: 'C\'est organisé en quelques minutes.', narrativeFunction: 'scheduling', universe: 'general' },
+// ============================================================================
+// GENERIC — scheduling
+// ============================================================================
 
-  // technician_arrival
-  { text: 'Le technicien est là.', narrativeFunction: 'technician_arrival', universe: 'general' },
-  { text: 'Arrivée rapide sur place.', narrativeFunction: 'technician_arrival', universe: 'general' },
-  { text: 'Le camion HelpConfort arrive.', narrativeFunction: 'technician_arrival', universe: 'general' },
+const GENERIC_SCHEDULING: TextAtomEntry[] = [
+  { text: 'On envoie quelqu\'un rapidement.', narrativeFunction: 'scheduling', universe: 'general', tone: 'reactif' },
+  { text: 'Intervention planifiée aujourd\'hui.', narrativeFunction: 'scheduling', universe: 'general', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'Un technicien est disponible.', narrativeFunction: 'scheduling', universe: 'general', tone: 'rassurant' },
+  { text: 'C\'est organisé en quelques minutes.', narrativeFunction: 'scheduling', universe: 'general', tone: 'rassurant' },
+  { text: 'Le planning est ajusté.', narrativeFunction: 'scheduling', universe: 'general', tone: 'pedagogique' },
+  { text: 'Rendez-vous calé dans l\'heure.', narrativeFunction: 'scheduling', universe: 'general', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'On s\'organise tout de suite.', narrativeFunction: 'scheduling', universe: 'general', tone: 'reactif' },
+  { text: 'Le technicien est prévenu.', narrativeFunction: 'scheduling', universe: 'general', tone: 'rassurant' },
+  { text: 'Passage prévu demain matin.', narrativeFunction: 'scheduling', universe: 'general', tone: 'rassurant', urgencyLevel: 'faible' },
+  { text: 'Un créneau se libère vite.', narrativeFunction: 'scheduling', universe: 'general', tone: 'proximite' },
+];
 
-  // result_visible
-  { text: 'Le problème est réglé.', narrativeFunction: 'result_visible', universe: 'general' },
-  { text: 'Tout fonctionne à nouveau.', narrativeFunction: 'result_visible', universe: 'general' },
-  { text: 'Le client est soulagé.', narrativeFunction: 'result_visible', universe: 'general' },
-  { text: 'La maison retrouve son calme.', narrativeFunction: 'result_visible', universe: 'general' },
-  { text: 'Ouf, c\'est réparé.', narrativeFunction: 'result_visible', universe: 'general' },
+// ============================================================================
+// GENERIC — technician_arrival
+// ============================================================================
+
+const GENERIC_ARRIVAL: TextAtomEntry[] = [
+  { text: 'Le technicien est là.', narrativeFunction: 'technician_arrival', universe: 'general', tone: 'rassurant' },
+  { text: 'Arrivée rapide sur place.', narrativeFunction: 'technician_arrival', universe: 'general', tone: 'reactif' },
+  { text: 'Le camion HelpConfort arrive.', narrativeFunction: 'technician_arrival', universe: 'general', tone: 'proximite' },
+  { text: 'Il se présente et s\'équipe.', narrativeFunction: 'technician_arrival', universe: 'general', tone: 'pedagogique' },
+  { text: 'L\'intervention peut commencer.', narrativeFunction: 'technician_arrival', universe: 'general', tone: 'rassurant' },
+  { text: 'Il évalue la situation d\'abord.', narrativeFunction: 'technician_arrival', universe: 'general', tone: 'pedagogique' },
+  { text: 'Le pro est sur place.', narrativeFunction: 'technician_arrival', universe: 'general', tone: 'proximite' },
+  { text: 'Le véhicule se gare devant.', narrativeFunction: 'technician_arrival', universe: 'general', tone: 'proximite' },
+];
+
+// ============================================================================
+// GENERIC — result_visible
+// ============================================================================
+
+const GENERIC_RESULT: TextAtomEntry[] = [
+  { text: 'Le problème est réglé.', narrativeFunction: 'result_visible', universe: 'general', tone: 'rassurant' },
+  { text: 'Tout fonctionne à nouveau.', narrativeFunction: 'result_visible', universe: 'general', tone: 'rassurant' },
+  { text: 'Le client est soulagé.', narrativeFunction: 'result_visible', universe: 'general', tone: 'rassurant' },
+  { text: 'La maison retrouve son calme.', narrativeFunction: 'result_visible', universe: 'general', tone: 'proximite' },
+  { text: 'Ouf, c\'est réparé.', narrativeFunction: 'result_visible', universe: 'general', tone: 'proximite' },
+  { text: 'Un vrai soulagement.', narrativeFunction: 'result_visible', universe: 'general', tone: 'rassurant' },
+  { text: 'Le quotidien peut reprendre.', narrativeFunction: 'result_visible', universe: 'general', tone: 'rassurant' },
+  { text: 'Le client respire enfin.', narrativeFunction: 'result_visible', universe: 'general', tone: 'proximite' },
+  { text: 'Tout est rentré dans l\'ordre.', narrativeFunction: 'result_visible', universe: 'general', tone: 'rassurant' },
+  { text: 'Le confort est retrouvé.', narrativeFunction: 'result_visible', universe: 'general', tone: 'proximite' },
+  { text: 'Problème résolu, vie normale.', narrativeFunction: 'result_visible', universe: 'general', tone: 'reactif' },
+  { text: 'Plus de souci à l\'horizon.', narrativeFunction: 'result_visible', universe: 'general', tone: 'rassurant' },
 ];
 
 // ============================================================================
@@ -62,21 +148,62 @@ const GENERIC: TextAtomEntry[] = [
 // ============================================================================
 
 const PLOMBERIE: TextAtomEntry[] = [
-  { text: 'L\'eau goutte sous l\'évier.', narrativeFunction: 'problem_appears', universe: 'plomberie' },
-  { text: 'Une flaque grandit au sol.', narrativeFunction: 'problem_appears', universe: 'plomberie' },
-  { text: 'Le meuble commence à gonfler.', narrativeFunction: 'problem_worsens', universe: 'plomberie' },
-  { text: 'La fuite s\'aggrave vite.', narrativeFunction: 'problem_worsens', universe: 'plomberie' },
-  { text: 'L\'eau ne s\'arrête plus.', narrativeFunction: 'problem_worsens', universe: 'plomberie' },
-  { text: 'Il inspecte la canalisation.', narrativeFunction: 'inspection_diagnosis', universe: 'plomberie' },
-  { text: 'Le tuyau est repéré.', narrativeFunction: 'inspection_diagnosis', universe: 'plomberie' },
-  { text: 'La fuite est localisée.', narrativeFunction: 'inspection_diagnosis', universe: 'plomberie' },
-  { text: 'Il colmate la fuite.', narrativeFunction: 'repair_action', universe: 'plomberie' },
-  { text: 'Le joint est remplacé.', narrativeFunction: 'repair_action', universe: 'plomberie' },
-  { text: 'Plus une goutte.', narrativeFunction: 'result_visible', universe: 'plomberie' },
-  { text: 'L\'évier est sauvé.', narrativeFunction: 'result_visible', universe: 'plomberie' },
-  { text: 'Le plafond commence à tacher.', narrativeFunction: 'problem_appears', universe: 'plomberie' },
-  { text: 'Plus d\'eau chaude ce matin.', narrativeFunction: 'problem_appears', universe: 'plomberie' },
-  { text: 'L\'évacuation est bouchée.', narrativeFunction: 'problem_appears', universe: 'plomberie' },
+  // problem_appears
+  { text: 'L\'eau goutte sous l\'évier.', narrativeFunction: 'problem_appears', universe: 'plomberie', tone: 'rassurant' },
+  { text: 'Une flaque grandit au sol.', narrativeFunction: 'problem_appears', universe: 'plomberie', tone: 'reactif' },
+  { text: 'Le plafond commence à tacher.', narrativeFunction: 'problem_appears', universe: 'plomberie', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'Plus d\'eau chaude ce matin.', narrativeFunction: 'problem_appears', universe: 'plomberie', tone: 'reactif' },
+  { text: 'L\'évacuation est bouchée.', narrativeFunction: 'problem_appears', universe: 'plomberie', tone: 'rassurant', urgencyLevel: 'moyenne' },
+  { text: 'Le robinet ne s\'arrête plus.', narrativeFunction: 'problem_appears', universe: 'plomberie', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'L\'eau suinte le long du mur.', narrativeFunction: 'problem_appears', universe: 'plomberie', tone: 'rassurant' },
+  { text: 'La chasse d\'eau ne fonctionne plus.', narrativeFunction: 'problem_appears', universe: 'plomberie', tone: 'rassurant', urgencyLevel: 'faible' },
+  { text: 'Le sol est mouillé ce matin.', narrativeFunction: 'problem_appears', universe: 'plomberie', tone: 'reactif' },
+  { text: 'De l\'eau coule sans raison.', narrativeFunction: 'problem_appears', universe: 'plomberie', tone: 'reactif' },
+  { text: 'Un bruit d\'eau dans le mur.', narrativeFunction: 'problem_appears', universe: 'plomberie', tone: 'pedagogique' },
+  { text: 'Le joint laisse passer l\'eau.', narrativeFunction: 'problem_appears', universe: 'plomberie', tone: 'pedagogique', urgencyLevel: 'faible' },
+  { text: 'La pression a chuté d\'un coup.', narrativeFunction: 'problem_appears', universe: 'plomberie', tone: 'reactif' },
+  { text: 'Une odeur remonte de l\'évier.', narrativeFunction: 'problem_appears', universe: 'plomberie', tone: 'pedagogique' },
+
+  // problem_worsens
+  { text: 'Le meuble commence à gonfler.', narrativeFunction: 'problem_worsens', universe: 'plomberie', tone: 'reactif' },
+  { text: 'La fuite s\'aggrave vite.', narrativeFunction: 'problem_worsens', universe: 'plomberie', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'L\'eau ne s\'arrête plus.', narrativeFunction: 'problem_worsens', universe: 'plomberie', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'La tache s\'étend au plafond.', narrativeFunction: 'problem_worsens', universe: 'plomberie', tone: 'reactif' },
+  { text: 'Le parquet commence à gondoler.', narrativeFunction: 'problem_worsens', universe: 'plomberie', tone: 'reactif' },
+  { text: 'L\'eau gagne la pièce d\'à côté.', narrativeFunction: 'problem_worsens', universe: 'plomberie', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'Ça empire d\'heure en heure.', narrativeFunction: 'problem_worsens', universe: 'plomberie', tone: 'reactif' },
+  { text: 'Le seau ne suffit plus.', narrativeFunction: 'problem_worsens', universe: 'plomberie', tone: 'proximite' },
+  { text: 'L\'humidité gagne du terrain.', narrativeFunction: 'problem_worsens', universe: 'plomberie', tone: 'pedagogique' },
+
+  // inspection_diagnosis
+  { text: 'Il inspecte la canalisation.', narrativeFunction: 'inspection_diagnosis', universe: 'plomberie', tone: 'pedagogique' },
+  { text: 'Le tuyau défaillant est repéré.', narrativeFunction: 'inspection_diagnosis', universe: 'plomberie', tone: 'pedagogique' },
+  { text: 'La fuite est localisée.', narrativeFunction: 'inspection_diagnosis', universe: 'plomberie', tone: 'rassurant' },
+  { text: 'Il vérifie l\'ensemble du réseau.', narrativeFunction: 'inspection_diagnosis', universe: 'plomberie', tone: 'pedagogique' },
+  { text: 'La cause est identifiée.', narrativeFunction: 'inspection_diagnosis', universe: 'plomberie', tone: 'rassurant' },
+  { text: 'Un joint usé, rien de plus.', narrativeFunction: 'inspection_diagnosis', universe: 'plomberie', tone: 'rassurant', urgencyLevel: 'faible' },
+  { text: 'Le raccord est en cause.', narrativeFunction: 'inspection_diagnosis', universe: 'plomberie', tone: 'pedagogique' },
+  { text: 'Il teste la pression.', narrativeFunction: 'inspection_diagnosis', universe: 'plomberie', tone: 'pedagogique' },
+  { text: 'Le ballon montre des signes d\'usure.', narrativeFunction: 'inspection_diagnosis', universe: 'plomberie', tone: 'pedagogique' },
+
+  // repair_action
+  { text: 'Il colmate la fuite.', narrativeFunction: 'repair_action', universe: 'plomberie', tone: 'reactif' },
+  { text: 'Le joint est remplacé.', narrativeFunction: 'repair_action', universe: 'plomberie', tone: 'rassurant' },
+  { text: 'Le tuyau est changé.', narrativeFunction: 'repair_action', universe: 'plomberie', tone: 'rassurant' },
+  { text: 'Il coupe l\'arrivée d\'eau.', narrativeFunction: 'repair_action', universe: 'plomberie', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'Le raccord est refait proprement.', narrativeFunction: 'repair_action', universe: 'plomberie', tone: 'pedagogique' },
+  { text: 'L\'évacuation est débouchée.', narrativeFunction: 'repair_action', universe: 'plomberie', tone: 'rassurant' },
+  { text: 'Soudure nette et précise.', narrativeFunction: 'repair_action', universe: 'plomberie', tone: 'pedagogique' },
+  { text: 'Il sécurise la zone en attendant.', narrativeFunction: 'repair_action', universe: 'plomberie', tone: 'rassurant', urgencyLevel: 'forte' },
+
+  // result_visible
+  { text: 'Plus une goutte.', narrativeFunction: 'result_visible', universe: 'plomberie', tone: 'rassurant' },
+  { text: 'L\'évier est sauvé.', narrativeFunction: 'result_visible', universe: 'plomberie', tone: 'proximite' },
+  { text: 'L\'eau chaude est de retour.', narrativeFunction: 'result_visible', universe: 'plomberie', tone: 'rassurant' },
+  { text: 'Le sol est sec et propre.', narrativeFunction: 'result_visible', universe: 'plomberie', tone: 'rassurant' },
+  { text: 'La fuite, c\'est fini.', narrativeFunction: 'result_visible', universe: 'plomberie', tone: 'proximite' },
+  { text: 'Tout coule normalement.', narrativeFunction: 'result_visible', universe: 'plomberie', tone: 'rassurant' },
+  { text: 'Plus de dégât possible.', narrativeFunction: 'result_visible', universe: 'plomberie', tone: 'rassurant' },
 ];
 
 // ============================================================================
@@ -84,17 +211,53 @@ const PLOMBERIE: TextAtomEntry[] = [
 // ============================================================================
 
 const ELECTRICITE: TextAtomEntry[] = [
-  { text: 'Tout disjoncte d\'un coup.', narrativeFunction: 'problem_appears', universe: 'electricite' },
-  { text: 'La lumière clignote bizarrement.', narrativeFunction: 'problem_appears', universe: 'electricite' },
-  { text: 'La prise est chaude au toucher.', narrativeFunction: 'problem_appears', universe: 'electricite' },
-  { text: 'Le noir total dans la maison.', narrativeFunction: 'problem_worsens', universe: 'electricite' },
-  { text: 'Ça sent le brûlé.', narrativeFunction: 'problem_worsens', universe: 'electricite' },
-  { text: 'Il contrôle le tableau.', narrativeFunction: 'inspection_diagnosis', universe: 'electricite' },
-  { text: 'La ligne défaillante est repérée.', narrativeFunction: 'inspection_diagnosis', universe: 'electricite' },
-  { text: 'Il sécurise le circuit.', narrativeFunction: 'repair_action', universe: 'electricite' },
-  { text: 'Mise en sécurité immédiate.', narrativeFunction: 'repair_action', universe: 'electricite' },
-  { text: 'La lumière revient enfin.', narrativeFunction: 'result_visible', universe: 'electricite' },
-  { text: 'Le courant est stable.', narrativeFunction: 'result_visible', universe: 'electricite' },
+  // problem_appears
+  { text: 'Tout disjoncte d\'un coup.', narrativeFunction: 'problem_appears', universe: 'electricite', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'La lumière clignote bizarrement.', narrativeFunction: 'problem_appears', universe: 'electricite', tone: 'rassurant' },
+  { text: 'La prise est chaude au toucher.', narrativeFunction: 'problem_appears', universe: 'electricite', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'Un interrupteur ne répond plus.', narrativeFunction: 'problem_appears', universe: 'electricite', tone: 'rassurant', urgencyLevel: 'faible' },
+  { text: 'Le courant saute régulièrement.', narrativeFunction: 'problem_appears', universe: 'electricite', tone: 'pedagogique' },
+  { text: 'Le tableau fait un bruit bizarre.', narrativeFunction: 'problem_appears', universe: 'electricite', tone: 'pedagogique' },
+  { text: 'Plus rien ne s\'allume.', narrativeFunction: 'problem_appears', universe: 'electricite', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'La prise sort du mur.', narrativeFunction: 'problem_appears', universe: 'electricite', tone: 'pedagogique', urgencyLevel: 'moyenne' },
+  { text: 'Un appareil fait tout sauter.', narrativeFunction: 'problem_appears', universe: 'electricite', tone: 'reactif' },
+  { text: 'Le luminaire grésille.', narrativeFunction: 'problem_appears', universe: 'electricite', tone: 'pedagogique' },
+
+  // problem_worsens
+  { text: 'Le noir total dans la maison.', narrativeFunction: 'problem_worsens', universe: 'electricite', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'Ça sent le brûlé.', narrativeFunction: 'problem_worsens', universe: 'electricite', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'Le plastique commence à fondre.', narrativeFunction: 'problem_worsens', universe: 'electricite', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'Les coupures se multiplient.', narrativeFunction: 'problem_worsens', universe: 'electricite', tone: 'pedagogique' },
+  { text: 'La prise noircit sur le mur.', narrativeFunction: 'problem_worsens', universe: 'electricite', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'Impossible de remettre le courant.', narrativeFunction: 'problem_worsens', universe: 'electricite', tone: 'reactif' },
+  { text: 'Le disjoncteur refuse de tenir.', narrativeFunction: 'problem_worsens', universe: 'electricite', tone: 'reactif' },
+  { text: 'L\'odeur devient inquiétante.', narrativeFunction: 'problem_worsens', universe: 'electricite', tone: 'reactif', urgencyLevel: 'forte' },
+
+  // inspection_diagnosis
+  { text: 'Il contrôle le tableau.', narrativeFunction: 'inspection_diagnosis', universe: 'electricite', tone: 'pedagogique' },
+  { text: 'La ligne défaillante est repérée.', narrativeFunction: 'inspection_diagnosis', universe: 'electricite', tone: 'pedagogique' },
+  { text: 'Il teste chaque circuit.', narrativeFunction: 'inspection_diagnosis', universe: 'electricite', tone: 'pedagogique' },
+  { text: 'Le défaut est localisé.', narrativeFunction: 'inspection_diagnosis', universe: 'electricite', tone: 'rassurant' },
+  { text: 'C\'est un faux contact.', narrativeFunction: 'inspection_diagnosis', universe: 'electricite', tone: 'rassurant', urgencyLevel: 'moyenne' },
+  { text: 'La surcharge est identifiée.', narrativeFunction: 'inspection_diagnosis', universe: 'electricite', tone: 'pedagogique' },
+  { text: 'L\'installation est vétuste.', narrativeFunction: 'inspection_diagnosis', universe: 'electricite', tone: 'pedagogique' },
+
+  // repair_action
+  { text: 'Il sécurise le circuit.', narrativeFunction: 'repair_action', universe: 'electricite', tone: 'reactif' },
+  { text: 'Mise en sécurité immédiate.', narrativeFunction: 'repair_action', universe: 'electricite', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'Le disjoncteur est remplacé.', narrativeFunction: 'repair_action', universe: 'electricite', tone: 'pedagogique' },
+  { text: 'La prise est changée.', narrativeFunction: 'repair_action', universe: 'electricite', tone: 'rassurant' },
+  { text: 'Le câble est refait proprement.', narrativeFunction: 'repair_action', universe: 'electricite', tone: 'pedagogique' },
+  { text: 'Il isole le circuit dangereux.', narrativeFunction: 'repair_action', universe: 'electricite', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'Le tableau est remis en ordre.', narrativeFunction: 'repair_action', universe: 'electricite', tone: 'rassurant' },
+
+  // result_visible
+  { text: 'La lumière revient enfin.', narrativeFunction: 'result_visible', universe: 'electricite', tone: 'rassurant' },
+  { text: 'Le courant est stable.', narrativeFunction: 'result_visible', universe: 'electricite', tone: 'rassurant' },
+  { text: 'Plus de risque électrique.', narrativeFunction: 'result_visible', universe: 'electricite', tone: 'rassurant' },
+  { text: 'L\'installation est sûre.', narrativeFunction: 'result_visible', universe: 'electricite', tone: 'pedagogique' },
+  { text: 'Les appareils fonctionnent normalement.', narrativeFunction: 'result_visible', universe: 'electricite', tone: 'rassurant' },
+  { text: 'Le tableau est aux normes.', narrativeFunction: 'result_visible', universe: 'electricite', tone: 'pedagogique' },
 ];
 
 // ============================================================================
@@ -102,15 +265,49 @@ const ELECTRICITE: TextAtomEntry[] = [
 // ============================================================================
 
 const SERRURERIE: TextAtomEntry[] = [
-  { text: 'La porte claque derrière lui.', narrativeFunction: 'problem_appears', universe: 'serrurerie' },
-  { text: 'La clé se casse net.', narrativeFunction: 'problem_appears', universe: 'serrurerie' },
-  { text: 'Impossible d\'entrer chez soi.', narrativeFunction: 'problem_worsens', universe: 'serrurerie' },
-  { text: 'Le stress monte rapidement.', narrativeFunction: 'problem_worsens', universe: 'serrurerie' },
-  { text: 'Il examine la serrure.', narrativeFunction: 'inspection_diagnosis', universe: 'serrurerie' },
-  { text: 'Le cylindre est extrait.', narrativeFunction: 'repair_action', universe: 'serrurerie' },
-  { text: 'Ouverture sans casse.', narrativeFunction: 'repair_action', universe: 'serrurerie' },
-  { text: 'L\'accès est rétabli.', narrativeFunction: 'result_visible', universe: 'serrurerie' },
-  { text: 'La porte ferme parfaitement.', narrativeFunction: 'result_visible', universe: 'serrurerie' },
+  // problem_appears
+  { text: 'La porte claque derrière lui.', narrativeFunction: 'problem_appears', universe: 'serrurerie', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'La clé se casse net.', narrativeFunction: 'problem_appears', universe: 'serrurerie', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'Impossible de tourner la clé.', narrativeFunction: 'problem_appears', universe: 'serrurerie', tone: 'reactif' },
+  { text: 'La serrure grince depuis des semaines.', narrativeFunction: 'problem_appears', universe: 'serrurerie', tone: 'pedagogique', urgencyLevel: 'faible' },
+  { text: 'Le verrou ne tient plus.', narrativeFunction: 'problem_appears', universe: 'serrurerie', tone: 'rassurant', urgencyLevel: 'moyenne' },
+  { text: 'La porte ne ferme plus bien.', narrativeFunction: 'problem_appears', universe: 'serrurerie', tone: 'rassurant' },
+  { text: 'La clé reste coincée dedans.', narrativeFunction: 'problem_appears', universe: 'serrurerie', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'La poignée tombe dans la main.', narrativeFunction: 'problem_appears', universe: 'serrurerie', tone: 'proximite' },
+  { text: 'On force, mais rien ne bouge.', narrativeFunction: 'problem_appears', universe: 'serrurerie', tone: 'reactif' },
+  { text: 'La porte résiste, bloquée.', narrativeFunction: 'problem_appears', universe: 'serrurerie', tone: 'reactif' },
+
+  // problem_worsens
+  { text: 'Impossible d\'entrer chez soi.', narrativeFunction: 'problem_worsens', universe: 'serrurerie', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'Le stress monte rapidement.', narrativeFunction: 'problem_worsens', universe: 'serrurerie', tone: 'reactif' },
+  { text: 'Les enfants attendent dehors.', narrativeFunction: 'problem_worsens', universe: 'serrurerie', tone: 'proximite', urgencyLevel: 'forte' },
+  { text: 'Il pleut et on est dehors.', narrativeFunction: 'problem_worsens', universe: 'serrurerie', tone: 'proximite', urgencyLevel: 'forte' },
+  { text: 'La sécurité n\'est plus assurée.', narrativeFunction: 'problem_worsens', universe: 'serrurerie', tone: 'rassurant' },
+  { text: 'La nuit tombe, toujours dehors.', narrativeFunction: 'problem_worsens', universe: 'serrurerie', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'La porte est grande ouverte.', narrativeFunction: 'problem_worsens', universe: 'serrurerie', tone: 'reactif' },
+
+  // inspection_diagnosis
+  { text: 'Il examine la serrure.', narrativeFunction: 'inspection_diagnosis', universe: 'serrurerie', tone: 'pedagogique' },
+  { text: 'Le cylindre est usé.', narrativeFunction: 'inspection_diagnosis', universe: 'serrurerie', tone: 'pedagogique' },
+  { text: 'Le mécanisme est grippé.', narrativeFunction: 'inspection_diagnosis', universe: 'serrurerie', tone: 'pedagogique' },
+  { text: 'Il repère le point de blocage.', narrativeFunction: 'inspection_diagnosis', universe: 'serrurerie', tone: 'rassurant' },
+  { text: 'La gâche est décalée.', narrativeFunction: 'inspection_diagnosis', universe: 'serrurerie', tone: 'pedagogique' },
+
+  // repair_action
+  { text: 'Le cylindre est extrait.', narrativeFunction: 'repair_action', universe: 'serrurerie', tone: 'pedagogique' },
+  { text: 'Ouverture sans casse.', narrativeFunction: 'repair_action', universe: 'serrurerie', tone: 'rassurant' },
+  { text: 'La serrure est remplacée.', narrativeFunction: 'repair_action', universe: 'serrurerie', tone: 'rassurant' },
+  { text: 'Le pêne est réaligné.', narrativeFunction: 'repair_action', universe: 'serrurerie', tone: 'pedagogique' },
+  { text: 'Il change le barillet.', narrativeFunction: 'repair_action', universe: 'serrurerie', tone: 'pedagogique' },
+  { text: 'Il sécurise la fermeture.', narrativeFunction: 'repair_action', universe: 'serrurerie', tone: 'rassurant' },
+
+  // result_visible
+  { text: 'L\'accès est rétabli.', narrativeFunction: 'result_visible', universe: 'serrurerie', tone: 'rassurant' },
+  { text: 'La porte ferme parfaitement.', narrativeFunction: 'result_visible', universe: 'serrurerie', tone: 'rassurant' },
+  { text: 'La serrure est fiable.', narrativeFunction: 'result_visible', universe: 'serrurerie', tone: 'pedagogique' },
+  { text: 'On peut rentrer chez soi.', narrativeFunction: 'result_visible', universe: 'serrurerie', tone: 'proximite' },
+  { text: 'Fermeture solide et nette.', narrativeFunction: 'result_visible', universe: 'serrurerie', tone: 'rassurant' },
+  { text: 'Nouvelles clés en main.', narrativeFunction: 'result_visible', universe: 'serrurerie', tone: 'proximite' },
 ];
 
 // ============================================================================
@@ -118,14 +315,48 @@ const SERRURERIE: TextAtomEntry[] = [
 // ============================================================================
 
 const VITRERIE: TextAtomEntry[] = [
-  { text: 'Un bruit sec surprend.', narrativeFunction: 'problem_appears', universe: 'vitrerie' },
-  { text: 'La vitre est fissurée.', narrativeFunction: 'problem_appears', universe: 'vitrerie' },
-  { text: 'La fissure s\'étend lentement.', narrativeFunction: 'problem_worsens', universe: 'vitrerie' },
-  { text: 'Le séjour devient moins sûr.', narrativeFunction: 'problem_worsens', universe: 'vitrerie' },
-  { text: 'Il inspecte le vitrage.', narrativeFunction: 'inspection_diagnosis', universe: 'vitrerie' },
-  { text: 'La zone est sécurisée.', narrativeFunction: 'repair_action', universe: 'vitrerie' },
-  { text: 'Le vitrage est remplacé.', narrativeFunction: 'repair_action', universe: 'vitrerie' },
-  { text: 'Fenêtre comme neuve.', narrativeFunction: 'result_visible', universe: 'vitrerie' },
+  // problem_appears
+  { text: 'Un bruit sec surprend.', narrativeFunction: 'problem_appears', universe: 'vitrerie', tone: 'reactif' },
+  { text: 'La vitre est fissurée.', narrativeFunction: 'problem_appears', universe: 'vitrerie', tone: 'rassurant' },
+  { text: 'Un impact sur la baie vitrée.', narrativeFunction: 'problem_appears', universe: 'vitrerie', tone: 'reactif' },
+  { text: 'Le carreau est fendu.', narrativeFunction: 'problem_appears', universe: 'vitrerie', tone: 'rassurant' },
+  { text: 'La vitrine est touchée.', narrativeFunction: 'problem_appears', universe: 'vitrerie', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'Le double vitrage est embué.', narrativeFunction: 'problem_appears', universe: 'vitrerie', tone: 'pedagogique', urgencyLevel: 'faible' },
+  { text: 'Le joint du vitrage lâche.', narrativeFunction: 'problem_appears', universe: 'vitrerie', tone: 'pedagogique' },
+  { text: 'Un éclat de verre au sol.', narrativeFunction: 'problem_appears', universe: 'vitrerie', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'De l\'air passe par la vitre.', narrativeFunction: 'problem_appears', universe: 'vitrerie', tone: 'pedagogique' },
+
+  // problem_worsens
+  { text: 'La fissure s\'étend lentement.', narrativeFunction: 'problem_worsens', universe: 'vitrerie', tone: 'reactif' },
+  { text: 'Le séjour devient moins sûr.', narrativeFunction: 'problem_worsens', universe: 'vitrerie', tone: 'rassurant' },
+  { text: 'Risque d\'éclats à tout moment.', narrativeFunction: 'problem_worsens', universe: 'vitrerie', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'La vitre menace de tomber.', narrativeFunction: 'problem_worsens', universe: 'vitrerie', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'On n\'ose plus ouvrir la fenêtre.', narrativeFunction: 'problem_worsens', universe: 'vitrerie', tone: 'proximite' },
+  { text: 'Le froid entre par la fissure.', narrativeFunction: 'problem_worsens', universe: 'vitrerie', tone: 'pedagogique' },
+  { text: 'L\'isolation est compromise.', narrativeFunction: 'problem_worsens', universe: 'vitrerie', tone: 'pedagogique' },
+
+  // inspection_diagnosis
+  { text: 'Il inspecte le vitrage.', narrativeFunction: 'inspection_diagnosis', universe: 'vitrerie', tone: 'pedagogique' },
+  { text: 'Le cadre est vérifié aussi.', narrativeFunction: 'inspection_diagnosis', universe: 'vitrerie', tone: 'pedagogique' },
+  { text: 'Il mesure pour le remplacement.', narrativeFunction: 'inspection_diagnosis', universe: 'vitrerie', tone: 'pedagogique' },
+  { text: 'Le type de vitrage est identifié.', narrativeFunction: 'inspection_diagnosis', universe: 'vitrerie', tone: 'pedagogique' },
+  { text: 'Il évalue l\'étendue du dommage.', narrativeFunction: 'inspection_diagnosis', universe: 'vitrerie', tone: 'rassurant' },
+
+  // repair_action
+  { text: 'La zone est sécurisée.', narrativeFunction: 'repair_action', universe: 'vitrerie', tone: 'reactif' },
+  { text: 'Le vitrage est remplacé.', narrativeFunction: 'repair_action', universe: 'vitrerie', tone: 'rassurant' },
+  { text: 'Il pose une protection temporaire.', narrativeFunction: 'repair_action', universe: 'vitrerie', tone: 'reactif', urgencyLevel: 'forte' },
+  { text: 'Le nouveau vitrage est en place.', narrativeFunction: 'repair_action', universe: 'vitrerie', tone: 'rassurant' },
+  { text: 'Les éclats sont nettoyés.', narrativeFunction: 'repair_action', universe: 'vitrerie', tone: 'rassurant' },
+  { text: 'Il refait l\'étanchéité.', narrativeFunction: 'repair_action', universe: 'vitrerie', tone: 'pedagogique' },
+
+  // result_visible
+  { text: 'Fenêtre comme neuve.', narrativeFunction: 'result_visible', universe: 'vitrerie', tone: 'rassurant' },
+  { text: 'Plus de risque d\'éclats.', narrativeFunction: 'result_visible', universe: 'vitrerie', tone: 'rassurant' },
+  { text: 'La lumière entre à nouveau.', narrativeFunction: 'result_visible', universe: 'vitrerie', tone: 'proximite' },
+  { text: 'Vitrage neuf et étanche.', narrativeFunction: 'result_visible', universe: 'vitrerie', tone: 'pedagogique' },
+  { text: 'La vitrine est réparée.', narrativeFunction: 'result_visible', universe: 'vitrerie', tone: 'rassurant' },
+  { text: 'Le froid ne passe plus.', narrativeFunction: 'result_visible', universe: 'vitrerie', tone: 'proximite' },
 ];
 
 // ============================================================================
@@ -133,14 +364,50 @@ const VITRERIE: TextAtomEntry[] = [
 // ============================================================================
 
 const MENUISERIE_ATOMS: TextAtomEntry[] = [
-  { text: 'Le volet ne monte plus.', narrativeFunction: 'problem_appears', universe: 'menuiserie' },
-  { text: 'La fenêtre ne ferme plus.', narrativeFunction: 'problem_appears', universe: 'menuiserie' },
-  { text: 'Ça force de plus en plus.', narrativeFunction: 'problem_worsens', universe: 'menuiserie' },
-  { text: 'Le blocage est total.', narrativeFunction: 'problem_worsens', universe: 'menuiserie' },
-  { text: 'Il vérifie le mécanisme.', narrativeFunction: 'inspection_diagnosis', universe: 'menuiserie' },
-  { text: 'Le réglage est effectué.', narrativeFunction: 'repair_action', universe: 'menuiserie' },
-  { text: 'Le volet coulisse à nouveau.', narrativeFunction: 'result_visible', universe: 'menuiserie' },
-  { text: 'L\'ouvrant fonctionne parfaitement.', narrativeFunction: 'result_visible', universe: 'menuiserie' },
+  // problem_appears
+  { text: 'Le volet ne monte plus.', narrativeFunction: 'problem_appears', universe: 'menuiserie', tone: 'rassurant' },
+  { text: 'La fenêtre ne ferme plus.', narrativeFunction: 'problem_appears', universe: 'menuiserie', tone: 'reactif' },
+  { text: 'Le volet est bloqué en haut.', narrativeFunction: 'problem_appears', universe: 'menuiserie', tone: 'rassurant' },
+  { text: 'La porte intérieure coince.', narrativeFunction: 'problem_appears', universe: 'menuiserie', tone: 'rassurant', urgencyLevel: 'faible' },
+  { text: 'Le bois a gonflé avec l\'humidité.', narrativeFunction: 'problem_appears', universe: 'menuiserie', tone: 'pedagogique' },
+  { text: 'La charnière grince fort.', narrativeFunction: 'problem_appears', universe: 'menuiserie', tone: 'rassurant', urgencyLevel: 'faible' },
+  { text: 'Le rail est tordu.', narrativeFunction: 'problem_appears', universe: 'menuiserie', tone: 'pedagogique' },
+  { text: 'La baie coulissante résiste.', narrativeFunction: 'problem_appears', universe: 'menuiserie', tone: 'rassurant' },
+  { text: 'Un volet reste coincé à mi-course.', narrativeFunction: 'problem_appears', universe: 'menuiserie', tone: 'reactif' },
+  { text: 'La poignée ne tient plus.', narrativeFunction: 'problem_appears', universe: 'menuiserie', tone: 'rassurant', urgencyLevel: 'faible' },
+
+  // problem_worsens
+  { text: 'Ça force de plus en plus.', narrativeFunction: 'problem_worsens', universe: 'menuiserie', tone: 'reactif' },
+  { text: 'Le blocage est total.', narrativeFunction: 'problem_worsens', universe: 'menuiserie', tone: 'reactif' },
+  { text: 'Le moteur tourne dans le vide.', narrativeFunction: 'problem_worsens', universe: 'menuiserie', tone: 'pedagogique' },
+  { text: 'La fenêtre bâille, le froid entre.', narrativeFunction: 'problem_worsens', universe: 'menuiserie', tone: 'proximite' },
+  { text: 'On ne peut plus ouvrir du tout.', narrativeFunction: 'problem_worsens', universe: 'menuiserie', tone: 'reactif' },
+  { text: 'Le mécanisme fait un bruit anormal.', narrativeFunction: 'problem_worsens', universe: 'menuiserie', tone: 'pedagogique' },
+  { text: 'Les lames commencent à se décaler.', narrativeFunction: 'problem_worsens', universe: 'menuiserie', tone: 'pedagogique' },
+
+  // inspection_diagnosis
+  { text: 'Il vérifie le mécanisme.', narrativeFunction: 'inspection_diagnosis', universe: 'menuiserie', tone: 'pedagogique' },
+  { text: 'Le guidage est abîmé.', narrativeFunction: 'inspection_diagnosis', universe: 'menuiserie', tone: 'pedagogique' },
+  { text: 'Il démonte le coffre du volet.', narrativeFunction: 'inspection_diagnosis', universe: 'menuiserie', tone: 'pedagogique' },
+  { text: 'La sangle est usée.', narrativeFunction: 'inspection_diagnosis', universe: 'menuiserie', tone: 'pedagogique' },
+  { text: 'Le problème vient du rail.', narrativeFunction: 'inspection_diagnosis', universe: 'menuiserie', tone: 'rassurant' },
+  { text: 'Les paumelles sont décalées.', narrativeFunction: 'inspection_diagnosis', universe: 'menuiserie', tone: 'pedagogique' },
+
+  // repair_action
+  { text: 'Le réglage est effectué.', narrativeFunction: 'repair_action', universe: 'menuiserie', tone: 'rassurant' },
+  { text: 'Il change la sangle.', narrativeFunction: 'repair_action', universe: 'menuiserie', tone: 'pedagogique' },
+  { text: 'Le rail est redressé.', narrativeFunction: 'repair_action', universe: 'menuiserie', tone: 'pedagogique' },
+  { text: 'Les charnières sont remplacées.', narrativeFunction: 'repair_action', universe: 'menuiserie', tone: 'rassurant' },
+  { text: 'Il rabote la porte.', narrativeFunction: 'repair_action', universe: 'menuiserie', tone: 'pedagogique' },
+  { text: 'Le mécanisme est remis en place.', narrativeFunction: 'repair_action', universe: 'menuiserie', tone: 'rassurant' },
+
+  // result_visible
+  { text: 'Le volet coulisse à nouveau.', narrativeFunction: 'result_visible', universe: 'menuiserie', tone: 'rassurant' },
+  { text: 'L\'ouvrant fonctionne parfaitement.', narrativeFunction: 'result_visible', universe: 'menuiserie', tone: 'rassurant' },
+  { text: 'La porte s\'ouvre sans effort.', narrativeFunction: 'result_visible', universe: 'menuiserie', tone: 'proximite' },
+  { text: 'Le volet monte et descend.', narrativeFunction: 'result_visible', universe: 'menuiserie', tone: 'rassurant' },
+  { text: 'La fenêtre se ferme à nouveau.', narrativeFunction: 'result_visible', universe: 'menuiserie', tone: 'rassurant' },
+  { text: 'Plus de bruit, plus de résistance.', narrativeFunction: 'result_visible', universe: 'menuiserie', tone: 'proximite' },
 ];
 
 // ============================================================================
@@ -148,14 +415,50 @@ const MENUISERIE_ATOMS: TextAtomEntry[] = [
 // ============================================================================
 
 const PEINTURE_ATOMS: TextAtomEntry[] = [
-  { text: 'Le mur est abîmé.', narrativeFunction: 'problem_appears', universe: 'peinture_renovation' },
-  { text: 'La peinture s\'écaille.', narrativeFunction: 'problem_appears', universe: 'peinture_renovation' },
-  { text: 'La tache s\'étend sur le plafond.', narrativeFunction: 'problem_worsens', universe: 'peinture_renovation' },
-  { text: 'L\'aspect se dégrade.', narrativeFunction: 'problem_worsens', universe: 'peinture_renovation' },
-  { text: 'Il prépare le support.', narrativeFunction: 'inspection_diagnosis', universe: 'peinture_renovation' },
-  { text: 'L\'enduit est appliqué.', narrativeFunction: 'repair_action', universe: 'peinture_renovation' },
-  { text: 'La peinture est reprise.', narrativeFunction: 'repair_action', universe: 'peinture_renovation' },
-  { text: 'Le mur est comme neuf.', narrativeFunction: 'result_visible', universe: 'peinture_renovation' },
+  // problem_appears
+  { text: 'Le mur est abîmé.', narrativeFunction: 'problem_appears', universe: 'peinture_renovation', tone: 'rassurant' },
+  { text: 'La peinture s\'écaille.', narrativeFunction: 'problem_appears', universe: 'peinture_renovation', tone: 'rassurant' },
+  { text: 'Une tache apparaît au plafond.', narrativeFunction: 'problem_appears', universe: 'peinture_renovation', tone: 'rassurant' },
+  { text: 'Le papier peint se décolle.', narrativeFunction: 'problem_appears', universe: 'peinture_renovation', tone: 'rassurant', urgencyLevel: 'faible' },
+  { text: 'L\'enduit se fissure par endroits.', narrativeFunction: 'problem_appears', universe: 'peinture_renovation', tone: 'pedagogique' },
+  { text: 'Le mur est marqué et rayé.', narrativeFunction: 'problem_appears', universe: 'peinture_renovation', tone: 'rassurant', urgencyLevel: 'faible' },
+  { text: 'Des traces d\'humidité apparaissent.', narrativeFunction: 'problem_appears', universe: 'peinture_renovation', tone: 'pedagogique', urgencyLevel: 'moyenne' },
+  { text: 'Le plafond a jauni.', narrativeFunction: 'problem_appears', universe: 'peinture_renovation', tone: 'rassurant', urgencyLevel: 'faible' },
+  { text: 'Un raccord de peinture se voit.', narrativeFunction: 'problem_appears', universe: 'peinture_renovation', tone: 'rassurant', urgencyLevel: 'faible' },
+  { text: 'La couleur a passé avec le temps.', narrativeFunction: 'problem_appears', universe: 'peinture_renovation', tone: 'pedagogique' },
+
+  // problem_worsens
+  { text: 'La tache s\'étend sur le plafond.', narrativeFunction: 'problem_worsens', universe: 'peinture_renovation', tone: 'reactif' },
+  { text: 'L\'aspect se dégrade.', narrativeFunction: 'problem_worsens', universe: 'peinture_renovation', tone: 'rassurant' },
+  { text: 'La moisissure gagne du terrain.', narrativeFunction: 'problem_worsens', universe: 'peinture_renovation', tone: 'pedagogique', urgencyLevel: 'moyenne' },
+  { text: 'L\'enduit tombe par morceaux.', narrativeFunction: 'problem_worsens', universe: 'peinture_renovation', tone: 'reactif' },
+  { text: 'Le mur devient vraiment laid.', narrativeFunction: 'problem_worsens', universe: 'peinture_renovation', tone: 'proximite' },
+  { text: 'Les invités arrivent bientôt.', narrativeFunction: 'problem_worsens', universe: 'peinture_renovation', tone: 'proximite' },
+  { text: 'C\'est de pire en pire.', narrativeFunction: 'problem_worsens', universe: 'peinture_renovation', tone: 'reactif' },
+
+  // inspection_diagnosis
+  { text: 'Il prépare le support.', narrativeFunction: 'inspection_diagnosis', universe: 'peinture_renovation', tone: 'pedagogique' },
+  { text: 'Il identifie la cause.', narrativeFunction: 'inspection_diagnosis', universe: 'peinture_renovation', tone: 'pedagogique' },
+  { text: 'Le mur est nettoyé d\'abord.', narrativeFunction: 'inspection_diagnosis', universe: 'peinture_renovation', tone: 'pedagogique' },
+  { text: 'Il vérifie l\'état du support.', narrativeFunction: 'inspection_diagnosis', universe: 'peinture_renovation', tone: 'pedagogique' },
+  { text: 'L\'humidité est traitée en premier.', narrativeFunction: 'inspection_diagnosis', universe: 'peinture_renovation', tone: 'pedagogique' },
+  { text: 'Il ponce la surface.', narrativeFunction: 'inspection_diagnosis', universe: 'peinture_renovation', tone: 'pedagogique' },
+
+  // repair_action
+  { text: 'L\'enduit est appliqué.', narrativeFunction: 'repair_action', universe: 'peinture_renovation', tone: 'rassurant' },
+  { text: 'La peinture est reprise.', narrativeFunction: 'repair_action', universe: 'peinture_renovation', tone: 'rassurant' },
+  { text: 'Il rebouche les fissures.', narrativeFunction: 'repair_action', universe: 'peinture_renovation', tone: 'pedagogique' },
+  { text: 'Le rouleau passe avec précision.', narrativeFunction: 'repair_action', universe: 'peinture_renovation', tone: 'pedagogique' },
+  { text: 'Deux couches pour un résultat net.', narrativeFunction: 'repair_action', universe: 'peinture_renovation', tone: 'pedagogique' },
+  { text: 'Le raccord est invisible.', narrativeFunction: 'repair_action', universe: 'peinture_renovation', tone: 'rassurant' },
+
+  // result_visible
+  { text: 'Le mur est comme neuf.', narrativeFunction: 'result_visible', universe: 'peinture_renovation', tone: 'rassurant' },
+  { text: 'Le plafond a retrouvé sa couleur.', narrativeFunction: 'result_visible', universe: 'peinture_renovation', tone: 'rassurant' },
+  { text: 'On ne voit plus la reprise.', narrativeFunction: 'result_visible', universe: 'peinture_renovation', tone: 'rassurant' },
+  { text: 'La pièce est transformée.', narrativeFunction: 'result_visible', universe: 'peinture_renovation', tone: 'proximite' },
+  { text: 'Aspect propre et uniforme.', narrativeFunction: 'result_visible', universe: 'peinture_renovation', tone: 'rassurant' },
+  { text: 'Comme si rien ne s\'était passé.', narrativeFunction: 'result_visible', universe: 'peinture_renovation', tone: 'proximite' },
 ];
 
 // ============================================================================
@@ -163,7 +466,13 @@ const PEINTURE_ATOMS: TextAtomEntry[] = [
 // ============================================================================
 
 export const ALL_TEXT_ATOMS: TextAtomEntry[] = [
-  ...GENERIC,
+  ...GENERIC_CLIENT_SETUP,
+  ...GENERIC_CLIENT_CONTEXT,
+  ...GENERIC_DECISION,
+  ...GENERIC_CALL,
+  ...GENERIC_SCHEDULING,
+  ...GENERIC_ARRIVAL,
+  ...GENERIC_RESULT,
   ...PLOMBERIE,
   ...ELECTRICITE,
   ...SERRURERIE,
@@ -172,14 +481,23 @@ export const ALL_TEXT_ATOMS: TextAtomEntry[] = [
   ...PEINTURE_ATOMS,
 ];
 
-/** Get text atoms for a specific function + universe */
+/** Get text atoms with full filtering */
 export function getTextAtoms(
   narrativeFunction: NarrativeFunction,
   universe?: ProblemUniverse | 'general',
+  tone?: 'rassurant' | 'pedagogique' | 'reactif' | 'proximite',
+  urgencyLevel?: 'faible' | 'moyenne' | 'forte',
 ): TextAtomEntry[] {
   return ALL_TEXT_ATOMS.filter(a => {
     if (a.narrativeFunction !== narrativeFunction) return false;
-    if (!universe) return true;
-    return a.universe === universe || a.universe === 'general';
+    if (universe && a.universe !== universe && a.universe !== 'general') return false;
+    if (tone && a.tone && a.tone !== tone) return false;
+    if (urgencyLevel && a.urgencyLevel && a.urgencyLevel !== urgencyLevel) return false;
+    return true;
   });
+}
+
+/** Count total atoms */
+export function getTextAtomsCount(): number {
+  return ALL_TEXT_ATOMS.length;
 }
