@@ -48,12 +48,14 @@ interface AwarenessDay {
   contentTypeHint: string;
   preferredUniverses: string[];
   ctaHint: string;
-  /** 1=aucun lien métier (ignoré), 2=angle possible (optionnel), 3=lien direct métier */
+  /** 1=JAMAIS de métier forcé, 2=angle possible (optionnel), 3=lien direct métier */
   relevanceScore: 1 | 2 | 3;
   /** 1=inspiration/branding, 2=réflexion/amélioration, 3=urgence/besoin immédiat */
   intentScore: 1 | 2 | 3;
-  /** Calendar-first angle for non-business days */
-  calendarAngle?: 'interne' | 'image_marque' | 'leger' | 'disponibilite' | 'metier';
+  /** Calendar-first angle — determines the editorial approach */
+  calendarAngle?: 'interne' | 'image_marque' | 'leger' | 'creatif' | 'disponibilite' | 'metier' | 'prevention' | 'preuve' | 'commercial' | 'emotionnel';
+  /** Human-readable usage hint for the AI prompt */
+  useHint?: string;
 }
 
 // ─── Build awareness days for a given year (dynamic Easter + fixed dates) ───
