@@ -772,23 +772,31 @@ Un post "correct mais non actionnable" est un MAUVAIS post.
 ═══════════════════════════════════════════
 HOOK — LIBRAIRIE OBLIGATOIRE (CRITIQUE)
 ═══════════════════════════════════════════
-Tu DOIS sélectionner chaque hook depuis la LIBRAIRIE DE HOOKS ci-dessous.
-INTERDICTION de générer des hooks aléatoires ou inventés.
+Tu DOIS sélectionner chaque hook depuis la LIBRAIRIE DE HOOKS ci-dessous OU le générer via les PATTERNS AUTORISÉS.
+INTERDICTION de générer des hooks aléatoires ou inventés hors de ces deux méthodes.
 
 PROCESSUS DE SÉLECTION :
 1. Identifier l'univers métier du post
 2. Identifier la saison (${currentSeason})
-3. Identifier l'intention prioritaire (urgence > prévention > argent > sécurité > saisonnier)
+3. Identifier l'intention prioritaire (urgence > argent > sécurité > prévention > saisonnier)
 4. Filtrer les hooks compatibles dans la librairie
-5. En sélectionner UN
+5. En sélectionner UN, ou générer via un pattern
 
-ADAPTATION AUTORISÉE :
-- Le hook peut être LÉGÈREMENT adapté pour coller au contexte
-- JAMAIS dépasser 6 mots
-- JAMAIS transformer en phrase longue
+PATTERNS AUTORISÉS (pour créer de nouveaux hooks) :
+1. QUESTION : "Votre [élément] [problème] ?"
+2. ALERTE : "Ça peut [conséquence]"
+3. PERTE : "Vous perdez [ressource]"
+4. ANTICIPATION : "Avant [moment], [action]"
+5. RISQUE : "Et si [scénario] ?"
+
+ÉLÉMENTS MÉTIER AUTORISÉS : robinet, canalisation, volet, serrure, porte, tableau électrique, installation, chauffe-eau, disjoncteur, fenêtre, parquet, carrelage
+
+CONTRAINTES HOOK :
+- Maximum 6 mots, phrase complète, lisible immédiatement
+- Si trop long → simplifier automatiquement
 - L'esprit du hook original DOIT être préservé
 
-LIBRAIRIE DE HOOKS (saison: ${currentSeason}) :
+LIBRAIRIE DE HOOKS (${totalHooks} hooks, saison: ${currentSeason}) :
 ${hookLibraryPrompt}
 
 ═══════════════════════════════════════════
@@ -796,18 +804,20 @@ STRUCTURE OBLIGATOIRE (PUBLICITÉ, PAS CONTENU)
 ═══════════════════════════════════════════
 Chaque post = une PUBLICITÉ, pas du contenu informatif.
 
-HOOK (issu de la librairie, max 6 mots)
+HOOK (issu de la librairie ou d'un pattern, max 6 mots)
 → le problème brut, immédiat
 
-SOUS-TEXTE (max 10 mots)
+SOUS-TEXTE (max 10 mots, phrase française PARFAITE)
 → le bénéfice clair, la conséquence ou le coût
+→ DOIT être grammaticalement correct (un francophone natif ne doit pas tiquer)
+→ INTERDIT : juxtaposition de mots sans verbe, phrases tronquées
 
 CTA (3 à 5 mots)
 → l'action directe
 
 Exemple :
 HOOK : "FUITE SOUS L'ÉVIER ?"
-SOUS-TEXTE : "Chaque jour perdu = 40€ de plus"
+SOUS-TEXTE : "Chaque jour perdu coûte 40 € de plus."
 CTA : "Appelez, on intervient vite"
 
 INTERDIT :
