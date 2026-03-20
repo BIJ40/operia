@@ -305,8 +305,12 @@ Deno.serve(async (req) => {
     const rawHook = aiPayload.hook || title;
     const rawCta = aiPayload.cta || 'Demandez un devis gratuit';
     const visualPrompt = aiPayload.visual_prompt || '';
-    // topicType already declared above
     const rawCaption = suggestion.caption_base_fr || '';
+
+    // ── Resolve visual style mode (80% réaliste / 10% optimisé / 10% créatif) ──
+    const visualStyle: VisualStyle = resolveVisualStyle(topicType);
+    const visualStyleDirective = VISUAL_STYLE_DIRECTIVES[visualStyle];
+    console.log(`[social-visual-generate] Visual style: ${visualStyle} (topic: ${topicType})`);
 
     // Validate AI keys are available
     let AI_KEYS_VALID = true;
