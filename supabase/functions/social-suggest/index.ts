@@ -266,8 +266,16 @@ function validateAndNormalizeSuggestions(
     if (seenTopicKeys.has(topicKey) || existingTopicKeys.has(topicKey)) continue;
     seenTopicKeys.add(topicKey);
 
-    // 4. universe
-    const universe = (NORMALIZED_UNIVERSES as readonly string[]).includes(s.universe) ? s.universe : 'general';
+    // 4. universe — enforce from awareness day if matching
+    let universe = (NORMALIZED_UNIVERSES as readonly string[]).includes(s.universe) ? s.universe : 'general';
+    const actualDay = parseInt(date.split('-')[2]);
+    const matchingAwareness = AWARENESS_DAYS.find(a => a.month === month && a.day === actualDay);
+    if (matchingAwareness && matchingAwareness.preferredUniverses.length > 0) {
+      const preferredUni = matchingAwareness.preferredUniverses[0];
+      if ((NORMALIZED_UNIVERSES as readonly string[]).includes(preferredUni)) {
+        universe = preferredUni; // Force the calendar event's preferred universe
+      }
+    }
 
     // 5. realisation_id
     let realisationId: string | null = null;
