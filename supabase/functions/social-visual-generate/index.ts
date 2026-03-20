@@ -152,8 +152,9 @@ async function callImageAIWithFallback(
   const hasInputImages = inputImages.length > 0;
   const forceGemini = preferredModel === 'gemini';
   const forceDalle = preferredModel === 'dall-e-3';
+  const requiresReferenceFaithfulness = hasInputImages;
 
-  console.log(`[callImageAI] preferredModel=${preferredModel || 'auto'}, hasInputImages=${hasInputImages}, forceGemini=${forceGemini}, forceDalle=${forceDalle}`);
+  console.log(`[callImageAI] preferredModel=${preferredModel || 'auto'}, hasInputImages=${hasInputImages}, forceGemini=${forceGemini}, forceDalle=${forceDalle}, referenceFaithfulness=${requiresReferenceFaithfulness}`);
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // ROUTE A: Input images present OR user forced Gemini → Gemini FIRST
