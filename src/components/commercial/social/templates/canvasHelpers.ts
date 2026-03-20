@@ -38,20 +38,20 @@ export const ZONES = {
   TEXT_WIDTH: 940,     // SIZE - 2*MARGIN_X
 } as const;
 
-// ─── Text constraints ───────────────────────────────────────
-const HOOK_MAX_CHARS = 50;
-const HOOK_MAX_WORDS = 8;
-const HOOK_MAX_LINES = 3;
+// ─── Text constraints — STRICT (verrouillé) ────────────────
+const HOOK_MAX_CHARS = 32;
+const HOOK_MAX_WORDS = 5;
+const HOOK_MAX_LINES = 2;
 const HOOK_FONT_MAX = 58;
 const HOOK_FONT_MIN = 38;
 
-const SUB_MAX_CHARS = 90;
-const SUB_MAX_WORDS = 18;
+const SUB_MAX_CHARS = 60;
+const SUB_MAX_WORDS = 10;
 const SUB_MAX_LINES = 2;
 const SUB_FONT = 24;
 
-const CTA_MAX_CHARS = 40;
-const CTA_FONT = 22;
+const CTA_MAX_CHARS = 25;
+const CTA_FONT = 24;
 
 // ─── Universe Style Map ─────────────────────────────────────
 export interface ServiceTheme {
@@ -82,40 +82,39 @@ export function getTheme(universe?: string | null): ServiceTheme {
 // TEXT SANITIZATION — Auto-optimize copy for canvas
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-/** Sanitize hook: max words, max chars, no truncation marks */
+/** Sanitize hook: max 5 words, max 32 chars, MUST be complete — never truncated */
 export function sanitizeHook(raw: string): string {
   if (!raw) return '';
   let text = raw.trim();
   // Remove trailing ellipsis/dots
   text = text.replace(/[…\.]+$/, '').trim();
-  // Limit words
+  // Limit words (strict: 5 max)
   const words = text.split(/\s+/);
   if (words.length > HOOK_MAX_WORDS) {
     text = words.slice(0, HOOK_MAX_WORDS).join(' ');
   }
-  // Limit chars
+  // Limit chars (strict: 32 max)
   if (text.length > HOOK_MAX_CHARS) {
     const cut = text.slice(0, HOOK_MAX_CHARS);
     const lastSpace = cut.lastIndexOf(' ');
-    text = lastSpace > HOOK_MAX_CHARS * 0.5 ? cut.slice(0, lastSpace) : cut;
+    text = lastSpace > 10 ? cut.slice(0, lastSpace) : cut;
   }
-  // Remove trailing punctuation artifacts
+  // Clean trailing punctuation artifacts (but keep sentence-ending ones)
   text = text.replace(/[\s,;:]+$/, '').trim();
   return text;
 }
 
-/** Sanitize subtext: complete sentence(s), max 18 words, 2 lines max */
+/** Sanitize subtext: max 10 words, max 60 chars, complete sentence — never truncated */
 export function sanitizeSubText(raw: string): string {
   if (!raw) return '';
   let text = raw.trim();
   // Remove trailing ellipsis
   text = text.replace(/[…]+$/, '').trim();
-  // Limit words (max 18)
+  // Limit words (strict: 10 max)
   const words = text.split(/\s+/);
   if (words.length > SUB_MAX_WORDS) {
-    // Try to cut at a natural sentence boundary
     let cutText = words.slice(0, SUB_MAX_WORDS).join(' ');
-    // Check for sentence-ending punctuation before the limit
+    // Try to cut at a natural sentence boundary
     const sentenceEnd = cutText.match(/^(.+[.!?])\s/);
     if (sentenceEnd) {
       cutText = sentenceEnd[1];
@@ -125,11 +124,11 @@ export function sanitizeSubText(raw: string): string {
     }
     text = cutText;
   }
-  // Limit chars
+  // Limit chars (strict: 60 max)
   if (text.length > SUB_MAX_CHARS) {
     const cut = text.slice(0, SUB_MAX_CHARS);
     const lastSpace = cut.lastIndexOf(' ');
-    text = lastSpace > SUB_MAX_CHARS * 0.4 ? cut.slice(0, lastSpace) : cut;
+    text = lastSpace > 20 ? cut.slice(0, lastSpace) : cut;
     text = text.replace(/[\s,;:]+$/, '').trim();
     if (!/[.!?]$/.test(text)) text += '.';
   }
