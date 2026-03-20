@@ -161,11 +161,96 @@ Deno.serve(async (req) => {
     const color = SERVICE_COLORS[universe] || SERVICE_COLORS.general;
     const serviceLabel = SERVICE_LABELS[universe] || SERVICE_LABELS.general;
     const title = suggestion.title || '';
-    const hook = aiPayload.hook || title;
-    const cta = aiPayload.cta || 'Demandez un devis gratuit';
+    const rawHook = aiPayload.hook || title;
+    const rawCta = aiPayload.cta || 'Demandez un devis gratuit';
     const visualPrompt = aiPayload.visual_prompt || '';
     const topicType = suggestion.topic_type || 'seasonal_tip';
-    const caption = suggestion.caption_base_fr || '';
+    const rawCaption = suggestion.caption_base_fr || '';
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ÉTAPE 0 : COPYWRITING IA — Réécriture cohérente du hook/sous-texte
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    let hook = rawHook;
+    let caption = rawCaption;
+    let cta = rawCta;
+
+    try {
+      console.log('[social-visual-generate] Generating coherent marketing copy...');
+      const copywritingPrompt = `Tu es un copywriter publicitaire expert pour une entreprise française de dépannage à domicile (plomberie, électricité, serrurerie, vitrerie, etc.) appelée "Help Confort".
+
+Contexte :
+- Univers/métier : ${serviceLabel}
+- Titre original : "${title}"
+- Hook original : "${rawHook}"
+- Sous-texte original : "${rawCaption}"
+- CTA original : "${rawCta}"
+- Type de post : ${topicType}
+
+MISSION : Réécris ces textes pour un visuel publicitaire social media (Instagram/Facebook).
+
+RÈGLES STRICTES :
+1. HOOK (phrase principale) :
+   - EXACTEMENT 3 à 5 mots
+   - Maximum 30 caractères
+   - Phrase COMPLÈTE, percutante, qui a du SENS
+   - Doit donner envie d'agir ou créer un sentiment d'urgence
+   - JAMAIS de phrase absurde, coupée ou incohérente
+   - Exemples bons : "Anticipez avant l'été", "Votre confort mérite mieux", "Agissez avant qu'il soit trop tard"
+   - Exemples MAUVAIS : "Le printemps ne revient pas", "Chaleur sans retour possible"
+
+2. SOUS-TEXTE (phrase secondaire) :
+   - EXACTEMENT 6 à 10 mots
+   - Maximum 55 caractères
+   - Phrase complète avec un point final
+   - Explique ou complète le hook
+   - Exemples bons : "Un diagnostic rapide pour protéger votre habitat.", "Nos experts interviennent dans les 24h."
+
+3. CTA (bouton d'action) :
+   - EXACTEMENT 2 à 4 mots
+   - Maximum 22 caractères
+   - Verbe d'action à l'infinitif ou impératif
+   - Exemples bons : "Demander un devis", "Prendre rendez-vous", "Nous contacter"
+
+Réponds UNIQUEMENT en JSON :
+{"hook": "...", "subtext": "...", "cta": "..."}`;
+
+      const copyResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-3-flash-preview',
+          messages: [{ role: 'user', content: copywritingPrompt }],
+          response_format: { type: 'json_object' },
+        }),
+      });
+
+      if (copyResponse.ok) {
+        const copyData = await copyResponse.json();
+        const rawContent = copyData.choices?.[0]?.message?.content || '';
+        try {
+          const parsed = JSON.parse(rawContent);
+          if (parsed.hook && parsed.hook.length <= 32 && parsed.hook.split(/\s+/).length <= 5) {
+            hook = parsed.hook;
+          }
+          if (parsed.subtext && parsed.subtext.length <= 60) {
+            caption = parsed.subtext;
+          }
+          if (parsed.cta && parsed.cta.length <= 25) {
+            cta = parsed.cta;
+          }
+          console.log('[social-visual-generate] AI copywriting result:', { hook, caption, cta });
+        } catch (parseErr) {
+          console.warn('[social-visual-generate] Failed to parse copywriting JSON, using originals:', rawContent);
+        }
+      } else {
+        console.warn('[social-visual-generate] Copywriting API returned', copyResponse.status, '— using originals');
+      }
+    } catch (copyErr) {
+      console.warn('[social-visual-generate] Copywriting step failed, using originals:', copyErr);
+    }
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
