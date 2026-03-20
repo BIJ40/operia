@@ -277,11 +277,11 @@ export async function drawHCLogo(ctx: CanvasRenderingContext2D, logoSrc: string,
 /** Universe picto + label — top right, inside ZONE 1 */
 export async function drawUniversePill(ctx: CanvasRenderingContext2D, theme: ServiceTheme, y = 35, pictoSrc?: string) {
   const pillText = theme.label.toUpperCase();
-  ctx.font = 'bold 18px sans-serif';
+  ctx.font = 'bold 22px sans-serif';
   const textW = ctx.measureText(pillText).width;
-  const pictoSize = 36;
-  const gap = 8;
-  const padX = 14;
+  const pictoSize = 44;
+  const gap = 10;
+  const padX = 16;
   const padY = 8;
   const hasPicto = !!pictoSrc;
   const pillW = (hasPicto ? pictoSize + gap : 0) + textW + padX * 2;
