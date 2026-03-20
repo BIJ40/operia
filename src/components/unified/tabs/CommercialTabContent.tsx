@@ -80,6 +80,7 @@ function CommercialInner() {
     { id: 'prospects', label: 'Prospects', icon: UserSearch },
     { id: 'realisations', label: getShortLabel('commercial.realisations', 'Réalisations'), icon: Camera },
     { id: 'social', label: getShortLabel('commercial.social', 'Social'), icon: Share2 },
+    { id: 'bd_story', label: getShortLabel('commercial.bd_story', 'BD Story'), icon: BookImage },
     { id: 'signature', label: getShortLabel('commercial.signature', 'Signatures'), icon: Stamp },
   ], [getShortLabel]);
 
