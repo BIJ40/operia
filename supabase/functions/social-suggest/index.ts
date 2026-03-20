@@ -859,10 +859,10 @@ Deno.serve(async (req) => {
     // Build weekly schedule for full month generation
     const weeklySchedule = buildWeeklySchedule(daysInMonth, year, month);
 
-    // ─── AI Generation ──────────────────────────────
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: 'Service IA non configuré' }), {
+    // ─── AI Generation (OpenAI + Claude fallback) ──────────────────────────────
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    if (!OPENAI_API_KEY) {
+      return new Response(JSON.stringify({ error: 'OPENAI_API_KEY non configurée' }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
