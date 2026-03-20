@@ -34,7 +34,14 @@ const SERVICE_LABELS: Record<string, string> = {
   volets: 'Volets roulants',
   pmr: 'Adaptation logement',
   renovation: 'Rénovation',
-  general: 'Multi-services',
+  general: 'Information',
+};
+
+const GENERAL_TOPIC_LABELS: Record<string, string> = {
+  awareness_day: 'Sensibilisation',
+  seasonal_tip: 'Conseil',
+  realisation: 'Réalisation',
+  local_branding: 'Réseau',
 };
 
 // ─── Multi-model fallback for image generation ─────────────
