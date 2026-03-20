@@ -301,6 +301,15 @@ Réponds UNIQUEMENT en JSON valide avec exactement ces clés :
     // ÉTAPE 2 : GÉNÉRER L'IMAGE DE FOND (SANS TEXTE)
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+    const HELPCONFORT_VEHICLE_DESC = `If a vehicle or van appears in the image, it MUST be a Help Confort branded service van:
+- White Ford Transit or similar commercial van
+- Large blue swoosh/wave design on the sides (from light blue #00BFFF to dark blue #003366)
+- "HELP! Confort" logo prominently on the side in dark blue with a house icon
+- Colorful round service pictograms on the side (8 circles: blue=plomberie, yellow=electricite, pink=serrurerie, orange=menuiserie, magenta=volets, green=vitrerie, blue=PMR, beige=renovation)
+- Phone number "05 58 35 21 38" visible on the van
+- Roof rack with ladders and equipment
+- Clean professional look, parked or on a French residential street`;
+
     const AD_COMPOSITION_RULES = `
 CRITICAL COMPOSITION RULES — THIS IMAGE IS A BACKGROUND FOR A SOCIAL MEDIA AD:
 
@@ -311,6 +320,7 @@ CRITICAL COMPOSITION RULES — THIS IMAGE IS A BACKGROUND FOR A SOCIAL MEDIA AD:
    (dark floor, shadow area, low-light zone). This is where ad text will appear.
 
 3. NO TEXT: Absolutely ZERO text, letters, words, logos, watermarks, numbers on the image.
+   EXCEPTION: If a branded Help Confort van is in the scene, its natural signage is acceptable.
 
 4. CONTRAST: High contrast between the subject and its environment. 
    Dramatic lighting preferred (side light, backlighting, spotlight effect).
@@ -321,7 +331,9 @@ CRITICAL COMPOSITION RULES — THIS IMAGE IS A BACKGROUND FOR A SOCIAL MEDIA AD:
 
 7. STYLE: Realistic professional photograph. NOT illustration, NOT 3D, NOT cartoon.
 
-8. FORBIDDEN: emoji, clip art, gradients, banners, overlays, borders, logos, ANY text.
+8. FORBIDDEN: emoji, clip art, gradients, banners, overlays, borders.
+
+9. VEHICLES: ${HELPCONFORT_VEHICLE_DESC}
 `;
 
     let bgMessages: any[];
@@ -659,15 +671,15 @@ async function persistAsset(
 
 function getSceneForUniverse(universe: string): string {
   const scenes: Record<string, string> = {
-    plomberie: 'bathroom with visible water leak under sink, dripping pipes, water puddle on tile floor, urgency feeling, blue-tinted lighting',
-    electricite: 'exposed electrical panel with sparking wires or burnt outlet, dangerous situation, warm orange dramatic lighting',
-    serrurerie: 'front door with broken lock or someone locked out at night, residential entrance, security urgency, dark moody lighting',
+    plomberie: 'bathroom with visible water leak under sink, dripping pipes, water puddle on tile floor, urgency feeling, blue-tinted lighting. A Help Confort branded white van with blue swoosh visible through the window or parked outside',
+    electricite: 'exposed electrical panel with sparking wires or burnt outlet, dangerous situation, warm orange dramatic lighting. A Help Confort branded white van with blue swoosh parked in front of the house',
+    serrurerie: 'front door with broken lock or someone locked out at night, residential entrance, security urgency, dark moody lighting. A Help Confort branded white van with blue swoosh parked nearby',
     menuiserie: 'damaged wooden window frame or broken cabinet door, splintered wood, visible damage needing repair',
     vitrerie: 'cracked window glass in French apartment, broken pane with spider web crack pattern, cold light coming through',
-    volets: 'stuck roller shutter on French building facade, half-open jammed shutter, visible mechanism problem',
+    volets: 'stuck roller shutter on French building facade, half-open jammed shutter, visible mechanism problem. A Help Confort branded white van parked in front',
     pmr: 'narrow bathroom with accessibility barriers, elderly person context, need for walk-in shower and grab bars',
     renovation: 'apartment mid-renovation with exposed walls, messy construction site needing professional finish',
-    general: 'French home interior showing multiple maintenance issues, general repair needed atmosphere',
+    general: 'Help Confort branded white Ford Transit van with blue swoosh livery and colorful service pictograms, parked in front of a French residential home, professional service atmosphere, clean and trustworthy',
   };
   return scenes[universe] || scenes.general;
 }
