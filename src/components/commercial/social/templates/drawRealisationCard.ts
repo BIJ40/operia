@@ -13,7 +13,7 @@ import { getLogoSrc, getPictoSrc } from './templateAssets';
 import type { SocialTemplatePayload } from '../SocialVisualCanvas';
 
 export async function drawRealisationCard(ctx: CanvasRenderingContext2D, payload: SocialTemplatePayload) {
-  const theme = getTheme(payload.universe);
+  const theme = getTheme(payload.universe, payload.topicType);
   const cta = payload.cta || 'Demandez un devis gratuit';
 
   // GUARD: Ce template exige une vraie photo

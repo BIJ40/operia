@@ -22,6 +22,8 @@ export interface SocialTemplatePayload {
   hook?: string | null;
   /** Call-to-action — texte du bouton ("Demandez un devis", etc.) */
   cta?: string | null;
+  /** Topic type — used to determine badge label for 'general' universe */
+  topicType?: string | null;
 }
 
 interface SocialVisualCanvasProps {
