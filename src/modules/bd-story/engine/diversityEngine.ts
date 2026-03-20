@@ -1,9 +1,11 @@
 /**
  * BD Story — Diversity Engine
  * Score pondéré anti-répétition sur fenêtre glissante
+ * + proximité narrative perçue (ouverture, tension, résolution, morale)
  */
 
 import { GeneratedStory, DiversityScoreBreakdown } from '../types/bdStory.types';
+import { narrativeDistance } from '../data/storyBible';
 
 // ============================================================================
 // WEIGHTS — importance de chaque dimension
@@ -52,6 +54,10 @@ function scoreAgainstOne(
   ) * recencyWeight;
   const sameCta = compareDimension(current.ctaText, previous.ctaText) * recencyWeight;
 
+  // Narrative proximity (0 = very different, 1 = identical feel)
+  const narDist = narrativeDistance(current.templateKey, previous.templateKey);
+  const narrativeProximity = (1 - narDist / 4) * recencyWeight;
+
   const totalWeight = Object.values(DIVERSITY_WEIGHTS).reduce((a, b) => a + b, 0);
   const totalScore = (
     sameProblemType * DIVERSITY_WEIGHTS.sameProblemType +
@@ -59,8 +65,9 @@ function scoreAgainstOne(
     sameTechnician * DIVERSITY_WEIGHTS.sameTechnician +
     sameLocation * DIVERSITY_WEIGHTS.sameLocation +
     sameOutcomeType * DIVERSITY_WEIGHTS.sameOutcomeType +
-    sameCta * DIVERSITY_WEIGHTS.sameCta
-  ) / totalWeight;
+    sameCta * DIVERSITY_WEIGHTS.sameCta +
+    narrativeProximity * 3 // strong weight on perceived similarity
+  ) / (totalWeight + 3);
 
   return { sameProblemType, sameStoryFamily, sameTechnician, sameLocation, sameOutcomeType, sameCta, totalScore };
 }
