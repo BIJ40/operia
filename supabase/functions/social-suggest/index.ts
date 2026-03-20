@@ -47,6 +47,10 @@ interface AwarenessDay {
   contentTypeHint: string;
   preferredUniverses: string[];
   ctaHint: string;
+  /** 1=aucun lien métier (ignoré), 2=angle possible (optionnel), 3=lien direct métier */
+  relevanceScore: 1 | 2 | 3;
+  /** 1=inspiration/branding, 2=réflexion/amélioration, 3=urgence/besoin immédiat */
+  intentScore: 1 | 2 | 3;
 }
 
 // ─── Build awareness days for a given year (dynamic Easter + fixed dates) ───
