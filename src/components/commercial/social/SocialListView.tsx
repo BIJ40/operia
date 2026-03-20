@@ -27,6 +27,7 @@ const TOPIC_BADGE_VARIANTS: Record<string, string> = {
   saisonnier: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
   contre_exemple: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
   pedagogique: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  prospection: 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300',
 };
 
 const TOPIC_LABELS: Record<string, string> = {
