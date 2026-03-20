@@ -353,7 +353,7 @@ export function drawTopicBadge(
 // ZONE 5 — FOOTER (990–1080px)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-/** Bandeau signature bas "HelpConfort — DEPAN40 — Adresse" */
+/** Bandeau signature bas "HelpConfort — DEPAN40 — Ville (CP)" */
 export function drawHCFooterBar(ctx: CanvasRenderingContext2D, theme: ServiceTheme, agencyAddress?: string) {
   const height = ZONES.FOOTER_HEIGHT;
   const y = ZONES.FOOTER_START;
@@ -364,9 +364,9 @@ export function drawHCFooterBar(ctx: CanvasRenderingContext2D, theme: ServiceThe
   ctx.fillStyle = HC.white;
   ctx.font = 'bold 26px sans-serif';
   ctx.textAlign = 'left';
-  const signature = agencyAddress
-    ? `HelpConfort — DEPAN40 — ${agencyAddress}`
-    : 'HelpConfort — DEPAN40';
+  const defaultAddress = 'Dax (40100)';
+  const address = agencyAddress || defaultAddress;
+  const signature = `HelpConfort — DEPAN40 — ${address}`;
   ctx.fillText(signature, 50, y + height / 2 + 9);
   ctx.textAlign = 'right';
   ctx.font = '22px sans-serif';
