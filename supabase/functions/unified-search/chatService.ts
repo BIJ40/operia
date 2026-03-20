@@ -144,62 +144,39 @@ function isIncompleteAnswer(answer: string): boolean {
  * Retourne la réponse complète (non-streaming pour simplifier l'intégration)
  */
 export async function generateChatResponse(request: ChatRequest): Promise<ChatResponse> {
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  
-  if (!LOVABLE_API_KEY) {
-    console.error("[chatService] LOVABLE_API_KEY not configured");
-    return {
-      answer: "Le service IA n'est pas configuré. Veuillez contacter l'administrateur.",
-      isIncomplete: true
-    };
-  }
+  const { callAiWithFallback } = await import("../_shared/aiClient.ts");
 
   const systemPrompt = buildSystemPrompt(request.context, request.ragContent, request.userName);
 
   try {
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...request.messages.filter(m => m.role !== 'system')
-        ],
-        stream: false, // Non-streaming pour simplifier
-        max_tokens: 2000,
-      }),
+    const result = await callAiWithFallback({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...request.messages.filter(m => m.role !== 'system')
+      ],
+      stream: false,
+      max_tokens: 2000,
     });
 
-    if (!response.ok) {
-      if (response.status === 429) {
+    if (!result.ok) {
+      if (result.status === 429) {
         console.error("[chatService] Rate limit exceeded");
         return {
           answer: "Trop de requêtes, veuillez réessayer dans quelques instants.",
           isIncomplete: true
         };
       }
-      if (response.status === 402) {
-        console.error("[chatService] Insufficient credits");
-        return {
-          answer: "Crédits IA insuffisants. Veuillez contacter l'administrateur.",
-          isIncomplete: true
-        };
-      }
       
-      const errorText = await response.text();
-      console.error("[chatService] AI gateway error:", response.status, errorText);
+      console.error("[chatService] AI error:", result.status, result.error.slice(0, 200));
       return {
         answer: "Une erreur est survenue lors de la génération de la réponse.",
         isIncomplete: true
       };
     }
 
-    const data = await response.json();
-    const answer = data.choices?.[0]?.message?.content || "";
+    console.log(`[chatService] AI success via ${result.provider}`);
+    const answer = result.data.choices?.[0]?.message?.content || "";
 
     if (!answer) {
       return {
