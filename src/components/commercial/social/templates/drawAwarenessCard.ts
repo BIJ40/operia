@@ -13,7 +13,7 @@ import { getLogoSrc, getPictoSrc } from './templateAssets';
 import type { SocialTemplatePayload } from '../SocialVisualCanvas';
 
 export async function drawAwarenessCard(ctx: CanvasRenderingContext2D, payload: SocialTemplatePayload) {
-  const theme = getTheme(payload.universe);
+  const theme = getTheme(payload.universe, payload.topicType);
   const cta = payload.cta || 'Contactez-nous';
 
   // ─── ZONE 2: Background ───

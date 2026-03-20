@@ -34,7 +34,14 @@ const SERVICE_LABELS: Record<string, string> = {
   volets: 'Volets roulants',
   pmr: 'Adaptation logement',
   renovation: 'Rénovation',
-  general: 'Multi-services',
+  general: 'Information',
+};
+
+const GENERAL_TOPIC_LABELS: Record<string, string> = {
+  awareness_day: 'Sensibilisation',
+  seasonal_tip: 'Conseil',
+  realisation: 'Réalisation',
+  local_branding: 'Réseau',
 };
 
 // ─── Multi-model fallback for image generation ─────────────
@@ -158,12 +165,15 @@ Deno.serve(async (req) => {
     const aiPayload = (suggestion.ai_payload as Record<string, any>) || {};
     const universe = suggestion.universe || 'general';
     const color = SERVICE_COLORS[universe] || SERVICE_COLORS.general;
-    const serviceLabel = SERVICE_LABELS[universe] || SERVICE_LABELS.general;
+    const topicType = suggestion.topic_type || 'seasonal_tip';
+    const serviceLabel = universe === 'general'
+      ? (GENERAL_TOPIC_LABELS[topicType] || SERVICE_LABELS.general)
+      : (SERVICE_LABELS[universe] || SERVICE_LABELS.general);
     const title = suggestion.title || '';
     const rawHook = aiPayload.hook || title;
     const rawCta = aiPayload.cta || 'Demandez un devis gratuit';
     const visualPrompt = aiPayload.visual_prompt || '';
-    const topicType = suggestion.topic_type || 'seasonal_tip';
+    // topicType already declared above
     const rawCaption = suggestion.caption_base_fr || '';
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');

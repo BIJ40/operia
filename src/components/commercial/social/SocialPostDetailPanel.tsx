@@ -100,6 +100,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
     mediaUrl: rawPreviewUrl || null,
     hook: generatedCopy?.hook || aiPayload.hook || suggestion.title,
     cta: generatedCopy?.cta || aiPayload.cta || null,
+    topicType: suggestion.topic_type,
   }), [suggestion, rawPreviewUrl, aiPayload, generatedCopy]);
 
   const templateId = useMemo(() => resolveSocialTemplate({

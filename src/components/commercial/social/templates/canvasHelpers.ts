@@ -71,11 +71,30 @@ export const SERVICE_THEMES: Record<string, ServiceTheme> = {
   volets:      { label: 'Volets roulants',     bg: '#A23189', accent: '#912982', labelColor: '#F0D6EC', overlayTint: 'rgba(162,49,137,0.18)' },
   pmr:         { label: 'Adaptation logement', bg: '#3C64A2', accent: '#2650A6', labelColor: '#D6DFEF', overlayTint: 'rgba(60,100,162,0.22)' },
   renovation:  { label: 'Rénovation',          bg: '#B79D84', accent: '#957E6E', labelColor: '#EDE5DE', overlayTint: 'rgba(183,157,132,0.20)' },
-  general:     { label: 'Multi-services',      bg: HC.blue,   accent: HC.blueDark, labelColor: '#D6EEFF', overlayTint: 'rgba(0,146,221,0.22)' },
+  general:     { label: 'Information',           bg: HC.blue,   accent: HC.blueDark, labelColor: '#D6EEFF', overlayTint: 'rgba(0,146,221,0.22)' },
 };
 
-export function getTheme(universe?: string | null): ServiceTheme {
-  return SERVICE_THEMES[universe || 'general'] || SERVICE_THEMES.general;
+/** Topic-based labels when universe is 'general' (no specific métier) */
+const GENERAL_TOPIC_LABELS: Record<string, string> = {
+  awareness_day: 'Sensibilisation',
+  seasonal_tip: 'Conseil',
+  realisation: 'Réalisation',
+  local_branding: 'Réseau',
+};
+
+export function getGeneralLabel(topicType?: string | null): string {
+  if (topicType && GENERAL_TOPIC_LABELS[topicType]) return GENERAL_TOPIC_LABELS[topicType];
+  return 'Information';
+}
+
+export function getTheme(universe?: string | null, topicType?: string | null): ServiceTheme {
+  const key = universe || 'general';
+  const theme = SERVICE_THEMES[key] || SERVICE_THEMES.general;
+  // For 'general' universe, override label with topic-based label
+  if (key === 'general') {
+    return { ...theme, label: getGeneralLabel(topicType) };
+  }
+  return theme;
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
