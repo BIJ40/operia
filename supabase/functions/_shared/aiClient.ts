@@ -233,24 +233,172 @@ function normalizeAnthropicResponse(data: any): any {
   };
 }
 
+// ─── Google Gemini caller ─────────────────────────────
+
+function convertToGeminiMessages(messages: AiChatMessage[]): { systemInstruction?: any; contents: any[] } {
+  let systemText = '';
+  const contents: any[] = [];
+
+  for (const msg of messages) {
+    if (msg.role === 'system') {
+      systemText += (systemText ? '\n\n' : '') + (typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content));
+      continue;
+    }
+
+    const role = msg.role === 'assistant' ? 'model' : 'user';
+
+    if (typeof msg.content === 'string') {
+      contents.push({ role, parts: [{ text: msg.content }] });
+    } else if (Array.isArray(msg.content)) {
+      const parts: any[] = [];
+      for (const part of msg.content) {
+        if (part.type === 'text' && part.text) {
+          parts.push({ text: part.text });
+        } else if (part.type === 'image_url' && part.image_url?.url) {
+          const url = part.image_url.url;
+          if (url.startsWith('data:image')) {
+            const match = url.match(/^data:(image\/\w+);base64,(.+)$/);
+            if (match) {
+              parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
+            }
+          }
+          // Gemini doesn't support URL-based images directly in the API
+        }
+      }
+      if (parts.length) contents.push({ role, parts });
+    }
+  }
+
+  const result: any = { contents };
+  if (systemText) {
+    result.systemInstruction = { parts: [{ text: systemText }] };
+  }
+  return result;
+}
+
+async function callGemini(
+  apiKey: string,
+  options: AiCompletionOptions,
+): Promise<AiResult> {
+  const model = DEFAULT_GEMINI_MODEL;
+  console.log(`[aiClient] Gemini → ${model}`);
+
+  const { systemInstruction, contents } = convertToGeminiMessages(options.messages);
+
+  const body: any = { contents };
+  if (systemInstruction) body.systemInstruction = systemInstruction;
+  
+  const generationConfig: any = {};
+  if (options.temperature !== undefined) generationConfig.temperature = options.temperature;
+  if (options.max_tokens !== undefined) generationConfig.maxOutputTokens = options.max_tokens;
+  if (options.response_format?.type === 'json_object') {
+    generationConfig.responseMimeType = 'application/json';
+  }
+  if (Object.keys(generationConfig).length > 0) body.generationConfig = generationConfig;
+
+  // Handle tool calling — convert OpenAI tool format to Gemini
+  if (options.tools && options.tools.length > 0) {
+    body.tools = [{
+      functionDeclarations: options.tools.map((t: any) => ({
+        name: t.function.name,
+        description: t.function.description,
+        parameters: t.function.parameters,
+      })),
+    }];
+    if (options.tool_choice) {
+      body.toolConfig = {
+        functionCallingConfig: {
+          mode: 'ANY',
+          allowedFunctionNames: [options.tool_choice.function.name],
+        },
+      };
+    }
+  }
+
+  const url = `${GEMINI_BASE}/${model}:generateContent?key=${apiKey}`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const normalized = normalizeGeminiResponse(data);
+      return { ok: true, data: normalized, provider: 'gemini' };
+    }
+
+    const errText = await response.text();
+    console.warn(`[aiClient] Gemini ${model} failed (${response.status}): ${errText.slice(0, 200)}`);
+    return { ok: false, status: response.status, error: errText, provider: 'gemini' };
+  } catch (err) {
+    console.error(`[aiClient] Gemini fetch error:`, err);
+    return { ok: false, status: 500, error: String(err), provider: 'gemini' };
+  }
+}
+
+/** Convert Gemini response format to OpenAI-compatible format */
+function normalizeGeminiResponse(data: any): any {
+  const candidate = data.candidates?.[0];
+  if (!candidate) {
+    return { choices: [{ message: { role: 'assistant', content: '' }, finish_reason: 'stop' }] };
+  }
+
+  const parts = candidate.content?.parts || [];
+
+  // Handle function call responses
+  const fnCall = parts.find((p: any) => p.functionCall);
+  if (fnCall) {
+    return {
+      choices: [{
+        message: {
+          role: 'assistant',
+          content: null,
+          tool_calls: [{
+            id: `call_${Date.now()}`,
+            type: 'function',
+            function: {
+              name: fnCall.functionCall.name,
+              arguments: JSON.stringify(fnCall.functionCall.args),
+            },
+          }],
+        },
+        finish_reason: 'tool_calls',
+      }],
+    };
+  }
+
+  // Handle text responses
+  const text = parts.filter((p: any) => p.text).map((p: any) => p.text).join('');
+  return {
+    choices: [{
+      message: { role: 'assistant', content: text },
+      finish_reason: candidate.finishReason === 'STOP' ? 'stop' : candidate.finishReason,
+    }],
+  };
+}
+
 // ─── Public API ───────────────────────────────────────
 
 /** Get API keys from env, throws with clear message if missing */
-export function getAiKeys(): { openaiKey: string; anthropicKey: string | null } {
+export function getAiKeys(): { openaiKey: string; anthropicKey: string | null; geminiKey: string | null } {
   const openaiKey = Deno.env.get('OPENAI_API_KEY');
   if (!openaiKey) {
     throw new Error('OPENAI_API_KEY non configurée dans les secrets Supabase');
   }
   const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY') || null;
-  return { openaiKey, anthropicKey };
+  const geminiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY') || null;
+  return { openaiKey, anthropicKey, geminiKey };
 }
 
 /**
- * Appel IA avec fallback automatique : OpenAI → Claude
+ * Appel IA avec fallback automatique : OpenAI → Claude → Gemini
  * Compatible avec le format OpenAI (messages, tools, etc.)
  */
 export async function callAiWithFallback(options: AiCompletionOptions): Promise<AiResult> {
-  const { openaiKey, anthropicKey } = getAiKeys();
+  const { openaiKey, anthropicKey, geminiKey } = getAiKeys();
 
   // 1. Try OpenAI
   const openaiResult = await callOpenAI(openaiKey, options);
@@ -262,15 +410,25 @@ export async function callAiWithFallback(options: AiCompletionOptions): Promise<
     return openaiResult;
   }
 
-  // 2. Fallback to Claude (if key available and not streaming — Claude streaming needs different handling)
+  // 2. Fallback to Claude (if key available and not streaming)
   if (anthropicKey && !options.stream) {
     console.log('[aiClient] OpenAI failed, falling back to Claude...');
     await new Promise(r => setTimeout(r, 500));
     const anthropicResult = await callAnthropic(anthropicKey, options);
     if (anthropicResult.ok) return anthropicResult;
     
-    console.error('[aiClient] Both OpenAI and Claude failed');
-    return anthropicResult; // Return the last error
+    console.warn('[aiClient] Claude also failed, trying Gemini...');
+  }
+
+  // 3. Fallback to Gemini (if key available and not streaming)
+  if (geminiKey && !options.stream) {
+    console.log('[aiClient] Falling back to Gemini...');
+    await new Promise(r => setTimeout(r, 500));
+    const geminiResult = await callGemini(geminiKey, options);
+    if (geminiResult.ok) return geminiResult;
+
+    console.error('[aiClient] All providers failed (OpenAI, Claude, Gemini)');
+    return geminiResult;
   }
 
   return openaiResult;
