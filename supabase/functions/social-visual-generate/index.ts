@@ -882,7 +882,7 @@ ADDITIONAL REQUIREMENTS:
       }
     }
 
-    if (!bgImageUrl || !bgImageUrl.startsWith('data:image')) {
+    if (!bgImageUrl || (!bgImageUrl.startsWith('data:image') && !bgImageUrl.startsWith('http'))) {
       console.error('[social-visual-generate] No background image generated after retry');
       return new Response(JSON.stringify({ error: "Aucune image de fond générée" }), { status: 502, headers: jsonHeaders });
     }
