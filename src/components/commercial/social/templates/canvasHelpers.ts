@@ -27,8 +27,8 @@ export const ZONES = {
   TOP_START: 0,
   TOP_END: 100,       // Logo + pills
   IMAGE_START: 100,
-  IMAGE_END: 620,     // Pure image zone
-  TEXT_START: 630,     // Hook + subtext
+  IMAGE_END: 580,     // Pure image zone (reduced to give more text space)
+  TEXT_START: 590,     // Hook + subtext (raised)
   TEXT_END: 910,       // Max bottom of text
   CTA_START: 915,     // CTA button
   CTA_END: 980,
