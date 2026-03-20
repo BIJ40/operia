@@ -921,22 +921,44 @@ Chaque post DOIT avoir un topic_type parmi :
 CATÉGORIE "PROSPECTION" — DÉTAIL OBLIGATOIRE
 ═══════════════════════════════════════════
 Cette catégorie est DIFFÉRENTE de toutes les autres. Elle ne parle PAS de problème métier.
-Elle présente L'ENTREPRISE sous un angle COMMERCIAL, STRATÉGIQUE ou CRÉATIF.
+Elle présente L'ENTREPRISE, L'ÉQUIPE, LA ZONE et LES MÉTIERS sous un angle HUMAIN et COMMERCIAL.
 
-SOUS-TYPES OBLIGATOIRES (varier chaque semaine) :
-a) ZONE D'INTERVENTION — "On intervient dans tout le Sud-Landes et Pays Basque" avec carte mentale ou description géographique
-b) PANORAMA MÉTIERS — Présenter L'ENSEMBLE des métiers (plomberie, électricité, serrurerie, vitrerie, menuiserie, volets, PMR, rénovation) en un seul post
-c) PARTENAIRES & PRESCRIPTEURS — "Assurances, agences immobilières, syndics : ils nous font confiance" → cibler les apporteurs d'affaires
-d) COMMERCIAL CRÉATIF — Surprendre : chiffre clé sur l'entreprise, coulisses de l'équipe, engagement qualité, véhicules de la flotte, certifications, valeurs, etc.
+SOUS-TYPES OBLIGATOIRES (varier chaque semaine, ne JAMAIS répéter le même sous-type 2 semaines de suite) :
+
+a) ZONE D'INTERVENTION — "On intervient dans tout le Sud-Landes et Pays Basque"
+   Exemples : carte mentale des villes couvertes, "De Capbreton à Mont-de-Marsan, on est là", distances d'intervention
+   visual_prompt : carte stylisée du sud-ouest avec points d'intervention, ou paysage landais avec véhicule HC
+
+b) PANORAMA MÉTIERS — Présenter L'ENSEMBLE des métiers en un seul post
+   Exemples : "8 métiers, 1 seul interlocuteur", "Plomberie, électricité, serrurerie... on fait tout"
+   visual_prompt : mosaïque de scènes métier ou infographie colorée avec icônes métier
+
+c) PARTENAIRES & PRESCRIPTEURS — Cibler les apporteurs d'affaires
+   Exemples : "Assurances, syndics, agences immo : ils nous font confiance", "Vous gérez des biens ? On est votre bras droit"
+   visual_prompt : poignée de main professionnelle, bureaux, ambiance corporate
+
+d) PRÉSENTATION ÉQUIPE — Coulisses humaines de l'entreprise
+   Exemples : "Notre équipe de techniciens intervient 7j/7", "Derrière chaque intervention, une équipe formée et engagée"
+   Sous-angles : nombre de techniciens, formations, esprit d'équipe, journée type d'un technicien, valeurs humaines
+   visual_prompt : équipe en tenue de travail devant véhicules, atelier, réunion d'équipe, technicien souriant
+
+e) ENGAGEMENT & VALEURS — Ce qui différencie Help Confort
+   Exemples : "Réactivité, propreté, suivi : nos 3 engagements", "Pourquoi nos clients nous rappellent"
+   Sous-angles : certifications, charte qualité, garantie satisfaction, suivi client, propreté chantier
+   visual_prompt : check-list qualité, véhicule propre et équipé, technicien avec EPI
+
+f) COMMERCIAL CRÉATIF — Surprendre et humaniser
+   Exemples : chiffre clé ("2847 interventions cette année"), coulisses, véhicules de la flotte, anecdotes terrain
+   visual_prompt : chiffres en grand sur fond coloré, véhicule HC en action, coulisses atelier
 
 RÈGLES PROSPECTION :
-- universe = "general" (pas de métier spécifique)
+- universe = "general" (TOUJOURS, pas de métier spécifique)
 - storytelling_type = "proximite_locale" ou "temoignage_client"
 - lead_type = "preuve_sociale"
-- Le visuel peut être : carte géographique stylisée, infographie métiers, photo équipe, véhicule HC, logo partenaires
-- visual_prompt doit décrire un visuel COMMERCIAL (pas un problème technique)
-- Le CTA peut être "Découvrir nos services", "Devenir partenaire", "Nous contacter"
-- Ces posts sont DIFFÉRENTS visuellement des autres : plus corporate, plus marque
+- Le CTA peut être "Découvrir nos services", "Devenir partenaire", "Nous contacter", "Rejoindre l'équipe"
+- Ces posts sont DIFFÉRENTS visuellement : plus corporate, plus chaleureux, plus marque
+- Le hook peut être plus doux (pas besoin de "choc") : question ouverte, chiffre impressionnant, affirmation de valeur
+- La PRESSION CONVERSION est ALLÉGÉE pour cette catégorie : l'objectif est la NOTORIÉTÉ et la CONFIANCE, pas l'action immédiate
 
 ═══════════════════════════════════════════
 PRESSION CONVERSION (OBLIGATOIRE)
