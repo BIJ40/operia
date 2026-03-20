@@ -380,6 +380,10 @@ function validateAndNormalizeSuggestions(
         universe = preferredUni; // Force the calendar event's preferred universe
       }
     }
+    // Force general universe for prospection posts
+    if (topicType === 'prospection') {
+      universe = 'general';
+    }
 
     // 5. realisation_id
     let realisationId: string | null = null;
