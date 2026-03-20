@@ -266,8 +266,16 @@ function validateAndNormalizeSuggestions(
     if (seenTopicKeys.has(topicKey) || existingTopicKeys.has(topicKey)) continue;
     seenTopicKeys.add(topicKey);
 
-    // 4. universe
-    const universe = (NORMALIZED_UNIVERSES as readonly string[]).includes(s.universe) ? s.universe : 'general';
+    // 4. universe — enforce from awareness day if matching
+    let universe = (NORMALIZED_UNIVERSES as readonly string[]).includes(s.universe) ? s.universe : 'general';
+    const actualDay = parseInt(date.split('-')[2]);
+    const matchingAwareness = AWARENESS_DAYS.find(a => a.month === month && a.day === actualDay);
+    if (matchingAwareness && matchingAwareness.preferredUniverses.length > 0) {
+      const preferredUni = matchingAwareness.preferredUniverses[0];
+      if ((NORMALIZED_UNIVERSES as readonly string[]).includes(preferredUni)) {
+        universe = preferredUni; // Force the calendar event's preferred universe
+      }
+    }
 
     // 5. realisation_id
     let realisationId: string | null = null;
@@ -912,8 +920,23 @@ CHAQUE journée thématique ci-dessous DOIT générer un post.
 Les jours fériés, fêtes et événements calendaires sont la COLONNE VERTÉBRALE du planning éditorial.
 Ils servent de PRÉTEXTE pour parler d'un VRAI problème métier (jamais un post informatif neutre).
 
+RÈGLE CRITIQUE — UNIVERS OBLIGATOIRE :
+Quand une journée thématique indique un "univers" préféré → tu DOIS utiliser CET univers.
+L'univers détermine le badge, la couleur et le picto du visuel final.
+Si l'événement a un univers spécifique (plomberie, electricite, serrurerie, volets...), le post DOIT être dans cet univers.
+Si l'événement est "general" → utilise "general".
+
+RÈGLE CRITIQUE — COHÉRENCE THÈME / CONTENU :
+Le hook, la caption, le visual_prompt et le CTA doivent être EN RAPPORT DIRECT avec l'événement calendaire.
+Exemples :
+- 1er avril → humour, blagues, pannes insolites, poisson d'avril (PAS un sujet sérieux sans rapport)
+- Pâques → famille, recevoir à la maison, préparation (PAS un sujet technique déconnecté)
+- Journée de l'eau → fuites, économies d'eau (PAS un problème électrique)
+- Halloween → pannes effrayantes, ambiance sombre
+Le visual_prompt DOIT illustrer l'ambiance de l'événement, pas un sujet métier générique.
+
 JOURNÉES THÉMATIQUES DU MOIS (TOUTES doivent être couvertes) :
-${monthAwareness.map(a => `- ${a.day}/${month}: ${a.label} (tags: ${a.tags.join(', ')}, univers: ${a.preferredUniverses.join('/')})`).join('\n')}
+${monthAwareness.map(a => `- ${a.day}/${month}: ${a.label} | UNIVERS OBLIGATOIRE: ${a.preferredUniverses[0]} | tags: ${a.tags.join(', ')}`).join('\n')}
 
 Les posts restants (pour atteindre ${targetPostCount}) doivent compléter avec des problèmes métiers concrets espacés régulièrement dans le mois.
 
