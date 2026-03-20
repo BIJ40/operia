@@ -533,6 +533,7 @@ CRITICAL QUALITY CHECK:
       realPhotoUrl,
       'composed',
       jsonHeaders,
+      generatedCopy,
     );
 
     if ('response' in composedSave) {
