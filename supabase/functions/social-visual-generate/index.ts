@@ -236,20 +236,14 @@ RÈGLES STRICTES :
 Réponds UNIQUEMENT en JSON valide avec exactement ces clés :
 {"hook":"...","subtext":"...","cta":"..."}`;
 
-      const copyResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-3-flash-preview',
-          messages: [{ role: 'user', content: copywritingPrompt }],
-          response_format: { type: 'json_object' },
-        }),
+      const copyResult = await callAiWithFallback({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: copywritingPrompt }],
+        response_format: { type: 'json_object' },
       });
 
-      if (copyResponse.ok) {
+      if (copyResult.ok) {
+        const copyData = copyResult.data;
         const copyData = await copyResponse.json();
         const rawContent = copyData.choices?.[0]?.message?.content || '';
         try {
