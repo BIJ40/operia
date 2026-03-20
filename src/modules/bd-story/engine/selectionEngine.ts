@@ -9,7 +9,7 @@ import {
   LocationContext, CtaEntry, Trigger, OutcomeStep, Character,
   ProblemUniverse, UrgencyLevel, RoomContext
 } from '../types/bdStory.types';
-import { ALL_PROBLEMS, getProblemsForUniverse } from '../data/problemTypes';
+import { getProblemsForUniverse } from '../data/problemTypes';
 import { STORY_TEMPLATES } from '../data/templates';
 import { CLIENT_PROFILES } from '../data/clientProfiles';
 import { PROPERTY_TYPES, ROOM_CONTEXTS, TIME_CONTEXTS } from '../data/propertyTypes';
