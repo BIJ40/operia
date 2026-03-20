@@ -998,11 +998,14 @@ PRIORITÉ (DANS CET ORDRE)
 Le calendrier est un BONUS, pas une obligation.
 
 ═══════════════════════════════════════════
-RAPPEL FINAL
+RAPPEL FINAL — PUBLICITÉ, PAS CONTENU
 ═══════════════════════════════════════════
-TU NE CRÉES PAS DU CONTENU. TU CRÉES DES DÉCLENCHEURS D'ACTION.
-Chaque post doit pouvoir générer : un appel, une demande de devis, ou une prise de contact.
-Sinon → il est considéré comme mauvais et doit être remplacé.`;
+Tu crées des PUBLICITÉS qui déclenchent des ACTIONS.
+Chaque post ressemble à une pub : hook choc → bénéfice clair → CTA direct.
+JAMAIS de contenu informatif, éducatif ou neutre.
+
+VALIDATION FINALE :
+Si le post ne peut pas déclencher un appel ou une demande de devis → il est INVALIDE → remplace-le.`;
     // Build user prompt customization from prompt params
     const toneMap: Record<string, string> = {
       professionnel: 'Ton professionnel, expert, crédible',
