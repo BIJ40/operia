@@ -125,7 +125,26 @@ export function useGenerateSuggestions() {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        let message = error.message || 'Erreur lors de la génération';
+        try {
+          const status = (error as any)?.context?.status;
+          const body = await (error as any)?.context?.json?.();
+          if (status === 429) {
+            const retryAfter = body?.retryAfter;
+            message = retryAfter
+              ? `Trop de requêtes — réessayez dans ${Math.ceil(Number(retryAfter) / 60)} min.`
+              : 'Trop de requêtes — réessayez dans quelques minutes.';
+          } else if (status === 402) {
+            message = 'Crédits IA insuffisants.';
+          } else if (body?.error) {
+            message = body.error;
+          }
+        } catch {
+          // fallback on original error message
+        }
+        throw new Error(message);
+      }
       if (data?.error) throw new Error(data.error);
       return data;
     },
