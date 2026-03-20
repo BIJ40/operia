@@ -1070,17 +1070,25 @@ PRIORITÉ (DANS CET ORDRE)
 Le calendrier est un BONUS, pas une obligation.
 
 ═══════════════════════════════════════════
-RAPPEL FINAL — PUBLICITÉ, PAS CONTENU
+RAPPEL FINAL — RESPECT DES CATÉGORIES
 ═══════════════════════════════════════════
 Tu crées des PUBLICITÉS qui déclenchent des ACTIONS.
-Chaque post ressemble à une pub : hook choc → bénéfice clair → CTA direct.
-JAMAIS de contenu informatif, éducatif ou neutre.
+Pour "urgence", "prevention", "amelioration" : hook choc → bénéfice clair → CTA direct.
+Pour "pedagogique" : contenu UTILE + valeur immédiate → CTA doux.
+Pour "conseil" : tip pratique + actionnable → CTA.
+Pour "contre_exemple" : erreur fréquente + contraste pro → CTA.
+Pour "prospection" : présentation entreprise/zone/partenaires → CTA découverte.
+Pour "preuve" : savoir-faire technicien, réalisation, témoignage → CTA confiance.
+Pour "saisonnier" : lien météo/période réelle → CTA anticipation.
+
+CHAQUE catégorie a sa PROPRE tonalité. Ne PAS tout transformer en "urgence métier".
+Le topic_type assigné à chaque jour est OBLIGATOIRE — ne jamais le remplacer par un autre.
 
 VOCABULAIRE INTERDIT :
 - Ne jamais utiliser le mot "expert" ou "expertise". Préférer "technicien", "technicien qualifié", "professionnel", "spécialiste".
 
 VALIDATION FINALE :
-Si le post ne peut pas déclencher un appel ou une demande de devis → il est INVALIDE → remplace-le.`;
+Si le topic_type du post ne correspond pas à la catégorie assignée au jour → il est INVALIDE → remplace-le.`;
     // Build user prompt customization from prompt params
     const toneMap: Record<string, string> = {
       professionnel: 'Ton professionnel, technicien, crédible',
