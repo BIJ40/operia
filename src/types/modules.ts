@@ -42,6 +42,7 @@ export const MODULES = {
   'commercial.prospects': 'commercial.prospects',
   'commercial.realisations': 'commercial.realisations',
   'commercial.social': 'commercial.social',
+  'commercial.bd_story': 'commercial.bd_story',
   'commercial.signature': 'commercial.signature',
   'commercial.realisations.photos': 'commercial.realisations.photos',
   'commercial.realisations.generer_avap': 'commercial.realisations.generer_avap',
