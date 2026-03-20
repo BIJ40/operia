@@ -57,13 +57,14 @@ export interface SocialVariant {
 }
 
 // ─── Fetch suggestions for a month ───────────────────────────
-export function useSocialSuggestions(monthKey: string) {
+export function useSocialSuggestions(monthKey: string, pollingEnabled = false) {
   const { agencyId } = useAuth();
 
   return useQuery({
     queryKey: ['social-suggestions', agencyId, monthKey],
     enabled: !!agencyId && !!monthKey,
-    staleTime: 60_000,
+    staleTime: pollingEnabled ? 0 : 60_000,
+    refetchInterval: pollingEnabled ? 3_000 : false,
     queryFn: async (): Promise<SocialSuggestion[]> => {
       if (!agencyId) return [];
 
