@@ -149,6 +149,7 @@ Deno.serve(async (req) => {
     const visualCustomization = body.visual_customization as {
       freePrompt?: string;
       keywords?: string;
+      includeVan?: boolean;
       tone?: string;
       audience?: string;
     } | undefined;
@@ -388,10 +389,8 @@ CRITICAL COMPOSITION RULES — THIS IMAGE IS A BACKGROUND FOR A SOCIAL MEDIA AD:
 
       console.log('[social-visual-generate] Scene description:', sceneDescription.slice(0, 200));
 
-      // Check if the scene mentions a van — if so, pass the real van photo as reference
-      const sceneHasVan = sceneDescription.toLowerCase().includes('van') || 
-                          sceneDescription.toLowerCase().includes('transit') ||
-                          universe === 'general' || universe === 'local_branding';
+      // Include the real van ONLY when explicitly requested by the user
+      const sceneHasVan = visualCustomization?.includeVan === true;
 
       if (sceneHasVan) {
         // RULE: Never generate a van without verified reference photos
@@ -423,7 +422,7 @@ ADDITIONAL REQUIREMENTS:
 - High resolution feel, sharp details on the main subject`,
           }];
         } else {
-          // Use multi-modal prompt with verified real van reference photos
+          // Use the real van photos — integrate them AS-IS into the scene
           bgMessages = [{
             role: 'user',
             content: [
@@ -431,26 +430,26 @@ ADDITIONAL REQUIREMENTS:
                 type: 'text', 
                 text: `Generate a REALISTIC PHOTOGRAPH designed as a SOCIAL MEDIA AD BACKGROUND (1080x1080 square).
 
-REFERENCE IMAGES: The ${refUrls.length} attached photos show the EXACT company van from multiple angles. Study them carefully and reproduce the van EXACTLY as shown:
-- White Renault Master van body (NOT Ford Transit, NOT Mercedes Sprinter)
-- Large blue diagonal wave/swoosh pattern on the sides — gradient from sky blue at the top to deep navy at the bottom. The wave starts near the front wheel and sweeps diagonally upward toward the rear roof
-- 6 small colorful circular service icons on the side panel
-- Roof rack with ladders on top
-- The van is predominantly WHITE with ONLY the blue wave — no red, no green, no extra stripes
+ATTACHED VAN PHOTOS: These are REAL photographs of the company van. You MUST integrate this EXACT van into the generated scene — do NOT redesign, recolor, or reimagine it. The van must appear as a faithful reproduction of these reference photos, as if photographed on location.
 
-CRITICAL: Copy the van design from the reference photos as FAITHFULLY as possible. The blue wave shape and position must match. Do not add text, logos or brand names on the van.
+KEY VAN DETAILS TO PRESERVE EXACTLY:
+- White Renault Master body (NOT Ford Transit)
+- Blue diagonal wave/swoosh pattern on the sides
+- Small colorful circular service icons on the side panel
+- Roof rack with ladders
+- The van is WHITE with ONLY the blue wave — no other colors
 
-SCENE TO PHOTOGRAPH:
+SCENE TO COMPOSE:
 ${sceneDescription}
+
+The van should be visible in the background or side of the scene, naturally integrated as if parked nearby during an intervention. The main subject (technician, problem, work scene) stays in the foreground.
 
 ${AD_COMPOSITION_RULES}
 
 ADDITIONAL REQUIREMENTS:
-- The van design must match the reference photos faithfully — especially the blue wave diagonal pattern
-- This must look like a REAL PHOTOGRAPH taken on-site by a professional photographer
-- Dramatic natural lighting with a cinematic feel
-- The bottom third should naturally be darker (floor, shadow, dark surface)
-- High resolution feel, sharp details on the main subject
+- The van must look EXACTLY like the reference photos — same colors, same wave pattern, same proportions
+- Natural integration: the van is part of the scene, not pasted on top
+- Professional on-location photography feel
 - Do NOT add any text, logos, or words to the image`
               },
               ...refUrls.map(url => ({ type: 'image_url' as const, image_url: { url } })),
