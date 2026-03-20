@@ -911,7 +911,7 @@ Chaque post DOIT avoir un topic_type parmi :
 2. "prevention" — éviter une panne, anticiper (~4 posts)
 3. "amelioration" — confort, esthétique, valorisation (~4 posts)
 4. "conseil" — tips concrets, utiles, actionnables (~3 posts)
-5. "preuve" — intervention rapide, savoir-faire technicien, proximité, réalisation, témoignage, avant/après, process (~3 posts)
+5. "preuve" — OBLIGATOIREMENT basé sur une VRAIE réalisation (réalisation_id requis). Intervention rapide, savoir-faire technicien, avant/après RÉEL, témoignage. INTERDIT de générer du contenu inventé pour cette catégorie. (~3 posts, uniquement si des réalisations existent)
 6. "saisonnier" — météo réelle, période (~3 posts)
 7. "contre_exemple" — erreur fréquente, "ce qu'il ne faut pas faire", contraste technicien vs bricoleur (~3 posts)
 8. "pedagogique" — schéma, chiffre clé, "le saviez-vous ?", valeur immédiate (~3 posts)
