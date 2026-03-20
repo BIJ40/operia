@@ -27,7 +27,7 @@ export async function drawRealisationCard(ctx: CanvasRenderingContext2D, payload
     ctx.fillStyle = HC.white;
     ctx.font = '24px sans-serif';
     ctx.fillText('Ce template nécessite une photo APRÈS', SIZE / 2, SIZE / 2 + 30);
-    drawHCFooterBar(ctx, theme);
+    await drawHCFooterBar(ctx, theme, undefined, getPictoSrc(payload.universe));
     return;
   }
 
@@ -64,5 +64,5 @@ export async function drawRealisationCard(ctx: CanvasRenderingContext2D, payload
   drawCTAButton(ctx, cta, { align: 'center' });
 
   // ─── ZONE 5: Footer ───
-  drawHCFooterBar(ctx, theme);
+  await drawHCFooterBar(ctx, theme, undefined, getPictoSrc(payload.universe));
 }

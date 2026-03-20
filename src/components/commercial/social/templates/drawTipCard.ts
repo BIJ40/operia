@@ -60,5 +60,5 @@ export async function drawTipCard(ctx: CanvasRenderingContext2D, payload: Social
   drawCTAButton(ctx, cta, { align: 'center' });
 
   // ─── ZONE 5: Footer ───
-  drawHCFooterBar(ctx, theme);
+  await drawHCFooterBar(ctx, theme, undefined, getPictoSrc(payload.universe));
 }

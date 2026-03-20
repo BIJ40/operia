@@ -78,5 +78,5 @@ export async function drawBrandCard(ctx: CanvasRenderingContext2D, payload: Soci
   drawCTAButton(ctx, cta, { align: 'center' });
 
   // ─── ZONE 5: Footer ───
-  drawHCFooterBar(ctx, theme);
+  await drawHCFooterBar(ctx, theme, undefined, getPictoSrc(payload.universe));
 }
