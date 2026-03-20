@@ -40,6 +40,7 @@ const TEMPLATE_RENDERERS: Record<SocialTemplateId, (ctx: CanvasRenderingContext2
   tip_card: drawTipCard,
   awareness_card: drawAwarenessCard,
   brand_card: drawBrandCard,
+  educational_card: drawEducationalCard,
 };
 
 export function SocialVisualCanvas({ payload, templateId, onRendered }: SocialVisualCanvasProps) {
