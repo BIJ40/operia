@@ -110,7 +110,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const canvasPayload: SocialTemplatePayload = useMemo(() => ({
     title: suggestion.title,
     caption: generatedCopy?.subtext || suggestion.caption_base_fr || '',
-    universe: suggestion.universe,
+    universe: effectiveUniverse,
     platform: suggestion.platform_targets?.[0] || null,
     date: suggestion.suggestion_date,
     mediaUrl: rawPreviewUrl || null,
