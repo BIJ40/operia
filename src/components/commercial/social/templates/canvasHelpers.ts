@@ -382,33 +382,43 @@ export function drawTopicBadge(
 // ZONE 5 — FOOTER (990–1080px)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-/** Bandeau signature bas "HelpConfort — DEPAN40 — Ville (CP)" */
+/** Bandeau signature bas avec coordonnées complètes */
 export function drawHCFooterBar(ctx: CanvasRenderingContext2D, theme: ServiceTheme, agencyAddress?: string) {
   const height = ZONES.FOOTER_HEIGHT;
   const y = ZONES.FOOTER_START;
+
+  // Background
   ctx.fillStyle = HC.blue;
   ctx.fillRect(0, y, SIZE, height);
   ctx.fillStyle = HC.orange;
   ctx.fillRect(0, y, SIZE, 4);
+
+  // ─── Line 1: Signature ───
   ctx.fillStyle = HC.white;
-  ctx.font = 'bold 26px sans-serif';
-  ctx.textAlign = 'left';
   const defaultAddress = 'Landes & Pays Basque';
   const address = agencyAddress || defaultAddress;
   const signature = `HelpConfort — DEPAN40 — ${address}`;
-  // Auto-shrink font if signature is too wide
-  const maxWidth = SIZE - 280; // leave room for right-side label
+  const maxWidth = SIZE - 280;
   let fontSize = 26;
   ctx.font = `bold ${fontSize}px sans-serif`;
   while (ctx.measureText(signature).width > maxWidth && fontSize > 16) {
     fontSize -= 1;
     ctx.font = `bold ${fontSize}px sans-serif`;
   }
-  ctx.fillText(signature, 50, y + height / 2 + 9);
+  ctx.textAlign = 'left';
+  ctx.fillText(signature, 50, y + 42);
+
+  // ─── Line 2: Coordonnées (tel, email, site) ───
+  ctx.font = '20px sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  const coords = '📞 05 58 35 21 38  ·  ✉ dax@helpconfort.com  ·  🌐 www.helpconfort-40.fr';
+  ctx.fillText(coords, 50, y + 78);
+
+  // ─── Universe label (right side) ───
   ctx.textAlign = 'right';
   ctx.font = '22px sans-serif';
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
-  ctx.fillText(theme.label, SIZE - 50, y + height / 2 + 8);
+  ctx.fillText(theme.label, SIZE - 50, y + 42);
   ctx.textAlign = 'left';
 }
 
