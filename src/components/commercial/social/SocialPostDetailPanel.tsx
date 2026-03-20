@@ -5,10 +5,14 @@
  */
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { Share2, ImagePlus, Download, RefreshCw, Loader2, Sparkles } from 'lucide-react';
+import { Share2, ImagePlus, Download, RefreshCw, Loader2, Sparkles, Truck, ChevronDown, ChevronUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { SocialPostCard } from './SocialPostCard';
 import { SocialVisualCanvas, canvasToBlob, type SocialTemplatePayload } from './SocialVisualCanvas';
 import { resolveSocialTemplate } from './templateResolver';
@@ -56,6 +60,10 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const [composedPreviewUrl, setComposedPreviewUrl] = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [renderModeOverride, setRenderModeOverride] = useState<'canvas' | 'image' | null>(null);
+  const [showCustomization, setShowCustomization] = useState(false);
+  const [freePrompt, setFreePrompt] = useState('');
+  const [keywords, setKeywords] = useState('');
+  const [includeVan, setIncludeVan] = useState(false);
 
   // Visual assets
   const { data: assets = [], isLoading: assetsLoading } = useSocialVisualAssets(suggestion.id);
@@ -137,8 +145,13 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
 
   const handleGenerate = useCallback(() => {
     setLoadingPreview(true);
+    const visualCustomization = (freePrompt || keywords || includeVan) ? {
+      freePrompt: freePrompt || undefined,
+      keywords: keywords || undefined,
+      includeVan,
+    } : undefined;
     generateMutation.mutate(
-      { suggestionId: suggestion.id },
+      { suggestionId: suggestion.id, visualCustomization },
       {
         onSuccess: (data) => {
           if (data?.signed_url) setComposedPreviewUrl(data.signed_url);
@@ -149,7 +162,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
         },
       }
     );
-  }, [suggestion.id, generateMutation]);
+  }, [suggestion.id, generateMutation, freePrompt, keywords, includeVan]);
 
   const handleDownload = useCallback(() => {
     const assetToDownload = renderMode === 'image'
@@ -237,6 +250,50 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
             <p className="text-[10px] text-muted-foreground/50 mt-1">Cliquez pour générer un visuel IA</p>
           </div>
         )}
+
+        {/* ─── Personnalisation du visuel ─── */}
+        <div className="border border-border rounded-lg overflow-hidden">
+          <button
+            onClick={() => setShowCustomization(!showCustomization)}
+            className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-medium text-muted-foreground hover:bg-muted/50 transition-colors"
+          >
+            <span>🎨 Personnaliser le visuel</span>
+            {showCustomization ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+          </button>
+          {showCustomization && (
+            <div className="px-3 pb-3 space-y-2.5 border-t border-border pt-2.5">
+              <div>
+                <Label className="text-[10px] text-muted-foreground">💡 Votre idée / direction visuelle</Label>
+                <Textarea
+                  value={freePrompt}
+                  onChange={(e) => setFreePrompt(e.target.value)}
+                  placeholder="Ex : spot LED à la place des ampoules, ambiance moderne..."
+                  className="mt-1 text-xs min-h-[56px] resize-none"
+                />
+              </div>
+              <div>
+                <Label className="text-[10px] text-muted-foreground">🔑 Mots-clés</Label>
+                <Input
+                  value={keywords}
+                  onChange={(e) => setKeywords(e.target.value)}
+                  placeholder="LED, moderne, salle de bain..."
+                  className="mt-1 text-xs h-7"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={includeVan}
+                  onCheckedChange={setIncludeVan}
+                  className="scale-75 origin-left"
+                />
+                <Label className="text-[10px] text-muted-foreground flex items-center gap-1">
+                  <Truck className="w-3 h-3" />
+                  Inclure le véhicule HC
+                </Label>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Actions */}
         <div className="flex gap-1.5">
