@@ -251,8 +251,19 @@ async function callImageAIWithFallback(
       console.warn('[callImageAI] No GOOGLE_GEMINI_API_KEY — cannot process input images');
     }
 
-    // Fallback for image inputs: use GPT-4o to analyze → DALL-E text-only generation
-    console.log('[callImageAI] Gemini failed with images, falling back to GPT-4o analysis → DALL-E...');
+    if (requiresReferenceFaithfulness || forceGemini) {
+      console.error('[callImageAI] Gemini failed and DALL-E fallback is disabled to preserve reference fidelity');
+      return {
+        ok: false,
+        status: 502,
+        error: requiresReferenceFaithfulness
+          ? 'Gemini n’a pas pu générer le visuel à partir des images de référence. DALL-E a été volontairement bloqué pour ne pas trahir le vrai véhicule.'
+          : 'La génération Gemini a échoué et aucun fallback DALL-E n’a été appliqué car le modèle Gemini était forcé.',
+      };
+    }
+
+    // Fallback sans images de référence : GPT-4o analyse → DALL-E text-only
+    console.log('[callImageAI] Gemini failed without reference images, falling back to GPT-4o analysis → DALL-E...');
     const analysisResult = await callAiWithFallback({
       messages: [{
         role: 'user',
@@ -272,12 +283,6 @@ CRITICAL RULES:
       model: 'gpt-4o',
       max_tokens: 500,
     });
-
-    if (analysisResult.ok) {
-      const dallePrompt = analysisResult.data.choices?.[0]?.message?.content || prompt;
-      prompt = dallePrompt.slice(0, 950);
-      console.log(`[callImageAI] GPT-4o generated DALL-E prompt: ${prompt.slice(0, 150)}...`);
-    }
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
