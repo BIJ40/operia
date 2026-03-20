@@ -149,6 +149,7 @@ Deno.serve(async (req) => {
     const visualCustomization = body.visual_customization as {
       freePrompt?: string;
       keywords?: string;
+      includeVan?: boolean;
       tone?: string;
       audience?: string;
     } | undefined;
