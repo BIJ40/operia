@@ -22,10 +22,9 @@ const VAN_REFERENCE_URLS = [
   `${SUPABASE_URL}/storage/v1/object/public/brand-assets/van-ref4.jpg`,
   `${SUPABASE_URL}/storage/v1/object/public/brand-assets/van-ref5.jpg`,
 ];
-// Pick 2 random references each time for variety + fidelity
+// Use ALL references for maximum fidelity
 function getVanReferenceUrls(): string[] {
-  const shuffled = [...VAN_REFERENCE_URLS].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, 2);
+  return [...VAN_REFERENCE_URLS];
 }
 
 const SERVICE_COLORS: Record<string, string> = {
@@ -317,7 +316,8 @@ Réponds UNIQUEMENT en JSON valide avec exactement ces clés :
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     const HELPCONFORT_VISUAL_IDENTITY = `COMPANY VISUAL IDENTITY (Help Confort — French home maintenance company):
-- VEHICLES: White commercial van (Ford Transit type) with a large blue wave/swoosh graphic on the sides (gradient from sky blue to navy blue). The van has a roof rack with ladders. Do NOT write any text or logo on the van — just the blue wave design on white.
+- VEHICLES: White Renault Master van. The van has a DISTINCTIVE blue diagonal wave/swoosh graphic covering the lower half of each side (gradient from sky blue to deep navy). On the side panels there are 6 small colorful circular service icons arranged in a grid. There is a roof rack with ladders on top. The van is CLEAN and WHITE with ONLY the blue wave pattern — no other color or stripe.
+- IMPORTANT: When the van appears, it must be CLEARLY a white Renault Master with the blue wave — NOT a generic white van, NOT a Ford Transit. The wave pattern is diagonal, starting from the front wheel area going up toward the rear top. Do NOT invent additional graphics.
 - TECHNICIAN UNIFORMS: Blue polo shirt or blue work jacket, dark pants, professional and clean appearance. Technicians may carry toolboxes or equipment.
 - COLOR PALETTE: Dominant blue (#0092DD) and white, with touches of orange (#FFB705) on accessories or details.`;
 
@@ -375,14 +375,14 @@ CRITICAL COMPOSITION RULES — THIS IMAGE IS A BACKGROUND FOR A SOCIAL MEDIA AD:
               type: 'text', 
               text: `Generate a REALISTIC PHOTOGRAPH designed as a SOCIAL MEDIA AD BACKGROUND (1080x1080 square).
 
-REFERENCE IMAGES: The attached photos show the EXACT company van from different angles. Key features to reproduce EXACTLY:
-- White Renault Master van body
-- Large blue diagonal wave/swoosh pattern covering the lower half and rear
-- 6 colorful circular service icons (plomberie=blue, electricite=yellow, serrurerie=pink, menuiserie=orange, vitrerie=green, volets=purple) arranged in a 3x2 grid on the side
-- Roof rack on top
-- "HELP! Confort" logo with house icon on the front and sides
+REFERENCE IMAGES: The attached photos show the EXACT company van from multiple angles. Study them carefully and reproduce the van EXACTLY as shown:
+- White Renault Master van body (NOT Ford Transit, NOT Mercedes Sprinter)
+- Large blue diagonal wave/swoosh pattern on the sides — gradient from sky blue at the top to deep navy at the bottom. The wave starts near the front wheel and sweeps diagonally upward toward the rear roof
+- 6 small colorful circular service icons on the side panel
+- Roof rack with ladders on top
+- The van is predominantly WHITE with ONLY the blue wave — no red, no green, no extra stripes
 
-Generate a scene that includes a van matching these reference photos AS CLOSELY AS POSSIBLE.
+CRITICAL: Copy the van design from the reference photos as FAITHFULLY as possible. The blue wave shape and position must match. Do not add text, logos or brand names on the van.
 
 SCENE TO PHOTOGRAPH:
 ${sceneDescription}
@@ -390,12 +390,12 @@ ${sceneDescription}
 ${AD_COMPOSITION_RULES}
 
 ADDITIONAL REQUIREMENTS:
-- The van design must match the reference photos faithfully — especially the blue wave pattern and colorful service icons
+- The van design must match the reference photos faithfully — especially the blue wave diagonal pattern
 - This must look like a REAL PHOTOGRAPH taken on-site by a professional photographer
 - Dramatic natural lighting with a cinematic feel
 - The bottom third should naturally be darker (floor, shadow, dark surface)
 - High resolution feel, sharp details on the main subject
-- Do NOT add any text, logos, or words to the image — the blue wave pattern on the van is a graphic, not text`
+- Do NOT add any text, logos, or words to the image`
             },
             ...refUrls.map(url => ({ type: 'image_url' as const, image_url: { url } })),
           ],
