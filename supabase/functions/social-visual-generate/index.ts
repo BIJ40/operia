@@ -595,8 +595,7 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
 
 1. HOOK TEXT (MAIN MESSAGE — BIG, BOLD, HIGH CONTRAST):
    "${hookText}"
-   - Position: LOWER area of the image — approximately Y=660 to Y=780 (bottom 35%)
-   - NEVER in the middle of the image — must be LOW, just above the sub-text
+   - Position: LOWER area of the image — approximately Y=580 to Y=700
    - Style: VERY LARGE white bold text (minimum 50px equivalent), ALL CAPS
    - Alignment: centered horizontally
    - Must have a dark semi-transparent backdrop/shadow for readability
@@ -605,27 +604,35 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
 
 2. SUB-TEXT (Secondary message — CLEARLY READABLE):
    "${subText}"
-   - Position: Just below the hook text, approximately Y=790 to Y=860
-   - Style: White text, regular weight, MINIMUM 28px equivalent — must be EASILY READABLE on a phone screen
+   - Position: Just below the hook text, approximately Y=710 to Y=770
+   - Style: White text, regular weight, MINIMUM 28px equivalent
    - Alignment: centered horizontally under the hook
-   - NOT tiny — this is important information that must be legible
    - Maximum 2 lines — the COMPLETE text must appear
    - CRITICAL: Write this text EXACTLY as provided. Do NOT truncate
 
 3. CTA BUTTON:
    "${ctaText}"
-   - Position: Below sub-text, approximately Y=870 to Y=930, HORIZONTALLY CENTERED
+   - Position: Below sub-text, approximately Y=780 to Y=840, HORIZONTALLY CENTERED
    - Style: Rounded button shape, bright orange (#FFB705) background, dark text
-   - Bold, compact, must fit on ONE LINE — perfectly centered in the image width
+   - Bold, compact, must fit on ONE LINE
 
-4. FOOTER BAR:
-   - Position: Very bottom of the image (last 110px, Y=920 to Y=1080)
-   - Style: Solid blue bar (#0092DD) full width
-   - Thin orange (#FFB705) line at the very top of the blue bar
-   - LINE 1 (main): "HelpConfort — DEPAN40 — Landes & Pays Basque" in white, left-aligned, bold
-   - LINE 2 (contact info, smaller): "📞 05 58 35 21 38 — dax@helpconfort.com — www.helpconfort-40.fr" in white, left-aligned, regular weight, smaller font
-   - Right side of LINE 1: "${serviceLabel}" in smaller white text
-   - Both lines must be FULLY READABLE — minimum 18px equivalent for line 2
+4. FOOTER BAR — THIS IS THE MOST IMPORTANT ELEMENT, IT MUST BE PERFECT:
+   - Position: Very bottom of the image (last 160px, Y=920 to Y=1080)
+   - Style: Solid blue bar (#0092DD) full width, with thin orange (#FFB705) line at the top edge
+   - The footer has EXACTLY 3 lines of text, ALL in white:
+   
+   LINE 1 (bold, larger): "HelpConfort — DEPAN40 — Landes & Pays Basque"
+   - Left-aligned with 20px padding
+   - Right side: "${serviceLabel}" in smaller white text
+   
+   LINE 2 (regular, medium): "📞 05 58 35 21 38"
+   - Left-aligned, below line 1
+   
+   LINE 3 (regular, medium): "✉ dax@helpconfort.com — 🌐 www.helpconfort-40.fr"
+   - Left-aligned, below line 2
+   
+   ALL 3 LINES MUST BE FULLY VISIBLE AND READABLE — minimum 20px font equivalent
+   The phone number, email and website are CRITICAL business information — they MUST appear clearly
 
 5. UNIVERSE BADGE (top-right corner):
    - Small rounded pill/badge
@@ -642,12 +649,13 @@ DESIGN RULES:
 - All text must be PERFECTLY LEGIBLE at phone screen size
 - NO extra decorative elements, badges, dates, or categories
 - Keep the square 1080x1080 format
-- ZONES MUST NOT OVERLAP
+- ZONES MUST NOT OVERLAP — especially CTA must NOT overlap the footer bar
 
 CRITICAL QUALITY CHECK:
 ✅ Hook text is EXACTLY as provided and centered
 ✅ Sub-text is COMPLETE, centered, and readable
-✅ CTA button is CENTERED horizontally
+✅ CTA button is CENTERED horizontally and ABOVE the footer
+✅ Footer bar shows phone "05 58 35 21 38", email "dax@helpconfort.com", and website "www.helpconfort-40.fr" — ALL THREE VISIBLE
 ✅ NO fake logo in top-left
 ✅ No elements overlap`;
 
