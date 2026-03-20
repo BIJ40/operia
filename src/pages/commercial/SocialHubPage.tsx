@@ -47,7 +47,11 @@ export default function SocialHubPage() {
 
   // Data hooks — poll every 3s while generation is in progress
   const generateMutation = useGenerateSuggestions();
-  const { data: suggestions = [], isLoading } = useSocialSuggestions(monthKey, generateMutation.isGenerating);
+  const { data: suggestions = [], isLoading } = useSocialSuggestions(
+    monthKey,
+    generateMutation.isGenerating,
+    generateMutation.checkGenerationDone,
+  );
   const updateStatusMutation = useUpdateSuggestionStatus();
 
   // Filter suggestions
@@ -125,10 +129,10 @@ export default function SocialHubPage() {
 
         <Button
           onClick={handleGenerate}
-          disabled={generateMutation.isPending}
+          disabled={generateMutation.isGenerating}
           variant="default"
         >
-          {generateMutation.isPending ? (
+          {generateMutation.isGenerating ? (
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
           ) : (
             <Sparkles className="w-4 h-4 mr-2" />
@@ -202,7 +206,7 @@ export default function SocialHubPage() {
                 selectedDays={selectedDays}
                 onToggleDay={handleToggleDay}
                 onRegenerateSelected={handleRegenerateSelectedDays}
-                isRegenerating={generateMutation.isPending}
+                isRegenerating={generateMutation.isGenerating}
               />
             ) : (
               <SocialListView
@@ -220,7 +224,7 @@ export default function SocialHubPage() {
               onApprove={handleApprove}
               onReject={handleReject}
               onRegenerate={handleRegenerate}
-              isRegenerating={generateMutation.isPending}
+              isRegenerating={generateMutation.isGenerating}
             />
           </div>
         </div>

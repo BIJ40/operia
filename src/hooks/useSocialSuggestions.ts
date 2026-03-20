@@ -57,7 +57,11 @@ export interface SocialVariant {
 }
 
 // ─── Fetch suggestions for a month ───────────────────────────
-export function useSocialSuggestions(monthKey: string, pollingEnabled = false) {
+export function useSocialSuggestions(
+  monthKey: string,
+  pollingEnabled = false,
+  onPollResult?: (count: number) => void,
+) {
   const { agencyId } = useAuth();
 
   return useQuery({
@@ -77,7 +81,13 @@ export function useSocialSuggestions(monthKey: string, pollingEnabled = false) {
         .order('suggestion_date', { ascending: true });
 
       if (error) throw error;
-      if (!suggestions?.length) return [];
+      if (!suggestions?.length) {
+        onPollResult?.(0);
+        return [];
+      }
+
+      // Notify polling observer
+      onPollResult?.(suggestions.length);
 
       // Fetch variants for all suggestions
       const suggestionIds = suggestions.map(s => s.id);
@@ -104,11 +114,38 @@ export function useSocialSuggestions(monthKey: string, pollingEnabled = false) {
 }
 
 // ─── Generate suggestions (invoke edge function) ─────────────
-// Returns { mutation, isGenerating } so the page can enable polling
+// Fire-and-forget: starts the edge function, then polling detects completion.
 export function useGenerateSuggestions() {
   const { agencyId } = useAuth();
   const queryClient = useQueryClient();
   const [isGenerating, setIsGenerating] = useState(false);
+  const prevCountRef = { current: -1 };
+  const stableCountRef = { current: 0 };
+  const expectedMinRef = { current: 0 };
+
+  // Call this from the polling query to auto-detect completion
+  const checkGenerationDone = useCallback((currentCount: number) => {
+    if (!isGenerating) return;
+    // Wait for at least a few suggestions before checking stability
+    if (currentCount < expectedMinRef.current && currentCount < 5) {
+      prevCountRef.current = currentCount;
+      stableCountRef.current = 0;
+      return;
+    }
+    if (currentCount === prevCountRef.current && currentCount > 0) {
+      stableCountRef.current += 1;
+      // Stable for 3 consecutive polls (9s) → generation done
+      if (stableCountRef.current >= 3) {
+        setIsGenerating(false);
+        stableCountRef.current = 0;
+        prevCountRef.current = -1;
+        toast.success(`${currentCount} suggestions générées`);
+      }
+    } else {
+      stableCountRef.current = 0;
+    }
+    prevCountRef.current = currentCount;
+  }, [isGenerating]);
 
   const mutation = useMutation({
     mutationFn: async ({ month, year, regenerateSingle, suggestionId, prompt, targetDates }: {
@@ -119,12 +156,14 @@ export function useGenerateSuggestions() {
       prompt?: { tone?: string; keywords?: string; audience?: string; length?: string; freePrompt?: string };
       targetDates?: string[];
     }) => {
+      // Reset polling detection
+      prevCountRef.current = -1;
+      stableCountRef.current = 0;
+      expectedMinRef.current = regenerateSingle ? 1 : (targetDates?.length || 20);
       setIsGenerating(true);
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 300_000);
-
-      const { data, error } = await supabase.functions.invoke('social-suggest', {
+      // Fire-and-forget: don't await the full response
+      supabase.functions.invoke('social-suggest', {
         body: {
           agency_id: agencyId,
           month,
@@ -134,49 +173,30 @@ export function useGenerateSuggestions() {
           prompt: prompt || null,
           target_dates: targetDates || null,
         },
-      });
-      clearTimeout(timeoutId);
-
-      if (error) {
-        let message = error.message || 'Erreur lors de la génération';
-        try {
-          const status = (error as any)?.context?.status;
-          const body = await (error as any)?.context?.json?.();
-          if (status === 429) {
-            const retryAfter = body?.retryAfter;
-            message = retryAfter
-              ? `Trop de requêtes — réessayez dans ${Math.ceil(Number(retryAfter) / 60)} min.`
-              : 'Trop de requêtes — réessayez dans quelques minutes.';
-          } else if (status === 402) {
-            message = 'Crédits IA insuffisants.';
-          } else if (body?.error) {
-            message = body.error;
+      }).then(({ data, error }) => {
+        if (error || data?.error) {
+          console.error('[social-suggest] Edge function error:', error || data?.error);
+          // If polling hasn't already stopped it, force stop
+          if (isGenerating) {
+            setIsGenerating(false);
+            const msg = error?.message || data?.error || 'Erreur lors de la génération';
+            toast.error(msg);
           }
-        } catch {
-          // fallback on original error message
         }
-        throw new Error(message);
-      }
-      if (data?.error) throw new Error(data.error);
-      return data;
-    },
-    onSuccess: (data) => {
-      setIsGenerating(false);
-      const monthKey = data.month_key;
-      queryClient.invalidateQueries({ queryKey: ['social-suggestions', agencyId, monthKey] });
-      toast.success(`${data.generated_count} suggestions générées`);
-    },
-    onError: (err: any) => {
-      setIsGenerating(false);
-      const msg = err?.message || 'Erreur lors de la génération';
-      toast.error(msg);
-    },
-    onSettled: () => {
-      setIsGenerating(false);
+        // If polling already detected completion, this is a no-op
+        const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+        queryClient.invalidateQueries({ queryKey: ['social-suggestions', agencyId, monthKey] });
+      }).catch(() => {
+        // Network error — polling will handle the generated suggestions
+        console.warn('[social-suggest] Network timeout — polling handles results');
+      });
+
+      // Return immediately so the mutation resolves fast
+      return { month_key: `${year}-${String(month).padStart(2, '0')}` };
     },
   });
 
-  return { ...mutation, isGenerating };
+  return { ...mutation, isGenerating, checkGenerationDone };
 }
 
 // ─── Update suggestion status ────────────────────────────────
