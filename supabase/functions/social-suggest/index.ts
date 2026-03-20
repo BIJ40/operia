@@ -385,10 +385,15 @@ function validateAndNormalizeSuggestions(
       universe = 'general';
     }
 
-    // 5. realisation_id
+    // 5. realisation_id — OBLIGATOIRE pour "preuve", on force une réalisation réelle
     let realisationId: string | null = null;
-    if (topicType === 'realisation' && s.realisation_id && validRealisationIds.has(s.realisation_id)) {
+    if ((topicType === 'realisation' || topicType === 'preuve') && s.realisation_id && validRealisationIds.has(s.realisation_id)) {
       realisationId = s.realisation_id;
+    }
+    // If preuve but no valid realisation → reject this suggestion
+    if (topicType === 'preuve' && !realisationId) {
+      console.warn(`[validateSuggestions] Preuve post "${s.topic_key}" rejected: no valid realisation_id`);
+      continue; // skip this suggestion entirely
     }
 
     // 6. caption — strip structural labels (HOOK:, CTA:, etc.)
@@ -906,7 +911,7 @@ Chaque post DOIT avoir un topic_type parmi :
 2. "prevention" — éviter une panne, anticiper (~4 posts)
 3. "amelioration" — confort, esthétique, valorisation (~4 posts)
 4. "conseil" — tips concrets, utiles, actionnables (~3 posts)
-5. "preuve" — intervention rapide, savoir-faire technicien, proximité, réalisation, témoignage, avant/après, process (~3 posts)
+5. "preuve" — OBLIGATOIREMENT basé sur une VRAIE réalisation (réalisation_id requis). Intervention rapide, savoir-faire technicien, avant/après RÉEL, témoignage. INTERDIT de générer du contenu inventé pour cette catégorie. (~3 posts, uniquement si des réalisations existent)
 6. "saisonnier" — météo réelle, période (~3 posts)
 7. "contre_exemple" — erreur fréquente, "ce qu'il ne faut pas faire", contraste technicien vs bricoleur (~3 posts)
 8. "pedagogique" — schéma, chiffre clé, "le saviez-vous ?", valeur immédiate (~3 posts)
@@ -1089,7 +1094,7 @@ Pour "pedagogique" : contenu UTILE + valeur immédiate → CTA doux.
 Pour "conseil" : tip pratique + actionnable → CTA.
 Pour "contre_exemple" : erreur fréquente + contraste pro → CTA.
 Pour "prospection" : présentation entreprise/zone/partenaires → CTA découverte.
-Pour "preuve" : savoir-faire technicien, réalisation, témoignage → CTA confiance.
+Pour "preuve" : OBLIGATOIREMENT lié à une VRAIE réalisation (realisation_id REQUIS). Utilise les photos réelles avant/après. visual_type DOIT être "before_after" si avant/après dispo, sinon "photo". INTERDIT de générer du contenu inventé pour cette catégorie. Le hook doit mettre en avant le résultat concret. → CTA confiance.
 Pour "saisonnier" : lien météo/période réelle → CTA anticipation.
 
 CHAQUE catégorie a sa PROPRE tonalité. Ne PAS tout transformer en "urgence métier".

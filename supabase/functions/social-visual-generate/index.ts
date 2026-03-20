@@ -267,10 +267,13 @@ Réponds UNIQUEMENT en JSON valide avec exactement ces clés :
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // ÉTAPE 1 : TROUVER UNE VRAIE PHOTO SI DISPONIBLE
+    // ÉTAPE 1 : TROUVER LES VRAIES PHOTOS (avant/après) SI DISPONIBLE
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     let realPhotoUrl: string | null = null;
+    let beforePhotoUrl: string | null = null;
+    let afterPhotoUrl: string | null = null;
+    let hasBeforeAfter = false;
 
     if (suggestion.realisation_id) {
       const { data: media } = await adminSupabase
@@ -281,19 +284,52 @@ Réponds UNIQUEMENT en JSON valide avec exactement ces clés :
         .limit(10);
 
       if (media && media.length > 0) {
+        const beforeMedia = media.find((m: any) => m.media_role === 'before');
         const afterMedia = media.find((m: any) => m.media_role === 'after');
-        const bestMedia = afterMedia || media[0];
+        
+        // Fetch before photo signed URL
+        if (beforeMedia?.storage_path) {
+          const { data: signedData } = await adminSupabase.storage
+            .from('realisation-media')
+            .createSignedUrl(beforeMedia.storage_path, 600);
+          if (signedData?.signedUrl) {
+            beforePhotoUrl = signedData.signedUrl;
+            console.log('[social-visual-generate] Before photo found:', beforeMedia.storage_path);
+          }
+        }
 
+        // Fetch after photo signed URL
+        if (afterMedia?.storage_path) {
+          const { data: signedData } = await adminSupabase.storage
+            .from('realisation-media')
+            .createSignedUrl(afterMedia.storage_path, 600);
+          if (signedData?.signedUrl) {
+            afterPhotoUrl = signedData.signedUrl;
+            console.log('[social-visual-generate] After photo found:', afterMedia.storage_path);
+          }
+        }
+
+        hasBeforeAfter = !!(beforePhotoUrl && afterPhotoUrl);
+
+        // Use the best available photo as the main real photo
+        const bestMedia = afterMedia || media[0];
         if (bestMedia?.storage_path) {
           const { data: signedData } = await adminSupabase.storage
             .from('realisation-media')
             .createSignedUrl(bestMedia.storage_path, 600);
-          
           if (signedData?.signedUrl) {
             realPhotoUrl = signedData.signedUrl;
-            console.log('[social-visual-generate] Using real photo from realisation:', bestMedia.storage_path);
+            console.log('[social-visual-generate] Main real photo:', bestMedia.storage_path);
           }
         }
+      }
+
+      // RULE: For preuve/realisation posts, REFUSE to generate without real photos
+      if (!realPhotoUrl) {
+        console.error('[social-visual-generate] Preuve post with realisation_id but no photos found');
+        return new Response(JSON.stringify({ 
+          error: 'Aucune photo trouvée pour cette réalisation. Ajoutez des photos dans le module Réalisations avant de générer le visuel.' 
+        }), { status: 400, headers: jsonHeaders });
       }
     }
 
@@ -334,11 +370,34 @@ CRITICAL COMPOSITION RULES — THIS IMAGE IS A BACKGROUND FOR A SOCIAL MEDIA AD:
 
     let bgMessages: any[];
 
-    if (realPhotoUrl) {
+    if (hasBeforeAfter && beforePhotoUrl && afterPhotoUrl) {
+      // BEFORE/AFTER LAYOUT: Use both real photos side by side
+      console.log('[social-visual-generate] Using BEFORE/AFTER layout with real photos');
       bgMessages = [{
         role: 'user',
         content: [
-          { type: 'text', text: `Transform this real photo into a premium social media ad background (1080x1080 square).\n\n${AD_COMPOSITION_RULES}\n\nKeep the authentic feel. Apply cinematic color grade. Ensure bottom 40% naturally darkens. Full bleed, no borders.` },
+          { type: 'text', text: `Create a professional BEFORE/AFTER comparison for a social media ad (1080x1080 square).
+
+INSTRUCTIONS:
+- Place the BEFORE photo on the LEFT half and the AFTER photo on the RIGHT half
+- Add a subtle vertical divider between them
+- Add "AVANT" label on the left side and "APRÈS" label on the right side (small, discrete, white text with shadow)
+- Apply professional color grading to both images for consistency
+- The bottom 30% should naturally darken for text overlay
+- Keep the authentic feel of both photos — these are REAL intervention photos
+- NO other text, NO logos, NO watermarks
+- Square format 1080x1080, edge to edge
+
+${HELPCONFORT_VISUAL_IDENTITY}` },
+          { type: 'image_url', image_url: { url: beforePhotoUrl } },
+          { type: 'image_url', image_url: { url: afterPhotoUrl } },
+        ],
+      }];
+    } else if (realPhotoUrl) {
+      bgMessages = [{
+        role: 'user',
+        content: [
+          { type: 'text', text: `Transform this real intervention photo into a premium social media ad background (1080x1080 square).\n\n${AD_COMPOSITION_RULES}\n\nThis is a REAL photo from an actual intervention — keep the authentic feel. Apply cinematic color grade. Ensure bottom 40% naturally darkens. Full bleed, no borders.` },
           { type: 'image_url', image_url: { url: realPhotoUrl } },
         ],
       }];
@@ -728,7 +787,7 @@ async function persistAsset(
     return { response: new Response(JSON.stringify({ error: 'Erreur upload: ' + uploadError.message }), { status: 500, headers }) };
   }
 
-  const visualStrategy = realPhotoUrl ? 'photo_realisation' : 'illustration_generee';
+  const visualStrategy = hasBeforeAfter ? 'avant_apres_reel' : realPhotoUrl ? 'photo_realisation' : 'illustration_generee';
   const { data: asset, error: insertError } = await adminSupabase
     .from('social_visual_assets')
     .insert({
