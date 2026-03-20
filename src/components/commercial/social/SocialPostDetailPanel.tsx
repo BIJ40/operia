@@ -66,6 +66,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const [composedPreviewUrl, setComposedPreviewUrl] = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [renderModeOverride, setRenderModeOverride] = useState<'canvas' | 'image' | null>(null);
+  const [visualCustomization, setVisualCustomization] = useState<VisualCustomization | null>(null);
 
   // Visual assets
   const { data: assets = [], isLoading: assetsLoading } = useSocialVisualAssets(suggestion.id);
