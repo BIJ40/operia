@@ -465,7 +465,6 @@ Deno.serve(async (req) => {
       return rateLimitResponse(rlResult.retryAfter!, corsHeaders);
     }
 
-    const userPromptParams = body.prompt || null;
 
     if (!agencyId) {
       return new Response(JSON.stringify({ error: 'agency_id requis' }), {
