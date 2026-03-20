@@ -170,10 +170,16 @@ export function getUniverseBatchCorrection(
   return correction;
 }
 
-function scoreTextFreshness(text: string, input: BdStoryGenerationInput): number {
+// Anti-repetition tuning constants (centralized)
+const RECENT_MEMORY_SIZE = 20;
+const RECENT_PENALTY = 24;
+const USAGE_PENALTY = 3;
+
+export function scoreTextFreshness(text: string, input: BdStoryGenerationInput): number {
   const usage = input.atomUsageState?.atomUsageCount[text] || 0;
-  const isRecent = input.atomUsageState?.recentAtomTexts.includes(text) || false;
-  return (isRecent ? -100 : 0) - usage * 8;
+  const recentTexts = input.atomUsageState?.recentAtomTexts?.slice(-RECENT_MEMORY_SIZE) || [];
+  const isRecent = recentTexts.includes(text);
+  return (isRecent ? -RECENT_PENALTY : 0) - usage * USAGE_PENALTY;
 }
 
 function selectUniverse(input: BdStoryGenerationInput): ProblemUniverse {
