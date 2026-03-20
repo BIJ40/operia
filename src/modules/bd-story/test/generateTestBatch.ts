@@ -4,6 +4,8 @@
  * Usage: npx tsx src/modules/bd-story/test/generateTestBatch.ts [20|60|120]
  */
 
+import * as fs from 'fs';
+
 import { generateStory } from '../engine/storyOrchestrator';
 import { auditCoverage } from '../engine/copyEngine';
 import { checkStoryBible } from '../data/storyBible';
