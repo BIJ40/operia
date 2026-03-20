@@ -1,9 +1,11 @@
 /**
  * BD Story — Diversity Engine
  * Score pondéré anti-répétition sur fenêtre glissante
+ * + proximité narrative perçue (ouverture, tension, résolution, morale)
  */
 
 import { GeneratedStory, DiversityScoreBreakdown } from '../types/bdStory.types';
+import { narrativeDistance } from '../data/storyBible';
 
 // ============================================================================
 // WEIGHTS — importance de chaque dimension
