@@ -152,7 +152,10 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const handleGenerate = useCallback(() => {
     setLoadingPreview(true);
     generateMutation.mutate(
-      { suggestionId: suggestion.id },
+      {
+        suggestionId: suggestion.id,
+        ...(visualCustomization ? { visualCustomization } : {}),
+      },
       {
         onSuccess: (data) => {
           if (data?.signed_url) {
@@ -161,7 +164,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
         },
       }
     );
-  }, [suggestion.id, generateMutation]);
+  }, [suggestion.id, generateMutation, visualCustomization]);
 
   const handleDownload = useCallback(() => {
     const assetToDownload = renderMode === 'image'
