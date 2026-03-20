@@ -5,6 +5,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { generateStory } from '../engine/storyOrchestrator';
 import { BdStoryGenerationInput, BdStoryGenerationOutput, GeneratedStory } from '../types/bdStory.types';
+import { Json } from '@/integrations/supabase/types';
 
 interface UseGenerateOptions {
   agencyId: string;
@@ -21,7 +22,7 @@ export function useBdStoryGenerate({ agencyId }: UseGenerateOptions) {
 
     try {
       // Fetch recent stories for diversity
-      const { data: recentRows } = await supabase
+      const { data: recentRows } = await (supabase as any)
         .from('bd_story_stories')
         .select('story_json')
         .eq('agency_id', agencyId)
@@ -29,7 +30,7 @@ export function useBdStoryGenerate({ agencyId }: UseGenerateOptions) {
         .limit(30);
 
       const recentStories: GeneratedStory[] = (recentRows || [])
-        .map(r => r.story_json as unknown as GeneratedStory)
+        .map((r: { story_json: Json }) => r.story_json as unknown as GeneratedStory)
         .filter(Boolean);
 
       const input: BdStoryGenerationInput = {
@@ -43,33 +44,38 @@ export function useBdStoryGenerate({ agencyId }: UseGenerateOptions) {
       const result = generateStory(input, recentStories);
       setLastResult(result);
 
-      // Persist
-      const { error: insertError } = await supabase
+      // Persist with extracted columns
+      const story = result.story;
+      const { error: insertError } = await (supabase as any)
         .from('bd_story_stories')
         .insert({
           agency_id: agencyId,
-          story_key: result.story.storyKey,
-          title: result.story.title,
-          summary: result.story.summary,
-          universe: result.story.universe,
-          story_family: result.story.storyFamily,
-          template_key: result.story.templateKey,
-          problem_slug: result.story.problemSlug,
-          technician_slug: result.story.assignedCharacters.technician,
-          client_profile_slug: result.story.clientProfileSlug,
-          tone: result.story.tone,
-          panels: result.story.panels as any,
-          story_json: result.story as any,
+          story_key: story.storyKey,
+          title: story.title,
+          summary: story.summary,
+          universe: story.universe,
+          story_family: story.storyFamily,
+          template_key: story.templateKey,
+          problem_slug: story.problemSlug,
+          technician_slug: story.assignedCharacters.technician,
+          client_profile_slug: story.clientProfileSlug,
+          tone: story.tone,
+          cta_mode: story.ctaText ? 'general' : null,
+          panels: JSON.parse(JSON.stringify(story.panels)),
+          story_json: JSON.parse(JSON.stringify(story)),
           board_prompt_master: result.boardPromptMaster,
-          diversity_score: result.story.diversityScore.totalScore,
-          coupling_score: result.story.validation.isValid ? 1 : 0,
+          diversity_score: story.diversityScore.totalScore,
+          coupling_score_total: story.validation.isValid ? 1 : 0,
+          validation_is_valid: story.validation.isValid,
+          validation_issue_count: story.validation.issues.length,
         });
 
       if (insertError) throw insertError;
 
       return result;
-    } catch (err: any) {
-      setError(err.message || 'Erreur de génération');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erreur de génération';
+      setError(message);
       return null;
     } finally {
       setIsGenerating(false);
