@@ -447,7 +447,20 @@ Deno.serve(async (req) => {
 
     const { context, supabase: userSupabase } = authResult;
 
-    const rlResult = await checkRateLimit(`social-suggest:${context.userId}`, { limit: 5, windowMs: 3600_000 });
+    const body = await req.json();
+    const month = Number(body.month);
+    const year = Number(body.year);
+    const agencyId = body.agency_id ? validateUUID(body.agency_id, 'agency_id') : context.agencyId;
+    const regenerateSingle = body.regenerate_single === true;
+    const singleSuggestionId = body.suggestion_id || null;
+    const userPromptParams = body.prompt || null;
+
+    const rateLimitKey = regenerateSingle
+      ? `social-suggest:single:${context.userId}:${singleSuggestionId || 'unknown'}`
+      : `social-suggest:month:${context.userId}:${agencyId || 'unknown'}:${year}-${String(month).padStart(2, '0')}`;
+    const rlResult = await checkRateLimit(rateLimitKey, regenerateSingle
+      ? { limit: 6, windowMs: 10 * 60_000 }
+      : { limit: 2, windowMs: 10 * 60_000 });
     if (!rlResult.allowed) {
       return rateLimitResponse(rlResult.retryAfter!, corsHeaders);
     }
