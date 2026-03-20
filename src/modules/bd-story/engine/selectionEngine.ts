@@ -213,7 +213,17 @@ function selectUniverse(input: BdStoryGenerationInput): ProblemUniverse {
     .filter(entry => entry.w > 0);
 
   if (entries.length === 0) {
-    return ALL_UNIVERSES[0];
+    // Controlled fallback: pick the least over-quota universe
+    const fallbackEntries = ALL_UNIVERSES
+      .map(u => {
+        const count = batchState?.countsByUniverse[u] || 0;
+        const { maxCount } = batchState
+          ? getFinalUniverseBounds(u, quotas, batchState.targetSize)
+          : { maxCount: Infinity };
+        return { u, overshoot: count - maxCount };
+      })
+      .sort((a, b) => a.overshoot - b.overshoot);
+    return fallbackEntries[0].u;
   }
 
   const totalW = entries.reduce((s, e) => s + e.w, 0);
