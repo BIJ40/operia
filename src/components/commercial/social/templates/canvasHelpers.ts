@@ -39,13 +39,14 @@ export const ZONES = {
 } as const;
 
 // ─── Text constraints ───────────────────────────────────────
-const HOOK_MAX_CHARS = 45;
-const HOOK_MAX_WORDS = 8;
+const HOOK_MAX_CHARS = 40;
+const HOOK_MAX_WORDS = 6;
 const HOOK_MAX_LINES = 2;
 const HOOK_FONT_MAX = 62;
 const HOOK_FONT_MIN = 42;
 
-const SUB_MAX_CHARS = 70;
+const SUB_MAX_CHARS = 60;
+const SUB_MAX_WORDS = 12;
 const SUB_MAX_LINES = 1;
 const SUB_FONT = 26;
 
@@ -103,20 +104,23 @@ export function sanitizeHook(raw: string): string {
   return text;
 }
 
-/** Sanitize subtext: single complete sentence, no truncation */
+/** Sanitize subtext: single complete sentence, max 12 words, no truncation */
 export function sanitizeSubText(raw: string): string {
   if (!raw) return '';
   let text = raw.trim();
   // Remove trailing ellipsis
   text = text.replace(/[…]+$/, '').trim();
+  // Limit words first (max 12)
+  const words = text.split(/\s+/);
+  if (words.length > SUB_MAX_WORDS) {
+    text = words.slice(0, SUB_MAX_WORDS).join(' ');
+  }
   // Limit chars — cut at last complete word
   if (text.length > SUB_MAX_CHARS) {
     const cut = text.slice(0, SUB_MAX_CHARS);
     const lastSpace = cut.lastIndexOf(' ');
     text = lastSpace > SUB_MAX_CHARS * 0.4 ? cut.slice(0, lastSpace) : cut;
-    // Ensure it ends cleanly
     text = text.replace(/[\s,;:]+$/, '').trim();
-    // Add period if doesn't end with punctuation
     if (!/[.!?]$/.test(text)) text += '.';
   }
   return text;
@@ -229,7 +233,7 @@ export function drawGradientBg(ctx: CanvasRenderingContext2D, color1: string, co
 // ZONE 1 — TOP BAR COMPONENTS (0–100px)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-/** Logo HC en haut — logo complet Help Confort */
+/** Logo HC en haut — logo image officiel UNIQUEMENT, jamais de fallback texte */
 export async function drawHCLogo(ctx: CanvasRenderingContext2D, logoSrc: string, position: 'top-left' | 'top-center' = 'top-left') {
   const logoH = 52;
   const padX = 12;
@@ -251,17 +255,8 @@ export async function drawHCLogo(ctx: CanvasRenderingContext2D, logoSrc: string,
 
     drawContain(ctx, img, x + padX, y + padY, logoW, logoH);
   } catch {
-    const bgW = 180;
-    const bgH = logoH + padY * 2;
-    const x = position === 'top-center' ? (SIZE - bgW) / 2 : 30;
-    const y = 25;
-    ctx.fillStyle = 'rgba(255,255,255,0.92)';
-    roundRect(ctx, x, y, bgW, bgH, 10);
-    ctx.fill();
-    ctx.fillStyle = HC.blue;
-    ctx.font = 'bold 24px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText('Help Confort', x + padX, y + bgH / 2 + 8);
+    // ❌ LOGO NON DISPONIBLE → ne rien afficher (jamais de fallback texte)
+    console.warn('[drawHCLogo] Logo image failed to load — skipping (no text fallback)');
   }
   ctx.textAlign = 'left';
 }
