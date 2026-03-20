@@ -652,6 +652,7 @@ ADDITIONAL REQUIREMENTS:
       'bg_only',
       jsonHeaders,
       undefined,
+      hasBeforeAfter,
     );
 
     if ('response' in backgroundSave) {
