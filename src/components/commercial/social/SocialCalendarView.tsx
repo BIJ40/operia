@@ -148,29 +148,28 @@ export function SocialCalendarView({
         })}
       </div>
 
-      {/* Footer: legend + regenerate selected */}
-      <div className="flex items-center gap-3 mt-2 pt-2 border-t border-border">
-        <div className="flex gap-3 flex-1">
-          {Object.entries({ urgence: 'Urgence', prevention: 'Prévention', amelioration: 'Amélioration', conseil: 'Conseil', preuve: 'Preuve', saisonnier: 'Saison', contre_exemple: 'Contre-ex.', pedagogique: 'Pédago.', prospection: 'Prospection' }).map(([type, label]) => (
+      {/* Footer: regenerate button (prominent) + legend */}
+      <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-border">
+        {selectedDays.size > 0 && (
+          <Button
+            size="sm"
+            variant="default"
+            className="h-8 text-xs gap-1.5 w-full"
+            onClick={onRegenerateSelected}
+            disabled={isRegenerating}
+          >
+            <RefreshCw className={cn('w-3.5 h-3.5', isRegenerating && 'animate-spin')} />
+            Suggérer à nouveau ({selectedDays.size} jour{selectedDays.size > 1 ? 's' : ''})
+          </Button>
+        )}
+        <div className="flex flex-wrap gap-x-3 gap-y-1">
+          {Object.entries({ urgence: 'Urgence', prevention: 'Prévent.', amelioration: 'Amélio.', conseil: 'Conseil', preuve: 'Preuve', saisonnier: 'Saison', contre_exemple: 'Contre-ex.', pedagogique: 'Pédago.', prospection: 'Prospect.' }).map(([type, label]) => (
             <div key={type} className="flex items-center gap-1">
               <div className={cn('w-2 h-2 rounded-full', TOPIC_DOT_COLORS[type])} />
               <span className="text-[10px] text-muted-foreground">{label}</span>
             </div>
           ))}
         </div>
-
-        {selectedDays.size > 0 && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 text-xs gap-1.5 shrink-0"
-            onClick={onRegenerateSelected}
-            disabled={isRegenerating}
-          >
-            <RefreshCw className={cn('w-3 h-3', isRegenerating && 'animate-spin')} />
-            Suggérer à nouveau ({selectedDays.size} jour{selectedDays.size > 1 ? 's' : ''})
-          </Button>
-        )}
       </div>
     </div>
   );
