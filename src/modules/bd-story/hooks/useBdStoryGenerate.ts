@@ -46,6 +46,10 @@ export function useBdStoryGenerate({ agencyId }: UseGenerateOptions) {
 
       // Persist with extracted columns
       const story = result.story;
+      const bibleViolations = story.validation.issues.filter(
+        (i: { severity: string }) => i.severity === 'blocking'
+      ).length;
+
       const { error: insertError } = await (supabase as any)
         .from('bd_story_stories')
         .insert({
@@ -64,10 +68,11 @@ export function useBdStoryGenerate({ agencyId }: UseGenerateOptions) {
           panels: JSON.parse(JSON.stringify(story.panels)),
           story_json: JSON.parse(JSON.stringify(story)),
           board_prompt_master: result.boardPromptMaster,
-          diversity_score: story.diversityScore.totalScore,
-          coupling_score_total: story.validation.isValid ? 1 : 0,
+          diversity_score: story.diversityScore?.totalScore ?? 0,
+          narrative_distance_score: story.diversityScore?.sameStoryFamily ?? 0,
           validation_is_valid: story.validation.isValid,
           validation_issue_count: story.validation.issues.length,
+          bible_violation_count: bibleViolations,
         });
 
       if (insertError) throw insertError;
