@@ -4,6 +4,8 @@
  * Usage: npx tsx src/modules/bd-story/test/generateTestBatch.ts [20|60|120]
  */
 
+import * as fs from 'fs';
+
 import { generateStory } from '../engine/storyOrchestrator';
 import { auditCoverage } from '../engine/copyEngine';
 import { checkStoryBible } from '../data/storyBible';
@@ -463,6 +465,38 @@ function run() {
     if (pct > UNIVERSE_QUOTAS[u].maxPct) issues.push(`${u}: ${pct.toFixed(1)}% > max ${UNIVERSE_QUOTAS[u].maxPct}%`);
   }
 
+  // ============================================================================
+  // JSON REPORT EXPORT
+  // ============================================================================
+
+  const jsonReport = {
+    batchSize: BATCH_SIZE,
+    validCount,
+    bibleClean,
+    avgDiversity: parseFloat(avgDiversity.toFixed(3)),
+    coveragePercent: coverage.coveragePercent,
+    criticalGaps: prioritizedZeroGaps.length,
+    universeDistribution: univDist,
+    technicianDistribution: techDist,
+    templateDistribution: tmplDist,
+    familyDistribution: familyDist,
+    toneDistribution: toneDist,
+    consecutiveUniverse,
+    consecutiveTech,
+    techClumps,
+    avgNarrativeDistance: parseFloat(avgDist.toFixed(2)),
+    wordIssueCount: wordIssues.length,
+    duplicatesOver5: duplicates.length,
+    bibleViolations: bibleReports,
+    validatorViolations: validatorReports,
+    issues,
+    verdict: issues.length === 0 ? 'PASS' : 'FAIL',
+  };
+
+  const reportPath = `/tmp/batch-${BATCH_SIZE}-report.json`;
+  fs.writeFileSync(reportPath, JSON.stringify(jsonReport, null, 2));
+  console.log(`\n📄 Rapport JSON exporté: ${reportPath}`);
+
   if (issues.length === 0) {
     console.log('🟢 TOUS LES TESTS PASSENT — Moteur prêt pour DB/UI');
   } else {
@@ -470,6 +504,7 @@ function run() {
     for (const issue of issues) {
       console.log(`   ⚠️ ${issue}`);
     }
+    process.exitCode = 1;
   }
 
   console.log('\n═══════════════════════════════════════════════════');
