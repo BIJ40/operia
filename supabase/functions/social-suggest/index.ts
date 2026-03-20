@@ -180,7 +180,7 @@ const AWARENESS_DAYS = buildAwarenessDays(new Date().getFullYear());
 
 const NORMALIZED_UNIVERSES = ['plomberie', 'electricite', 'serrurerie', 'vitrerie', 'menuiserie', 'renovation', 'volets', 'pmr', 'general'] as const;
 const VALID_PLATFORMS = ['facebook', 'instagram', 'google_business', 'linkedin'] as const;
-const VALID_TOPIC_TYPES = ['awareness_day', 'seasonal_tip', 'realisation', 'local_branding'] as const;
+const VALID_TOPIC_TYPES = ['awareness_day', 'seasonal_tip', 'realisation', 'local_branding', 'educational'] as const;
 const VALID_LEAD_TYPES = ['urgence', 'prevention', 'amelioration', 'preuve_sociale', 'saisonnier'] as const;
 const VALID_TARGET_INTENTS = ['besoin_immediat', 'besoin_latent', 'curiosite', 'education'] as const;
 const VALID_URGENCY_LEVELS = ['low', 'medium', 'high'] as const;
