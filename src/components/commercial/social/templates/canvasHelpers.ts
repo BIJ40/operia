@@ -32,8 +32,8 @@ export const ZONES = {
   TEXT_END: 900,       // Max bottom of text
   CTA_START: 910,     // CTA button
   CTA_END: 975,
-  FOOTER_START: 985,
-  FOOTER_HEIGHT: 95,
+  FOOTER_START: 960,
+  FOOTER_HEIGHT: 120,
   MARGIN_X: 70,       // Left/right margin for text
   TEXT_WIDTH: 940,     // SIZE - 2*MARGIN_X
 } as const;
