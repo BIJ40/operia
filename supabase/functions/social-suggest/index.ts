@@ -814,11 +814,18 @@ PLATFORM VARIANTS :
 - Google Business → problème + solution + zone géo
 - LinkedIn → expertise + cas concret + crédibilité
 
-ANTI-RÉPÉTITION :
+ANTI-RÉPÉTITION (CRITIQUE — 21 JOURS MINIMUM) :
+- Jamais 2 posts du même univers métier à moins de 21 jours d'écart
 - Jamais 2 posts identiques, jamais le même angle, jamais le même hook
+- Si un post "volets" existe fin mars, PAS de post "volets" début avril
+- Varier les univers : alterner plomberie, electricite, serrurerie, volets, menuiserie, vitrerie, pmr, renovation
+- Espacer les posts régulièrement : ~1 post tous les 1-2 jours
 
-UNIVERS MÉTIER : ${NORMALIZED_UNIVERSES.join(', ')}
-Dates dans le mois cible ${month}/${year}.
+PRIORITÉ CALENDAIRE (CRITIQUE) :
+- Les jours fériés, fêtes nationales et événements calendaires DOIVENT TOUS avoir un post
+- Chaque événement sert de PRÉTEXTE pour un vrai problème métier
+- Le topic_type de ces posts est "awareness_day"
+- Ces posts calendaires forment la colonne vertébrale du planning (~50% des posts)
 
 ═══════════════════════════════════════════
 RAPPEL FINAL
