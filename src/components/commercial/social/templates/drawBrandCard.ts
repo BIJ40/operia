@@ -1,7 +1,6 @@
 /**
  * Template : brand_card — Créa branding / fallback 1080x1080
- * V5 — STRICT layout: logo top-left, universe top-right, CTA centered, footer always.
- * NO parasitic elements.
+ * V6 — Logo endossé + picto univers.
  */
 import {
   SIZE, loadImage, drawCover,
@@ -10,8 +9,8 @@ import {
   drawContain, drawHookText, drawSubText, drawCTAButton,
   drawCinematicOverlay, drawUniversePill, roundRect,
 } from './canvasHelpers';
+import { getLogoSrc, getPictoSrc } from './templateAssets';
 import bannerSrc from '@/assets/banniere_helpconfort.jpg';
-import logoSrc from '@/assets/help-confort-house-icon.png';
 import type { SocialTemplatePayload } from '../SocialVisualCanvas';
 
 export async function drawBrandCard(ctx: CanvasRenderingContext2D, payload: SocialTemplatePayload) {
@@ -29,7 +28,6 @@ export async function drawBrandCard(ctx: CanvasRenderingContext2D, payload: Soci
     }
   } else {
     drawGradientBg(ctx, HC.blue, HC.blueDark);
-    // Subtle diagonal pattern
     ctx.strokeStyle = 'rgba(255,255,255,0.04)';
     ctx.lineWidth = 1;
     for (let i = -SIZE; i < SIZE * 2; i += 50) {
@@ -40,13 +38,13 @@ export async function drawBrandCard(ctx: CanvasRenderingContext2D, payload: Soci
     }
   }
 
-  // ─── ZONE 1: Top bar — Logo left, Universe right ───
+  // ─── ZONE 1: Top bar ───
   ctx.fillStyle = HC.orange;
   ctx.fillRect(0, 0, SIZE, 6);
-  await drawHCLogo(ctx, logoSrc, 'top-left');
-  drawUniversePill(ctx, theme, 35);
+  await drawHCLogo(ctx, getLogoSrc(), 'top-left');
+  await drawUniversePill(ctx, theme, 35, getPictoSrc(payload.universe));
 
-  // Banner image (only on solid bg, inside ZONE 2)
+  // Banner image (only on solid bg)
   if (!payload.mediaUrl) {
     try {
       const imgBanner = await loadImage(bannerSrc);
@@ -76,9 +74,9 @@ export async function drawBrandCard(ctx: CanvasRenderingContext2D, payload: Soci
     });
   }
 
-  // ─── ZONE 4: CTA — CENTRÉ horizontalement ───
+  // ─── ZONE 4: CTA ───
   drawCTAButton(ctx, cta, { align: 'center' });
 
-  // ─── ZONE 5: Footer — TOUJOURS présent ───
+  // ─── ZONE 5: Footer ───
   drawHCFooterBar(ctx, theme);
 }

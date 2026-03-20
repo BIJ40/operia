@@ -242,80 +242,88 @@ export function drawGradientBg(ctx: CanvasRenderingContext2D, color1: string, co
 // ZONE 1 — TOP BAR COMPONENTS (0–100px)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-/** Logo HC en haut — icône maison + "Help Confort Landes & Pays Basque" */
-export async function drawHCLogo(ctx: CanvasRenderingContext2D, logoSrc: string, position: 'top-left' | 'top-center' = 'top-left') {
-  const logoH = 56;
-  const agencyName = 'Help Confort';
-  const agencyRegion = 'Landes & Pays Basque';
-  const gap = 10;
-  const padX = 14;
-  const padY = 10;
-
+/** Logo HC endossé en haut à gauche — image seule dans une pill blanche */
+export async function drawHCLogo(ctx: CanvasRenderingContext2D, logoSrc: string, _position: 'top-left' | 'top-center' = 'top-left') {
   try {
     const img = await loadImage(logoSrc);
+    const logoH = 52;
     const logoRatio = img.naturalWidth / img.naturalHeight;
     const logoW = logoH * logoRatio;
-
-    // Measure text widths
-    ctx.font = 'bold 22px sans-serif';
-    const nameW = ctx.measureText(agencyName).width;
-    ctx.font = '16px sans-serif';
-    const regionW = ctx.measureText(agencyRegion).width;
-    const textBlockW = Math.max(nameW, regionW);
-
-    const bgW = logoW + gap + textBlockW + padX * 2;
+    const padX = 14;
+    const padY = 10;
+    const bgW = logoW + padX * 2;
     const bgH = logoH + padY * 2;
+    const x = 25;
+    const y = 22;
 
-    const x = position === 'top-center' ? (SIZE - bgW) / 2 : 30;
-    const y = 25;
-
-    // Background pill
-    ctx.fillStyle = 'rgba(255,255,255,0.94)';
-    roundRect(ctx, x, y, bgW, bgH, 12);
-    ctx.fill();
-
-    // Shadow
+    // Shadow + pill
     ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,0.12)';
-    ctx.shadowBlur = 8;
-    ctx.shadowOffsetY = 2;
-    ctx.fillStyle = 'rgba(255,255,255,0.94)';
-    roundRect(ctx, x, y, bgW, bgH, 12);
+    ctx.shadowColor = 'rgba(0,0,0,0.15)';
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetY = 3;
+    ctx.fillStyle = 'rgba(255,255,255,0.96)';
+    roundRect(ctx, x, y, bgW, bgH, 14);
     ctx.fill();
     ctx.restore();
 
-    // Logo icon
+    // Logo image
     drawContain(ctx, img, x + padX, y + padY, logoW, logoH);
-
-    // Agency name text
-    const textX = x + padX + logoW + gap;
-    ctx.fillStyle = HC.blueDark;
-    ctx.font = 'bold 22px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText(agencyName, textX, y + padY + 22);
-
-    // Region text
-    ctx.fillStyle = HC.blue;
-    ctx.font = '16px sans-serif';
-    ctx.fillText(agencyRegion, textX, y + padY + 44);
   } catch {
-    // ❌ LOGO NON DISPONIBLE → ne rien afficher (jamais de fallback texte)
-    console.warn('[drawHCLogo] Logo image failed to load — skipping (no text fallback)');
+    console.warn('[drawHCLogo] Logo image failed to load — skipping');
   }
   ctx.textAlign = 'left';
 }
 
-/** Universe pill — top right, inside ZONE 1 */
-export function drawUniversePill(ctx: CanvasRenderingContext2D, theme: ServiceTheme, y = 40) {
-  ctx.font = 'bold 20px sans-serif';
+/** Universe picto + label — top right, inside ZONE 1 */
+export async function drawUniversePill(ctx: CanvasRenderingContext2D, theme: ServiceTheme, y = 35, pictoSrc?: string) {
   const pillText = theme.label.toUpperCase();
-  const pillW = ctx.measureText(pillText).width + 36;
-  ctx.fillStyle = theme.bg;
-  roundRect(ctx, SIZE - pillW - 40, y, pillW, 40, 20);
+  ctx.font = 'bold 18px sans-serif';
+  const textW = ctx.measureText(pillText).width;
+  const pictoSize = 36;
+  const gap = 8;
+  const padX = 14;
+  const padY = 8;
+  const hasPicto = !!pictoSrc;
+  const pillW = (hasPicto ? pictoSize + gap : 0) + textW + padX * 2;
+  const pillH = Math.max(pictoSize, 24) + padY * 2;
+  const x = SIZE - pillW - 25;
+
+  // Shadow + pill background
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.18)';
+  ctx.shadowBlur = 8;
+  ctx.shadowOffsetY = 2;
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  roundRect(ctx, x, y, pillW, pillH, pillH / 2);
   ctx.fill();
+  ctx.restore();
+
+  // Draw picto if available
+  let textStartX = x + padX;
+  if (hasPicto) {
+    try {
+      const pictoImg = await loadImage(pictoSrc!);
+      const pictoX = x + padX;
+      const pictoY = y + (pillH - pictoSize) / 2;
+      // Clip circle
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(pictoX + pictoSize / 2, pictoY + pictoSize / 2, pictoSize / 2, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      drawCover(ctx, pictoImg, pictoX, pictoY, pictoSize, pictoSize);
+      ctx.restore();
+      textStartX = pictoX + pictoSize + gap;
+    } catch {
+      // Picto failed to load — just show text
+    }
+  }
+
+  // Label text
   ctx.fillStyle = HC.white;
-  ctx.textAlign = 'center';
-  ctx.fillText(pillText, SIZE - pillW / 2 - 40, y + 27);
+  ctx.font = 'bold 18px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(pillText, textStartX, y + pillH / 2 + 6);
   ctx.textAlign = 'left';
 }
 
