@@ -43,9 +43,12 @@ export function SocialPostCard({ suggestion, onApprove, onReject, onRegenerate, 
   const statusInfo = STATUS_LABELS[suggestion.status] || STATUS_LABELS.draft;
   const [isSendingWebhook, setIsSendingWebhook] = useState(false);
 
+  // Normalize hashtags: strip any leading #/## and re-add single #
+  const normalizeTag = (h: string) => `#${h.replace(/^#+/, '')}`;
+
   const fullCopyText = [
     suggestion.caption_base_fr,
-    suggestion.hashtags?.length > 0 ? suggestion.hashtags.map(h => `#${h}`).join(' ') : '',
+    suggestion.hashtags?.length > 0 ? suggestion.hashtags.map(normalizeTag).join(' ') : '',
   ].filter(Boolean).join('\n\n');
 
   const handleCopy = async () => {
