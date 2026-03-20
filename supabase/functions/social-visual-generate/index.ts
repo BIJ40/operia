@@ -13,6 +13,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
 import { handleCorsPreflightOrReject, getCorsHeaders } from '../_shared/cors.ts';
 import { getUserContext, assertAgencyAccess } from '../_shared/auth.ts';
 
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
+const VAN_REFERENCE_URL = `${SUPABASE_URL}/storage/v1/object/public/brand-assets/van-reference.png`;
+
 const SERVICE_COLORS: Record<string, string> = {
   plomberie: '#2D8BC9',
   electricite: '#F8A73C',
