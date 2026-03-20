@@ -1149,51 +1149,49 @@ RÈGLES :
 - Chaque post DOIT contenir un DÉCLENCHEUR de conversion
 - Pas de contenu calendaire forcé`;
     } else {
-      userPrompt = `Génère ${targetPostCount} suggestions de posts social media PERFORMANTS pour le mois ${month}/${year}.
+      // Build weekly schedule string for the prompt
+      const scheduleLines = weeklySchedule.map(s => {
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(s.day).padStart(2, '0')}`;
+        const event = monthAwareness.find(a => a.day === s.day);
+        const eventNote = event ? ` | événement: "${event.label}" (score: ${event.relevanceScore})` : '';
+        return `- ${dateStr}: catégorie "${s.category}"${eventNote}`;
+      }).join('\n');
+
+      userPrompt = `Génère EXACTEMENT ${targetPostCount} suggestions de posts (1 PAR JOUR) pour le mois ${month}/${year}.
+
+═══════════════════════════════════════════
+PLANNING QUOTIDIEN (1 POST/JOUR — STRUCTURE SEMI-ALÉATOIRE)
+═══════════════════════════════════════════
+Chaque jour a une catégorie assignée. Le topic_type du post DOIT correspondre.
+L'ordre change chaque semaine pour éviter la prévisibilité.
+
+${scheduleLines}
 
 ═══════════════════════════════════════════
 ÉVÉNEMENTS À LIEN DIRECT MÉTIER (prioritaires)
 ═══════════════════════════════════════════
 Ces événements ont un lien DIRECT avec l'habitat/dépannage. Utilise-les comme PRÉTEXTE pour un vrai problème.
-Le topic_type de ces posts est "awareness_day".
-Respecte l'univers indiqué.
+Respecte l'univers indiqué. Le topic_type reste celui assigné au jour.
 
 ${pertinentEvents.map(a => `- ${a.day}/${month}: ${a.label} | UNIVERS: ${a.preferredUniverses[0]} | priorité: ${a.relevanceScore * a.intentScore}`).join('\n') || '(aucun événement pertinent ce mois)'}
 
 ═══════════════════════════════════════════
 ÉVÉNEMENTS OPTIONNELS (score 2 — NE PAS FORCER)
 ═══════════════════════════════════════════
-Ces événements PEUVENT être utilisés UNIQUEMENT si :
-- l'angle est naturel et crédible
-- le lien avec le métier n'est pas forcé
-- le post serait meilleur AVEC l'événement que SANS
+S'ils ne produisent pas un angle naturel → IGNORER.
+Max 3 événements par semaine.
 
-S'ils ne produisent pas un angle naturel → IGNORER et générer un post métier classique à la place.
-
-${optionalEvents.map(a => `- ${a.day}/${month}: ${a.label} | univers: ${a.preferredUniverses[0]} | OPTIONNEL — ignorer si forcé`).join('\n') || '(aucun)'}
+${optionalEvents.map(a => `- ${a.day}/${month}: ${a.label} | univers: ${a.preferredUniverses[0]} | OPTIONNEL`).join('\n') || '(aucun)'}
 
 ═══════════════════════════════════════════
-SLOTS MÉTIER LIBRES (remplacent les événements sans lien)
+ANTI-REDONDANCE — GAP MINIMUM 3 JOURS
 ═══════════════════════════════════════════
-Pour ces dates, génère un post métier PERFORMANT de la catégorie indiquée :
-${fallbackSlots.map(s => `- ${s.day}/${month}: POST MÉTIER catégorie "${s.category}" (pas d'événement calendaire)`).join('\n') || '(aucun)'}
-
-Les posts restants (pour atteindre ${targetPostCount}) doivent compléter avec des problèmes métiers concrets.
-
-═══════════════════════════════════════════
-RÉPARTITION SUR ${targetPostCount} POSTS
-═══════════════════════════════════════════
-- ~25% URGENCE / PROBLÈME (leads directs, pannes, fuites)
-- ~25% ENTRETIEN / PRÉVENTION (anticiper, éviter une panne)
-- ~20% AMÉLIORATION HABITAT (confort, valorisation)
-- ~15% SAISONNALITÉ RÉELLE (météo, période)
-- ~10% CONSEIL PRATIQUE (tips utiles)
-- ~5% PREUVE / RÉASSURANCE (expertise, rapidité, proximité)
-
-═══════════════════════════════════════════
-ANTI-REDONDANCE — GAP MINIMUM 21 JOURS
-═══════════════════════════════════════════
-Un même univers/thème ne doit PAS apparaître deux fois en moins de 21 jours.
+- Même univers interdit à moins de 3 jours d'écart
+- Max 2 occurrences par semaine par univers
+- Max 6 occurrences par mois par univers
+- Pas 2 posts consécutifs même catégorie
+- Pas 2 posts consécutifs même intention
+- Variation obligatoire du ton (question, alerte, affirmation, conseil, chiffre)
 ${recentThemesWarning}
 
 SUJETS DÉJÀ EXISTANTS (à ne pas dupliquer) :
@@ -1205,31 +1203,34 @@ ${exploitableReals.length > 0
   : '(aucune)'}
 
 ═══════════════════════════════════════════
-RAPPEL CRITIQUE — PRESSION CONVERSION
+FORMAT DES POSTS (VARIATION OBLIGATOIRE)
 ═══════════════════════════════════════════
-- MINIMUM ${targetPostCount} posts, répartis sur tout le mois
-- Chaque post DOIT contenir un DÉCLENCHEUR (perte d'argent, inconfort, risque, gain, simplicité)
-- Un post sans déclencheur est INVALIDE — remplace-le par un post métier classique
-- lead_score DOIT refléter le potentiel RÉEL de conversion
-- Posts urgence (fuite, panne, sécurité) → lead_score > 80, urgency_level = high
-- visual_prompt = scène RÉALISTE habitat français, JAMAIS un fond vide
-- JAMAIS inventer de faux cas client — rester GÉNÉRAL et EXPERT
-- Le topic_type "realisation" est INTERDIT sauf s'il y a de vraies photos (realisation_id valide)
-- Espacer les posts de 1-2 jours, couvrir le mois entier
+Répartir les ${targetPostCount} posts selon :
+- ~20% PUNCHLINE : hook seul (visuel ultra impactant, aucun texte additionnel)
+- ~30% COURT : hook + CTA direct
+- ~40% MOYEN : hook + 1 phrase de bénéfice + CTA
+- ~10% LONG : hook + 2 phrases (problème + solution) + CTA
 
 ═══════════════════════════════════════════
-CATÉGORIE : CONTENU PÉDAGOGIQUE (topic_type = "educational")
+CATÉGORIE "preuve" — SOUS-TYPES
 ═══════════════════════════════════════════
-Inclure 2-3 posts pédagogiques par mois. Objectif : rendre un sujet technique compréhensible en 30 secondes.
-Visuels de type : schéma simple, comparaison, chiffre clé, process.
-RÈGLES :
-- UNE seule idée par visuel
-- Pas de texte long, pas de graphique complexe, pas de jargon
-- Hook basé sur un chiffre ou une prise de conscience ("80% des fuites sont évitables")
-- Explication simple et directe (max 10 mots)
-- CTA = action directe
-INTERDICTION : contenu scolaire, explication longue, design type powerpoint
-OBLIGATION : le post doit apporter une VALEUR IMMÉDIATE et rester actionnable`;
+Les posts "preuve" doivent varier entre :
+- réalisation (avec photo réelle si dispo)
+- avant/après
+- témoignage client (anonymisé)
+- process d'intervention
+
+═══════════════════════════════════════════
+RAPPEL CRITIQUE — 1 POST/JOUR, MACHINE ÉDITORIALE
+═══════════════════════════════════════════
+- EXACTEMENT ${targetPostCount} posts, UN par jour du mois
+- Chaque post DOIT contenir un DÉCLENCHEUR (perte d'argent, inconfort, risque, gain, simplicité)
+- Un post sans déclencheur est INVALIDE
+- lead_score DOIT refléter le potentiel RÉEL de conversion
+- visual_prompt = scène RÉALISTE habitat français
+- JAMAIS inventer de faux cas client
+- Chaque post doit être PERÇU comme DIFFÉRENT du précédent (anti-fatigue)
+- topic_type DOIT être l'une des 8 catégories valides : urgence, prevention, amelioration, conseil, preuve, saisonnier, contre_exemple, pedagogique`;
 
     }
 
