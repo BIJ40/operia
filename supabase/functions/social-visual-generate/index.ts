@@ -77,6 +77,40 @@ const GENERAL_TOPIC_LABELS: Record<string, string> = {
   educational: 'Le saviez-vous ?',
 };
 
+// ─── Visual Style Modes (réaliste 80% / optimisé 10% / créatif 10%) ───
+type VisualStyle = 'realiste' | 'optimise' | 'creatif';
+
+function resolveVisualStyle(topicType: string): VisualStyle {
+  const allowCreatif = topicType === 'contre_exemple' || topicType === 'pedagogique';
+  const roll = Math.random() * 100;
+  if (allowCreatif && roll >= 90) return 'creatif';
+  if (roll >= 80) return 'optimise';
+  return 'realiste';
+}
+
+const VISUAL_STYLE_DIRECTIVES: Record<VisualStyle, string> = {
+  realiste: `STYLE VISUEL : RÉALISTE TERRAIN (mode dominant)
+- Photo de chantier, maison, intervention RÉELLE
+- Imperfections légères AUTORISÉES (poussière, câbles visibles, mur pas parfait)
+- Lumière NATURELLE uniquement (fenêtre, extérieur, lampe de chantier)
+- INTERDIT : éclairage studio, rendu glossy, perfection type catalogue IKEA
+- INTERDIT : tuyauterie parfaite irréaliste, surfaces trop propres
+- INTERDIT : rendu 3D, cinéma, publicité luxe
+- Le visuel DOIT pouvoir être confondu avec une VRAIE photo d'intervention`,
+  optimise: `STYLE VISUEL : RÉALISTE OPTIMISÉ (légèrement amélioré mais crédible)
+- Scène propre et bien cadrée, lisible
+- Éclairage naturel légèrement amélioré (pas studio)
+- Installation nette, environnement rangé
+- TOUJOURS PLAUSIBLE — un professionnel du métier doit trouver ça crédible
+- Pas de rendu publicitaire luxe, pas de perfection artificielle`,
+  creatif: `STYLE VISUEL : CRÉATIF ASSUMÉ (humour, décalé — volontairement irréel)
+- Le côté irréel doit être ÉVIDENT et IMMÉDIAT (pas entre-deux)
+- Exemples autorisés : robot plombier, super-héros dépannage, animal mascotte, scène humoristique
+- Ton fun, mémorable, original
+- RÈGLE CLÉ : si c'est irréel, ça doit être CLAIREMENT voulu et drôle
+- JAMAIS de visuel "presque réel mais bizarre" — soit 100% réaliste, soit 100% décalé`,
+};
+
 // ─── Image generation via OpenAI DALL-E 3 ─────────────
 import { callAiWithFallback, getAiKeys, type AiChatMessage } from '../_shared/aiClient.ts';
 
@@ -271,8 +305,12 @@ Deno.serve(async (req) => {
     const rawHook = aiPayload.hook || title;
     const rawCta = aiPayload.cta || 'Demandez un devis gratuit';
     const visualPrompt = aiPayload.visual_prompt || '';
-    // topicType already declared above
     const rawCaption = suggestion.caption_base_fr || '';
+
+    // ── Resolve visual style mode (80% réaliste / 10% optimisé / 10% créatif) ──
+    const visualStyle: VisualStyle = resolveVisualStyle(topicType);
+    const visualStyleDirective = VISUAL_STYLE_DIRECTIVES[visualStyle];
+    console.log(`[social-visual-generate] Visual style: ${visualStyle} (topic: ${topicType})`);
 
     // Validate AI keys are available
     let AI_KEYS_VALID = true;
@@ -458,11 +496,13 @@ CRITICAL COMPOSITION RULES — THIS IMAGE IS A BACKGROUND FOR A SOCIAL MEDIA AD:
 
 6. FORMAT: Square 1080x1080. Fill the entire frame edge to edge.
 
-7. STYLE: Realistic professional photograph. NOT illustration, NOT 3D, NOT cartoon.
+7. STYLE: ${visualStyle === 'creatif' ? 'Creative/humorous — intentionally unrealistic, fun, memorable.' : 'Realistic professional photograph. NOT illustration, NOT 3D, NOT cartoon.'}
 
 8. FORBIDDEN: emoji, clip art, gradients as backgrounds, banners, overlays, borders, any written text.
 
 9. ${HELPCONFORT_VISUAL_IDENTITY}
+
+10. ${visualStyleDirective}
 `;
 
     let bgMessages: any[];
@@ -508,7 +548,9 @@ ${HELPCONFORT_VISUAL_IDENTITY}` },
 
       const baseScene = userDirective
         ? userDirective
-        : (visualPrompt || `Professional French home ${getSceneForUniverse(universe)}, realistic close-up showing a real problem or urgent situation`);
+        : visualStyle === 'creatif'
+          ? `Creative, humorous, intentionally unrealistic scene related to ${getSceneForUniverse(universe)}. Fun, memorable, clearly fictional (e.g. cartoon mascot, superhero technician, robot plumber). Must be OBVIOUSLY fantasy.`
+          : (visualPrompt || `Professional French home ${getSceneForUniverse(universe)}, realistic close-up showing a real problem or urgent situation`);
       
       const sceneDescription = customOverride
         ? `${baseScene}\n\n${customOverride}`
@@ -653,6 +695,7 @@ ADDITIONAL REQUIREMENTS:
       jsonHeaders,
       undefined,
       hasBeforeAfter,
+      visualStyle,
     );
 
     if ('response' in backgroundSave) {
@@ -823,6 +866,7 @@ MANDATORY QUALITY CHECKLIST (if ANY fails, regenerate):
       jsonHeaders,
       generatedCopy,
       hasBeforeAfter,
+      visualStyle,
     );
 
     if ('response' in composedSave) {
@@ -859,6 +903,7 @@ async function persistAsset(
   headers: Record<string, string>,
   generatedCopy?: { hook: string; subtext: string; cta: string },
   hasBeforeAfter: boolean = false,
+  visualStyle: string = 'realiste',
 ): Promise<
   | { assetId: string; storagePath: string; signedUrl: string | null; mode: 'photo' | 'generated' }
   | { response: Response }
@@ -910,6 +955,7 @@ async function persistAsset(
         composition_mode: compositionMode,
         prompt_version: compositionMode === 'bg_only' ? 'v5_background' : 'v5_composed',
         generated_copy: generatedCopy ?? null,
+        visual_style: visualStyle,
       },
     })
     .select('id, storage_path, created_at')
