@@ -116,7 +116,7 @@ function replaceExpertVocab(text: string): string {
 /** Sanitize hook: max 5 words, max 32 chars, MUST be complete — never truncated */
 export function sanitizeHook(raw: string): string {
   if (!raw) return '';
-  let text = raw.trim();
+  let text = replaceExpertVocab(raw.trim());
   // Remove trailing ellipsis/dots
   text = text.replace(/[…\.]+$/, '').trim();
   // Limit words (strict: 5 max)
