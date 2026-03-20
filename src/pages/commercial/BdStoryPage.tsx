@@ -147,9 +147,9 @@ export default function BdStoryPage() {
         {/* Progress bar during render */}
         {render.isRendering && (
           <div className="space-y-1">
-            <Progress value={(render.renderProgress / 12) * 100} className="h-2" />
+            <Progress value={(render.renderProgress / render.renderTotal) * 100} className="h-2" />
             <p className="text-xs text-muted-foreground">
-              Génération du panel {render.renderProgress}/12…
+              Génération du panel {render.renderProgress}/{render.renderTotal}…
             </p>
           </div>
         )}
