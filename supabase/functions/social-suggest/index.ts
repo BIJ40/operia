@@ -1105,10 +1105,11 @@ PLATFORM VARIANTS :
 ANTI-RÉPÉTITION & ANTI-FATIGUE (CRITIQUE — MODE DAILY CONTENT) :
 - Pas 2 posts consécutifs même univers
 - Pas 2 posts consécutifs même catégorie (topic_type)
-- Même univers : gap minimum 3 jours, max 2 par semaine, max 6 par mois
+- Même univers (hors general) : gap minimum 3 jours, max 2 par semaine, MAX 4 PAR MOIS
 - Variation obligatoire du ton : alterner question, affirmation, alerte, conseil, chiffre
 - Si un post ressemble trop au précédent → REJETER ET REFAIRE
 - Varier les univers : alterner plomberie, electricite, serrurerie, volets, menuiserie, vitrerie, pmr, renovation
+- MINIMUM 4 posts "prospection" par mois (1 par semaine), répartis sur les sous-types : zone, métiers, équipe, partenaires, valeurs, créatif
 - 1 post par jour, couvrir le mois entier
 
 FORMAT DES POSTS (variation obligatoire) :
