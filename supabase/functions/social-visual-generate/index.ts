@@ -777,30 +777,13 @@ ${HELPCONFORT_VISUAL_IDENTITY}` },
         const refUrls = await getVerifiedVanReferenceUrls();
         
         if (refUrls.length === 0) {
-          // No reference photos accessible — generate scene WITHOUT van
-          console.warn('[social-visual-generate] No van reference photos accessible — generating without van');
-          const noVanScene = sceneDescription
-            .replace(/van|transit|renault master|utilitaire/gi, '')
-            .replace(/parked|garé/gi, '')
-            + '. Do NOT include any vehicle, van, truck or car in this image.';
-          bgMessages = [{
-            role: 'user',
-            content: `Generate a REALISTIC PHOTOGRAPH designed as a SOCIAL MEDIA AD BACKGROUND (1080x1080 square).
-
-SCENE TO PHOTOGRAPH:
-${noVanScene}
-
-${AD_COMPOSITION_RULES}
-
-IMPORTANT: Do NOT generate any vehicle, van, truck, or car in this image. Focus only on the technician and the work scene.
-
-ADDITIONAL REQUIREMENTS:
-- This must look like a REAL PHOTOGRAPH taken on-site by a professional photographer
-- Close-up framing on the problem (NOT the whole building/house)
-- Dramatic natural lighting with a cinematic feel
-- The bottom third should naturally be darker (floor, shadow, dark surface)
-- High resolution feel, sharp details on the main subject`,
-          }];
+          console.error('[social-visual-generate] includeVan=true but no verified van reference photos are accessible');
+          return new Response(
+            JSON.stringify({
+              error: 'Impossible d’intégrer le vrai véhicule HC : aucune photo de référence exploitable n’est accessible.',
+            }),
+            { status: 502, headers: jsonHeaders }
+          );
         } else {
           // Use the real van photos — integrate them AS-IS into the scene
           bgMessages = [{
