@@ -432,10 +432,26 @@ ADDITIONAL REQUIREMENTS:
     }
 
     const bgData = bgResult.data;
-    const bgImageUrl = bgData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    let bgImageUrl = bgData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+
+    // Sometimes the model returns OK but no image — retry once with a simpler prompt
+    if (!bgImageUrl || !bgImageUrl.startsWith('data:image')) {
+      console.warn('[social-visual-generate] Model returned OK but no image. Response keys:', JSON.stringify(Object.keys(bgData?.choices?.[0]?.message || {})));
+      console.warn('[social-visual-generate] Retrying with simplified prompt...');
+      
+      const retryMessages = [{
+        role: 'user',
+        content: `Generate a realistic photograph for a social media ad (1080x1080 square). Scene: ${getSceneForUniverse(universe)}. Professional photography, cinematic lighting, bottom third darker. No text, no logos, no watermarks.`,
+      }];
+      
+      const retryResult = await callImageAIWithFallback(LOVABLE_API_KEY, retryMessages);
+      if (retryResult.ok) {
+        bgImageUrl = retryResult.data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+      }
+    }
 
     if (!bgImageUrl || !bgImageUrl.startsWith('data:image')) {
-      console.error('[social-visual-generate] No background image generated');
+      console.error('[social-visual-generate] No background image generated after retry');
       return new Response(JSON.stringify({ error: "Aucune image de fond générée" }), { status: 502, headers: jsonHeaders });
     }
 
