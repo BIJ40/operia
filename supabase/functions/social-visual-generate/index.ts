@@ -146,6 +146,12 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const suggestionId = body.suggestion_id;
     const agencyId = body.agency_id || context.agencyId;
+    const visualCustomization = body.visual_customization as {
+      freePrompt?: string;
+      keywords?: string;
+      tone?: string;
+      audience?: string;
+    } | undefined;
 
     if (!suggestionId || !agencyId) {
       return new Response(JSON.stringify({ error: 'suggestion_id et agency_id requis' }), { status: 400, headers: jsonHeaders });
