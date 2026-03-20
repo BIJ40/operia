@@ -24,6 +24,7 @@ const TOPIC_LABELS: Record<string, string> = {
   seasonal_tip: 'Conseil saisonnier',
   realisation: 'Réalisation',
   local_branding: 'Marque & confiance',
+  educational: 'Pédagogique',
 };
 
 interface SocialPostCardProps {

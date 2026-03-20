@@ -23,6 +23,7 @@ const TOPIC_BADGE_VARIANTS: Record<string, string> = {
   seasonal_tip: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
   realisation: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
   local_branding: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
+  educational: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
 };
 
 const TOPIC_LABELS: Record<string, string> = {
@@ -30,6 +31,7 @@ const TOPIC_LABELS: Record<string, string> = {
   seasonal_tip: 'Conseil',
   realisation: 'Réalisation',
   local_branding: 'Marque',
+  educational: 'Pédagogique',
 };
 
 interface SocialListViewProps {

@@ -24,6 +24,7 @@ const TOPIC_DOT_COLORS: Record<string, string> = {
   seasonal_tip: 'bg-blue-500',
   realisation: 'bg-orange-500',
   local_branding: 'bg-violet-500',
+  educational: 'bg-amber-500',
 };
 
 interface SocialCalendarViewProps {

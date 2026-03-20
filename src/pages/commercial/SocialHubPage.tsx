@@ -18,7 +18,7 @@ import { SocialListView } from '@/components/commercial/social/SocialListView';
 import { SocialPostDetailPanel } from '@/components/commercial/social/SocialPostDetailPanel';
 
 type ViewMode = 'calendar' | 'list';
-type TopicFilter = 'all' | 'awareness_day' | 'seasonal_tip' | 'realisation' | 'local_branding';
+type TopicFilter = 'all' | 'awareness_day' | 'seasonal_tip' | 'realisation' | 'local_branding' | 'educational';
 
 const TOPIC_LABELS: Record<TopicFilter, string> = {
   all: 'Tous',
@@ -26,6 +26,7 @@ const TOPIC_LABELS: Record<TopicFilter, string> = {
   seasonal_tip: 'Conseils',
   realisation: 'Réalisations',
   local_branding: 'Marque',
+  educational: 'Pédagogique',
 };
 
 export default function SocialHubPage() {
