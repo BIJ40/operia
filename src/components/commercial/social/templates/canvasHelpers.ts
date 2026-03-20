@@ -106,6 +106,13 @@ export function getTheme(universe?: string | null, topicType?: string | null): S
 // TEXT SANITIZATION — Auto-optimize copy for canvas
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+/** Replace forbidden vocabulary: "expert(s)/expertise" → "technicien(s)/savoir-faire" */
+function replaceExpertVocab(text: string): string {
+  return text
+    .replace(/\bexperts?\b/gi, (m) => m.endsWith('s') ? 'techniciens' : 'technicien')
+    .replace(/\bexpertise\b/gi, 'savoir-faire');
+}
+
 /** Sanitize hook: max 5 words, max 32 chars, MUST be complete — never truncated */
 export function sanitizeHook(raw: string): string {
   if (!raw) return '';
