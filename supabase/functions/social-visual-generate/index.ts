@@ -77,23 +77,120 @@ const GENERAL_TOPIC_LABELS: Record<string, string> = {
   educational: 'Le saviez-vous ?',
 };
 
-// ─── Multi-model fallback for text/image AI (OpenAI + Claude) ─────────────
+// ─── Image generation via OpenAI DALL-E 3 ─────────────
 import { callAiWithFallback, getAiKeys, type AiChatMessage } from '../_shared/aiClient.ts';
 
 async function callImageAIWithFallback(
   _apiKey: string,
   messages: any[],
 ): Promise<{ ok: true; data: any; model: string } | { ok: false; status: number; error: string }> {
-  // Use OpenAI gpt-4o for image understanding/composition
-  const result = await callAiWithFallback({
-    messages: messages as AiChatMessage[],
-    model: 'gpt-4o',
-  });
+  const { openaiKey } = getAiKeys();
 
-  if (result.ok) {
-    return { ok: true, data: result.data, model: `${result.provider}/gpt-4o` };
+  // Extract the text prompt from messages
+  let prompt = '';
+  let inputImageUrl: string | null = null;
+  const inputImages: string[] = [];
+  
+  for (const msg of messages) {
+    if (typeof msg.content === 'string') {
+      prompt = msg.content;
+    } else if (Array.isArray(msg.content)) {
+      for (const part of msg.content) {
+        if (part.type === 'text') prompt += (prompt ? '\n' : '') + part.text;
+        if (part.type === 'image_url' && part.image_url?.url) {
+          inputImages.push(part.image_url.url);
+        }
+      }
+    }
   }
-  return { ok: false, status: result.status, error: result.error };
+
+  // If we have input images, use GPT-4o for image understanding + editing
+  // (DALL-E 3 cannot accept input images for editing in the standard API)
+  if (inputImages.length > 0) {
+    console.log(`[callImageAI] Has ${inputImages.length} input image(s) — using gpt-4o for understanding`);
+    
+    // Use GPT-4o to analyze the image and create a detailed DALL-E prompt
+    const analysisResult = await callAiWithFallback({
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'text', text: `Analyze this image and create a detailed prompt for DALL-E 3 to recreate/enhance it as a professional social media ad background (1080x1080).
+The prompt should describe: the scene, lighting, composition, colors, and mood.
+Keep the authentic feel. Make the bottom 40% darker for text overlay.
+Reply with ONLY the DALL-E prompt text, nothing else. Max 900 characters.` },
+          ...inputImages.map(url => ({ type: 'image_url', image_url: { url } })),
+        ] as any,
+      }],
+      model: 'gpt-4o',
+      max_tokens: 500,
+    });
+
+    if (analysisResult.ok) {
+      const dallePrompt = analysisResult.data.choices?.[0]?.message?.content || prompt;
+      prompt = dallePrompt.slice(0, 950);
+      console.log(`[callImageAI] GPT-4o generated DALL-E prompt: ${prompt.slice(0, 150)}...`);
+    }
+  }
+
+  // Truncate prompt for DALL-E 3 (max 4000 chars)
+  if (prompt.length > 3900) {
+    prompt = prompt.slice(0, 3900);
+  }
+
+  // Call DALL-E 3 for image generation
+  console.log(`[callImageAI] Generating image via DALL-E 3...`);
+  try {
+    const response = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'dall-e-3',
+        prompt,
+        n: 1,
+        size: '1024x1024',
+        quality: 'hd',
+        response_format: 'b64_json',
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error(`[callImageAI] DALL-E 3 error (${response.status}):`, errText.slice(0, 300));
+      return { ok: false, status: response.status, error: errText };
+    }
+
+    const data = await response.json();
+    const b64 = data.data?.[0]?.b64_json;
+    
+    if (!b64) {
+      console.error('[callImageAI] DALL-E 3 returned no image data');
+      return { ok: false, status: 502, error: 'No image data returned' };
+    }
+
+    // Convert to the format expected by the rest of the code
+    const imageUrl = `data:image/png;base64,${b64}`;
+    const normalizedData = {
+      choices: [{
+        message: {
+          role: 'assistant',
+          content: data.data?.[0]?.revised_prompt || '',
+          images: [{
+            type: 'image_url',
+            image_url: { url: imageUrl },
+          }],
+        },
+      }],
+    };
+
+    console.log(`[callImageAI] DALL-E 3 image generated successfully`);
+    return { ok: true, data: normalizedData, model: 'dall-e-3' };
+  } catch (err) {
+    console.error('[callImageAI] DALL-E 3 fetch error:', err);
+    return { ok: false, status: 500, error: String(err) };
+  }
 }
 
 Deno.serve(async (req) => {
