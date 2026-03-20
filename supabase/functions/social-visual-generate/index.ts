@@ -243,8 +243,6 @@ Réponds UNIQUEMENT en JSON valide avec exactement ces clés :
       });
 
       if (copyResult.ok) {
-        const copyData = copyResult.data;
-        const copyData = await copyResponse.json();
         const rawContent = copyData.choices?.[0]?.message?.content || '';
         try {
           const parsed = JSON.parse(rawContent);
