@@ -53,7 +53,7 @@ export function useSignatureProfile() {
         .eq('user_id', user.id)
         .maybeSingle();
       if (error) throw error;
-      return data as SignatureProfile | null;
+      return (data as any) as SignatureProfile | null;
     },
     enabled: !!user,
   });
@@ -71,7 +71,7 @@ export function useUpsertSignatureProfile() {
         .select()
         .single();
       if (error) throw error;
-      return data as SignatureProfile;
+      return (data as any) as SignatureProfile;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['signature-profile'] });
@@ -93,7 +93,7 @@ export function useSignatureConfigs() {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return (data || []) as SignatureConfig[];
+      return ((data || []) as any) as SignatureConfig[];
     },
     enabled: !!user,
   });
@@ -111,7 +111,7 @@ export function useUpsertSignatureConfig() {
         .select()
         .single();
       if (error) throw error;
-      return data as SignatureConfig;
+      return (data as any) as SignatureConfig;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['signature-configs'] });
