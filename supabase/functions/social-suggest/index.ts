@@ -935,70 +935,63 @@ CONTRAINTES :
 ${singleContext.original_realisation_id ? `- Réalisation liée : ${singleContext.original_realisation_id}` : ''}
 ${promptCustomization}
 
-JOURNÉES THÉMATIQUES DU MOIS :
-${monthAwareness.map(a => `- ${a.day}/${month}: ${a.label}`).join('\n')}
+ÉVÉNEMENTS PERTINENTS CE MOIS (utilise-les UNIQUEMENT si l'angle est naturel et crédible) :
+${pertinentEvents.map(a => `- ${a.day}/${month}: ${a.label} | univers: ${a.preferredUniverses[0]} | LIEN DIRECT MÉTIER`).join('\n') || '(aucun)'}
+${optionalEvents.length > 0 ? `\nÉVÉNEMENTS OPTIONNELS (à utiliser SEULEMENT si un angle crédible existe, sinon ignorer) :\n${optionalEvents.map(a => `- ${a.day}/${month}: ${a.label} | univers: ${a.preferredUniverses[0]} | OPTIONNEL`).join('\n')}` : ''}
 
 RÉALISATIONS EXPLOITABLES :
 ${exploitableReals.length > 0 
   ? exploitableReals.map(r => `- "${r.title}" (ID: ${r.id}, univers: ${r.universe || 'inconnu'}, avant/après: ${r.hasBeforeAfter ? 'oui' : 'non'})`).join('\n')
   : '(aucune)'}
 
-Propose un angle DIFFÉRENT du post précédent, tout en gardant le même contexte thématique.
-IMPORTANT : lead_score doit refléter le potentiel réel de conversion client.`;
+Propose un angle DIFFÉRENT du post précédent.
+RAPPEL : le post doit contenir au moins UN déclencheur de conversion (perte d'argent, inconfort, risque, gain immédiat, simplicité).`;
     } else {
-      userPrompt = `Génère ${targetPostCount} suggestions de posts social media PREMIUM pour le mois ${month}/${year}.
+      userPrompt = `Génère ${targetPostCount} suggestions de posts social media PERFORMANTS pour le mois ${month}/${year}.
 
 ═══════════════════════════════════════════
-PRIORITÉ N°1 — CALENDRIER & ÉVÉNEMENTS
+ÉVÉNEMENTS À LIEN DIRECT MÉTIER (prioritaires)
 ═══════════════════════════════════════════
-CHAQUE journée thématique ci-dessous DOIT générer un post.
-Les jours fériés, fêtes et événements calendaires sont la COLONNE VERTÉBRALE du planning éditorial.
-Ils servent de PRÉTEXTE pour parler d'un VRAI problème métier (jamais un post informatif neutre).
+Ces événements ont un lien DIRECT avec l'habitat/dépannage. Utilise-les comme PRÉTEXTE pour un vrai problème.
+Le topic_type de ces posts est "awareness_day".
+Respecte l'univers indiqué.
 
-RÈGLE CRITIQUE — UNIVERS OBLIGATOIRE :
-Quand une journée thématique indique un "univers" préféré → tu DOIS utiliser CET univers.
-L'univers détermine le badge, la couleur et le picto du visuel final.
-Si l'événement a un univers spécifique (plomberie, electricite, serrurerie, volets...), le post DOIT être dans cet univers.
-Si l'événement est "general" → utilise "general".
+${pertinentEvents.map(a => `- ${a.day}/${month}: ${a.label} | UNIVERS: ${a.preferredUniverses[0]} | priorité: ${a.relevanceScore * a.intentScore}`).join('\n') || '(aucun événement pertinent ce mois)'}
 
-RÈGLE CRITIQUE — COHÉRENCE THÈME / CONTENU (ZÉRO TOLÉRANCE) :
-Le hook, la caption, le visual_prompt et le CTA doivent être EN RAPPORT DIRECT avec l'événement calendaire.
-Le LABEL de chaque journée contient le SUJET EXACT — tu DOIS t'en inspirer directement.
-Si le label mentionne "Pâques", "famille", "repas" → le post DOIT parler de Pâques, famille, fête.
-Si le label mentionne "pont pascal", "petits travaux" → le post DOIT parler du pont, week-end prolongé, bricolage.
-Un post awareness_day dont le contenu n'a AUCUN rapport avec le label est un ÉCHEC.
+═══════════════════════════════════════════
+ÉVÉNEMENTS OPTIONNELS (score 2 — NE PAS FORCER)
+═══════════════════════════════════════════
+Ces événements PEUVENT être utilisés UNIQUEMENT si :
+- l'angle est naturel et crédible
+- le lien avec le métier n'est pas forcé
+- le post serait meilleur AVEC l'événement que SANS
 
-Exemples BONS :
-- 🐣 Pâques → "PANNE DE CHAUFFE-EAU LA VEILLE DU REPAS DE PÂQUES ?" (lié à la fête)
-- 🐰 Lundi de Pâques → "CE PONT DE PÂQUES, RÉPAREZ ENFIN CE QUI TRAÎNE !" (lié au pont)
-- 1er avril → humour, poisson d'avril, pannes insolites
-- Journée de l'eau → fuites, économies d'eau
-- Halloween → pannes effrayantes, ambiance sombre
+S'ils ne produisent pas un angle naturel → IGNORER et générer un post métier classique à la place.
 
-Exemples MAUVAIS (INTERDITS) :
-- Pâques → post sur une fuite sans mention de Pâques → REJETÉ
-- Lundi de Pâques → post sur un disjoncteur sans mention du pont → REJETÉ
-Le visual_prompt DOIT aussi illustrer l'ambiance de l'événement (Pâques = ambiance familiale, déco, etc.).
+${optionalEvents.map(a => `- ${a.day}/${month}: ${a.label} | univers: ${a.preferredUniverses[0]} | OPTIONNEL — ignorer si forcé`).join('\n') || '(aucun)'}
 
-JOURNÉES THÉMATIQUES DU MOIS (TOUTES doivent être couvertes) :
-${monthAwareness.map(a => `- ${a.day}/${month}: ${a.label} | UNIVERS OBLIGATOIRE: ${a.preferredUniverses[0]} | tags: ${a.tags.join(', ')}`).join('\n')}
+═══════════════════════════════════════════
+SLOTS MÉTIER LIBRES (remplacent les événements sans lien)
+═══════════════════════════════════════════
+Pour ces dates, génère un post métier PERFORMANT de la catégorie indiquée :
+${fallbackSlots.map(s => `- ${s.day}/${month}: POST MÉTIER catégorie "${s.category}" (pas d'événement calendaire)`).join('\n') || '(aucun)'}
 
-Les posts restants (pour atteindre ${targetPostCount}) doivent compléter avec des problèmes métiers concrets espacés régulièrement dans le mois.
+Les posts restants (pour atteindre ${targetPostCount}) doivent compléter avec des problèmes métiers concrets.
 
 ═══════════════════════════════════════════
 RÉPARTITION SUR ${targetPostCount} POSTS
 ═══════════════════════════════════════════
-- ~50% CALENDAIRE (jours fériés, fêtes, événements → prétexte problème métier)
-- ~25% PROBLÈMES CONCRETS (leads directs, urgences habitat)
-- ~15% CONSEILS EXPERTS (valeur ajoutée, toujours via un problème)
-- ~10% CRÉATIF / BRANDING LOCAL (visibilité, proximité)
+- ~25% URGENCE / PROBLÈME (leads directs, pannes, fuites)
+- ~25% ENTRETIEN / PRÉVENTION (anticiper, éviter une panne)
+- ~20% AMÉLIORATION HABITAT (confort, valorisation)
+- ~15% SAISONNALITÉ RÉELLE (météo, période)
+- ~10% CONSEIL PRATIQUE (tips utiles)
+- ~5% PREUVE / RÉASSURANCE (expertise, rapidité, proximité)
 
 ═══════════════════════════════════════════
 ANTI-REDONDANCE — GAP MINIMUM 21 JOURS
 ═══════════════════════════════════════════
 Un même univers/thème ne doit PAS apparaître deux fois en moins de 21 jours.
-Cela inclut le mois précédent : si un post "volets" existe le 28 du mois dernier,
-NE PAS faire de post "volets" avant le 18 du mois cible.
 ${recentThemesWarning}
 
 SUJETS DÉJÀ EXISTANTS (à ne pas dupliquer) :
@@ -1009,15 +1002,18 @@ ${exploitableReals.length > 0
   ? exploitableReals.map(r => `- "${r.title}" (ID: ${r.id}, univers: ${r.universe || 'inconnu'}, avant/après: ${r.hasBeforeAfter ? 'oui' : 'non'})`).join('\n')
   : '(aucune)'}
 
-RAPPEL CRITIQUE :
-- MINIMUM ${targetPostCount} posts, répartis sur tout le mois (pas de clusters)
-- Chaque post DOIT avoir un hook stop-scroll, un CTA business, un visual_prompt exploitable
-- lead_score DOIT refléter le potentiel réel de conversion
+═══════════════════════════════════════════
+RAPPEL CRITIQUE — PRESSION CONVERSION
+═══════════════════════════════════════════
+- MINIMUM ${targetPostCount} posts, répartis sur tout le mois
+- Chaque post DOIT contenir un DÉCLENCHEUR (perte d'argent, inconfort, risque, gain, simplicité)
+- Un post sans déclencheur est INVALIDE — remplace-le par un post métier classique
+- lead_score DOIT refléter le potentiel RÉEL de conversion
 - Posts urgence (fuite, panne, sécurité) → lead_score > 80, urgency_level = high
 - visual_prompt = scène RÉALISTE habitat français, JAMAIS un fond vide
-- JAMAIS inventer de faux cas client ou fausse intervention — rester GÉNÉRAL et EXPERT
+- JAMAIS inventer de faux cas client — rester GÉNÉRAL et EXPERT
 - Le topic_type "realisation" est INTERDIT sauf s'il y a de vraies photos (realisation_id valide)
-- Espacer les posts de 1-2 jours entre eux, couvrir le mois entier du 1er au dernier jour`;
+- Espacer les posts de 1-2 jours, couvrir le mois entier`;
 
     }
 
