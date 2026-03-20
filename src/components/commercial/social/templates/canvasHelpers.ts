@@ -138,7 +138,7 @@ export function sanitizeHook(raw: string): string {
 /** Sanitize subtext: max 10 words, max 60 chars, complete sentence — never truncated */
 export function sanitizeSubText(raw: string): string {
   if (!raw) return '';
-  let text = raw.trim();
+  let text = replaceExpertVocab(raw.trim());
   // Remove trailing ellipsis
   text = text.replace(/[…]+$/, '').trim();
   // Limit words (strict: 10 max)
