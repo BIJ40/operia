@@ -80,7 +80,7 @@ export function SocialCalendarView({ currentMonth, suggestions, selectedId, onSe
             <div
               key={dateKey}
               className={cn(
-                'border border-border/50 rounded-sm p-1 min-h-[80px] transition-colors',
+                'border border-border/50 rounded-sm p-0.5 min-h-[60px] transition-colors',
                 !inMonth && 'opacity-30',
                 isToday(day) && 'bg-accent/20 border-accent',
               )}
