@@ -4,7 +4,7 @@
  * Simplifié : pas de variantes plateforme, pas de customization panel.
  */
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Share2, ImagePlus, Download, RefreshCw, Loader2, Sparkles, Truck, ChevronDown, ChevronUp, Palette } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
 import { SocialPostCard } from './SocialPostCard';
 import { SocialVisualCanvas, canvasToBlob, type SocialTemplatePayload } from './SocialVisualCanvas';
 import { resolveSocialTemplate } from './templateResolver';
@@ -67,6 +68,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const [includeVan, setIncludeVan] = useState(false);
   const [universeOverride, setUniverseOverride] = useState<string>('');
   const [imageModel, setImageModel] = useState<string>('auto');
+  const renderedCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const UNIVERSE_OPTIONS = [
     { value: '', label: '— Auto (IA)' },
@@ -184,11 +186,33 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
     );
   }, [suggestion.id, generateMutation, freePrompt, keywords, includeVan, universeOverride, imageModel]);
 
-  const handleDownload = useCallback(() => {
-    // Always prioritize composed (final) asset, fallback to raw background
+  const handleDownload = useCallback(async () => {
+    if (renderMode === 'canvas' && renderedCanvasRef.current) {
+      try {
+        const blob = await canvasToBlob(renderedCanvasRef.current);
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = `social-${suggestion.id}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+        toast.success('Téléchargement lancé');
+      } catch {
+        toast.error('Erreur lors du téléchargement du visuel');
+      }
+      return;
+    }
+
+    if (renderMode === 'image' && rawAsset) {
+      downloadSocialVisual(rawAsset.storage_path);
+      return;
+    }
+
     const assetToDownload = composedAsset || rawAsset;
     if (assetToDownload) downloadSocialVisual(assetToDownload.storage_path);
-  }, [composedAsset, rawAsset]);
+  }, [renderMode, composedAsset, rawAsset, suggestion.id]);
 
   return (
     <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-200px)] pr-1">
@@ -238,7 +262,13 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
           <Skeleton className="w-full aspect-square rounded-lg" />
         ) : renderMode === 'canvas' ? (
           rawPreviewUrl ? (
-            <SocialVisualCanvas payload={canvasPayload} templateId={templateId} />
+            <SocialVisualCanvas
+              payload={canvasPayload}
+              templateId={templateId}
+              onRendered={(canvas) => {
+                renderedCanvasRef.current = canvas;
+              }}
+            />
           ) : composedPreviewUrl ? (
             <div className="flex flex-col items-center justify-center py-8 bg-muted/30 rounded-lg border border-dashed border-border text-center px-4">
               <Sparkles className="w-8 h-8 text-muted-foreground/30 mb-2" />
