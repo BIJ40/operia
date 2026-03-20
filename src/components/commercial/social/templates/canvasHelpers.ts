@@ -241,6 +241,16 @@ export function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: 
   }
   if (currentLine) lines.push(currentLine);
 
+  // Anti-orphan: if last line is very short (≤3 chars, e.g. "?" or "!"),
+  // merge it back into the previous line
+  if (lines.length >= 2) {
+    const lastLine = lines[lines.length - 1].trim();
+    if (lastLine.length <= 3) {
+      lines[lines.length - 2] += ' ' + lastLine;
+      lines.pop();
+    }
+  }
+
   // Hard limit lines — drop overflow (no ellipsis)
   if (maxLines && lines.length > maxLines) {
     return lines.slice(0, maxLines);
