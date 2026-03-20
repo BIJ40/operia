@@ -383,7 +383,7 @@ export function drawTopicBadge(
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 /** Bandeau signature bas avec coordonnées complètes + picto univers */
-export function drawHCFooterBar(ctx: CanvasRenderingContext2D, theme: ServiceTheme, agencyAddress?: string, pictoSrc?: string) {
+export async function drawHCFooterBar(ctx: CanvasRenderingContext2D, theme: ServiceTheme, agencyAddress?: string, pictoSrc?: string) {
   const height = ZONES.FOOTER_HEIGHT;
   const y = ZONES.FOOTER_START;
 
@@ -416,13 +416,11 @@ export function drawHCFooterBar(ctx: CanvasRenderingContext2D, theme: ServiceThe
 
   // ─── Universe picto (right side, full height) ───
   if (pictoSrc) {
-    const img = new Image();
-    img.src = pictoSrc;
-    // Draw picto centered right, filling footer height with padding
-    const pictoSize = height - 24;
-    const pictoX = SIZE - pictoSize - 30;
-    const pictoY = y + 12;
     try {
+      const img = await loadImage(pictoSrc);
+      const pictoSize = height - 24;
+      const pictoX = SIZE - pictoSize - 30;
+      const pictoY = y + 12;
       ctx.globalAlpha = 0.9;
       ctx.drawImage(img, pictoX, pictoY, pictoSize, pictoSize);
       ctx.globalAlpha = 1;
