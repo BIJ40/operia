@@ -203,7 +203,7 @@ async function callImageAIWithFallback(
           }
         }
 
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${geminiKey}`;
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${geminiKey}`;
         const geminiResponse = await fetch(geminiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -346,7 +346,7 @@ CRITICAL RULES:
     console.log('[callImageAI] Trying Gemini Imagen (text-only)...');
     await new Promise(r => setTimeout(r, 500));
     try {
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${geminiKey}`;
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${geminiKey}`;
       const geminiResponse = await fetch(geminiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -389,6 +389,33 @@ CRITICAL RULES:
     }
   }
   } // end if (!forceDalle)
+
+  // ─── Ultimate fallback: try DALL-E even if Gemini was forced ───
+  if (forceGemini) {
+    console.log('[callImageAI] Gemini forced but failed — trying DALL-E as ultimate fallback...');
+    const openaiKey = Deno.env.get('OPENAI_API_KEY');
+    if (openaiKey) {
+      try {
+        const dalleResp = await fetch('https://api.openai.com/v1/images/generations', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${openaiKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: 'dall-e-3', prompt: prompt.slice(0, 4000), n: 1, size: '1024x1024', quality: 'standard' }),
+        });
+        if (dalleResp.ok) {
+          const dalleData = await dalleResp.json();
+          const url = dalleData.data?.[0]?.url;
+          if (url) {
+            console.log('[callImageAI] DALL-E fallback succeeded');
+            return { ok: true, data: { choices: [{ message: { role: 'assistant', content: '', images: [{ type: 'image_url', image_url: { url } }] } }] }, model: 'dall-e-3' };
+          }
+        }
+        const errText = await dalleResp.text();
+        console.error(`[callImageAI] DALL-E fallback failed (${dalleResp.status}):`, errText.slice(0, 300));
+      } catch (err) {
+        console.error('[callImageAI] DALL-E fallback error:', err);
+      }
+    }
+  }
 
   return { ok: false, status: 502, error: 'All image providers failed (DALL-E 3, Gemini)' };
 }
