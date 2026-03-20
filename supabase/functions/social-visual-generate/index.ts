@@ -253,6 +253,7 @@ Deno.serve(async (req) => {
       freePrompt?: string;
       keywords?: string;
       includeVan?: boolean;
+      universeOverride?: string;
       tone?: string;
       audience?: string;
     } | undefined;
