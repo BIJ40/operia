@@ -993,6 +993,36 @@ ${exploitableReals.length > 0
 
 Propose un angle DIFFÉRENT du post précédent.
 RAPPEL : le post doit contenir au moins UN déclencheur de conversion (perte d'argent, inconfort, risque, gain immédiat, simplicité).`;
+    } else if (isTargetDatesMode) {
+      const datesFormatted = targetDates.map(d => {
+        const day = parseInt(d.split('-')[2]);
+        // Check if there's an awareness event on this date
+        const event = monthAwareness.find(a => a.day === day);
+        return event 
+          ? `- ${d}: événement "${event.label}" (univers: ${event.preferredUniverses[0]}, score: ${event.relevanceScore}) — utiliser SEULEMENT si pertinent`
+          : `- ${d}: post métier libre — choisir un univers varié`;
+      }).join('\n');
+
+      userPrompt = `Génère EXACTEMENT ${targetDates.length} suggestion(s) de posts, UNE par date suivante :
+
+${datesFormatted}
+${promptCustomization}
+
+RÉALISATIONS EXPLOITABLES :
+${exploitableReals.length > 0 
+  ? exploitableReals.map(r => `- "${r.title}" (ID: ${r.id}, univers: ${r.universe || 'inconnu'}, avant/après: ${r.hasBeforeAfter ? 'oui' : 'non'})`).join('\n')
+  : '(aucune)'}
+
+SUJETS DÉJÀ EXISTANTS (à ne pas dupliquer) :
+${[...existingTopicKeys].join(', ') || '(aucun)'}
+
+RÈGLES :
+- UN post par date, pas plus, pas moins
+- Chaque post doit être sur une date différente parmi celles listées
+- La suggestion_date DOIT correspondre EXACTEMENT à une des dates demandées
+- Varier les univers entre les posts
+- Chaque post DOIT contenir un DÉCLENCHEUR de conversion
+- Pas de contenu calendaire forcé`;
     } else {
       userPrompt = `Génère ${targetPostCount} suggestions de posts social media PERFORMANTS pour le mois ${month}/${year}.
 
