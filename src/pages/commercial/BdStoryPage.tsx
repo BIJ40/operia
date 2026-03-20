@@ -192,6 +192,7 @@ export default function BdStoryPage() {
                   onRegeneratePanel={render.regeneratePanel}
                   onRegenerateAll={render.regenerateAll}
                   isGenerating={render.isRendering}
+                  mode={render.renderMode}
                 />
               ) : selectedStory ? (
                 <div className="rounded-xl border bg-card/50 flex flex-col items-center justify-center py-16 gap-3 text-sm text-muted-foreground">
