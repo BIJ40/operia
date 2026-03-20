@@ -193,38 +193,85 @@ Reply with ONLY the DALL-E prompt text, nothing else. Max 900 characters.` },
     if (!response.ok) {
       const errText = await response.text();
       console.error(`[callImageAI] DALL-E 3 error (${response.status}):`, errText.slice(0, 300));
-      return { ok: false, status: response.status, error: errText };
-    }
-
-    const data = await response.json();
-    const b64 = data.data?.[0]?.b64_json;
-    
-    if (!b64) {
-      console.error('[callImageAI] DALL-E 3 returned no image data');
-      return { ok: false, status: 502, error: 'No image data returned' };
-    }
-
-    // Convert to the format expected by the rest of the code
-    const imageUrl = `data:image/png;base64,${b64}`;
-    const normalizedData = {
-      choices: [{
-        message: {
-          role: 'assistant',
-          content: data.data?.[0]?.revised_prompt || '',
-          images: [{
-            type: 'image_url',
-            image_url: { url: imageUrl },
+      // Don't return yet — try Gemini fallback below
+    } else {
+      const data = await response.json();
+      const b64 = data.data?.[0]?.b64_json;
+      
+      if (b64) {
+        const imageUrl = `data:image/png;base64,${b64}`;
+        const normalizedData = {
+          choices: [{
+            message: {
+              role: 'assistant',
+              content: data.data?.[0]?.revised_prompt || '',
+              images: [{
+                type: 'image_url',
+                image_url: { url: imageUrl },
+              }],
+            },
           }],
-        },
-      }],
-    };
+        };
 
-    console.log(`[callImageAI] DALL-E 3 image generated successfully`);
-    return { ok: true, data: normalizedData, model: 'dall-e-3' };
+        console.log(`[callImageAI] DALL-E 3 image generated successfully`);
+        return { ok: true, data: normalizedData, model: 'dall-e-3' };
+      }
+      console.error('[callImageAI] DALL-E 3 returned no image data');
+    }
   } catch (err) {
     console.error('[callImageAI] DALL-E 3 fetch error:', err);
-    return { ok: false, status: 500, error: String(err) };
   }
+
+  // ─── Fallback: Gemini Imagen ───
+  const geminiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
+  if (geminiKey) {
+    console.log('[callImageAI] DALL-E failed, falling back to Gemini Imagen...');
+    await new Promise(r => setTimeout(r, 500));
+    try {
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiKey}`;
+      const geminiResponse = await fetch(geminiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseModalities: ['TEXT', 'IMAGE'],
+          },
+        }),
+      });
+
+      if (geminiResponse.ok) {
+        const geminiData = await geminiResponse.json();
+        const parts = geminiData.candidates?.[0]?.content?.parts || [];
+        const imagePart = parts.find((p: any) => p.inlineData);
+        
+        if (imagePart?.inlineData) {
+          const mimeType = imagePart.inlineData.mimeType || 'image/png';
+          const imageUrl = `data:${mimeType};base64,${imagePart.inlineData.data}`;
+          const normalizedData = {
+            choices: [{
+              message: {
+                role: 'assistant',
+                content: '',
+                images: [{
+                  type: 'image_url',
+                  image_url: { url: imageUrl },
+                }],
+              },
+            }],
+          };
+          console.log('[callImageAI] Gemini image generated successfully');
+          return { ok: true, data: normalizedData, model: 'gemini-imagen' };
+        }
+      }
+      const errText = await geminiResponse.text();
+      console.error(`[callImageAI] Gemini Imagen failed (${geminiResponse.status}):`, errText.slice(0, 300));
+    } catch (err) {
+      console.error('[callImageAI] Gemini Imagen fetch error:', err);
+    }
+  }
+
+  return { ok: false, status: 502, error: 'All image providers failed (DALL-E 3, Gemini)' };
 }
 
 Deno.serve(async (req) => {
