@@ -522,7 +522,21 @@ Deno.serve(async (req) => {
     );
 
     // ─── Load context data ───────────────────────────
-    const monthAwareness = AWARENESS_DAYS.filter(d => d.month === month);
+    // ─── Filter awareness days by relevance ───
+    const allMonthAwareness = AWARENESS_DAYS.filter(d => d.month === month);
+    // Score 3 = direct link (always included), Score 2 = optional (included but marked optional), Score 1 = ignored (replaced by fallback)
+    const monthAwareness = allMonthAwareness.filter(d => d.relevanceScore >= 2);
+    const pertinentEvents = allMonthAwareness.filter(d => d.relevanceScore === 3);
+    const optionalEvents = allMonthAwareness.filter(d => d.relevanceScore === 2);
+    const ignoredEvents = allMonthAwareness.filter(d => d.relevanceScore === 1);
+    
+    // Build fallback rotation for ignored event slots
+    const fallbackSlots = ignoredEvents.map((e, i) => ({
+      day: e.day,
+      category: POST_CATEGORIES_ROTATION[i % POST_CATEGORIES_ROTATION.length],
+    }));
+    
+    console.log(`[social-suggest] Month ${month}: ${pertinentEvents.length} pertinent, ${optionalEvents.length} optional, ${ignoredEvents.length} ignored → ${fallbackSlots.length} fallback slots`);
 
     // Load agency info for localization
     const { data: agency } = await adminSupabase
