@@ -821,8 +821,20 @@ Deno.serve(async (req) => {
       });
     }
 
-    const systemPrompt = `Tu es simultanément directeur éditorial, copywriter expert conversion locale, growth marketer et directeur artistique.
-Tu travailles pour HelpConfort (dépannage & rénovation habitat).
+    // Build hook library for the current month's season
+    const currentSeason = getSeasonFromMonth(month);
+    const seasonalHooks = HOOK_LIBRARY.filter(h => h.season === 'all' || h.season === currentSeason);
+    const hookLibraryPrompt = Object.entries(
+      seasonalHooks.reduce((acc, h) => {
+        acc[h.universe] = acc[h.universe] || [];
+        acc[h.universe].push(h);
+        return acc;
+      }, {} as Record<string, HookEntry[]>)
+    ).map(([uni, hooks]) => 
+      `${uni.toUpperCase()} :\n${hooks.map(h => `  - "${h.hook}" [${h.trigger}/${h.intent}]`).join('\n')}`
+    ).join('\n\n');
+
+    const systemPrompt = `Tu es un copywriter expert conversion locale pour HelpConfort (dépannage & rénovation habitat).
 
 Tu produis des posts social media qui GÉNÈRENT DES ACTIONS (appels, devis, contacts).
 Un post qui ne peut pas déclencher d'action est considéré comme MAUVAIS.
