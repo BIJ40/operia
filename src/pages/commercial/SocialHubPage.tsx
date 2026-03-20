@@ -224,7 +224,7 @@ export default function SocialHubPage() {
               onApprove={handleApprove}
               onReject={handleReject}
               onRegenerate={handleRegenerate}
-              isRegenerating={generateMutation.isPending}
+              isRegenerating={generateMutation.isGenerating}
             />
           </div>
         </div>
