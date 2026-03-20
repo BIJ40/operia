@@ -177,10 +177,12 @@ Deno.serve(async (req) => {
     // topicType already declared above
     const rawCaption = suggestion.caption_base_fr || '';
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: 'Service IA non configuré' }), { status: 500, headers: jsonHeaders });
+    // Validate AI keys are available
+    let AI_KEYS_VALID = true;
+    try { getAiKeys(); } catch (e) {
+      return new Response(JSON.stringify({ error: (e as Error).message }), { status: 500, headers: jsonHeaders });
     }
+    const LOVABLE_API_KEY = 'unused'; // kept for callImageAIWithFallback signature compat
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // ÉTAPE 0 : COPYWRITING IA — Réécriture cohérente du hook/sous-texte
