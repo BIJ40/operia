@@ -1152,19 +1152,42 @@ ${exploitableReals.length > 0
 Propose un angle DIFFÉRENT du post précédent.
 RAPPEL : le post doit contenir au moins UN déclencheur de conversion (perte d'argent, inconfort, risque, gain immédiat, simplicité).`;
     } else if (isTargetDatesMode) {
+      // Look up the weekly schedule to know what category each target date should have
       const datesFormatted = targetDates.map(d => {
         const day = parseInt(d.split('-')[2]);
-        // Check if there's an awareness event on this date
         const event = monthAwareness.find(a => a.day === day);
-        return event 
-          ? `- ${d}: événement "${event.label}" (univers: ${event.preferredUniverses[0]}, score: ${event.relevanceScore}) — utiliser SEULEMENT si pertinent`
-          : `- ${d}: post métier libre — choisir un univers varié`;
+        const scheduledCategory = weeklySchedule.find(s => s.day === day)?.category || 'conseil';
+        
+        const CATEGORY_DESCRIPTIONS: Record<string, string> = {
+          urgence: 'URGENCE — fuite, panne, casse, sécurité. Universe métier obligatoire.',
+          prevention: 'PRÉVENTION — anticiper un problème, entretien préventif.',
+          amelioration: 'AMÉLIORATION — confort, esthétique, valorisation habitat.',
+          conseil: 'CONSEIL PRATIQUE — tip utile, actionnable, court.',
+          preuve: 'PREUVE — témoignage, avant/après, process d\'intervention, savoir-faire.',
+          saisonnier: 'SAISONNIER — lié à la météo réelle ou à la période.',
+          contre_exemple: 'CONTRE-EXEMPLE — erreur fréquente, "ce qu\'il ne faut pas faire".',
+          pedagogique: 'PÉDAGOGIQUE — "le saviez-vous ?", chiffre clé, schéma simple.',
+          prospection: 'PROSPECTION & MARQUE — zone d\'intervention, panorama métiers, partenaires, commercial créatif. Universe = general.',
+        };
+        
+        const categoryDesc = CATEGORY_DESCRIPTIONS[scheduledCategory] || scheduledCategory;
+        
+        if (event) {
+          return `- ${d}: CATÉGORIE OBLIGATOIRE = "${scheduledCategory}" (${categoryDesc}) | événement: "${event.label}" (utiliser SEULEMENT si pertinent)`;
+        }
+        return `- ${d}: CATÉGORIE OBLIGATOIRE = "${scheduledCategory}" (${categoryDesc})`;
       }).join('\n');
 
       userPrompt = `Génère EXACTEMENT ${targetDates.length} suggestion(s) de posts, UNE par date suivante :
 
 ${datesFormatted}
 ${promptCustomization}
+
+RÈGLE CRITIQUE : le topic_type de chaque post DOIT correspondre EXACTEMENT à la catégorie indiquée pour ce jour.
+Si la catégorie est "pedagogique" → le post DOIT être pédagogique (chiffre clé, "le saviez-vous ?").
+Si la catégorie est "prospection" → le post DOIT présenter l'entreprise (zone, métiers, partenaires).
+Si la catégorie est "contre_exemple" → le post DOIT montrer une erreur fréquente.
+NE PAS remplacer par de l'urgence ou du métier terrain si ce n'est pas la catégorie assignée.
 
 RÉALISATIONS EXPLOITABLES :
 ${exploitableReals.length > 0 
@@ -1176,9 +1199,8 @@ ${[...existingTopicKeys].join(', ') || '(aucun)'}
 
 RÈGLES :
 - UN post par date, pas plus, pas moins
-- Chaque post doit être sur une date différente parmi celles listées
 - La suggestion_date DOIT correspondre EXACTEMENT à une des dates demandées
-- Varier les univers entre les posts
+- Varier les univers entre les posts (pas 2 fois le même univers)
 - Chaque post DOIT contenir un DÉCLENCHEUR de conversion
 - Pas de contenu calendaire forcé`;
     } else {
