@@ -47,6 +47,10 @@ interface AwarenessDay {
   contentTypeHint: string;
   preferredUniverses: string[];
   ctaHint: string;
+  /** 1=aucun lien métier (ignoré), 2=angle possible (optionnel), 3=lien direct métier */
+  relevanceScore: 1 | 2 | 3;
+  /** 1=inspiration/branding, 2=réflexion/amélioration, 3=urgence/besoin immédiat */
+  intentScore: 1 | 2 | 3;
 }
 
 // ─── Build awareness days for a given year (dynamic Easter + fixed dates) ───
@@ -61,112 +65,112 @@ function buildAwarenessDays(year: number): AwarenessDay[] {
 
   return [
     // ════════════════ JANVIER ════════════════
-    { month: 1, day: 1,  label: "🎉 Jour de l'An — bonnes résolutions habitat", tags: ["habitat","renovation","branding","fete"], contentTypeHint: "lifestyle", preferredUniverses: ["renovation","general"], ctaHint: "devis_renovation" },
-    { month: 1, day: 6,  label: "Épiphanie — et si on en profitait pour vérifier le chauffage ?", tags: ["entretien","plomberie","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["plomberie"], ctaHint: "entretien_chauffage" },
-    { month: 1, day: 10, label: "Vague de froid — protéger ses canalisations du gel", tags: ["urgence","plomberie","hiver"], contentTypeHint: "prevention", preferredUniverses: ["plomberie"], ctaHint: "urgence_gel" },
-    { month: 1, day: 15, label: "⚠️ Prévention gel canalisations", tags: ["eau","urgence","plomberie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie"], ctaHint: "urgence_gel" },
-    { month: 1, day: 20, label: "Blue Monday — offrez-vous un intérieur qui fait du bien", tags: ["confort","renovation","lifestyle"], contentTypeHint: "lifestyle", preferredUniverses: ["renovation","electricite"], ctaHint: "ambiance_maison" },
-    { month: 1, day: 24, label: "Soldes d'hiver — le bon moment pour rénover", tags: ["renovation","promo"], contentTypeHint: "pedagogique", preferredUniverses: ["renovation"], ctaHint: "devis_renovation" },
-    { month: 1, day: 27, label: "Vérification détecteurs de fumée", tags: ["securite","electricite"], contentTypeHint: "prevention", preferredUniverses: ["electricite"], ctaHint: "securite_incendie" },
+    { month: 1, day: 1,  label: "🎉 Jour de l'An — bonnes résolutions habitat", tags: ["habitat","renovation","branding","fete"], contentTypeHint: "lifestyle", preferredUniverses: ["renovation","general"], ctaHint: "devis_renovation", relevanceScore: 2, intentScore: 2 },
+    { month: 1, day: 6,  label: "Épiphanie — et si on en profitait pour vérifier le chauffage ?", tags: ["entretien","plomberie","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["plomberie"], ctaHint: "entretien_chauffage", relevanceScore: 1, intentScore: 1 },
+    { month: 1, day: 10, label: "Vague de froid — protéger ses canalisations du gel", tags: ["urgence","plomberie","hiver"], contentTypeHint: "prevention", preferredUniverses: ["plomberie"], ctaHint: "urgence_gel", relevanceScore: 3, intentScore: 3 },
+    { month: 1, day: 15, label: "⚠️ Prévention gel canalisations", tags: ["eau","urgence","plomberie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie"], ctaHint: "urgence_gel", relevanceScore: 3, intentScore: 3 },
+    { month: 1, day: 20, label: "Blue Monday — offrez-vous un intérieur qui fait du bien", tags: ["confort","renovation","lifestyle"], contentTypeHint: "lifestyle", preferredUniverses: ["renovation","electricite"], ctaHint: "ambiance_maison", relevanceScore: 1, intentScore: 1 },
+    { month: 1, day: 24, label: "Soldes d'hiver — le bon moment pour rénover", tags: ["renovation","promo"], contentTypeHint: "pedagogique", preferredUniverses: ["renovation"], ctaHint: "devis_renovation", relevanceScore: 2, intentScore: 2 },
+    { month: 1, day: 27, label: "Vérification détecteurs de fumée", tags: ["securite","electricite"], contentTypeHint: "prevention", preferredUniverses: ["electricite"], ctaHint: "securite_incendie", relevanceScore: 3, intentScore: 3 },
 
     // ════════════════ FÉVRIER ════════════════
-    { month: 2, day: 2,  label: "🕯 Chandeleur — attention aux risques incendie en cuisine", tags: ["securite","electricite","fete"], contentTypeHint: "prevention", preferredUniverses: ["electricite"], ctaHint: "securite_incendie" },
-    { month: 2, day: 7,  label: "Journée sans téléphone — mais pas sans chauffage !", tags: ["confort","plomberie","decale"], contentTypeHint: "decale", preferredUniverses: ["plomberie"], ctaHint: "entretien_chauffage" },
-    { month: 2, day: 10, label: "Journée mondiale de l'énergie — économies d'énergie", tags: ["energie","habitat"], contentTypeHint: "pedagogique", preferredUniverses: ["electricite","plomberie"], ctaHint: "audit_energetique" },
-    { month: 2, day: 14, label: "💕 Saint-Valentin — créer une ambiance cocooning chez soi", tags: ["confort","habitat","lifestyle","fete"], contentTypeHint: "lifestyle", preferredUniverses: ["renovation","electricite","general"], ctaHint: "ambiance_maison" },
-    { month: 2, day: 20, label: "Fin d'hiver — bilan chauffage et préparation du printemps", tags: ["entretien","plomberie","energie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","renovation"], ctaHint: "bilan_chauffage" },
-    { month: 2, day: 25, label: "🎭 Carnaval — les déguisements de vos installations les plus insolites", tags: ["humour","engagement","decale"], contentTypeHint: "decale", preferredUniverses: ["general"], ctaHint: "engagement_communaute" },
+    { month: 2, day: 2,  label: "🕯 Chandeleur — attention aux risques incendie en cuisine", tags: ["securite","electricite","fete"], contentTypeHint: "prevention", preferredUniverses: ["electricite"], ctaHint: "securite_incendie", relevanceScore: 2, intentScore: 2 },
+    { month: 2, day: 7,  label: "Journée sans téléphone — mais pas sans chauffage !", tags: ["confort","plomberie","decale"], contentTypeHint: "decale", preferredUniverses: ["plomberie"], ctaHint: "entretien_chauffage", relevanceScore: 1, intentScore: 1 },
+    { month: 2, day: 10, label: "Journée mondiale de l'énergie — économies d'énergie", tags: ["energie","habitat"], contentTypeHint: "pedagogique", preferredUniverses: ["electricite","plomberie"], ctaHint: "audit_energetique", relevanceScore: 3, intentScore: 2 },
+    { month: 2, day: 14, label: "💕 Saint-Valentin — créer une ambiance cocooning chez soi", tags: ["confort","habitat","lifestyle","fete"], contentTypeHint: "lifestyle", preferredUniverses: ["renovation","electricite","general"], ctaHint: "ambiance_maison", relevanceScore: 1, intentScore: 1 },
+    { month: 2, day: 20, label: "Fin d'hiver — bilan chauffage et préparation du printemps", tags: ["entretien","plomberie","energie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","renovation"], ctaHint: "bilan_chauffage", relevanceScore: 3, intentScore: 2 },
+    { month: 2, day: 25, label: "🎭 Carnaval — les déguisements de vos installations les plus insolites", tags: ["humour","engagement","decale"], contentTypeHint: "decale", preferredUniverses: ["general"], ctaHint: "engagement_communaute", relevanceScore: 1, intentScore: 1 },
 
     // ════════════════ MARS ════════════════
-    { month: 3, day: 3,  label: "Journée mondiale de la vie sauvage — protéger les oiseaux des vitrages", tags: ["vitrerie","environnement"], contentTypeHint: "pedagogique", preferredUniverses: ["vitrerie"], ctaHint: "remplacement_vitrage" },
-    { month: 3, day: 8,  label: "👩 Journée des droits des femmes — nos techniciennes sur le terrain", tags: ["branding","engagement","fete"], contentTypeHint: "lifestyle", preferredUniverses: ["general"], ctaHint: "recrutement" },
-    { month: 3, day: 12, label: "Début du printemps — check-up plomberie & robinetterie", tags: ["entretien","plomberie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie"], ctaHint: "entretien_printemps" },
-    { month: 3, day: 17, label: "☘️ Saint-Patrick — la chance n'a rien à voir avec l'entretien", tags: ["humour","engagement","fete"], contentTypeHint: "decale", preferredUniverses: ["general"], ctaHint: "engagement_communaute" },
-    { month: 3, day: 20, label: "🌸 Équinoxe de printemps — préparez votre habitat", tags: ["habitat","renovation","entretien"], contentTypeHint: "prevention", preferredUniverses: ["renovation","plomberie","electricite"], ctaHint: "check_up_printemps" },
-    { month: 3, day: 22, label: "💧 Journée mondiale de l'eau", tags: ["eau","plomberie","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["plomberie"], ctaHint: "diagnostic_fuite" },
-    { month: 3, day: 25, label: "Semaine du développement durable — rénover éco-responsable", tags: ["energie","renovation","environnement"], contentTypeHint: "pedagogique", preferredUniverses: ["renovation","electricite"], ctaHint: "renovation_ecologique" },
-    { month: 3, day: lastSunMarch, label: "🕐 Changement d'heure (été) — reprogrammer volets & minuteries", tags: ["electricite","confort","volets"], contentTypeHint: "pedagogique", preferredUniverses: ["electricite","volets"], ctaHint: "programmateur_volets" },
+    { month: 3, day: 3,  label: "Journée mondiale de la vie sauvage — protéger les oiseaux des vitrages", tags: ["vitrerie","environnement"], contentTypeHint: "pedagogique", preferredUniverses: ["vitrerie"], ctaHint: "remplacement_vitrage", relevanceScore: 2, intentScore: 2 },
+    { month: 3, day: 8,  label: "👩 Journée des droits des femmes — nos techniciennes sur le terrain", tags: ["branding","engagement","fete"], contentTypeHint: "lifestyle", preferredUniverses: ["general"], ctaHint: "recrutement", relevanceScore: 1, intentScore: 1 },
+    { month: 3, day: 12, label: "Début du printemps — check-up plomberie & robinetterie", tags: ["entretien","plomberie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie"], ctaHint: "entretien_printemps", relevanceScore: 3, intentScore: 2 },
+    { month: 3, day: 17, label: "☘️ Saint-Patrick — la chance n'a rien à voir avec l'entretien", tags: ["humour","engagement","fete"], contentTypeHint: "decale", preferredUniverses: ["general"], ctaHint: "engagement_communaute", relevanceScore: 1, intentScore: 1 },
+    { month: 3, day: 20, label: "🌸 Équinoxe de printemps — préparez votre habitat", tags: ["habitat","renovation","entretien"], contentTypeHint: "prevention", preferredUniverses: ["renovation","plomberie","electricite"], ctaHint: "check_up_printemps", relevanceScore: 3, intentScore: 2 },
+    { month: 3, day: 22, label: "💧 Journée mondiale de l'eau", tags: ["eau","plomberie","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["plomberie"], ctaHint: "diagnostic_fuite", relevanceScore: 3, intentScore: 3 },
+    { month: 3, day: 25, label: "Semaine du développement durable — rénover éco-responsable", tags: ["energie","renovation","environnement"], contentTypeHint: "pedagogique", preferredUniverses: ["renovation","electricite"], ctaHint: "renovation_ecologique", relevanceScore: 3, intentScore: 2 },
+    { month: 3, day: lastSunMarch, label: "🕐 Changement d'heure (été) — reprogrammer volets & minuteries", tags: ["electricite","confort","volets"], contentTypeHint: "pedagogique", preferredUniverses: ["electricite","volets"], ctaHint: "programmateur_volets", relevanceScore: 3, intentScore: 2 },
 
     // ════════════════ AVRIL ════════════════
-    { month: 4, day: 1,  label: "🐟 1er avril — les pannes les plus insolites de nos techniciens", tags: ["humour","engagement","branding","fete"], contentTypeHint: "decale", preferredUniverses: ["plomberie"], ctaHint: "engagement_communaute" },
-    { month: 4, day: 7,  label: "🧹 Grand ménage de printemps — check-up complet maison", tags: ["entretien","habitat"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","electricite","renovation"], ctaHint: "check_up_maison" },
-    { month: 4, day: 11, label: "Journée mondiale Parkinson — adapter le logement PMR", tags: ["pmr","sante","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["pmr"], ctaHint: "adaptation_logement" },
-    { month: 4, day: 15, label: "Préparer terrasse & extérieurs pour les beaux jours", tags: ["habitat","menuiserie","volets"], contentTypeHint: "pedagogique", preferredUniverses: ["menuiserie","volets","renovation"], ctaHint: "amenagement_exterieur" },
-    { month: easter.month, day: easter.day, label: "🐣 Pâques — repas de famille, invités : votre maison est-elle prête ? Vérifiez plomberie & confort avant le week-end pascal", tags: ["confort","habitat","famille","fete","paques"], contentTypeHint: "lifestyle", preferredUniverses: ["renovation","general"], ctaHint: "maison_accueillante" },
-    { month: easterMon.month, day: easterMon.day, label: "🐰 Lundi de Pâques — jour férié, pont pascal : le bon moment pour ces petits travaux repoussés depuis des mois", tags: ["renovation","habitat","weekend","fete","paques","pont"], contentTypeHint: "pedagogique", preferredUniverses: ["renovation","menuiserie"], ctaHint: "travaux_weekend" },
-    { month: 4, day: 22, label: "🌍 Jour de la Terre — rénovation éco-responsable", tags: ["energie","renovation","environnement","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["renovation"], ctaHint: "renovation_ecologique" },
-    { month: 4, day: 28, label: "🔒 Journée sécurité au travail — sécurisez aussi votre maison", tags: ["securite","electricite","serrurerie","fete"], contentTypeHint: "prevention", preferredUniverses: ["electricite","serrurerie"], ctaHint: "diagnostic_securite" },
+    { month: 4, day: 1,  label: "🐟 1er avril — les pannes les plus insolites de nos techniciens", tags: ["humour","engagement","branding","fete"], contentTypeHint: "decale", preferredUniverses: ["plomberie"], ctaHint: "engagement_communaute", relevanceScore: 2, intentScore: 1 },
+    { month: 4, day: 7,  label: "🧹 Grand ménage de printemps — check-up complet maison", tags: ["entretien","habitat"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","electricite","renovation"], ctaHint: "check_up_maison", relevanceScore: 3, intentScore: 2 },
+    { month: 4, day: 11, label: "Journée mondiale Parkinson — adapter le logement PMR", tags: ["pmr","sante","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["pmr"], ctaHint: "adaptation_logement", relevanceScore: 3, intentScore: 2 },
+    { month: 4, day: 15, label: "Préparer terrasse & extérieurs pour les beaux jours", tags: ["habitat","menuiserie","volets"], contentTypeHint: "pedagogique", preferredUniverses: ["menuiserie","volets","renovation"], ctaHint: "amenagement_exterieur", relevanceScore: 3, intentScore: 2 },
+    { month: easter.month, day: easter.day, label: "🐣 Pâques — disponibilité urgence même les jours fériés", tags: ["urgence","branding","fete","paques"], contentTypeHint: "prevention", preferredUniverses: ["general","plomberie"], ctaHint: "dispo_jours_feries", relevanceScore: 2, intentScore: 2 },
+    { month: easterMon.month, day: easterMon.day, label: "🐰 Lundi de Pâques — profitez du pont pour anticiper vos travaux", tags: ["renovation","habitat","weekend","fete","paques","pont"], contentTypeHint: "pedagogique", preferredUniverses: ["renovation","menuiserie"], ctaHint: "anticipation_travaux", relevanceScore: 2, intentScore: 2 },
+    { month: 4, day: 22, label: "🌍 Jour de la Terre — rénovation éco-responsable", tags: ["energie","renovation","environnement","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["renovation"], ctaHint: "renovation_ecologique", relevanceScore: 3, intentScore: 2 },
+    { month: 4, day: 28, label: "🔒 Journée sécurité au travail — sécurisez aussi votre maison", tags: ["securite","electricite","serrurerie","fete"], contentTypeHint: "prevention", preferredUniverses: ["electricite","serrurerie"], ctaHint: "diagnostic_securite", relevanceScore: 3, intentScore: 3 },
 
     // ════════════════ MAI ════════════════
-    { month: 5, day: 1,  label: "🌷 Fête du travail — sécuriser sa maison pour le pont de mai", tags: ["securite","serrurerie","fete"], contentTypeHint: "prevention", preferredUniverses: ["serrurerie"], ctaHint: "securisation_pont" },
-    { month: 5, day: 4,  label: "Star Wars Day — que la force soit avec vos installations", tags: ["humour","engagement","decale"], contentTypeHint: "decale", preferredUniverses: ["general"], ctaHint: "engagement_communaute" },
-    { month: 5, day: 8,  label: "8 mai — pont = cambriolages : sécurisez vos accès", tags: ["securite","serrurerie","fete"], contentTypeHint: "prevention", preferredUniverses: ["serrurerie"], ctaHint: "securisation_pont" },
-    { month: 5, day: 10, label: "Entretien climatisation avant l'été", tags: ["entretien","confort"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","electricite"], ctaHint: "entretien_clim" },
-    { month: 5, day: 15, label: "🏠 Journée sans écran — redécouvrez votre maison (et ses défauts)", tags: ["habitat","renovation","decale"], contentTypeHint: "decale", preferredUniverses: ["renovation","general"], ctaHint: "devis_renovation" },
-    { month: 5, day: 20, label: "Journée mondiale des abeilles — fenêtres avec moustiquaires", tags: ["vitrerie","environnement","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["vitrerie","menuiserie"], ctaHint: "moustiquaires" },
-    { month: 5, day: 25, label: "Fête des mères — offrez du confort à la maison", tags: ["lifestyle","branding","confort","fete"], contentTypeHint: "lifestyle", preferredUniverses: ["general","renovation"], ctaHint: "cadeau_confort" },
-    { month: ascension.month, day: ascension.day, label: "🙏 Ascension — on reste disponible même les jours fériés", tags: ["branding","urgence","fete"], contentTypeHint: "prevention", preferredUniverses: ["general","plomberie","serrurerie"], ctaHint: "dispo_jours_feries" },
-    { month: pentecote.month, day: pentecote.day, label: "Lundi de Pentecôte — dernier grand pont avant l'été", tags: ["securite","serrurerie","fete"], contentTypeHint: "prevention", preferredUniverses: ["serrurerie","general"], ctaHint: "securisation_pont" },
+    { month: 5, day: 1,  label: "🌷 Fête du travail — sécuriser sa maison pour le pont de mai", tags: ["securite","serrurerie","fete"], contentTypeHint: "prevention", preferredUniverses: ["serrurerie"], ctaHint: "securisation_pont", relevanceScore: 3, intentScore: 3 },
+    { month: 5, day: 4,  label: "Star Wars Day — que la force soit avec vos installations", tags: ["humour","engagement","decale"], contentTypeHint: "decale", preferredUniverses: ["general"], ctaHint: "engagement_communaute", relevanceScore: 1, intentScore: 1 },
+    { month: 5, day: 8,  label: "8 mai — pont = cambriolages : sécurisez vos accès", tags: ["securite","serrurerie","fete"], contentTypeHint: "prevention", preferredUniverses: ["serrurerie"], ctaHint: "securisation_pont", relevanceScore: 3, intentScore: 3 },
+    { month: 5, day: 10, label: "Entretien climatisation avant l'été", tags: ["entretien","confort"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","electricite"], ctaHint: "entretien_clim", relevanceScore: 3, intentScore: 2 },
+    { month: 5, day: 15, label: "🏠 Journée sans écran — redécouvrez votre maison (et ses défauts)", tags: ["habitat","renovation","decale"], contentTypeHint: "decale", preferredUniverses: ["renovation","general"], ctaHint: "devis_renovation", relevanceScore: 1, intentScore: 1 },
+    { month: 5, day: 20, label: "Journée mondiale des abeilles — fenêtres avec moustiquaires", tags: ["vitrerie","environnement","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["vitrerie","menuiserie"], ctaHint: "moustiquaires", relevanceScore: 2, intentScore: 2 },
+    { month: 5, day: 25, label: "Fête des mères — offrez du confort à la maison", tags: ["lifestyle","branding","confort","fete"], contentTypeHint: "lifestyle", preferredUniverses: ["general","renovation"], ctaHint: "cadeau_confort", relevanceScore: 1, intentScore: 1 },
+    { month: ascension.month, day: ascension.day, label: "🙏 Ascension — on reste disponible même les jours fériés", tags: ["branding","urgence","fete"], contentTypeHint: "prevention", preferredUniverses: ["general","plomberie","serrurerie"], ctaHint: "dispo_jours_feries", relevanceScore: 2, intentScore: 2 },
+    { month: pentecote.month, day: pentecote.day, label: "Lundi de Pentecôte — dernier grand pont avant l'été", tags: ["securite","serrurerie","fete"], contentTypeHint: "prevention", preferredUniverses: ["serrurerie","general"], ctaHint: "securisation_pont", relevanceScore: 2, intentScore: 2 },
 
     // ════════════════ JUIN ════════════════
-    { month: 6, day: 1,  label: "Début météo d'été — préparer volets et stores", tags: ["confort","volets"], contentTypeHint: "prevention", preferredUniverses: ["volets"], ctaHint: "installation_volets" },
-    { month: 6, day: 5,  label: "🌱 Journée de l'environnement — éco-gestes maison", tags: ["energie","habitat","environnement","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["electricite","plomberie"], ctaHint: "eco_gestes" },
-    { month: 6, day: 10, label: "Semaine du vélo — mais qui sécurise votre garage ?", tags: ["serrurerie","securite","decale"], contentTypeHint: "decale", preferredUniverses: ["serrurerie","menuiserie"], ctaHint: "securisation_garage" },
-    { month: 6, day: 15, label: "☀️ Premières chaleurs — fraîcheur & ventilation", tags: ["confort","urgence"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","electricite","volets"], ctaHint: "installation_clim" },
-    { month: 6, day: 15, label: "Fête des pères — un projet maison à deux ?", tags: ["lifestyle","branding","fete"], contentTypeHint: "lifestyle", preferredUniverses: ["general","renovation","menuiserie"], ctaHint: "projet_maison" },
-    { month: 6, day: 21, label: "🔒 Été = vacances : sécurisez avant de partir", tags: ["securite","serrurerie"], contentTypeHint: "prevention", preferredUniverses: ["serrurerie"], ctaHint: "securisation_vacances" },
-    { month: 6, day: 21, label: "☀️ Solstice d'été — protégez-vous de la chaleur", tags: ["confort","volets","habitat","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["volets","electricite"], ctaHint: "protection_chaleur" },
-    { month: 6, day: 25, label: "🎵 Fête de la musique passée — vos volets tiennent le bruit ?", tags: ["volets","vitrerie","decale"], contentTypeHint: "decale", preferredUniverses: ["volets","vitrerie"], ctaHint: "isolation_phonique" },
+    { month: 6, day: 1,  label: "Début météo d'été — préparer volets et stores", tags: ["confort","volets"], contentTypeHint: "prevention", preferredUniverses: ["volets"], ctaHint: "installation_volets", relevanceScore: 3, intentScore: 2 },
+    { month: 6, day: 5,  label: "🌱 Journée de l'environnement — éco-gestes maison", tags: ["energie","habitat","environnement","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["electricite","plomberie"], ctaHint: "eco_gestes", relevanceScore: 3, intentScore: 2 },
+    { month: 6, day: 10, label: "Semaine du vélo — mais qui sécurise votre garage ?", tags: ["serrurerie","securite","decale"], contentTypeHint: "decale", preferredUniverses: ["serrurerie","menuiserie"], ctaHint: "securisation_garage", relevanceScore: 1, intentScore: 1 },
+    { month: 6, day: 15, label: "☀️ Premières chaleurs — fraîcheur & ventilation", tags: ["confort","urgence"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","electricite","volets"], ctaHint: "installation_clim", relevanceScore: 3, intentScore: 3 },
+    { month: 6, day: 15, label: "Fête des pères — un projet maison à deux ?", tags: ["lifestyle","branding","fete"], contentTypeHint: "lifestyle", preferredUniverses: ["general","renovation","menuiserie"], ctaHint: "projet_maison", relevanceScore: 1, intentScore: 1 },
+    { month: 6, day: 21, label: "🔒 Été = vacances : sécurisez avant de partir", tags: ["securite","serrurerie"], contentTypeHint: "prevention", preferredUniverses: ["serrurerie"], ctaHint: "securisation_vacances", relevanceScore: 3, intentScore: 3 },
+    { month: 6, day: 21, label: "☀️ Solstice d'été — protégez-vous de la chaleur", tags: ["confort","volets","habitat","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["volets","electricite"], ctaHint: "protection_chaleur", relevanceScore: 3, intentScore: 2 },
+    { month: 6, day: 25, label: "🎵 Fête de la musique passée — vos volets tiennent le bruit ?", tags: ["volets","vitrerie","decale"], contentTypeHint: "decale", preferredUniverses: ["volets","vitrerie"], ctaHint: "isolation_phonique", relevanceScore: 2, intentScore: 2 },
 
     // ════════════════ JUILLET ════════════════
-    { month: 7, day: 1,  label: "🏖 Départs en vacances — checklist sécurité maison", tags: ["securite","serrurerie","plomberie"], contentTypeHint: "prevention", preferredUniverses: ["serrurerie","plomberie"], ctaHint: "checklist_vacances" },
-    { month: 7, day: 7,  label: "Canicule — les bons réflexes pour garder la fraîcheur", tags: ["confort","volets","electricite"], contentTypeHint: "prevention", preferredUniverses: ["volets","electricite"], ctaHint: "protection_chaleur" },
-    { month: 7, day: 14, label: "🇫🇷 14 juillet — sécurité électrique pour les festivités", tags: ["securite","electricite","fete"], contentTypeHint: "prevention", preferredUniverses: ["electricite"], ctaHint: "securite_electrique" },
-    { month: 7, day: 20, label: "Stores & volets roulants contre la canicule", tags: ["confort","habitat"], contentTypeHint: "pedagogique", preferredUniverses: ["volets"], ctaHint: "installation_volets" },
-    { month: 7, day: 25, label: "Vacances — comment couper l'eau en partant", tags: ["plomberie","prevention"], contentTypeHint: "pedagogique", preferredUniverses: ["plomberie"], ctaHint: "prevention_degat_eaux" },
+    { month: 7, day: 1,  label: "🏖 Départs en vacances — checklist sécurité maison", tags: ["securite","serrurerie","plomberie"], contentTypeHint: "prevention", preferredUniverses: ["serrurerie","plomberie"], ctaHint: "checklist_vacances", relevanceScore: 3, intentScore: 3 },
+    { month: 7, day: 7,  label: "Canicule — les bons réflexes pour garder la fraîcheur", tags: ["confort","volets","electricite"], contentTypeHint: "prevention", preferredUniverses: ["volets","electricite"], ctaHint: "protection_chaleur", relevanceScore: 3, intentScore: 3 },
+    { month: 7, day: 14, label: "🇫🇷 14 juillet — sécurité électrique pour les festivités", tags: ["securite","electricite","fete"], contentTypeHint: "prevention", preferredUniverses: ["electricite"], ctaHint: "securite_electrique", relevanceScore: 2, intentScore: 2 },
+    { month: 7, day: 20, label: "Stores & volets roulants contre la canicule", tags: ["confort","habitat"], contentTypeHint: "pedagogique", preferredUniverses: ["volets"], ctaHint: "installation_volets", relevanceScore: 3, intentScore: 2 },
+    { month: 7, day: 25, label: "Vacances — comment couper l'eau en partant", tags: ["plomberie","prevention"], contentTypeHint: "pedagogique", preferredUniverses: ["plomberie"], ctaHint: "prevention_degat_eaux", relevanceScore: 3, intentScore: 2 },
 
     // ════════════════ AOÛT ════════════════
-    { month: 8, day: 1,  label: "🚨 Urgences estivales — Help Confort reste ouvert", tags: ["urgence","plomberie","serrurerie","branding"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","serrurerie"], ctaHint: "numero_urgence" },
-    { month: 8, day: 8,  label: "Journée mondiale du chat — protéger vos moustiquaires", tags: ["vitrerie","humour","decale","fete"], contentTypeHint: "decale", preferredUniverses: ["vitrerie"], ctaHint: "reparation_moustiquaire" },
-    { month: 8, day: 15, label: "🌅 15 août — Assomption — pensez à vos projets de rentrée", tags: ["renovation","habitat","fete"], contentTypeHint: "lifestyle", preferredUniverses: ["renovation","general"], ctaHint: "projet_rentree" },
-    { month: 8, day: 20, label: "Fin des vacances — dégâts des eaux pendant l'absence ?", tags: ["urgence","plomberie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie"], ctaHint: "diagnostic_retour" },
-    { month: 8, day: 25, label: "📚 Rentrée approche — préparer la maison pour la famille", tags: ["entretien","habitat","famille"], contentTypeHint: "prevention", preferredUniverses: ["renovation","general","electricite"], ctaHint: "preparation_rentree" },
+    { month: 8, day: 1,  label: "🚨 Urgences estivales — Help Confort reste ouvert", tags: ["urgence","plomberie","serrurerie","branding"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","serrurerie"], ctaHint: "numero_urgence", relevanceScore: 3, intentScore: 3 },
+    { month: 8, day: 8,  label: "Journée mondiale du chat — protéger vos moustiquaires", tags: ["vitrerie","humour","decale","fete"], contentTypeHint: "decale", preferredUniverses: ["vitrerie"], ctaHint: "reparation_moustiquaire", relevanceScore: 1, intentScore: 1 },
+    { month: 8, day: 15, label: "🌅 15 août — Assomption — pensez à vos projets de rentrée", tags: ["renovation","habitat","fete"], contentTypeHint: "lifestyle", preferredUniverses: ["renovation","general"], ctaHint: "projet_rentree", relevanceScore: 2, intentScore: 2 },
+    { month: 8, day: 20, label: "Fin des vacances — dégâts des eaux pendant l'absence ?", tags: ["urgence","plomberie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie"], ctaHint: "diagnostic_retour", relevanceScore: 3, intentScore: 3 },
+    { month: 8, day: 25, label: "📚 Rentrée approche — préparer la maison pour la famille", tags: ["entretien","habitat","famille"], contentTypeHint: "prevention", preferredUniverses: ["renovation","general","electricite"], ctaHint: "preparation_rentree", relevanceScore: 3, intentScore: 2 },
 
     // ════════════════ SEPTEMBRE ════════════════
-    { month: 9, day: 1,  label: "📚 Rentrée — révision chauffage avant l'hiver", tags: ["entretien","energie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie"], ctaHint: "revision_chauffage" },
-    { month: 9, day: 7,  label: "Semaine de la mobilité — accessibilité du logement", tags: ["pmr","habitat","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["pmr"], ctaHint: "adaptation_logement" },
-    { month: 9, day: 15, label: "⚡ Rentrée — vérifier tableau électrique & prises", tags: ["securite","electricite"], contentTypeHint: "prevention", preferredUniverses: ["electricite"], ctaHint: "diagnostic_electrique" },
-    { month: 9, day: 20, label: "Journées du patrimoine — entretenir c'est préserver", tags: ["pedagogique","habitat","branding","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["renovation","menuiserie"], ctaHint: "entretien_patrimoine" },
-    { month: 9, day: 22, label: "🍂 Équinoxe d'automne — préparer sa maison pour l'hiver", tags: ["entretien","habitat","energie","fete"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","renovation","volets"], ctaHint: "preparation_hiver" },
-    { month: 9, day: 26, label: "Journée européenne des langues — Help Confort parle votre langue", tags: ["branding","proximite","fete"], contentTypeHint: "lifestyle", preferredUniverses: ["general"], ctaHint: "branding_proximite" },
+    { month: 9, day: 1,  label: "📚 Rentrée — révision chauffage avant l'hiver", tags: ["entretien","energie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie"], ctaHint: "revision_chauffage", relevanceScore: 3, intentScore: 2 },
+    { month: 9, day: 7,  label: "Semaine de la mobilité — accessibilité du logement", tags: ["pmr","habitat","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["pmr"], ctaHint: "adaptation_logement", relevanceScore: 3, intentScore: 2 },
+    { month: 9, day: 15, label: "⚡ Rentrée — vérifier tableau électrique & prises", tags: ["securite","electricite"], contentTypeHint: "prevention", preferredUniverses: ["electricite"], ctaHint: "diagnostic_electrique", relevanceScore: 3, intentScore: 3 },
+    { month: 9, day: 20, label: "Journées du patrimoine — entretenir c'est préserver", tags: ["pedagogique","habitat","branding","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["renovation","menuiserie"], ctaHint: "entretien_patrimoine", relevanceScore: 2, intentScore: 2 },
+    { month: 9, day: 22, label: "🍂 Équinoxe d'automne — préparer sa maison pour l'hiver", tags: ["entretien","habitat","energie","fete"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","renovation","volets"], ctaHint: "preparation_hiver", relevanceScore: 3, intentScore: 2 },
+    { month: 9, day: 26, label: "Journée européenne des langues — Help Confort parle votre langue", tags: ["branding","proximite","fete"], contentTypeHint: "lifestyle", preferredUniverses: ["general"], ctaHint: "branding_proximite", relevanceScore: 1, intentScore: 1 },
 
     // ════════════════ OCTOBRE ════════════════
-    { month: 10, day: 1,  label: "🧥 Anticiper l'hiver — isolation & chauffage", tags: ["entretien","energie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","renovation"], ctaHint: "preparation_hiver" },
-    { month: 10, day: 4,  label: "Journée mondiale des animaux — sécuriser vos installations", tags: ["securite","humour","fete"], contentTypeHint: "decale", preferredUniverses: ["electricite","vitrerie"], ctaHint: "securisation_maison" },
-    { month: 10, day: 10, label: "Journée de la santé mentale — un logement sain pour se sentir bien", tags: ["confort","habitat","fete"], contentTypeHint: "lifestyle", preferredUniverses: ["renovation","general"], ctaHint: "renovation_confort" },
-    { month: 10, day: 13, label: "Journée prévention catastrophes naturelles", tags: ["securite","urgence","fete"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","electricite"], ctaHint: "prevention_degats_eaux" },
-    { month: 10, day: 20, label: "Semaine du goût — un robinet qui fuit gâche le goût de l'eau", tags: ["plomberie","decale","fete"], contentTypeHint: "decale", preferredUniverses: ["plomberie"], ctaHint: "reparation_robinet" },
-    { month: 10, day: lastSunOct, label: "🕐 Changement d'heure (hiver) — reprogrammer volets & minuteries", tags: ["electricite","volets","confort"], contentTypeHint: "pedagogique", preferredUniverses: ["electricite","volets"], ctaHint: "programmateur_volets" },
-    { month: 10, day: 31, label: "🎃 Halloween — les pannes qui font (vraiment) peur", tags: ["humour","engagement","fete"], contentTypeHint: "decale", preferredUniverses: ["general","electricite"], ctaHint: "engagement_communaute" },
+    { month: 10, day: 1,  label: "🧥 Anticiper l'hiver — isolation & chauffage", tags: ["entretien","energie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","renovation"], ctaHint: "preparation_hiver", relevanceScore: 3, intentScore: 2 },
+    { month: 10, day: 4,  label: "Journée mondiale des animaux — sécuriser vos installations", tags: ["securite","humour","fete"], contentTypeHint: "decale", preferredUniverses: ["electricite","vitrerie"], ctaHint: "securisation_maison", relevanceScore: 1, intentScore: 1 },
+    { month: 10, day: 10, label: "Journée de la santé mentale — un logement sain pour se sentir bien", tags: ["confort","habitat","fete"], contentTypeHint: "lifestyle", preferredUniverses: ["renovation","general"], ctaHint: "renovation_confort", relevanceScore: 2, intentScore: 2 },
+    { month: 10, day: 13, label: "Journée prévention catastrophes naturelles", tags: ["securite","urgence","fete"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","electricite"], ctaHint: "prevention_degats_eaux", relevanceScore: 3, intentScore: 3 },
+    { month: 10, day: 20, label: "Semaine du goût — un robinet qui fuit gâche le goût de l'eau", tags: ["plomberie","decale","fete"], contentTypeHint: "decale", preferredUniverses: ["plomberie"], ctaHint: "reparation_robinet", relevanceScore: 2, intentScore: 2 },
+    { month: 10, day: lastSunOct, label: "🕐 Changement d'heure (hiver) — reprogrammer volets & minuteries", tags: ["electricite","volets","confort"], contentTypeHint: "pedagogique", preferredUniverses: ["electricite","volets"], ctaHint: "programmateur_volets", relevanceScore: 3, intentScore: 2 },
+    { month: 10, day: 31, label: "🎃 Halloween — les pannes qui font (vraiment) peur", tags: ["humour","engagement","fete"], contentTypeHint: "decale", preferredUniverses: ["general","electricite"], ctaHint: "engagement_communaute", relevanceScore: 1, intentScore: 1 },
 
     // ════════════════ NOVEMBRE ════════════════
-    { month: 11, day: 1,  label: "🕯 Toussaint — purge radiateurs avant le grand froid", tags: ["entretien","plomberie","fete"], contentTypeHint: "prevention", preferredUniverses: ["plomberie"], ctaHint: "purge_radiateurs" },
-    { month: 11, day: 8,  label: "Semaine de la qualité de l'air — ventilation et aération", tags: ["sante","habitat","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["electricite","renovation"], ctaHint: "ventilation" },
-    { month: 11, day: 11, label: "11 novembre — pont = vérifier serrures & accès", tags: ["securite","serrurerie","fete"], contentTypeHint: "prevention", preferredUniverses: ["serrurerie"], ctaHint: "securisation_pont" },
-    { month: 11, day: 15, label: "♿ Journée accessibilité — adaptation PMR du logement", tags: ["pmr","habitat","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["pmr"], ctaHint: "adaptation_logement" },
-    { month: 11, day: 19, label: "Journée mondiale des toilettes — entretien WC et sanitaires", tags: ["plomberie","humour","fete"], contentTypeHint: "decale", preferredUniverses: ["plomberie"], ctaHint: "reparation_wc" },
-    { month: 11, day: 24, label: "🛒 Black Friday — c'est le moment de planifier vos travaux", tags: ["renovation","habitat","promotion","fete"], contentTypeHint: "lifestyle", preferredUniverses: ["renovation","general"], ctaHint: "devis_travaux" },
-    { month: 11, day: 28, label: "Préparer les illuminations de Noël en toute sécurité", tags: ["securite","electricite","noel"], contentTypeHint: "prevention", preferredUniverses: ["electricite"], ctaHint: "securite_electrique_noel" },
+    { month: 11, day: 1,  label: "🕯 Toussaint — purge radiateurs avant le grand froid", tags: ["entretien","plomberie","fete"], contentTypeHint: "prevention", preferredUniverses: ["plomberie"], ctaHint: "purge_radiateurs", relevanceScore: 3, intentScore: 2 },
+    { month: 11, day: 8,  label: "Semaine de la qualité de l'air — ventilation et aération", tags: ["sante","habitat","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["electricite","renovation"], ctaHint: "ventilation", relevanceScore: 3, intentScore: 2 },
+    { month: 11, day: 11, label: "11 novembre — pont = vérifier serrures & accès", tags: ["securite","serrurerie","fete"], contentTypeHint: "prevention", preferredUniverses: ["serrurerie"], ctaHint: "securisation_pont", relevanceScore: 3, intentScore: 3 },
+    { month: 11, day: 15, label: "♿ Journée accessibilité — adaptation PMR du logement", tags: ["pmr","habitat","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["pmr"], ctaHint: "adaptation_logement", relevanceScore: 3, intentScore: 2 },
+    { month: 11, day: 19, label: "Journée mondiale des toilettes — entretien WC et sanitaires", tags: ["plomberie","humour","fete"], contentTypeHint: "decale", preferredUniverses: ["plomberie"], ctaHint: "reparation_wc", relevanceScore: 3, intentScore: 2 },
+    { month: 11, day: 24, label: "🛒 Black Friday — c'est le moment de planifier vos travaux", tags: ["renovation","habitat","promotion","fete"], contentTypeHint: "lifestyle", preferredUniverses: ["renovation","general"], ctaHint: "devis_travaux", relevanceScore: 2, intentScore: 2 },
+    { month: 11, day: 28, label: "Préparer les illuminations de Noël en toute sécurité", tags: ["securite","electricite","noel"], contentTypeHint: "prevention", preferredUniverses: ["electricite"], ctaHint: "securite_electrique_noel", relevanceScore: 3, intentScore: 3 },
 
     // ════════════════ DÉCEMBRE ════════════════
-    { month: 12, day: 1,  label: "❄️ Risques gel canalisations — protégez vos tuyaux", tags: ["urgence","plomberie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie"], ctaHint: "prevention_gel" },
-    { month: 12, day: 5,  label: "🎅 Saint-Nicolas — l'hiver s'installe, vérifiez le chauffage", tags: ["entretien","plomberie","fete"], contentTypeHint: "prevention", preferredUniverses: ["plomberie"], ctaHint: "entretien_chauffage" },
-    { month: 12, day: 10, label: "🎄 Sécurité électrique pour les illuminations de Noël", tags: ["securite","electricite","fete"], contentTypeHint: "prevention", preferredUniverses: ["electricite"], ctaHint: "securite_electrique_noel" },
-    { month: 12, day: 15, label: "Achats de Noël — et si le vrai cadeau c'était la rénovation ?", tags: ["renovation","lifestyle","fete"], contentTypeHint: "lifestyle", preferredUniverses: ["renovation","general"], ctaHint: "devis_travaux" },
-    { month: 12, day: 21, label: "Solstice d'hiver — vérifiez isolation & chauffage", tags: ["energie","entretien","plomberie","fete"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","renovation"], ctaHint: "isolation_hiver" },
-    { month: 12, day: 25, label: "🎅 Joyeux Noël — Help Confort à vos côtés toute l'année", tags: ["branding","engagement","fete"], contentTypeHint: "lifestyle", preferredUniverses: ["general"], ctaHint: "branding_fetes" },
-    { month: 12, day: 28, label: "Bilan de fin d'année — les pannes les plus fréquentes", tags: ["branding","pedagogique"], contentTypeHint: "pedagogique", preferredUniverses: ["general"], ctaHint: "engagement_communaute" },
-    { month: 12, day: 31, label: "🥂 Réveillon — bilan & projets habitat pour la nouvelle année", tags: ["branding","habitat","fete"], contentTypeHint: "lifestyle", preferredUniverses: ["general","renovation"], ctaHint: "projets_nouvelle_annee" },
+    { month: 12, day: 1,  label: "❄️ Risques gel canalisations — protégez vos tuyaux", tags: ["urgence","plomberie"], contentTypeHint: "prevention", preferredUniverses: ["plomberie"], ctaHint: "prevention_gel", relevanceScore: 3, intentScore: 3 },
+    { month: 12, day: 5,  label: "🎅 Saint-Nicolas — l'hiver s'installe, vérifiez le chauffage", tags: ["entretien","plomberie","fete"], contentTypeHint: "prevention", preferredUniverses: ["plomberie"], ctaHint: "entretien_chauffage", relevanceScore: 2, intentScore: 2 },
+    { month: 12, day: 10, label: "🎄 Sécurité électrique pour les illuminations de Noël", tags: ["securite","electricite","fete"], contentTypeHint: "prevention", preferredUniverses: ["electricite"], ctaHint: "securite_electrique_noel", relevanceScore: 3, intentScore: 3 },
+    { month: 12, day: 15, label: "Achats de Noël — et si le vrai cadeau c'était la rénovation ?", tags: ["renovation","lifestyle","fete"], contentTypeHint: "lifestyle", preferredUniverses: ["renovation","general"], ctaHint: "devis_travaux", relevanceScore: 1, intentScore: 1 },
+    { month: 12, day: 21, label: "Solstice d'hiver — vérifiez isolation & chauffage", tags: ["energie","entretien","plomberie","fete"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","renovation"], ctaHint: "isolation_hiver", relevanceScore: 3, intentScore: 2 },
+    { month: 12, day: 25, label: "🎅 Joyeux Noël — Help Confort à vos côtés toute l'année", tags: ["branding","engagement","fete"], contentTypeHint: "lifestyle", preferredUniverses: ["general"], ctaHint: "branding_fetes", relevanceScore: 1, intentScore: 1 },
+    { month: 12, day: 28, label: "Bilan de fin d'année — les pannes les plus fréquentes", tags: ["branding","pedagogique"], contentTypeHint: "pedagogique", preferredUniverses: ["general"], ctaHint: "engagement_communaute", relevanceScore: 2, intentScore: 2 },
+    { month: 12, day: 31, label: "🥂 Réveillon — bilan & projets habitat pour la nouvelle année", tags: ["branding","habitat","fete"], contentTypeHint: "lifestyle", preferredUniverses: ["general","renovation"], ctaHint: "projets_nouvelle_annee", relevanceScore: 1, intentScore: 1 },
   ];
 }
 
@@ -179,6 +183,30 @@ const VALID_TOPIC_TYPES = ['awareness_day', 'seasonal_tip', 'realisation', 'loca
 const VALID_LEAD_TYPES = ['urgence', 'prevention', 'amelioration', 'preuve_sociale', 'saisonnier'] as const;
 const VALID_TARGET_INTENTS = ['besoin_immediat', 'besoin_latent', 'curiosite', 'education'] as const;
 const VALID_URGENCY_LEVELS = ['low', 'medium', 'high'] as const;
+
+// ─── Post category rotation for fallback slots (score 1 events replaced) ───
+const POST_CATEGORIES_ROTATION = [
+  'urgence',        // fuite, panne, casse, sécurité
+  'entretien',      // prévention, anticiper
+  'amelioration',   // confort, esthétique, valorisation
+  'saisonnalite',   // météo réelle, période
+  'conseil',        // tips concrets
+  'preuve',         // intervention rapide, expertise, local
+] as const;
+
+// ─── Blacklist: forbidden theme associations ───
+const FORBIDDEN_THEME_ASSOCIATIONS = [
+  'Pâques = travaux',
+  'Noël = rénovation',
+  'Carnaval = bricolage',
+  'Saint-Valentin = plomberie',
+  'Halloween = rénovation',
+  'Épiphanie = chauffage',
+  'Star Wars = installations',
+  'Fête des mères = confort maison',
+  'Fête des pères = projet maison',
+  'Saint-Patrick = entretien',
+];
 
 // ─── Universe keyword inference ───
 const UNIVERSE_KEYWORDS: Record<string, string[]> = {
@@ -494,7 +522,21 @@ Deno.serve(async (req) => {
     );
 
     // ─── Load context data ───────────────────────────
-    const monthAwareness = AWARENESS_DAYS.filter(d => d.month === month);
+    // ─── Filter awareness days by relevance ───
+    const allMonthAwareness = AWARENESS_DAYS.filter(d => d.month === month);
+    // Score 3 = direct link (always included), Score 2 = optional (included but marked optional), Score 1 = ignored (replaced by fallback)
+    const monthAwareness = allMonthAwareness.filter(d => d.relevanceScore >= 2);
+    const pertinentEvents = allMonthAwareness.filter(d => d.relevanceScore === 3);
+    const optionalEvents = allMonthAwareness.filter(d => d.relevanceScore === 2);
+    const ignoredEvents = allMonthAwareness.filter(d => d.relevanceScore === 1);
+    
+    // Build fallback rotation for ignored event slots
+    const fallbackSlots = ignoredEvents.map((e, i) => ({
+      day: e.day,
+      category: POST_CATEGORIES_ROTATION[i % POST_CATEGORIES_ROTATION.length],
+    }));
+    
+    console.log(`[social-suggest] Month ${month}: ${pertinentEvents.length} pertinent, ${optionalEvents.length} optional, ${ignoredEvents.length} ignored → ${fallbackSlots.length} fallback slots`);
 
     // Load agency info for localization
     const { data: agency } = await adminSupabase
@@ -668,55 +710,55 @@ Deno.serve(async (req) => {
     const systemPrompt = `Tu es simultanément directeur éditorial, copywriter expert conversion locale, growth marketer et directeur artistique.
 Tu travailles pour HelpConfort (dépannage & rénovation habitat).
 
-Tu produis des posts social media PREMIUM orientés :
-→ visibilité locale
-→ engagement
-→ génération de leads
-Chaque post doit pouvoir générer une prise de contact.
+Tu produis des posts social media qui GÉNÈRENT DES ACTIONS (appels, devis, contacts).
+Un post qui ne peut pas déclencher d'action est considéré comme MAUVAIS.
 
 ═══════════════════════════════════════════
-RÈGLE FONDAMENTALE — PROBLÈME CLIENT AU CENTRE
+FILTRE DE PERTINENCE (RÈGLE N°1)
 ═══════════════════════════════════════════
-Tu ne crées JAMAIS de contenu informatif neutre.
-Tu mets TOUJOURS en scène un PROBLÈME CLIENT CONCRET.
+Pour chaque événement ou angle, pose-toi LA question :
+"Y a-t-il un lien DIRECT, UTILE ou STRATÉGIQUE avec l'habitat, le dépannage ou la rénovation ?"
 
-Chaque post part d'une situation réelle vécue par un client :
-- un volet bloqué, une fuite sous évier, un disjoncteur qui saute, une serrure cassée
-- PAS une "journée thématique", PAS un "rappel saisonnier", PAS une info générique
+SI NON → ignore l'événement → génère un post métier classique performant à la place.
+SI FAIBLEMENT → l'événement est OPTIONNEL. Utilise-le UNIQUEMENT si l'angle est naturel et crédible.
+SI OUI → utilise-le comme PRÉTEXTE pour un vrai problème métier.
 
-Les journées du calendrier servent de PRÉTEXTE pour parler d'un VRAI problème.
-Ex: "Changement d'heure" → "VOLET BLOQUÉ APRÈS LE CHANGEMENT D'HEURE ?"
-Ex: "Journée de l'eau" → "CETTE FUITE INVISIBLE COÛTAIT 40€/MOIS"
-Ex: "Pâques" → "PANNE DE CHAUFFE-EAU LA VEILLE D'UN REPAS DE FAMILLE ?"
+Un événement NE PEUT être utilisé QUE s'il :
+- permet un angle crédible
+- renforce le message métier
+- ne paraît pas forcé
+
+ASSOCIATIONS INTERDITES (BLACKLIST) :
+${FORBIDDEN_THEME_ASSOCIATIONS.map(a => `- ${a}`).join('\n')}
+Toute analogie faible, contenu forcé ou phrase marketing creuse = REJETÉ.
 
 ═══════════════════════════════════════════
-EXCEPTION — POSTS DÉCALÉS / HUMOUR (FÊTES & ÉVÉNEMENTS FUN)
+6 CATÉGORIES DE POSTS AUTORISÉES
 ═══════════════════════════════════════════
-Certains événements calendaires ont le tag "decale" ou "humour".
-Pour CES posts uniquement, tu DOIS abandonner le ton sérieux et créer un contenu DRÔLE, DÉCALÉ, VIRAL.
+Chaque post DOIT appartenir à UNE de ces catégories :
 
-Le post doit être DIRECTEMENT LIÉ à l'événement et FAIRE RIRE.
-L'humour vient du CROISEMENT entre le métier (plomberie, serrurerie, etc.) et l'événement.
+1. URGENCE / PROBLÈME — fuite, panne, casse, sécurité
+2. ENTRETIEN / PRÉVENTION — éviter une panne, anticiper
+3. AMÉLIORATION HABITAT — confort, esthétique, valorisation
+4. SAISONNALITÉ RÉELLE — météo, période (printemps = humidité, été = clim, hiver = gel)
+5. CONSEIL PRATIQUE — tips concrets, utiles, actionnables
+6. PREUVE / RÉASSURANCE — intervention rapide, expertise, proximité locale
 
-EXEMPLES DE BONS POSTS DÉCALÉS :
-- 🐟 1er avril → "DES POISSONS DANS VOS CANALISATIONS ?" + visual: un plombier qui essaie d'attraper des poissons sortant d'un robinet avec une épuisette, scène absurde et drôle
-- 🎃 Halloween → "CE BRUIT DANS LES TUYAUX LA NUIT..." + visual: un robinet qui fuit avec une ombre effrayante, ambiance film d'horreur
-- 🎭 Carnaval → "MÊME DÉGUISÉ, VOTRE PLOMBIER VOUS RECONNAÎT" + visual: un technicien en costume de carnaval avec sa caisse à outils
-- Star Wars Day → "QUE LA FORCE SOIT AVEC VOTRE CHAUFFE-EAU" + visual: un technicien en pose Jedi devant un chauffe-eau qui fume
+═══════════════════════════════════════════
+PRESSION CONVERSION (OBLIGATOIRE)
+═══════════════════════════════════════════
+Chaque post DOIT contenir au moins UN de ces déclencheurs :
 
-RÈGLES POUR LES POSTS DÉCALÉS :
-- Le hook doit faire SOURIRE immédiatement
-- Le visual_prompt doit décrire une scène ABSURDE, DRÔLE, SURRÉALISTE mais toujours liée au métier
-- La caption reste courte, fun, et se termine par un CTA léger ("On est là même le 1er avril 😉")
-- Le storytelling_type est "conseil_expert" mais le ton est humoristique
-- L'univers métier doit être respecté (si indiqué par l'événement)
-- Ces posts visent l'ENGAGEMENT et le PARTAGE, pas la conversion directe → lead_score 40-60
+- PERTE D'ARGENT ("Cette fuite vous coûte X€/mois sans le savoir")
+- INCONFORT ("Impossible de dormir avec ce bruit de tuyauterie")
+- RISQUE / DANGER ("Ce tableau électrique pouvait prendre feu")
+- GAIN IMMÉDIAT ("On règle ça en 1h, vous êtes tranquille")
+- SIMPLICITÉ / RAPIDITÉ ("Un appel, un technicien, c'est réglé")
 
-INTERDIT pour les posts NON décalés :
-- Hooks informatifs ("C'est la journée de...", "Pensez à...", "Saviez-vous que...")
-- Hooks trop longs (max 8 mots)
-- Hooks sans tension ni émotion
-- Contenus neutres qui "informent" sans créer de réaction
+Si aucun de ces déclencheurs n'est présent → le post est INVALIDE.
+
+Un post "correct mais non actionnable" est un MAUVAIS post.
+"Votre robinet fuit depuis des semaines ?" est TOUJOURS meilleur qu'un "post Pâques" forcé.
 
 ═══════════════════════════════════════════
 HOOK — STOP SCROLL (CRITIQUE)
@@ -726,6 +768,9 @@ Le hook est la PREMIÈRE LIGNE. Il doit :
 2. Poser un PROBLÈME ou une QUESTION directe
 3. Créer du STRESS LÉGER ou de la CURIOSITÉ
 4. Parler au client comme s'il vivait le problème MAINTENANT
+
+Le hook est TOUJOURS basé sur un problème ou une opportunité RÉELLE.
+JAMAIS basé uniquement sur un jour du calendrier.
 
 BONS hooks :
 - "IL NE REMONTE PLUS ?"
@@ -737,24 +782,17 @@ BONS hooks :
 - "CE TABLEAU ÉLECTRIQUE POUVAIT PRENDRE FEU"
 
 MAUVAIS hooks (INTERDITS) :
-- "Changement d'heure & volets" → trop long, pas émotionnel
-- "C'est le moment de penser à..." → zéro tension
-- "Journée mondiale de l'eau" → personne ne s'en soucie
+- "C'est la journée de..." → zéro tension
+- "Pensez à..." ou "Saviez-vous que..." → informatif neutre
 - "Préparez votre maison pour..." → conseil générique
-
-Le champ "hook" dans la réponse = CE texte court percutant.
-Le "title" = version légèrement plus longue mais toujours orientée problème.
+- "Lundi de Pâques = petits travaux" → analogie faible
 
 ═══════════════════════════════════════════
-SOUS-TEXTE / CAPTION
+STRUCTURE OBLIGATOIRE : HOOK → SOUS-TEXTE → CTA
 ═══════════════════════════════════════════
-Après le hook, la caption développe :
-1. Le problème en 1 phrase ("Le changement d'heure dérègle souvent les programmateurs de volets roulants")
-2. La conséquence ("Résultat : volet bloqué, store qui ne répond plus")
-3. La solution Help Confort ("On règle ça en 1 intervention")
-4. Le CTA naturel ("Appelez-nous avant que ça bloque complètement")
-
-JAMAIS de paragraphe informatif sans lien avec un problème client.
+HOOK : problème ou opportunité RÉELLE (jamais un calendrier)
+SOUS-TEXTE : bénéfice CONCRET pour le client (conséquence + solution)
+CTA : action CLAIRE (devis, intervention, planification)
 
 ═══════════════════════════════════════════
 CTA (OBLIGATOIRE — ORIENTÉ ACTION)
@@ -764,47 +802,31 @@ Court, direct, crée un sentiment de nécessité :
 - "Appelez avant que ça empire"
 - "Diagnostic gratuit, résultat immédiat"
 - "Intervention rapide dans votre secteur"
+- "Prendre RDV" / "Demander un devis"
 
 INTERDIT : CTA mous ("N'hésitez pas à nous contacter", "Pour plus d'informations")
 
 ═══════════════════════════════════════════
+EXCEPTION — POSTS DÉCALÉS / HUMOUR
+═══════════════════════════════════════════
+Certains événements avec tag "decale" ou "humour" ET relevanceScore >= 2 peuvent être traités en mode humour.
+L'humour vient du CROISEMENT entre le métier et l'événement.
+Ces posts visent l'ENGAGEMENT → lead_score 40-60.
+Mais si l'événement a relevanceScore 1 → ne PAS l'utiliser même en mode humour.
+
+═══════════════════════════════════════════
 VISUEL — PROBLÈME VISIBLE (CRITIQUE)
 ═══════════════════════════════════════════
-Chaque visuel doit représenter un PROBLÈME RÉEL ou une situation concrète vécue par le client.
-Les visuels neutres ou purement illustratifs sont INTERDITS.
-
-BONS visuels (visual_prompt) :
-- "Volet roulant bloqué à mi-hauteur sur une fenêtre française, lumière sombre de fin de journée, gros plan"
-- "Fuite d'eau visible sous un évier de cuisine, gouttes sur le sol, ambiance urgence"
-- "Tableau électrique ouvert avec câbles en désordre, traces de chaleur"
-- "Serrure de porte d'entrée cassée, cylindre sorti, vue rapprochée"
-
-EXCEPTION POUR POSTS DÉCALÉS — VISUELS HUMORISTIQUES :
-Pour les posts tagués "decale" ou "humour", le visual_prompt DOIT être DRÔLE et SURRÉALISTE :
-- "Un plombier en bleu de travail essayant d'attraper des poissons rouges qui jaillissent d'un robinet de cuisine avec une épuisette, eau partout, scène absurde et comique, éclairage lumineux"
-- "Un technicien déguisé en fantôme essayant de réparer un radiateur dans une maison décorée Halloween, toiles d'araignée, ambiance fun"
-- "Un électricien en costume de super-héros devant un tableau électrique qui fait des étincelles colorées comme un feu d'artifice"
-Ces visuels doivent faire SOURIRE et être PARTAGÉS. Ils restent liés au métier mais dans un registre absurde/comique.
-
-MAUVAIS visuels (INTERDITS sauf posts décalés) :
-- "Maison propre avec volets" → zéro tension, banque d'image
-- "Famille souriante dans son salon" → hors sujet
-- "Main tenant une clé" → trop générique
-- "Plombier qui répare" → pas le problème client
-
-Composition :
-- ZOOM sur le problème (pas la maison entière)
-- Ambiance : lumière dramatique, impression d'urgence ou de désagrément
-- Le spectateur doit penser "Ah oui, ça m'est arrivé" (ou rire si post décalé)
+Chaque visuel représente un PROBLÈME RÉEL ou une situation concrète.
+ZOOM sur le problème, ambiance urgence/désagrément.
+Exception posts décalés : visuels drôles et surréalistes liés au métier.
 
 ═══════════════════════════════════════════
 BRANDING — DISCRET ET EFFICACE
 ═══════════════════════════════════════════
 - Couleurs métier : plomberie=#2D8BC9, electricite=#F8A73C, serrurerie=#E22673, menuiserie=#EF8531, vitrerie=#90C14E, volets=#A23189, pmr=#3C64A2, renovation=#B79D84, general=#37474F
 - Logo Help Confort : DISCRET, petit, en bas
-- PAS de bandeau massif coloré qui écrase le visuel
-- PAS de violet, PAS de couleurs hors charte
-- Style : moderne, épuré, professionnel — jamais "template bas de gamme"
+- Style : moderne, épuré, professionnel
 
 ═══════════════════════════════════════════
 LEAD ENGINE
@@ -814,46 +836,16 @@ LEAD ENGINE
 - lead_score 0-100 : >80=problème concret+CTA fort, 60-80=bon angle, <60=trop informatif
 - urgency_level : high=panne/fuite/sécurité, medium=confort, low=conseil
 
-STORYTELLING : situation → problème → intervention → résultat/bénéfice
-EMOTIONAL TRIGGER : securite, economie, confort, tranquillite, urgence, confiance
-
 ═══════════════════════════════════════════
-RÈGLE ANTI-MYTHO (CRITIQUE — INTERDICTION ABSOLUE)
+RÈGLE ANTI-MYTHO (INTERDICTION ABSOLUE)
 ═══════════════════════════════════════════
-Les visuels sont générés par IA, PAS des vraies photos d'interventions.
-Tu ne dois JAMAIS laisser croire qu'une intervention réelle est montrée.
-
-FORMULATIONS STRICTEMENT INTERDITES :
-- "Notre agence de Dax a remplacé..."
-- "Help Confort Dax" → TOUJOURS utiliser "Help Confort Landes & Pays Basque"
-- "Chez Help Confort Dax" → TOUJOURS "Chez Help Confort Landes & Pays Basque"
-- Ne JAMAIS mentionner "Dax" seul comme zone — toujours "Landes & Pays Basque"
-- "Cet habitant de [ville] avait un problème de..."
-- "Intervention réalisée chez un client..."
-- "Avant/après d'un remplacement..."
-- "Nous avons installé..."
-- "Résultat de notre intervention..."
-- Toute mention d'un cas client SPÉCIFIQUE présenté comme réel
-
-FORMULATIONS AUTORISÉES :
-- "Votre volet ne remonte plus ?" (problème générique)
-- "Ce type de fuite est fréquent dans les maisons des Landes"
-- "On intervient rapidement dans votre secteur"
-- Questions directes au lecteur
-- Conseils généraux basés sur l'expertise métier
-- Statistiques génériques ("80% des pannes de volets surviennent en hiver")
-
-Le ton est EXPERT et PROCHE, mais JAMAIS mensonger.
-On parle de problèmes RÉELS que les gens vivent — sans inventer de faux cas clients.
-
-RÉPARTITION :
-- 40% PROBLÈMES CONCRETS (leads directs, urgences)
-- 30% CONSEILS EXPERTS (toujours via un problème concret)
-- 20% SAISONNIERS (anticipation, prévention)
-- 10% CRÉATIF / BRANDING LOCAL (visibilité, proximité)
+Visuels générés par IA. JAMAIS laisser croire qu'une intervention réelle est montrée.
+INTERDIT : "Notre agence de Dax a remplacé...", "Intervention réalisée chez un client..."
+AUTORISÉ : "Votre volet ne remonte plus ?", "Ce type de fuite est fréquent dans les Landes"
+TOUJOURS "Help Confort Landes & Pays Basque", JAMAIS "Help Confort Dax" seul.
 
 LOCALISATION :
-Zone : Landes & Pays Basque. TOUJOURS utiliser "Landes & Pays Basque", JAMAIS "Dax" seul.
+Zone : Landes & Pays Basque.
 ${agencyName ? `Agence : ${agencyName.replace(/Dax/gi, 'Landes & Pays Basque')}.` : ''}
 
 PLATFORM VARIANTS :
@@ -862,25 +854,28 @@ PLATFORM VARIANTS :
 - Google Business → problème + solution + zone géo
 - LinkedIn → expertise + cas concret + crédibilité
 
-ANTI-RÉPÉTITION (CRITIQUE — 21 JOURS MINIMUM) :
-- Jamais 2 posts du même univers métier à moins de 21 jours d'écart
-- Jamais 2 posts identiques, jamais le même angle, jamais le même hook
-- Si un post "volets" existe fin mars, PAS de post "volets" début avril
+ANTI-RÉPÉTITION (21 JOURS MINIMUM) :
+- Jamais 2 posts du même univers à moins de 21 jours d'écart
 - Varier les univers : alterner plomberie, electricite, serrurerie, volets, menuiserie, vitrerie, pmr, renovation
-- Espacer les posts régulièrement : ~1 post tous les 1-2 jours
+- Espacer les posts : ~1 post tous les 1-2 jours
 
-PRIORITÉ CALENDAIRE (CRITIQUE) :
-- Les jours fériés, fêtes nationales et événements calendaires DOIVENT TOUS avoir un post
-- Chaque événement sert de PRÉTEXTE pour un vrai problème métier
-- Le topic_type de ces posts est "awareness_day"
-- Ces posts calendaires forment la colonne vertébrale du planning (~50% des posts)
+═══════════════════════════════════════════
+PRIORITÉ (DANS CET ORDRE)
+═══════════════════════════════════════════
+1. UTILITÉ pour le client
+2. CRÉDIBILITÉ
+3. LIEN MÉTIER
+4. CONVERSION (appel, devis, contact)
+5. Calendrier EN DERNIER
+
+Le calendrier est un BONUS, pas une obligation.
 
 ═══════════════════════════════════════════
 RAPPEL FINAL
 ═══════════════════════════════════════════
 TU NE CRÉES PAS DU CONTENU. TU CRÉES DES DÉCLENCHEURS D'ACTION.
-Chaque post doit faire penser au lecteur : "Tiens, j'ai ce problème chez moi — je les appelle."`;
-
+Chaque post doit pouvoir générer : un appel, une demande de devis, ou une prise de contact.
+Sinon → il est considéré comme mauvais et doit être remplacé.`;
     // Build user prompt customization from prompt params
     const toneMap: Record<string, string> = {
       professionnel: 'Ton professionnel, expert, crédible',
@@ -940,70 +935,63 @@ CONTRAINTES :
 ${singleContext.original_realisation_id ? `- Réalisation liée : ${singleContext.original_realisation_id}` : ''}
 ${promptCustomization}
 
-JOURNÉES THÉMATIQUES DU MOIS :
-${monthAwareness.map(a => `- ${a.day}/${month}: ${a.label}`).join('\n')}
+ÉVÉNEMENTS PERTINENTS CE MOIS (utilise-les UNIQUEMENT si l'angle est naturel et crédible) :
+${pertinentEvents.map(a => `- ${a.day}/${month}: ${a.label} | univers: ${a.preferredUniverses[0]} | LIEN DIRECT MÉTIER`).join('\n') || '(aucun)'}
+${optionalEvents.length > 0 ? `\nÉVÉNEMENTS OPTIONNELS (à utiliser SEULEMENT si un angle crédible existe, sinon ignorer) :\n${optionalEvents.map(a => `- ${a.day}/${month}: ${a.label} | univers: ${a.preferredUniverses[0]} | OPTIONNEL`).join('\n')}` : ''}
 
 RÉALISATIONS EXPLOITABLES :
 ${exploitableReals.length > 0 
   ? exploitableReals.map(r => `- "${r.title}" (ID: ${r.id}, univers: ${r.universe || 'inconnu'}, avant/après: ${r.hasBeforeAfter ? 'oui' : 'non'})`).join('\n')
   : '(aucune)'}
 
-Propose un angle DIFFÉRENT du post précédent, tout en gardant le même contexte thématique.
-IMPORTANT : lead_score doit refléter le potentiel réel de conversion client.`;
+Propose un angle DIFFÉRENT du post précédent.
+RAPPEL : le post doit contenir au moins UN déclencheur de conversion (perte d'argent, inconfort, risque, gain immédiat, simplicité).`;
     } else {
-      userPrompt = `Génère ${targetPostCount} suggestions de posts social media PREMIUM pour le mois ${month}/${year}.
+      userPrompt = `Génère ${targetPostCount} suggestions de posts social media PERFORMANTS pour le mois ${month}/${year}.
 
 ═══════════════════════════════════════════
-PRIORITÉ N°1 — CALENDRIER & ÉVÉNEMENTS
+ÉVÉNEMENTS À LIEN DIRECT MÉTIER (prioritaires)
 ═══════════════════════════════════════════
-CHAQUE journée thématique ci-dessous DOIT générer un post.
-Les jours fériés, fêtes et événements calendaires sont la COLONNE VERTÉBRALE du planning éditorial.
-Ils servent de PRÉTEXTE pour parler d'un VRAI problème métier (jamais un post informatif neutre).
+Ces événements ont un lien DIRECT avec l'habitat/dépannage. Utilise-les comme PRÉTEXTE pour un vrai problème.
+Le topic_type de ces posts est "awareness_day".
+Respecte l'univers indiqué.
 
-RÈGLE CRITIQUE — UNIVERS OBLIGATOIRE :
-Quand une journée thématique indique un "univers" préféré → tu DOIS utiliser CET univers.
-L'univers détermine le badge, la couleur et le picto du visuel final.
-Si l'événement a un univers spécifique (plomberie, electricite, serrurerie, volets...), le post DOIT être dans cet univers.
-Si l'événement est "general" → utilise "general".
+${pertinentEvents.map(a => `- ${a.day}/${month}: ${a.label} | UNIVERS: ${a.preferredUniverses[0]} | priorité: ${a.relevanceScore * a.intentScore}`).join('\n') || '(aucun événement pertinent ce mois)'}
 
-RÈGLE CRITIQUE — COHÉRENCE THÈME / CONTENU (ZÉRO TOLÉRANCE) :
-Le hook, la caption, le visual_prompt et le CTA doivent être EN RAPPORT DIRECT avec l'événement calendaire.
-Le LABEL de chaque journée contient le SUJET EXACT — tu DOIS t'en inspirer directement.
-Si le label mentionne "Pâques", "famille", "repas" → le post DOIT parler de Pâques, famille, fête.
-Si le label mentionne "pont pascal", "petits travaux" → le post DOIT parler du pont, week-end prolongé, bricolage.
-Un post awareness_day dont le contenu n'a AUCUN rapport avec le label est un ÉCHEC.
+═══════════════════════════════════════════
+ÉVÉNEMENTS OPTIONNELS (score 2 — NE PAS FORCER)
+═══════════════════════════════════════════
+Ces événements PEUVENT être utilisés UNIQUEMENT si :
+- l'angle est naturel et crédible
+- le lien avec le métier n'est pas forcé
+- le post serait meilleur AVEC l'événement que SANS
 
-Exemples BONS :
-- 🐣 Pâques → "PANNE DE CHAUFFE-EAU LA VEILLE DU REPAS DE PÂQUES ?" (lié à la fête)
-- 🐰 Lundi de Pâques → "CE PONT DE PÂQUES, RÉPAREZ ENFIN CE QUI TRAÎNE !" (lié au pont)
-- 1er avril → humour, poisson d'avril, pannes insolites
-- Journée de l'eau → fuites, économies d'eau
-- Halloween → pannes effrayantes, ambiance sombre
+S'ils ne produisent pas un angle naturel → IGNORER et générer un post métier classique à la place.
 
-Exemples MAUVAIS (INTERDITS) :
-- Pâques → post sur une fuite sans mention de Pâques → REJETÉ
-- Lundi de Pâques → post sur un disjoncteur sans mention du pont → REJETÉ
-Le visual_prompt DOIT aussi illustrer l'ambiance de l'événement (Pâques = ambiance familiale, déco, etc.).
+${optionalEvents.map(a => `- ${a.day}/${month}: ${a.label} | univers: ${a.preferredUniverses[0]} | OPTIONNEL — ignorer si forcé`).join('\n') || '(aucun)'}
 
-JOURNÉES THÉMATIQUES DU MOIS (TOUTES doivent être couvertes) :
-${monthAwareness.map(a => `- ${a.day}/${month}: ${a.label} | UNIVERS OBLIGATOIRE: ${a.preferredUniverses[0]} | tags: ${a.tags.join(', ')}`).join('\n')}
+═══════════════════════════════════════════
+SLOTS MÉTIER LIBRES (remplacent les événements sans lien)
+═══════════════════════════════════════════
+Pour ces dates, génère un post métier PERFORMANT de la catégorie indiquée :
+${fallbackSlots.map(s => `- ${s.day}/${month}: POST MÉTIER catégorie "${s.category}" (pas d'événement calendaire)`).join('\n') || '(aucun)'}
 
-Les posts restants (pour atteindre ${targetPostCount}) doivent compléter avec des problèmes métiers concrets espacés régulièrement dans le mois.
+Les posts restants (pour atteindre ${targetPostCount}) doivent compléter avec des problèmes métiers concrets.
 
 ═══════════════════════════════════════════
 RÉPARTITION SUR ${targetPostCount} POSTS
 ═══════════════════════════════════════════
-- ~50% CALENDAIRE (jours fériés, fêtes, événements → prétexte problème métier)
-- ~25% PROBLÈMES CONCRETS (leads directs, urgences habitat)
-- ~15% CONSEILS EXPERTS (valeur ajoutée, toujours via un problème)
-- ~10% CRÉATIF / BRANDING LOCAL (visibilité, proximité)
+- ~25% URGENCE / PROBLÈME (leads directs, pannes, fuites)
+- ~25% ENTRETIEN / PRÉVENTION (anticiper, éviter une panne)
+- ~20% AMÉLIORATION HABITAT (confort, valorisation)
+- ~15% SAISONNALITÉ RÉELLE (météo, période)
+- ~10% CONSEIL PRATIQUE (tips utiles)
+- ~5% PREUVE / RÉASSURANCE (expertise, rapidité, proximité)
 
 ═══════════════════════════════════════════
 ANTI-REDONDANCE — GAP MINIMUM 21 JOURS
 ═══════════════════════════════════════════
 Un même univers/thème ne doit PAS apparaître deux fois en moins de 21 jours.
-Cela inclut le mois précédent : si un post "volets" existe le 28 du mois dernier,
-NE PAS faire de post "volets" avant le 18 du mois cible.
 ${recentThemesWarning}
 
 SUJETS DÉJÀ EXISTANTS (à ne pas dupliquer) :
@@ -1014,15 +1002,18 @@ ${exploitableReals.length > 0
   ? exploitableReals.map(r => `- "${r.title}" (ID: ${r.id}, univers: ${r.universe || 'inconnu'}, avant/après: ${r.hasBeforeAfter ? 'oui' : 'non'})`).join('\n')
   : '(aucune)'}
 
-RAPPEL CRITIQUE :
-- MINIMUM ${targetPostCount} posts, répartis sur tout le mois (pas de clusters)
-- Chaque post DOIT avoir un hook stop-scroll, un CTA business, un visual_prompt exploitable
-- lead_score DOIT refléter le potentiel réel de conversion
+═══════════════════════════════════════════
+RAPPEL CRITIQUE — PRESSION CONVERSION
+═══════════════════════════════════════════
+- MINIMUM ${targetPostCount} posts, répartis sur tout le mois
+- Chaque post DOIT contenir un DÉCLENCHEUR (perte d'argent, inconfort, risque, gain, simplicité)
+- Un post sans déclencheur est INVALIDE — remplace-le par un post métier classique
+- lead_score DOIT refléter le potentiel RÉEL de conversion
 - Posts urgence (fuite, panne, sécurité) → lead_score > 80, urgency_level = high
 - visual_prompt = scène RÉALISTE habitat français, JAMAIS un fond vide
-- JAMAIS inventer de faux cas client ou fausse intervention — rester GÉNÉRAL et EXPERT
+- JAMAIS inventer de faux cas client — rester GÉNÉRAL et EXPERT
 - Le topic_type "realisation" est INTERDIT sauf s'il y a de vraies photos (realisation_id valide)
-- Espacer les posts de 1-2 jours entre eux, couvrir le mois entier du 1er au dernier jour`;
+- Espacer les posts de 1-2 jours, couvrir le mois entier`;
 
     }
 
