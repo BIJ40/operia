@@ -303,14 +303,15 @@ ADDITIONAL REQUIREMENTS:
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // ÉTAPE 3 : COMPOSITION FINALE — SUPERPOSER TEXTE + BRANDING
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ── Sanitizers STRICTS — verrouillés (5 mots/32 chars hook, 10 mots/60 chars sub, 25 chars CTA) ──
     const sanitizeHookForAI = (raw: string): string => {
       let t = raw.trim().replace(/[…\.]+$/, '').trim();
       const words = t.split(/\s+/);
-      if (words.length > 8) t = words.slice(0, 8).join(' ');
-      if (t.length > 50) {
-        const cut = t.slice(0, 50);
+      if (words.length > 5) t = words.slice(0, 5).join(' ');
+      if (t.length > 32) {
+        const cut = t.slice(0, 32);
         const ls = cut.lastIndexOf(' ');
-        t = ls > 20 ? cut.slice(0, ls) : cut;
+        t = ls > 10 ? cut.slice(0, ls) : cut;
       }
       return t.replace(/[\s,;:]+$/, '').trim().toUpperCase();
     };
@@ -318,20 +319,26 @@ ADDITIONAL REQUIREMENTS:
     const sanitizeSubForAI = (raw: string): string => {
       let t = raw.trim().replace(/[…]+$/, '').trim();
       const words = t.split(/\s+/);
-      if (words.length > 18) t = words.slice(0, 18).join(' ');
-      if (t.length > 90) {
-        const cut = t.slice(0, 90);
-        const ls = cut.lastIndexOf(' ');
-        t = ls > 30 ? cut.slice(0, ls) : cut;
+      if (words.length > 10) {
+        let cutText = words.slice(0, 10).join(' ');
+        const sentenceEnd = cutText.match(/^(.+[.!?])\s/);
+        if (sentenceEnd) { cutText = sentenceEnd[1]; }
+        else { cutText = cutText.replace(/[\s,;:]+$/, '').trim(); if (!/[.!?]$/.test(cutText)) cutText += '.'; }
+        t = cutText;
       }
-      t = t.replace(/[\s,;:]+$/, '').trim();
-      if (t && !/[.!?]$/.test(t)) t += '.';
+      if (t.length > 60) {
+        const cut = t.slice(0, 60);
+        const ls = cut.lastIndexOf(' ');
+        t = ls > 20 ? cut.slice(0, ls) : cut;
+        t = t.replace(/[\s,;:]+$/, '').trim();
+        if (!/[.!?]$/.test(t)) t += '.';
+      }
       return t;
     };
 
-    const hookText = sanitizeHookForAI(hook || title || 'Votre maison mérite le meilleur');
+    const hookText = sanitizeHookForAI(hook || title || 'Anticipez vos travaux');
     const subText = sanitizeSubForAI(caption || '');
-    const ctaText = (cta || 'Demandez un devis gratuit').toUpperCase().slice(0, 40);
+    const ctaText = (cta || 'Demander un devis').toUpperCase().slice(0, 25);
 
     const compositionPrompt = `You are a professional social media graphic designer. Take this background image and create a FINAL SOCIAL MEDIA AD CREATIVE (1080x1080) by adding the following text overlay elements.
 
@@ -342,22 +349,21 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
    - Position: Lower-center area of the image (bottom 40%)
    - Style: VERY LARGE white bold text, ALL CAPS
    - Must have a dark semi-transparent backdrop/shadow for readability
-   - Maximum 3 lines
-   - This is the MOST IMPORTANT element — must be instantly readable
-   - CRITICAL: Write this text EXACTLY as provided. Do NOT modify, truncate, or split it.
+   - Maximum 2 lines
+   - CRITICAL: Write this text EXACTLY as provided, letter by letter. Do NOT modify, truncate, add words, or split it differently.
 
 2. SUB-TEXT (Secondary message — smaller):
    "${subText}"
    - Position: Just below the hook text
    - Style: Smaller white text, regular weight
-   - Maximum 2 lines — the COMPLETE text must appear, no truncation
+   - Maximum 2 lines — the COMPLETE text must appear
    - CRITICAL: Write this text EXACTLY as provided. Do NOT truncate or add "…"
 
 3. CTA BUTTON:
    "${ctaText}"
    - Position: Bottom area, above the footer
    - Style: Rounded button shape, bright orange (#FFB705) background, dark text
-   - Bold, compact, eye-catching
+   - Bold, compact, must fit on ONE LINE — never overflow or cut
 
 4. FOOTER BAR:
    - Position: Very bottom of the image (last 80-90px)
@@ -371,12 +377,12 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
    - Background color: ${color}
    - Text: "${serviceLabel}" in white, small font
 
-6. BRANDING (top-left corner):
-   - White rounded rectangle pill with subtle shadow
-   - Inside: the blue house icon logo (a blue house with a wave/ribbon below it)
-   - Next to the logo, on the right: "Help Confort" in bold dark blue (#006FAA) + below it "Landes & Pays Basque" in lighter blue (#0092DD) smaller text
-   - This MUST always appear — it is the agency branding
-   - NEVER write just "HC" — always the full branding block described above
+6. LOGO (top-left corner) — STRICT RULE:
+   - DO NOT create, draw, or invent any logo
+   - DO NOT write "HC" as a logo substitute
+   - DO NOT write "Help Confort" as standalone text pretending to be a logo
+   - Leave the top-left area EMPTY — the real logo is added later by the template system
+   - This is NON-NEGOTIABLE
 
 DESIGN RULES:
 - The background image must remain FULLY VISIBLE behind all overlays
@@ -386,11 +392,14 @@ DESIGN RULES:
 - The result must look like a PROFESSIONAL social media advertisement
 - NO extra decorative elements beyond what's specified
 - Keep the square 1080x1080 format
+- ZONES MUST NOT OVERLAP: hook, sub-text, CTA, and footer each have their own space
 
-CRITICAL QUALITY CHECK — The AI MUST verify before outputting:
-✅ Hook text is COMPLETE (no "…", no truncation, exactly as provided)
-✅ Sub-text is COMPLETE and can span 2 lines if needed (no "…", no truncation)
-✅ No text marked "HC" or fake logo — always use the full Help Confort Landes & Pays Basque branding block
+CRITICAL QUALITY CHECK — VERIFY BEFORE OUTPUT:
+✅ Hook text is COMPLETE and EXACTLY as provided (no "…", no truncation, no extra words)
+✅ Sub-text is COMPLETE (no "…", no truncation)
+✅ CTA text fits entirely inside the button on ONE line
+✅ NO fake logo in top-left — that area must be empty
+✅ No elements overlap each other
 ✅ All text is correctly spelled and perfectly readable`;
 
     const compMessages = [{
