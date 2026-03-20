@@ -230,7 +230,7 @@ Deno.serve(async (req) => {
 
     try {
       console.log('[social-visual-generate] Generating coherent marketing copy...');
-      const copywritingPrompt = `Tu es un copywriter publicitaire expert pour une entreprise française de dépannage à domicile appelée Help Confort.
+      const copywritingPrompt = `Tu es un copywriter publicitaire spécialisé pour une entreprise française de dépannage à domicile appelée Help Confort.
 
 Contexte :
 - Univers : ${serviceLabel}
@@ -260,7 +260,7 @@ RÈGLES STRICTES :
 - INTERDIT : juxtaposition de mots-clés sans verbe (ex: "Simplifiez votre chauffe-eau remplacement" est INVALIDE)
 - INTERDIT : phrases tronquées, boiteuses ou incompréhensibles
 - jamais de date, jamais d'événement calendaire inutile
-- Exemples VALIDES : "Remplacez votre chauffe-eau en urgence.", "Votre installation mérite un expert.", "On intervient même le week-end."
+- Exemples VALIDES : "Remplacez votre chauffe-eau en urgence.", "Votre installation mérite un technicien qualifié.", "On intervient même le week-end."
 - Exemples INVALIDES : "Simplifiez votre remplacement en urgence", "Chauffe-eau problème résolu vite"
 
 3. CTA :

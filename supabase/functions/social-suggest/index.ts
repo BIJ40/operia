@@ -544,7 +544,7 @@ const SUGGEST_TOOL = {
               visual_type: { type: 'string', enum: ['photo', 'illustration', 'before_after', 'quote'] },
               universe: { type: 'string', enum: ['plomberie', 'electricite', 'serrurerie', 'vitrerie', 'menuiserie', 'renovation', 'volets', 'pmr', 'general'] },
               realisation_id: { type: 'string', description: 'UUID de la réalisation liée ou null' },
-              storytelling_type: { type: 'string', enum: ['situation_probleme_solution', 'avant_apres', 'temoignage_client', 'conseil_expert', 'prevention_urgence', 'proximite_locale'] },
+              storytelling_type: { type: 'string', enum: ['situation_probleme_solution', 'avant_apres', 'temoignage_client', 'conseil_technicien', 'prevention_urgence', 'proximite_locale'] },
               emotional_trigger: { type: 'string', enum: ['securite', 'economie', 'confort', 'tranquillite', 'urgence', 'confiance'] },
               visual_strategy: { type: 'string', enum: ['photo_realisation', 'illustration_generee', 'photo_stock_contextualisee', 'visuel_typo_only'] },
               visual_prompt: { type: 'string', description: "Prompt descriptif pour générer le visuel. Réaliste, précis, orienté habitat français. Ex: \"Modern French bathroom with water leak under sink, realistic lighting\"" },
@@ -862,7 +862,7 @@ Deno.serve(async (req) => {
     const totalHooks = getFullHookLibrary().length;
     console.log(`[social-suggest] Hook library: ${totalHooks} hooks available, season: ${currentSeason}`);
 
-    const systemPrompt = `Tu es un copywriter expert conversion locale pour HelpConfort (dépannage & rénovation habitat).
+    const systemPrompt = `Tu es un copywriter spécialisé en conversion locale pour HelpConfort (dépannage & rénovation habitat).
 
 Tu produis des posts social media qui GÉNÈRENT DES ACTIONS (appels, devis, contacts).
 Un post qui ne peut pas déclencher d'action est considéré comme MAUVAIS.
@@ -895,9 +895,9 @@ Chaque post DOIT avoir un topic_type parmi :
 2. "prevention" — éviter une panne, anticiper (15%, ~4-5 posts)
 3. "amelioration" — confort, esthétique, valorisation (15%, ~4-5 posts)
 4. "conseil" — tips concrets, utiles, actionnables (10%, ~3 posts)
-5. "preuve" — intervention rapide, expertise, proximité, réalisation, témoignage, avant/après, process (10%, ~3 posts)
+5. "preuve" — intervention rapide, savoir-faire technicien, proximité, réalisation, témoignage, avant/après, process (10%, ~3 posts)
 6. "saisonnier" — météo réelle, période (10%, ~3 posts)
-7. "contre_exemple" — erreur fréquente, "ce qu'il ne faut pas faire", contraste expert (10%, ~3 posts)
+7. "contre_exemple" — erreur fréquente, "ce qu'il ne faut pas faire", contraste technicien vs bricoleur (10%, ~3 posts)
 8. "pedagogique" — schéma, chiffre clé, "le saviez-vous ?", valeur immédiate (10%, ~3 posts)
 
 ═══════════════════════════════════════════
@@ -1019,7 +1019,7 @@ PLATFORM VARIANTS :
 - Facebook → storytelling + proximité + émotion
 - Instagram → visuel choc + caption court + hashtags
 - Google Business → problème + solution + zone géo
-- LinkedIn → expertise + cas concret + crédibilité
+- LinkedIn → savoir-faire technicien + cas concret + crédibilité
 
 ANTI-RÉPÉTITION & ANTI-FATIGUE (CRITIQUE — MODE DAILY CONTENT) :
 - Pas 2 posts consécutifs même univers
@@ -1054,11 +1054,14 @@ Tu crées des PUBLICITÉS qui déclenchent des ACTIONS.
 Chaque post ressemble à une pub : hook choc → bénéfice clair → CTA direct.
 JAMAIS de contenu informatif, éducatif ou neutre.
 
+VOCABULAIRE INTERDIT :
+- Ne jamais utiliser le mot "expert" ou "expertise". Préférer "technicien", "technicien qualifié", "professionnel", "spécialiste".
+
 VALIDATION FINALE :
 Si le post ne peut pas déclencher un appel ou une demande de devis → il est INVALIDE → remplace-le.`;
     // Build user prompt customization from prompt params
     const toneMap: Record<string, string> = {
-      professionnel: 'Ton professionnel, expert, crédible',
+      professionnel: 'Ton professionnel, technicien, crédible',
       humour: 'Ton humoristique, léger, décalé — tout en restant professionnel',
       bienveillant: 'Ton bienveillant, chaleureux, empathique',
       urgent: 'Ton alarmant, urgent — créer un sentiment de nécessité',
