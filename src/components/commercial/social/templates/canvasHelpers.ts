@@ -48,7 +48,7 @@ const HOOK_FONT_MIN = 38;
 const SUB_MAX_CHARS = 60;
 const SUB_MAX_WORDS = 10;
 const SUB_MAX_LINES = 2;
-const SUB_FONT = 24;
+const SUB_FONT = 30;
 
 const CTA_MAX_CHARS = 25;
 const CTA_FONT = 24;
