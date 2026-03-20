@@ -148,10 +148,15 @@ async function callImageAIWithFallback(
       messages: [{
         role: 'user',
         content: [
-          { type: 'text', text: `Analyze this image and create a detailed prompt for DALL-E 3 to recreate/enhance it as a professional social media ad background (1080x1080).
-The prompt should describe: the scene, lighting, composition, colors, and mood.
-Keep the authentic feel. Make the bottom 40% darker for text overlay.
-Reply with ONLY the DALL-E prompt text, nothing else. Max 900 characters.` },
+          { type: 'text', text: `Analyze this/these image(s) and create a detailed prompt for DALL-E 3 to generate a social media ad background (1080x1080) inspired by these photos.
+
+CRITICAL RULES:
+- If a van/vehicle is shown: describe it as "a white Renault Master van with a blue diagonal wave/swoosh graphic covering the lower half of each side, small colorful circular service icons on the side panel, roof rack with ladders on top"
+- Keep the scene REALISTIC and GROUNDED — like a real photo from a French residential street
+- NOT futuristic, NOT corporate, NOT conference room, NOT high-tech
+- Natural daylight, French residential neighborhood setting
+- Make the bottom 40% darker for text overlay
+- Reply with ONLY the DALL-E prompt text, nothing else. Max 900 characters.` },
           ...inputImages.map(url => ({ type: 'image_url', image_url: { url } })),
         ] as any,
       }],
@@ -597,11 +602,17 @@ ${HELPCONFORT_VISUAL_IDENTITY}` },
         ? `USER DIRECTIVE (HIGHEST PRIORITY — override all defaults): ${userDirective}${userKeywords ? `. Visual keywords: ${userKeywords}` : ''}`
         : '';
 
+      // For prospection posts, use dedicated scene descriptions
+      const prospectionSubType = (aiPayload as any)?.prospection_subtype || '';
+      const isProspection = topicType === 'prospection';
+      
       const baseScene = userDirective
         ? userDirective
         : visualStyle === 'creatif'
           ? `Creative, humorous, intentionally unrealistic scene related to ${getSceneForUniverse(universe)}. Fun, memorable, clearly fictional (e.g. cartoon mascot, superhero technician, robot plumber). Must be OBVIOUSLY fantasy.`
-          : (visualPrompt || `Professional French home ${getSceneForUniverse(universe)}, realistic close-up showing a real problem or urgent situation`);
+          : isProspection
+            ? getSceneForProspection(topicType, prospectionSubType)
+            : (visualPrompt || `Professional French home ${getSceneForUniverse(universe)}, realistic close-up showing a real problem or urgent situation`);
       
       const sceneDescription = customOverride
         ? `${baseScene}\n\n${customOverride}`
@@ -1043,7 +1054,19 @@ function getSceneForUniverse(universe: string): string {
     volets: 'A technician in blue uniform repairing a stuck roller shutter on a French building facade, tools and ladder visible, natural daylight',
     pmr: 'A technician in blue polo shirt installing grab bars in a bathroom for accessibility, elderly-friendly renovation context, professional and caring atmosphere',
     renovation: 'Two technicians in blue uniforms working in an apartment mid-renovation, professional tools and equipment, bright natural light from windows',
-    general: 'A white Ford Transit van with a large blue wave/swoosh design on the sides parked in front of a French residential home, roof rack with ladders, professional home service atmosphere, clean and trustworthy, a technician in blue polo shirt walking toward the house carrying a toolbox',
+    general: 'A white Renault Master van with a large blue diagonal wave/swoosh design on the sides parked in front of a typical French residential home, roof rack with ladders, professional home service atmosphere, clean and trustworthy, a technician in blue polo shirt walking toward the house carrying a toolbox',
   };
   return scenes[universe] || scenes.general;
+}
+
+function getSceneForProspection(topicType: string, subType?: string): string {
+  const prospectionScenes: Record<string, string> = {
+    'zone_intervention': 'Aerial photograph of a small French town in the Landes region (southwestern France), terracotta rooftops, pine forests in the background, sunny day, warm natural light, a white Renault Master van with blue wave graphics parked on a residential street below',
+    'panorama_metiers': 'Wide shot of a French home maintenance workshop with organized tool walls — plumbing wrenches, electrical testers, locksmith picks, carpentry tools — all neatly arranged, professional and diverse, natural warehouse lighting, clean workspace',
+    'partenaires': 'Two professionals shaking hands in front of a French real estate agency or insurance office, one in a blue polo shirt (technician), the other in business attire, warm natural light, trust and partnership atmosphere',
+    'presentation_equipe': 'Group photo of 4-5 home maintenance technicians in matching blue polo shirts standing together in front of a white Renault Master van, smiling, professional but approachable, French residential street background, natural daylight',
+    'engagement_valeurs': 'Close-up of a technician in a blue polo shirt carefully putting on shoe covers before entering a French home, showing respect and cleanliness, warm interior lighting, homeowner smiling in the background',
+    'commercial_creatif': 'A technician in blue polo shirt handing over keys to a smiling homeowner at their front door, completed work visible behind (new lock, repaired item), satisfaction moment, warm golden hour lighting',
+  };
+  return prospectionScenes[subType || ''] || prospectionScenes['presentation_equipe'];
 }
