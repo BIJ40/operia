@@ -293,11 +293,11 @@ ADDITIONAL REQUIREMENTS:
     const sanitizeHookForAI = (raw: string): string => {
       let t = raw.trim().replace(/[…\.]+$/, '').trim();
       const words = t.split(/\s+/);
-      if (words.length > 6) t = words.slice(0, 6).join(' ');
-      if (t.length > 40) {
-        const cut = t.slice(0, 40);
+      if (words.length > 8) t = words.slice(0, 8).join(' ');
+      if (t.length > 50) {
+        const cut = t.slice(0, 50);
         const ls = cut.lastIndexOf(' ');
-        t = ls > 15 ? cut.slice(0, ls) : cut;
+        t = ls > 20 ? cut.slice(0, ls) : cut;
       }
       return t.replace(/[\s,;:]+$/, '').trim().toUpperCase();
     };
@@ -305,11 +305,11 @@ ADDITIONAL REQUIREMENTS:
     const sanitizeSubForAI = (raw: string): string => {
       let t = raw.trim().replace(/[…]+$/, '').trim();
       const words = t.split(/\s+/);
-      if (words.length > 12) t = words.slice(0, 12).join(' ');
-      if (t.length > 60) {
-        const cut = t.slice(0, 60);
+      if (words.length > 18) t = words.slice(0, 18).join(' ');
+      if (t.length > 90) {
+        const cut = t.slice(0, 90);
         const ls = cut.lastIndexOf(' ');
-        t = ls > 20 ? cut.slice(0, ls) : cut;
+        t = ls > 30 ? cut.slice(0, ls) : cut;
       }
       t = t.replace(/[\s,;:]+$/, '').trim();
       if (t && !/[.!?]$/.test(t)) t += '.';
@@ -318,7 +318,7 @@ ADDITIONAL REQUIREMENTS:
 
     const hookText = sanitizeHookForAI(hook || title || 'Votre maison mérite le meilleur');
     const subText = sanitizeSubForAI(caption || '');
-    const ctaText = (cta || 'Demandez un devis gratuit').toUpperCase().slice(0, 30);
+    const ctaText = (cta || 'Demandez un devis gratuit').toUpperCase().slice(0, 40);
 
     const compositionPrompt = `You are a professional social media graphic designer. Take this background image and create a FINAL SOCIAL MEDIA AD CREATIVE (1080x1080) by adding the following text overlay elements.
 
