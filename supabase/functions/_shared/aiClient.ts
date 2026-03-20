@@ -26,7 +26,7 @@ export interface AiCompletionOptions {
 export interface AiCompletionResult {
   ok: true;
   data: any;
-  provider: 'openai' | 'anthropic';
+  provider: 'openai' | 'anthropic' | 'gemini';
 }
 
 export interface AiCompletionError {
