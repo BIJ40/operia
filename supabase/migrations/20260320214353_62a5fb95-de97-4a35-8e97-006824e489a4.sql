@@ -1,0 +1,1 @@
+UPDATE public.module_registry SET is_deployed = true WHERE key = 'commercial.bd_story';
