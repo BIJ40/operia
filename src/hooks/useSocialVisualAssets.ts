@@ -112,11 +112,21 @@ export async function downloadSocialVisual(storagePath: string, filename?: strin
     return;
   }
 
-  const link = document.createElement('a');
-  link.href = data.signedUrl;
-  link.download = filename || storagePath.split('/').pop() || 'visual.png';
-  link.click();
-  toast.success('Téléchargement lancé');
+  try {
+    const response = await fetch(data.signedUrl);
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename || storagePath.split('/').pop() || 'visual.png';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(blobUrl);
+    toast.success('Téléchargement lancé');
+  } catch {
+    toast.error('Erreur lors du téléchargement');
+  }
 }
 
 // ─── Get signed URL for display ─────────────────────────────
