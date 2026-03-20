@@ -214,7 +214,7 @@ function buildWeeklySchedule(daysInMonth: number, year: number, month: number): 
 const UNIVERSE_RULES = {
   minGapDays: 3,
   maxPerWeek: 2,
-  maxPerMonth: 6,
+  maxPerMonth: 4, // Reduced from 6 to force more diversity
 };
 
 // ─── Format distribution ───
