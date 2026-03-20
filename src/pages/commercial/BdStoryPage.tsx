@@ -14,7 +14,7 @@ import { GeneratedStory } from '@/modules/bd-story/types/bdStory.types';
 import { useQueryClient } from '@tanstack/react-query';
 
 export default function BdStoryPage() {
-  const agencyId = useAgencyId();
+  const { agencyId } = useProfile();
   const queryClient = useQueryClient();
   const { generate, isGenerating, lastResult, error } = useBdStoryGenerate({ agencyId: agencyId || '' });
   const { data: stories = [], isLoading: isLoadingHistory } = useBdStoryHistory(agencyId);
