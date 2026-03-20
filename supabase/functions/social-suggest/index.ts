@@ -177,9 +177,404 @@ const VALID_LEAD_TYPES = ['urgence', 'prevention', 'amelioration', 'preuve_socia
 const VALID_TARGET_INTENTS = ['besoin_immediat', 'besoin_latent', 'curiosite', 'education'] as const;
 const VALID_URGENCY_LEVELS = ['low', 'medium', 'high'] as const;
 
-// ─── Weekly structure (shuffled each week for variety) ───
-const WEEKLY_CATEGORIES = ['urgence', 'prevention', 'amelioration', 'conseil', 'preuve', 'contre_exemple', 'pedagogique', 'prospection'] as const;
+// ─── Editorial Calendar 2026 (365 days, curated) ───
+// Format: [month, day, topic_type, universe, theme]
+type CalendarEntry = [number, number, string, string, string];
+const EDITORIAL_CALENDAR_2026: CalendarEntry[] = [
+  // ════ JANVIER ════
+  [1,1,"calendar","general","Vœux de nouvelle année et engagement qualité"],
+  [1,2,"urgence","plomberie","Fuite après période de gel"],
+  [1,3,"prevention","electricite","Vérifier le tableau après les fêtes"],
+  [1,4,"amelioration","volets","Mieux isoler avec des volets bien réglés"],
+  [1,5,"conseil","serrurerie","Vérifier fermetures après absence"],
+  [1,6,"calendar","general","Épiphanie, confort à la maison en hiver"],
+  [1,7,"preuve","renovation","Avant/après rafraîchissement intérieur"],
+  [1,8,"contre_exemple","vitrerie","Vitrage mal posé, ce qu'on corrige"],
+  [1,9,"pedagogique","pmr","Sécuriser un accès au quotidien"],
+  [1,10,"prospection","general","Présentation équipe terrain"],
+  [1,11,"urgence","menuiserie","Porte qui frotte ou bloque"],
+  [1,12,"prevention","plomberie","Prévenir les dégâts invisibles"],
+  [1,13,"amelioration","electricite","Moderniser l'éclairage"],
+  [1,14,"conseil","volets","Entretien simple pour éviter la panne"],
+  [1,15,"preuve","serrurerie","Remplacement de serrure propre et rapide"],
+  [1,16,"saisonnier","renovation","Isolation et confort d'hiver"],
+  [1,17,"contre_exemple","electricite","Installation dangereuse à éviter"],
+  [1,18,"pedagogique","plomberie","Comprendre la pression d'eau"],
+  [1,19,"prospection","general","Zone d'intervention et proximité locale"],
+  [1,20,"prospection","general","Devis rapide, sans surprise"],
+  [1,21,"urgence","vitrerie","Vitre cassée, réaction rapide"],
+  [1,22,"prevention","menuiserie","Entretenir portes et ouvrants"],
+  [1,23,"amelioration","pmr","Adapter un logement simplement"],
+  [1,24,"conseil","renovation","Bien préparer une remise en peinture"],
+  [1,25,"preuve","electricite","Mise en sécurité réussie"],
+  [1,26,"saisonnier","plomberie","Gel des canalisations, les bons réflexes"],
+  [1,27,"contre_exemple","volets","Volet mal réglé, usure accélérée"],
+  [1,28,"pedagogique","serrurerie","Les différences entre serrures"],
+  [1,29,"prospection","general","Comment on gagne du temps sur le terrain"],
+  [1,30,"prospection","general","Intervention rapide dans votre secteur"],
+  [1,31,"urgence","renovation","Réagir après un dégât des eaux"],
+  // ════ FÉVRIER ════
+  [2,1,"calendar","general","Début de mois, maison prête pour l'hiver finissant"],
+  [2,2,"conseil","plomberie","Repérer une petite fuite avant qu'elle coûte"],
+  [2,3,"preuve","volets","Déblocage propre sans changer tout le système"],
+  [2,4,"prospection","general","Coulisses d'une journée d'intervention"],
+  [2,5,"urgence","serrurerie","Clé cassée ou porte bloquée"],
+  [2,6,"pedagogique","electricite","Pourquoi un disjoncteur saute"],
+  [2,7,"contre_exemple","renovation","Peinture mal préparée, résultat décevant"],
+  [2,8,"prospection","general","Pourquoi faire intervenir un pro local"],
+  [2,9,"prevention","vitrerie","Vérifier joints et étanchéité"],
+  [2,10,"amelioration","menuiserie","Gagner en confort avec de bons réglages"],
+  [2,11,"preuve","pmr","Petit aménagement, grand confort"],
+  [2,12,"saisonnier","general","L'humidité d'hiver, ne pas la laisser s'installer"],
+  [2,13,"calendar","general","Saint-Valentin, mieux vivre chez soi"],
+  [2,14,"calendar","general","Maison confortable, esprit tranquille"],
+  [2,15,"urgence","plomberie","Siphon, évacuation, fuite soudaine"],
+  [2,16,"prospection","general","Nos zones d'intervention en pratique"],
+  [2,17,"conseil","electricite","Éviter les surcharges inutiles"],
+  [2,18,"preuve","renovation","Réparation discrète et propre"],
+  [2,19,"contre_exemple","serrurerie","Serrure mal posée, sécurité réduite"],
+  [2,20,"pedagogique","volets","Moteur, lames, réglages : comprendre simplement"],
+  [2,21,"prospection","general","Un devis clair change tout"],
+  [2,22,"prevention","pmr","Anticiper l'accessibilité utile"],
+  [2,23,"amelioration","vitrerie","Lumière et confort avec un vitrage adapté"],
+  [2,24,"prospection","general","L'efficacité, c'est aussi l'organisation"],
+  [2,25,"urgence","menuiserie","Fenêtre qui ferme mal, agir vite"],
+  [2,26,"saisonnier","plomberie","Fin d'hiver : check utile des installations"],
+  [2,27,"preuve","electricite","Intervention nette, diagnostic précis"],
+  [2,28,"calendar","general","Fin de mois, bilan prévention maison"],
+  // ════ MARS ════
+  [3,1,"saisonnier","renovation","Préparer le printemps côté habitat"],
+  [3,2,"urgence","vitrerie","Impact ou fissure, ne pas attendre"],
+  [3,3,"prospection","general","Qui intervient chez vous"],
+  [3,4,"conseil","serrurerie","Les bons réflexes avant remplacement"],
+  [3,5,"preuve","plomberie","Réparation rapide, sans dégâts supplémentaires"],
+  [3,6,"contre_exemple","electricite","Bricolage électrique risqué"],
+  [3,7,"pedagogique","general","Ce qu'un diagnostic évite réellement"],
+  [3,8,"calendar","general","Mise en avant des femmes de l'équipe"],
+  [3,9,"prospection","general","Service local, délais maîtrisés"],
+  [3,10,"prevention","volets","Entretenir avant les beaux jours"],
+  [3,11,"amelioration","pmr","Confort quotidien par petits aménagements"],
+  [3,12,"prospection","general","Notre rayon d'action expliqué simplement"],
+  [3,13,"urgence","menuiserie","Porte d'entrée qui ne ferme plus correctement"],
+  [3,14,"preuve","renovation","Reprise propre d'une finition ratée"],
+  [3,15,"calendar","general","Journée des consommateurs : devis clair et suivi"],
+  [3,16,"conseil","plomberie","Petits signes d'alerte à repérer"],
+  [3,17,"calendar","general","Saint-Patrick : mieux vaut du vert que des dégâts"],
+  [3,18,"contre_exemple","vitrerie","Jointage bâclé, problème garanti"],
+  [3,19,"pedagogique","electricite","Comprendre une mise en sécurité"],
+  [3,20,"saisonnier","general","Printemps : le bon moment pour vérifier"],
+  [3,21,"prospection","general","Planifier avant le rush saisonnier"],
+  [3,22,"calendar","plomberie","Journée mondiale de l'eau : fuites et consommation"],
+  [3,23,"prevention","serrurerie","Anticiper avant la panne de serrure"],
+  [3,24,"amelioration","electricite","Moderniser pour plus de confort"],
+  [3,25,"prospection","general","Une intervention efficace, comment ça se joue"],
+  [3,26,"urgence","volets","Volet bloqué au mauvais moment"],
+  [3,27,"preuve","pmr","Solution simple, vrai confort"],
+  [3,28,"contre_exemple","renovation","Sol mal posé, résultat à reprendre"],
+  [3,29,"pedagogique","menuiserie","Pourquoi un réglage change tout"],
+  [3,30,"conseil","vitrerie","Quand remplacer au lieu de laisser durer"],
+  [3,31,"prospection","general","Demander un avis pro avant d'agir"],
+  // ════ AVRIL ════
+  [4,1,"calendar","general","Poisson d'avril, post créatif assumé"],
+  [4,2,"urgence","electricite","Coupure inexpliquée, on sécurise"],
+  [4,3,"prospection","general","Une journée type Help Confort"],
+  [4,4,"preuve","serrurerie","Dépannage propre sans surpromesse"],
+  [4,5,"saisonnier","renovation","Remise en état de printemps"],
+  [4,6,"calendar","general","Lundi de Pâques, maison et confort du week-end"],
+  [4,7,"calendar","general","Journée santé : sécurité et confort chez soi"],
+  [4,8,"conseil","volets","Entretien avant les chaleurs"],
+  [4,9,"contre_exemple","plomberie","Raccord bricolé, fuite assurée"],
+  [4,10,"pedagogique","vitrerie","Le rôle réel d'un bon vitrage"],
+  [4,11,"prospection","general","Pourquoi agir avant la haute saison"],
+  [4,12,"prevention","menuiserie","Vérifier ouvrants et fermetures"],
+  [4,13,"amelioration","pmr","Rendre le quotidien plus simple"],
+  [4,14,"prospection","general","La réactivité, côté organisation"],
+  [4,15,"urgence","renovation","Après infiltration, ne laissez pas traîner"],
+  [4,16,"preuve","electricite","Reprise nette d'une anomalie"],
+  [4,17,"conseil","plomberie","Ce qu'une petite fuite annonce parfois"],
+  [4,18,"contre_exemple","volets","Mauvais réglage, usure accélérée"],
+  [4,19,"pedagogique","serrurerie","Choisir une serrure adaptée"],
+  [4,20,"saisonnier","general","Le printemps, meilleur moment pour anticiper"],
+  [4,21,"prospection","general","Un devis simple, une décision plus claire"],
+  [4,22,"calendar","general","Journée de la Terre : réparer plutôt que subir"],
+  [4,23,"prevention","electricite","Vérifier prises et sécurité"],
+  [4,24,"amelioration","vitrerie","Lumière et confort dans l'habitat"],
+  [4,25,"prospection","general","Notre terrain d'action dans les Landes"],
+  [4,26,"urgence","serrurerie","Porte claquée, réaction utile"],
+  [4,27,"preuve","renovation","Réparer proprement un support abîmé"],
+  [4,28,"contre_exemple","menuiserie","Pose approximative, mauvais résultat"],
+  [4,29,"pedagogique","plomberie","D'où vient vraiment une fuite"],
+  [4,30,"conseil","general","Ce qu'il vaut mieux traiter avant mai"],
+  // ════ MAI ════
+  [5,1,"calendar","general","Fête du Travail, hommage à l'équipe terrain"],
+  [5,2,"prospection","general","Nos métiers, notre exigence"],
+  [5,3,"prospection","general","Intervention locale, efficacité concrète"],
+  [5,4,"calendar","general","Journée créative décalée, visuel assumé"],
+  [5,5,"urgence","plomberie","Fuite extérieure ou intérieure, agir vite"],
+  [5,6,"preuve","volets","Déblocage sans changer inutilement"],
+  [5,7,"conseil","serrurerie","Quand faut-il remplacer ?"],
+  [5,8,"calendar","general","Message de respect et présence locale"],
+  [5,9,"pedagogique","electricite","Ce que protège un tableau"],
+  [5,10,"contre_exemple","renovation","Peinture faite trop vite, résultat raté"],
+  [5,11,"prevention","menuiserie","Vérifier avant la pleine saison"],
+  [5,12,"amelioration","pmr","Aménager sans gros travaux"],
+  [5,13,"prospection","general","Une intervention bien préparée"],
+  [5,14,"calendar","general","Ascension : présence, confort, proximité"],
+  [5,15,"prospection","general","Pourquoi anticiper ses demandes"],
+  [5,16,"urgence","vitrerie","Bris de glace, sécuriser vite"],
+  [5,17,"preuve","plomberie","Réparation nette et durable"],
+  [5,18,"conseil","volets","Prévenir les blocages d'été"],
+  [5,19,"pedagogique","serrurerie","Serrure standard vs renforcée"],
+  [5,20,"contre_exemple","electricite","Rallonges, surcharges et danger"],
+  [5,21,"prevention","renovation","Préparer un rafraîchissement malin"],
+  [5,22,"amelioration","vitrerie","Gagner en confort visuel et thermique"],
+  [5,23,"prospection","general","Notre zone d'intervention au quotidien"],
+  [5,24,"calendar","general","Message léger de week-end prolongé"],
+  [5,25,"calendar","general","Lundi de Pentecôte, présence et service"],
+  [5,26,"urgence","menuiserie","Ouvrant bloqué, agir avant aggravation"],
+  [5,27,"preuve","pmr","Un aménagement qui change tout"],
+  [5,28,"conseil","plomberie","Signes faibles à ne pas ignorer"],
+  [5,29,"prospection","general","Demander un pro évite des reprises"],
+  [5,30,"pedagogique","general","Pourquoi un bon diagnostic fait gagner du temps"],
+  [5,31,"calendar","general","Fête des mères, le confort du foyer d'abord"],
+  // ════ JUIN ════
+  [6,1,"saisonnier","general","Juin : préparer l'été côté habitat"],
+  [6,2,"urgence","electricite","Panne soudaine avant l'été"],
+  [6,3,"preuve","renovation","Reprise propre d'un mur dégradé"],
+  [6,4,"prospection","general","Comment on limite les délais"],
+  [6,5,"calendar","general","Journée environnement : réparer intelligemment"],
+  [6,6,"conseil","volets","Bien régler avant les grosses chaleurs"],
+  [6,7,"contre_exemple","plomberie","Silicone posé à la va-vite, dégâts ensuite"],
+  [6,8,"pedagogique","vitrerie","Pourquoi l'étanchéité compte vraiment"],
+  [6,9,"prospection","general","Prendre de l'avance avant juillet"],
+  [6,10,"prevention","serrurerie","Vérifier accès et fermetures"],
+  [6,11,"amelioration","menuiserie","Plus de confort avec de bons réglages"],
+  [6,12,"prospection","general","Une équipe locale, des interventions concrètes"],
+  [6,13,"urgence","plomberie","Évacuation bouchée ou lente"],
+  [6,14,"preuve","electricite","Mise en sécurité propre et lisible"],
+  [6,15,"conseil","renovation","Préparer petits travaux d'été"],
+  [6,16,"pedagogique","pmr","Simplifier les déplacements chez soi"],
+  [6,17,"contre_exemple","volets","Moteur forcé, panne amplifiée"],
+  [6,18,"prevention","vitrerie","Entretenir avant dégradation"],
+  [6,19,"amelioration","plomberie","Remplacer un équipement vieillissant"],
+  [6,20,"prospection","general","Un devis clair avant de se lancer"],
+  [6,21,"calendar","general","Fête de la musique, ambiance maison et confort"],
+  [6,22,"prospection","general","Le terrain, notre vraie base"],
+  [6,23,"urgence","serrurerie","Serrure capricieuse, ne pas attendre"],
+  [6,24,"preuve","volets","Réglage qui prolonge la durée de vie"],
+  [6,25,"conseil","electricite","Chaleur et installation : vigilance"],
+  [6,26,"pedagogique","renovation","Ce qui fait une finition durable"],
+  [6,27,"contre_exemple","menuiserie","Porte posée de travers"],
+  [6,28,"prevention","pmr","Prévoir avant d'être contraint"],
+  [6,29,"amelioration","vitrerie","Mieux vivre la lumière d'été"],
+  [6,30,"prospection","general","Avant les vacances, vérifiez l'essentiel"],
+  // ════ JUILLET ════
+  [7,1,"saisonnier","general","Départ de l'été, maison prête ?"],
+  [7,2,"urgence","vitrerie","Bris de glace en pleine saison"],
+  [7,3,"preuve","serrurerie","Intervention rapide, accès rétabli"],
+  [7,4,"prospection","general","Comment on couvre le secteur en été"],
+  [7,5,"conseil","plomberie","Surveiller les consommations anormales"],
+  [7,6,"contre_exemple","electricite","Installation de fortune, danger réel"],
+  [7,7,"pedagogique","volets","Pourquoi les volets souffrent en été"],
+  [7,8,"prospection","general","Faire intervenir un pro avant le départ"],
+  [7,9,"prevention","menuiserie","Vérifier fermetures et accès"],
+  [7,10,"amelioration","renovation","Redonner un coup de frais utile"],
+  [7,11,"prospection","general","Nos délais quand tout le monde part"],
+  [7,12,"urgence","plomberie","Fuite visible, réaction immédiate"],
+  [7,13,"preuve","pmr","Aménagement simple, quotidien facilité"],
+  [7,14,"calendar","general","Fête nationale, présence locale et service"],
+  [7,15,"conseil","serrurerie","Bien sécuriser avant une absence"],
+  [7,16,"pedagogique","electricite","Coupure, surcharge, protection : simple"],
+  [7,17,"contre_exemple","renovation","Sol mal posé, conséquences visibles"],
+  [7,18,"prospection","general","Demandez conseil avant d'improviser"],
+  [7,19,"prevention","vitrerie","Étanchéité et chaleur"],
+  [7,20,"amelioration","volets","Gagner en confort d'été"],
+  [7,21,"prospection","general","Le terrain ne s'arrête pas en juillet"],
+  [7,22,"urgence","electricite","Panne gênante en période chaude"],
+  [7,23,"preuve","plomberie","Réparation nette, sans reprise inutile"],
+  [7,24,"conseil","menuiserie","Quand agir avant déformation"],
+  [7,25,"pedagogique","serrurerie","Ce qui protège vraiment un accès"],
+  [7,26,"contre_exemple","vitrerie","Vitrage approximatif, problème garanti"],
+  [7,27,"prospection","general","Un pro local fait gagner du temps"],
+  [7,28,"prevention","pmr","Sécuriser sans attendre le besoin urgent"],
+  [7,29,"amelioration","electricite","Moderniser le confort du quotidien"],
+  [7,30,"prospection","general","Notre efficacité, vue de l'intérieur"],
+  [7,31,"calendar","general","Fin juillet, check avant août"],
+  // ════ AOÛT ════
+  [8,1,"saisonnier","general","Vacances : la maison doit rester fiable"],
+  [8,2,"conseil","serrurerie","Sécuriser avant de partir"],
+  [8,3,"preuve","volets","Réglage utile avant surchauffe"],
+  [8,4,"prospection","general","Continuité de service en août"],
+  [8,5,"urgence","plomberie","Fuite pendant une absence, agir vite"],
+  [8,6,"pedagogique","vitrerie","Vitrage et confort d'été"],
+  [8,7,"contre_exemple","menuiserie","Fermeture négligée, problème assuré"],
+  [8,8,"prospection","general","Un check utile avant départ"],
+  [8,9,"prevention","electricite","Vérifier les points sensibles"],
+  [8,10,"amelioration","renovation","Entretenir plutôt que subir"],
+  [8,11,"prospection","general","Organisation estivale, service maintenu"],
+  [8,12,"urgence","serrurerie","Accès bloqué au mauvais moment"],
+  [8,13,"preuve","plomberie","Petite fuite, grand soulagement"],
+  [8,14,"conseil","volets","Préserver les mécanismes malgré la chaleur"],
+  [8,15,"calendar","general","Assomption : présence, proximité, service"],
+  [8,16,"pedagogique","electricite","Ce qui met une installation en difficulté"],
+  [8,17,"contre_exemple","plomberie","Raccord bricolé = dégâts évitables"],
+  [8,18,"prospection","general","Intervention utile avant la rentrée"],
+  [8,19,"prevention","pmr","Anticiper le confort d'usage"],
+  [8,20,"amelioration","menuiserie","Ajuster pour durer"],
+  [8,21,"prospection","general","Notre secteur, vos besoins, notre réponse"],
+  [8,22,"urgence","vitrerie","Sécuriser un bris rapidement"],
+  [8,23,"preuve","renovation","Reprise propre d'un support abîmé"],
+  [8,24,"conseil","electricite","Mieux comprendre avant d'agir"],
+  [8,25,"pedagogique","serrurerie","Une serrure n'offre pas toutes la même protection"],
+  [8,26,"contre_exemple","volets","Mauvaise pose, panne accélérée"],
+  [8,27,"prospection","general","Devis clair avant septembre"],
+  [8,28,"prevention","plomberie","Fin d'été, faites le point"],
+  [8,29,"amelioration","vitrerie","Plus de confort lumineux"],
+  [8,30,"prospection","general","Retour d'expérience terrain"],
+  [8,31,"calendar","general","Veille de rentrée, maison prête ?"],
+  // ════ SEPTEMBRE ════
+  [9,1,"calendar","general","Rentrée : repartir sur de bonnes bases"],
+  [9,2,"prevention","electricite","Vérifier l'installation avant reprise du rythme"],
+  [9,3,"preuve","serrurerie","Remise en état rapide et nette"],
+  [9,4,"prospection","general","L'efficacité se prépare"],
+  [9,5,"conseil","plomberie","Un contrôle utile après l'été"],
+  [9,6,"contre_exemple","renovation","Finitions bâclées, reprises inévitables"],
+  [9,7,"pedagogique","volets","Pourquoi l'entretien évite les blocages"],
+  [9,8,"prospection","general","Le bon moment pour planifier"],
+  [9,9,"urgence","menuiserie","Ouvrant qui force, agir avant casse"],
+  [9,10,"amelioration","pmr","Confort et autonomie à domicile"],
+  [9,11,"prospection","general","Notre zone d'intervention, concrètement"],
+  [9,12,"prevention","vitrerie","Étanchéité et confort de saison"],
+  [9,13,"preuve","plomberie","Réparation propre, problème stoppé"],
+  [9,14,"conseil","serrurerie","Quand remplacer plutôt que subir"],
+  [9,15,"pedagogique","electricite","À quoi sert réellement une mise en sécurité"],
+  [9,16,"contre_exemple","menuiserie","Réglage oublié, gêne au quotidien"],
+  [9,17,"prospection","general","Un avis pro avant les gros frais"],
+  [9,18,"urgence","volets","Volet bloqué, confort et sécurité touchés"],
+  [9,19,"amelioration","renovation","Rénover malin, sans excès"],
+  [9,20,"prospection","general","Ce qui fait gagner du temps à nos clients"],
+  [9,21,"saisonnier","general","Automne qui arrive : anticiper"],
+  [9,22,"calendar","general","Changement de saison, check habitat"],
+  [9,23,"prevention","pmr","Sécuriser les usages quotidiens"],
+  [9,24,"preuve","vitrerie","Intervention discrète, résultat visible"],
+  [9,25,"conseil","electricite","Éviter les mauvaises surprises"],
+  [9,26,"pedagogique","plomberie","D'où viennent certaines surconsommations"],
+  [9,27,"contre_exemple","serrurerie","Pose légère, sécurité limitée"],
+  [9,28,"prospection","general","Avant l'automne, mieux vaut agir"],
+  [9,29,"urgence","renovation","Infiltration : ne laissez pas durer"],
+  [9,30,"prospection","general","Fin de mois, bilan terrain"],
+  // ════ OCTOBRE ════
+  [10,1,"calendar","pmr","Accessibilité et confort du quotidien"],
+  [10,2,"conseil","menuiserie","Vérifier avant humidité et froid"],
+  [10,3,"preuve","electricite","Mise en ordre et sécurité retrouvée"],
+  [10,4,"prospection","general","Les interventions qui changent le quotidien"],
+  [10,5,"urgence","plomberie","Fuite masquée, dégâts possibles"],
+  [10,6,"pedagogique","vitrerie","Condensation, vitrage, confort"],
+  [10,7,"contre_exemple","renovation","Sol mal préparé, résultat fragile"],
+  [10,8,"prospection","general","Faire vérifier avant l'hiver"],
+  [10,9,"prevention","serrurerie","Sécuriser accès et fermetures"],
+  [10,10,"amelioration","volets","Préparer la saison froide"],
+  [10,11,"prospection","general","Notre secteur, votre proximité"],
+  [10,12,"preuve","plomberie","Réparer vite sans masquer le problème"],
+  [10,13,"conseil","electricite","Quand un signe n'est pas normal"],
+  [10,14,"pedagogique","menuiserie","Ce qu'un bon réglage change réellement"],
+  [10,15,"contre_exemple","vitrerie","Étanchéité mal traitée, souci garanti"],
+  [10,16,"prospection","general","Un professionnel évite des reprises"],
+  [10,17,"urgence","serrurerie","Accès bloqué, solution rapide"],
+  [10,18,"amelioration","pmr","Mieux vivre chez soi, simplement"],
+  [10,19,"prospection","general","Notre organisation sur le terrain"],
+  [10,20,"saisonnier","general","L'hiver se prépare maintenant"],
+  [10,21,"prevention","renovation","Anticiper avant humidité et froid"],
+  [10,22,"preuve","volets","Réglage propre, résultat durable"],
+  [10,23,"conseil","plomberie","Les signes d'une faiblesse à traiter"],
+  [10,24,"pedagogique","serrurerie","Ce qui compte vraiment pour sécuriser"],
+  [10,25,"calendar","volets","Changement d'heure : volets et automatismes"],
+  [10,26,"contre_exemple","electricite","Multiprises et surcharge, vrai risque"],
+  [10,27,"prospection","general","Avant le rush d'hiver, planifiez"],
+  [10,28,"urgence","vitrerie","Sécuriser sans attendre"],
+  [10,29,"prospection","general","Coulisses d'une intervention rapide"],
+  [10,30,"calendar","general","Halloween, créatif assumé et léger"],
+  [10,31,"calendar","general","Message de saison, confort et sécurité"],
+  // ════ NOVEMBRE ════
+  [11,1,"calendar","general","Toussaint, présence locale et service"],
+  [11,2,"prevention","plomberie","Vérifier avant les vrais froids"],
+  [11,3,"preuve","renovation","Reprise soignée d'un support dégradé"],
+  [11,4,"prospection","general","Réactivité : ce qui se joue avant le chantier"],
+  [11,5,"conseil","volets","Préserver le fonctionnement en hiver"],
+  [11,6,"pedagogique","electricite","Ce qui provoque certaines pannes"],
+  [11,7,"contre_exemple","serrurerie","Sécurité mal traitée, faux sentiment de protection"],
+  [11,8,"prospection","general","Agir maintenant plutôt qu'en urgence"],
+  [11,9,"urgence","menuiserie","Porte ou fenêtre qui ne tient plus"],
+  [11,10,"amelioration","pmr","Adapter sans alourdir les travaux"],
+  [11,11,"calendar","general","Armistice, message de respect et présence"],
+  [11,12,"prospection","general","Ce qui fait notre efficacité au quotidien"],
+  [11,13,"prevention","vitrerie","Étanchéité, confort et saison froide"],
+  [11,14,"preuve","plomberie","Réparation nette, fuite stoppée"],
+  [11,15,"conseil","electricite","Petits signes, vrais risques"],
+  [11,16,"pedagogique","renovation","Comprendre une bonne remise en état"],
+  [11,17,"contre_exemple","volets","Pose approximative, panne accélérée"],
+  [11,18,"prospection","general","Un avis pro avant de dépenser"],
+  [11,19,"urgence","serrurerie","Serrure usée, blocage imminent"],
+  [11,20,"amelioration","vitrerie","Plus de confort intérieur"],
+  [11,21,"prospection","general","Nos zones d'intervention, votre secteur"],
+  [11,22,"saisonnier","general","Préparer l'hiver sans stress"],
+  [11,23,"prevention","pmr","Sécuriser avant d'être obligé"],
+  [11,24,"preuve","electricite","Mise en sécurité réussie"],
+  [11,25,"conseil","plomberie","Quand une consommation doit alerter"],
+  [11,26,"pedagogique","serrurerie","Renforcer un accès, ce que ça change"],
+  [11,27,"calendar","general","Black Friday : mieux vaut bien faire que refaire"],
+  [11,28,"prospection","general","Diagnostic rapide, décision plus simple"],
+  [11,29,"urgence","renovation","Après infiltration, agir sans attendre"],
+  [11,30,"prospection","general","Fin novembre, bilan terrain et réactivité"],
+  // ════ DÉCEMBRE ════
+  [12,1,"saisonnier","general","Décembre : sécuriser et anticiper"],
+  [12,2,"conseil","serrurerie","Penser aux accès avant les fêtes"],
+  [12,3,"preuve","electricite","Intervention propre avant l'hiver"],
+  [12,4,"prospection","general","Organisation de fin d'année"],
+  [12,5,"urgence","plomberie","Fuite ou gel, agir vite"],
+  [12,6,"pedagogique","vitrerie","Le vitrage face au froid"],
+  [12,7,"contre_exemple","renovation","Finition de dernière minute, mauvais pari"],
+  [12,8,"prospection","general","Faire vérifier avant les congés"],
+  [12,9,"prevention","volets","Préserver les mécanismes en saison froide"],
+  [12,10,"amelioration","pmr","Plus de confort pendant les fêtes"],
+  [12,11,"prospection","general","Être présent quand il faut"],
+  [12,12,"preuve","plomberie","Réparer vite, réparer bien"],
+  [12,13,"conseil","electricite","Ce qu'il faut surveiller en hiver"],
+  [12,14,"pedagogique","menuiserie","Pourquoi un ouvrant fatigue"],
+  [12,15,"contre_exemple","serrurerie","Sécurité vite faite, mauvais résultat"],
+  [12,16,"prospection","general","Avant les congés, mieux vaut agir"],
+  [12,17,"urgence","vitrerie","Sécuriser un bris sans attendre"],
+  [12,18,"amelioration","renovation","Remettre en état avant de recevoir"],
+  [12,19,"prospection","general","Nos équipes, votre tranquillité"],
+  [12,20,"calendar","general","Préparer sereinement les fêtes"],
+  [12,21,"calendar","general","Entrée dans l'hiver, vigilance utile"],
+  [12,22,"prevention","plomberie","Protéger avant le gel"],
+  [12,23,"preuve","volets","Réglage utile avant fermeture prolongée"],
+  [12,24,"calendar","general","Veille de Noël, confort et sérénité"],
+  [12,25,"calendar","general","Noël, message chaleureux et présence"],
+  [12,26,"prospection","general","Même en période creuse, on reste mobilisés"],
+  [12,27,"conseil","serrurerie","Vérifier après les déplacements et visites"],
+  [12,28,"pedagogique","electricite","Pourquoi un simple contrôle aide vraiment"],
+  [12,29,"contre_exemple","plomberie","Une petite fuite ignorée tout l'hiver"],
+  [12,30,"prospection","general","Bien démarrer l'année sans problème latent"],
+  [12,31,"calendar","general","Bilan, remerciements, cap sur 2027"],
+];
 
+// ─── Lookup editorial calendar for a given month ───
+interface DaySchedule { day: number; category: string; universe: string; theme: string; isCalendar: boolean }
+
+function buildEditorialSchedule(month: number, _year: number): DaySchedule[] {
+  const entries = EDITORIAL_CALENDAR_2026.filter(e => e[0] === month);
+  return entries.map(([_m, day, category, universe, theme]) => ({
+    day,
+    category,
+    universe,
+    theme,
+    isCalendar: category === 'calendar',
+  }));
+}
+
+// Keep shuffleArray for other uses
 function shuffleArray<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -189,17 +584,27 @@ function shuffleArray<T>(arr: T[]): T[] {
   return a;
 }
 
-function buildWeeklySchedule(daysInMonth: number, year: number, month: number): { day: number; category: string }[] {
-  const schedule: { day: number; category: string }[] = [];
+// Legacy fallback — only used if editorial calendar has no entry for a day
+const WEEKLY_CATEGORIES = ['urgence', 'prevention', 'amelioration', 'conseil', 'preuve', 'contre_exemple', 'pedagogique', 'prospection'] as const;
+
+function buildWeeklySchedule(daysInMonth: number, year: number, month: number): DaySchedule[] {
+  // Primary: use editorial calendar
+  const editorial = buildEditorialSchedule(month, year);
+  if (editorial.length >= daysInMonth) return editorial;
+  
+  // Fallback: fill missing days with random categories
+  const coveredDays = new Set(editorial.map(e => e.day));
   let weekPool: string[] = [];
+  const result = [...editorial];
   
   for (let d = 1; d <= daysInMonth; d++) {
+    if (coveredDays.has(d)) continue;
     if (weekPool.length === 0) {
       weekPool = shuffleArray([...WEEKLY_CATEGORIES]);
     }
-    schedule.push({ day: d, category: weekPool.shift()! });
+    result.push({ day: d, category: weekPool.shift()!, universe: 'general', theme: '', isCalendar: false });
   }
-  return schedule;
+  return result.sort((a, b) => a.day - b.day);
 }
 
 // ─── Universe rotation rules ───
@@ -328,7 +733,7 @@ function validateAndNormalizeSuggestions(
   year: number,
   exploitableReals: { id: string }[],
   existingTopicKeys: Set<string>,
-  weeklySchedule?: { day: number; category: string }[],
+  weeklySchedule?: DaySchedule[],
 ): ValidatedSuggestion[] {
   const monthKey = `${year}-${String(month).padStart(2, '0')}`;
   const daysInMonth = new Date(year, month, 0).getDate();
@@ -348,18 +753,17 @@ function validateAndNormalizeSuggestions(
     const dayNum = parseInt(date.split('-')[2]);
     if (dayNum < 1 || dayNum > daysInMonth) date = `${monthKey}-15`;
 
-    // 2. topic_type — CALENDAR-FIRST: if this day has a calendar event with non-metier angle, force "calendar"
+    // 2. topic_type and universe — EDITORIAL CALENDAR FIRST
     let topicType = (VALID_TOPIC_TYPES as readonly string[]).includes(s.topic_type) ? s.topic_type : 'conseil';
     const actualDay = parseInt(date.split('-')[2]);
-    const matchingAwareness = AWARENESS_DAYS.find(a => a.month === month && a.day === actualDay);
     
-    if (matchingAwareness && matchingAwareness.calendarAngle && matchingAwareness.calendarAngle !== 'metier') {
-      // Calendar-first: this is a human/brand/light/availability day — force calendar type
-      topicType = 'calendar';
-    } else if (weeklySchedule) {
-      const scheduledDay = weeklySchedule.find(ws => ws.day === dayNum);
-      if (scheduledDay && (VALID_TOPIC_TYPES as readonly string[]).includes(scheduledDay.category)) {
-        topicType = scheduledDay.category;
+    // Look up editorial calendar for this day
+    const editorialEntry = weeklySchedule?.find(ws => ws.day === actualDay);
+    
+    if (editorialEntry) {
+      // Editorial calendar overrides both topic_type and universe
+      if ((VALID_TOPIC_TYPES as readonly string[]).includes(editorialEntry.category)) {
+        topicType = editorialEntry.category;
       }
     }
 
@@ -368,16 +772,13 @@ function validateAndNormalizeSuggestions(
     if (seenTopicKeys.has(topicKey) || existingTopicKeys.has(topicKey)) continue;
     seenTopicKeys.add(topicKey);
 
-    // 4. universe — for calendar/non-metier, force general. For metier events, use preferred universe.
+    // 4. universe — editorial calendar is the source of truth
     let universe = (NORMALIZED_UNIVERSES as readonly string[]).includes(s.universe) ? s.universe : 'general';
-    if (matchingAwareness && matchingAwareness.preferredUniverses.length > 0) {
-      const preferredUni = matchingAwareness.preferredUniverses[0];
-      if ((NORMALIZED_UNIVERSES as readonly string[]).includes(preferredUni)) {
-        universe = preferredUni;
-      }
+    if (editorialEntry && editorialEntry.universe && (NORMALIZED_UNIVERSES as readonly string[]).includes(editorialEntry.universe)) {
+      universe = editorialEntry.universe;
     }
-    // Force general for calendar and prospection
-    if (topicType === 'calendar' || topicType === 'prospection') {
+    // Force general for prospection (always)
+    if (topicType === 'prospection') {
       universe = 'general';
     }
 
@@ -1252,30 +1653,18 @@ ${exploitableReals.length > 0
 Propose un angle DIFFÉRENT du post précédent.
 RAPPEL : le post doit contenir au moins UN déclencheur de conversion (perte d'argent, inconfort, risque, gain immédiat, simplicité).`;
     } else if (isTargetDatesMode) {
-      // Look up the weekly schedule to know what category each target date should have
+      // Look up the editorial calendar for each target date
       const datesFormatted = targetDates.map(d => {
         const day = parseInt(d.split('-')[2]);
-        const event = monthAwareness.find(a => a.day === day);
-        const scheduledCategory = weeklySchedule.find(s => s.day === day)?.category || 'conseil';
+        const editorialDay = weeklySchedule.find(s => s.day === day);
+        const scheduledCategory = editorialDay?.category || 'conseil';
+        const scheduledUniverse = editorialDay?.universe || 'general';
+        const scheduledTheme = editorialDay?.theme || '';
         
-        const CATEGORY_DESCRIPTIONS: Record<string, string> = {
-          urgence: 'URGENCE — fuite, panne, casse, sécurité. Universe métier obligatoire.',
-          prevention: 'PRÉVENTION — anticiper un problème, entretien préventif.',
-          amelioration: 'AMÉLIORATION — confort, esthétique, valorisation habitat.',
-          conseil: 'CONSEIL PRATIQUE — tip utile, actionnable, court.',
-          preuve: 'PREUVE — témoignage, avant/après, process d\'intervention, savoir-faire.',
-          saisonnier: 'SAISONNIER — lié à la météo réelle ou à la période.',
-          contre_exemple: 'CONTRE-EXEMPLE — erreur fréquente, "ce qu\'il ne faut pas faire".',
-          pedagogique: 'PÉDAGOGIQUE — "le saviez-vous ?", chiffre clé, schéma simple.',
-          prospection: 'PROSPECTION & MARQUE — zone d\'intervention, panorama métiers, partenaires, commercial créatif. Universe = general.',
-        };
-        
-        const categoryDesc = CATEGORY_DESCRIPTIONS[scheduledCategory] || scheduledCategory;
-        
-        if (event) {
-          return `- ${d}: CATÉGORIE OBLIGATOIRE = "${scheduledCategory}" (${categoryDesc}) | événement: "${event.label}" (utiliser SEULEMENT si pertinent)`;
+        if (editorialDay?.isCalendar) {
+          return `- ${d}: ⚠️ CALENDAIRE → topic_type="calendar" | universe="${scheduledUniverse}" | THÈME: "${scheduledTheme}" | Post humain/image, AUCUN métier`;
         }
-        return `- ${d}: CATÉGORIE OBLIGATOIRE = "${scheduledCategory}" (${categoryDesc})`;
+        return `- ${d}: topic_type="${scheduledCategory}" | universe="${scheduledUniverse}" | THÈME: "${scheduledTheme}"`;
       }).join('\n');
 
       userPrompt = `Génère EXACTEMENT ${targetDates.length} suggestion(s) de posts, UNE par date suivante :
@@ -1283,11 +1672,7 @@ RAPPEL : le post doit contenir au moins UN déclencheur de conversion (perte d'a
 ${datesFormatted}
 ${promptCustomization}
 
-RÈGLE CRITIQUE : le topic_type de chaque post DOIT correspondre EXACTEMENT à la catégorie indiquée pour ce jour.
-Si la catégorie est "pedagogique" → le post DOIT être pédagogique (chiffre clé, "le saviez-vous ?").
-Si la catégorie est "prospection" → le post DOIT présenter l'entreprise (zone, métiers, partenaires).
-Si la catégorie est "contre_exemple" → le post DOIT montrer une erreur fréquente.
-NE PAS remplacer par de l'urgence ou du métier terrain si ce n'est pas la catégorie assignée.
+RÈGLE CRITIQUE : le topic_type, l'univers et le thème de chaque post DOIVENT correspondre au planning éditorial ci-dessus.
 
 RÉALISATIONS EXPLOITABLES :
 ${exploitableReals.length > 0 
@@ -1300,75 +1685,41 @@ ${[...existingTopicKeys].join(', ') || '(aucun)'}
 RÈGLES :
 - UN post par date, pas plus, pas moins
 - La suggestion_date DOIT correspondre EXACTEMENT à une des dates demandées
-- Varier les univers entre les posts (pas 2 fois le même univers)
-- Chaque post DOIT contenir un DÉCLENCHEUR de conversion
-- Pas de contenu calendaire forcé`;
+- Posts métier DOIVENT contenir un DÉCLENCHEUR de conversion
+- Posts calendar = post humain/image, pas de conversion forcée`;
     } else {
-      // Build weekly schedule string for the prompt — with calendar override
+      // Build schedule from editorial calendar — each day has exact topic_type, universe, and theme
       const scheduleLines = weeklySchedule.map(s => {
         const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(s.day).padStart(2, '0')}`;
-        // Check if this day has a calendar event
-        const calEvent = calendarOnlyEvents.find(a => a.day === s.day);
-        const pertEvent = pertinentEvents.find(a => a.day === s.day);
-        const optEvent = optionalEvents.find(a => a.day === s.day);
         
-        if (calEvent) {
-          // relevance 1 → FORCE calendar type
-          const angleDesc = ANGLE_DESCRIPTIONS[calEvent.calendarAngle || 'leger'] || 'ANGLE LÉGER';
-          return `- ${dateStr}: ⚠️ CALENDAIRE → topic_type="calendar" | "${calEvent.label}" | ${angleDesc} | Utilisation: ${calEvent.useHint || ''} | universe="general" | AUCUN contenu métier`;
+        if (s.isCalendar) {
+          return `- ${dateStr}: ⚠️ CALENDAIRE → topic_type="calendar" | universe="${s.universe}" | THÈME: "${s.theme}" | AUCUN contenu métier forcé, post humain/image/léger`;
         }
-        if (pertEvent) {
-          return `- ${dateStr}: catégorie "${s.category}" | ⚠️ ÉVÉNEMENT MÉTIER: "${pertEvent.label}" | univers: ${pertEvent.preferredUniverses[0]} | Utilisation: ${pertEvent.useHint || ''}`;
+        if (s.category === 'prospection') {
+          return `- ${dateStr}: topic_type="prospection" | universe="general" | THÈME: "${s.theme}"`;
         }
-        if (optEvent) {
-          return `- ${dateStr}: catégorie "${s.category}" | événement optionnel: "${optEvent.label}" (utiliser SEULEMENT si angle naturel)`;
-        }
-        return `- ${dateStr}: catégorie "${s.category}"`;
+        return `- ${dateStr}: topic_type="${s.category}" | universe="${s.universe}" | THÈME: "${s.theme}"`;
       }).join('\n');
 
       userPrompt = `Génère EXACTEMENT ${targetPostCount} suggestions de posts (1 PAR JOUR) pour le mois ${month}/${year}.
 
 ═══════════════════════════════════════════
-PLANNING QUOTIDIEN (1 POST/JOUR — STRUCTURE SEMI-ALÉATOIRE)
+PLANNING ÉDITORIAL QUOTIDIEN (CALENDRIER CURÉ — OBLIGATOIRE)
 ═══════════════════════════════════════════
-Chaque jour a une catégorie assignée. Le topic_type du post DOIT correspondre.
-EXCEPTION : les jours marqués "CALENDAIRE" → topic_type DOIT être "calendar" (pas la catégorie assignée).
+Chaque jour a un topic_type, un univers et un thème PRÉ-ASSIGNÉS.
+Tu DOIS respecter ces 3 éléments pour chaque jour. Le thème est une DIRECTION ÉDITORIALE, pas un titre à copier.
 
 ${scheduleLines}
 
 ═══════════════════════════════════════════
-JOURS CALENDAIRES (relevance 1 — AUCUN MÉTIER)
+RÈGLES DU CALENDRIER ÉDITORIAL
 ═══════════════════════════════════════════
-Ces jours ont topic_type = "calendar". Le contenu est HUMAIN, pas technique.
-INTERDIT : conseil métier, contenu technique, angle travaux, conversion agressive.
-L'angle éditorial est indiqué pour chaque jour. Le hook doit être chaleureux/humain.
-
-${calendarOnlyEvents.map(a => `- ⚠️ JOUR ${a.day}/${month}: "${a.label}" → angle: ${a.calendarAngle || 'leger'} | ${a.useHint || ''}`).join('\n') || '(aucun)'}
-
-═══════════════════════════════════════════
-ÉVÉNEMENTS MÉTIER DIRECTS (relevance 3 — LIEN MÉTIER OBLIGATOIRE)
-═══════════════════════════════════════════
-Le post du jour DOIT traiter ce thème avec un angle métier Help Confort.
-
-${pertinentEvents.map(a => `- ⚠️ JOUR ${a.day}/${month}: "${a.label}" | UNIVERS: ${a.preferredUniverses[0]} | ${a.useHint || ''}`).join('\n') || '(aucun)'}
-
-═══════════════════════════════════════════
-ÉVÉNEMENTS OPTIONNELS (relevance 2 — NE PAS FORCER)
-═══════════════════════════════════════════
-S'ils ne produisent pas un angle naturel → IGNORER.
-
-${optionalEvents.map(a => `- ${a.day}/${month}: ${a.label} | angle: ${a.calendarAngle || 'leger'} | ${a.useHint || ''} | OPTIONNEL`).join('\n') || '(aucun)'}
-
-═══════════════════════════════════════════
-ANTI-REDONDANCE — GAP MINIMUM 3 JOURS
-═══════════════════════════════════════════
-- Même univers interdit à moins de 3 jours d'écart
-- Max 2 occurrences par semaine par univers
-- Max 6 occurrences par mois par univers
-- Pas 2 posts consécutifs même catégorie
-- Pas 2 posts consécutifs même intention
-- Variation obligatoire du ton (question, alerte, affirmation, conseil, chiffre)
-${recentThemesWarning}
+- Le topic_type de chaque jour est OBLIGATOIRE — ne jamais le remplacer
+- L'univers de chaque jour est OBLIGATOIRE — ne jamais le changer
+- Le thème indique la DIRECTION du post — génère un contenu original qui respecte cette direction
+- Les jours "CALENDAIRE" → post HUMAIN, pas technique. Hook chaleureux, CTA doux.
+- Les jours "prospection" → présentation entreprise/équipe/zone. Pas de problème technique.
+- Tous les autres jours → post métier avec DÉCLENCHEUR de conversion
 
 SUJETS DÉJÀ EXISTANTS (à ne pas dupliquer) :
 ${[...existingTopicKeys].join(', ') || '(aucun)'}
@@ -1377,6 +1728,7 @@ RÉALISATIONS EXPLOITABLES :
 ${exploitableReals.length > 0 
   ? exploitableReals.map(r => `- "${r.title}" (ID: ${r.id}, univers: ${r.universe || 'inconnu'}, avant/après: ${r.hasBeforeAfter ? 'oui' : 'non'})`).join('\n')
   : '(aucune)'}
+${recentThemesWarning}
 
 ═══════════════════════════════════════════
 FORMAT DES POSTS (VARIATION OBLIGATOIRE)
@@ -1388,15 +1740,15 @@ Répartir les ${targetPostCount} posts selon :
 - ~10% LONG : hook + 2 phrases + CTA
 
 ═══════════════════════════════════════════
-RAPPEL CRITIQUE — 1 POST/JOUR, MACHINE ÉDITORIALE
+RAPPEL CRITIQUE
 ═══════════════════════════════════════════
 - EXACTEMENT ${targetPostCount} posts, UN par jour du mois
 - Posts métier DOIVENT contenir un DÉCLENCHEUR (perte d'argent, inconfort, risque, gain, simplicité)
 - Posts "calendar" n'ont PAS besoin de déclencheur commercial — leur objectif est la PRÉSENCE et l'IMAGE
-- lead_score DOIT refléter le potentiel RÉEL de conversion (posts calendar = lead_score 10-30)
+- lead_score : posts calendar = 10-30, posts métier = 50-100
 - visual_prompt = scène RÉALISTE pour métier, scène HUMAINE/FESTIVE pour calendar
 - JAMAIS inventer de faux cas client
-- topic_type DOIT être l'une des catégories valides : urgence, prevention, amelioration, conseil, preuve, saisonnier, contre_exemple, pedagogique, prospection, calendar`;
+- topic_type et universe DOIVENT correspondre EXACTEMENT au planning ci-dessus`;
 
     }
 
