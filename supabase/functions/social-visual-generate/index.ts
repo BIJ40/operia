@@ -616,23 +616,21 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
    - Style: Rounded button shape, bright orange (#FFB705) background, dark text
    - Bold, compact, must fit on ONE LINE
 
-4. FOOTER BAR — THIS IS THE MOST IMPORTANT ELEMENT, IT MUST BE PERFECT:
-   - Position: Very bottom of the image (last 160px, Y=920 to Y=1080)
-   - Style: Solid blue bar (#0092DD) full width, with thin orange (#FFB705) line at the top edge
-   - The footer has EXACTLY 3 lines of text, ALL in white:
+4. FOOTER BAR — ABSOLUTELY CRITICAL, NON-NEGOTIABLE:
+   - Position: Very bottom of the image (last 120px, Y=960 to Y=1080)
+   - Style: Solid opaque blue rectangle (#0092DD) spanning FULL WIDTH, with thin orange (#FFB705) line at the top edge
+   - The footer contains EXACTLY 2 lines of WHITE text:
    
-   LINE 1 (bold, larger): "HelpConfort — DEPAN40 — Landes & Pays Basque"
-   - Left-aligned with 20px padding
-   - Right side: "${serviceLabel}" in smaller white text
+   LINE 1 (bold, 22px+, left-aligned at x=30):
+   "HelpConfort — DEPAN40 — Landes & Pays Basque"
+   Right side: "${serviceLabel}" in smaller white text
    
-   LINE 2 (regular, medium): "📞 05 58 35 21 38"
-   - Left-aligned, below line 1
+   LINE 2 (regular, 18px+, left-aligned at x=30):
+   "📞 05 58 35 21 38  ·  ✉ dax@helpconfort.com  ·  🌐 www.helpconfort-40.fr"
    
-   LINE 3 (regular, medium): "✉ dax@helpconfort.com — 🌐 www.helpconfort-40.fr"
-   - Left-aligned, below line 2
-   
-   ALL 3 LINES MUST BE FULLY VISIBLE AND READABLE — minimum 20px font equivalent
-   The phone number, email and website are CRITICAL business information — they MUST appear clearly
+   ⚠️ THIS LINE 2 IS THE MOST IMPORTANT ELEMENT OF THE ENTIRE IMAGE.
+   The phone number, email, and website MUST be clearly readable.
+   If they are missing or unreadable, the entire image is REJECTED.
 
 5. UNIVERSE BADGE (top-right corner):
    - Small rounded pill/badge
@@ -649,13 +647,16 @@ DESIGN RULES:
 - All text must be PERFECTLY LEGIBLE at phone screen size
 - NO extra decorative elements, badges, dates, or categories
 - Keep the square 1080x1080 format
-- ZONES MUST NOT OVERLAP — especially CTA must NOT overlap the footer bar
+- ZONES MUST NOT OVERLAP — CTA must be ABOVE the footer bar
 
-CRITICAL QUALITY CHECK:
-✅ Hook text is EXACTLY as provided and centered
-✅ Sub-text is COMPLETE, centered, and readable
-✅ CTA button is CENTERED horizontally and ABOVE the footer
-✅ Footer bar shows phone "05 58 35 21 38", email "dax@helpconfort.com", and website "www.helpconfort-40.fr" — ALL THREE VISIBLE
+MANDATORY QUALITY CHECKLIST (if ANY fails, regenerate):
+✅ Hook text is EXACTLY as provided, centered, readable
+✅ Sub-text is COMPLETE and readable
+✅ CTA button is centered and ABOVE the footer
+✅ Footer blue bar is SOLID OPAQUE BLUE, full width, at very bottom
+✅ Footer line 1 shows "HelpConfort — DEPAN40 — Landes & Pays Basque"
+✅ Footer line 2 shows "05 58 35 21 38" AND "dax@helpconfort.com" AND "www.helpconfort-40.fr"
+✅ ALL contact info is CLEARLY READABLE — not tiny, not blurred, not cut off
 ✅ NO fake logo in top-left
 ✅ No elements overlap`;
 
