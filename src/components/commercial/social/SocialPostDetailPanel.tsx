@@ -122,8 +122,8 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const templateId = useMemo(() => resolveSocialTemplate({
     topic_type: suggestion.topic_type,
     hasMedia: !!rawPreviewUrl,
-    universe: suggestion.universe,
-  }), [suggestion.topic_type, rawPreviewUrl, suggestion.universe]);
+    universe: effectiveUniverse,
+  }), [suggestion.topic_type, rawPreviewUrl, effectiveUniverse]);
 
   // Load signed URLs
   useEffect(() => {
