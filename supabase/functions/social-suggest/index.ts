@@ -1425,7 +1425,7 @@ RAPPEL CRITIQUE — 1 POST/JOUR, MACHINE ÉDITORIALE
     }
 
     const validatedSuggestions = validateAndNormalizeSuggestions(
-      rawSuggestions, month, year, exploitableReals, existingTopicKeys
+      rawSuggestions, month, year, exploitableReals, existingTopicKeys, weeklySchedule
     );
 
     if (validatedSuggestions.length === 0) {
