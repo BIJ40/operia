@@ -84,6 +84,7 @@ const GENERAL_TOPIC_LABELS: Record<string, string> = {
   saisonnier: 'Saison',
   contre_exemple: 'À éviter',
   pedagogique: 'Le saviez-vous ?',
+  prospection: 'Notre entreprise',
 };
 
 export function getGeneralLabel(topicType?: string | null): string {
