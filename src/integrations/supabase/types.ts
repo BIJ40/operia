@@ -8334,6 +8334,90 @@ export type Database = {
         }
         Relationships: []
       }
+      signature_configs: {
+        Row: {
+          agency_status: string | null
+          auto_mode: boolean | null
+          color_palette: Json | null
+          created_at: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          region: string | null
+          season: string | null
+          style: string | null
+          temporal_event: string | null
+          theme: string | null
+          typography: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          agency_status?: string | null
+          auto_mode?: boolean | null
+          color_palette?: Json | null
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          region?: string | null
+          season?: string | null
+          style?: string | null
+          temporal_event?: string | null
+          theme?: string | null
+          typography?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          agency_status?: string | null
+          auto_mode?: boolean | null
+          color_palette?: Json | null
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          region?: string | null
+          season?: string | null
+          style?: string | null
+          temporal_event?: string | null
+          theme?: string | null
+          typography?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      signature_templates_registry: {
+        Row: {
+          base_background: string | null
+          default_palette: Json | null
+          font_pair: string | null
+          id: string
+          layout_type: string | null
+          overlay_rules: Json | null
+          region: string | null
+        }
+        Insert: {
+          base_background?: string | null
+          default_palette?: Json | null
+          font_pair?: string | null
+          id: string
+          layout_type?: string | null
+          overlay_rules?: Json | null
+          region?: string | null
+        }
+        Update: {
+          base_background?: string | null
+          default_palette?: Json | null
+          font_pair?: string | null
+          id?: string
+          layout_type?: string | null
+          overlay_rules?: Json | null
+          region?: string | null
+        }
+        Relationships: []
+      }
       social_calendar_entries: {
         Row: {
           agency_id: string
@@ -9890,6 +9974,57 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_signature_profiles: {
+        Row: {
+          agency_name: string
+          created_at: string | null
+          email: string
+          first_name: string
+          id: string
+          job_title: string | null
+          last_name: string
+          logo_url: string | null
+          phone: string
+          updated_at: string | null
+          user_id: string
+          validated: boolean | null
+          validated_at: string | null
+          website: string | null
+        }
+        Insert: {
+          agency_name: string
+          created_at?: string | null
+          email: string
+          first_name: string
+          id?: string
+          job_title?: string | null
+          last_name: string
+          logo_url?: string | null
+          phone: string
+          updated_at?: string | null
+          user_id: string
+          validated?: boolean | null
+          validated_at?: string | null
+          website?: string | null
+        }
+        Update: {
+          agency_name?: string
+          created_at?: string | null
+          email?: string
+          first_name?: string
+          id?: string
+          job_title?: string | null
+          last_name?: string
+          logo_url?: string | null
+          phone?: string
+          updated_at?: string | null
+          user_id?: string
+          validated?: boolean | null
+          validated_at?: string | null
+          website?: string | null
         }
         Relationships: []
       }
