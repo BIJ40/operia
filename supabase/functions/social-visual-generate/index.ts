@@ -431,27 +431,29 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
 
 1. HOOK TEXT (MAIN MESSAGE — BIG, BOLD, HIGH CONTRAST):
    "${hookText}"
-   - Position: Lower-center area of the image (bottom 40%)
-   - Style: VERY LARGE white bold text, ALL CAPS
+   - Position: LOWER area of the image — approximately Y=660 to Y=780 (bottom 35%)
+   - NEVER in the middle of the image — must be LOW, just above the sub-text
+   - Style: VERY LARGE white bold text (minimum 50px equivalent), ALL CAPS
    - Must have a dark semi-transparent backdrop/shadow for readability
    - Maximum 2 lines
-   - CRITICAL: Write this text EXACTLY as provided, letter by letter. Do NOT modify, truncate, add words, or split it differently.
+   - CRITICAL: Write this text EXACTLY as provided, letter by letter
 
-2. SUB-TEXT (Secondary message — smaller):
+2. SUB-TEXT (Secondary message — CLEARLY READABLE):
    "${subText}"
-   - Position: Just below the hook text
-   - Style: Smaller white text, regular weight
+   - Position: Just below the hook text, approximately Y=790 to Y=860
+   - Style: White text, regular weight, MINIMUM 28px equivalent — must be EASILY READABLE on a phone screen
+   - NOT tiny — this is important information that must be legible
    - Maximum 2 lines — the COMPLETE text must appear
-   - CRITICAL: Write this text EXACTLY as provided. Do NOT truncate or add "…"
+   - CRITICAL: Write this text EXACTLY as provided. Do NOT truncate
 
 3. CTA BUTTON:
    "${ctaText}"
-   - Position: Bottom area, above the footer
+   - Position: Below sub-text, approximately Y=870 to Y=930, HORIZONTALLY CENTERED
    - Style: Rounded button shape, bright orange (#FFB705) background, dark text
-   - Bold, compact, must fit on ONE LINE — never overflow or cut
+   - Bold, compact, must fit on ONE LINE — perfectly centered in the image width
 
 4. FOOTER BAR:
-   - Position: Very bottom of the image (last 80-90px)
+   - Position: Very bottom of the image (last 90px, Y=940 to Y=1080)
    - Style: Solid blue bar (#0092DD) full width
    - Text: "HelpConfort — DEPAN40${agencyAddress ? ' — ' + agencyAddress : ''}" in white, left-aligned
    - Right side: "${serviceLabel}" in smaller white text
@@ -464,28 +466,23 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
 
 6. LOGO (top-left corner) — STRICT RULE:
    - DO NOT create, draw, or invent any logo
-   - DO NOT write "HC" as a logo substitute
-   - DO NOT write "Help Confort" as standalone text pretending to be a logo
-   - Leave the top-left area EMPTY — the real logo is added later by the template system
-   - This is NON-NEGOTIABLE
+   - Leave the top-left area EMPTY — the real logo is added later
 
 DESIGN RULES:
 - The background image must remain FULLY VISIBLE behind all overlays
-- Use semi-transparent dark gradients behind text areas for readability
-- Text must be PERFECTLY LEGIBLE at phone screen size
+- Use semi-transparent dark gradient ONLY in the bottom 40% for text readability
+- All text must be PERFECTLY LEGIBLE at phone screen size (especially the sub-text!)
 - Color palette: White text, Blue #0092DD, Orange #FFB705, Dark gray #2F2F2F
-- The result must look like a PROFESSIONAL social media advertisement
-- NO extra decorative elements beyond what's specified
+- NO extra decorative elements, badges, dates, or categories
 - Keep the square 1080x1080 format
-- ZONES MUST NOT OVERLAP: hook, sub-text, CTA, and footer each have their own space
+- ZONES MUST NOT OVERLAP
 
-CRITICAL QUALITY CHECK — VERIFY BEFORE OUTPUT:
-✅ Hook text is COMPLETE and EXACTLY as provided (no "…", no truncation, no extra words)
-✅ Sub-text is COMPLETE (no "…", no truncation)
-✅ CTA text fits entirely inside the button on ONE line
-✅ NO fake logo in top-left — that area must be empty
-✅ No elements overlap each other
-✅ All text is correctly spelled and perfectly readable`;
+CRITICAL QUALITY CHECK:
+✅ Hook text is EXACTLY as provided, positioned LOW (not mid-image)
+✅ Sub-text is COMPLETE and LARGE ENOUGH to read on a phone
+✅ CTA button is CENTERED horizontally
+✅ NO fake logo in top-left
+✅ No elements overlap`;
 
     const compMessages = [{
       role: 'user',
