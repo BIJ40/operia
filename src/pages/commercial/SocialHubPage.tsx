@@ -47,7 +47,11 @@ export default function SocialHubPage() {
 
   // Data hooks — poll every 3s while generation is in progress
   const generateMutation = useGenerateSuggestions();
-  const { data: suggestions = [], isLoading } = useSocialSuggestions(monthKey, generateMutation.isGenerating);
+  const { data: suggestions = [], isLoading } = useSocialSuggestions(
+    monthKey,
+    generateMutation.isGenerating,
+    generateMutation.checkGenerationDone,
+  );
   const updateStatusMutation = useUpdateSuggestionStatus();
 
   // Filter suggestions
