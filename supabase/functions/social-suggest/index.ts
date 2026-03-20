@@ -684,6 +684,26 @@ Deno.serve(async (req) => {
         original_universe: originalSuggestion.universe,
         original_realisation_id: originalSuggestion.realisation_id,
       } : null;
+    } else if (isTargetDatesMode) {
+      // Archive only suggestions on the selected dates
+      const toArchiveIds = (existingSuggestions || [])
+        .filter(s => targetDates.includes(s.suggestion_date) && (s.status === 'draft' || s.status === 'rejected') && !protectedSuggestionIds.has(s.id))
+        .map(s => s.id);
+
+      if (toArchiveIds.length > 0) {
+        await adminSupabase
+          .from('social_content_suggestions')
+          .update({ status: 'archived' })
+          .in('id', toArchiveIds)
+          .eq('agency_id', agencyId);
+
+        await adminSupabase
+          .from('social_post_variants')
+          .update({ status: 'archived' })
+          .in('suggestion_id', toArchiveIds)
+          .eq('agency_id', agencyId);
+      }
+      console.log(`[social-suggest] Target dates mode: ${targetDates.length} dates, archived ${toArchiveIds.length} suggestions`);
     } else {
       const toArchiveIds = (existingSuggestions || [])
         .filter(s => (s.status === 'draft' || s.status === 'rejected') && !protectedSuggestionIds.has(s.id))
@@ -705,7 +725,7 @@ Deno.serve(async (req) => {
     }
 
     const approvedCount = (existingSuggestions || []).filter(s => s.status === 'approved' || protectedSuggestionIds.has(s.id)).length;
-    const targetPostCount = regenerateSingle ? 1 : Math.max(8, 20 - approvedCount);
+    const targetPostCount = regenerateSingle ? 1 : isTargetDatesMode ? targetDates.length : Math.max(8, 20 - approvedCount);
 
     // ─── AI Generation ──────────────────────────────
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
