@@ -597,11 +597,17 @@ ${HELPCONFORT_VISUAL_IDENTITY}` },
         ? `USER DIRECTIVE (HIGHEST PRIORITY — override all defaults): ${userDirective}${userKeywords ? `. Visual keywords: ${userKeywords}` : ''}`
         : '';
 
+      // For prospection posts, use dedicated scene descriptions
+      const prospectionSubType = (aiPayload as any)?.prospection_subtype || '';
+      const isProspection = topicType === 'prospection';
+      
       const baseScene = userDirective
         ? userDirective
         : visualStyle === 'creatif'
           ? `Creative, humorous, intentionally unrealistic scene related to ${getSceneForUniverse(universe)}. Fun, memorable, clearly fictional (e.g. cartoon mascot, superhero technician, robot plumber). Must be OBVIOUSLY fantasy.`
-          : (visualPrompt || `Professional French home ${getSceneForUniverse(universe)}, realistic close-up showing a real problem or urgent situation`);
+          : isProspection
+            ? getSceneForProspection(topicType, prospectionSubType)
+            : (visualPrompt || `Professional French home ${getSceneForUniverse(universe)}, realistic close-up showing a real problem or urgent situation`);
       
       const sceneDescription = customOverride
         ? `${baseScene}\n\n${customOverride}`
