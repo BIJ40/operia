@@ -2222,6 +2222,143 @@ export type Database = {
           },
         ]
       }
+      bd_story_batches: {
+        Row: {
+          agency_id: string
+          batch_size: number
+          campaign_mode: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          input_params: Json | null
+          report: Json | null
+        }
+        Insert: {
+          agency_id: string
+          batch_size: number
+          campaign_mode?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          input_params?: Json | null
+          report?: Json | null
+        }
+        Update: {
+          agency_id?: string
+          batch_size?: number
+          campaign_mode?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          input_params?: Json | null
+          report?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bd_story_batches_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bd_story_stories: {
+        Row: {
+          agency_id: string
+          batch_id: string | null
+          board_prompt_master: string | null
+          campaign_mode: string | null
+          client_profile_slug: string | null
+          coupling_score: number | null
+          created_at: string
+          created_by: string | null
+          diversity_score: number | null
+          id: string
+          is_favorite: boolean | null
+          panels: Json
+          problem_slug: string
+          status: string
+          story_family: string
+          story_json: Json
+          story_key: string
+          summary: string | null
+          technician_slug: string
+          template_key: string
+          title: string
+          tone: string | null
+          universe: string
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          batch_id?: string | null
+          board_prompt_master?: string | null
+          campaign_mode?: string | null
+          client_profile_slug?: string | null
+          coupling_score?: number | null
+          created_at?: string
+          created_by?: string | null
+          diversity_score?: number | null
+          id?: string
+          is_favorite?: boolean | null
+          panels?: Json
+          problem_slug: string
+          status?: string
+          story_family: string
+          story_json?: Json
+          story_key: string
+          summary?: string | null
+          technician_slug: string
+          template_key: string
+          title: string
+          tone?: string | null
+          universe: string
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          batch_id?: string | null
+          board_prompt_master?: string | null
+          campaign_mode?: string | null
+          client_profile_slug?: string | null
+          coupling_score?: number | null
+          created_at?: string
+          created_by?: string | null
+          diversity_score?: number | null
+          id?: string
+          is_favorite?: boolean | null
+          panels?: Json
+          problem_slug?: string
+          status?: string
+          story_family?: string
+          story_json?: Json
+          story_key?: string
+          summary?: string | null
+          technician_slug?: string
+          template_key?: string
+          title?: string
+          tone?: string | null
+          universe?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bd_story_stories_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bd_story_stories_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "bd_story_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blocks: {
         Row: {
           attachments: Json | null
