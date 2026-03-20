@@ -60,6 +60,7 @@ export function useGenerateSocialVisual() {
         freePrompt?: string;
         keywords?: string;
         includeVan?: boolean;
+        universeOverride?: string;
         tone?: string;
         audience?: string;
       };
