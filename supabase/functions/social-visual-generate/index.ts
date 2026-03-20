@@ -232,15 +232,17 @@ async function callImageAIWithFallback(
       console.warn('[callImageAI] No LOVABLE_API_KEY — cannot use AI Gateway');
     }
 
-    if (requiresReferenceFaithfulness || forceGemini) {
+    if (requiresReferenceFaithfulness) {
       console.error('[callImageAI] Gemini failed and DALL-E fallback is disabled to preserve reference fidelity');
       return {
         ok: false,
         status: 502,
-        error: requiresReferenceFaithfulness
-          ? 'Gemini n’a pas pu générer le visuel à partir des images de référence. DALL-E a été volontairement bloqué pour ne pas trahir le vrai véhicule.'
-          : 'La génération Gemini a échoué et aucun fallback DALL-E n’a été appliqué car le modèle Gemini était forcé.',
+        error: "Gemini n'a pas pu générer le visuel à partir des images de référence. DALL-E a été volontairement bloqué pour ne pas trahir le vrai véhicule.",
       };
+    }
+    // forceGemini without reference images → allow DALL-E fallback
+    if (forceGemini && !hasInputImages) {
+      console.warn('[callImageAI] Gemini forced but failed without reference images — falling through to DALL-E fallback');
     }
 
     // Fallback sans images de référence : GPT-4o analyse → DALL-E text-only
