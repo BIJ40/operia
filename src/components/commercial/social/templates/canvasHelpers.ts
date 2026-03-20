@@ -364,9 +364,17 @@ export function drawHCFooterBar(ctx: CanvasRenderingContext2D, theme: ServiceThe
   ctx.fillStyle = HC.white;
   ctx.font = 'bold 26px sans-serif';
   ctx.textAlign = 'left';
-  const defaultAddress = 'Saint Paul lès Dax (40990)';
+  const defaultAddress = 'Landes & Pays Basque';
   const address = agencyAddress || defaultAddress;
   const signature = `HelpConfort — DEPAN40 — ${address}`;
+  // Auto-shrink font if signature is too wide
+  const maxWidth = SIZE - 280; // leave room for right-side label
+  let fontSize = 26;
+  ctx.font = `bold ${fontSize}px sans-serif`;
+  while (ctx.measureText(signature).width > maxWidth && fontSize > 16) {
+    fontSize -= 1;
+    ctx.font = `bold ${fontSize}px sans-serif`;
+  }
   ctx.fillText(signature, 50, y + height / 2 + 9);
   ctx.textAlign = 'right';
   ctx.font = '22px sans-serif';
