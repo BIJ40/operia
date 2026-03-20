@@ -384,22 +384,11 @@ function validateAndNormalizeSuggestions(
     let captionBase = String(s.caption_base_fr || '').substring(0, 2000);
     captionBase = captionBase
       .replace(/^HOOK\s*[:：]\s*/gim, '')
-      .replace(/
-HOOK\s*[:：]\s*/gim, '
-')
-      .replace(/
-SOUS[- ]?TEXTE\s*[:：]\s*/gim, '
-')
-      .replace(/
-CTA\s*[:：]\s*/gim, '
-')
-      .replace(/
-ACCROCHE\s*[:：]\s*/gim, '
-')
-      .replace(/
-{3,}/g, '
-
-')
+      .replace(/\nHOOK\s*[:：]\s*/gim, '\n')
+      .replace(/\nSOUS[- ]?TEXTE\s*[:：]\s*/gim, '\n')
+      .replace(/\nCTA\s*[:：]\s*/gim, '\n')
+      .replace(/\nACCROCHE\s*[:：]\s*/gim, '\n')
+      .replace(/\n{3,}/g, '\n\n')
       .trim();
     if (captionBase.length < 10) continue;
 
