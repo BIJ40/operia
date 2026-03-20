@@ -1019,7 +1019,7 @@ PLATFORM VARIANTS :
 - Facebook → storytelling + proximité + émotion
 - Instagram → visuel choc + caption court + hashtags
 - Google Business → problème + solution + zone géo
-- LinkedIn → expertise + cas concret + crédibilité
+- LinkedIn → savoir-faire technicien + cas concret + crédibilité
 
 ANTI-RÉPÉTITION & ANTI-FATIGUE (CRITIQUE — MODE DAILY CONTENT) :
 - Pas 2 posts consécutifs même univers
