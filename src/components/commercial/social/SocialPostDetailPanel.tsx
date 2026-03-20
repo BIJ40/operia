@@ -163,11 +163,12 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
 
   const handleGenerate = useCallback(() => {
     setLoadingPreview(true);
-    const visualCustomization = (freePrompt || keywords || includeVan || universeOverride) ? {
+    const visualCustomization = (freePrompt || keywords || includeVan || universeOverride || imageModel !== 'auto') ? {
       freePrompt: freePrompt || undefined,
       keywords: keywords || undefined,
       includeVan,
       universeOverride: universeOverride || undefined,
+      imageModel: imageModel !== 'auto' ? imageModel : undefined,
     } : undefined;
     generateMutation.mutate(
       { suggestionId: suggestion.id, visualCustomization },
