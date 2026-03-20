@@ -280,6 +280,30 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
           </button>
           {showCustomization && (
             <div className="px-3 pb-3 space-y-2.5 border-t border-border pt-2.5">
+              {/* Universe override */}
+              <div>
+                <Label className="text-[10px] text-muted-foreground flex items-center gap-1">
+                  <Palette className="w-3 h-3" />
+                  Univers métier (couleur + picto)
+                </Label>
+                <Select value={universeOverride} onValueChange={setUniverseOverride}>
+                  <SelectTrigger className="mt-1 h-7 text-xs">
+                    <SelectValue placeholder="Auto (déterminé par l'IA)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {UNIVERSE_OPTIONS.map(opt => (
+                      <SelectItem key={opt.value || '__auto'} value={opt.value || '__auto'} className="text-xs">
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {universeOverride && (
+                  <p className="text-[9px] text-amber-600 mt-0.5">
+                    ⚠️ Univers forcé → le visuel et le canvas utiliseront « {UNIVERSE_OPTIONS.find(o => o.value === universeOverride)?.label} »
+                  </p>
+                )}
+              </div>
               <div>
                 <Label className="text-[10px] text-muted-foreground">💡 Votre idée / direction visuelle</Label>
                 <Textarea
