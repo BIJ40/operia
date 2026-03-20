@@ -342,12 +342,18 @@ function validateAndNormalizeSuggestions(
     const dayNum = parseInt(date.split('-')[2]);
     if (dayNum < 1 || dayNum > daysInMonth) date = `${monthKey}-15`;
 
-    // 2. topic_type — enforce from weekly schedule if available
+    // 2. topic_type — CALENDAR-FIRST: if this day has a calendar event with non-metier angle, force "calendar"
     let topicType = (VALID_TOPIC_TYPES as readonly string[]).includes(s.topic_type) ? s.topic_type : 'conseil';
-    if (weeklySchedule) {
+    const actualDay = parseInt(date.split('-')[2]);
+    const matchingAwareness = AWARENESS_DAYS.find(a => a.month === month && a.day === actualDay);
+    
+    if (matchingAwareness && matchingAwareness.calendarAngle && matchingAwareness.calendarAngle !== 'metier') {
+      // Calendar-first: this is a human/brand/light/availability day — force calendar type
+      topicType = 'calendar';
+    } else if (weeklySchedule) {
       const scheduledDay = weeklySchedule.find(ws => ws.day === dayNum);
       if (scheduledDay && (VALID_TOPIC_TYPES as readonly string[]).includes(scheduledDay.category)) {
-        topicType = scheduledDay.category; // Force the scheduled category
+        topicType = scheduledDay.category;
       }
     }
 
@@ -356,18 +362,16 @@ function validateAndNormalizeSuggestions(
     if (seenTopicKeys.has(topicKey) || existingTopicKeys.has(topicKey)) continue;
     seenTopicKeys.add(topicKey);
 
-    // 4. universe — enforce from awareness day if matching
+    // 4. universe — for calendar/non-metier, force general. For metier events, use preferred universe.
     let universe = (NORMALIZED_UNIVERSES as readonly string[]).includes(s.universe) ? s.universe : 'general';
-    const actualDay = parseInt(date.split('-')[2]);
-    const matchingAwareness = AWARENESS_DAYS.find(a => a.month === month && a.day === actualDay);
     if (matchingAwareness && matchingAwareness.preferredUniverses.length > 0) {
       const preferredUni = matchingAwareness.preferredUniverses[0];
       if ((NORMALIZED_UNIVERSES as readonly string[]).includes(preferredUni)) {
-        universe = preferredUni; // Force the calendar event's preferred universe
+        universe = preferredUni;
       }
     }
-    // Force general universe for prospection posts
-    if (topicType === 'prospection') {
+    // Force general for calendar and prospection
+    if (topicType === 'calendar' || topicType === 'prospection') {
       universe = 'general';
     }
 
