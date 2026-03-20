@@ -60,6 +60,10 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const [composedPreviewUrl, setComposedPreviewUrl] = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [renderModeOverride, setRenderModeOverride] = useState<'canvas' | 'image' | null>(null);
+  const [showCustomization, setShowCustomization] = useState(false);
+  const [freePrompt, setFreePrompt] = useState('');
+  const [keywords, setKeywords] = useState('');
+  const [includeVan, setIncludeVan] = useState(false);
 
   // Visual assets
   const { data: assets = [], isLoading: assetsLoading } = useSocialVisualAssets(suggestion.id);
