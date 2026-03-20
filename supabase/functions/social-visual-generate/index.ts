@@ -358,11 +358,12 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
    - Background color: ${color}
    - Text: "${serviceLabel}" in white, small font
 
-6. BRANDING (top-left):
-   - Use the official Help Confort logo if visible in the composition
-   - If no logo available: leave the top-left area EMPTY
-   - NEVER write "HC" or "HelpConfort" as text in the logo area
-   - NEVER create a fake/invented logo
+6. BRANDING (top-left corner):
+   - White rounded rectangle pill with subtle shadow
+   - Inside: the blue house icon logo (a blue house with a wave/ribbon below it)
+   - Next to the logo, on the right: "Help Confort" in bold dark blue (#006FAA) + below it "Landes & Pays Basque" in lighter blue (#0092DD) smaller text
+   - This MUST always appear — it is the agency branding
+   - NEVER write just "HC" — always the full branding block described above
 
 DESIGN RULES:
 - The background image must remain FULLY VISIBLE behind all overlays
