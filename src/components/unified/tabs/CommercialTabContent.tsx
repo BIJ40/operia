@@ -4,7 +4,7 @@
  */
 
 import { lazy, Suspense, useState, useCallback, useMemo } from 'react';
-import { Building2, GitCompare, UserSearch, Radar, Camera, Share2, Stamp, Loader2 } from 'lucide-react';
+import { Building2, GitCompare, UserSearch, Radar, Camera, Share2, BookImage, Stamp, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, type PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
