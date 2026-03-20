@@ -152,9 +152,8 @@ Deno.serve(async (req) => {
       .eq('id', agencyId)
       .single();
 
-    const agencyAddress = agency?.ville
-      ? `${agency.ville}${agency.code_postal ? ' (' + agency.code_postal + ')' : ''}`
-      : '';
+    // Prefer "Landes & Pays Basque" as agency address, fallback to short city name if space is tight
+    const agencyAddress = 'Landes & Pays Basque';
 
     const aiPayload = (suggestion.ai_payload as Record<string, any>) || {};
     const universe = suggestion.universe || 'general';
