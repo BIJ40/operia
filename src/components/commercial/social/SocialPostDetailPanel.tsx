@@ -281,71 +281,77 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
             {showCustomization ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
           </button>
           {showCustomization && (
-            <div className="px-3 pb-3 space-y-2.5 border-t border-border pt-2.5">
-              {/* Universe override */}
-              <div>
-                <Label className="text-[10px] text-muted-foreground flex items-center gap-1">
-                  <Palette className="w-3 h-3" />
-                  Univers métier (couleur + picto)
-                </Label>
-                <Select value={universeOverride} onValueChange={setUniverseOverride}>
-                  <SelectTrigger className="mt-1 h-7 text-xs">
-                    <SelectValue placeholder="Auto (déterminé par l'IA)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {UNIVERSE_OPTIONS.map(opt => (
-                      <SelectItem key={opt.value || '__auto'} value={opt.value || '__auto'} className="text-xs">
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {universeOverride && (
-                  <p className="text-[9px] text-amber-600 mt-0.5">
-                    ⚠️ Univers forcé → le visuel et le canvas utiliseront « {UNIVERSE_OPTIONS.find(o => o.value === universeOverride)?.label} »
-                  </p>
-                )}
+            <div className="px-3 pb-3 space-y-2 border-t border-border pt-2.5">
+              {/* Row 1: Univers + Mots-clés */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <Palette className="w-3 h-3" /> Univers
+                  </Label>
+                  <Select value={universeOverride} onValueChange={setUniverseOverride}>
+                    <SelectTrigger className="mt-0.5 h-7 text-xs">
+                      <SelectValue placeholder="Auto (IA)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {UNIVERSE_OPTIONS.map(opt => (
+                        <SelectItem key={opt.value || '__auto'} value={opt.value || '__auto'} className="text-xs">
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">🔑 Mots-clés</Label>
+                  <Input
+                    value={keywords}
+                    onChange={(e) => setKeywords(e.target.value)}
+                    placeholder="LED, moderne…"
+                    className="mt-0.5 text-xs h-7"
+                  />
+                </div>
               </div>
+              {universeOverride && universeOverride !== '__auto' && (
+                <p className="text-[9px] text-amber-600">
+                  ⚠️ Univers forcé → « {UNIVERSE_OPTIONS.find(o => o.value === universeOverride)?.label} »
+                </p>
+              )}
+
+              {/* Row 2: Modèle + Véhicule */}
+              <div className="grid grid-cols-2 gap-2 items-end">
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">🤖 Modèle</Label>
+                  <select
+                    value={imageModel}
+                    onChange={(e) => setImageModel(e.target.value)}
+                    className="mt-0.5 w-full h-7 text-xs rounded-md border border-input bg-background px-2"
+                  >
+                    <option value="auto">🔄 Auto</option>
+                    <option value="dall-e-3">🎨 DALL-E 3</option>
+                    <option value="gemini">🌐 Gemini</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-1.5 h-7">
+                  <Switch
+                    checked={includeVan}
+                    onCheckedChange={setIncludeVan}
+                    className="scale-75 origin-left"
+                  />
+                  <Label className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <Truck className="w-3 h-3" /> Véhicule HC
+                  </Label>
+                </div>
+              </div>
+
+              {/* Direction visuelle */}
               <div>
-                <Label className="text-[10px] text-muted-foreground">💡 Votre idée / direction visuelle</Label>
+                <Label className="text-[10px] text-muted-foreground">💡 Direction visuelle</Label>
                 <Textarea
                   value={freePrompt}
                   onChange={(e) => setFreePrompt(e.target.value)}
-                  placeholder="Ex : spot LED à la place des ampoules, ambiance moderne..."
-                  className="mt-1 text-xs min-h-[56px] resize-none"
+                  placeholder="Ex : spot LED, ambiance moderne..."
+                  className="mt-0.5 text-xs min-h-[44px] resize-none"
                 />
-              </div>
-              <div>
-                <Label className="text-[10px] text-muted-foreground">🔑 Mots-clés</Label>
-                <Input
-                  value={keywords}
-                  onChange={(e) => setKeywords(e.target.value)}
-                  placeholder="LED, moderne, salle de bain..."
-                  className="mt-1 text-xs h-7"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={includeVan}
-                  onCheckedChange={setIncludeVan}
-                  className="scale-75 origin-left"
-                />
-                <Label className="text-[10px] text-muted-foreground flex items-center gap-1">
-                  <Truck className="w-3 h-3" />
-                  Inclure le véhicule HC
-                </Label>
-              </div>
-              <div>
-                <Label className="text-[10px] text-muted-foreground">🤖 Modèle image</Label>
-                <select
-                  value={imageModel}
-                  onChange={(e) => setImageModel(e.target.value)}
-                  className="mt-1 w-full h-7 text-xs rounded-md border border-input bg-background px-2"
-                >
-                  <option value="auto">🔄 Auto (DALL-E → Gemini)</option>
-                  <option value="dall-e-3">🎨 DALL-E 3 (OpenAI)</option>
-                  <option value="gemini">🌐 Gemini Imagen (Google)</option>
-                </select>
               </div>
             </div>
           )}
