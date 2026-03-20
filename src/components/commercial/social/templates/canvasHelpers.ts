@@ -233,27 +233,62 @@ export function drawGradientBg(ctx: CanvasRenderingContext2D, color1: string, co
 // ZONE 1 — TOP BAR COMPONENTS (0–100px)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-/** Logo HC en haut — logo image officiel UNIQUEMENT, jamais de fallback texte */
+/** Logo HC en haut — icône maison + "Help Confort Landes & Pays Basque" */
 export async function drawHCLogo(ctx: CanvasRenderingContext2D, logoSrc: string, position: 'top-left' | 'top-center' = 'top-left') {
-  const logoH = 52;
-  const padX = 12;
-  const padY = 8;
+  const logoH = 56;
+  const agencyName = 'Help Confort';
+  const agencyRegion = 'Landes & Pays Basque';
+  const gap = 10;
+  const padX = 14;
+  const padY = 10;
 
   try {
     const img = await loadImage(logoSrc);
     const logoRatio = img.naturalWidth / img.naturalHeight;
     const logoW = logoH * logoRatio;
-    const bgW = logoW + padX * 2;
+
+    // Measure text widths
+    ctx.font = 'bold 22px sans-serif';
+    const nameW = ctx.measureText(agencyName).width;
+    ctx.font = '16px sans-serif';
+    const regionW = ctx.measureText(agencyRegion).width;
+    const textBlockW = Math.max(nameW, regionW);
+
+    const bgW = logoW + gap + textBlockW + padX * 2;
     const bgH = logoH + padY * 2;
 
     const x = position === 'top-center' ? (SIZE - bgW) / 2 : 30;
     const y = 25;
 
-    ctx.fillStyle = 'rgba(255,255,255,0.92)';
-    roundRect(ctx, x, y, bgW, bgH, 10);
+    // Background pill
+    ctx.fillStyle = 'rgba(255,255,255,0.94)';
+    roundRect(ctx, x, y, bgW, bgH, 12);
     ctx.fill();
 
+    // Shadow
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.12)';
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetY = 2;
+    ctx.fillStyle = 'rgba(255,255,255,0.94)';
+    roundRect(ctx, x, y, bgW, bgH, 12);
+    ctx.fill();
+    ctx.restore();
+
+    // Logo icon
     drawContain(ctx, img, x + padX, y + padY, logoW, logoH);
+
+    // Agency name text
+    const textX = x + padX + logoW + gap;
+    ctx.fillStyle = HC.blueDark;
+    ctx.font = 'bold 22px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(agencyName, textX, y + padY + 22);
+
+    // Region text
+    ctx.fillStyle = HC.blue;
+    ctx.font = '16px sans-serif';
+    ctx.fillText(agencyRegion, textX, y + padY + 44);
   } catch {
     // ❌ LOGO NON DISPONIBLE → ne rien afficher (jamais de fallback texte)
     console.warn('[drawHCLogo] Logo image failed to load — skipping (no text fallback)');
