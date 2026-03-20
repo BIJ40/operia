@@ -895,7 +895,7 @@ Chaque post DOIT avoir un topic_type parmi :
 2. "prevention" — éviter une panne, anticiper (15%, ~4-5 posts)
 3. "amelioration" — confort, esthétique, valorisation (15%, ~4-5 posts)
 4. "conseil" — tips concrets, utiles, actionnables (10%, ~3 posts)
-5. "preuve" — intervention rapide, expertise, proximité, réalisation, témoignage, avant/après, process (10%, ~3 posts)
+5. "preuve" — intervention rapide, savoir-faire technicien, proximité, réalisation, témoignage, avant/après, process (10%, ~3 posts)
 6. "saisonnier" — météo réelle, période (10%, ~3 posts)
 7. "contre_exemple" — erreur fréquente, "ce qu'il ne faut pas faire", contraste expert (10%, ~3 posts)
 8. "pedagogique" — schéma, chiffre clé, "le saviez-vous ?", valeur immédiate (10%, ~3 posts)
