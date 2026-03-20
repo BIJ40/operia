@@ -27,8 +27,8 @@ export const ZONES = {
   TOP_START: 0,
   TOP_END: 100,       // Logo + pills
   IMAGE_START: 100,
-  IMAGE_END: 620,     // Pure image zone
-  TEXT_START: 630,     // Hook + subtext
+  IMAGE_END: 580,     // Pure image zone (reduced to give more text space)
+  TEXT_START: 590,     // Hook + subtext (raised)
   TEXT_END: 910,       // Max bottom of text
   CTA_START: 915,     // CTA button
   CTA_END: 980,
@@ -39,16 +39,16 @@ export const ZONES = {
 } as const;
 
 // ─── Text constraints ───────────────────────────────────────
-const HOOK_MAX_CHARS = 40;
-const HOOK_MAX_WORDS = 6;
-const HOOK_MAX_LINES = 2;
-const HOOK_FONT_MAX = 62;
-const HOOK_FONT_MIN = 42;
+const HOOK_MAX_CHARS = 50;
+const HOOK_MAX_WORDS = 8;
+const HOOK_MAX_LINES = 3;
+const HOOK_FONT_MAX = 58;
+const HOOK_FONT_MIN = 38;
 
-const SUB_MAX_CHARS = 60;
-const SUB_MAX_WORDS = 12;
-const SUB_MAX_LINES = 1;
-const SUB_FONT = 26;
+const SUB_MAX_CHARS = 90;
+const SUB_MAX_WORDS = 18;
+const SUB_MAX_LINES = 2;
+const SUB_FONT = 24;
 
 const CTA_MAX_CHARS = 30;
 const CTA_FONT = 24;
@@ -104,18 +104,28 @@ export function sanitizeHook(raw: string): string {
   return text;
 }
 
-/** Sanitize subtext: single complete sentence, max 12 words, no truncation */
+/** Sanitize subtext: complete sentence(s), max 18 words, 2 lines max */
 export function sanitizeSubText(raw: string): string {
   if (!raw) return '';
   let text = raw.trim();
   // Remove trailing ellipsis
   text = text.replace(/[…]+$/, '').trim();
-  // Limit words first (max 12)
+  // Limit words (max 18)
   const words = text.split(/\s+/);
   if (words.length > SUB_MAX_WORDS) {
-    text = words.slice(0, SUB_MAX_WORDS).join(' ');
+    // Try to cut at a natural sentence boundary
+    let cutText = words.slice(0, SUB_MAX_WORDS).join(' ');
+    // Check for sentence-ending punctuation before the limit
+    const sentenceEnd = cutText.match(/^(.+[.!?])\s/);
+    if (sentenceEnd) {
+      cutText = sentenceEnd[1];
+    } else {
+      cutText = cutText.replace(/[\s,;:]+$/, '').trim();
+      if (!/[.!?]$/.test(cutText)) cutText += '.';
+    }
+    text = cutText;
   }
-  // Limit chars — cut at last complete word
+  // Limit chars
   if (text.length > SUB_MAX_CHARS) {
     const cut = text.slice(0, SUB_MAX_CHARS);
     const lastSpace = cut.lastIndexOf(' ');
