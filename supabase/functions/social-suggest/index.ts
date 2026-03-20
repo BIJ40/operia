@@ -208,6 +208,120 @@ const FORBIDDEN_THEME_ASSOCIATIONS = [
   'Saint-Patrick = entretien',
 ];
 
+// ─── HOOK LIBRARY — The AI MUST select from this list ───
+interface HookEntry {
+  hook: string;
+  universe: string;
+  trigger: 'peur' | 'argent' | 'urgence' | 'gain' | 'simplicite';
+  season?: 'hiver' | 'ete' | 'printemps' | 'automne' | 'all';
+  intent: 'urgence' | 'prevention' | 'amelioration' | 'securite' | 'saisonnier';
+}
+
+const HOOK_LIBRARY: HookEntry[] = [
+  // ─── PLOMBERIE ───
+  { hook: "FUITE SOUS L'ÉVIER ?", universe: 'plomberie', trigger: 'urgence', intent: 'urgence', season: 'all' },
+  { hook: "VOTRE ROBINET GOUTTE ENCORE ?", universe: 'plomberie', trigger: 'argent', intent: 'prevention', season: 'all' },
+  { hook: "PLUS D'EAU CHAUDE ?", universe: 'plomberie', trigger: 'urgence', intent: 'urgence', season: 'all' },
+  { hook: "CHAUFFE-EAU EN PANNE ?", universe: 'plomberie', trigger: 'urgence', intent: 'urgence', season: 'all' },
+  { hook: "WC BOUCHÉ CE MATIN ?", universe: 'plomberie', trigger: 'urgence', intent: 'urgence', season: 'all' },
+  { hook: "CETTE FUITE COÛTE CHER", universe: 'plomberie', trigger: 'argent', intent: 'prevention', season: 'all' },
+  { hook: "RADIATEUR FROID EN BAS ?", universe: 'plomberie', trigger: 'peur', intent: 'prevention', season: 'hiver' },
+  { hook: "CANALISATIONS GELÉES ?", universe: 'plomberie', trigger: 'peur', intent: 'urgence', season: 'hiver' },
+  { hook: "TRACE D'HUMIDITÉ AU PLAFOND ?", universe: 'plomberie', trigger: 'peur', intent: 'urgence', season: 'all' },
+  { hook: "ODEUR D'ÉGOUT CHEZ VOUS ?", universe: 'plomberie', trigger: 'peur', intent: 'urgence', season: 'all' },
+  { hook: "FACTURE D'EAU ANORMALE ?", universe: 'plomberie', trigger: 'argent', intent: 'prevention', season: 'all' },
+  { hook: "BRUIT DANS LES TUYAUX ?", universe: 'plomberie', trigger: 'peur', intent: 'prevention', season: 'all' },
+  { hook: "DÉGÂT DES EAUX EN COURS ?", universe: 'plomberie', trigger: 'urgence', intent: 'urgence', season: 'all' },
+  { hook: "CHAUFFAGE QUI NE DÉMARRE PAS ?", universe: 'plomberie', trigger: 'urgence', intent: 'urgence', season: 'hiver' },
+  { hook: "PURGE RADIATEURS FAITE ?", universe: 'plomberie', trigger: 'simplicite', intent: 'prevention', season: 'automne' },
+
+  // ─── ÉLECTRICITÉ ───
+  { hook: "DISJONCTEUR QUI SAUTE ?", universe: 'electricite', trigger: 'urgence', intent: 'urgence', season: 'all' },
+  { hook: "PRISE QUI FAIT DES ÉTINCELLES ?", universe: 'electricite', trigger: 'peur', intent: 'securite', season: 'all' },
+  { hook: "PANNE DE COURANT CHEZ VOUS ?", universe: 'electricite', trigger: 'urgence', intent: 'urgence', season: 'all' },
+  { hook: "TABLEAU ÉLECTRIQUE VÉTUSTE ?", universe: 'electricite', trigger: 'peur', intent: 'securite', season: 'all' },
+  { hook: "ODEUR DE BRÛLÉ ÉLECTRIQUE ?", universe: 'electricite', trigger: 'peur', intent: 'urgence', season: 'all' },
+  { hook: "INTERRUPTEUR QUI NE RÉPOND PLUS ?", universe: 'electricite', trigger: 'simplicite', intent: 'prevention', season: 'all' },
+  { hook: "VOS PRISES SONT AUX NORMES ?", universe: 'electricite', trigger: 'peur', intent: 'securite', season: 'all' },
+  { hook: "LUMIÈRES QUI CLIGNOTENT ?", universe: 'electricite', trigger: 'peur', intent: 'prevention', season: 'all' },
+  { hook: "FACTURE ÉLECTRIQUE TROP HAUTE ?", universe: 'electricite', trigger: 'argent', intent: 'amelioration', season: 'all' },
+  { hook: "ILLUMINATIONS NOËL = DANGER ?", universe: 'electricite', trigger: 'peur', intent: 'securite', season: 'hiver' },
+
+  // ─── SERRURERIE ───
+  { hook: "PORTE CLAQUÉE, CLÉS DEDANS ?", universe: 'serrurerie', trigger: 'urgence', intent: 'urgence', season: 'all' },
+  { hook: "SERRURE BLOQUÉE CE SOIR ?", universe: 'serrurerie', trigger: 'urgence', intent: 'urgence', season: 'all' },
+  { hook: "CLÉ CASSÉE DANS LA SERRURE ?", universe: 'serrurerie', trigger: 'urgence', intent: 'urgence', season: 'all' },
+  { hook: "CAMBRIOLAGE DANS VOTRE RUE ?", universe: 'serrurerie', trigger: 'peur', intent: 'securite', season: 'all' },
+  { hook: "VOTRE PORTE RÉSISTE AU PIED-DE-BICHE ?", universe: 'serrurerie', trigger: 'peur', intent: 'securite', season: 'all' },
+  { hook: "PONT = CAMBRIOLAGES", universe: 'serrurerie', trigger: 'peur', intent: 'securite', season: 'all' },
+  { hook: "VERROU TROP FACILE À FORCER ?", universe: 'serrurerie', trigger: 'peur', intent: 'securite', season: 'all' },
+  { hook: "VACANCES = MAISON VULNÉRABLE", universe: 'serrurerie', trigger: 'peur', intent: 'securite', season: 'ete' },
+
+  // ─── VOLETS ───
+  { hook: "VOLET BLOQUÉ CE MATIN ?", universe: 'volets', trigger: 'urgence', intent: 'urgence', season: 'all' },
+  { hook: "IL NE REMONTE PLUS ?", universe: 'volets', trigger: 'urgence', intent: 'urgence', season: 'all' },
+  { hook: "MOTEUR DE VOLET QUI GRINCE ?", universe: 'volets', trigger: 'peur', intent: 'prevention', season: 'all' },
+  { hook: "STORE COINCÉ À MI-HAUTEUR ?", universe: 'volets', trigger: 'urgence', intent: 'urgence', season: 'all' },
+  { hook: "VOLET = PASSOIRE THERMIQUE ?", universe: 'volets', trigger: 'argent', intent: 'amelioration', season: 'hiver' },
+  { hook: "CANICULE SANS VOLETS ?", universe: 'volets', trigger: 'gain', intent: 'saisonnier', season: 'ete' },
+  { hook: "SANGLE DE VOLET USÉE ?", universe: 'volets', trigger: 'simplicite', intent: 'prevention', season: 'all' },
+  { hook: "PROGRAMMATEUR DÉRÉGLÉ ?", universe: 'volets', trigger: 'simplicite', intent: 'prevention', season: 'all' },
+
+  // ─── VITRERIE ───
+  { hook: "VITRE FISSURÉE CE MATIN ?", universe: 'vitrerie', trigger: 'urgence', intent: 'urgence', season: 'all' },
+  { hook: "DOUBLE VITRAGE EMBUÉE ?", universe: 'vitrerie', trigger: 'argent', intent: 'amelioration', season: 'hiver' },
+  { hook: "FENÊTRE QUI NE FERME PLUS ?", universe: 'vitrerie', trigger: 'peur', intent: 'securite', season: 'all' },
+  { hook: "COURANT D'AIR MALGRÉ FENÊTRES FERMÉES ?", universe: 'vitrerie', trigger: 'argent', intent: 'amelioration', season: 'hiver' },
+  { hook: "CARREAU CASSÉ = URGENCE", universe: 'vitrerie', trigger: 'urgence', intent: 'urgence', season: 'all' },
+
+  // ─── MENUISERIE ───
+  { hook: "PORTE QUI FROTTE AU SOL ?", universe: 'menuiserie', trigger: 'simplicite', intent: 'amelioration', season: 'all' },
+  { hook: "PLACARD QUI NE FERME PLUS ?", universe: 'menuiserie', trigger: 'simplicite', intent: 'amelioration', season: 'all' },
+  { hook: "PARQUET QUI GONDOLE ?", universe: 'menuiserie', trigger: 'peur', intent: 'urgence', season: 'all' },
+  { hook: "HUMIDITÉ SUR VOS BOISERIES ?", universe: 'menuiserie', trigger: 'peur', intent: 'prevention', season: 'automne' },
+
+  // ─── RÉNOVATION ───
+  { hook: "SALLE DE BAIN VIEILLISSANTE ?", universe: 'renovation', trigger: 'gain', intent: 'amelioration', season: 'all' },
+  { hook: "CUISINE À REFAIRE ?", universe: 'renovation', trigger: 'gain', intent: 'amelioration', season: 'all' },
+  { hook: "CARRELAGE FISSURÉ ?", universe: 'renovation', trigger: 'simplicite', intent: 'amelioration', season: 'all' },
+  { hook: "MOISISSURES SUR LES MURS ?", universe: 'renovation', trigger: 'peur', intent: 'urgence', season: 'all' },
+  { hook: "PEINTURE QUI S'ÉCAILLE ?", universe: 'renovation', trigger: 'simplicite', intent: 'amelioration', season: 'all' },
+  { hook: "VOTRE MAISON PERD DE LA VALEUR", universe: 'renovation', trigger: 'argent', intent: 'amelioration', season: 'all' },
+
+  // ─── PMR ───
+  { hook: "DOUCHE INACCESSIBLE ?", universe: 'pmr', trigger: 'gain', intent: 'amelioration', season: 'all' },
+  { hook: "ESCALIER DEVENU DANGEREUX ?", universe: 'pmr', trigger: 'peur', intent: 'securite', season: 'all' },
+  { hook: "ADAPTER POUR RESTER CHEZ SOI", universe: 'pmr', trigger: 'gain', intent: 'amelioration', season: 'all' },
+  { hook: "AIDE À L'ADAPTATION = 0€ DE RESTE", universe: 'pmr', trigger: 'argent', intent: 'amelioration', season: 'all' },
+
+  // ─── GÉNÉRAL / MULTI-MÉTIER ───
+  { hook: "URGENCE UN JOUR FÉRIÉ ?", universe: 'general', trigger: 'urgence', intent: 'urgence', season: 'all' },
+  { hook: "PANNE CE WEEK-END ?", universe: 'general', trigger: 'urgence', intent: 'urgence', season: 'all' },
+  { hook: "QUI APPELER À 22H ?", universe: 'general', trigger: 'urgence', intent: 'urgence', season: 'all' },
+  { hook: "INTERVENTION EN 1H ?", universe: 'general', trigger: 'simplicite', intent: 'urgence', season: 'all' },
+  { hook: "DEVIS GRATUIT, SANS SURPRISE", universe: 'general', trigger: 'simplicite', intent: 'amelioration', season: 'all' },
+  { hook: "TECHNICIEN PRÈS DE CHEZ VOUS", universe: 'general', trigger: 'simplicite', intent: 'urgence', season: 'all' },
+];
+
+// ─── Helper: get season from month ───
+function getSeasonFromMonth(month: number): string {
+  if (month >= 3 && month <= 5) return 'printemps';
+  if (month >= 6 && month <= 8) return 'ete';
+  if (month >= 9 && month <= 11) return 'automne';
+  return 'hiver';
+}
+
+// ─── Helper: filter hooks for a given context ───
+function getHooksForContext(universe: string, month: number, intent?: string): HookEntry[] {
+  const season = getSeasonFromMonth(month);
+  return HOOK_LIBRARY.filter(h => {
+    if (h.universe !== universe && h.universe !== 'general') return false;
+    if (h.season && h.season !== 'all' && h.season !== season) return false;
+    if (intent && h.intent !== intent) return false;
+    return true;
+  });
+}
+
 // ─── Universe keyword inference ───
 const UNIVERSE_KEYWORDS: Record<string, string[]> = {
   plomberie: ['plomberie', 'fuite', 'canalisation', 'robinet', 'chauffe-eau', 'ballon', 'wc', 'sanitaire', 'radiateur', 'chauffage'],
@@ -707,8 +821,20 @@ Deno.serve(async (req) => {
       });
     }
 
-    const systemPrompt = `Tu es simultanément directeur éditorial, copywriter expert conversion locale, growth marketer et directeur artistique.
-Tu travailles pour HelpConfort (dépannage & rénovation habitat).
+    // Build hook library for the current month's season
+    const currentSeason = getSeasonFromMonth(month);
+    const seasonalHooks = HOOK_LIBRARY.filter(h => h.season === 'all' || h.season === currentSeason);
+    const hookLibraryPrompt = Object.entries(
+      seasonalHooks.reduce((acc, h) => {
+        acc[h.universe] = acc[h.universe] || [];
+        acc[h.universe].push(h);
+        return acc;
+      }, {} as Record<string, HookEntry[]>)
+    ).map(([uni, hooks]) => 
+      `${uni.toUpperCase()} :\n${hooks.map(h => `  - "${h.hook}" [${h.trigger}/${h.intent}]`).join('\n')}`
+    ).join('\n\n');
+
+    const systemPrompt = `Tu es un copywriter expert conversion locale pour HelpConfort (dépannage & rénovation habitat).
 
 Tu produis des posts social media qui GÉNÈRENT DES ACTIONS (appels, devis, contacts).
 Un post qui ne peut pas déclencher d'action est considéré comme MAUVAIS.
@@ -761,50 +887,51 @@ Un post "correct mais non actionnable" est un MAUVAIS post.
 "Votre robinet fuit depuis des semaines ?" est TOUJOURS meilleur qu'un "post Pâques" forcé.
 
 ═══════════════════════════════════════════
-HOOK — STOP SCROLL (CRITIQUE)
+HOOK — LIBRAIRIE OBLIGATOIRE (CRITIQUE)
 ═══════════════════════════════════════════
-Le hook est la PREMIÈRE LIGNE. Il doit :
-1. Être COURT (4-8 mots MAX)
-2. Poser un PROBLÈME ou une QUESTION directe
-3. Créer du STRESS LÉGER ou de la CURIOSITÉ
-4. Parler au client comme s'il vivait le problème MAINTENANT
+Tu DOIS sélectionner chaque hook depuis la LIBRAIRIE DE HOOKS ci-dessous.
+INTERDICTION de générer des hooks aléatoires ou inventés.
 
-Le hook est TOUJOURS basé sur un problème ou une opportunité RÉELLE.
-JAMAIS basé uniquement sur un jour du calendrier.
+PROCESSUS DE SÉLECTION :
+1. Identifier l'univers métier du post
+2. Identifier la saison (${currentSeason})
+3. Identifier l'intention prioritaire (urgence > prévention > argent > sécurité > saisonnier)
+4. Filtrer les hooks compatibles dans la librairie
+5. En sélectionner UN
 
-BONS hooks :
-- "IL NE REMONTE PLUS ?"
-- "VOLET BLOQUÉ CE MATIN ?"
-- "FUITE SOUS L'ÉVIER ?"
-- "CETTE ODEUR DANS LA SALLE DE BAIN ?"
-- "DISJONCTEUR QUI SAUTE ENCORE ?"
-- "PORTE CLAQUÉE, CLÉS DEDANS ?"
-- "CE TABLEAU ÉLECTRIQUE POUVAIT PRENDRE FEU"
+ADAPTATION AUTORISÉE :
+- Le hook peut être LÉGÈREMENT adapté pour coller au contexte
+- JAMAIS dépasser 6 mots
+- JAMAIS transformer en phrase longue
+- L'esprit du hook original DOIT être préservé
 
-MAUVAIS hooks (INTERDITS) :
-- "C'est la journée de..." → zéro tension
-- "Pensez à..." ou "Saviez-vous que..." → informatif neutre
-- "Préparez votre maison pour..." → conseil générique
-- "Lundi de Pâques = petits travaux" → analogie faible
+LIBRAIRIE DE HOOKS (saison: ${currentSeason}) :
+${hookLibraryPrompt}
 
 ═══════════════════════════════════════════
-STRUCTURE OBLIGATOIRE : HOOK → SOUS-TEXTE → CTA
+STRUCTURE OBLIGATOIRE (PUBLICITÉ, PAS CONTENU)
 ═══════════════════════════════════════════
-HOOK : problème ou opportunité RÉELLE (jamais un calendrier)
-SOUS-TEXTE : bénéfice CONCRET pour le client (conséquence + solution)
-CTA : action CLAIRE (devis, intervention, planification)
+Chaque post = une PUBLICITÉ, pas du contenu informatif.
 
-═══════════════════════════════════════════
-CTA (OBLIGATOIRE — ORIENTÉ ACTION)
-═══════════════════════════════════════════
-Court, direct, crée un sentiment de nécessité :
-- "On règle ça en 1 intervention"
-- "Appelez avant que ça empire"
-- "Diagnostic gratuit, résultat immédiat"
-- "Intervention rapide dans votre secteur"
-- "Prendre RDV" / "Demander un devis"
+HOOK (issu de la librairie, max 6 mots)
+→ le problème brut, immédiat
 
-INTERDIT : CTA mous ("N'hésitez pas à nous contacter", "Pour plus d'informations")
+SOUS-TEXTE (max 10 mots)
+→ le bénéfice clair, la conséquence ou le coût
+
+CTA (3 à 5 mots)
+→ l'action directe
+
+Exemple :
+HOOK : "FUITE SOUS L'ÉVIER ?"
+SOUS-TEXTE : "Chaque jour perdu = 40€ de plus"
+CTA : "Appelez, on intervient vite"
+
+INTERDIT :
+- texte long
+- phrase creuse
+- contenu générique
+- événement forcé
 
 ═══════════════════════════════════════════
 EXCEPTION — POSTS DÉCALÉS / HUMOUR
@@ -871,11 +998,14 @@ PRIORITÉ (DANS CET ORDRE)
 Le calendrier est un BONUS, pas une obligation.
 
 ═══════════════════════════════════════════
-RAPPEL FINAL
+RAPPEL FINAL — PUBLICITÉ, PAS CONTENU
 ═══════════════════════════════════════════
-TU NE CRÉES PAS DU CONTENU. TU CRÉES DES DÉCLENCHEURS D'ACTION.
-Chaque post doit pouvoir générer : un appel, une demande de devis, ou une prise de contact.
-Sinon → il est considéré comme mauvais et doit être remplacé.`;
+Tu crées des PUBLICITÉS qui déclenchent des ACTIONS.
+Chaque post ressemble à une pub : hook choc → bénéfice clair → CTA direct.
+JAMAIS de contenu informatif, éducatif ou neutre.
+
+VALIDATION FINALE :
+Si le post ne peut pas déclencher un appel ou une demande de devis → il est INVALIDE → remplace-le.`;
     // Build user prompt customization from prompt params
     const toneMap: Record<string, string> = {
       professionnel: 'Ton professionnel, expert, crédible',
