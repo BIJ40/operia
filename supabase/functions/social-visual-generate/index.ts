@@ -661,15 +661,15 @@ async function persistAsset(
 
 function getSceneForUniverse(universe: string): string {
   const scenes: Record<string, string> = {
-    plomberie: 'bathroom with visible water leak under sink, dripping pipes, water puddle on tile floor, urgency feeling, blue-tinted lighting. A Help Confort branded white van with blue swoosh visible through the window or parked outside',
-    electricite: 'exposed electrical panel with sparking wires or burnt outlet, dangerous situation, warm orange dramatic lighting. A Help Confort branded white van with blue swoosh parked in front of the house',
-    serrurerie: 'front door with broken lock or someone locked out at night, residential entrance, security urgency, dark moody lighting. A Help Confort branded white van with blue swoosh parked nearby',
+    plomberie: 'bathroom with visible water leak under sink, dripping pipes, water puddle on tile floor, urgency feeling, blue-tinted lighting',
+    electricite: 'exposed electrical panel with sparking wires or burnt outlet, dangerous situation, warm orange dramatic lighting',
+    serrurerie: 'front door with broken lock or someone locked out at night, residential entrance, security urgency, dark moody lighting',
     menuiserie: 'damaged wooden window frame or broken cabinet door, splintered wood, visible damage needing repair',
     vitrerie: 'cracked window glass in French apartment, broken pane with spider web crack pattern, cold light coming through',
-    volets: 'stuck roller shutter on French building facade, half-open jammed shutter, visible mechanism problem. A Help Confort branded white van parked in front',
+    volets: 'stuck roller shutter on French building facade, half-open jammed shutter, visible mechanism problem',
     pmr: 'narrow bathroom with accessibility barriers, elderly person context, need for walk-in shower and grab bars',
     renovation: 'apartment mid-renovation with exposed walls, messy construction site needing professional finish',
-    general: 'Help Confort branded white Ford Transit van with blue swoosh livery and colorful service pictograms, parked in front of a French residential home, professional service atmosphere, clean and trustworthy',
+    general: 'plain white service van parked in front of a French residential home, professional maintenance service atmosphere, clean and trustworthy, no logos or branding on the van',
   };
   return scenes[universe] || scenes.general;
 }
