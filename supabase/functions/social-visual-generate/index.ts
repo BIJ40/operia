@@ -787,7 +787,7 @@ async function persistAsset(
     return { response: new Response(JSON.stringify({ error: 'Erreur upload: ' + uploadError.message }), { status: 500, headers }) };
   }
 
-  const visualStrategy = realPhotoUrl ? 'photo_realisation' : 'illustration_generee';
+  const visualStrategy = hasBeforeAfter ? 'avant_apres_reel' : realPhotoUrl ? 'photo_realisation' : 'illustration_generee';
   const { data: asset, error: insertError } = await adminSupabase
     .from('social_visual_assets')
     .insert({
