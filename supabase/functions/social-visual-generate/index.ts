@@ -152,8 +152,9 @@ async function callImageAIWithFallback(
   const hasInputImages = inputImages.length > 0;
   const forceGemini = preferredModel === 'gemini';
   const forceDalle = preferredModel === 'dall-e-3';
+  const requiresReferenceFaithfulness = hasInputImages;
 
-  console.log(`[callImageAI] preferredModel=${preferredModel || 'auto'}, hasInputImages=${hasInputImages}, forceGemini=${forceGemini}, forceDalle=${forceDalle}`);
+  console.log(`[callImageAI] preferredModel=${preferredModel || 'auto'}, hasInputImages=${hasInputImages}, forceGemini=${forceGemini}, forceDalle=${forceDalle}, referenceFaithfulness=${requiresReferenceFaithfulness}`);
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // ROUTE A: Input images present OR user forced Gemini → Gemini FIRST
@@ -250,8 +251,19 @@ async function callImageAIWithFallback(
       console.warn('[callImageAI] No GOOGLE_GEMINI_API_KEY — cannot process input images');
     }
 
-    // Fallback for image inputs: use GPT-4o to analyze → DALL-E text-only generation
-    console.log('[callImageAI] Gemini failed with images, falling back to GPT-4o analysis → DALL-E...');
+    if (requiresReferenceFaithfulness || forceGemini) {
+      console.error('[callImageAI] Gemini failed and DALL-E fallback is disabled to preserve reference fidelity');
+      return {
+        ok: false,
+        status: 502,
+        error: requiresReferenceFaithfulness
+          ? 'Gemini n’a pas pu générer le visuel à partir des images de référence. DALL-E a été volontairement bloqué pour ne pas trahir le vrai véhicule.'
+          : 'La génération Gemini a échoué et aucun fallback DALL-E n’a été appliqué car le modèle Gemini était forcé.',
+      };
+    }
+
+    // Fallback sans images de référence : GPT-4o analyse → DALL-E text-only
+    console.log('[callImageAI] Gemini failed without reference images, falling back to GPT-4o analysis → DALL-E...');
     const analysisResult = await callAiWithFallback({
       messages: [{
         role: 'user',
@@ -271,12 +283,6 @@ CRITICAL RULES:
       model: 'gpt-4o',
       max_tokens: 500,
     });
-
-    if (analysisResult.ok) {
-      const dallePrompt = analysisResult.data.choices?.[0]?.message?.content || prompt;
-      prompt = dallePrompt.slice(0, 950);
-      console.log(`[callImageAI] GPT-4o generated DALL-E prompt: ${prompt.slice(0, 150)}...`);
-    }
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -771,30 +777,13 @@ ${HELPCONFORT_VISUAL_IDENTITY}` },
         const refUrls = await getVerifiedVanReferenceUrls();
         
         if (refUrls.length === 0) {
-          // No reference photos accessible — generate scene WITHOUT van
-          console.warn('[social-visual-generate] No van reference photos accessible — generating without van');
-          const noVanScene = sceneDescription
-            .replace(/van|transit|renault master|utilitaire/gi, '')
-            .replace(/parked|garé/gi, '')
-            + '. Do NOT include any vehicle, van, truck or car in this image.';
-          bgMessages = [{
-            role: 'user',
-            content: `Generate a REALISTIC PHOTOGRAPH designed as a SOCIAL MEDIA AD BACKGROUND (1080x1080 square).
-
-SCENE TO PHOTOGRAPH:
-${noVanScene}
-
-${AD_COMPOSITION_RULES}
-
-IMPORTANT: Do NOT generate any vehicle, van, truck, or car in this image. Focus only on the technician and the work scene.
-
-ADDITIONAL REQUIREMENTS:
-- This must look like a REAL PHOTOGRAPH taken on-site by a professional photographer
-- Close-up framing on the problem (NOT the whole building/house)
-- Dramatic natural lighting with a cinematic feel
-- The bottom third should naturally be darker (floor, shadow, dark surface)
-- High resolution feel, sharp details on the main subject`,
-          }];
+          console.error('[social-visual-generate] includeVan=true but no verified van reference photos are accessible');
+          return new Response(
+            JSON.stringify({
+              error: 'Impossible d’intégrer le vrai véhicule HC : aucune photo de référence exploitable n’est accessible.',
+            }),
+            { status: 502, headers: jsonHeaders }
+          );
         } else {
           // Use the real van photos — integrate them AS-IS into the scene
           bgMessages = [{
