@@ -116,7 +116,7 @@ export function SocialPostCard({ suggestion, onApprove, onReject, onRegenerate, 
         {suggestion.hashtags?.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2 pt-2 border-t border-border/50">
             {suggestion.hashtags.map(h => (
-              <span key={h} className="text-[10px] text-primary">#{h}</span>
+              <span key={h} className="text-[10px] text-primary">{normalizeTag(h)}</span>
             ))}
           </div>
         )}
