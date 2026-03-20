@@ -79,7 +79,7 @@ const GENERAL_TOPIC_LABELS: Record<string, string> = {
   awareness_day: 'Sensibilisation',
   seasonal_tip: 'Conseil',
   realisation: 'Réalisation',
-  local_branding: 'Réseau',
+  local_branding: 'Votre agence',
 };
 
 export function getGeneralLabel(topicType?: string | null): string {
