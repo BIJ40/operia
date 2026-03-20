@@ -293,11 +293,11 @@ ADDITIONAL REQUIREMENTS:
     const sanitizeHookForAI = (raw: string): string => {
       let t = raw.trim().replace(/[…\.]+$/, '').trim();
       const words = t.split(/\s+/);
-      if (words.length > 6) t = words.slice(0, 6).join(' ');
-      if (t.length > 40) {
-        const cut = t.slice(0, 40);
+      if (words.length > 8) t = words.slice(0, 8).join(' ');
+      if (t.length > 50) {
+        const cut = t.slice(0, 50);
         const ls = cut.lastIndexOf(' ');
-        t = ls > 15 ? cut.slice(0, ls) : cut;
+        t = ls > 20 ? cut.slice(0, ls) : cut;
       }
       return t.replace(/[\s,;:]+$/, '').trim().toUpperCase();
     };
@@ -305,11 +305,11 @@ ADDITIONAL REQUIREMENTS:
     const sanitizeSubForAI = (raw: string): string => {
       let t = raw.trim().replace(/[…]+$/, '').trim();
       const words = t.split(/\s+/);
-      if (words.length > 12) t = words.slice(0, 12).join(' ');
-      if (t.length > 60) {
-        const cut = t.slice(0, 60);
+      if (words.length > 18) t = words.slice(0, 18).join(' ');
+      if (t.length > 90) {
+        const cut = t.slice(0, 90);
         const ls = cut.lastIndexOf(' ');
-        t = ls > 20 ? cut.slice(0, ls) : cut;
+        t = ls > 30 ? cut.slice(0, ls) : cut;
       }
       t = t.replace(/[\s,;:]+$/, '').trim();
       if (t && !/[.!?]$/.test(t)) t += '.';
@@ -318,7 +318,7 @@ ADDITIONAL REQUIREMENTS:
 
     const hookText = sanitizeHookForAI(hook || title || 'Votre maison mérite le meilleur');
     const subText = sanitizeSubForAI(caption || '');
-    const ctaText = (cta || 'Demandez un devis gratuit').toUpperCase().slice(0, 30);
+    const ctaText = (cta || 'Demandez un devis gratuit').toUpperCase().slice(0, 40);
 
     const compositionPrompt = `You are a professional social media graphic designer. Take this background image and create a FINAL SOCIAL MEDIA AD CREATIVE (1080x1080) by adding the following text overlay elements.
 
@@ -329,7 +329,7 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
    - Position: Lower-center area of the image (bottom 40%)
    - Style: VERY LARGE white bold text, ALL CAPS
    - Must have a dark semi-transparent backdrop/shadow for readability
-   - Maximum 2 lines
+   - Maximum 3 lines
    - This is the MOST IMPORTANT element — must be instantly readable
    - CRITICAL: Write this text EXACTLY as provided. Do NOT modify, truncate, or split it.
 
@@ -337,7 +337,7 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
    "${subText}"
    - Position: Just below the hook text
    - Style: Smaller white text, regular weight
-   - 1 line only — MUST fit on a single line
+   - Maximum 2 lines — the COMPLETE text must appear, no truncation
    - CRITICAL: Write this text EXACTLY as provided. Do NOT truncate or add "…"
 
 3. CTA BUTTON:
@@ -358,11 +358,12 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
    - Background color: ${color}
    - Text: "${serviceLabel}" in white, small font
 
-6. BRANDING (top-left):
-   - Use the official Help Confort logo if visible in the composition
-   - If no logo available: leave the top-left area EMPTY
-   - NEVER write "HC" or "HelpConfort" as text in the logo area
-   - NEVER create a fake/invented logo
+6. BRANDING (top-left corner):
+   - White rounded rectangle pill with subtle shadow
+   - Inside: the blue house icon logo (a blue house with a wave/ribbon below it)
+   - Next to the logo, on the right: "Help Confort" in bold dark blue (#006FAA) + below it "Landes & Pays Basque" in lighter blue (#0092DD) smaller text
+   - This MUST always appear — it is the agency branding
+   - NEVER write just "HC" — always the full branding block described above
 
 DESIGN RULES:
 - The background image must remain FULLY VISIBLE behind all overlays
