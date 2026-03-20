@@ -385,10 +385,15 @@ function validateAndNormalizeSuggestions(
       universe = 'general';
     }
 
-    // 5. realisation_id
+    // 5. realisation_id — OBLIGATOIRE pour "preuve", on force une réalisation réelle
     let realisationId: string | null = null;
-    if (topicType === 'realisation' && s.realisation_id && validRealisationIds.has(s.realisation_id)) {
+    if ((topicType === 'realisation' || topicType === 'preuve') && s.realisation_id && validRealisationIds.has(s.realisation_id)) {
       realisationId = s.realisation_id;
+    }
+    // If preuve but no valid realisation → reject this suggestion
+    if (topicType === 'preuve' && !realisationId) {
+      console.warn(`[validateSuggestions] Preuve post "${s.topic_key}" rejected: no valid realisation_id`);
+      continue; // skip this suggestion entirely
     }
 
     // 6. caption — strip structural labels (HOOK:, CTA:, etc.)
