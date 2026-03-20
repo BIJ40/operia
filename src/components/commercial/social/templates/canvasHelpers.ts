@@ -421,9 +421,10 @@ export function drawHookText(
   }
 
   ctx.font = `900 ${fontSize}px sans-serif`;
-  ctx.textAlign = align;
+  // Force center alignment for hook
+  ctx.textAlign = 'center';
   const lineH = fontSize * 1.15;
-  const xPos = align === 'center' ? SIZE / 2 : ZONES.MARGIN_X;
+  const xPos = SIZE / 2;
 
   lines.forEach((line, i) => {
     const ly = y + i * lineH;
