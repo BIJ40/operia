@@ -1246,6 +1246,7 @@ OBLIGATION : le post doit apporter une VALEUR IMMÉDIATE et rester actionnable`;
       let sourceType = 'ai_seasonal';
       if (s.topic_type === 'awareness_day') sourceType = 'ai_awareness';
       else if (s.topic_type === 'realisation') sourceType = 'ai_realisation';
+      else if (s.topic_type === 'educational') sourceType = 'ai_educational';
       if (regenerateSingle) sourceType = 'regenerated';
 
       const aiPayload = {
