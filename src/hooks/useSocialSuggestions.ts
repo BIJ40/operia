@@ -57,7 +57,11 @@ export interface SocialVariant {
 }
 
 // ─── Fetch suggestions for a month ───────────────────────────
-export function useSocialSuggestions(monthKey: string, pollingEnabled = false) {
+export function useSocialSuggestions(
+  monthKey: string,
+  pollingEnabled = false,
+  onPollResult?: (count: number) => void,
+) {
   const { agencyId } = useAuth();
 
   return useQuery({
@@ -77,7 +81,13 @@ export function useSocialSuggestions(monthKey: string, pollingEnabled = false) {
         .order('suggestion_date', { ascending: true });
 
       if (error) throw error;
-      if (!suggestions?.length) return [];
+      if (!suggestions?.length) {
+        onPollResult?.(0);
+        return [];
+      }
+
+      // Notify polling observer
+      onPollResult?.(suggestions.length);
 
       // Fetch variants for all suggestions
       const suggestionIds = suggestions.map(s => s.id);
