@@ -80,7 +80,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
     { value: 'general', label: '📢 Général' },
   ];
 
-  const effectiveUniverse = universeOverride || suggestion.universe;
+  const effectiveUniverse = (universeOverride && universeOverride !== '__auto') ? universeOverride : suggestion.universe;
 
   // Visual assets
   const { data: assets = [], isLoading: assetsLoading } = useSocialVisualAssets(suggestion.id);
