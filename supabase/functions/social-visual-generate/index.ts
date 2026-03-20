@@ -226,7 +226,7 @@ Contexte :
 - Hook original : "${rawHook}"
 - Sous-texte original : "${rawCaption}"
 - CTA original : "${rawCta}"
-- Type de post : ${topicType}
+- Type de post : ${topicType}${visualCustomization?.freePrompt ? `\n- DIRECTIVE UTILISATEUR (prioritaire) : "${visualCustomization.freePrompt}"` : ''}${visualCustomization?.keywords ? `\n- Mots-clés imposés : ${visualCustomization.keywords}` : ''}
 
 MISSION : produire un texte publicitaire court, naturel, crédible et immédiatement compréhensible pour un visuel social media.
 
