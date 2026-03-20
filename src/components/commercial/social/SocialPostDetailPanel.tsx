@@ -5,7 +5,7 @@
  */
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { Share2, ImagePlus, Download, RefreshCw, Loader2, Sparkles, Truck, ChevronDown, ChevronUp } from 'lucide-react';
+import { Share2, ImagePlus, Download, RefreshCw, Loader2, Sparkles, Truck, ChevronDown, ChevronUp, Palette } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,6 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SocialPostCard } from './SocialPostCard';
 import { SocialVisualCanvas, canvasToBlob, type SocialTemplatePayload } from './SocialVisualCanvas';
 import { resolveSocialTemplate } from './templateResolver';
@@ -64,6 +65,22 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const [freePrompt, setFreePrompt] = useState('');
   const [keywords, setKeywords] = useState('');
   const [includeVan, setIncludeVan] = useState(false);
+  const [universeOverride, setUniverseOverride] = useState<string>('');
+
+  const UNIVERSE_OPTIONS = [
+    { value: '', label: '— Auto (IA)' },
+    { value: 'plomberie', label: '🔧 Plomberie' },
+    { value: 'electricite', label: '⚡ Électricité' },
+    { value: 'serrurerie', label: '🔑 Serrurerie' },
+    { value: 'menuiserie', label: '🪵 Menuiserie' },
+    { value: 'vitrerie', label: '🪟 Vitrerie' },
+    { value: 'volets', label: '🪟 Volets roulants' },
+    { value: 'pmr', label: '♿ Adaptation logement' },
+    { value: 'renovation', label: '🏠 Rénovation' },
+    { value: 'general', label: '📢 Général' },
+  ];
+
+  const effectiveUniverse = (universeOverride && universeOverride !== '__auto') ? universeOverride : suggestion.universe;
 
   // Visual assets
   const { data: assets = [], isLoading: assetsLoading } = useSocialVisualAssets(suggestion.id);
@@ -93,20 +110,20 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const canvasPayload: SocialTemplatePayload = useMemo(() => ({
     title: suggestion.title,
     caption: generatedCopy?.subtext || suggestion.caption_base_fr || '',
-    universe: suggestion.universe,
+    universe: effectiveUniverse,
     platform: suggestion.platform_targets?.[0] || null,
     date: suggestion.suggestion_date,
     mediaUrl: rawPreviewUrl || null,
     hook: generatedCopy?.hook || aiPayload.hook || suggestion.title,
     cta: generatedCopy?.cta || aiPayload.cta || null,
     topicType: suggestion.topic_type,
-  }), [suggestion, rawPreviewUrl, aiPayload, generatedCopy]);
+  }), [suggestion, rawPreviewUrl, aiPayload, generatedCopy, effectiveUniverse]);
 
   const templateId = useMemo(() => resolveSocialTemplate({
     topic_type: suggestion.topic_type,
     hasMedia: !!rawPreviewUrl,
-    universe: suggestion.universe,
-  }), [suggestion.topic_type, rawPreviewUrl, suggestion.universe]);
+    universe: effectiveUniverse,
+  }), [suggestion.topic_type, rawPreviewUrl, effectiveUniverse]);
 
   // Load signed URLs
   useEffect(() => {
@@ -145,10 +162,11 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
 
   const handleGenerate = useCallback(() => {
     setLoadingPreview(true);
-    const visualCustomization = (freePrompt || keywords || includeVan) ? {
+    const visualCustomization = (freePrompt || keywords || includeVan || universeOverride) ? {
       freePrompt: freePrompt || undefined,
       keywords: keywords || undefined,
       includeVan,
+      universeOverride: universeOverride || undefined,
     } : undefined;
     generateMutation.mutate(
       { suggestionId: suggestion.id, visualCustomization },
@@ -162,7 +180,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
         },
       }
     );
-  }, [suggestion.id, generateMutation, freePrompt, keywords, includeVan]);
+  }, [suggestion.id, generateMutation, freePrompt, keywords, includeVan, universeOverride]);
 
   const handleDownload = useCallback(() => {
     const assetToDownload = renderMode === 'image'
@@ -262,6 +280,30 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
           </button>
           {showCustomization && (
             <div className="px-3 pb-3 space-y-2.5 border-t border-border pt-2.5">
+              {/* Universe override */}
+              <div>
+                <Label className="text-[10px] text-muted-foreground flex items-center gap-1">
+                  <Palette className="w-3 h-3" />
+                  Univers métier (couleur + picto)
+                </Label>
+                <Select value={universeOverride} onValueChange={setUniverseOverride}>
+                  <SelectTrigger className="mt-1 h-7 text-xs">
+                    <SelectValue placeholder="Auto (déterminé par l'IA)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {UNIVERSE_OPTIONS.map(opt => (
+                      <SelectItem key={opt.value || '__auto'} value={opt.value || '__auto'} className="text-xs">
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {universeOverride && (
+                  <p className="text-[9px] text-amber-600 mt-0.5">
+                    ⚠️ Univers forcé → le visuel et le canvas utiliseront « {UNIVERSE_OPTIONS.find(o => o.value === universeOverride)?.label} »
+                  </p>
+                )}
+              </div>
               <div>
                 <Label className="text-[10px] text-muted-foreground">💡 Votre idée / direction visuelle</Label>
                 <Textarea
