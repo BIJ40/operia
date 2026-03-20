@@ -337,11 +337,13 @@ CRITICAL RULES:
   } catch (err) {
     console.error('[callImageAI] DALL-E 3 fetch error:', err);
   }
+  } // end if (!forceGemini)
 
-  // ─── Fallback: Gemini Imagen (text-only) ───
+  // ─── Fallback: Gemini Imagen (text-only) — or primary if forceDalle failed ───
+  if (!forceDalle) {
   const geminiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
   if (geminiKey) {
-    console.log('[callImageAI] DALL-E failed, falling back to Gemini Imagen (text-only)...');
+    console.log('[callImageAI] Trying Gemini Imagen (text-only)...');
     await new Promise(r => setTimeout(r, 500));
     try {
       const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiKey}`;
