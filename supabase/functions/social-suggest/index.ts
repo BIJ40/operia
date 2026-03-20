@@ -486,11 +486,15 @@ Deno.serve(async (req) => {
     const regenerateSingle = body.regenerate_single === true;
     const singleSuggestionId = body.suggestion_id || null;
     const userPromptParams = body.prompt || null;
+    const targetDates: string[] = Array.isArray(body.target_dates) ? body.target_dates : [];
 
+    const isTargetDatesMode = targetDates.length > 0 && !regenerateSingle;
     const rateLimitKey = regenerateSingle
       ? `social-suggest:single:${context.userId}:${singleSuggestionId || 'unknown'}`
-      : `social-suggest:month:${context.userId}:${agencyId || 'unknown'}:${year}-${String(month).padStart(2, '0')}`;
-    const rlResult = await checkRateLimit(rateLimitKey, regenerateSingle
+      : isTargetDatesMode
+        ? `social-suggest:dates:${context.userId}:${agencyId || 'unknown'}:${targetDates.join(',')}`
+        : `social-suggest:month:${context.userId}:${agencyId || 'unknown'}:${year}-${String(month).padStart(2, '0')}`;
+    const rlResult = await checkRateLimit(rateLimitKey, regenerateSingle || isTargetDatesMode
       ? { limit: 6, windowMs: 10 * 60_000 }
       : { limit: 2, windowMs: 10 * 60_000 });
     if (!rlResult.allowed) {
@@ -680,6 +684,26 @@ Deno.serve(async (req) => {
         original_universe: originalSuggestion.universe,
         original_realisation_id: originalSuggestion.realisation_id,
       } : null;
+    } else if (isTargetDatesMode) {
+      // Archive only suggestions on the selected dates
+      const toArchiveIds = (existingSuggestions || [])
+        .filter(s => targetDates.includes(s.suggestion_date) && (s.status === 'draft' || s.status === 'rejected') && !protectedSuggestionIds.has(s.id))
+        .map(s => s.id);
+
+      if (toArchiveIds.length > 0) {
+        await adminSupabase
+          .from('social_content_suggestions')
+          .update({ status: 'archived' })
+          .in('id', toArchiveIds)
+          .eq('agency_id', agencyId);
+
+        await adminSupabase
+          .from('social_post_variants')
+          .update({ status: 'archived' })
+          .in('suggestion_id', toArchiveIds)
+          .eq('agency_id', agencyId);
+      }
+      console.log(`[social-suggest] Target dates mode: ${targetDates.length} dates, archived ${toArchiveIds.length} suggestions`);
     } else {
       const toArchiveIds = (existingSuggestions || [])
         .filter(s => (s.status === 'draft' || s.status === 'rejected') && !protectedSuggestionIds.has(s.id))
@@ -701,7 +725,7 @@ Deno.serve(async (req) => {
     }
 
     const approvedCount = (existingSuggestions || []).filter(s => s.status === 'approved' || protectedSuggestionIds.has(s.id)).length;
-    const targetPostCount = regenerateSingle ? 1 : Math.max(8, 20 - approvedCount);
+    const targetPostCount = regenerateSingle ? 1 : isTargetDatesMode ? targetDates.length : Math.max(8, 20 - approvedCount);
 
     // ─── AI Generation ──────────────────────────────
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
@@ -969,6 +993,36 @@ ${exploitableReals.length > 0
 
 Propose un angle DIFFÉRENT du post précédent.
 RAPPEL : le post doit contenir au moins UN déclencheur de conversion (perte d'argent, inconfort, risque, gain immédiat, simplicité).`;
+    } else if (isTargetDatesMode) {
+      const datesFormatted = targetDates.map(d => {
+        const day = parseInt(d.split('-')[2]);
+        // Check if there's an awareness event on this date
+        const event = monthAwareness.find(a => a.day === day);
+        return event 
+          ? `- ${d}: événement "${event.label}" (univers: ${event.preferredUniverses[0]}, score: ${event.relevanceScore}) — utiliser SEULEMENT si pertinent`
+          : `- ${d}: post métier libre — choisir un univers varié`;
+      }).join('\n');
+
+      userPrompt = `Génère EXACTEMENT ${targetDates.length} suggestion(s) de posts, UNE par date suivante :
+
+${datesFormatted}
+${promptCustomization}
+
+RÉALISATIONS EXPLOITABLES :
+${exploitableReals.length > 0 
+  ? exploitableReals.map(r => `- "${r.title}" (ID: ${r.id}, univers: ${r.universe || 'inconnu'}, avant/après: ${r.hasBeforeAfter ? 'oui' : 'non'})`).join('\n')
+  : '(aucune)'}
+
+SUJETS DÉJÀ EXISTANTS (à ne pas dupliquer) :
+${[...existingTopicKeys].join(', ') || '(aucun)'}
+
+RÈGLES :
+- UN post par date, pas plus, pas moins
+- Chaque post doit être sur une date différente parmi celles listées
+- La suggestion_date DOIT correspondre EXACTEMENT à une des dates demandées
+- Varier les univers entre les posts
+- Chaque post DOIT contenir un DÉCLENCHEUR de conversion
+- Pas de contenu calendaire forcé`;
     } else {
       userPrompt = `Génère ${targetPostCount} suggestions de posts social media PERFORMANTS pour le mois ${month}/${year}.
 

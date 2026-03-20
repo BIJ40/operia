@@ -87,21 +87,13 @@ export default function SocialHubPage() {
   }, []);
 
   const handleRegenerateSelectedDays = useCallback(() => {
-    // Regenerate suggestions for each selected day
     const dates = Array.from(selectedDays);
-    // Find suggestion IDs for selected days
-    const idsToRegenerate = suggestions
-      .filter(s => dates.includes(s.suggestion_date))
-      .map(s => s.id);
+    if (dates.length === 0) return;
 
-    if (idsToRegenerate.length === 0) return;
-
-    // Regenerate each one
-    for (const id of idsToRegenerate) {
-      generateMutation.mutate({ month, year, regenerateSingle: true, suggestionId: id });
-    }
+    // Send target_dates to the edge function — it handles archival + generation
+    generateMutation.mutate({ month, year, targetDates: dates });
     setSelectedDays(new Set());
-  }, [selectedDays, suggestions, generateMutation, month, year]);
+  }, [selectedDays, generateMutation, month, year]);
 
   // Stats
   const stats = useMemo(() => {
