@@ -50,8 +50,8 @@ const SUB_MAX_WORDS = 18;
 const SUB_MAX_LINES = 2;
 const SUB_FONT = 24;
 
-const CTA_MAX_CHARS = 30;
-const CTA_FONT = 24;
+const CTA_MAX_CHARS = 40;
+const CTA_FONT = 22;
 
 // ─── Universe Style Map ─────────────────────────────────────
 export interface ServiceTheme {

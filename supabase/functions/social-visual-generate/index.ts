@@ -329,7 +329,7 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
    - Position: Lower-center area of the image (bottom 40%)
    - Style: VERY LARGE white bold text, ALL CAPS
    - Must have a dark semi-transparent backdrop/shadow for readability
-   - Maximum 2 lines
+   - Maximum 3 lines
    - This is the MOST IMPORTANT element — must be instantly readable
    - CRITICAL: Write this text EXACTLY as provided. Do NOT modify, truncate, or split it.
 
@@ -337,7 +337,7 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
    "${subText}"
    - Position: Just below the hook text
    - Style: Smaller white text, regular weight
-   - 1 line only — MUST fit on a single line
+   - Maximum 2 lines — the COMPLETE text must appear, no truncation
    - CRITICAL: Write this text EXACTLY as provided. Do NOT truncate or add "…"
 
 3. CTA BUTTON:
