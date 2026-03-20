@@ -465,12 +465,6 @@ Deno.serve(async (req) => {
       return rateLimitResponse(rlResult.retryAfter!, corsHeaders);
     }
 
-    const body = await req.json();
-    const month = Number(body.month);
-    const year = Number(body.year);
-    const agencyId = body.agency_id ? validateUUID(body.agency_id, 'agency_id') : context.agencyId;
-    const regenerateSingle = body.regenerate_single === true;
-    const singleSuggestionId = body.suggestion_id || null;
     const userPromptParams = body.prompt || null;
 
     if (!agencyId) {
