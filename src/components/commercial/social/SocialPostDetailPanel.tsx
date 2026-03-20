@@ -251,6 +251,50 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
           </div>
         )}
 
+        {/* ─── Personnalisation du visuel ─── */}
+        <div className="border border-border rounded-lg overflow-hidden">
+          <button
+            onClick={() => setShowCustomization(!showCustomization)}
+            className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-medium text-muted-foreground hover:bg-muted/50 transition-colors"
+          >
+            <span>🎨 Personnaliser le visuel</span>
+            {showCustomization ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+          </button>
+          {showCustomization && (
+            <div className="px-3 pb-3 space-y-2.5 border-t border-border pt-2.5">
+              <div>
+                <Label className="text-[10px] text-muted-foreground">💡 Votre idée / direction visuelle</Label>
+                <Textarea
+                  value={freePrompt}
+                  onChange={(e) => setFreePrompt(e.target.value)}
+                  placeholder="Ex : spot LED à la place des ampoules, ambiance moderne..."
+                  className="mt-1 text-xs min-h-[56px] resize-none"
+                />
+              </div>
+              <div>
+                <Label className="text-[10px] text-muted-foreground">🔑 Mots-clés</Label>
+                <Input
+                  value={keywords}
+                  onChange={(e) => setKeywords(e.target.value)}
+                  placeholder="LED, moderne, salle de bain..."
+                  className="mt-1 text-xs h-7"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={includeVan}
+                  onCheckedChange={setIncludeVan}
+                  className="scale-75 origin-left"
+                />
+                <Label className="text-[10px] text-muted-foreground flex items-center gap-1">
+                  <Truck className="w-3 h-3" />
+                  Inclure le véhicule HC
+                </Label>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Actions */}
         <div className="flex gap-1.5">
           <Button
