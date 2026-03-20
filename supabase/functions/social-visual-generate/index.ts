@@ -609,11 +609,13 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
    - Bold, compact, must fit on ONE LINE — perfectly centered in the image width
 
 4. FOOTER BAR:
-   - Position: Very bottom of the image (last 90px, Y=940 to Y=1080)
+   - Position: Very bottom of the image (last 110px, Y=920 to Y=1080)
    - Style: Solid blue bar (#0092DD) full width
-   - Text: "HelpConfort — DEPAN40${agencyAddress ? ' — ' + agencyAddress : ''}" in white, left-aligned
-   - Right side: "${serviceLabel}" in smaller white text
-   - Thin orange (#FFB705) line at the top of the blue bar
+   - Thin orange (#FFB705) line at the very top of the blue bar
+   - LINE 1 (main): "HelpConfort — DEPAN40 — Landes & Pays Basque" in white, left-aligned, bold
+   - LINE 2 (contact info, smaller): "📞 05 58 35 21 38 — dax@helpconfort.com — www.helpconfort-40.fr" in white, left-aligned, regular weight, smaller font
+   - Right side of LINE 1: "${serviceLabel}" in smaller white text
+   - Both lines must be FULLY READABLE — minimum 18px equivalent for line 2
 
 5. UNIVERSE BADGE (top-right corner):
    - Small rounded pill/badge
