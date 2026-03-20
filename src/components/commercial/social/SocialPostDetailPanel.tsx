@@ -65,6 +65,22 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const [freePrompt, setFreePrompt] = useState('');
   const [keywords, setKeywords] = useState('');
   const [includeVan, setIncludeVan] = useState(false);
+  const [universeOverride, setUniverseOverride] = useState<string>('');
+
+  const UNIVERSE_OPTIONS = [
+    { value: '', label: '— Auto (IA)' },
+    { value: 'plomberie', label: '🔧 Plomberie' },
+    { value: 'electricite', label: '⚡ Électricité' },
+    { value: 'serrurerie', label: '🔑 Serrurerie' },
+    { value: 'menuiserie', label: '🪵 Menuiserie' },
+    { value: 'vitrerie', label: '🪟 Vitrerie' },
+    { value: 'volets', label: '🪟 Volets roulants' },
+    { value: 'pmr', label: '♿ Adaptation logement' },
+    { value: 'renovation', label: '🏠 Rénovation' },
+    { value: 'general', label: '📢 Général' },
+  ];
+
+  const effectiveUniverse = universeOverride || suggestion.universe;
 
   // Visual assets
   const { data: assets = [], isLoading: assetsLoading } = useSocialVisualAssets(suggestion.id);
