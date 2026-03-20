@@ -420,7 +420,7 @@ const SUGGEST_TOOL = {
               caption_base_fr: { type: 'string', description: 'Texte complet du post : hook + storytelling (situation → problème → intervention → résultat) + CTA. Publiable sans modification.' },
               cta: { type: 'string', description: "CTA court et GÉNÉRIQUE (jamais de nom de ville). Ex: \"Prendre RDV\", \"En savoir plus\", \"Demander un devis\", \"Nous contacter\"" },
               hashtags: { type: 'array', items: { type: 'string' }, description: 'Hashtags (max 10)' },
-              topic_type: { type: 'string', enum: ['awareness_day', 'seasonal_tip', 'realisation', 'local_branding'] },
+              topic_type: { type: 'string', enum: ['awareness_day', 'seasonal_tip', 'realisation', 'local_branding', 'educational'] },
               topic_key: { type: 'string', description: 'Identifiant unique du sujet' },
               visual_type: { type: 'string', enum: ['photo', 'illustration', 'before_after', 'quote'] },
               universe: { type: 'string', enum: ['plomberie', 'electricite', 'serrurerie', 'vitrerie', 'menuiserie', 'renovation', 'volets', 'pmr', 'general'] },
