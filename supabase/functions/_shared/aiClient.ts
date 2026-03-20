@@ -1,5 +1,5 @@
 /**
- * Client IA unifié — OpenAI (principal) + Anthropic Claude (fallback)
+ * Client IA unifié — OpenAI (principal) + Anthropic Claude (fallback) + Google Gemini (second fallback)
  * Remplace entièrement le Lovable AI Gateway
  */
 
