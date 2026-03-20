@@ -32,16 +32,27 @@ const VAN_REFERENCE_URLS = [
   `${SUPABASE_URL}/storage/v1/object/public/brand-assets/van-ref14.jpg`,
   `${SUPABASE_URL}/storage/v1/object/public/brand-assets/van-ref15.jpg`,
 ];
-// Verify van reference URLs are accessible, return only valid ones
+// Verify van reference URLs are accessible, return only valid ones (MAX 3 to avoid CPU timeout)
+const MAX_VAN_REFS = 3;
 async function getVerifiedVanReferenceUrls(): Promise<string[]> {
   const verified: string[] = [];
   for (const url of VAN_REFERENCE_URLS) {
+    if (verified.length >= MAX_VAN_REFS) break;
     try {
       const resp = await fetch(url, { method: 'HEAD' });
-      if (resp.ok) verified.push(url);
+      if (resp.ok) {
+        // Prefer smaller images (< 500KB) to avoid CPU limits
+        const size = parseInt(resp.headers.get('content-length') || '0', 10);
+        if (size > 0 && size < 500_000) {
+          verified.push(url);
+        } else if (verified.length < 2) {
+          // Accept larger ones only if we don't have enough small ones
+          verified.push(url);
+        }
+      }
     } catch { /* skip unavailable */ }
   }
-  console.log(`[social-visual-generate] Van references verified: ${verified.length}/${VAN_REFERENCE_URLS.length}`);
+  console.log(`[social-visual-generate] Van references verified: ${verified.length}/${VAN_REFERENCE_URLS.length} (max ${MAX_VAN_REFS})`);
   return verified;
 }
 
