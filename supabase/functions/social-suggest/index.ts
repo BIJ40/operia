@@ -1298,12 +1298,11 @@ L'ordre change chaque semaine pour éviter la prévisibilité.
 ${scheduleLines}
 
 ═══════════════════════════════════════════
-ÉVÉNEMENTS À LIEN DIRECT MÉTIER (prioritaires)
+ÉVÉNEMENTS OBLIGATOIRES (le post de CE JOUR doit traiter CE THÈME)
 ═══════════════════════════════════════════
-Ces événements ont un lien DIRECT avec l'habitat/dépannage. Utilise-les comme PRÉTEXTE pour un vrai problème.
-Respecte l'univers indiqué. Le topic_type reste celui assigné au jour.
+Ces événements sont le THÈME PRINCIPAL du post du jour. Ne les utilise pas comme simple prétexte — le post doit PARLER de l'événement, avec un angle métier Help Confort.
 
-${pertinentEvents.map(a => `- ${a.day}/${month}: ${a.label} | UNIVERS: ${a.preferredUniverses[0]} | priorité: ${a.relevanceScore * a.intentScore}`).join('\n') || '(aucun événement pertinent ce mois)'}
+${pertinentEvents.map(a => `- ⚠️ JOUR ${a.day}/${month}: "${a.label}" | UNIVERS: ${a.preferredUniverses[0]} | Le post du ${a.day} DOIT traiter ce sujet`).join('\n') || '(aucun événement pertinent ce mois)'}
 
 ═══════════════════════════════════════════
 ÉVÉNEMENTS OPTIONNELS (score 2 — NE PAS FORCER)
