@@ -34,6 +34,7 @@ const TAB_MODULE_MAP: Record<string, ModuleKey> = {
   prospects: 'commercial.prospects',
   realisations: 'commercial.realisations',
   social: 'commercial.social',
+  bd_story: 'commercial.bd_story',
   signature: 'commercial.signature',
 };
 
