@@ -1339,16 +1339,7 @@ RAPPEL CRITIQUE — 1 POST/JOUR, MACHINE ÉDITORIALE
 
     console.log(`[social-suggest] AI success via ${aiResult.provider}`);
 
-    const aiText = await aiResponse.text();
-    let aiData: any;
-    try {
-      aiData = JSON.parse(aiText);
-    } catch {
-      console.error('[social-suggest] AI returned non-JSON:', aiText.slice(0, 500));
-      return new Response(JSON.stringify({ error: 'Réponse IA invalide (non-JSON), réessayez' }), {
-        status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    const aiData = aiResult.data;
 
     let rawSuggestions: any[];
     try {
