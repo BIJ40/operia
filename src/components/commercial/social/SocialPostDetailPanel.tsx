@@ -66,6 +66,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const [keywords, setKeywords] = useState('');
   const [includeVan, setIncludeVan] = useState(false);
   const [universeOverride, setUniverseOverride] = useState<string>('');
+  const [imageModel, setImageModel] = useState<string>('auto');
 
   const UNIVERSE_OPTIONS = [
     { value: '', label: '— Auto (IA)' },
@@ -162,11 +163,12 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
 
   const handleGenerate = useCallback(() => {
     setLoadingPreview(true);
-    const visualCustomization = (freePrompt || keywords || includeVan || universeOverride) ? {
+    const visualCustomization = (freePrompt || keywords || includeVan || universeOverride || imageModel !== 'auto') ? {
       freePrompt: freePrompt || undefined,
       keywords: keywords || undefined,
       includeVan,
       universeOverride: universeOverride || undefined,
+      imageModel: imageModel !== 'auto' ? imageModel : undefined,
     } : undefined;
     generateMutation.mutate(
       { suggestionId: suggestion.id, visualCustomization },
@@ -180,7 +182,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
         },
       }
     );
-  }, [suggestion.id, generateMutation, freePrompt, keywords, includeVan, universeOverride]);
+  }, [suggestion.id, generateMutation, freePrompt, keywords, includeVan, universeOverride, imageModel]);
 
   const handleDownload = useCallback(() => {
     const assetToDownload = renderMode === 'image'
@@ -332,6 +334,18 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
                   <Truck className="w-3 h-3" />
                   Inclure le véhicule HC
                 </Label>
+              </div>
+              <div>
+                <Label className="text-[10px] text-muted-foreground">🤖 Modèle image</Label>
+                <select
+                  value={imageModel}
+                  onChange={(e) => setImageModel(e.target.value)}
+                  className="mt-1 w-full h-7 text-xs rounded-md border border-input bg-background px-2"
+                >
+                  <option value="auto">🔄 Auto (DALL-E → Gemini)</option>
+                  <option value="dall-e-3">🎨 DALL-E 3 (OpenAI)</option>
+                  <option value="gemini">🌐 Gemini Imagen (Google)</option>
+                </select>
               </div>
             </div>
           )}

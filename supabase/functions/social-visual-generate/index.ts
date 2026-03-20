@@ -128,6 +128,7 @@ import { callAiWithFallback, getAiKeys, type AiChatMessage } from '../_shared/ai
 async function callImageAIWithFallback(
   _apiKey: string,
   messages: any[],
+  preferredModel?: string,
 ): Promise<{ ok: true; data: any; model: string } | { ok: false; status: number; error: string }> {
   const { openaiKey } = getAiKeys();
 
@@ -149,12 +150,16 @@ async function callImageAIWithFallback(
   }
 
   const hasInputImages = inputImages.length > 0;
+  const forceGemini = preferredModel === 'gemini';
+  const forceDalle = preferredModel === 'dall-e-3';
+
+  console.log(`[callImageAI] preferredModel=${preferredModel || 'auto'}, hasInputImages=${hasInputImages}, forceGemini=${forceGemini}, forceDalle=${forceDalle}`);
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // ROUTE A: Input images present → Gemini FIRST (can process images natively)
+  // ROUTE A: Input images present OR user forced Gemini → Gemini FIRST
   // DALL-E 3 CANNOT accept input images, so Gemini is the only option here
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  if (hasInputImages) {
+  if (hasInputImages || forceGemini) {
     console.log(`[callImageAI] Has ${inputImages.length} input image(s) — using Gemini (native image input)`);
     
     const geminiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
@@ -276,6 +281,7 @@ CRITICAL RULES:
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // ROUTE B: No input images (or Gemini failed above) → DALL-E 3 primary
+  // Skip DALL-E if user explicitly forced Gemini (already tried above)
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   
   // Truncate prompt for DALL-E 3 (max 4000 chars)
@@ -283,6 +289,7 @@ CRITICAL RULES:
     prompt = prompt.slice(0, 3900);
   }
 
+  if (!forceGemini) {
   console.log(`[callImageAI] Generating image via DALL-E 3 (text-only)...`);
   try {
     const response = await fetch('https://api.openai.com/v1/images/generations', {
@@ -330,11 +337,13 @@ CRITICAL RULES:
   } catch (err) {
     console.error('[callImageAI] DALL-E 3 fetch error:', err);
   }
+  } // end if (!forceGemini)
 
-  // ─── Fallback: Gemini Imagen (text-only) ───
+  // ─── Fallback: Gemini Imagen (text-only) — or primary if forceDalle failed ───
+  if (!forceDalle) {
   const geminiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
   if (geminiKey) {
-    console.log('[callImageAI] DALL-E failed, falling back to Gemini Imagen (text-only)...');
+    console.log('[callImageAI] Trying Gemini Imagen (text-only)...');
     await new Promise(r => setTimeout(r, 500));
     try {
       const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiKey}`;
@@ -379,6 +388,7 @@ CRITICAL RULES:
       console.error('[callImageAI] Gemini Imagen fetch error:', err);
     }
   }
+  } // end if (!forceDalle)
 
   return { ok: false, status: 502, error: 'All image providers failed (DALL-E 3, Gemini)' };
 }
@@ -412,6 +422,7 @@ Deno.serve(async (req) => {
       universeOverride?: string;
       tone?: string;
       audience?: string;
+      imageModel?: string;
     } | undefined;
 
     if (!suggestionId || !agencyId) {
@@ -460,7 +471,8 @@ Deno.serve(async (req) => {
     const serviceLabel = universe === 'general'
       ? (GENERAL_TOPIC_LABELS[topicType] || SERVICE_LABELS.general)
       : (SERVICE_LABELS[universe] || SERVICE_LABELS.general);
-    console.log(`[social-visual-generate] Universe: ${universe} (override: ${visualCustomization?.universeOverride || 'none'})`);
+    const preferredImageModel = visualCustomization?.imageModel || undefined;
+    console.log(`[social-visual-generate] Universe: ${universe} (override: ${visualCustomization?.universeOverride || 'none'}), imageModel: ${preferredImageModel || 'auto'}`);
     const title = suggestion.title || '';
     const rawHook = aiPayload.hook || title;
     const rawCta = aiPayload.cta || 'Demandez un devis gratuit';
@@ -815,7 +827,7 @@ ADDITIONAL REQUIREMENTS:
 
     console.log('[social-visual-generate] Generating background image...');
 
-    const bgResult = await callImageAIWithFallback(LOVABLE_API_KEY, bgMessages);
+    const bgResult = await callImageAIWithFallback(LOVABLE_API_KEY, bgMessages, preferredImageModel);
 
     if (!bgResult.ok) {
       if (bgResult.status === 402) {
@@ -837,7 +849,7 @@ ADDITIONAL REQUIREMENTS:
         content: `Generate a realistic photograph for a social media ad (1080x1080 square). Scene: ${getSceneForUniverse(universe)}. Professional photography, cinematic lighting, bottom third darker. No text, no logos, no watermarks.`,
       }];
       
-      const retryResult = await callImageAIWithFallback(LOVABLE_API_KEY, retryMessages);
+      const retryResult = await callImageAIWithFallback(LOVABLE_API_KEY, retryMessages, preferredImageModel);
       if (retryResult.ok) {
         bgImageUrl = retryResult.data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
       }
@@ -990,7 +1002,7 @@ MANDATORY QUALITY CHECKLIST (if ANY fails, regenerate):
       ],
     }];
 
-    const compResult = await callImageAIWithFallback(LOVABLE_API_KEY, compMessages);
+    const compResult = await callImageAIWithFallback(LOVABLE_API_KEY, compMessages, preferredImageModel);
 
     if (!compResult.ok) {
       console.warn('[social-visual-generate] Composition failed, returning raw background asset');
