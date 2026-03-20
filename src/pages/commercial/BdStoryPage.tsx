@@ -3,7 +3,7 @@
  * Génération, aperçu planche, historique
  */
 import { useState, useCallback } from 'react';
-import { useAgencyId } from '@/hooks/useAgencyId';
+import { useProfile } from '@/contexts/ProfileContext';
 import { useBdStoryGenerate } from '@/modules/bd-story/hooks/useBdStoryGenerate';
 import { useBdStoryHistory } from '@/modules/bd-story/hooks/useBdStoryHistory';
 import { BdStoryGeneratorForm } from '@/modules/bd-story/ui/BdStoryGeneratorForm';
