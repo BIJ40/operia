@@ -1653,30 +1653,18 @@ ${exploitableReals.length > 0
 Propose un angle DIFFÉRENT du post précédent.
 RAPPEL : le post doit contenir au moins UN déclencheur de conversion (perte d'argent, inconfort, risque, gain immédiat, simplicité).`;
     } else if (isTargetDatesMode) {
-      // Look up the weekly schedule to know what category each target date should have
+      // Look up the editorial calendar for each target date
       const datesFormatted = targetDates.map(d => {
         const day = parseInt(d.split('-')[2]);
-        const event = monthAwareness.find(a => a.day === day);
-        const scheduledCategory = weeklySchedule.find(s => s.day === day)?.category || 'conseil';
+        const editorialDay = weeklySchedule.find(s => s.day === day);
+        const scheduledCategory = editorialDay?.category || 'conseil';
+        const scheduledUniverse = editorialDay?.universe || 'general';
+        const scheduledTheme = editorialDay?.theme || '';
         
-        const CATEGORY_DESCRIPTIONS: Record<string, string> = {
-          urgence: 'URGENCE — fuite, panne, casse, sécurité. Universe métier obligatoire.',
-          prevention: 'PRÉVENTION — anticiper un problème, entretien préventif.',
-          amelioration: 'AMÉLIORATION — confort, esthétique, valorisation habitat.',
-          conseil: 'CONSEIL PRATIQUE — tip utile, actionnable, court.',
-          preuve: 'PREUVE — témoignage, avant/après, process d\'intervention, savoir-faire.',
-          saisonnier: 'SAISONNIER — lié à la météo réelle ou à la période.',
-          contre_exemple: 'CONTRE-EXEMPLE — erreur fréquente, "ce qu\'il ne faut pas faire".',
-          pedagogique: 'PÉDAGOGIQUE — "le saviez-vous ?", chiffre clé, schéma simple.',
-          prospection: 'PROSPECTION & MARQUE — zone d\'intervention, panorama métiers, partenaires, commercial créatif. Universe = general.',
-        };
-        
-        const categoryDesc = CATEGORY_DESCRIPTIONS[scheduledCategory] || scheduledCategory;
-        
-        if (event) {
-          return `- ${d}: CATÉGORIE OBLIGATOIRE = "${scheduledCategory}" (${categoryDesc}) | événement: "${event.label}" (utiliser SEULEMENT si pertinent)`;
+        if (editorialDay?.isCalendar) {
+          return `- ${d}: ⚠️ CALENDAIRE → topic_type="calendar" | universe="${scheduledUniverse}" | THÈME: "${scheduledTheme}" | Post humain/image, AUCUN métier`;
         }
-        return `- ${d}: CATÉGORIE OBLIGATOIRE = "${scheduledCategory}" (${categoryDesc})`;
+        return `- ${d}: topic_type="${scheduledCategory}" | universe="${scheduledUniverse}" | THÈME: "${scheduledTheme}"`;
       }).join('\n');
 
       userPrompt = `Génère EXACTEMENT ${targetDates.length} suggestion(s) de posts, UNE par date suivante :
@@ -1684,11 +1672,7 @@ RAPPEL : le post doit contenir au moins UN déclencheur de conversion (perte d'a
 ${datesFormatted}
 ${promptCustomization}
 
-RÈGLE CRITIQUE : le topic_type de chaque post DOIT correspondre EXACTEMENT à la catégorie indiquée pour ce jour.
-Si la catégorie est "pedagogique" → le post DOIT être pédagogique (chiffre clé, "le saviez-vous ?").
-Si la catégorie est "prospection" → le post DOIT présenter l'entreprise (zone, métiers, partenaires).
-Si la catégorie est "contre_exemple" → le post DOIT montrer une erreur fréquente.
-NE PAS remplacer par de l'urgence ou du métier terrain si ce n'est pas la catégorie assignée.
+RÈGLE CRITIQUE : le topic_type, l'univers et le thème de chaque post DOIVENT correspondre au planning éditorial ci-dessus.
 
 RÉALISATIONS EXPLOITABLES :
 ${exploitableReals.length > 0 
@@ -1701,9 +1685,8 @@ ${[...existingTopicKeys].join(', ') || '(aucun)'}
 RÈGLES :
 - UN post par date, pas plus, pas moins
 - La suggestion_date DOIT correspondre EXACTEMENT à une des dates demandées
-- Varier les univers entre les posts (pas 2 fois le même univers)
-- Chaque post DOIT contenir un DÉCLENCHEUR de conversion
-- Pas de contenu calendaire forcé`;
+- Posts métier DOIVENT contenir un DÉCLENCHEUR de conversion
+- Posts calendar = post humain/image, pas de conversion forcée`;
     } else {
       // Build schedule from editorial calendar — each day has exact topic_type, universe, and theme
       const scheduleLines = weeklySchedule.map(s => {
