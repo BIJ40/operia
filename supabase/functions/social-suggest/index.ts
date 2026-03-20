@@ -1709,71 +1709,38 @@ RÈGLES :
 - Chaque post DOIT contenir un DÉCLENCHEUR de conversion
 - Pas de contenu calendaire forcé`;
     } else {
-      // Build weekly schedule string for the prompt — with calendar override
+      // Build schedule from editorial calendar — each day has exact topic_type, universe, and theme
       const scheduleLines = weeklySchedule.map(s => {
         const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(s.day).padStart(2, '0')}`;
-        // Check if this day has a calendar event
-        const calEvent = calendarOnlyEvents.find(a => a.day === s.day);
-        const pertEvent = pertinentEvents.find(a => a.day === s.day);
-        const optEvent = optionalEvents.find(a => a.day === s.day);
         
-        if (calEvent) {
-          // relevance 1 → FORCE calendar type
-          const angleDesc = ANGLE_DESCRIPTIONS[calEvent.calendarAngle || 'leger'] || 'ANGLE LÉGER';
-          return `- ${dateStr}: ⚠️ CALENDAIRE → topic_type="calendar" | "${calEvent.label}" | ${angleDesc} | Utilisation: ${calEvent.useHint || ''} | universe="general" | AUCUN contenu métier`;
+        if (s.isCalendar) {
+          return `- ${dateStr}: ⚠️ CALENDAIRE → topic_type="calendar" | universe="${s.universe}" | THÈME: "${s.theme}" | AUCUN contenu métier forcé, post humain/image/léger`;
         }
-        if (pertEvent) {
-          return `- ${dateStr}: catégorie "${s.category}" | ⚠️ ÉVÉNEMENT MÉTIER: "${pertEvent.label}" | univers: ${pertEvent.preferredUniverses[0]} | Utilisation: ${pertEvent.useHint || ''}`;
+        if (s.category === 'prospection') {
+          return `- ${dateStr}: topic_type="prospection" | universe="general" | THÈME: "${s.theme}"`;
         }
-        if (optEvent) {
-          return `- ${dateStr}: catégorie "${s.category}" | événement optionnel: "${optEvent.label}" (utiliser SEULEMENT si angle naturel)`;
-        }
-        return `- ${dateStr}: catégorie "${s.category}"`;
+        return `- ${dateStr}: topic_type="${s.category}" | universe="${s.universe}" | THÈME: "${s.theme}"`;
       }).join('\n');
 
       userPrompt = `Génère EXACTEMENT ${targetPostCount} suggestions de posts (1 PAR JOUR) pour le mois ${month}/${year}.
 
 ═══════════════════════════════════════════
-PLANNING QUOTIDIEN (1 POST/JOUR — STRUCTURE SEMI-ALÉATOIRE)
+PLANNING ÉDITORIAL QUOTIDIEN (CALENDRIER CURÉ — OBLIGATOIRE)
 ═══════════════════════════════════════════
-Chaque jour a une catégorie assignée. Le topic_type du post DOIT correspondre.
-EXCEPTION : les jours marqués "CALENDAIRE" → topic_type DOIT être "calendar" (pas la catégorie assignée).
+Chaque jour a un topic_type, un univers et un thème PRÉ-ASSIGNÉS.
+Tu DOIS respecter ces 3 éléments pour chaque jour. Le thème est une DIRECTION ÉDITORIALE, pas un titre à copier.
 
 ${scheduleLines}
 
 ═══════════════════════════════════════════
-JOURS CALENDAIRES (relevance 1 — AUCUN MÉTIER)
+RÈGLES DU CALENDRIER ÉDITORIAL
 ═══════════════════════════════════════════
-Ces jours ont topic_type = "calendar". Le contenu est HUMAIN, pas technique.
-INTERDIT : conseil métier, contenu technique, angle travaux, conversion agressive.
-L'angle éditorial est indiqué pour chaque jour. Le hook doit être chaleureux/humain.
-
-${calendarOnlyEvents.map(a => `- ⚠️ JOUR ${a.day}/${month}: "${a.label}" → angle: ${a.calendarAngle || 'leger'} | ${a.useHint || ''}`).join('\n') || '(aucun)'}
-
-═══════════════════════════════════════════
-ÉVÉNEMENTS MÉTIER DIRECTS (relevance 3 — LIEN MÉTIER OBLIGATOIRE)
-═══════════════════════════════════════════
-Le post du jour DOIT traiter ce thème avec un angle métier Help Confort.
-
-${pertinentEvents.map(a => `- ⚠️ JOUR ${a.day}/${month}: "${a.label}" | UNIVERS: ${a.preferredUniverses[0]} | ${a.useHint || ''}`).join('\n') || '(aucun)'}
-
-═══════════════════════════════════════════
-ÉVÉNEMENTS OPTIONNELS (relevance 2 — NE PAS FORCER)
-═══════════════════════════════════════════
-S'ils ne produisent pas un angle naturel → IGNORER.
-
-${optionalEvents.map(a => `- ${a.day}/${month}: ${a.label} | angle: ${a.calendarAngle || 'leger'} | ${a.useHint || ''} | OPTIONNEL`).join('\n') || '(aucun)'}
-
-═══════════════════════════════════════════
-ANTI-REDONDANCE — GAP MINIMUM 3 JOURS
-═══════════════════════════════════════════
-- Même univers interdit à moins de 3 jours d'écart
-- Max 2 occurrences par semaine par univers
-- Max 6 occurrences par mois par univers
-- Pas 2 posts consécutifs même catégorie
-- Pas 2 posts consécutifs même intention
-- Variation obligatoire du ton (question, alerte, affirmation, conseil, chiffre)
-${recentThemesWarning}
+- Le topic_type de chaque jour est OBLIGATOIRE — ne jamais le remplacer
+- L'univers de chaque jour est OBLIGATOIRE — ne jamais le changer
+- Le thème indique la DIRECTION du post — génère un contenu original qui respecte cette direction
+- Les jours "CALENDAIRE" → post HUMAIN, pas technique. Hook chaleureux, CTA doux.
+- Les jours "prospection" → présentation entreprise/équipe/zone. Pas de problème technique.
+- Tous les autres jours → post métier avec DÉCLENCHEUR de conversion
 
 SUJETS DÉJÀ EXISTANTS (à ne pas dupliquer) :
 ${[...existingTopicKeys].join(', ') || '(aucun)'}
@@ -1782,6 +1749,7 @@ RÉALISATIONS EXPLOITABLES :
 ${exploitableReals.length > 0 
   ? exploitableReals.map(r => `- "${r.title}" (ID: ${r.id}, univers: ${r.universe || 'inconnu'}, avant/après: ${r.hasBeforeAfter ? 'oui' : 'non'})`).join('\n')
   : '(aucune)'}
+${recentThemesWarning}
 
 ═══════════════════════════════════════════
 FORMAT DES POSTS (VARIATION OBLIGATOIRE)
@@ -1793,15 +1761,15 @@ Répartir les ${targetPostCount} posts selon :
 - ~10% LONG : hook + 2 phrases + CTA
 
 ═══════════════════════════════════════════
-RAPPEL CRITIQUE — 1 POST/JOUR, MACHINE ÉDITORIALE
+RAPPEL CRITIQUE
 ═══════════════════════════════════════════
 - EXACTEMENT ${targetPostCount} posts, UN par jour du mois
 - Posts métier DOIVENT contenir un DÉCLENCHEUR (perte d'argent, inconfort, risque, gain, simplicité)
 - Posts "calendar" n'ont PAS besoin de déclencheur commercial — leur objectif est la PRÉSENCE et l'IMAGE
-- lead_score DOIT refléter le potentiel RÉEL de conversion (posts calendar = lead_score 10-30)
+- lead_score : posts calendar = 10-30, posts métier = 50-100
 - visual_prompt = scène RÉALISTE pour métier, scène HUMAINE/FESTIVE pour calendar
 - JAMAIS inventer de faux cas client
-- topic_type DOIT être l'une des catégories valides : urgence, prevention, amelioration, conseil, preuve, saisonnier, contre_exemple, pedagogique, prospection, calendar`;
+- topic_type et universe DOIVENT correspondre EXACTEMENT au planning ci-dessus`;
 
     }
 
