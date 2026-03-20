@@ -165,7 +165,7 @@ export function SocialCalendarView({
           </Button>
         )}
         <div className="flex flex-wrap gap-x-3 gap-y-1">
-          {Object.entries({ urgence: 'Urgence', prevention: 'Prévent.', amelioration: 'Amélio.', conseil: 'Conseil', preuve: 'Preuve', saisonnier: 'Saison', contre_exemple: 'Contre-ex.', pedagogique: 'Pédago.', prospection: 'Prospect.' }).map(([type, label]) => (
+          {Object.entries({ urgence: 'Urgence', prevention: 'Prévent.', amelioration: 'Amélio.', conseil: 'Conseil', preuve: 'Preuve', saisonnier: 'Saison', contre_exemple: 'Contre-ex.', pedagogique: 'Pédago.', prospection: 'Prospect.', calendar: 'Calendaire' }).map(([type, label]) => (
             <div key={type} className="flex items-center gap-1">
               <div className={cn('w-2 h-2 rounded-full', TOPIC_DOT_COLORS[type])} />
               <span className="text-[10px] text-muted-foreground">{label}</span>

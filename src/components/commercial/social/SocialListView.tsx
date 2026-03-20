@@ -41,6 +41,7 @@ const TOPIC_LABELS: Record<string, string> = {
   contre_exemple: 'Contre-ex.',
   pedagogique: 'Pédago.',
   prospection: 'Prospection',
+  calendar: 'Calendaire',
 };
 
 interface SocialListViewProps {
