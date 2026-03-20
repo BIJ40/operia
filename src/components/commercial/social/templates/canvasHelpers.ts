@@ -104,18 +104,28 @@ export function sanitizeHook(raw: string): string {
   return text;
 }
 
-/** Sanitize subtext: single complete sentence, max 12 words, no truncation */
+/** Sanitize subtext: complete sentence(s), max 18 words, 2 lines max */
 export function sanitizeSubText(raw: string): string {
   if (!raw) return '';
   let text = raw.trim();
   // Remove trailing ellipsis
   text = text.replace(/[…]+$/, '').trim();
-  // Limit words first (max 12)
+  // Limit words (max 18)
   const words = text.split(/\s+/);
   if (words.length > SUB_MAX_WORDS) {
-    text = words.slice(0, SUB_MAX_WORDS).join(' ');
+    // Try to cut at a natural sentence boundary
+    let cutText = words.slice(0, SUB_MAX_WORDS).join(' ');
+    // Check for sentence-ending punctuation before the limit
+    const sentenceEnd = cutText.match(/^(.+[.!?])\s/);
+    if (sentenceEnd) {
+      cutText = sentenceEnd[1];
+    } else {
+      cutText = cutText.replace(/[\s,;:]+$/, '').trim();
+      if (!/[.!?]$/.test(cutText)) cutText += '.';
+    }
+    text = cutText;
   }
-  // Limit chars — cut at last complete word
+  // Limit chars
   if (text.length > SUB_MAX_CHARS) {
     const cut = text.slice(0, SUB_MAX_CHARS);
     const lastSpace = cut.lastIndexOf(' ');
