@@ -5,7 +5,7 @@
  */
 
 import { GeneratedPanel, NarrativeFunction, ProblemUniverse, UrgencyLevel } from '../types/bdStory.types';
-import { TEXT_ATOMS, getTextAtoms } from '../data/textAtoms';
+import { getTextAtoms, getTextAtomsCount } from '../data/textAtoms';
 import { StorySelection } from './selectionEngine';
 
 // ============================================================================
