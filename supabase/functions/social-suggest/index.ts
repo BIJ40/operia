@@ -887,50 +887,51 @@ Un post "correct mais non actionnable" est un MAUVAIS post.
 "Votre robinet fuit depuis des semaines ?" est TOUJOURS meilleur qu'un "post Pâques" forcé.
 
 ═══════════════════════════════════════════
-HOOK — STOP SCROLL (CRITIQUE)
+HOOK — LIBRAIRIE OBLIGATOIRE (CRITIQUE)
 ═══════════════════════════════════════════
-Le hook est la PREMIÈRE LIGNE. Il doit :
-1. Être COURT (4-8 mots MAX)
-2. Poser un PROBLÈME ou une QUESTION directe
-3. Créer du STRESS LÉGER ou de la CURIOSITÉ
-4. Parler au client comme s'il vivait le problème MAINTENANT
+Tu DOIS sélectionner chaque hook depuis la LIBRAIRIE DE HOOKS ci-dessous.
+INTERDICTION de générer des hooks aléatoires ou inventés.
 
-Le hook est TOUJOURS basé sur un problème ou une opportunité RÉELLE.
-JAMAIS basé uniquement sur un jour du calendrier.
+PROCESSUS DE SÉLECTION :
+1. Identifier l'univers métier du post
+2. Identifier la saison (${currentSeason})
+3. Identifier l'intention prioritaire (urgence > prévention > argent > sécurité > saisonnier)
+4. Filtrer les hooks compatibles dans la librairie
+5. En sélectionner UN
 
-BONS hooks :
-- "IL NE REMONTE PLUS ?"
-- "VOLET BLOQUÉ CE MATIN ?"
-- "FUITE SOUS L'ÉVIER ?"
-- "CETTE ODEUR DANS LA SALLE DE BAIN ?"
-- "DISJONCTEUR QUI SAUTE ENCORE ?"
-- "PORTE CLAQUÉE, CLÉS DEDANS ?"
-- "CE TABLEAU ÉLECTRIQUE POUVAIT PRENDRE FEU"
+ADAPTATION AUTORISÉE :
+- Le hook peut être LÉGÈREMENT adapté pour coller au contexte
+- JAMAIS dépasser 6 mots
+- JAMAIS transformer en phrase longue
+- L'esprit du hook original DOIT être préservé
 
-MAUVAIS hooks (INTERDITS) :
-- "C'est la journée de..." → zéro tension
-- "Pensez à..." ou "Saviez-vous que..." → informatif neutre
-- "Préparez votre maison pour..." → conseil générique
-- "Lundi de Pâques = petits travaux" → analogie faible
+LIBRAIRIE DE HOOKS (saison: ${currentSeason}) :
+${hookLibraryPrompt}
 
 ═══════════════════════════════════════════
-STRUCTURE OBLIGATOIRE : HOOK → SOUS-TEXTE → CTA
+STRUCTURE OBLIGATOIRE (PUBLICITÉ, PAS CONTENU)
 ═══════════════════════════════════════════
-HOOK : problème ou opportunité RÉELLE (jamais un calendrier)
-SOUS-TEXTE : bénéfice CONCRET pour le client (conséquence + solution)
-CTA : action CLAIRE (devis, intervention, planification)
+Chaque post = une PUBLICITÉ, pas du contenu informatif.
 
-═══════════════════════════════════════════
-CTA (OBLIGATOIRE — ORIENTÉ ACTION)
-═══════════════════════════════════════════
-Court, direct, crée un sentiment de nécessité :
-- "On règle ça en 1 intervention"
-- "Appelez avant que ça empire"
-- "Diagnostic gratuit, résultat immédiat"
-- "Intervention rapide dans votre secteur"
-- "Prendre RDV" / "Demander un devis"
+HOOK (issu de la librairie, max 6 mots)
+→ le problème brut, immédiat
 
-INTERDIT : CTA mous ("N'hésitez pas à nous contacter", "Pour plus d'informations")
+SOUS-TEXTE (max 10 mots)
+→ le bénéfice clair, la conséquence ou le coût
+
+CTA (3 à 5 mots)
+→ l'action directe
+
+Exemple :
+HOOK : "FUITE SOUS L'ÉVIER ?"
+SOUS-TEXTE : "Chaque jour perdu = 40€ de plus"
+CTA : "Appelez, on intervient vite"
+
+INTERDIT :
+- texte long
+- phrase creuse
+- contenu générique
+- événement forcé
 
 ═══════════════════════════════════════════
 EXCEPTION — POSTS DÉCALÉS / HUMOUR
