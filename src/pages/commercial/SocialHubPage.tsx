@@ -70,8 +70,15 @@ export default function SocialHubPage() {
 
   // Actions
   const handleGenerate = useCallback(() => {
+    const approvedCount = suggestions.filter(s => s.status === 'approved').length;
+    if (approvedCount > 0) {
+      const confirmed = window.confirm(
+        `⚠️ ${approvedCount} suggestion(s) approuvée(s) seront supprimées.\nToutes les suggestions du mois seront remplacées par le calendrier éditorial complet (1 post/jour).\n\nContinuer ?`
+      );
+      if (!confirmed) return;
+    }
     generateMutation.mutate({ month, year });
-  }, [generateMutation, month, year]);
+  }, [generateMutation, month, year, suggestions]);
 
   const handleApprove = useCallback((id: string) => {
     updateStatusMutation.mutate({ id, status: 'approved', monthKey });
