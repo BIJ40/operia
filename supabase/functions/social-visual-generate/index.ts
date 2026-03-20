@@ -1002,7 +1002,7 @@ MANDATORY QUALITY CHECKLIST (if ANY fails, regenerate):
       ],
     }];
 
-    const compResult = await callImageAIWithFallback(LOVABLE_API_KEY, compMessages);
+    const compResult = await callImageAIWithFallback(LOVABLE_API_KEY, compMessages, preferredImageModel);
 
     if (!compResult.ok) {
       console.warn('[social-visual-generate] Composition failed, returning raw background asset');
