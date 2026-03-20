@@ -899,6 +899,7 @@ async function persistAsset(
   headers: Record<string, string>,
   generatedCopy?: { hook: string; subtext: string; cta: string },
   hasBeforeAfter: boolean = false,
+  visualStyle: string = 'realiste',
 ): Promise<
   | { assetId: string; storagePath: string; signedUrl: string | null; mode: 'photo' | 'generated' }
   | { response: Response }
