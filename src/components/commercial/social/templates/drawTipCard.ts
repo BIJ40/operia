@@ -1,7 +1,6 @@
 /**
  * Template : tip_card — Créa publicitaire conseil saisonnier 1080x1080
- * V5 — STRICT layout: logo top-left, universe top-right, CTA centered, footer always.
- * NO parasitic elements (no topic badge, no accent bar).
+ * V6 — Logo endossé + picto univers.
  */
 import {
   SIZE, loadImage, drawCover,
@@ -10,7 +9,7 @@ import {
   drawCinematicOverlay, drawHookText, drawSubText,
   drawCTAButton, drawUniversePill,
 } from './canvasHelpers';
-import logoSrc from '@/assets/help-confort-house-icon.png';
+import { getLogoSrc, getPictoSrc } from './templateAssets';
 import type { SocialTemplatePayload } from '../SocialVisualCanvas';
 
 export async function drawTipCard(ctx: CanvasRenderingContext2D, payload: SocialTemplatePayload) {
@@ -28,7 +27,6 @@ export async function drawTipCard(ctx: CanvasRenderingContext2D, payload: Social
     }
   } else {
     drawGradientBg(ctx, HC.grayDark, '#1A1A2E');
-    // Decorative accent shapes (only on solid bg)
     ctx.fillStyle = theme.bg;
     ctx.globalAlpha = 0.10;
     ctx.beginPath();
@@ -41,9 +39,9 @@ export async function drawTipCard(ctx: CanvasRenderingContext2D, payload: Social
     ctx.globalAlpha = 1;
   }
 
-  // ─── ZONE 1: Top bar — Logo left, Universe right ───
-  await drawHCLogo(ctx, logoSrc, 'top-left');
-  drawUniversePill(ctx, theme, 35);
+  // ─── ZONE 1: Top bar ───
+  await drawHCLogo(ctx, getLogoSrc(), 'top-left');
+  await drawUniversePill(ctx, theme, 35, getPictoSrc(payload.universe));
 
   // ─── ZONE 3: Hook + subtext ───
   const { bottomY: hookBottom } = drawHookText(ctx, payload.hook || payload.title || 'Conseil', {
@@ -58,9 +56,9 @@ export async function drawTipCard(ctx: CanvasRenderingContext2D, payload: Social
     });
   }
 
-  // ─── ZONE 4: CTA — CENTRÉ horizontalement ───
+  // ─── ZONE 4: CTA ───
   drawCTAButton(ctx, cta, { align: 'center' });
 
-  // ─── ZONE 5: Footer — TOUJOURS présent ───
+  // ─── ZONE 5: Footer ───
   drawHCFooterBar(ctx, theme);
 }
