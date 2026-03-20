@@ -1272,8 +1272,10 @@ Deno.serve(async (req) => {
       }
       console.log(`[social-suggest] Target dates mode: ${targetDates.length} dates, archived ${toArchiveIds.length} suggestions`);
     } else {
+      // Full month generation: archive ALL existing suggestions (draft, approved, rejected)
+      // Only protected ones (scheduled/published in calendar) are kept
       const toArchiveIds = (existingSuggestions || [])
-        .filter(s => (s.status === 'draft' || s.status === 'rejected') && !protectedSuggestionIds.has(s.id))
+        .filter(s => s.status !== 'archived' && !protectedSuggestionIds.has(s.id))
         .map(s => s.id);
 
       if (toArchiveIds.length > 0) {
@@ -1289,6 +1291,7 @@ Deno.serve(async (req) => {
           .in('suggestion_id', toArchiveIds)
           .eq('agency_id', agencyId);
       }
+      console.log(`[social-suggest] Full month reset: archived ${toArchiveIds.length} suggestions (including approved)`);
     }
 
     const approvedCount = (existingSuggestions || []).filter(s => s.status === 'approved' || protectedSuggestionIds.has(s.id)).length;
