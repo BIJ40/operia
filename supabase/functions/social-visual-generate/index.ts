@@ -301,6 +301,11 @@ Réponds UNIQUEMENT en JSON valide avec exactement ces clés :
     // ÉTAPE 2 : GÉNÉRER L'IMAGE DE FOND (SANS TEXTE)
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+    const HELPCONFORT_VISUAL_IDENTITY = `COMPANY VISUAL IDENTITY (Help Confort — French home maintenance company):
+- VEHICLES: White commercial van (Ford Transit type) with a large blue wave/swoosh graphic on the sides (gradient from sky blue to navy blue). The van has a roof rack with ladders. Do NOT write any text or logo on the van — just the blue wave design on white.
+- TECHNICIAN UNIFORMS: Blue polo shirt or blue work jacket, dark pants, professional and clean appearance. Technicians may carry toolboxes or equipment.
+- COLOR PALETTE: Dominant blue (#0092DD) and white, with touches of orange (#FFB705) on accessories or details.`;
+
     const AD_COMPOSITION_RULES = `
 CRITICAL COMPOSITION RULES — THIS IMAGE IS A BACKGROUND FOR A SOCIAL MEDIA AD:
 
@@ -310,7 +315,7 @@ CRITICAL COMPOSITION RULES — THIS IMAGE IS A BACKGROUND FOR A SOCIAL MEDIA AD:
 2. NATURAL DARK ZONE: Create a natural gradient toward darker tones at the bottom
    (dark floor, shadow area, low-light zone). This is where ad text will appear.
 
-3. NO TEXT, NO LOGOS, NO BRANDING: Absolutely ZERO text, letters, words, logos, watermarks, numbers, brand signage, or any written element on the image. This is a RAW BACKGROUND PHOTO — branding and text are added separately later.
+3. NO TEXT OR LOGOS: Absolutely ZERO text, letters, words, logos, watermarks, or numbers anywhere on the image. No brand names. The blue wave graphic on the van is a PATTERN, not text — that is allowed. But no written words at all.
 
 4. CONTRAST: High contrast between the subject and its environment. 
    Dramatic lighting preferred (side light, backlighting, spotlight effect).
@@ -321,9 +326,9 @@ CRITICAL COMPOSITION RULES — THIS IMAGE IS A BACKGROUND FOR A SOCIAL MEDIA AD:
 
 7. STYLE: Realistic professional photograph. NOT illustration, NOT 3D, NOT cartoon.
 
-8. FORBIDDEN: emoji, clip art, gradients, banners, overlays, borders, vehicle branding, logos, any text whatsoever.
+8. FORBIDDEN: emoji, clip art, gradients as backgrounds, banners, overlays, borders, any written text.
 
-9. VEHICLES: If a white service van appears, show a GENERIC plain white commercial van (no branding, no logos, no signage). The real company branding is added as an overlay later.
+9. ${HELPCONFORT_VISUAL_IDENTITY}
 `;
 
     let bgMessages: any[];
