@@ -5,12 +5,12 @@
 import { useState, useCallback } from 'react';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useBdStoryGenerate } from '@/modules/bd-story/hooks/useBdStoryGenerate';
-import { useBdStoryHistory } from '@/modules/bd-story/hooks/useBdStoryHistory';
+import { useBdStoryHistory, BdStoryRow } from '@/modules/bd-story/hooks/useBdStoryHistory';
 import { BdStoryGeneratorForm } from '@/modules/bd-story/ui/BdStoryGeneratorForm';
 import { BdStoryBoardPreview } from '@/modules/bd-story/ui/BdStoryBoardPreview';
 import { BdStoryHistoryList } from '@/modules/bd-story/ui/BdStoryHistoryList';
 import { BdStoryStoryDetail } from '@/modules/bd-story/ui/BdStoryStoryDetail';
-import { GeneratedStory } from '@/modules/bd-story/types/bdStory.types';
+import { BdStoryGenerationInput, GeneratedStory } from '@/modules/bd-story/types/bdStory.types';
 import { useQueryClient } from '@tanstack/react-query';
 
 export default function BdStoryPage() {
@@ -22,7 +22,7 @@ export default function BdStoryPage() {
   const [selectedStory, setSelectedStory] = useState<GeneratedStory | null>(null);
   const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
 
-  const handleGenerate = useCallback(async (params: any) => {
+  const handleGenerate = useCallback(async (params: Partial<BdStoryGenerationInput>) => {
     const result = await generate(params);
     if (result) {
       setSelectedStory(result.story);
@@ -31,8 +31,8 @@ export default function BdStoryPage() {
     }
   }, [generate, queryClient]);
 
-  const handleSelectFromHistory = useCallback((row: any) => {
-    const storyJson = row.story_json as GeneratedStory;
+  const handleSelectFromHistory = useCallback((row: BdStoryRow) => {
+    const storyJson = row.story_json as unknown as GeneratedStory;
     setSelectedStory(storyJson);
     setSelectedPrompt(row.board_prompt_master);
   }, []);

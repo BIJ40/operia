@@ -5,17 +5,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { BookImage, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-interface StoryRow {
-  id: string;
-  title: string;
-  summary: string | null;
-  universe: string;
-  technician_slug: string;
-  tone: string | null;
-  status: string;
-  created_at: string;
-}
+import { BdStoryRow } from '../hooks/useBdStoryHistory';
 
 const UNIVERSE_LABELS: Record<string, string> = {
   plomberie: 'Plomberie',
@@ -36,9 +26,9 @@ const UNIVERSE_COLORS: Record<string, string> = {
 };
 
 interface Props {
-  stories: StoryRow[];
+  stories: BdStoryRow[];
   selectedId?: string | null;
-  onSelect: (story: StoryRow) => void;
+  onSelect: (story: BdStoryRow) => void;
   isLoading?: boolean;
 }
 

@@ -2225,33 +2225,54 @@ export type Database = {
       bd_story_batches: {
         Row: {
           agency_id: string
-          batch_size: number
+          bible_ok_count: number | null
           campaign_mode: string | null
+          coverage_percent: number | null
           created_at: string
           created_by: string | null
+          diversity_score_avg: number | null
+          generated_size: number | null
           id: string
           input_params: Json | null
           report: Json | null
+          requested_size: number
+          status: string
+          updated_at: string
+          valid_count: number | null
         }
         Insert: {
           agency_id: string
-          batch_size: number
+          bible_ok_count?: number | null
           campaign_mode?: string | null
+          coverage_percent?: number | null
           created_at?: string
           created_by?: string | null
+          diversity_score_avg?: number | null
+          generated_size?: number | null
           id?: string
           input_params?: Json | null
           report?: Json | null
+          requested_size: number
+          status?: string
+          updated_at?: string
+          valid_count?: number | null
         }
         Update: {
           agency_id?: string
-          batch_size?: number
+          bible_ok_count?: number | null
           campaign_mode?: string | null
+          coverage_percent?: number | null
           created_at?: string
           created_by?: string | null
+          diversity_score_avg?: number | null
+          generated_size?: number | null
           id?: string
           input_params?: Json | null
           report?: Json | null
+          requested_size?: number
+          status?: string
+          updated_at?: string
+          valid_count?: number | null
         }
         Relationships: [
           {
@@ -2270,9 +2291,10 @@ export type Database = {
           board_prompt_master: string | null
           campaign_mode: string | null
           client_profile_slug: string | null
-          coupling_score: number | null
+          coupling_score_total: number | null
           created_at: string
           created_by: string | null
+          cta_mode: string | null
           diversity_score: number | null
           id: string
           is_favorite: boolean | null
@@ -2289,6 +2311,8 @@ export type Database = {
           tone: string | null
           universe: string
           updated_at: string
+          validation_is_valid: boolean
+          validation_issue_count: number
         }
         Insert: {
           agency_id: string
@@ -2296,9 +2320,10 @@ export type Database = {
           board_prompt_master?: string | null
           campaign_mode?: string | null
           client_profile_slug?: string | null
-          coupling_score?: number | null
+          coupling_score_total?: number | null
           created_at?: string
           created_by?: string | null
+          cta_mode?: string | null
           diversity_score?: number | null
           id?: string
           is_favorite?: boolean | null
@@ -2315,6 +2340,8 @@ export type Database = {
           tone?: string | null
           universe: string
           updated_at?: string
+          validation_is_valid?: boolean
+          validation_issue_count?: number
         }
         Update: {
           agency_id?: string
@@ -2322,9 +2349,10 @@ export type Database = {
           board_prompt_master?: string | null
           campaign_mode?: string | null
           client_profile_slug?: string | null
-          coupling_score?: number | null
+          coupling_score_total?: number | null
           created_at?: string
           created_by?: string | null
+          cta_mode?: string | null
           diversity_score?: number | null
           id?: string
           is_favorite?: boolean | null
@@ -2341,6 +2369,8 @@ export type Database = {
           tone?: string | null
           universe?: string
           updated_at?: string
+          validation_is_valid?: boolean
+          validation_issue_count?: number
         }
         Relationships: [
           {
