@@ -85,6 +85,7 @@ const GENERAL_TOPIC_LABELS: Record<string, string> = {
   contre_exemple: 'À éviter',
   pedagogique: 'Le saviez-vous ?',
   prospection: 'Notre entreprise',
+  calendar: 'Événement',
 };
 
 export function getGeneralLabel(topicType?: string | null): string {

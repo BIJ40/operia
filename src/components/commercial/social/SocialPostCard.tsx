@@ -29,6 +29,7 @@ const TOPIC_LABELS: Record<string, string> = {
   contre_exemple: 'Contre-exemple',
   pedagogique: 'Pédagogique',
   prospection: 'Prospection & Marque',
+  calendar: 'Calendaire',
 };
 
 interface SocialPostCardProps {

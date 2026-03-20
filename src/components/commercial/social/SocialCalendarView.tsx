@@ -21,6 +21,7 @@ const TOPIC_COLORS: Record<string, string> = {
   contre_exemple: 'bg-rose-100 border-rose-300 text-rose-800 dark:bg-rose-900/30 dark:border-rose-700 dark:text-rose-300',
   pedagogique: 'bg-amber-100 border-amber-300 text-amber-800 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-300',
   prospection: 'bg-teal-100 border-teal-300 text-teal-800 dark:bg-teal-900/30 dark:border-teal-700 dark:text-teal-300',
+  calendar: 'bg-sky-100 border-sky-300 text-sky-800 dark:bg-sky-900/30 dark:border-sky-700 dark:text-sky-300',
 };
 
 const TOPIC_DOT_COLORS: Record<string, string> = {
@@ -33,6 +34,7 @@ const TOPIC_DOT_COLORS: Record<string, string> = {
   contre_exemple: 'bg-rose-500',
   pedagogique: 'bg-amber-500',
   prospection: 'bg-teal-500',
+  calendar: 'bg-sky-500',
 };
 
 interface SocialCalendarViewProps {
@@ -163,7 +165,7 @@ export function SocialCalendarView({
           </Button>
         )}
         <div className="flex flex-wrap gap-x-3 gap-y-1">
-          {Object.entries({ urgence: 'Urgence', prevention: 'Prévent.', amelioration: 'Amélio.', conseil: 'Conseil', preuve: 'Preuve', saisonnier: 'Saison', contre_exemple: 'Contre-ex.', pedagogique: 'Pédago.', prospection: 'Prospect.' }).map(([type, label]) => (
+          {Object.entries({ urgence: 'Urgence', prevention: 'Prévent.', amelioration: 'Amélio.', conseil: 'Conseil', preuve: 'Preuve', saisonnier: 'Saison', contre_exemple: 'Contre-ex.', pedagogique: 'Pédago.', prospection: 'Prospect.', calendar: 'Calendaire' }).map(([type, label]) => (
             <div key={type} className="flex items-center gap-1">
               <div className={cn('w-2 h-2 rounded-full', TOPIC_DOT_COLORS[type])} />
               <span className="text-[10px] text-muted-foreground">{label}</span>
