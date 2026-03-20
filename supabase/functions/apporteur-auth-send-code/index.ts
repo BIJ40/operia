@@ -184,8 +184,8 @@ Deno.serve(async (req) => {
             
             <p style="color: #333; font-size: 16px;">Voici votre code de connexion :</p>
             
-            <div style="background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); border-radius: 12px; padding: 30px; text-align: center; margin: 30px 0;">
-              <span style="font-size: 36px; font-weight: bold; color: #ffffff; letter-spacing: 8px;">${otp}</span>
+            <div style="background-color: #1e3a5f; background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); border-radius: 12px; padding: 30px; text-align: center; margin: 30px 0;">
+              <span style="font-size: 36px; font-weight: bold; color: #ffffff; letter-spacing: 8px; display: inline-block;">${otp}</span>
             </div>
             
             <p style="color: #666; font-size: 14px; text-align: center;">
