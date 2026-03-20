@@ -77,47 +77,24 @@ const GENERAL_TOPIC_LABELS: Record<string, string> = {
   educational: 'Le saviez-vous ?',
 };
 
-// ─── Multi-model fallback for image generation ─────────────
-const IMAGE_MODELS = [
-  'google/gemini-3.1-flash-image-preview',  // Nano Banana 2 (fast + quality)
-  'google/gemini-2.5-flash-image',           // Nano Banana 1 (fallback)
-  'google/gemini-3-pro-image-preview',       // Pro (last resort, slower)
-];
+// ─── Multi-model fallback for text/image AI (OpenAI + Claude) ─────────────
+import { callAiWithFallback, getAiKeys, type AiChatMessage } from '../_shared/aiClient.ts';
 
 async function callImageAIWithFallback(
-  apiKey: string,
+  _apiKey: string,
   messages: any[],
 ): Promise<{ ok: true; data: any; model: string } | { ok: false; status: number; error: string }> {
-  let lastStatus = 502;
-  let lastError = 'All models failed';
+  // Use OpenAI gpt-4o for image understanding/composition
+  const result = await callAiWithFallback({
+    messages: messages as AiChatMessage[],
+    model: 'gpt-4o',
+  });
 
-  for (const model of IMAGE_MODELS) {
-    console.log(`[social-visual-generate] Trying model: ${model}`);
-    try {
-      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ model, messages, modalities: ['image', 'text'] }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log(`[social-visual-generate] Success with model: ${model}`);
-        return { ok: true, data, model };
-      }
-
-      const errText = await response.text();
-      console.warn(`[social-visual-generate] ${model} returned ${response.status}: ${errText.slice(0, 200)}`);
-      lastStatus = response.status;
-      lastError = errText;
-
-      // 402 = no credits → same billing, stop
-      if (response.status === 402) {
-        return { ok: false, status: 402, error: 'Crédits IA insuffisants.' };
-      }
+  if (result.ok) {
+    return { ok: true, data: result.data, model: `${result.provider}/gpt-4o` };
+  }
+  return { ok: false, status: result.status, error: result.error };
+}
 
       // 429 = rate limited → try next model
       if (response.status === 429) {
