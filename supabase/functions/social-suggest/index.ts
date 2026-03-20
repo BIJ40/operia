@@ -528,7 +528,7 @@ const SUGGEST_TOOL = {
               title: { type: 'string', description: 'Titre court et accrocheur (max 200 car.)' },
               hook: { type: 'string', description: "Première ligne STOP-SCROLL : choc, curiosité, problème concret. Ex: \"Cette fuite coûtait 300€/mois sans que le client s'en rende compte.\"" },
               content_angle: { type: 'string', description: 'Angle éditorial en 1 phrase' },
-              caption_base_fr: { type: 'string', description: 'Texte complet du post : hook + storytelling (situation → problème → intervention → résultat) + CTA. Publiable sans modification.' },
+              caption_base_fr: { type: 'string', description: "Texte NATUREL prêt à publier sur les réseaux sociaux. INTERDIT d'écrire 'HOOK :', 'CTA :', 'SOUS-TEXTE :' ou tout label structurel. Le texte doit être fluide, comme un vrai post Facebook/Instagram. Exemple : 'Votre robinet fuit depuis des semaines ? Chaque jour, c est 40€ de plus sur votre facture. Appelez-nous, on intervient en 1h.'" },
               cta: { type: 'string', description: "CTA court et GÉNÉRIQUE (jamais de nom de ville). Ex: \"Prendre RDV\", \"En savoir plus\", \"Demander un devis\", \"Nous contacter\"" },
               hashtags: { type: 'array', items: { type: 'string' }, description: 'Hashtags (max 10)' },
               topic_type: { type: 'string', enum: ['urgence', 'prevention', 'amelioration', 'conseil', 'preuve', 'saisonnier', 'contre_exemple', 'pedagogique'] },
