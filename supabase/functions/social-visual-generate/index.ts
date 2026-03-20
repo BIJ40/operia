@@ -375,14 +375,14 @@ CRITICAL COMPOSITION RULES — THIS IMAGE IS A BACKGROUND FOR A SOCIAL MEDIA AD:
               type: 'text', 
               text: `Generate a REALISTIC PHOTOGRAPH designed as a SOCIAL MEDIA AD BACKGROUND (1080x1080 square).
 
-REFERENCE IMAGES: The attached photos show the EXACT company van from different angles. Key features to reproduce EXACTLY:
-- White Renault Master van body
-- Large blue diagonal wave/swoosh pattern covering the lower half and rear
-- 6 colorful circular service icons (plomberie=blue, electricite=yellow, serrurerie=pink, menuiserie=orange, vitrerie=green, volets=purple) arranged in a 3x2 grid on the side
-- Roof rack on top
-- "HELP! Confort" logo with house icon on the front and sides
+REFERENCE IMAGES: The attached photos show the EXACT company van from multiple angles. Study them carefully and reproduce the van EXACTLY as shown:
+- White Renault Master van body (NOT Ford Transit, NOT Mercedes Sprinter)
+- Large blue diagonal wave/swoosh pattern on the sides — gradient from sky blue at the top to deep navy at the bottom. The wave starts near the front wheel and sweeps diagonally upward toward the rear roof
+- 6 small colorful circular service icons on the side panel
+- Roof rack with ladders on top
+- The van is predominantly WHITE with ONLY the blue wave — no red, no green, no extra stripes
 
-Generate a scene that includes a van matching these reference photos AS CLOSELY AS POSSIBLE.
+CRITICAL: Copy the van design from the reference photos as FAITHFULLY as possible. The blue wave shape and position must match. Do not add text, logos or brand names on the van.
 
 SCENE TO PHOTOGRAPH:
 ${sceneDescription}
@@ -390,12 +390,12 @@ ${sceneDescription}
 ${AD_COMPOSITION_RULES}
 
 ADDITIONAL REQUIREMENTS:
-- The van design must match the reference photos faithfully — especially the blue wave pattern and colorful service icons
+- The van design must match the reference photos faithfully — especially the blue wave diagonal pattern
 - This must look like a REAL PHOTOGRAPH taken on-site by a professional photographer
 - Dramatic natural lighting with a cinematic feel
 - The bottom third should naturally be darker (floor, shadow, dark surface)
 - High resolution feel, sharp details on the main subject
-- Do NOT add any text, logos, or words to the image — the blue wave pattern on the van is a graphic, not text`
+- Do NOT add any text, logos, or words to the image`
             },
             ...refUrls.map(url => ({ type: 'image_url' as const, image_url: { url } })),
           ],
