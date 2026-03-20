@@ -801,6 +801,61 @@ const GAP_FILL_GENERIC: TextAtomEntry[] = [
   { text: 'Elle pose les bonnes questions.', narrativeFunction: 'call_received', universe: 'general', tone: 'pedagogique' },
 ];
 
+const GAP_FILL_CRITICAL: TextAtomEntry[] = [
+  { text: 'Le bruit devient inquiétant.', narrativeFunction: 'problem_appears', universe: 'general', tone: 'rassurant' },
+  { text: 'Le détail commence à gêner.', narrativeFunction: 'problem_appears', universe: 'general', tone: 'rassurant' },
+  { text: 'Un signe discret apparaît.', narrativeFunction: 'problem_appears', universe: 'general', tone: 'pedagogique' },
+  { text: 'Le premier symptôme est visible.', narrativeFunction: 'problem_appears', universe: 'general', tone: 'pedagogique' },
+  { text: 'Le souci éclate d\'un coup.', narrativeFunction: 'problem_appears', universe: 'general', tone: 'reactif' },
+  { text: 'Tout bascule soudainement.', narrativeFunction: 'problem_appears', universe: 'general', tone: 'reactif' },
+  { text: 'Le souci casse le rythme.', narrativeFunction: 'problem_appears', universe: 'general', tone: 'proximite' },
+  { text: 'La journée change d\'un coup.', narrativeFunction: 'problem_appears', universe: 'general', tone: 'proximite' },
+
+  { text: 'Heureusement, rien n\'est perdu.', narrativeFunction: 'problem_worsens', universe: 'general', tone: 'rassurant' },
+  { text: 'Le souci reste encore maîtrisable.', narrativeFunction: 'problem_worsens', universe: 'general', tone: 'rassurant' },
+  { text: 'Le défaut devient plus lisible.', narrativeFunction: 'problem_worsens', universe: 'general', tone: 'pedagogique' },
+  { text: 'Le problème montre son ampleur.', narrativeFunction: 'problem_worsens', universe: 'general', tone: 'pedagogique' },
+  { text: 'La situation se tend vite.', narrativeFunction: 'problem_worsens', universe: 'general', tone: 'reactif' },
+  { text: 'Ça se dégrade nettement.', narrativeFunction: 'problem_worsens', universe: 'general', tone: 'reactif' },
+  { text: 'Le quotidien se complique vraiment.', narrativeFunction: 'problem_worsens', universe: 'general', tone: 'proximite' },
+  { text: 'On sent que ça empire.', narrativeFunction: 'problem_worsens', universe: 'general', tone: 'proximite' },
+
+  { text: 'Le diagnostic confirme le souci.', narrativeFunction: 'inspection_diagnosis', universe: 'general', tone: 'rassurant' },
+  { text: 'Le point faible est trouvé.', narrativeFunction: 'inspection_diagnosis', universe: 'general', tone: 'rassurant' },
+  { text: 'Chaque cause est vérifiée.', narrativeFunction: 'inspection_diagnosis', universe: 'general', tone: 'pedagogique' },
+  { text: 'Le contrôle précise l\'origine.', narrativeFunction: 'inspection_diagnosis', universe: 'general', tone: 'pedagogique' },
+  { text: 'Le défaut est repéré vite.', narrativeFunction: 'inspection_diagnosis', universe: 'general', tone: 'reactif' },
+  { text: 'La cause saute aux yeux.', narrativeFunction: 'inspection_diagnosis', universe: 'general', tone: 'reactif' },
+  { text: 'Il explique ce qui bloque.', narrativeFunction: 'inspection_diagnosis', universe: 'general', tone: 'proximite' },
+  { text: 'On comprend enfin le souci.', narrativeFunction: 'inspection_diagnosis', universe: 'general', tone: 'proximite' },
+
+  { text: 'Le geste est sûr et propre.', narrativeFunction: 'repair_action', universe: 'general', tone: 'rassurant' },
+  { text: 'La réparation avance sereinement.', narrativeFunction: 'repair_action', universe: 'general', tone: 'rassurant' },
+  { text: 'Chaque étape suit la méthode.', narrativeFunction: 'repair_action', universe: 'general', tone: 'pedagogique' },
+  { text: 'Il corrige point par point.', narrativeFunction: 'repair_action', universe: 'general', tone: 'pedagogique' },
+  { text: 'Il agit sans perdre une seconde.', narrativeFunction: 'repair_action', universe: 'general', tone: 'reactif' },
+  { text: 'Le correctif est posé vite.', narrativeFunction: 'repair_action', universe: 'general', tone: 'reactif' },
+  { text: 'Le bon geste change tout.', narrativeFunction: 'repair_action', universe: 'general', tone: 'proximite' },
+  { text: 'Ça avance enfin concrètement.', narrativeFunction: 'repair_action', universe: 'general', tone: 'proximite' },
+
+  { text: 'La fuite paraît plus active.', narrativeFunction: 'inspection_diagnosis', universe: 'plomberie', tone: 'reactif' },
+  { text: 'Le point d\'eau critique est trouvé.', narrativeFunction: 'inspection_diagnosis', universe: 'plomberie', tone: 'reactif' },
+  { text: 'Le disjoncteur révèle le défaut.', narrativeFunction: 'inspection_diagnosis', universe: 'electricite', tone: 'reactif' },
+  { text: 'La ligne fautive est isolée.', narrativeFunction: 'inspection_diagnosis', universe: 'electricite', tone: 'reactif' },
+  { text: 'Le blocage devient plus net.', narrativeFunction: 'problem_worsens', universe: 'serrurerie', tone: 'pedagogique' },
+  { text: 'Le mécanisme fatigue davantage.', narrativeFunction: 'problem_worsens', universe: 'serrurerie', tone: 'pedagogique' },
+  { text: 'Le point dur est identifié.', narrativeFunction: 'inspection_diagnosis', universe: 'serrurerie', tone: 'reactif' },
+  { text: 'Le défaut de serrure est vu.', narrativeFunction: 'inspection_diagnosis', universe: 'serrurerie', tone: 'reactif' },
+  { text: 'Il réaligne vite le mécanisme.', narrativeFunction: 'repair_action', universe: 'serrurerie', tone: 'reactif' },
+  { text: 'La serrure est reprise aussitôt.', narrativeFunction: 'repair_action', universe: 'serrurerie', tone: 'reactif' },
+  { text: 'La zone fragile est repérée.', narrativeFunction: 'inspection_diagnosis', universe: 'vitrerie', tone: 'reactif' },
+  { text: 'La fissure active est localisée.', narrativeFunction: 'inspection_diagnosis', universe: 'vitrerie', tone: 'reactif' },
+  { text: 'Le jeu du battant est trouvé.', narrativeFunction: 'inspection_diagnosis', universe: 'menuiserie', tone: 'reactif' },
+  { text: 'Le point de friction est vu.', narrativeFunction: 'inspection_diagnosis', universe: 'menuiserie', tone: 'reactif' },
+  { text: 'Il reprend vite le réglage.', narrativeFunction: 'repair_action', universe: 'menuiserie', tone: 'reactif' },
+  { text: 'Le mécanisme est corrigé aussitôt.', narrativeFunction: 'repair_action', universe: 'menuiserie', tone: 'reactif' },
+];
+
 // ============================================================================
 // EXPORT UNIFIÉ
 // ============================================================================
@@ -834,6 +889,7 @@ export const ALL_TEXT_ATOMS: TextAtomEntry[] = [
   ...GAP_FILL_MENUISERIE,
   ...GAP_FILL_PEINTURE,
   ...GAP_FILL_GENERIC,
+  ...GAP_FILL_CRITICAL,
 ];
 
 /** Get text atoms with full filtering */

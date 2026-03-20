@@ -108,6 +108,7 @@ export function assembleStory(
 ): GeneratedStory {
   const storyKey = [
     selection.problem.slug,
+    selection.template.storyFamily,
     selection.template.key,
     selection.technician.slug,
     selection.clientProfile.slug,
@@ -145,11 +146,13 @@ export function assembleStory(
     },
     diversityFingerprint: [
       selection.problem.universe,
+      selection.template.storyFamily,
       selection.problem.slug,
       selection.template.key,
       selection.technician.slug,
       selection.clientProfile.slug,
       selection.location.room,
+      selection.outcomes[0]?.slug || 'no_outcome',
       selection.cta.mode,
       selection.tone,
     ],

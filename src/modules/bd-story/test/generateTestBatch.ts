@@ -8,8 +8,8 @@ import { generateStory } from '../engine/storyOrchestrator';
 import { auditCoverage } from '../engine/copyEngine';
 import { checkStoryBible } from '../data/storyBible';
 import { narrativeDistance } from '../data/storyBible';
-import { BdStoryGenerationInput, GeneratedStory, ProblemUniverse } from '../types/bdStory.types';
-import { STORY_TEMPLATES } from '../data/templates';
+import { AtomUsageState, BatchUniverseQuota, BdStoryGenerationInput, GeneratedStory, ProblemUniverse, ValidationIssue } from '../types/bdStory.types';
+import { DEFAULT_BATCH_UNIVERSE_QUOTAS } from '../engine/selectionEngine';
 
 // ============================================================================
 // CONFIG
@@ -26,23 +26,7 @@ const ALL_UNIVERSES: ProblemUniverse[] = [
 // UNIVERSE DISTRIBUTION TARGETS (percentage)
 // ============================================================================
 
-const UNIVERSE_MIN_PCT: Record<ProblemUniverse, number> = {
-  plomberie: 10,
-  electricite: 10,
-  serrurerie: 10,
-  vitrerie: 10,
-  menuiserie: 10,
-  peinture_renovation: 10,
-};
-
-const UNIVERSE_MAX_PCT: Record<ProblemUniverse, number> = {
-  plomberie: 25,
-  electricite: 25,
-  serrurerie: 25,
-  vitrerie: 25,
-  menuiserie: 25,
-  peinture_renovation: 22,
-};
+const UNIVERSE_QUOTAS: Record<ProblemUniverse, BatchUniverseQuota> = DEFAULT_BATCH_UNIVERSE_QUOTAS;
 
 // ============================================================================
 // GENERATE
@@ -62,8 +46,63 @@ interface StoryResult {
   panelTexts: string[];
   wordCounts: number[];
   bibleViolations: number;
+   bibleViolationCodes: string[];
+   validatorIssueCodes: string[];
   diversityScore: number;
   valid: boolean;
+}
+
+interface ViolationReport {
+  code: string;
+  count: number;
+  examples: Array<{
+    storyIndex: number;
+    storyKey: string;
+    details: string;
+  }>;
+}
+
+function createEmptyUniverseCounts(): Record<ProblemUniverse, number> {
+  return {
+    plomberie: 0,
+    electricite: 0,
+    serrurerie: 0,
+    vitrerie: 0,
+    menuiserie: 0,
+    peinture_renovation: 0,
+  };
+}
+
+function aggregateViolations(
+  entries: Array<{ storyIndex: number; storyKey: string; code: string; details: string }>
+): ViolationReport[] {
+  const map = new Map<string, ViolationReport>();
+
+  for (const entry of entries) {
+    if (!map.has(entry.code)) {
+      map.set(entry.code, { code: entry.code, count: 0, examples: [] });
+    }
+
+    const report = map.get(entry.code)!;
+    report.count += 1;
+    if (report.examples.length < 5) {
+      report.examples.push({
+        storyIndex: entry.storyIndex,
+        storyKey: entry.storyKey,
+        details: entry.details,
+      });
+    }
+  }
+
+  return [...map.values()].sort((a, b) => b.count - a.count);
+}
+
+function getGapPriority(gap: { universe: string; tone?: string; narrativeFunction: string }): number {
+  let priority = 0;
+  if (['proximite', 'rassurant'].includes(gap.tone || '')) priority += 3;
+  if (['inspection_diagnosis', 'repair_action', 'problem_worsens'].includes(gap.narrativeFunction)) priority += 3;
+  if (['plomberie', 'electricite', 'serrurerie', 'vitrerie', 'menuiserie'].includes(gap.universe)) priority += 2;
+  return priority;
 }
 
 function run() {
@@ -73,31 +112,54 @@ function run() {
 
   const stories: GeneratedStory[] = [];
   const results: StoryResult[] = [];
-  const templateKeys = STORY_TEMPLATES.map(t => t.key);
+  const batchCounts = createEmptyUniverseCounts();
+  const atomUsageState: AtomUsageState = { atomUsageCount: {}, recentAtomTexts: [] };
+  const bibleViolationEntries: Array<{ storyIndex: number; storyKey: string; code: string; details: string }> = [];
+  const validatorViolationEntries: Array<{ storyIndex: number; storyKey: string; code: string; details: string }> = [];
 
   for (let i = 0; i < BATCH_SIZE; i++) {
-    // Force universe rotation to ensure coverage
-    const forceUniverse = i < ALL_UNIVERSES.length * 2 
-      ? ALL_UNIVERSES[i % ALL_UNIVERSES.length] 
-      : undefined;
-
     const input: BdStoryGenerationInput = {
       agencyId: AGENCY_ID,
-      universe: forceUniverse,
-      templateType: i < templateKeys.length ? templateKeys[i] as any : undefined,
       season: (['printemps', 'ete', 'automne', 'hiver'] as const)[i % 4],
       tone: (['rassurant', 'pedagogique', 'reactif', 'proximite'] as const)[i % 4],
       avoidRecentProblemSlugs: stories.slice(-5).map(s => s.problemSlug),
       avoidRecentTechnicianSlugs: stories.slice(-3).map(s => s.assignedCharacters.technician),
       avoidRecentStoryKeys: stories.slice(-10).map(s => s.storyKey),
+      batchState: {
+        generatedCount: i,
+        countsByUniverse: { ...batchCounts },
+        targetSize: BATCH_SIZE,
+      },
+      batchUniverseQuotas: UNIVERSE_QUOTAS,
+      atomUsageState,
     };
 
     const output = generateStory(input, stories);
     const story = output.story;
     stories.push(story);
+    batchCounts[story.universe] = (batchCounts[story.universe] || 0) + 1;
 
     const bibleCheck = checkStoryBible(story);
+    const validatorIssues = story.validation.issues;
     const wordCounts = story.panels.map(p => p.text.trim().split(/\s+/).length);
+
+    for (const violation of bibleCheck) {
+      bibleViolationEntries.push({
+        storyIndex: i + 1,
+        storyKey: story.storyKey,
+        code: violation.rule,
+        details: violation.detail,
+      });
+    }
+
+    for (const issue of validatorIssues) {
+      validatorViolationEntries.push({
+        storyIndex: i + 1,
+        storyKey: story.storyKey,
+        code: issue.code,
+        details: issue.message,
+      });
+    }
 
     results.push({
       idx: i + 1,
@@ -113,6 +175,8 @@ function run() {
       panelTexts: story.panels.map(p => p.text),
       wordCounts,
       bibleViolations: bibleCheck.length,
+      bibleViolationCodes: bibleCheck.map(v => v.rule),
+      validatorIssueCodes: validatorIssues.map(v => v.code),
       diversityScore: story.diversityScore.totalScore,
       valid: story.validation.isValid,
     });
@@ -159,6 +223,8 @@ function run() {
   const validCount = results.filter(r => r.valid).length;
   const bibleClean = results.filter(r => r.bibleViolations === 0).length;
   const avgDiversity = results.reduce((s, r) => s + r.diversityScore, 0) / results.length;
+  const bibleReports = aggregateViolations(bibleViolationEntries);
+  const validatorReports = aggregateViolations(validatorViolationEntries);
 
   console.log(`✅ Histoires valides:      ${validCount}/${BATCH_SIZE} (${(validCount/BATCH_SIZE*100).toFixed(0)}%)`);
   console.log(`✅ Bible respectée:        ${bibleClean}/${BATCH_SIZE} (${(bibleClean/BATCH_SIZE*100).toFixed(0)}%)`);
@@ -188,11 +254,37 @@ function run() {
   for (const u of ALL_UNIVERSES) {
     const count = univDist[u] || 0;
     const pct = (count / BATCH_SIZE * 100).toFixed(1);
-    const minOk = parseFloat(pct) >= UNIVERSE_MIN_PCT[u];
-    const maxOk = parseFloat(pct) <= UNIVERSE_MAX_PCT[u];
+    const minOk = parseFloat(pct) >= UNIVERSE_QUOTAS[u].minPct;
+    const maxOk = parseFloat(pct) <= UNIVERSE_QUOTAS[u].maxPct;
     const flag = minOk && maxOk ? '✅' : '⚠️';
     const bar = '█'.repeat(Math.round(parseFloat(pct) / 2));
     console.log(`   ${flag} ${u.padEnd(20)} ${count.toString().padStart(3)} (${pct.padStart(5)}%) ${bar}`);
+  }
+
+  if (bibleReports.length > 0 || validatorReports.length > 0) {
+    console.log('\n📋 VIOLATIONS BIBLE PAR TYPE:');
+    if (bibleReports.length === 0) {
+      console.log('   ✅ Aucune violation bible');
+    } else {
+      for (const report of bibleReports) {
+        console.log(`   ❌ ${report.code}: ${report.count}`);
+        for (const example of report.examples) {
+          console.log(`      - #${example.storyIndex} ${example.storyKey}: ${example.details}`);
+        }
+      }
+    }
+
+    console.log('\n📋 VIOLATIONS VALIDATEUR PAR TYPE:');
+    if (validatorReports.length === 0) {
+      console.log('   ✅ Aucune violation validateur');
+    } else {
+      for (const report of validatorReports) {
+        console.log(`   ❌ ${report.code}: ${report.count}`);
+        for (const example of report.examples) {
+          console.log(`      - #${example.storyIndex} ${example.storyKey}: ${example.details}`);
+        }
+      }
+    }
   }
 
   console.log('\n📊 DISTRIBUTION TECHNICIENS:');
@@ -326,16 +418,25 @@ function run() {
   console.log(`═══════════════════════════════════════════════════\n`);
   console.log(`📚 Couverture: ${coverage.coveragePercent}% (${coverage.coveredCombinations}/${coverage.totalPossibleCombinations})`);
   console.log(`   Total phrases: ${coverage.totalAtoms}`);
-  if (coverage.gaps.length > 0) {
-    console.log(`   Trous (0 phrase): ${coverage.gaps.length}`);
-    for (const gap of coverage.gaps.slice(0, 20)) {
+  const prioritizedZeroGaps = [...coverage.gaps].sort((a, b) => getGapPriority(b) - getGapPriority(a));
+  const prioritizedWeakGaps = [...coverage.weakGaps].sort((a, b) => getGapPriority(b) - getGapPriority(a));
+  if (prioritizedZeroGaps.length > 0) {
+    console.log(`   Trous critiques (0 phrase): ${prioritizedZeroGaps.length}`);
+    for (const gap of prioritizedZeroGaps.slice(0, 20)) {
       console.log(`     ❌ ${gap.universe} / ${gap.narrativeFunction} / ${gap.tone}`);
     }
-    if (coverage.gaps.length > 20) {
-      console.log(`     ... et ${coverage.gaps.length - 20} autres`);
+    if (prioritizedZeroGaps.length > 20) {
+      console.log(`     ... et ${prioritizedZeroGaps.length - 20} autres`);
     }
   } else {
-    console.log('   ✅ Aucun trou de couverture !');
+    console.log('   ✅ Aucun trou de couverture critique !');
+  }
+
+  if (prioritizedWeakGaps.length > 0) {
+    console.log(`   Couverture faible (1 phrase): ${prioritizedWeakGaps.length}`);
+    for (const gap of prioritizedWeakGaps.slice(0, 12)) {
+      console.log(`     ⚠️ ${gap.universe} / ${gap.narrativeFunction} / ${gap.tone}`);
+    }
   }
 
   // ============================================================================
@@ -353,12 +454,13 @@ function run() {
   if (consecutiveUniverse > BATCH_SIZE * 0.15) issues.push(`Trop d'univers consécutifs identiques`);
   if (consecutiveTech > BATCH_SIZE * 0.1) issues.push(`Trop de techniciens consécutifs identiques`);
   if (coverage.coveragePercent < 90) issues.push(`Couverture textAtoms ${coverage.coveragePercent}% < 90%`);
+  if (prioritizedZeroGaps.length > 0) issues.push(`${prioritizedZeroGaps.length} trous textAtoms critiques`);
 
   // Check universe distribution
   for (const u of ALL_UNIVERSES) {
     const pct = ((univDist[u] || 0) / BATCH_SIZE) * 100;
-    if (pct < UNIVERSE_MIN_PCT[u]) issues.push(`${u}: ${pct.toFixed(1)}% < min ${UNIVERSE_MIN_PCT[u]}%`);
-    if (pct > UNIVERSE_MAX_PCT[u]) issues.push(`${u}: ${pct.toFixed(1)}% > max ${UNIVERSE_MAX_PCT[u]}%`);
+    if (pct < UNIVERSE_QUOTAS[u].minPct) issues.push(`${u}: ${pct.toFixed(1)}% < min ${UNIVERSE_QUOTAS[u].minPct}%`);
+    if (pct > UNIVERSE_QUOTAS[u].maxPct) issues.push(`${u}: ${pct.toFixed(1)}% > max ${UNIVERSE_QUOTAS[u].maxPct}%`);
   }
 
   if (issues.length === 0) {

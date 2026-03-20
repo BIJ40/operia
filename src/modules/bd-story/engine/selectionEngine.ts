@@ -7,7 +7,7 @@
 import { 
   BdStoryGenerationInput, ProblemType, StoryTemplate, ClientProfile,
   LocationContext, CtaEntry, Trigger, OutcomeStep, Character,
-  ProblemUniverse, UrgencyLevel, RoomContext
+  ProblemUniverse, BatchState, BatchUniverseQuota
 } from '../types/bdStory.types';
 import { getProblemsForUniverse } from '../data/problemTypes';
 import { STORY_TEMPLATES } from '../data/templates';
@@ -16,9 +16,7 @@ import { PROPERTY_TYPES, ROOM_CONTEXTS, TIME_CONTEXTS } from '../data/propertyTy
 import { CTA_ENTRIES, getCtasByMode } from '../data/ctas';
 import { TRIGGERS } from '../data/triggers';
 import { OUTCOMES } from '../data/outcomes';
-import { getCrewForUniverse } from '../data/crewPools';
 import { BD_STORY_CHARACTERS } from '../data/characters';
-import { STORY_FAMILIES } from '../data/storyFamilies';
 
 // ============================================================================
 // TYPES
@@ -98,30 +96,120 @@ const SEASON_WEIGHTS: Record<string, Partial<Record<ProblemUniverse, number>>> =
   automne: { plomberie: 2, electricite: 2, serrurerie: 2, vitrerie: 1.5, menuiserie: 1.5, peinture_renovation: 1 },
 };
 
+export const DEFAULT_BATCH_UNIVERSE_QUOTAS: Record<ProblemUniverse, BatchUniverseQuota> = {
+  plomberie: { minPct: 10, maxPct: 25 },
+  electricite: { minPct: 10, maxPct: 25 },
+  serrurerie: { minPct: 10, maxPct: 25 },
+  vitrerie: { minPct: 10, maxPct: 25 },
+  menuiserie: { minPct: 10, maxPct: 25 },
+  peinture_renovation: { minPct: 10, maxPct: 22 },
+};
+
+function getFinalUniverseBounds(
+  universe: ProblemUniverse,
+  quotas: Record<ProblemUniverse, BatchUniverseQuota>,
+  targetSize: number
+): { minCount: number; maxCount: number } {
+  const quota = quotas[universe];
+  return {
+    minCount: Math.ceil((targetSize * quota.minPct) / 100),
+    maxCount: Math.max(1, Math.floor((targetSize * quota.maxPct) / 100)),
+  };
+}
+
+function isUniverseCapped(
+  universe: ProblemUniverse,
+  state: BatchState,
+  quotas: Record<ProblemUniverse, BatchUniverseQuota>
+): boolean {
+  const count = state.countsByUniverse[universe] || 0;
+  const { maxCount } = getFinalUniverseBounds(universe, quotas, state.targetSize);
+  return count >= maxCount;
+}
+
+function isUniverseMandatoryNow(
+  universe: ProblemUniverse,
+  state: BatchState,
+  quotas: Record<ProblemUniverse, BatchUniverseQuota>
+): boolean {
+  const count = state.countsByUniverse[universe] || 0;
+  const { minCount } = getFinalUniverseBounds(universe, quotas, state.targetSize);
+  const remainingAfterThisPick = Math.max(0, state.targetSize - (state.generatedCount + 1));
+  const missingIfSkipped = Math.max(0, minCount - count);
+  return missingIfSkipped > remainingAfterThisPick;
+}
+
+export function getUniverseBatchCorrection(
+  universe: ProblemUniverse,
+  state: BatchState,
+  quotas: Record<ProblemUniverse, BatchUniverseQuota>
+): number {
+  const count = state.countsByUniverse[universe] || 0;
+  const nextGeneratedCount = state.generatedCount + 1;
+  const { minCount, maxCount } = getFinalUniverseBounds(universe, quotas, state.targetSize);
+
+  if (count >= maxCount) return 0;
+  if (isUniverseMandatoryNow(universe, state, quotas)) return 12;
+
+  const expectedMinByNow = Math.floor((nextGeneratedCount / state.targetSize) * minCount);
+  const expectedMaxByNow = Math.ceil((nextGeneratedCount / state.targetSize) * maxCount);
+  let correction = 1;
+
+  if (count < expectedMinByNow) {
+    correction += (expectedMinByNow - count) * 4;
+  }
+
+  if (count >= expectedMaxByNow) {
+    correction *= 0.2;
+  }
+
+  if (count === 0 && state.generatedCount > 0) {
+    correction *= 1.15;
+  }
+
+  return correction;
+}
+
+function scoreTextFreshness(text: string, input: BdStoryGenerationInput): number {
+  const usage = input.atomUsageState?.atomUsageCount[text] || 0;
+  const isRecent = input.atomUsageState?.recentAtomTexts.includes(text) || false;
+  return (isRecent ? -100 : 0) - usage * 8;
+}
+
 function selectUniverse(input: BdStoryGenerationInput): ProblemUniverse {
   if (input.universe) return input.universe;
 
   // Apply season adjustments on top of base weights
   const baseWeights = { ...UNIVERSE_BASE_WEIGHTS };
   const seasonAdj = input.season ? SEASON_WEIGHTS[input.season] : undefined;
-  const finalWeights: Record<string, number> = {};
+  const quotas = input.batchUniverseQuotas || DEFAULT_BATCH_UNIVERSE_QUOTAS;
+  const batchState = input.batchState;
 
-  for (const u of ALL_UNIVERSES) {
-    finalWeights[u] = seasonAdj?.[u] ?? baseWeights[u];
-  }
-
-  // Boost underrepresented universes based on avoidance lists
-  // If a universe hasn't appeared recently, boost it
-  const recentUniverses = (input.avoidRecentProblemSlugs || []);
-  for (const u of ALL_UNIVERSES) {
-    const recentCount = recentUniverses.filter(s => s.startsWith(u.slice(0, 4))).length;
-    if (recentCount === 0) {
-      finalWeights[u] = (finalWeights[u] || 1) * 1.3; // Boost absent universes
+  let candidates = [...ALL_UNIVERSES];
+  if (batchState) {
+    candidates = candidates.filter(u => !isUniverseCapped(u, batchState, quotas));
+    const mandatory = candidates.filter(u => isUniverseMandatoryNow(u, batchState, quotas));
+    if (mandatory.length > 0) {
+      candidates = mandatory;
     }
   }
 
+  const finalWeights: Record<string, number> = {};
+  for (const u of candidates) {
+    const seasonWeight = seasonAdj?.[u] ?? baseWeights[u];
+    const batchCorrection = batchState ? getUniverseBatchCorrection(u, batchState, quotas) : 1;
+    finalWeights[u] = seasonWeight * batchCorrection;
+  }
+
   // Weighted random pick
-  const entries = ALL_UNIVERSES.map(u => ({ u, w: finalWeights[u] || 1 }));
+  const entries = candidates
+    .map(u => ({ u, w: finalWeights[u] || 1 }))
+    .filter(entry => entry.w > 0);
+
+  if (entries.length === 0) {
+    return ALL_UNIVERSES[0];
+  }
+
   const totalW = entries.reduce((s, e) => s + e.w, 0);
   let r = Math.random() * totalW;
   for (const e of entries) {
@@ -333,7 +421,12 @@ function selectCta(
     }
   })();
   const pool = getCtasByMode(mode);
-  return pickRandom(pool);
+
+  const ranked = pool
+    .map(cta => ({ cta, freshness: scoreTextFreshness(cta.text, input) + Math.random() }))
+    .sort((a, b) => b.freshness - a.freshness);
+
+  return ranked[0]?.cta || pool[0] || CTA_ENTRIES[0];
 }
 
 // ============================================================================
@@ -483,7 +576,15 @@ export function generateSelection(input: BdStoryGenerationInput): StorySelection
       problem,
       template,
       clientProfile: CLIENT_PROFILES[0],
-      location: { propertyType: 'maison_moderne', room: problem.compatibleRooms[0], time: 'matin' },
+      location: {
+        propertyType: 'maison_moderne',
+        room: problem.compatibleRooms[0],
+        time: 'matin',
+        season: input.season || 'printemps',
+        weather: 'beau',
+        occupancy: 'famille_presente',
+        visualMood: 'calme',
+      },
       technician: BD_STORY_CHARACTERS.find(c => problem.allowedTechnicians.includes(c.slug))!,
       assistante: BD_STORY_CHARACTERS.find(c => c.slug === 'amandine')!,
       cta: CTA_ENTRIES[0],
