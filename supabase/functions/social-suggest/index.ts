@@ -711,18 +711,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Build hook library for the current month's season
+    // Build hook library for the current month's season (1000+ hooks)
     const currentSeason = getSeasonFromMonth(month);
-    const seasonalHooks = HOOK_LIBRARY.filter(h => h.season === 'all' || h.season === currentSeason);
-    const hookLibraryPrompt = Object.entries(
-      seasonalHooks.reduce((acc, h) => {
-        acc[h.universe] = acc[h.universe] || [];
-        acc[h.universe].push(h);
-        return acc;
-      }, {} as Record<string, HookEntry[]>)
-    ).map(([uni, hooks]) => 
-      `${uni.toUpperCase()} :\n${hooks.map(h => `  - "${h.hook}" [${h.trigger}/${h.intent}]`).join('\n')}`
-    ).join('\n\n');
+    const hookLibraryPrompt = buildHookLibraryPrompt(month);
+    const totalHooks = getFullHookLibrary().length;
+    console.log(`[social-suggest] Hook library: ${totalHooks} hooks available, season: ${currentSeason}`);
 
     const systemPrompt = `Tu es un copywriter expert conversion locale pour HelpConfort (dépannage & rénovation habitat).
 
