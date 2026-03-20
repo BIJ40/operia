@@ -420,8 +420,9 @@ ADDITIONAL REQUIREMENTS:
     };
 
     const hookText = sanitizeHookForAI(hook || title || 'Anticipez vos travaux');
-    const subText = sanitizeSubForAI(caption || '');
+    const subText = sanitizeSubForAI(caption || 'Un accompagnement simple pour votre habitat.');
     const ctaText = (cta || 'Demander un devis').toUpperCase().slice(0, 25);
+    const generatedCopy = { hook: hookText, subtext: subText, cta: ctaText };
 
     const compositionPrompt = `You are a professional social media graphic designer. Take this background image and create a FINAL SOCIAL MEDIA AD CREATIVE (1080x1080) by adding the following text overlay elements.
 
@@ -432,6 +433,7 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
    - Position: LOWER area of the image — approximately Y=660 to Y=780 (bottom 35%)
    - NEVER in the middle of the image — must be LOW, just above the sub-text
    - Style: VERY LARGE white bold text (minimum 50px equivalent), ALL CAPS
+   - Alignment: centered horizontally
    - Must have a dark semi-transparent backdrop/shadow for readability
    - Maximum 2 lines
    - CRITICAL: Write this text EXACTLY as provided, letter by letter
@@ -440,6 +442,7 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
    "${subText}"
    - Position: Just below the hook text, approximately Y=790 to Y=860
    - Style: White text, regular weight, MINIMUM 28px equivalent — must be EASILY READABLE on a phone screen
+   - Alignment: centered horizontally under the hook
    - NOT tiny — this is important information that must be legible
    - Maximum 2 lines — the COMPLETE text must appear
    - CRITICAL: Write this text EXACTLY as provided. Do NOT truncate
@@ -469,15 +472,14 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
 DESIGN RULES:
 - The background image must remain FULLY VISIBLE behind all overlays
 - Use semi-transparent dark gradient ONLY in the bottom 40% for text readability
-- All text must be PERFECTLY LEGIBLE at phone screen size (especially the sub-text!)
-- Color palette: White text, Blue #0092DD, Orange #FFB705, Dark gray #2F2F2F
+- All text must be PERFECTLY LEGIBLE at phone screen size
 - NO extra decorative elements, badges, dates, or categories
 - Keep the square 1080x1080 format
 - ZONES MUST NOT OVERLAP
 
 CRITICAL QUALITY CHECK:
-✅ Hook text is EXACTLY as provided, positioned LOW (not mid-image)
-✅ Sub-text is COMPLETE and LARGE ENOUGH to read on a phone
+✅ Hook text is EXACTLY as provided and centered
+✅ Sub-text is COMPLETE, centered, and readable
 ✅ CTA button is CENTERED horizontally
 ✅ NO fake logo in top-left
 ✅ No elements overlap`;
