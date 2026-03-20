@@ -186,7 +186,7 @@ const VALID_TARGET_INTENTS = ['besoin_immediat', 'besoin_latent', 'curiosite', '
 const VALID_URGENCY_LEVELS = ['low', 'medium', 'high'] as const;
 
 // ─── Weekly structure (shuffled each week for variety) ───
-const WEEKLY_CATEGORIES = ['urgence', 'prevention', 'amelioration', 'conseil', 'preuve', 'contre_exemple', 'pedagogique'] as const;
+const WEEKLY_CATEGORIES = ['urgence', 'prevention', 'amelioration', 'conseil', 'preuve', 'contre_exemple', 'pedagogique', 'prospection'] as const;
 
 function shuffleArray<T>(arr: T[]): T[] {
   const a = [...arr];
