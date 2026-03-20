@@ -1,17 +1,16 @@
 /**
  * SocialPostCard — Carte de suggestion dans le panneau détail.
- * Actions : approuver, rejeter, régénérer (avec prompt personnalisé), copier le texte, renvoyer webhook.
+ * Actions : approuver, rejeter, copier le texte, reformuler, renvoyer webhook.
  */
 
 import { useState } from 'react';
-import { Check, X, Copy, Loader2, Send } from 'lucide-react';
+import { Check, X, Copy, Loader2, Send, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import type { SocialSuggestion } from '@/hooks/useSocialSuggestions';
-import { RegenerationPromptPanel, type RegenerationPrompt } from './RegenerationPromptPanel';
 
 const STATUS_LABELS: Record<string, { label: string; variant: string }> = {
   draft: { label: 'Brouillon', variant: 'bg-muted text-muted-foreground' },
@@ -31,7 +30,7 @@ interface SocialPostCardProps {
   suggestion: SocialSuggestion;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
-  onRegenerate: (id: string, prompt?: RegenerationPrompt) => void;
+  onRegenerate: (id: string) => void;
   isRegenerating?: boolean;
 }
 
@@ -93,7 +92,7 @@ export function SocialPostCard({ suggestion, onApprove, onReject, onRegenerate, 
         </div>
       )}
 
-      {/* Caption */}
+      {/* Caption + hashtags with copy icon */}
       <div className="relative group bg-muted/50 rounded-md p-3 pr-9 border border-border">
         <button
           type="button"
@@ -128,22 +127,6 @@ export function SocialPostCard({ suggestion, onApprove, onReject, onRegenerate, 
         )}
       </div>
 
-      {/* Platform variants preview */}
-      {suggestion.variants && suggestion.variants.length > 0 && (
-        <div className="space-y-1">
-          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-            Variantes plateforme
-          </p>
-          <div className="flex gap-1">
-            {suggestion.variants.map(v => (
-              <Badge key={v.id} variant="outline" className="text-[10px] capitalize">
-                {v.platform.replace('_', ' ')}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Actions */}
       <div className="flex flex-wrap gap-1.5 pt-1 border-t border-border">
         {suggestion.status === 'draft' && (
@@ -156,6 +139,16 @@ export function SocialPostCard({ suggestion, onApprove, onReject, onRegenerate, 
             </Button>
           </>
         )}
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 text-xs gap-1"
+          onClick={() => onRegenerate(suggestion.id)}
+          disabled={isRegenerating || suggestion.status === 'approved'}
+        >
+          {isRegenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+          Reformuler
+        </Button>
         <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={handleCopy}>
           <Copy className="w-3 h-3" /> Copier
         </Button>
@@ -172,13 +165,6 @@ export function SocialPostCard({ suggestion, onApprove, onReject, onRegenerate, 
           </Button>
         )}
       </div>
-
-      {/* Regeneration prompt panel */}
-      <RegenerationPromptPanel
-        onRegenerate={(prompt) => onRegenerate(suggestion.id, prompt)}
-        isRegenerating={isRegenerating}
-        disabled={suggestion.status === 'approved'}
-      />
     </div>
   );
 }

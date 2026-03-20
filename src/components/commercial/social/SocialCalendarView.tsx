@@ -1,17 +1,14 @@
 /**
- * SocialCalendarView — Grille calendrier mensuel avec posts colorés par topic_type.
- * 
- * Couleurs :
- * - awareness_day = teal
- * - seasonal_tip = blue
- * - realisation = orange
- * - local_branding = violet
+ * SocialCalendarView — Grille calendrier mensuel avec jours sélectionnables.
+ * Multi-select des jours pour régénération ciblée.
  */
 
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, isToday } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import type { SocialSuggestion } from '@/hooks/useSocialSuggestions';
 
 const TOPIC_COLORS: Record<string, string> = {
@@ -33,9 +30,16 @@ interface SocialCalendarViewProps {
   suggestions: SocialSuggestion[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  selectedDays: Set<string>;
+  onToggleDay: (dateKey: string) => void;
+  onRegenerateSelected: () => void;
+  isRegenerating?: boolean;
 }
 
-export function SocialCalendarView({ currentMonth, suggestions, selectedId, onSelect }: SocialCalendarViewProps) {
+export function SocialCalendarView({
+  currentMonth, suggestions, selectedId, onSelect,
+  selectedDays, onToggleDay, onRegenerateSelected, isRegenerating,
+}: SocialCalendarViewProps) {
   const calendarDays = useMemo(() => {
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(currentMonth);
@@ -44,7 +48,6 @@ export function SocialCalendarView({ currentMonth, suggestions, selectedId, onSe
     return eachDayOfInterval({ start: calStart, end: calEnd });
   }, [currentMonth]);
 
-  // Group suggestions by date
   const suggestionsByDate = useMemo(() => {
     const map = new Map<string, SocialSuggestion[]>();
     for (const s of suggestions) {
@@ -55,6 +58,12 @@ export function SocialCalendarView({ currentMonth, suggestions, selectedId, onSe
     }
     return map;
   }, [suggestions]);
+
+  const handleDayClick = useCallback((e: React.MouseEvent, dateKey: string) => {
+    // Only toggle day selection if clicking on the day cell background, not on a post button
+    e.stopPropagation();
+    onToggleDay(dateKey);
+  }, [onToggleDay]);
 
   const dayNames = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
@@ -75,28 +84,39 @@ export function SocialCalendarView({ currentMonth, suggestions, selectedId, onSe
           const dateKey = format(day, 'yyyy-MM-dd');
           const daySuggestions = suggestionsByDate.get(dateKey) || [];
           const inMonth = isSameMonth(day, currentMonth);
+          const isDaySelected = selectedDays.has(dateKey);
 
           return (
             <div
               key={dateKey}
+              onClick={(e) => inMonth ? handleDayClick(e, dateKey) : undefined}
               className={cn(
-                'border border-border/50 rounded-sm p-0.5 min-h-[60px] transition-colors',
-                !inMonth && 'opacity-30',
-                isToday(day) && 'bg-accent/20 border-accent',
+                'border rounded-sm p-0.5 min-h-[60px] transition-colors cursor-pointer select-none',
+                !inMonth && 'opacity-30 cursor-default',
+                isToday(day) && 'bg-accent/20',
+                isDaySelected
+                  ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
+                  : 'border-border/50 hover:border-border',
               )}
             >
               <div className={cn(
-                'text-xs font-medium mb-0.5',
-                isToday(day) ? 'text-accent-foreground' : 'text-muted-foreground',
+                'text-xs font-medium mb-0.5 flex items-center gap-1',
+                isDaySelected ? 'text-primary' : isToday(day) ? 'text-accent-foreground' : 'text-muted-foreground',
               )}>
                 {format(day, 'd')}
+                {isDaySelected && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                )}
               </div>
 
               <div className="space-y-0.5">
                 {daySuggestions.slice(0, 3).map(s => (
                   <button
                     key={s.id}
-                    onClick={() => onSelect(s.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelect(s.id);
+                    }}
                     className={cn(
                       'w-full text-left text-[10px] leading-tight px-1 py-0.5 rounded border truncate transition-all',
                       TOPIC_COLORS[s.topic_type] || TOPIC_COLORS.seasonal_tip,
@@ -118,14 +138,29 @@ export function SocialCalendarView({ currentMonth, suggestions, selectedId, onSe
         })}
       </div>
 
-      {/* Legend */}
-      <div className="flex gap-3 mt-2 pt-2 border-t border-border">
-        {Object.entries({ awareness_day: 'Journées', seasonal_tip: 'Conseils', realisation: 'Réalisations', local_branding: 'Marque' }).map(([type, label]) => (
-          <div key={type} className="flex items-center gap-1">
-            <div className={cn('w-2 h-2 rounded-full', TOPIC_DOT_COLORS[type])} />
-            <span className="text-[10px] text-muted-foreground">{label}</span>
-          </div>
-        ))}
+      {/* Footer: legend + regenerate selected */}
+      <div className="flex items-center gap-3 mt-2 pt-2 border-t border-border">
+        <div className="flex gap-3 flex-1">
+          {Object.entries({ awareness_day: 'Journées', seasonal_tip: 'Conseils', realisation: 'Réalisations', local_branding: 'Marque' }).map(([type, label]) => (
+            <div key={type} className="flex items-center gap-1">
+              <div className={cn('w-2 h-2 rounded-full', TOPIC_DOT_COLORS[type])} />
+              <span className="text-[10px] text-muted-foreground">{label}</span>
+            </div>
+          ))}
+        </div>
+
+        {selectedDays.size > 0 && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs gap-1.5 shrink-0"
+            onClick={onRegenerateSelected}
+            disabled={isRegenerating}
+          >
+            <RefreshCw className={cn('w-3 h-3', isRegenerating && 'animate-spin')} />
+            Suggérer à nouveau ({selectedDays.size} jour{selectedDays.size > 1 ? 's' : ''})
+          </Button>
+        )}
       </div>
     </div>
   );
