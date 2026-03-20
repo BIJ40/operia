@@ -184,6 +184,30 @@ const VALID_LEAD_TYPES = ['urgence', 'prevention', 'amelioration', 'preuve_socia
 const VALID_TARGET_INTENTS = ['besoin_immediat', 'besoin_latent', 'curiosite', 'education'] as const;
 const VALID_URGENCY_LEVELS = ['low', 'medium', 'high'] as const;
 
+// ─── Post category rotation for fallback slots (score 1 events replaced) ───
+const POST_CATEGORIES_ROTATION = [
+  'urgence',        // fuite, panne, casse, sécurité
+  'entretien',      // prévention, anticiper
+  'amelioration',   // confort, esthétique, valorisation
+  'saisonnalite',   // météo réelle, période
+  'conseil',        // tips concrets
+  'preuve',         // intervention rapide, expertise, local
+] as const;
+
+// ─── Blacklist: forbidden theme associations ───
+const FORBIDDEN_THEME_ASSOCIATIONS = [
+  'Pâques = travaux',
+  'Noël = rénovation',
+  'Carnaval = bricolage',
+  'Saint-Valentin = plomberie',
+  'Halloween = rénovation',
+  'Épiphanie = chauffage',
+  'Star Wars = installations',
+  'Fête des mères = confort maison',
+  'Fête des pères = projet maison',
+  'Saint-Patrick = entretien',
+];
+
 // ─── Universe keyword inference ───
 const UNIVERSE_KEYWORDS: Record<string, string[]> = {
   plomberie: ['plomberie', 'fuite', 'canalisation', 'robinet', 'chauffe-eau', 'ballon', 'wc', 'sanitaire', 'radiateur', 'chauffage'],
