@@ -652,6 +652,7 @@ ADDITIONAL REQUIREMENTS:
       'bg_only',
       jsonHeaders,
       undefined,
+      hasBeforeAfter,
     );
 
     if ('response' in backgroundSave) {
@@ -821,6 +822,7 @@ MANDATORY QUALITY CHECKLIST (if ANY fails, regenerate):
       'composed',
       jsonHeaders,
       generatedCopy,
+      hasBeforeAfter,
     );
 
     if ('response' in composedSave) {
@@ -856,6 +858,7 @@ async function persistAsset(
   compositionMode: 'composed' | 'bg_only',
   headers: Record<string, string>,
   generatedCopy?: { hook: string; subtext: string; cta: string },
+  hasBeforeAfter: boolean = false,
 ): Promise<
   | { assetId: string; storagePath: string; signedUrl: string | null; mode: 'photo' | 'generated' }
   | { response: Response }
