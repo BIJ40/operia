@@ -336,6 +336,7 @@ function validateAndNormalizeSuggestions(
   year: number,
   exploitableReals: { id: string }[],
   existingTopicKeys: Set<string>,
+  weeklySchedule?: { day: number; category: string }[],
 ): ValidatedSuggestion[] {
   const monthKey = `${year}-${String(month).padStart(2, '0')}`;
   const daysInMonth = new Date(year, month, 0).getDate();
@@ -355,8 +356,14 @@ function validateAndNormalizeSuggestions(
     const dayNum = parseInt(date.split('-')[2]);
     if (dayNum < 1 || dayNum > daysInMonth) date = `${monthKey}-15`;
 
-    // 2. topic_type
-    const topicType = (VALID_TOPIC_TYPES as readonly string[]).includes(s.topic_type) ? s.topic_type : 'conseil';
+    // 2. topic_type — enforce from weekly schedule if available
+    let topicType = (VALID_TOPIC_TYPES as readonly string[]).includes(s.topic_type) ? s.topic_type : 'conseil';
+    if (weeklySchedule) {
+      const scheduledDay = weeklySchedule.find(ws => ws.day === dayNum);
+      if (scheduledDay && (VALID_TOPIC_TYPES as readonly string[]).includes(scheduledDay.category)) {
+        topicType = scheduledDay.category; // Force the scheduled category
+      }
+    }
 
     // 3. topic_key dedup
     const topicKey = String(s.topic_key || `${topicType}_${date}`);
@@ -372,6 +379,10 @@ function validateAndNormalizeSuggestions(
       if ((NORMALIZED_UNIVERSES as readonly string[]).includes(preferredUni)) {
         universe = preferredUni; // Force the calendar event's preferred universe
       }
+    }
+    // Force general universe for prospection posts
+    if (topicType === 'prospection') {
+      universe = 'general';
     }
 
     // 5. realisation_id
@@ -1070,17 +1081,25 @@ PRIORITÉ (DANS CET ORDRE)
 Le calendrier est un BONUS, pas une obligation.
 
 ═══════════════════════════════════════════
-RAPPEL FINAL — PUBLICITÉ, PAS CONTENU
+RAPPEL FINAL — RESPECT DES CATÉGORIES
 ═══════════════════════════════════════════
 Tu crées des PUBLICITÉS qui déclenchent des ACTIONS.
-Chaque post ressemble à une pub : hook choc → bénéfice clair → CTA direct.
-JAMAIS de contenu informatif, éducatif ou neutre.
+Pour "urgence", "prevention", "amelioration" : hook choc → bénéfice clair → CTA direct.
+Pour "pedagogique" : contenu UTILE + valeur immédiate → CTA doux.
+Pour "conseil" : tip pratique + actionnable → CTA.
+Pour "contre_exemple" : erreur fréquente + contraste pro → CTA.
+Pour "prospection" : présentation entreprise/zone/partenaires → CTA découverte.
+Pour "preuve" : savoir-faire technicien, réalisation, témoignage → CTA confiance.
+Pour "saisonnier" : lien météo/période réelle → CTA anticipation.
+
+CHAQUE catégorie a sa PROPRE tonalité. Ne PAS tout transformer en "urgence métier".
+Le topic_type assigné à chaque jour est OBLIGATOIRE — ne jamais le remplacer par un autre.
 
 VOCABULAIRE INTERDIT :
 - Ne jamais utiliser le mot "expert" ou "expertise". Préférer "technicien", "technicien qualifié", "professionnel", "spécialiste".
 
 VALIDATION FINALE :
-Si le post ne peut pas déclencher un appel ou une demande de devis → il est INVALIDE → remplace-le.`;
+Si le topic_type du post ne correspond pas à la catégorie assignée au jour → il est INVALIDE → remplace-le.`;
     // Build user prompt customization from prompt params
     const toneMap: Record<string, string> = {
       professionnel: 'Ton professionnel, technicien, crédible',
@@ -1152,19 +1171,42 @@ ${exploitableReals.length > 0
 Propose un angle DIFFÉRENT du post précédent.
 RAPPEL : le post doit contenir au moins UN déclencheur de conversion (perte d'argent, inconfort, risque, gain immédiat, simplicité).`;
     } else if (isTargetDatesMode) {
+      // Look up the weekly schedule to know what category each target date should have
       const datesFormatted = targetDates.map(d => {
         const day = parseInt(d.split('-')[2]);
-        // Check if there's an awareness event on this date
         const event = monthAwareness.find(a => a.day === day);
-        return event 
-          ? `- ${d}: événement "${event.label}" (univers: ${event.preferredUniverses[0]}, score: ${event.relevanceScore}) — utiliser SEULEMENT si pertinent`
-          : `- ${d}: post métier libre — choisir un univers varié`;
+        const scheduledCategory = weeklySchedule.find(s => s.day === day)?.category || 'conseil';
+        
+        const CATEGORY_DESCRIPTIONS: Record<string, string> = {
+          urgence: 'URGENCE — fuite, panne, casse, sécurité. Universe métier obligatoire.',
+          prevention: 'PRÉVENTION — anticiper un problème, entretien préventif.',
+          amelioration: 'AMÉLIORATION — confort, esthétique, valorisation habitat.',
+          conseil: 'CONSEIL PRATIQUE — tip utile, actionnable, court.',
+          preuve: 'PREUVE — témoignage, avant/après, process d\'intervention, savoir-faire.',
+          saisonnier: 'SAISONNIER — lié à la météo réelle ou à la période.',
+          contre_exemple: 'CONTRE-EXEMPLE — erreur fréquente, "ce qu\'il ne faut pas faire".',
+          pedagogique: 'PÉDAGOGIQUE — "le saviez-vous ?", chiffre clé, schéma simple.',
+          prospection: 'PROSPECTION & MARQUE — zone d\'intervention, panorama métiers, partenaires, commercial créatif. Universe = general.',
+        };
+        
+        const categoryDesc = CATEGORY_DESCRIPTIONS[scheduledCategory] || scheduledCategory;
+        
+        if (event) {
+          return `- ${d}: CATÉGORIE OBLIGATOIRE = "${scheduledCategory}" (${categoryDesc}) | événement: "${event.label}" (utiliser SEULEMENT si pertinent)`;
+        }
+        return `- ${d}: CATÉGORIE OBLIGATOIRE = "${scheduledCategory}" (${categoryDesc})`;
       }).join('\n');
 
       userPrompt = `Génère EXACTEMENT ${targetDates.length} suggestion(s) de posts, UNE par date suivante :
 
 ${datesFormatted}
 ${promptCustomization}
+
+RÈGLE CRITIQUE : le topic_type de chaque post DOIT correspondre EXACTEMENT à la catégorie indiquée pour ce jour.
+Si la catégorie est "pedagogique" → le post DOIT être pédagogique (chiffre clé, "le saviez-vous ?").
+Si la catégorie est "prospection" → le post DOIT présenter l'entreprise (zone, métiers, partenaires).
+Si la catégorie est "contre_exemple" → le post DOIT montrer une erreur fréquente.
+NE PAS remplacer par de l'urgence ou du métier terrain si ce n'est pas la catégorie assignée.
 
 RÉALISATIONS EXPLOITABLES :
 ${exploitableReals.length > 0 
@@ -1176,9 +1218,8 @@ ${[...existingTopicKeys].join(', ') || '(aucun)'}
 
 RÈGLES :
 - UN post par date, pas plus, pas moins
-- Chaque post doit être sur une date différente parmi celles listées
 - La suggestion_date DOIT correspondre EXACTEMENT à une des dates demandées
-- Varier les univers entre les posts
+- Varier les univers entre les posts (pas 2 fois le même univers)
 - Chaque post DOIT contenir un DÉCLENCHEUR de conversion
 - Pas de contenu calendaire forcé`;
     } else {
@@ -1388,7 +1429,7 @@ RAPPEL CRITIQUE — 1 POST/JOUR, MACHINE ÉDITORIALE
     }
 
     const validatedSuggestions = validateAndNormalizeSuggestions(
-      rawSuggestions, month, year, exploitableReals, existingTopicKeys
+      rawSuggestions, month, year, exploitableReals, existingTopicKeys, weeklySchedule
     );
 
     if (validatedSuggestions.length === 0) {
