@@ -568,6 +568,7 @@ async function persistAsset(
   realPhotoUrl: string | null,
   compositionMode: 'composed' | 'bg_only',
   headers: Record<string, string>,
+  generatedCopy?: { hook: string; subtext: string; cta: string },
 ): Promise<
   | { assetId: string; storagePath: string; signedUrl: string | null; mode: 'photo' | 'generated' }
   | { response: Response }
@@ -614,10 +615,11 @@ async function persistAsset(
         platform: 'base',
         universe,
         generated_at: now.toISOString(),
-        source: realPhotoUrl ? 'ai_photo_edit_v4' : 'ai_generated_v4',
+        source: realPhotoUrl ? 'ai_photo_edit_v5' : 'ai_generated_v5',
         mode,
         composition_mode: compositionMode,
-        prompt_version: compositionMode === 'bg_only' ? 'v4_background' : 'v4_composed',
+        prompt_version: compositionMode === 'bg_only' ? 'v5_background' : 'v5_composed',
+        generated_copy: generatedCopy ?? null,
       },
     })
     .select('id, storage_path, created_at')

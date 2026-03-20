@@ -84,18 +84,23 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const hasPreview = Boolean(rawPreviewUrl || composedPreviewUrl);
   const showPreviewSkeleton = (assetsLoading || loadingPreview) && !hasPreview;
 
-  // Build canvas payload from suggestion + raw AI background only
+  // Build canvas payload from suggestion + latest generated marketing copy
   const aiPayload = (suggestion as any).ai_payload || {};
+  const generatedCopy = (rawAsset?.generation_meta?.generated_copy || composedAsset?.generation_meta?.generated_copy || null) as {
+    hook?: string;
+    subtext?: string;
+    cta?: string;
+  } | null;
   const canvasPayload: SocialTemplatePayload = useMemo(() => ({
     title: suggestion.title,
-    caption: suggestion.caption_base_fr || '',
+    caption: generatedCopy?.subtext || suggestion.caption_base_fr || '',
     universe: suggestion.universe,
     platform: suggestion.platform_targets?.[0] || null,
     date: suggestion.suggestion_date,
     mediaUrl: rawPreviewUrl || null,
-    hook: aiPayload.hook || suggestion.title,
-    cta: aiPayload.cta || null,
-  }), [suggestion, rawPreviewUrl, aiPayload]);
+    hook: generatedCopy?.hook || aiPayload.hook || suggestion.title,
+    cta: generatedCopy?.cta || aiPayload.cta || null,
+  }), [suggestion, rawPreviewUrl, aiPayload, generatedCopy]);
 
   const templateId = useMemo(() => resolveSocialTemplate({
     topic_type: suggestion.topic_type,

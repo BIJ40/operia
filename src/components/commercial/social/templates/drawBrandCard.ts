@@ -71,7 +71,7 @@ export async function drawBrandCard(ctx: CanvasRenderingContext2D, payload: Soci
   if (payload.caption) {
     drawSubText(ctx, payload.caption, {
       y: hookBottom + 14,
-      align: 'left',
+      align: 'center',
       color: 'rgba(255,255,255,0.88)',
     });
   }

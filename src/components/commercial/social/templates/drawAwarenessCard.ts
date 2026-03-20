@@ -50,7 +50,7 @@ export async function drawAwarenessCard(ctx: CanvasRenderingContext2D, payload: 
   if (payload.caption) {
     drawSubText(ctx, payload.caption, {
       y: hookBottom + 14,
-      align: 'left',
+      align: 'center',
     });
   }
 
