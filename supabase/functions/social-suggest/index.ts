@@ -1054,6 +1054,9 @@ Tu crées des PUBLICITÉS qui déclenchent des ACTIONS.
 Chaque post ressemble à une pub : hook choc → bénéfice clair → CTA direct.
 JAMAIS de contenu informatif, éducatif ou neutre.
 
+VOCABULAIRE INTERDIT :
+- Ne jamais utiliser le mot "expert" ou "expertise". Préférer "technicien", "technicien qualifié", "professionnel", "spécialiste".
+
 VALIDATION FINALE :
 Si le post ne peut pas déclencher un appel ou une demande de devis → il est INVALIDE → remplace-le.`;
     // Build user prompt customization from prompt params
