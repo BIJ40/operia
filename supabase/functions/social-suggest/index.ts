@@ -834,7 +834,11 @@ Deno.serve(async (req) => {
     }
 
     const approvedCount = (existingSuggestions || []).filter(s => s.status === 'approved' || protectedSuggestionIds.has(s.id)).length;
-    const targetPostCount = regenerateSingle ? 1 : isTargetDatesMode ? targetDates.length : Math.max(8, 20 - approvedCount);
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const targetPostCount = regenerateSingle ? 1 : isTargetDatesMode ? targetDates.length : daysInMonth;
+    
+    // Build weekly schedule for full month generation
+    const weeklySchedule = buildWeeklySchedule(daysInMonth, year, month);
 
     // ─── AI Generation ──────────────────────────────
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
