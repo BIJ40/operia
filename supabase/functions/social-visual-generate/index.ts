@@ -203,10 +203,10 @@ async function callImageAIWithFallback(
           }
         }
 
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-image-generation:generateContent?key=${geminiKey}`;
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent` ;
         const geminiResponse = await fetch(geminiUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiKey },
           body: JSON.stringify({
             contents: [{ parts: geminiParts }],
             generationConfig: {
@@ -346,10 +346,10 @@ CRITICAL RULES:
     console.log('[callImageAI] Trying Gemini Imagen (text-only)...');
     await new Promise(r => setTimeout(r, 500));
     try {
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-image-generation:generateContent?key=${geminiKey}`;
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent`;
       const geminiResponse = await fetch(geminiUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiKey },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
@@ -399,14 +399,14 @@ CRITICAL RULES:
         const dalleResp = await fetch('https://api.openai.com/v1/images/generations', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${openaiKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model: 'dall-e-3', prompt: prompt.slice(0, 4000), n: 1, size: '1024x1024', quality: 'standard' }),
+          body: JSON.stringify({ model: 'dall-e-3', prompt: prompt.slice(0, 4000), n: 1, size: '1024x1024', quality: 'standard', response_format: 'b64_json' }),
         });
         if (dalleResp.ok) {
           const dalleData = await dalleResp.json();
-          const url = dalleData.data?.[0]?.url;
-          if (url) {
+          const b64 = dalleData.data?.[0]?.b64_json;
+          if (b64) {
             console.log('[callImageAI] DALL-E fallback succeeded');
-            return { ok: true, data: { choices: [{ message: { role: 'assistant', content: '', images: [{ type: 'image_url', image_url: { url } }] } }] }, model: 'dall-e-3' };
+            return { ok: true, data: { choices: [{ message: { role: 'assistant', content: '', images: [{ type: 'image_url', image_url: { url: `data:image/png;base64,${b64}` } }] } }] }, model: 'dall-e-3' };
           }
         }
         const errText = await dalleResp.text();
