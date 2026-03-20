@@ -499,7 +499,8 @@ Deno.serve(async (req) => {
 
     const agencyName = agency?.label || 'Help Confort';
     const agencyCity = agency?.ville || '';
-    const agencyZone = agencyCity ? `${agencyCity} (${agency?.code_postal || ''})` : '';
+    // Force "Landes & Pays Basque" — never use "Dax" alone
+    const agencyZone = 'Landes & Pays Basque';
 
     // Realisations with media
     const sixMonthsAgo = new Date();
