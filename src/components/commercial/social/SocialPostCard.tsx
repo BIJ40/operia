@@ -20,11 +20,14 @@ const STATUS_LABELS: Record<string, { label: string; variant: string }> = {
 };
 
 const TOPIC_LABELS: Record<string, string> = {
-  awareness_day: 'Journée thématique',
-  seasonal_tip: 'Conseil saisonnier',
-  realisation: 'Réalisation',
-  local_branding: 'Marque & confiance',
-  educational: 'Pédagogique',
+  urgence: 'Urgence',
+  prevention: 'Prévention',
+  amelioration: 'Amélioration',
+  conseil: 'Conseil pratique',
+  preuve: 'Preuve & réassurance',
+  saisonnier: 'Saisonnier',
+  contre_exemple: 'Contre-exemple',
+  pedagogique: 'Pédagogique',
 };
 
 interface SocialPostCardProps {

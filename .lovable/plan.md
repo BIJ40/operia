@@ -1,68 +1,60 @@
 
 
-## Plan: Corrections Pilotage avancé (4 points)
+## Plan: Daily Content Machine — 1 post/jour, cadence hebdomadaire
 
-### 1. Maturité Pipeline — Ajouter tooltips explicatifs au survol
+### Résumé
 
-**Fichier**: `PipelineMaturityCard.tsx`
+Passage de ~20 posts/mois (répartition macro) à **28-31 posts/mois** (1/jour) avec structure hebdomadaire semi-aléatoire, 8 topic_types, anti-fatigue avancé.
 
-Ajouter un tooltip (via `HoverCard` ou `title`) sur chaque étape du funnel expliquant les critères de classification :
-- **Commercial** : dossier sans devis validé ni date planifiée
-- **À commander** : devis en attente de commande (`devis_to_order`)
-- **Prêt planif.** : état `to_planify_tvx` avec devis validé
-- **Planifié** : date d'intervention future trouvée
-- **Bloqué** : en attente fournisseur (`wait_fourn`)
+### 1. Nouveaux topic_types (remplacent les anciens)
 
-Base de dossiers : uniquement les projets dans les 3 états éligibles (`to_planify_tvx`, `devis_to_order`, `wait_fourn`).
+| Ancien | Nouveau | Template canvas |
+|--------|---------|-----------------|
+| awareness_day | urgence | tip_card |
+| seasonal_tip | prevention | awareness_card |
+| realisation | amelioration | brand_card |
+| local_branding | conseil | tip_card |
+| educational | preuve | brand_card / realisation_card |
+| — | saisonnier | awareness_card |
+| — | contre_exemple | tip_card |
+| — | pedagogique | educational_card |
 
----
+### 2. Structure hebdomadaire semi-aléatoire
 
-### 2. Ancienneté des dossiers — Corriger la récupération de la date de création
+Chaque semaine contient les 7 catégories dans un ordre **shufflé** (randomisé). L'ordre change chaque semaine → variété naturelle, non prévisible.
 
-**Fichier**: `chargeTravauxEngine.ts`, ligne 463
+### 3. Règles de rotation (anti-fatigue)
 
-Le bug : le code cherche `project?.createdAt` (camelCase) alors que l'API Apogée retourne `project.created_at` (snake_case). Tout le reste du codebase utilise `project.created_at || project.date`.
+- **Universe gap** : min 3 jours, max 2/semaine, max 6/mois
+- **Pas 2 posts consécutifs** même univers NI même catégorie
+- **Fatigue score** : si score > 3 → rejet et swap automatique
+  - same_universe_recent: +2/+1
+  - same_topic_type_recent: +2
+  - similar_hook_pattern: +3
+- **Micro-variation** : alterner question, affirmation, alerte, conseil, chiffre
 
-**Correction** :
-```
-project.created_at || project.date || project?.createdAt || project?.data?.createdAt
-```
+### 4. Format des posts (variation obligatoire)
 
-Cela éliminera la catégorie "Inconnu" pour les dossiers qui ont bien une date.
+| Format | Structure | Distribution |
+|--------|-----------|-------------|
+| Punchline | Hook seul | 20% |
+| Court | Hook + CTA | 30% |
+| Moyen | Hook + 1 phrase + CTA | 40% |
+| Long | Hook + 2 phrases + CTA | 10% |
 
----
+### 5. Preuve — sous-types
 
-### 3. Dossiers à risque — Ajouter tooltip explicatif au survol
+Les posts "preuve" varient entre : réalisation, avant/après, témoignage, process d'intervention.
 
-**Fichier**: `RiskDossiersCard.tsx`
+### 6. Fichiers modifiés
 
-Au survol de chaque dossier, afficher le détail du score via un `HoverCard` :
-- **Flux** (25%) : score X% — stagnation temporelle
-- **Données** (40%) : score X% — complétude des informations
-- **Valeur** (35%) : score X% — enjeu financier
-- **Score global** : X%
-
----
-
-### 4. Charge hebdomadaire — Corriger le calcul
-
-**Fichier**: `chargeTravauxEngine.ts`, lignes 733-752
-
-Le calcul actuel ne fonctionne que pour les interventions ayant une date dans les 4 prochaines semaines (`dateReelle` ou `date`). Or la plupart des dossiers éligibles (`to_planify_tvx`, `devis_to_order`) n'ont PAS encore de date d'intervention planifiée.
-
-**Correction** : pour les dossiers sans date d'intervention, répartir les heures estimées sur les semaines à venir selon l'état du workflow :
-- `to_planify_tvx` → S+1 (prêts à planifier)
-- `devis_to_order` → S+2 (en attente commande)
-- `wait_fourn` → S+3 (en attente fournitures)
-
-Les dossiers avec une date d'intervention planifiée restent dans leur semaine réelle.
-
----
-
-### Fichiers impactés
 | Fichier | Modification |
 |---------|-------------|
-| `src/statia/shared/chargeTravauxEngine.ts` | Fix date field (L463), fix weekly load logic (L733+) |
-| `src/apogee-connect/components/stats-hub/previsionnel/PipelineMaturityCard.tsx` | Tooltips explicatifs par étape |
-| `src/apogee-connect/components/stats-hub/previsionnel/RiskDossiersCard.tsx` | HoverCard détail score risque |
-
+| `supabase/functions/social-suggest/index.ts` | 8 topic_types, daily volume, weekly schedule, fatigue score, format distribution, universe rules |
+| `supabase/functions/_shared/hookLibrary.ts` | HookIntent étendu (8 intents) |
+| `src/components/commercial/social/SocialCalendarView.tsx` | 8 couleurs + légende |
+| `src/components/commercial/social/SocialListView.tsx` | 8 badges + labels |
+| `src/components/commercial/social/SocialPostCard.tsx` | 8 labels |
+| `src/pages/commercial/SocialHubPage.tsx` | 8 filtres |
+| `src/components/commercial/social/templateResolver.ts` | Mapping 8 types → 5 templates |
+| `src/components/commercial/social/templates/canvasHelpers.ts` | 8 labels canvas |

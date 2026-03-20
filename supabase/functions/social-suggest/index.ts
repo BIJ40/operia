@@ -180,10 +180,75 @@ const AWARENESS_DAYS = buildAwarenessDays(new Date().getFullYear());
 
 const NORMALIZED_UNIVERSES = ['plomberie', 'electricite', 'serrurerie', 'vitrerie', 'menuiserie', 'renovation', 'volets', 'pmr', 'general'] as const;
 const VALID_PLATFORMS = ['facebook', 'instagram', 'google_business', 'linkedin'] as const;
-const VALID_TOPIC_TYPES = ['awareness_day', 'seasonal_tip', 'realisation', 'local_branding', 'educational'] as const;
+const VALID_TOPIC_TYPES = ['urgence', 'prevention', 'amelioration', 'conseil', 'preuve', 'saisonnier', 'contre_exemple', 'pedagogique'] as const;
 const VALID_LEAD_TYPES = ['urgence', 'prevention', 'amelioration', 'preuve_sociale', 'saisonnier'] as const;
 const VALID_TARGET_INTENTS = ['besoin_immediat', 'besoin_latent', 'curiosite', 'education'] as const;
 const VALID_URGENCY_LEVELS = ['low', 'medium', 'high'] as const;
+
+// ─── Weekly structure (shuffled each week for variety) ───
+const WEEKLY_CATEGORIES = ['urgence', 'prevention', 'amelioration', 'conseil', 'preuve', 'contre_exemple', 'pedagogique'] as const;
+
+function shuffleArray<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildWeeklySchedule(daysInMonth: number, year: number, month: number): { day: number; category: string }[] {
+  const schedule: { day: number; category: string }[] = [];
+  let weekPool: string[] = [];
+  
+  for (let d = 1; d <= daysInMonth; d++) {
+    if (weekPool.length === 0) {
+      weekPool = shuffleArray([...WEEKLY_CATEGORIES]);
+    }
+    schedule.push({ day: d, category: weekPool.shift()! });
+  }
+  return schedule;
+}
+
+// ─── Universe rotation rules ───
+const UNIVERSE_RULES = {
+  minGapDays: 3,
+  maxPerWeek: 2,
+  maxPerMonth: 6,
+};
+
+// ─── Format distribution ───
+const FORMAT_DISTRIBUTION = {
+  punchline: 20, // hook seul
+  court: 30,     // hook + CTA
+  moyen: 40,     // hook + 1 phrase + CTA
+  long: 10,      // hook + 2 phrases + CTA
+};
+
+// ─── Fatigue score (anti-repetition perçue) ───
+function computeFatigueScore(
+  current: { universe: string; topic_type: string; hook: string },
+  recent: { universe: string; topic_type: string; hook: string }[],
+): number {
+  let score = 0;
+  const last3 = recent.slice(-3);
+  
+  // Same universe in last 2 posts
+  if (last3.length > 0 && last3[last3.length - 1].universe === current.universe) score += 2;
+  if (last3.length > 1 && last3[last3.length - 2].universe === current.universe) score += 1;
+  
+  // Same intent/category in last post
+  if (last3.length > 0 && last3[last3.length - 1].topic_type === current.topic_type) score += 2;
+  
+  // Similar hook pattern (first 3 words match)
+  const currentStart = current.hook.split(/\s+/).slice(0, 3).join(' ').toLowerCase();
+  for (const r of last3) {
+    const rStart = r.hook.split(/\s+/).slice(0, 3).join(' ').toLowerCase();
+    if (currentStart === rStart) score += 3;
+  }
+  
+  return score;
+}
 
 // ─── Post category rotation for fallback slots (score 1 events replaced) ───
 const POST_CATEGORIES_ROTATION = [
@@ -291,7 +356,7 @@ function validateAndNormalizeSuggestions(
     if (dayNum < 1 || dayNum > daysInMonth) date = `${monthKey}-15`;
 
     // 2. topic_type
-    const topicType = (VALID_TOPIC_TYPES as readonly string[]).includes(s.topic_type) ? s.topic_type : 'seasonal_tip';
+    const topicType = (VALID_TOPIC_TYPES as readonly string[]).includes(s.topic_type) ? s.topic_type : 'conseil';
 
     // 3. topic_key dedup
     const topicKey = String(s.topic_key || `${topicType}_${date}`);
@@ -384,7 +449,8 @@ function validateAndNormalizeSuggestions(
     });
   }
 
-  // Anti-repetition: no 2 consecutive same universe
+  // ─── Anti-fatigue: universe gap enforcement ───
+  // Rule 1: no 2 consecutive same universe
   for (let i = 1; i < result.length; i++) {
     if (result[i].universe === result[i - 1].universe && result[i].universe !== 'general') {
       for (let j = i + 1; j < result.length; j++) {
@@ -396,7 +462,52 @@ function validateAndNormalizeSuggestions(
     }
   }
 
-  return result;
+  // Rule 2: fatigue score — reject and swap posts with high fatigue
+  const finalResult: ValidatedSuggestion[] = [];
+  for (const post of result) {
+    const recent = finalResult.slice(-3).map(p => ({
+      universe: p.universe,
+      topic_type: p.topic_type,
+      hook: p.hook,
+    }));
+    const fatigue = computeFatigueScore(
+      { universe: post.universe, topic_type: post.topic_type, hook: post.hook },
+      recent,
+    );
+    if (fatigue > 3) {
+      // Try to find a better candidate later in the array
+      const betterIdx = result.indexOf(post) + 1;
+      let swapped = false;
+      for (let k = betterIdx; k < result.length; k++) {
+        const candidate = result[k];
+        const candFatigue = computeFatigueScore(
+          { universe: candidate.universe, topic_type: candidate.topic_type, hook: candidate.hook },
+          recent,
+        );
+        if (candFatigue <= 3 && !finalResult.includes(candidate)) {
+          finalResult.push(candidate);
+          swapped = true;
+          break;
+        }
+      }
+      if (!swapped) finalResult.push(post); // no better option, keep it
+    } else {
+      finalResult.push(post);
+    }
+  }
+
+  // Rule 3: max per week/month universe enforcement (log warning only, don't reject at this stage)
+  const universeCounts: Record<string, number> = {};
+  for (const p of finalResult) {
+    universeCounts[p.universe] = (universeCounts[p.universe] || 0) + 1;
+  }
+  for (const [uni, count] of Object.entries(universeCounts)) {
+    if (uni !== 'general' && count > UNIVERSE_RULES.maxPerMonth) {
+      console.warn(`[social-suggest] Universe "${uni}" appears ${count} times (max ${UNIVERSE_RULES.maxPerMonth})`);
+    }
+  }
+
+  return finalResult;
 }
 
 // ─── AI tool schema ───
@@ -627,12 +738,11 @@ Deno.serve(async (req) => {
         .filter(Boolean) as string[]
     );
 
-    // ─── Cross-month 21-day gap detection ───────────────
-    // Load last 21 days of previous month's suggestions to avoid near-duplicates
-    const prevMonthDate = new Date(year, month - 2, 1); // month-1 in 0-based, then -1 more
+    // ─── Cross-month universe gap detection (3 days) ───
+    const prevMonthDate = new Date(year, month - 2, 1);
     const prevMonthKey = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, '0')}`;
     const daysInPrevMonth = new Date(prevMonthDate.getFullYear(), prevMonthDate.getMonth() + 1, 0).getDate();
-    const cutoffDay = daysInPrevMonth - 21; // only last 21 days of prev month
+    const cutoffDay = daysInPrevMonth - 3; // only last 3 days of prev month (universe gap = 3 days)
 
     const { data: prevMonthSuggestions } = await adminSupabase
       .from('social_content_suggestions')
@@ -649,9 +759,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Build a string for the AI prompt with recent themes to avoid
     const recentThemesWarning = recentPrevUniverses.length > 0
-      ? `\n\nTHÈMES RÉCENTS DU MOIS PRÉCÉDENT (à espacer d'au moins 21 jours) :\n${recentPrevUniverses.map(r => `- ${r.date}: univers "${r.universe}"`).join('\n')}\nSi un univers apparaît ici, NE PAS le réutiliser dans les 21 premiers jours du mois cible.`
+      ? `\n\nTHÈMES RÉCENTS DU MOIS PRÉCÉDENT (gap minimum 3 jours) :\n${recentPrevUniverses.map(r => `- ${r.date}: univers "${r.universe}"`).join('\n')}\nSi un univers apparaît ici, NE PAS le réutiliser dans les 3 premiers jours du mois cible.`
       : '';
 
     // ─── Regeneration logic ──────────────────────────
@@ -725,7 +834,11 @@ Deno.serve(async (req) => {
     }
 
     const approvedCount = (existingSuggestions || []).filter(s => s.status === 'approved' || protectedSuggestionIds.has(s.id)).length;
-    const targetPostCount = regenerateSingle ? 1 : isTargetDatesMode ? targetDates.length : Math.max(8, 20 - approvedCount);
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const targetPostCount = regenerateSingle ? 1 : isTargetDatesMode ? targetDates.length : daysInMonth;
+    
+    // Build weekly schedule for full month generation
+    const weeklySchedule = buildWeeklySchedule(daysInMonth, year, month);
 
     // ─── AI Generation ──────────────────────────────
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
@@ -766,16 +879,18 @@ ${FORBIDDEN_THEME_ASSOCIATIONS.map(a => `- ${a}`).join('\n')}
 Toute analogie faible, contenu forcé ou phrase marketing creuse = REJETÉ.
 
 ═══════════════════════════════════════════
-6 CATÉGORIES DE POSTS AUTORISÉES
+8 CATÉGORIES DE POSTS (topic_type)
 ═══════════════════════════════════════════
-Chaque post DOIT appartenir à UNE de ces catégories :
+Chaque post DOIT avoir un topic_type parmi :
 
-1. URGENCE / PROBLÈME — fuite, panne, casse, sécurité
-2. ENTRETIEN / PRÉVENTION — éviter une panne, anticiper
-3. AMÉLIORATION HABITAT — confort, esthétique, valorisation
-4. SAISONNALITÉ RÉELLE — météo, période (printemps = humidité, été = clim, hiver = gel)
-5. CONSEIL PRATIQUE — tips concrets, utiles, actionnables
-6. PREUVE / RÉASSURANCE — intervention rapide, expertise, proximité locale
+1. "urgence" — fuite, panne, casse, sécurité (20% du mois, ~6 posts)
+2. "prevention" — éviter une panne, anticiper (15%, ~4-5 posts)
+3. "amelioration" — confort, esthétique, valorisation (15%, ~4-5 posts)
+4. "conseil" — tips concrets, utiles, actionnables (10%, ~3 posts)
+5. "preuve" — intervention rapide, expertise, proximité, réalisation, témoignage, avant/après, process (10%, ~3 posts)
+6. "saisonnier" — météo réelle, période (10%, ~3 posts)
+7. "contre_exemple" — erreur fréquente, "ce qu'il ne faut pas faire", contraste expert (10%, ~3 posts)
+8. "pedagogique" — schéma, chiffre clé, "le saviez-vous ?", valeur immédiate (10%, ~3 posts)
 
 ═══════════════════════════════════════════
 PRESSION CONVERSION (OBLIGATOIRE)
@@ -898,10 +1013,20 @@ PLATFORM VARIANTS :
 - Google Business → problème + solution + zone géo
 - LinkedIn → expertise + cas concret + crédibilité
 
-ANTI-RÉPÉTITION (21 JOURS MINIMUM) :
-- Jamais 2 posts du même univers à moins de 21 jours d'écart
+ANTI-RÉPÉTITION & ANTI-FATIGUE (CRITIQUE — MODE DAILY CONTENT) :
+- Pas 2 posts consécutifs même univers
+- Pas 2 posts consécutifs même catégorie (topic_type)
+- Même univers : gap minimum 3 jours, max 2 par semaine, max 6 par mois
+- Variation obligatoire du ton : alterner question, affirmation, alerte, conseil, chiffre
+- Si un post ressemble trop au précédent → REJETER ET REFAIRE
 - Varier les univers : alterner plomberie, electricite, serrurerie, volets, menuiserie, vitrerie, pmr, renovation
-- Espacer les posts : ~1 post tous les 1-2 jours
+- 1 post par jour, couvrir le mois entier
+
+FORMAT DES POSTS (variation obligatoire) :
+- 20% PUNCHLINE : hook seul (pas de sous-texte, pas de CTA dans le visuel)
+- 30% COURT : hook + CTA (pas de sous-texte)
+- 40% MOYEN : hook + 1 phrase sous-texte + CTA
+- 10% LONG : hook + 2 phrases sous-texte + CTA
 
 ═══════════════════════════════════════════
 PRIORITÉ (DANS CET ORDRE)
@@ -1024,51 +1149,49 @@ RÈGLES :
 - Chaque post DOIT contenir un DÉCLENCHEUR de conversion
 - Pas de contenu calendaire forcé`;
     } else {
-      userPrompt = `Génère ${targetPostCount} suggestions de posts social media PERFORMANTS pour le mois ${month}/${year}.
+      // Build weekly schedule string for the prompt
+      const scheduleLines = weeklySchedule.map(s => {
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(s.day).padStart(2, '0')}`;
+        const event = monthAwareness.find(a => a.day === s.day);
+        const eventNote = event ? ` | événement: "${event.label}" (score: ${event.relevanceScore})` : '';
+        return `- ${dateStr}: catégorie "${s.category}"${eventNote}`;
+      }).join('\n');
+
+      userPrompt = `Génère EXACTEMENT ${targetPostCount} suggestions de posts (1 PAR JOUR) pour le mois ${month}/${year}.
+
+═══════════════════════════════════════════
+PLANNING QUOTIDIEN (1 POST/JOUR — STRUCTURE SEMI-ALÉATOIRE)
+═══════════════════════════════════════════
+Chaque jour a une catégorie assignée. Le topic_type du post DOIT correspondre.
+L'ordre change chaque semaine pour éviter la prévisibilité.
+
+${scheduleLines}
 
 ═══════════════════════════════════════════
 ÉVÉNEMENTS À LIEN DIRECT MÉTIER (prioritaires)
 ═══════════════════════════════════════════
 Ces événements ont un lien DIRECT avec l'habitat/dépannage. Utilise-les comme PRÉTEXTE pour un vrai problème.
-Le topic_type de ces posts est "awareness_day".
-Respecte l'univers indiqué.
+Respecte l'univers indiqué. Le topic_type reste celui assigné au jour.
 
 ${pertinentEvents.map(a => `- ${a.day}/${month}: ${a.label} | UNIVERS: ${a.preferredUniverses[0]} | priorité: ${a.relevanceScore * a.intentScore}`).join('\n') || '(aucun événement pertinent ce mois)'}
 
 ═══════════════════════════════════════════
 ÉVÉNEMENTS OPTIONNELS (score 2 — NE PAS FORCER)
 ═══════════════════════════════════════════
-Ces événements PEUVENT être utilisés UNIQUEMENT si :
-- l'angle est naturel et crédible
-- le lien avec le métier n'est pas forcé
-- le post serait meilleur AVEC l'événement que SANS
+S'ils ne produisent pas un angle naturel → IGNORER.
+Max 3 événements par semaine.
 
-S'ils ne produisent pas un angle naturel → IGNORER et générer un post métier classique à la place.
-
-${optionalEvents.map(a => `- ${a.day}/${month}: ${a.label} | univers: ${a.preferredUniverses[0]} | OPTIONNEL — ignorer si forcé`).join('\n') || '(aucun)'}
+${optionalEvents.map(a => `- ${a.day}/${month}: ${a.label} | univers: ${a.preferredUniverses[0]} | OPTIONNEL`).join('\n') || '(aucun)'}
 
 ═══════════════════════════════════════════
-SLOTS MÉTIER LIBRES (remplacent les événements sans lien)
+ANTI-REDONDANCE — GAP MINIMUM 3 JOURS
 ═══════════════════════════════════════════
-Pour ces dates, génère un post métier PERFORMANT de la catégorie indiquée :
-${fallbackSlots.map(s => `- ${s.day}/${month}: POST MÉTIER catégorie "${s.category}" (pas d'événement calendaire)`).join('\n') || '(aucun)'}
-
-Les posts restants (pour atteindre ${targetPostCount}) doivent compléter avec des problèmes métiers concrets.
-
-═══════════════════════════════════════════
-RÉPARTITION SUR ${targetPostCount} POSTS
-═══════════════════════════════════════════
-- ~25% URGENCE / PROBLÈME (leads directs, pannes, fuites)
-- ~25% ENTRETIEN / PRÉVENTION (anticiper, éviter une panne)
-- ~20% AMÉLIORATION HABITAT (confort, valorisation)
-- ~15% SAISONNALITÉ RÉELLE (météo, période)
-- ~10% CONSEIL PRATIQUE (tips utiles)
-- ~5% PREUVE / RÉASSURANCE (expertise, rapidité, proximité)
-
-═══════════════════════════════════════════
-ANTI-REDONDANCE — GAP MINIMUM 21 JOURS
-═══════════════════════════════════════════
-Un même univers/thème ne doit PAS apparaître deux fois en moins de 21 jours.
+- Même univers interdit à moins de 3 jours d'écart
+- Max 2 occurrences par semaine par univers
+- Max 6 occurrences par mois par univers
+- Pas 2 posts consécutifs même catégorie
+- Pas 2 posts consécutifs même intention
+- Variation obligatoire du ton (question, alerte, affirmation, conseil, chiffre)
 ${recentThemesWarning}
 
 SUJETS DÉJÀ EXISTANTS (à ne pas dupliquer) :
@@ -1080,31 +1203,34 @@ ${exploitableReals.length > 0
   : '(aucune)'}
 
 ═══════════════════════════════════════════
-RAPPEL CRITIQUE — PRESSION CONVERSION
+FORMAT DES POSTS (VARIATION OBLIGATOIRE)
 ═══════════════════════════════════════════
-- MINIMUM ${targetPostCount} posts, répartis sur tout le mois
-- Chaque post DOIT contenir un DÉCLENCHEUR (perte d'argent, inconfort, risque, gain, simplicité)
-- Un post sans déclencheur est INVALIDE — remplace-le par un post métier classique
-- lead_score DOIT refléter le potentiel RÉEL de conversion
-- Posts urgence (fuite, panne, sécurité) → lead_score > 80, urgency_level = high
-- visual_prompt = scène RÉALISTE habitat français, JAMAIS un fond vide
-- JAMAIS inventer de faux cas client — rester GÉNÉRAL et EXPERT
-- Le topic_type "realisation" est INTERDIT sauf s'il y a de vraies photos (realisation_id valide)
-- Espacer les posts de 1-2 jours, couvrir le mois entier
+Répartir les ${targetPostCount} posts selon :
+- ~20% PUNCHLINE : hook seul (visuel ultra impactant, aucun texte additionnel)
+- ~30% COURT : hook + CTA direct
+- ~40% MOYEN : hook + 1 phrase de bénéfice + CTA
+- ~10% LONG : hook + 2 phrases (problème + solution) + CTA
 
 ═══════════════════════════════════════════
-CATÉGORIE : CONTENU PÉDAGOGIQUE (topic_type = "educational")
+CATÉGORIE "preuve" — SOUS-TYPES
 ═══════════════════════════════════════════
-Inclure 2-3 posts pédagogiques par mois. Objectif : rendre un sujet technique compréhensible en 30 secondes.
-Visuels de type : schéma simple, comparaison, chiffre clé, process.
-RÈGLES :
-- UNE seule idée par visuel
-- Pas de texte long, pas de graphique complexe, pas de jargon
-- Hook basé sur un chiffre ou une prise de conscience ("80% des fuites sont évitables")
-- Explication simple et directe (max 10 mots)
-- CTA = action directe
-INTERDICTION : contenu scolaire, explication longue, design type powerpoint
-OBLIGATION : le post doit apporter une VALEUR IMMÉDIATE et rester actionnable`;
+Les posts "preuve" doivent varier entre :
+- réalisation (avec photo réelle si dispo)
+- avant/après
+- témoignage client (anonymisé)
+- process d'intervention
+
+═══════════════════════════════════════════
+RAPPEL CRITIQUE — 1 POST/JOUR, MACHINE ÉDITORIALE
+═══════════════════════════════════════════
+- EXACTEMENT ${targetPostCount} posts, UN par jour du mois
+- Chaque post DOIT contenir un DÉCLENCHEUR (perte d'argent, inconfort, risque, gain, simplicité)
+- Un post sans déclencheur est INVALIDE
+- lead_score DOIT refléter le potentiel RÉEL de conversion
+- visual_prompt = scène RÉALISTE habitat français
+- JAMAIS inventer de faux cas client
+- Chaque post doit être PERÇU comme DIFFÉRENT du précédent (anti-fatigue)
+- topic_type DOIT être l'une des 8 catégories valides : urgence, prevention, amelioration, conseil, preuve, saisonnier, contre_exemple, pedagogique`;
 
     }
 
@@ -1243,10 +1369,9 @@ OBLIGATION : le post doit apporter une VALEUR IMMÉDIATE et rester actionnable`;
     const persistedSuggestions: any[] = [];
 
     for (const s of validatedSuggestions) {
-      let sourceType = 'ai_seasonal';
-      if (s.topic_type === 'awareness_day') sourceType = 'ai_awareness';
-      else if (s.topic_type === 'realisation') sourceType = 'ai_realisation';
-      else if (s.topic_type === 'educational') sourceType = 'ai_educational';
+      let sourceType = 'ai_daily';
+      if (s.topic_type === 'pedagogique') sourceType = 'ai_educational';
+      else if (s.topic_type === 'preuve') sourceType = 'ai_realisation';
       if (regenerateSingle) sourceType = 'regenerated';
 
       const aiPayload = {

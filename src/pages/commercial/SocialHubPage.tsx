@@ -18,15 +18,18 @@ import { SocialListView } from '@/components/commercial/social/SocialListView';
 import { SocialPostDetailPanel } from '@/components/commercial/social/SocialPostDetailPanel';
 
 type ViewMode = 'calendar' | 'list';
-type TopicFilter = 'all' | 'awareness_day' | 'seasonal_tip' | 'realisation' | 'local_branding' | 'educational';
+type TopicFilter = 'all' | 'urgence' | 'prevention' | 'amelioration' | 'conseil' | 'preuve' | 'saisonnier' | 'contre_exemple' | 'pedagogique';
 
 const TOPIC_LABELS: Record<TopicFilter, string> = {
   all: 'Tous',
-  awareness_day: 'Journées',
-  seasonal_tip: 'Conseils',
-  realisation: 'Réalisations',
-  local_branding: 'Marque',
-  educational: 'Pédagogique',
+  urgence: 'Urgence',
+  prevention: 'Prévention',
+  amelioration: 'Amélioration',
+  conseil: 'Conseil',
+  preuve: 'Preuve',
+  saisonnier: 'Saison',
+  contre_exemple: 'Contre-ex.',
+  pedagogique: 'Pédago.',
 };
 
 export default function SocialHubPage() {

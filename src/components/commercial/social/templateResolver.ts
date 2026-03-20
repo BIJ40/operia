@@ -20,35 +20,35 @@ export interface TemplateResolverInput {
 
 /**
  * Détermine le template visuel à utiliser selon le contexte.
- *
- * realisation_card requiert OBLIGATOIREMENT une vraie photo (hasMedia).
- * Sans photo réelle, un sujet "réalisation" tombe en brand_card générique.
+ * Mapping des 8 topic_types vers les 5 templates canvas existants.
  */
 export function resolveSocialTemplate(input: TemplateResolverInput): SocialTemplateId {
   const { topic_type, hasMedia } = input;
 
-  // 1. Réalisation — UNIQUEMENT avec une vraie photo APRÈS
-  if (topic_type === 'realisation' && hasMedia) {
+  // Preuve avec vraie photo → realisation_card
+  if (topic_type === 'preuve' && hasMedia) {
     return 'realisation_card';
   }
 
-  // 2. Conseil saisonnier
-  if (topic_type === 'seasonal_tip') {
-    return 'tip_card';
-  }
+  // Mapping topic_type → template canvas
+  const TEMPLATE_MAP: Record<string, SocialTemplateId> = {
+    urgence: 'tip_card',
+    prevention: 'awareness_card',
+    amelioration: 'brand_card',
+    conseil: 'tip_card',
+    preuve: 'brand_card', // fallback sans photo
+    saisonnier: 'awareness_card',
+    contre_exemple: 'tip_card',
+    pedagogique: 'educational_card',
+    // Legacy types (backward compatibility)
+    awareness_day: 'awareness_card',
+    seasonal_tip: 'tip_card',
+    realisation: hasMedia ? 'realisation_card' : 'brand_card',
+    local_branding: 'brand_card',
+    educational: 'educational_card',
+  };
 
-  // 3. Journée de sensibilisation
-  if (topic_type === 'awareness_day') {
-    return 'awareness_card';
-  }
-
-  // 4. Contenu pédagogique (schéma / chiffres)
-  if (topic_type === 'educational') {
-    return 'educational_card';
-  }
-
-  // 5. Branding local, ou fallback pour réalisation sans photo
-  return 'brand_card';
+  return TEMPLATE_MAP[topic_type] || 'brand_card';
 }
 
 /**
