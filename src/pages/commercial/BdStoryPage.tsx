@@ -16,6 +16,7 @@ import { BdStoryVisualBoard } from '@/modules/bd-story/ui/BdStoryVisualBoard';
 import { BdStoryCharacterLibrary } from '@/modules/bd-story/ui/BdStoryCharacterLibrary';
 import { BdStoryGenerationInput, GeneratedStory } from '@/modules/bd-story/types/bdStory.types';
 import { StylePreset } from '@/modules/bd-story/engine/imageRenderService';
+import { RenderMode } from '@/modules/bd-story/hooks/useBdStoryRender';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -96,6 +97,19 @@ export default function BdStoryPage() {
             </Select>
           </div>
 
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Format</Label>
+            <Select value={render.renderMode} onValueChange={(v) => render.setRenderMode(v as RenderMode)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="4">⭐ 4 cases premium</SelectItem>
+                <SelectItem value="12">📖 12 cases complète</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <Button
             onClick={() => handleGenerateAndRender({})}
             disabled={isGenerating || render.isRendering}
@@ -106,12 +120,12 @@ export default function BdStoryPage() {
             {(isGenerating || render.isRendering) ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                {render.isRendering ? `Rendu ${render.renderProgress}/12` : 'Génération…'}
+                {render.isRendering ? `Rendu ${render.renderProgress}/${render.renderTotal}` : 'Génération…'}
               </>
             ) : (
               <>
                 <Sparkles className="w-4 h-4" />
-                Générer la BD finale
+                Générer la BD {render.renderMode === '4' ? 'premium' : 'finale'}
               </>
             )}
           </Button>
@@ -133,9 +147,9 @@ export default function BdStoryPage() {
         {/* Progress bar during render */}
         {render.isRendering && (
           <div className="space-y-1">
-            <Progress value={(render.renderProgress / 12) * 100} className="h-2" />
+            <Progress value={(render.renderProgress / render.renderTotal) * 100} className="h-2" />
             <p className="text-xs text-muted-foreground">
-              Génération du panel {render.renderProgress}/12…
+              Génération du panel {render.renderProgress}/{render.renderTotal}…
             </p>
           </div>
         )}
@@ -178,6 +192,7 @@ export default function BdStoryPage() {
                   onRegeneratePanel={render.regeneratePanel}
                   onRegenerateAll={render.regenerateAll}
                   isGenerating={render.isRendering}
+                  mode={render.renderMode}
                 />
               ) : selectedStory ? (
                 <div className="rounded-xl border bg-card/50 flex flex-col items-center justify-center py-16 gap-3 text-sm text-muted-foreground">
