@@ -5,7 +5,7 @@
  */
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { Share2, ImagePlus, Download, RefreshCw, Loader2, Sparkles } from 'lucide-react';
+import { Share2, ImagePlus, Download, RefreshCw, Loader2, Sparkles, Truck, ChevronDown, ChevronUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
