@@ -867,7 +867,7 @@ ADDITIONAL REQUIREMENTS:
     let bgImageUrl = bgData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
     // Sometimes the model returns OK but no image — retry once with a simpler prompt
-    if (!bgImageUrl || !bgImageUrl.startsWith('data:image')) {
+    if (!bgImageUrl || (!bgImageUrl.startsWith('data:image') && !bgImageUrl.startsWith('http'))) {
       console.warn('[social-visual-generate] Model returned OK but no image. Response keys:', JSON.stringify(Object.keys(bgData?.choices?.[0]?.message || {})));
       console.warn('[social-visual-generate] Retrying with simplified prompt...');
       
