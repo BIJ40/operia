@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SocialPostCard } from './SocialPostCard';
+import { VisualCustomizationPanel, type VisualCustomization } from './VisualCustomizationPanel';
 import { SocialVisualCanvas, canvasToBlob, type SocialTemplatePayload } from './SocialVisualCanvas';
 import { resolveSocialTemplate } from './templateResolver';
 import { useSocialVisualAssets, useGenerateSocialVisual, downloadSocialVisual, getSignedVisualUrl } from '@/hooks/useSocialVisualAssets';
@@ -65,6 +66,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const [composedPreviewUrl, setComposedPreviewUrl] = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [renderModeOverride, setRenderModeOverride] = useState<'canvas' | 'image' | null>(null);
+  const [visualCustomization, setVisualCustomization] = useState<VisualCustomization | null>(null);
 
   // Visual assets
   const { data: assets = [], isLoading: assetsLoading } = useSocialVisualAssets(suggestion.id);
@@ -151,7 +153,10 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const handleGenerate = useCallback(() => {
     setLoadingPreview(true);
     generateMutation.mutate(
-      { suggestionId: suggestion.id },
+      {
+        suggestionId: suggestion.id,
+        ...(visualCustomization ? { visualCustomization } : {}),
+      },
       {
         onSuccess: (data) => {
           if (data?.signed_url) {
@@ -160,7 +165,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
         },
       }
     );
-  }, [suggestion.id, generateMutation]);
+  }, [suggestion.id, generateMutation, visualCustomization]);
 
   const handleDownload = useCallback(() => {
     const assetToDownload = renderMode === 'image'
@@ -255,6 +260,12 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
           </div>
         )}
 
+        {/* Visual customization panel */}
+        <VisualCustomizationPanel
+          onCustomize={setVisualCustomization}
+          disabled={generateMutation.isPending}
+        />
+
         {/* Actions */}
         <div className="flex gap-1.5">
           <Button
@@ -272,7 +283,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
             ) : composedAsset || rawAsset ? (
               <>
                 <RefreshCw className="w-3 h-3" />
-                Régénérer
+                Régénérer{visualCustomization ? ' (personnalisé)' : ''}
               </>
             ) : (
               <>
