@@ -449,7 +449,8 @@ function validateAndNormalizeSuggestions(
     });
   }
 
-  // Anti-repetition: no 2 consecutive same universe
+  // ─── Anti-fatigue: universe gap enforcement ───
+  // Rule 1: no 2 consecutive same universe
   for (let i = 1; i < result.length; i++) {
     if (result[i].universe === result[i - 1].universe && result[i].universe !== 'general') {
       for (let j = i + 1; j < result.length; j++) {
@@ -461,7 +462,52 @@ function validateAndNormalizeSuggestions(
     }
   }
 
-  return result;
+  // Rule 2: fatigue score — reject and swap posts with high fatigue
+  const finalResult: ValidatedSuggestion[] = [];
+  for (const post of result) {
+    const recent = finalResult.slice(-3).map(p => ({
+      universe: p.universe,
+      topic_type: p.topic_type,
+      hook: p.hook,
+    }));
+    const fatigue = computeFatigueScore(
+      { universe: post.universe, topic_type: post.topic_type, hook: post.hook },
+      recent,
+    );
+    if (fatigue > 3) {
+      // Try to find a better candidate later in the array
+      const betterIdx = result.indexOf(post) + 1;
+      let swapped = false;
+      for (let k = betterIdx; k < result.length; k++) {
+        const candidate = result[k];
+        const candFatigue = computeFatigueScore(
+          { universe: candidate.universe, topic_type: candidate.topic_type, hook: candidate.hook },
+          recent,
+        );
+        if (candFatigue <= 3 && !finalResult.includes(candidate)) {
+          finalResult.push(candidate);
+          swapped = true;
+          break;
+        }
+      }
+      if (!swapped) finalResult.push(post); // no better option, keep it
+    } else {
+      finalResult.push(post);
+    }
+  }
+
+  // Rule 3: max per week/month universe enforcement (log warning only, don't reject at this stage)
+  const universeCounts: Record<string, number> = {};
+  for (const p of finalResult) {
+    universeCounts[p.universe] = (universeCounts[p.universe] || 0) + 1;
+  }
+  for (const [uni, count] of Object.entries(universeCounts)) {
+    if (uni !== 'general' && count > UNIVERSE_RULES.maxPerMonth) {
+      console.warn(`[social-suggest] Universe "${uni}" appears ${count} times (max ${UNIVERSE_RULES.maxPerMonth})`);
+    }
+  }
+
+  return finalResult;
 }
 
 // ─── AI tool schema ───
