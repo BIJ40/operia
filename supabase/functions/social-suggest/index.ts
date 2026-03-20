@@ -486,6 +486,7 @@ Deno.serve(async (req) => {
     const regenerateSingle = body.regenerate_single === true;
     const singleSuggestionId = body.suggestion_id || null;
     const userPromptParams = body.prompt || null;
+    const targetDates: string[] = Array.isArray(body.target_dates) ? body.target_dates : [];
 
     const rateLimitKey = regenerateSingle
       ? `social-suggest:single:${context.userId}:${singleSuggestionId || 'unknown'}`
