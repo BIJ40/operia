@@ -149,7 +149,7 @@ export function SocialCalendarView({
       {/* Footer: legend + regenerate selected */}
       <div className="flex items-center gap-3 mt-2 pt-2 border-t border-border">
         <div className="flex gap-3 flex-1">
-          {Object.entries({ awareness_day: 'Journées', seasonal_tip: 'Conseils', realisation: 'Réalisations', local_branding: 'Marque' }).map(([type, label]) => (
+          {Object.entries({ urgence: 'Urgence', prevention: 'Prévention', amelioration: 'Amélioration', conseil: 'Conseil', preuve: 'Preuve', saisonnier: 'Saison', contre_exemple: 'Contre-ex.', pedagogique: 'Pédago.' }).map(([type, label]) => (
             <div key={type} className="flex items-center gap-1">
               <div className={cn('w-2 h-2 rounded-full', TOPIC_DOT_COLORS[type])} />
               <span className="text-[10px] text-muted-foreground">{label}</span>

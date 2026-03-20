@@ -1369,10 +1369,9 @@ RAPPEL CRITIQUE — 1 POST/JOUR, MACHINE ÉDITORIALE
     const persistedSuggestions: any[] = [];
 
     for (const s of validatedSuggestions) {
-      let sourceType = 'ai_seasonal';
-      if (s.topic_type === 'awareness_day') sourceType = 'ai_awareness';
-      else if (s.topic_type === 'realisation') sourceType = 'ai_realisation';
-      else if (s.topic_type === 'educational') sourceType = 'ai_educational';
+      let sourceType = 'ai_daily';
+      if (s.topic_type === 'pedagogique') sourceType = 'ai_educational';
+      else if (s.topic_type === 'preuve') sourceType = 'ai_realisation';
       if (regenerateSingle) sourceType = 'regenerated';
 
       const aiPayload = {

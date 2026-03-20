@@ -76,11 +76,14 @@ export const SERVICE_THEMES: Record<string, ServiceTheme> = {
 
 /** Topic-based labels when universe is 'general' (no specific métier) */
 const GENERAL_TOPIC_LABELS: Record<string, string> = {
-  awareness_day: 'Prévention',
-  seasonal_tip: 'Conseil',
-  realisation: 'Réalisation',
-  local_branding: 'Votre agence',
-  educational: 'Le saviez-vous ?',
+  urgence: 'Urgence',
+  prevention: 'Prévention',
+  amelioration: 'Amélioration',
+  conseil: 'Conseil',
+  preuve: 'Réalisation',
+  saisonnier: 'Saison',
+  contre_exemple: 'À éviter',
+  pedagogique: 'Le saviez-vous ?',
 };
 
 export function getGeneralLabel(topicType?: string | null): string {
