@@ -951,6 +951,7 @@ async function persistAsset(
         composition_mode: compositionMode,
         prompt_version: compositionMode === 'bg_only' ? 'v5_background' : 'v5_composed',
         generated_copy: generatedCopy ?? null,
+        visual_style: visualStyle,
       },
     })
     .select('id, storage_path, created_at')
