@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
     const rawHook = aiPayload.hook || title;
     const rawCta = aiPayload.cta || 'Demandez un devis gratuit';
     const visualPrompt = aiPayload.visual_prompt || '';
-    const topicType = suggestion.topic_type || 'seasonal_tip';
+    // topicType already declared above
     const rawCaption = suggestion.caption_base_fr || '';
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
