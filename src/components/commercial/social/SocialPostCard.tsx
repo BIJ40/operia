@@ -39,10 +39,15 @@ export function SocialPostCard({ suggestion, onApprove, onReject, onRegenerate, 
   const statusInfo = STATUS_LABELS[suggestion.status] || STATUS_LABELS.draft;
   const [isSendingWebhook, setIsSendingWebhook] = useState(false);
 
+  const fullCopyText = [
+    suggestion.caption_base_fr,
+    suggestion.hashtags?.length > 0 ? suggestion.hashtags.map(h => `#${h}`).join(' ') : '',
+  ].filter(Boolean).join('\n\n');
+
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(suggestion.caption_base_fr);
-      toast.success('Texte copié');
+      await navigator.clipboard.writeText(fullCopyText);
+      toast.success('Texte + hashtags copiés');
     } catch {
       toast.error('Impossible de copier');
     }
@@ -94,23 +99,21 @@ export function SocialPostCard({ suggestion, onApprove, onReject, onRegenerate, 
           type="button"
           onClick={handleCopy}
           className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
-          title="Copier le texte"
+          title="Copier texte + hashtags"
         >
           <Copy className="w-3.5 h-3.5" />
         </button>
         <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
           {suggestion.caption_base_fr}
         </p>
+        {suggestion.hashtags?.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2 pt-2 border-t border-border/50">
+            {suggestion.hashtags.map(h => (
+              <span key={h} className="text-[10px] text-primary">#{h}</span>
+            ))}
+          </div>
+        )}
       </div>
-
-      {/* Hashtags */}
-      {suggestion.hashtags?.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {suggestion.hashtags.map(h => (
-            <span key={h} className="text-[10px] text-primary">#{h}</span>
-          ))}
-        </div>
-      )}
 
       {/* Meta */}
       <div className="flex flex-wrap gap-1.5">
