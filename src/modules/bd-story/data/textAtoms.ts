@@ -826,6 +826,14 @@ export const ALL_TEXT_ATOMS: TextAtomEntry[] = [
   ...MENUISERIE_EXTRA,
   ...PEINTURE_EXTRA,
   ...GENERIC_EXTRA,
+  // Gap fills
+  ...GAP_FILL_PLOMBERIE,
+  ...GAP_FILL_ELECTRICITE,
+  ...GAP_FILL_SERRURERIE,
+  ...GAP_FILL_VITRERIE,
+  ...GAP_FILL_MENUISERIE,
+  ...GAP_FILL_PEINTURE,
+  ...GAP_FILL_GENERIC,
 ];
 
 /** Get text atoms with full filtering */

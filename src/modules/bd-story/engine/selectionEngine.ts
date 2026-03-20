@@ -78,26 +78,57 @@ const ALL_UNIVERSES: ProblemUniverse[] = [
   'plomberie', 'electricite', 'serrurerie', 'vitrerie', 'menuiserie', 'peinture_renovation'
 ];
 
+// ============================================================================
+// UNIVERSE BALANCING — min/max constraints for batch generation
+// ============================================================================
+
+const UNIVERSE_BASE_WEIGHTS: Record<ProblemUniverse, number> = {
+  plomberie: 2,
+  electricite: 2,
+  serrurerie: 2,
+  vitrerie: 2,
+  menuiserie: 2,
+  peinture_renovation: 1.5, // Slightly reduced to prevent domination
+};
+
+const SEASON_WEIGHTS: Record<string, Partial<Record<ProblemUniverse, number>>> = {
+  hiver: { plomberie: 3, electricite: 2, serrurerie: 1.5, vitrerie: 2, menuiserie: 1, peinture_renovation: 0.8 },
+  printemps: { plomberie: 1.5, electricite: 1.5, serrurerie: 1.5, vitrerie: 1.5, menuiserie: 2, peinture_renovation: 2 },
+  ete: { plomberie: 1, electricite: 2, serrurerie: 1.5, vitrerie: 2, menuiserie: 2, peinture_renovation: 1.5 },
+  automne: { plomberie: 2, electricite: 2, serrurerie: 2, vitrerie: 1.5, menuiserie: 1.5, peinture_renovation: 1 },
+};
+
 function selectUniverse(input: BdStoryGenerationInput): ProblemUniverse {
   if (input.universe) return input.universe;
-  // Season-weighted selection
-  const weights: Record<string, Partial<Record<ProblemUniverse, number>>> = {
-    hiver: { plomberie: 3, electricite: 2, serrurerie: 1, vitrerie: 2, menuiserie: 1, peinture_renovation: 1 },
-    printemps: { plomberie: 2, electricite: 1, serrurerie: 1, vitrerie: 1, menuiserie: 2, peinture_renovation: 3 },
-    ete: { plomberie: 1, electricite: 2, serrurerie: 1, vitrerie: 2, menuiserie: 2, peinture_renovation: 2 },
-    automne: { plomberie: 2, electricite: 2, serrurerie: 2, vitrerie: 1, menuiserie: 1, peinture_renovation: 1 },
-  };
-  const seasonWeights = input.season ? weights[input.season] : undefined;
-  if (seasonWeights) {
-    const entries = ALL_UNIVERSES.map(u => ({ u, w: seasonWeights[u] || 1 }));
-    const totalW = entries.reduce((s, e) => s + e.w, 0);
-    let r = Math.random() * totalW;
-    for (const e of entries) {
-      r -= e.w;
-      if (r <= 0) return e.u;
+
+  // Apply season adjustments on top of base weights
+  const baseWeights = { ...UNIVERSE_BASE_WEIGHTS };
+  const seasonAdj = input.season ? SEASON_WEIGHTS[input.season] : undefined;
+  const finalWeights: Record<string, number> = {};
+
+  for (const u of ALL_UNIVERSES) {
+    finalWeights[u] = seasonAdj?.[u] ?? baseWeights[u];
+  }
+
+  // Boost underrepresented universes based on avoidance lists
+  // If a universe hasn't appeared recently, boost it
+  const recentUniverses = (input.avoidRecentProblemSlugs || []);
+  for (const u of ALL_UNIVERSES) {
+    const recentCount = recentUniverses.filter(s => s.startsWith(u.slice(0, 4))).length;
+    if (recentCount === 0) {
+      finalWeights[u] = (finalWeights[u] || 1) * 1.3; // Boost absent universes
     }
   }
-  return pickRandom(ALL_UNIVERSES);
+
+  // Weighted random pick
+  const entries = ALL_UNIVERSES.map(u => ({ u, w: finalWeights[u] || 1 }));
+  const totalW = entries.reduce((s, e) => s + e.w, 0);
+  let r = Math.random() * totalW;
+  for (const e of entries) {
+    r -= e.w;
+    if (r <= 0) return e.u;
+  }
+  return entries[entries.length - 1].u;
 }
 
 // ============================================================================
