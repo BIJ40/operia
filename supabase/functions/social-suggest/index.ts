@@ -689,21 +689,30 @@ Deno.serve(async (req) => {
     );
 
     // ─── Load context data ───────────────────────────
-    // ─── Filter awareness days by relevance ───
+    // ─── Filter awareness days by relevance (CALENDAR_STRATEGY) ───
     const allMonthAwareness = AWARENESS_DAYS.filter(d => d.month === month);
-    // Score 3 = direct link (always included), Score 2 = optional (included but marked optional), Score 1 = ignored (replaced by fallback)
-    const monthAwareness = allMonthAwareness.filter(d => d.relevanceScore >= 2);
+    // relevance 3 = lien métier direct (contenu technique)
+    // relevance 2 = angle possible (optionnel, soft business)
+    // relevance 1 = JAMAIS de métier → topic_type=calendar, angle humain/image/léger
     const pertinentEvents = allMonthAwareness.filter(d => d.relevanceScore === 3);
     const optionalEvents = allMonthAwareness.filter(d => d.relevanceScore === 2);
-    const ignoredEvents = allMonthAwareness.filter(d => d.relevanceScore === 1);
+    const calendarOnlyEvents = allMonthAwareness.filter(d => d.relevanceScore === 1);
     
-    // Build fallback rotation for ignored event slots
-    const fallbackSlots = ignoredEvents.map((e, i) => ({
-      day: e.day,
-      category: POST_CATEGORIES_ROTATION[i % POST_CATEGORIES_ROTATION.length],
-    }));
+    // ANGLE MAPPING for calendar-only events
+    const ANGLE_DESCRIPTIONS: Record<string, string> = {
+      interne: 'ANGLE INTERNE — équipe, terrain, coulisses, valorisation collaborateurs',
+      image_marque: 'ANGLE IMAGE DE MARQUE — crédibilité, présence locale, sérieux, proximité',
+      leger: 'ANGLE LÉGER — clin d\'œil, message simple, présence de marque sans vente',
+      creatif: 'ANGLE CRÉATIF — post décalé/fun assumé, humour, visuel original',
+      disponibilite: 'ANGLE DISPONIBILITÉ — "on reste disponibles", service 7j/7',
+      emotionnel: 'ANGLE ÉMOTIONNEL — famille, confort, chaleur humaine',
+      commercial: 'ANGLE COMMERCIAL — offre ciblée, promo (uniquement si pertinent)',
+      prevention: 'ANGLE PRÉVENTION — check logement, sécurité (soft, pas technique)',
+      preuve: 'ANGLE PREUVE — transparence, qualité, confiance',
+      metier: 'ANGLE MÉTIER — contenu technique direct',
+    };
     
-    console.log(`[social-suggest] Month ${month}: ${pertinentEvents.length} pertinent, ${optionalEvents.length} optional, ${ignoredEvents.length} ignored → ${fallbackSlots.length} fallback slots`);
+    console.log(`[social-suggest] Month ${month}: ${pertinentEvents.length} métier direct, ${optionalEvents.length} optionnel, ${calendarOnlyEvents.length} calendaire pur (topic_type=calendar)`);
 
     // Load agency info for localization
     const { data: agency } = await adminSupabase
