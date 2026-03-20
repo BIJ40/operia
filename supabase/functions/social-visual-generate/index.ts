@@ -693,6 +693,7 @@ ADDITIONAL REQUIREMENTS:
       jsonHeaders,
       undefined,
       hasBeforeAfter,
+      visualStyle,
     );
 
     if ('response' in backgroundSave) {
