@@ -879,16 +879,18 @@ ${FORBIDDEN_THEME_ASSOCIATIONS.map(a => `- ${a}`).join('\n')}
 Toute analogie faible, contenu forcé ou phrase marketing creuse = REJETÉ.
 
 ═══════════════════════════════════════════
-6 CATÉGORIES DE POSTS AUTORISÉES
+8 CATÉGORIES DE POSTS (topic_type)
 ═══════════════════════════════════════════
-Chaque post DOIT appartenir à UNE de ces catégories :
+Chaque post DOIT avoir un topic_type parmi :
 
-1. URGENCE / PROBLÈME — fuite, panne, casse, sécurité
-2. ENTRETIEN / PRÉVENTION — éviter une panne, anticiper
-3. AMÉLIORATION HABITAT — confort, esthétique, valorisation
-4. SAISONNALITÉ RÉELLE — météo, période (printemps = humidité, été = clim, hiver = gel)
-5. CONSEIL PRATIQUE — tips concrets, utiles, actionnables
-6. PREUVE / RÉASSURANCE — intervention rapide, expertise, proximité locale
+1. "urgence" — fuite, panne, casse, sécurité (20% du mois, ~6 posts)
+2. "prevention" — éviter une panne, anticiper (15%, ~4-5 posts)
+3. "amelioration" — confort, esthétique, valorisation (15%, ~4-5 posts)
+4. "conseil" — tips concrets, utiles, actionnables (10%, ~3 posts)
+5. "preuve" — intervention rapide, expertise, proximité, réalisation, témoignage, avant/après, process (10%, ~3 posts)
+6. "saisonnier" — météo réelle, période (10%, ~3 posts)
+7. "contre_exemple" — erreur fréquente, "ce qu'il ne faut pas faire", contraste expert (10%, ~3 posts)
+8. "pedagogique" — schéma, chiffre clé, "le saviez-vous ?", valeur immédiate (10%, ~3 posts)
 
 ═══════════════════════════════════════════
 PRESSION CONVERSION (OBLIGATOIRE)
