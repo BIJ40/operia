@@ -182,7 +182,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
         },
       }
     );
-  }, [suggestion.id, generateMutation, freePrompt, keywords, includeVan, universeOverride]);
+  }, [suggestion.id, generateMutation, freePrompt, keywords, includeVan, universeOverride, imageModel]);
 
   const handleDownload = useCallback(() => {
     const assetToDownload = renderMode === 'image'
