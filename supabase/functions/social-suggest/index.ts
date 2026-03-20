@@ -520,14 +520,35 @@ function validateAndNormalizeSuggestions(
     }
   }
 
-  // Rule 3: max per week/month universe enforcement (log warning only, don't reject at this stage)
+  // Rule 3: max per month universe enforcement — ACTIVELY redistribute excess
   const universeCounts: Record<string, number> = {};
   for (const p of finalResult) {
     universeCounts[p.universe] = (universeCounts[p.universe] || 0) + 1;
   }
-  for (const [uni, count] of Object.entries(universeCounts)) {
-    if (uni !== 'general' && count > UNIVERSE_RULES.maxPerMonth) {
-      console.warn(`[social-suggest] Universe "${uni}" appears ${count} times (max ${UNIVERSE_RULES.maxPerMonth})`);
+
+  // Find universes that are under-represented for redistribution
+  const allSpecificUniverses = ['plomberie', 'electricite', 'serrurerie', 'vitrerie', 'menuiserie', 'renovation', 'volets', 'pmr'];
+  const underUsed = allSpecificUniverses.filter(u => (universeCounts[u] || 0) < 2);
+
+  for (let i = 0; i < finalResult.length; i++) {
+    const p = finalResult[i];
+    if (p.universe === 'general') continue; // general is always OK
+    const count = universeCounts[p.universe] || 0;
+    if (count > UNIVERSE_RULES.maxPerMonth) {
+      // Find an under-used universe to reassign
+      if (underUsed.length > 0) {
+        const newUni = underUsed.shift()!;
+        console.log(`[social-suggest] Redistributing "${p.universe}" → "${newUni}" (was ${count}x, max ${UNIVERSE_RULES.maxPerMonth})`);
+        universeCounts[p.universe]--;
+        universeCounts[newUni] = (universeCounts[newUni] || 0) + 1;
+        finalResult[i] = { ...p, universe: newUni };
+      } else {
+        // Fallback to general
+        console.log(`[social-suggest] Redistributing "${p.universe}" → "general" (was ${count}x, max ${UNIVERSE_RULES.maxPerMonth})`);
+        universeCounts[p.universe]--;
+        universeCounts['general'] = (universeCounts['general'] || 0) + 1;
+        finalResult[i] = { ...p, universe: 'general' };
+      }
     }
   }
 
