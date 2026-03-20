@@ -1058,7 +1058,7 @@ VALIDATION FINALE :
 Si le post ne peut pas déclencher un appel ou une demande de devis → il est INVALIDE → remplace-le.`;
     // Build user prompt customization from prompt params
     const toneMap: Record<string, string> = {
-      professionnel: 'Ton professionnel, expert, crédible',
+      professionnel: 'Ton professionnel, technicien, crédible',
       humour: 'Ton humoristique, léger, décalé — tout en restant professionnel',
       bienveillant: 'Ton bienveillant, chaleureux, empathique',
       urgent: 'Ton alarmant, urgent — créer un sentiment de nécessité',
