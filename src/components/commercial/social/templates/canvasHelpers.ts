@@ -246,11 +246,11 @@ export function drawGradientBg(ctx: CanvasRenderingContext2D, color1: string, co
 export async function drawHCLogo(ctx: CanvasRenderingContext2D, logoSrc: string, _position: 'top-left' | 'top-center' = 'top-left') {
   try {
     const img = await loadImage(logoSrc);
-    const logoH = 52;
+    const logoH = 68;
     const logoRatio = img.naturalWidth / img.naturalHeight;
     const logoW = logoH * logoRatio;
-    const padX = 14;
-    const padY = 10;
+    const padX = 16;
+    const padY = 12;
     const bgW = logoW + padX * 2;
     const bgH = logoH + padY * 2;
     const x = 25;
@@ -277,11 +277,11 @@ export async function drawHCLogo(ctx: CanvasRenderingContext2D, logoSrc: string,
 /** Universe picto + label — top right, inside ZONE 1 */
 export async function drawUniversePill(ctx: CanvasRenderingContext2D, theme: ServiceTheme, y = 35, pictoSrc?: string) {
   const pillText = theme.label.toUpperCase();
-  ctx.font = 'bold 18px sans-serif';
+  ctx.font = 'bold 22px sans-serif';
   const textW = ctx.measureText(pillText).width;
-  const pictoSize = 36;
-  const gap = 8;
-  const padX = 14;
+  const pictoSize = 44;
+  const gap = 10;
+  const padX = 16;
   const padY = 8;
   const hasPicto = !!pictoSrc;
   const pillW = (hasPicto ? pictoSize + gap : 0) + textW + padX * 2;
@@ -321,7 +321,7 @@ export async function drawUniversePill(ctx: CanvasRenderingContext2D, theme: Ser
 
   // Label text
   ctx.fillStyle = HC.white;
-  ctx.font = 'bold 18px sans-serif';
+  ctx.font = 'bold 22px sans-serif';
   ctx.textAlign = 'left';
   ctx.fillText(pillText, textStartX, y + pillH / 2 + 6);
   ctx.textAlign = 'left';
