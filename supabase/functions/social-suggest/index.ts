@@ -1215,8 +1215,8 @@ CONTRAINTES :
 ${singleContext.original_realisation_id ? `- Réalisation liée : ${singleContext.original_realisation_id}` : ''}
 ${promptCustomization}
 
-ÉVÉNEMENTS PERTINENTS CE MOIS (utilise-les UNIQUEMENT si l'angle est naturel et crédible) :
-${pertinentEvents.map(a => `- ${a.day}/${month}: ${a.label} | univers: ${a.preferredUniverses[0]} | LIEN DIRECT MÉTIER`).join('\n') || '(aucun)'}
+ÉVÉNEMENTS OBLIGATOIRES CE MOIS — Le post de CE JOUR PRÉCIS DOIT parler de cet événement. L'événement est le THÈME PRINCIPAL du post, pas un simple prétexte :
+${pertinentEvents.map(a => `- ⚠️ ${a.day}/${month}: "${a.label}" → Le post du ${a.day} DOIT être sur ce thème. Univers: ${a.preferredUniverses[0]}`).join('\n') || '(aucun)'}
 ${optionalEvents.length > 0 ? `\nÉVÉNEMENTS OPTIONNELS (à utiliser SEULEMENT si un angle crédible existe, sinon ignorer) :\n${optionalEvents.map(a => `- ${a.day}/${month}: ${a.label} | univers: ${a.preferredUniverses[0]} | OPTIONNEL`).join('\n')}` : ''}
 
 RÉALISATIONS EXPLOITABLES :
