@@ -822,6 +822,7 @@ MANDATORY QUALITY CHECKLIST (if ANY fails, regenerate):
       'composed',
       jsonHeaders,
       generatedCopy,
+      hasBeforeAfter,
     );
 
     if ('response' in composedSave) {
