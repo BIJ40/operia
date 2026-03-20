@@ -636,6 +636,172 @@ const GENERIC_EXTRA: TextAtomEntry[] = [
 ];
 
 // ============================================================================
+// GAP FILL — proximite + rassurant across all universes & functions
+// ============================================================================
+
+const GAP_FILL_PLOMBERIE: TextAtomEntry[] = [
+  // proximite — problem_appears
+  { text: 'Le lavabo goutte sans arrêt.', narrativeFunction: 'problem_appears', universe: 'plomberie', tone: 'proximite' },
+  { text: 'L\'eau coule sous l\'évier.', narrativeFunction: 'problem_appears', universe: 'plomberie', tone: 'proximite' },
+  { text: 'Le robinet fait des siennes.', narrativeFunction: 'problem_appears', universe: 'plomberie', tone: 'proximite' },
+  // proximite — problem_worsens
+  { text: 'Toute la cuisine est trempée.', narrativeFunction: 'problem_worsens', universe: 'plomberie', tone: 'proximite' },
+  { text: 'On met des serpillères partout.', narrativeFunction: 'problem_worsens', universe: 'plomberie', tone: 'proximite' },
+  // proximite — inspection_diagnosis
+  { text: 'Il regarde avec attention.', narrativeFunction: 'inspection_diagnosis', universe: 'plomberie', tone: 'proximite' },
+  { text: 'Il montre la cause au client.', narrativeFunction: 'inspection_diagnosis', universe: 'plomberie', tone: 'proximite' },
+  // proximite — repair_action
+  { text: 'En quelques gestes, c\'est fait.', narrativeFunction: 'repair_action', universe: 'plomberie', tone: 'proximite' },
+  { text: 'Il répare avec soin.', narrativeFunction: 'repair_action', universe: 'plomberie', tone: 'proximite' },
+  // rassurant — problem_worsens
+  { text: 'Le dégât reste gérable.', narrativeFunction: 'problem_worsens', universe: 'plomberie', tone: 'rassurant' },
+  { text: 'On peut encore agir à temps.', narrativeFunction: 'problem_worsens', universe: 'plomberie', tone: 'rassurant' },
+  // rassurant — inspection_diagnosis (already some, add more)
+  { text: 'Le problème est simple à traiter.', narrativeFunction: 'inspection_diagnosis', universe: 'plomberie', tone: 'rassurant' },
+];
+
+const GAP_FILL_ELECTRICITE: TextAtomEntry[] = [
+  // proximite — problem_appears
+  { text: 'Plus de lumière dans le salon.', narrativeFunction: 'problem_appears', universe: 'electricite', tone: 'proximite' },
+  { text: 'On cherche la lampe torche.', narrativeFunction: 'problem_appears', universe: 'electricite', tone: 'proximite' },
+  { text: 'L\'ampoule grille encore.', narrativeFunction: 'problem_appears', universe: 'electricite', tone: 'proximite' },
+  // proximite — problem_worsens
+  { text: 'Les enfants ont peur du noir.', narrativeFunction: 'problem_worsens', universe: 'electricite', tone: 'proximite' },
+  { text: 'On dîne à la bougie.', narrativeFunction: 'problem_worsens', universe: 'electricite', tone: 'proximite' },
+  // proximite — inspection_diagnosis
+  { text: 'Il explique ce qu\'il fait.', narrativeFunction: 'inspection_diagnosis', universe: 'electricite', tone: 'proximite' },
+  { text: 'Le client regarde, attentif.', narrativeFunction: 'inspection_diagnosis', universe: 'electricite', tone: 'proximite' },
+  // proximite — repair_action
+  { text: 'Il rebranche avec précaution.', narrativeFunction: 'repair_action', universe: 'electricite', tone: 'proximite' },
+  { text: 'Chaque connexion est vérifiée.', narrativeFunction: 'repair_action', universe: 'electricite', tone: 'proximite' },
+  // proximite — result_visible
+  { text: 'La maison s\'éclaire à nouveau.', narrativeFunction: 'result_visible', universe: 'electricite', tone: 'proximite' },
+  { text: 'On retrouve le confort habituel.', narrativeFunction: 'result_visible', universe: 'electricite', tone: 'proximite' },
+  // rassurant — problem_worsens
+  { text: 'Le problème reste localisé.', narrativeFunction: 'problem_worsens', universe: 'electricite', tone: 'rassurant' },
+  { text: 'Pas de dégât visible pour l\'instant.', narrativeFunction: 'problem_worsens', universe: 'electricite', tone: 'rassurant' },
+  // rassurant — repair_action
+  { text: 'Tout est remis en ordre.', narrativeFunction: 'repair_action', universe: 'electricite', tone: 'rassurant' },
+];
+
+const GAP_FILL_SERRURERIE: TextAtomEntry[] = [
+  // proximite — problem_appears (already 1, add more)
+  { text: 'La porte fait des caprices.', narrativeFunction: 'problem_appears', universe: 'serrurerie', tone: 'proximite' },
+  { text: 'On galère pour ouvrir.', narrativeFunction: 'problem_appears', universe: 'serrurerie', tone: 'proximite' },
+  // proximite — inspection_diagnosis
+  { text: 'Il repère le souci tout de suite.', narrativeFunction: 'inspection_diagnosis', universe: 'serrurerie', tone: 'proximite' },
+  { text: 'Il explique simplement le blocage.', narrativeFunction: 'inspection_diagnosis', universe: 'serrurerie', tone: 'proximite' },
+  // proximite — repair_action
+  { text: 'Il débloque avec douceur.', narrativeFunction: 'repair_action', universe: 'serrurerie', tone: 'proximite' },
+  { text: 'La porte cède en douceur.', narrativeFunction: 'repair_action', universe: 'serrurerie', tone: 'proximite' },
+  // rassurant — problem_appears (add more)
+  { text: 'La serrure résiste un peu.', narrativeFunction: 'problem_appears', universe: 'serrurerie', tone: 'rassurant' },
+  // rassurant — problem_worsens
+  { text: 'Le souci reste gérable.', narrativeFunction: 'problem_worsens', universe: 'serrurerie', tone: 'rassurant' },
+  { text: 'Pas de panique, on va résoudre.', narrativeFunction: 'problem_worsens', universe: 'serrurerie', tone: 'rassurant' },
+  // rassurant — inspection_diagnosis
+  { text: 'Le mécanisme est accessible.', narrativeFunction: 'inspection_diagnosis', universe: 'serrurerie', tone: 'rassurant' },
+  // rassurant — repair_action
+  { text: 'Le remplacement est rapide.', narrativeFunction: 'repair_action', universe: 'serrurerie', tone: 'rassurant' },
+];
+
+const GAP_FILL_VITRERIE: TextAtomEntry[] = [
+  // proximite — problem_appears
+  { text: 'La vitre a pris un coup.', narrativeFunction: 'problem_appears', universe: 'vitrerie', tone: 'proximite' },
+  { text: 'Le carreau ne tient plus bien.', narrativeFunction: 'problem_appears', universe: 'vitrerie', tone: 'proximite' },
+  // proximite — inspection_diagnosis
+  { text: 'Il regarde de près la fissure.', narrativeFunction: 'inspection_diagnosis', universe: 'vitrerie', tone: 'proximite' },
+  { text: 'Il rassure le client tout de suite.', narrativeFunction: 'inspection_diagnosis', universe: 'vitrerie', tone: 'proximite' },
+  // proximite — repair_action
+  { text: 'Il pose le vitrage avec soin.', narrativeFunction: 'repair_action', universe: 'vitrerie', tone: 'proximite' },
+  { text: 'Chaque geste est précis.', narrativeFunction: 'repair_action', universe: 'vitrerie', tone: 'proximite' },
+  // rassurant — problem_worsens
+  { text: 'Le risque reste contenu.', narrativeFunction: 'problem_worsens', universe: 'vitrerie', tone: 'rassurant' },
+  { text: 'On peut sécuriser rapidement.', narrativeFunction: 'problem_worsens', universe: 'vitrerie', tone: 'rassurant' },
+  // rassurant — inspection_diagnosis (add more)
+  { text: 'Le dommage est localisé.', narrativeFunction: 'inspection_diagnosis', universe: 'vitrerie', tone: 'rassurant' },
+  // rassurant — repair_action
+  { text: 'Le remplacement est propre.', narrativeFunction: 'repair_action', universe: 'vitrerie', tone: 'rassurant' },
+];
+
+const GAP_FILL_MENUISERIE: TextAtomEntry[] = [
+  // proximite — problem_appears
+  { text: 'Le volet fait du bruit.', narrativeFunction: 'problem_appears', universe: 'menuiserie', tone: 'proximite' },
+  { text: 'La fenêtre coince depuis hier.', narrativeFunction: 'problem_appears', universe: 'menuiserie', tone: 'proximite' },
+  // proximite — problem_worsens
+  { text: 'On ne dort pas bien à cause du bruit.', narrativeFunction: 'problem_worsens', universe: 'menuiserie', tone: 'proximite' },
+  // proximite — inspection_diagnosis
+  { text: 'Il montre d\'où vient le problème.', narrativeFunction: 'inspection_diagnosis', universe: 'menuiserie', tone: 'proximite' },
+  { text: 'Il touche le rail, trouvé.', narrativeFunction: 'inspection_diagnosis', universe: 'menuiserie', tone: 'proximite' },
+  // proximite — repair_action
+  { text: 'Il règle avec patience.', narrativeFunction: 'repair_action', universe: 'menuiserie', tone: 'proximite' },
+  { text: 'Le geste est sûr et calme.', narrativeFunction: 'repair_action', universe: 'menuiserie', tone: 'proximite' },
+  // rassurant — problem_worsens
+  { text: 'Le souci reste mécanique.', narrativeFunction: 'problem_worsens', universe: 'menuiserie', tone: 'rassurant' },
+  { text: 'Rien de grave, mais il faut agir.', narrativeFunction: 'problem_worsens', universe: 'menuiserie', tone: 'rassurant' },
+  // rassurant — inspection_diagnosis
+  { text: 'Le problème est vite identifié.', narrativeFunction: 'inspection_diagnosis', universe: 'menuiserie', tone: 'rassurant' },
+  // rassurant — repair_action
+  { text: 'Le réglage prend quelques minutes.', narrativeFunction: 'repair_action', universe: 'menuiserie', tone: 'rassurant' },
+];
+
+const GAP_FILL_PEINTURE: TextAtomEntry[] = [
+  // proximite — problem_appears
+  { text: 'Le mur fait mauvaise impression.', narrativeFunction: 'problem_appears', universe: 'peinture_renovation', tone: 'proximite' },
+  { text: 'La peinture fait triste mine.', narrativeFunction: 'problem_appears', universe: 'peinture_renovation', tone: 'proximite' },
+  // proximite — problem_worsens (already 2, add more)
+  { text: 'La pièce perd de son charme.', narrativeFunction: 'problem_worsens', universe: 'peinture_renovation', tone: 'proximite' },
+  // proximite — inspection_diagnosis
+  { text: 'Il touche le mur, le son parle.', narrativeFunction: 'inspection_diagnosis', universe: 'peinture_renovation', tone: 'proximite' },
+  { text: 'Il explique l\'état du support.', narrativeFunction: 'inspection_diagnosis', universe: 'peinture_renovation', tone: 'proximite' },
+  // proximite — repair_action
+  { text: 'Coup de pinceau après coup de pinceau.', narrativeFunction: 'repair_action', universe: 'peinture_renovation', tone: 'proximite' },
+  { text: 'Le mur reprend des couleurs.', narrativeFunction: 'repair_action', universe: 'peinture_renovation', tone: 'proximite' },
+  // rassurant — problem_worsens
+  { text: 'C\'est surtout esthétique pour l\'instant.', narrativeFunction: 'problem_worsens', universe: 'peinture_renovation', tone: 'rassurant' },
+  { text: 'Rien de structurel, on peut agir.', narrativeFunction: 'problem_worsens', universe: 'peinture_renovation', tone: 'rassurant' },
+  // rassurant — inspection_diagnosis
+  { text: 'Le support est encore sain.', narrativeFunction: 'inspection_diagnosis', universe: 'peinture_renovation', tone: 'rassurant' },
+  // rassurant — repair_action
+  { text: 'L\'application est régulière et nette.', narrativeFunction: 'repair_action', universe: 'peinture_renovation', tone: 'rassurant' },
+  // reactif — inspection_diagnosis
+  { text: 'Il repère la zone critique.', narrativeFunction: 'inspection_diagnosis', universe: 'peinture_renovation', tone: 'reactif' },
+  // reactif — repair_action
+  { text: 'Il intervient sur les zones abîmées.', narrativeFunction: 'repair_action', universe: 'peinture_renovation', tone: 'reactif' },
+  // reactif — result_visible
+  { text: 'Le dégât est effacé.', narrativeFunction: 'result_visible', universe: 'peinture_renovation', tone: 'reactif' },
+];
+
+// Additional generic gaps — proximite for scheduling, call_received, technician_arrival
+const GAP_FILL_GENERIC: TextAtomEntry[] = [
+  // proximite — call_received
+  { text: 'Amandine connaît bien le secteur.', narrativeFunction: 'call_received', universe: 'general', tone: 'proximite' },
+  { text: 'Elle met en confiance tout de suite.', narrativeFunction: 'call_received', universe: 'general', tone: 'proximite' },
+  // proximite — scheduling
+  { text: 'Le rendez-vous est pris simplement.', narrativeFunction: 'scheduling', universe: 'general', tone: 'proximite' },
+  { text: 'On se met d\'accord facilement.', narrativeFunction: 'scheduling', universe: 'general', tone: 'proximite' },
+  // pedagogique — technician_arrival
+  { text: 'Il observe avant de commencer.', narrativeFunction: 'technician_arrival', universe: 'general', tone: 'pedagogique' },
+  // pedagogique — result_visible
+  { text: 'Le résultat parle de lui-même.', narrativeFunction: 'result_visible', universe: 'general', tone: 'pedagogique' },
+  { text: 'L\'expertise a fait la différence.', narrativeFunction: 'result_visible', universe: 'general', tone: 'pedagogique' },
+  // reactif — result_visible
+  { text: 'Situation maîtrisée, fin du stress.', narrativeFunction: 'result_visible', universe: 'general', tone: 'reactif' },
+  { text: 'Le pire est derrière eux.', narrativeFunction: 'result_visible', universe: 'general', tone: 'reactif' },
+  // rassurant — technician_arrival
+  { text: 'Il arrive calmement, prêt à agir.', narrativeFunction: 'technician_arrival', universe: 'general', tone: 'rassurant' },
+  { text: 'Le client se sent en confiance.', narrativeFunction: 'technician_arrival', universe: 'general', tone: 'rassurant' },
+  // reactif — scheduling
+  { text: 'Pas de temps à perdre.', narrativeFunction: 'scheduling', universe: 'general', tone: 'reactif' },
+  // reactif — technician_arrival
+  { text: 'Il arrive sans traîner.', narrativeFunction: 'technician_arrival', universe: 'general', tone: 'reactif' },
+  // pedagogique — scheduling
+  { text: 'Elle explique le déroulement.', narrativeFunction: 'scheduling', universe: 'general', tone: 'pedagogique' },
+  // pedagogique — call_received
+  { text: 'Elle pose les bonnes questions.', narrativeFunction: 'call_received', universe: 'general', tone: 'pedagogique' },
+];
+
+// ============================================================================
 // EXPORT UNIFIÉ
 // ============================================================================
 
@@ -660,6 +826,14 @@ export const ALL_TEXT_ATOMS: TextAtomEntry[] = [
   ...MENUISERIE_EXTRA,
   ...PEINTURE_EXTRA,
   ...GENERIC_EXTRA,
+  // Gap fills
+  ...GAP_FILL_PLOMBERIE,
+  ...GAP_FILL_ELECTRICITE,
+  ...GAP_FILL_SERRURERIE,
+  ...GAP_FILL_VITRERIE,
+  ...GAP_FILL_MENUISERIE,
+  ...GAP_FILL_PEINTURE,
+  ...GAP_FILL_GENERIC,
 ];
 
 /** Get text atoms with full filtering */
