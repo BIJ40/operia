@@ -1013,10 +1013,20 @@ PLATFORM VARIANTS :
 - Google Business → problème + solution + zone géo
 - LinkedIn → expertise + cas concret + crédibilité
 
-ANTI-RÉPÉTITION (21 JOURS MINIMUM) :
-- Jamais 2 posts du même univers à moins de 21 jours d'écart
+ANTI-RÉPÉTITION & ANTI-FATIGUE (CRITIQUE — MODE DAILY CONTENT) :
+- Pas 2 posts consécutifs même univers
+- Pas 2 posts consécutifs même catégorie (topic_type)
+- Même univers : gap minimum 3 jours, max 2 par semaine, max 6 par mois
+- Variation obligatoire du ton : alterner question, affirmation, alerte, conseil, chiffre
+- Si un post ressemble trop au précédent → REJETER ET REFAIRE
 - Varier les univers : alterner plomberie, electricite, serrurerie, volets, menuiserie, vitrerie, pmr, renovation
-- Espacer les posts : ~1 post tous les 1-2 jours
+- 1 post par jour, couvrir le mois entier
+
+FORMAT DES POSTS (variation obligatoire) :
+- 20% PUNCHLINE : hook seul (pas de sous-texte, pas de CTA dans le visuel)
+- 30% COURT : hook + CTA (pas de sous-texte)
+- 40% MOYEN : hook + 1 phrase sous-texte + CTA
+- 10% LONG : hook + 2 phrases sous-texte + CTA
 
 ═══════════════════════════════════════════
 PRIORITÉ (DANS CET ORDRE)
