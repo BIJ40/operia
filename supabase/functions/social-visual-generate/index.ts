@@ -14,7 +14,19 @@ import { handleCorsPreflightOrReject, getCorsHeaders } from '../_shared/cors.ts'
 import { getUserContext, assertAgencyAccess } from '../_shared/auth.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
-const VAN_REFERENCE_URL = `${SUPABASE_URL}/storage/v1/object/public/brand-assets/van-reference.png`;
+
+// Multiple van reference photos for better AI fidelity
+const VAN_REFERENCE_URLS = [
+  `${SUPABASE_URL}/storage/v1/object/public/brand-assets/van-reference.png`,
+  `${SUPABASE_URL}/storage/v1/object/public/brand-assets/van-ref3.jpg`,
+  `${SUPABASE_URL}/storage/v1/object/public/brand-assets/van-ref4.jpg`,
+  `${SUPABASE_URL}/storage/v1/object/public/brand-assets/van-ref5.jpg`,
+];
+// Pick 2 random references each time for variety + fidelity
+function getVanReferenceUrls(): string[] {
+  const shuffled = [...VAN_REFERENCE_URLS].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 2);
+}
 
 const SERVICE_COLORS: Record<string, string> = {
   plomberie: '#2D8BC9',
