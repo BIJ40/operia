@@ -356,8 +356,14 @@ function validateAndNormalizeSuggestions(
     const dayNum = parseInt(date.split('-')[2]);
     if (dayNum < 1 || dayNum > daysInMonth) date = `${monthKey}-15`;
 
-    // 2. topic_type
-    const topicType = (VALID_TOPIC_TYPES as readonly string[]).includes(s.topic_type) ? s.topic_type : 'conseil';
+    // 2. topic_type — enforce from weekly schedule if available
+    let topicType = (VALID_TOPIC_TYPES as readonly string[]).includes(s.topic_type) ? s.topic_type : 'conseil';
+    if (weeklySchedule) {
+      const scheduledDay = weeklySchedule.find(ws => ws.day === dayNum);
+      if (scheduledDay && (VALID_TOPIC_TYPES as readonly string[]).includes(scheduledDay.category)) {
+        topicType = scheduledDay.category; // Force the scheduled category
+      }
+    }
 
     // 3. topic_key dedup
     const topicKey = String(s.topic_key || `${topicType}_${date}`);
