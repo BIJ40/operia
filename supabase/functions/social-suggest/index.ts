@@ -380,8 +380,27 @@ function validateAndNormalizeSuggestions(
       realisationId = s.realisation_id;
     }
 
-    // 6. caption
-    const captionBase = String(s.caption_base_fr || '').substring(0, 2000);
+    // 6. caption — strip structural labels (HOOK:, CTA:, etc.)
+    let captionBase = String(s.caption_base_fr || '').substring(0, 2000);
+    captionBase = captionBase
+      .replace(/^HOOK\s*[:：]\s*/gim, '')
+      .replace(/
+HOOK\s*[:：]\s*/gim, '
+')
+      .replace(/
+SOUS[- ]?TEXTE\s*[:：]\s*/gim, '
+')
+      .replace(/
+CTA\s*[:：]\s*/gim, '
+')
+      .replace(/
+ACCROCHE\s*[:：]\s*/gim, '
+')
+      .replace(/
+{3,}/g, '
+
+')
+      .trim();
     if (captionBase.length < 10) continue;
 
     // 7. title
