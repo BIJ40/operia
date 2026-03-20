@@ -238,7 +238,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
           )
         ) : rawPreviewUrl ? (
           <div className="relative rounded-lg overflow-hidden border border-border">
-            <img src={rawPreviewUrl} alt="Aperçu image brute" className="w-full h-auto" />
+            <img src={rawPreviewUrl} alt="Aperçu image brute" className="w-full h-auto" data-no-modal />
           </div>
         ) : composedPreviewUrl ? (
           <div className="flex flex-col items-center justify-center py-8 bg-muted/30 rounded-lg border border-dashed border-border text-center px-4">
