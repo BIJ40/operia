@@ -897,7 +897,7 @@ Chaque post DOIT avoir un topic_type parmi :
 4. "conseil" — tips concrets, utiles, actionnables (10%, ~3 posts)
 5. "preuve" — intervention rapide, savoir-faire technicien, proximité, réalisation, témoignage, avant/après, process (10%, ~3 posts)
 6. "saisonnier" — météo réelle, période (10%, ~3 posts)
-7. "contre_exemple" — erreur fréquente, "ce qu'il ne faut pas faire", contraste expert (10%, ~3 posts)
+7. "contre_exemple" — erreur fréquente, "ce qu'il ne faut pas faire", contraste technicien vs bricoleur (10%, ~3 posts)
 8. "pedagogique" — schéma, chiffre clé, "le saviez-vous ?", valeur immédiate (10%, ~3 posts)
 
 ═══════════════════════════════════════════
