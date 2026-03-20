@@ -635,12 +635,10 @@ Réponds UNIQUEMENT en JSON valide avec exactement ces clés :
         }
       }
 
-      // RULE: For preuve/realisation posts, REFUSE to generate without real photos
+      // If no real photos found, fall back to AI generation instead of blocking
       if (!realPhotoUrl) {
-        console.error('[social-visual-generate] Preuve post with realisation_id but no photos found');
-        return new Response(JSON.stringify({ 
-          error: 'Aucune photo trouvée pour cette réalisation. Ajoutez des photos dans le module Réalisations avant de générer le visuel.' 
-        }), { status: 400, headers: jsonHeaders });
+        console.warn('[social-visual-generate] Preuve post with realisation_id but no photos — falling back to AI generation');
+        hasBeforeAfter = false;
       }
     }
 
