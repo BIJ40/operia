@@ -316,7 +316,8 @@ Réponds UNIQUEMENT en JSON valide avec exactement ces clés :
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     const HELPCONFORT_VISUAL_IDENTITY = `COMPANY VISUAL IDENTITY (Help Confort — French home maintenance company):
-- VEHICLES: White commercial van (Ford Transit type) with a large blue wave/swoosh graphic on the sides (gradient from sky blue to navy blue). The van has a roof rack with ladders. Do NOT write any text or logo on the van — just the blue wave design on white.
+- VEHICLES: White Renault Master van. The van has a DISTINCTIVE blue diagonal wave/swoosh graphic covering the lower half of each side (gradient from sky blue to deep navy). On the side panels there are 6 small colorful circular service icons arranged in a grid. There is a roof rack with ladders on top. The van is CLEAN and WHITE with ONLY the blue wave pattern — no other color or stripe.
+- IMPORTANT: When the van appears, it must be CLEARLY a white Renault Master with the blue wave — NOT a generic white van, NOT a Ford Transit. The wave pattern is diagonal, starting from the front wheel area going up toward the rear top. Do NOT invent additional graphics.
 - TECHNICIAN UNIFORMS: Blue polo shirt or blue work jacket, dark pants, professional and clean appearance. Technicians may carry toolboxes or equipment.
 - COLOR PALETTE: Dominant blue (#0092DD) and white, with touches of orange (#FFB705) on accessories or details.`;
 
