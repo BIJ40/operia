@@ -159,7 +159,7 @@ async function callImageAIWithFallback(
   // ROUTE A: Input images present OR user forced Gemini → Gemini FIRST
   // DALL-E 3 CANNOT accept input images, so Gemini is the only option here
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  if (hasInputImages) {
+  if (hasInputImages || forceGemini) {
     console.log(`[callImageAI] Has ${inputImages.length} input image(s) — using Gemini (native image input)`);
     
     const geminiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
