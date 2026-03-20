@@ -88,7 +88,7 @@ function buildAwarenessDays(year: number): AwarenessDay[] {
     { month: 3, day: lastSunMarch, label: "🕐 Changement d'heure (été) — reprogrammer volets & minuteries", tags: ["electricite","confort","volets"], contentTypeHint: "pedagogique", preferredUniverses: ["electricite","volets"], ctaHint: "programmateur_volets" },
 
     // ════════════════ AVRIL ════════════════
-    { month: 4, day: 1,  label: "🐟 1er avril — les pannes les plus insolites de nos techniciens", tags: ["humour","engagement","branding","fete"], contentTypeHint: "decale", preferredUniverses: ["general"], ctaHint: "engagement_communaute" },
+    { month: 4, day: 1,  label: "🐟 1er avril — les pannes les plus insolites de nos techniciens", tags: ["humour","engagement","branding","fete"], contentTypeHint: "decale", preferredUniverses: ["plomberie"], ctaHint: "engagement_communaute" },
     { month: 4, day: 7,  label: "🧹 Grand ménage de printemps — check-up complet maison", tags: ["entretien","habitat"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","electricite","renovation"], ctaHint: "check_up_maison" },
     { month: 4, day: 11, label: "Journée mondiale Parkinson — adapter le logement PMR", tags: ["pmr","sante","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["pmr"], ctaHint: "adaptation_logement" },
     { month: 4, day: 15, label: "Préparer terrasse & extérieurs pour les beaux jours", tags: ["habitat","menuiserie","volets"], contentTypeHint: "pedagogique", preferredUniverses: ["menuiserie","volets","renovation"], ctaHint: "amenagement_exterieur" },
