@@ -1,0 +1,2 @@
+ALTER TABLE social_content_suggestions DROP CONSTRAINT social_content_suggestions_source_type_check;
+ALTER TABLE social_content_suggestions ADD CONSTRAINT social_content_suggestions_source_type_check CHECK (source_type = ANY (ARRAY['ai_awareness', 'ai_realisation', 'ai_seasonal', 'ai_daily', 'manual', 'regenerated']));
