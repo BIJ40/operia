@@ -733,7 +733,7 @@ function validateAndNormalizeSuggestions(
   year: number,
   exploitableReals: { id: string }[],
   existingTopicKeys: Set<string>,
-  weeklySchedule?: { day: number; category: string }[],
+  weeklySchedule?: DaySchedule[],
 ): ValidatedSuggestion[] {
   const monthKey = `${year}-${String(month).padStart(2, '0')}`;
   const daysInMonth = new Date(year, month, 0).getDate();
