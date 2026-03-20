@@ -146,6 +146,12 @@ function CommercialInner() {
           </Suspense>
         </TabsContent>
 
+        <TabsContent value="bd_story" className="mt-4">
+          <Suspense fallback={<LoadingFallback />}>
+            <BdStoryPage />
+          </Suspense>
+        </TabsContent>
+
         <TabsContent value="signature" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
             <SignatureGeneratorPage />
