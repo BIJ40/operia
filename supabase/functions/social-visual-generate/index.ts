@@ -243,9 +243,14 @@ RÈGLES STRICTES :
 2. SOUS-TEXTE :
 - 6 à 10 mots maximum
 - 55 caractères maximum
-- une phrase complète avec point final
-- doit compléter le hook de façon simple et lisible
-- jamais de date, jamais d'événement calendaire inutile, jamais de texte décoratif
+- DOIT être une phrase française grammaticalement PARFAITE et naturelle avec un point final
+- Un francophone natif doit pouvoir la lire sans tiquer
+- doit compléter le hook de façon logique et claire
+- INTERDIT : juxtaposition de mots-clés sans verbe (ex: "Simplifiez votre chauffe-eau remplacement" est INVALIDE)
+- INTERDIT : phrases tronquées, boiteuses ou incompréhensibles
+- jamais de date, jamais d'événement calendaire inutile
+- Exemples VALIDES : "Remplacez votre chauffe-eau en urgence.", "Votre installation mérite un expert.", "On intervient même le week-end."
+- Exemples INVALIDES : "Simplifiez votre remplacement en urgence", "Chauffe-eau problème résolu vite"
 
 3. CTA :
 - 2 à 4 mots maximum
