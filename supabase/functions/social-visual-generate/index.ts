@@ -496,11 +496,13 @@ CRITICAL COMPOSITION RULES — THIS IMAGE IS A BACKGROUND FOR A SOCIAL MEDIA AD:
 
 6. FORMAT: Square 1080x1080. Fill the entire frame edge to edge.
 
-7. STYLE: Realistic professional photograph. NOT illustration, NOT 3D, NOT cartoon.
+7. STYLE: ${visualStyle === 'creatif' ? 'Creative/humorous — intentionally unrealistic, fun, memorable.' : 'Realistic professional photograph. NOT illustration, NOT 3D, NOT cartoon.'}
 
 8. FORBIDDEN: emoji, clip art, gradients as backgrounds, banners, overlays, borders, any written text.
 
 9. ${HELPCONFORT_VISUAL_IDENTITY}
+
+10. ${visualStyleDirective}
 `;
 
     let bgMessages: any[];
