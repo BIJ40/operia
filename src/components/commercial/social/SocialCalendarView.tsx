@@ -12,19 +12,25 @@ import { Button } from '@/components/ui/button';
 import type { SocialSuggestion } from '@/hooks/useSocialSuggestions';
 
 const TOPIC_COLORS: Record<string, string> = {
-  awareness_day: 'bg-teal-100 border-teal-300 text-teal-800 dark:bg-teal-900/30 dark:border-teal-700 dark:text-teal-300',
-  seasonal_tip: 'bg-blue-100 border-blue-300 text-blue-800 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300',
-  realisation: 'bg-orange-100 border-orange-300 text-orange-800 dark:bg-orange-900/30 dark:border-orange-700 dark:text-orange-300',
-  local_branding: 'bg-violet-100 border-violet-300 text-violet-800 dark:bg-violet-900/30 dark:border-violet-700 dark:text-violet-300',
-  educational: 'bg-amber-100 border-amber-300 text-amber-800 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-300',
+  urgence: 'bg-red-100 border-red-300 text-red-800 dark:bg-red-900/30 dark:border-red-700 dark:text-red-300',
+  prevention: 'bg-blue-100 border-blue-300 text-blue-800 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300',
+  amelioration: 'bg-emerald-100 border-emerald-300 text-emerald-800 dark:bg-emerald-900/30 dark:border-emerald-700 dark:text-emerald-300',
+  conseil: 'bg-sky-100 border-sky-300 text-sky-800 dark:bg-sky-900/30 dark:border-sky-700 dark:text-sky-300',
+  preuve: 'bg-violet-100 border-violet-300 text-violet-800 dark:bg-violet-900/30 dark:border-violet-700 dark:text-violet-300',
+  saisonnier: 'bg-orange-100 border-orange-300 text-orange-800 dark:bg-orange-900/30 dark:border-orange-700 dark:text-orange-300',
+  contre_exemple: 'bg-rose-100 border-rose-300 text-rose-800 dark:bg-rose-900/30 dark:border-rose-700 dark:text-rose-300',
+  pedagogique: 'bg-amber-100 border-amber-300 text-amber-800 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-300',
 };
 
 const TOPIC_DOT_COLORS: Record<string, string> = {
-  awareness_day: 'bg-teal-500',
-  seasonal_tip: 'bg-blue-500',
-  realisation: 'bg-orange-500',
-  local_branding: 'bg-violet-500',
-  educational: 'bg-amber-500',
+  urgence: 'bg-red-500',
+  prevention: 'bg-blue-500',
+  amelioration: 'bg-emerald-500',
+  conseil: 'bg-sky-500',
+  preuve: 'bg-violet-500',
+  saisonnier: 'bg-orange-500',
+  contre_exemple: 'bg-rose-500',
+  pedagogique: 'bg-amber-500',
 };
 
 interface SocialCalendarViewProps {
