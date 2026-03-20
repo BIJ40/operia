@@ -321,7 +321,7 @@ export async function drawUniversePill(ctx: CanvasRenderingContext2D, theme: Ser
 
   // Label text
   ctx.fillStyle = HC.white;
-  ctx.font = 'bold 18px sans-serif';
+  ctx.font = 'bold 22px sans-serif';
   ctx.textAlign = 'left';
   ctx.fillText(pillText, textStartX, y + pillH / 2 + 6);
   ctx.textAlign = 'left';
