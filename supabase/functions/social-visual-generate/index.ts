@@ -13,6 +13,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
 import { handleCorsPreflightOrReject, getCorsHeaders } from '../_shared/cors.ts';
 import { getUserContext, assertAgencyAccess } from '../_shared/auth.ts';
 
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
+const VAN_REFERENCE_URL = `${SUPABASE_URL}/storage/v1/object/public/brand-assets/van-reference.png`;
+
 const SERVICE_COLORS: Record<string, string> = {
   plomberie: '#2D8BC9',
   electricite: '#F8A73C',
@@ -345,9 +348,42 @@ CRITICAL COMPOSITION RULES — THIS IMAGE IS A BACKGROUND FOR A SOCIAL MEDIA AD:
       const sceneDescription = visualPrompt ||
         `Professional French home ${getSceneForUniverse(universe)}, realistic close-up showing a real problem or urgent situation`;
 
-      bgMessages = [{
-        role: 'user',
-        content: `Generate a REALISTIC PHOTOGRAPH designed as a SOCIAL MEDIA AD BACKGROUND (1080x1080 square).
+      // Check if the scene mentions a van — if so, pass the real van photo as reference
+      const sceneHasVan = sceneDescription.toLowerCase().includes('van') || 
+                          sceneDescription.toLowerCase().includes('transit') ||
+                          universe === 'general' || universe === 'local_branding';
+
+      if (sceneHasVan) {
+        // Use multi-modal prompt with the real van reference photo
+        bgMessages = [{
+          role: 'user',
+          content: [
+            { 
+              type: 'text', 
+              text: `Generate a REALISTIC PHOTOGRAPH designed as a SOCIAL MEDIA AD BACKGROUND (1080x1080 square).
+
+REFERENCE IMAGE: The attached photo shows the EXACT company van design. Generate a scene that includes a van that looks EXACTLY like this one — same white body, same blue wave/swoosh graphics, same style. Copy the van's visual appearance as faithfully as possible.
+
+SCENE TO PHOTOGRAPH:
+${sceneDescription}
+
+${AD_COMPOSITION_RULES}
+
+ADDITIONAL REQUIREMENTS:
+- The van in the generated image must match the reference photo's design as closely as possible
+- This must look like a REAL PHOTOGRAPH taken on-site by a professional photographer
+- Dramatic natural lighting with a cinematic feel
+- The bottom third should naturally be darker (floor, shadow, dark surface)
+- High resolution feel, sharp details on the main subject
+- Do NOT add any text, logos, or words to the image — the blue wave pattern on the van is a graphic, not text`
+            },
+            { type: 'image_url', image_url: { url: VAN_REFERENCE_URL } },
+          ],
+        }];
+      } else {
+        bgMessages = [{
+          role: 'user',
+          content: `Generate a REALISTIC PHOTOGRAPH designed as a SOCIAL MEDIA AD BACKGROUND (1080x1080 square).
 
 SCENE TO PHOTOGRAPH:
 ${sceneDescription}
@@ -360,7 +396,8 @@ ADDITIONAL REQUIREMENTS:
 - Dramatic natural lighting with a cinematic feel
 - The bottom third should naturally be darker (floor, shadow, dark surface)
 - High resolution feel, sharp details on the main subject`,
-      }];
+        }];
+      }
     }
 
     console.log('[social-visual-generate] Generating background image...');
