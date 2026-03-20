@@ -2284,6 +2284,116 @@ export type Database = {
           },
         ]
       }
+      bd_story_character_visuals: {
+        Row: {
+          active: boolean | null
+          agency_id: string
+          created_at: string | null
+          display_name: string
+          id: string
+          must_keep: Json | null
+          outfit_rules: Json | null
+          reference_image_urls: string[] | null
+          role: string
+          slug: string
+          updated_at: string | null
+          visual_identity: Json | null
+        }
+        Insert: {
+          active?: boolean | null
+          agency_id: string
+          created_at?: string | null
+          display_name: string
+          id?: string
+          must_keep?: Json | null
+          outfit_rules?: Json | null
+          reference_image_urls?: string[] | null
+          role?: string
+          slug: string
+          updated_at?: string | null
+          visual_identity?: Json | null
+        }
+        Update: {
+          active?: boolean | null
+          agency_id?: string
+          created_at?: string | null
+          display_name?: string
+          id?: string
+          must_keep?: Json | null
+          outfit_rules?: Json | null
+          reference_image_urls?: string[] | null
+          role?: string
+          slug?: string
+          updated_at?: string | null
+          visual_identity?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bd_story_character_visuals_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bd_story_renders: {
+        Row: {
+          agency_id: string
+          created_at: string | null
+          final_board_url: string | null
+          id: string
+          panels_render: Json | null
+          render_debug: Json | null
+          render_provider: string | null
+          status: string
+          story_id: string | null
+          style_preset: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string | null
+          final_board_url?: string | null
+          id?: string
+          panels_render?: Json | null
+          render_debug?: Json | null
+          render_provider?: string | null
+          status?: string
+          story_id?: string | null
+          style_preset?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string | null
+          final_board_url?: string | null
+          id?: string
+          panels_render?: Json | null
+          render_debug?: Json | null
+          render_provider?: string | null
+          status?: string
+          story_id?: string | null
+          style_preset?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bd_story_renders_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bd_story_renders_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "bd_story_stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bd_story_stories: {
         Row: {
           agency_id: string
