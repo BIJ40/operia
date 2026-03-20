@@ -37,7 +37,8 @@ try {
   // ignore
 }
 
-const PREVIEW_BUILD_REFRESH_KEY = '__lovable_preview_build_refresh__';
+const PREVIEW_BOOTSTRAP_PARAM = '__lovable_preview_refresh';
+const PREVIEW_BOOTSTRAP_TTL_MS = 15_000;
 
 // Safe SW registration — disabled in Lovable preview and sandboxed frames
 const isLovablePreview = () => {
@@ -76,15 +77,16 @@ const canRegisterSW = () => {
 };
 
 if (isLovablePreview()) {
-  const previewBuildKey = `preview:${APP_VERSION}`;
-
   try {
-    const lastPreviewBuild = sessionStorage.getItem(PREVIEW_BUILD_REFRESH_KEY);
+    const previewUrl = new URL(window.location.href);
+    const refreshMarker = previewUrl.searchParams.get(PREVIEW_BOOTSTRAP_PARAM);
+    const refreshTimestamp = refreshMarker ? Number(refreshMarker.split(':').pop()) : Number.NaN;
+    const needsFreshBootstrap = !Number.isFinite(refreshTimestamp) || (Date.now() - refreshTimestamp) > PREVIEW_BOOTSTRAP_TTL_MS;
 
-    if (lastPreviewBuild !== previewBuildKey) {
-      sessionStorage.setItem(PREVIEW_BUILD_REFRESH_KEY, previewBuildKey);
+    if (needsFreshBootstrap) {
+      previewUrl.searchParams.set(PREVIEW_BOOTSTRAP_PARAM, `${APP_VERSION}:${Date.now()}`);
       void clearPreviewRuntimeCaches().finally(() => {
-        window.location.replace(window.location.href);
+        window.location.replace(previewUrl.toString());
       });
     } else {
       void clearPreviewRuntimeCaches();
