@@ -15,11 +15,11 @@ import { BdStoryStoryDetail } from '@/modules/bd-story/ui/BdStoryStoryDetail';
 import { BdStoryVisualBoard } from '@/modules/bd-story/ui/BdStoryVisualBoard';
 import { BdStoryCharacterLibrary } from '@/modules/bd-story/ui/BdStoryCharacterLibrary';
 import { BdStoryGenerationInput, GeneratedStory } from '@/modules/bd-story/types/bdStory.types';
-import { StylePreset, STYLE_PRESETS } from '@/modules/bd-story/engine/imageRenderService';
+import { StylePreset } from '@/modules/bd-story/engine/imageRenderService';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Image, FileJson, Users, Sparkles, Loader2 } from 'lucide-react';
+import { Image, FileJson, Users, Sparkles, Loader2, Clock } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -57,7 +57,6 @@ export default function BdStoryPage() {
       setSelectedPrompt(result.boardPromptMaster);
       setActiveTab('bd');
       queryClient.invalidateQueries({ queryKey: ['bd-story-history'] });
-      // Start visual rendering
       await render.renderStory(result.story);
     }
   }, [generate, queryClient, render]);
@@ -98,35 +97,37 @@ export default function BdStoryPage() {
           </div>
 
           <Button
-            onClick={() => selectedStory && render.renderStory(selectedStory)}
-            disabled={!selectedStory || render.isRendering}
+            onClick={() => handleGenerateAndRender({})}
+            disabled={isGenerating || render.isRendering}
             variant="default"
             size="sm"
             className="gap-2"
           >
-            {render.isRendering ? (
+            {(isGenerating || render.isRendering) ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Rendu en cours ({render.renderProgress}/12)
+                {render.isRendering ? `Rendu ${render.renderProgress}/12` : 'Génération…'}
               </>
             ) : (
               <>
-                <Image className="w-4 h-4" />
-                Générer la BD visuelle
+                <Sparkles className="w-4 h-4" />
+                Générer la BD finale
               </>
             )}
           </Button>
 
-          <Button
-            onClick={() => handleGenerateAndRender({})}
-            disabled={isGenerating || render.isRendering}
-            variant="outline"
-            size="sm"
-            className="gap-2"
-          >
-            <Sparkles className="w-4 h-4" />
-            Histoire + BD en un clic
-          </Button>
+          {selectedStory && !render.isRendering && (
+            <Button
+              onClick={() => selectedStory && render.renderStory(selectedStory)}
+              disabled={render.isRendering}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Image className="w-4 h-4" />
+              Re-rendre cette histoire
+            </Button>
+          )}
         </div>
 
         {/* Progress bar during render */}
@@ -153,7 +154,11 @@ export default function BdStoryPage() {
             <TabsList className="mb-4">
               <TabsTrigger value="bd" className="gap-1.5 text-xs">
                 <Image className="w-3.5 h-3.5" />
-                BD visuelle
+                BD finale
+              </TabsTrigger>
+              <TabsTrigger value="historique" className="gap-1.5 text-xs">
+                <Clock className="w-3.5 h-3.5" />
+                Historique
               </TabsTrigger>
               <TabsTrigger value="script" className="gap-1.5 text-xs">
                 <FileJson className="w-3.5 h-3.5" />
@@ -177,13 +182,24 @@ export default function BdStoryPage() {
               ) : selectedStory ? (
                 <div className="rounded-xl border bg-card/50 flex flex-col items-center justify-center py-16 gap-3 text-sm text-muted-foreground">
                   <Image className="w-8 h-8 text-muted-foreground/30" />
-                  <p>Cliquez sur « Générer la BD visuelle » pour créer la planche illustrée.</p>
+                  <p>Cliquez sur « Générer la BD finale » pour créer la planche illustrée.</p>
                 </div>
               ) : (
                 <div className="rounded-xl border bg-card/50 flex items-center justify-center py-20 text-sm text-muted-foreground">
-                  Générez une histoire pour voir la BD ici.
+                  Cliquez sur « Générer la BD finale » pour commencer.
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="historique">
+              <div className="rounded-xl border bg-card p-5">
+                <BdStoryHistoryList
+                  stories={stories}
+                  selectedId={selectedStory?.id || null}
+                  onSelect={handleSelectFromHistory}
+                  isLoading={isLoadingHistory}
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="script">
@@ -208,15 +224,35 @@ export default function BdStoryPage() {
           </Tabs>
         </div>
 
-        {/* Sidebar: history */}
+        {/* Sidebar: quick story info */}
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground">Historique</h3>
-          <BdStoryHistoryList
-            stories={stories}
-            selectedId={selectedStory?.id || null}
-            onSelect={handleSelectFromHistory}
-            isLoading={isLoadingHistory}
-          />
+          {selectedStory ? (
+            <div className="rounded-xl border bg-card p-4 space-y-3">
+              <h3 className="text-sm font-semibold text-foreground">Histoire en cours</h3>
+              <p className="text-xs text-muted-foreground">{selectedStory.title}</p>
+              <p className="text-[10px] text-muted-foreground/70">{selectedStory.summary}</p>
+              <div className="flex flex-wrap gap-1.5">
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">{selectedStory.universe}</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{selectedStory.storyFamily}</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{selectedStory.tone}</span>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-xl border bg-card/50 p-4 text-center text-xs text-muted-foreground">
+              Aucune histoire sélectionnée
+            </div>
+          )}
+
+          {/* Recent history quick access */}
+          <div className="space-y-2">
+            <h4 className="text-xs font-medium text-muted-foreground">Dernières histoires</h4>
+            <BdStoryHistoryList
+              stories={stories.slice(0, 5)}
+              selectedId={selectedStory?.id || null}
+              onSelect={handleSelectFromHistory}
+              isLoading={isLoadingHistory}
+            />
+          </div>
         </div>
       </div>
     </div>
