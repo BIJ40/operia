@@ -388,6 +388,7 @@ CRITICAL RULES:
       console.error('[callImageAI] Gemini Imagen fetch error:', err);
     }
   }
+  } // end if (!forceDalle)
 
   return { ok: false, status: 502, error: 'All image providers failed (DALL-E 3, Gemini)' };
 }
