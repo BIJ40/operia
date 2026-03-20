@@ -296,12 +296,15 @@ Deno.serve(async (req) => {
     const agencyAddress = 'Landes & Pays Basque';
 
     const aiPayload = (suggestion.ai_payload as Record<string, any>) || {};
-    const universe = suggestion.universe || 'general';
+    const universe = (visualCustomization?.universeOverride && visualCustomization.universeOverride !== '__auto')
+      ? visualCustomization.universeOverride
+      : (suggestion.universe || 'general');
     const color = SERVICE_COLORS[universe] || SERVICE_COLORS.general;
     const topicType = suggestion.topic_type || 'seasonal_tip';
     const serviceLabel = universe === 'general'
       ? (GENERAL_TOPIC_LABELS[topicType] || SERVICE_LABELS.general)
       : (SERVICE_LABELS[universe] || SERVICE_LABELS.general);
+    console.log(`[social-visual-generate] Universe: ${universe} (override: ${visualCustomization?.universeOverride || 'none'})`);
     const title = suggestion.title || '';
     const rawHook = aiPayload.hook || title;
     const rawCta = aiPayload.cta || 'Demandez un devis gratuit';
