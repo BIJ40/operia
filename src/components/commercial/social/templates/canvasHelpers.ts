@@ -42,16 +42,16 @@ export const ZONES = {
 const HOOK_MAX_CHARS = 32;
 const HOOK_MAX_WORDS = 5;
 const HOOK_MAX_LINES = 2;
-const HOOK_FONT_MAX = 58;
-const HOOK_FONT_MIN = 38;
+const HOOK_FONT_MAX = 72;
+const HOOK_FONT_MIN = 44;
 
 const SUB_MAX_CHARS = 60;
 const SUB_MAX_WORDS = 10;
 const SUB_MAX_LINES = 2;
-const SUB_FONT = 30;
+const SUB_FONT = 36;
 
 const CTA_MAX_CHARS = 25;
-const CTA_FONT = 24;
+const CTA_FONT = 30;
 
 // ─── Universe Style Map ─────────────────────────────────────
 export interface ServiceTheme {
@@ -353,7 +353,7 @@ export function drawTopicBadge(
 // ZONE 5 — FOOTER (990–1080px)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-/** Bandeau signature bas "HelpConfort — DEPAN40 — Adresse" */
+/** Bandeau signature bas "HelpConfort — DEPAN40 — Ville (CP)" */
 export function drawHCFooterBar(ctx: CanvasRenderingContext2D, theme: ServiceTheme, agencyAddress?: string) {
   const height = ZONES.FOOTER_HEIGHT;
   const y = ZONES.FOOTER_START;
@@ -364,9 +364,9 @@ export function drawHCFooterBar(ctx: CanvasRenderingContext2D, theme: ServiceThe
   ctx.fillStyle = HC.white;
   ctx.font = 'bold 26px sans-serif';
   ctx.textAlign = 'left';
-  const signature = agencyAddress
-    ? `HelpConfort — DEPAN40 — ${agencyAddress}`
-    : 'HelpConfort — DEPAN40';
+  const defaultAddress = 'Dax (40100)';
+  const address = agencyAddress || defaultAddress;
+  const signature = `HelpConfort — DEPAN40 — ${address}`;
   ctx.fillText(signature, 50, y + height / 2 + 9);
   ctx.textAlign = 'right';
   ctx.font = '22px sans-serif';
@@ -421,9 +421,10 @@ export function drawHookText(
   }
 
   ctx.font = `900 ${fontSize}px sans-serif`;
-  ctx.textAlign = align;
+  // Force center alignment for hook
+  ctx.textAlign = 'center';
   const lineH = fontSize * 1.15;
-  const xPos = align === 'center' ? SIZE / 2 : ZONES.MARGIN_X;
+  const xPos = SIZE / 2;
 
   lines.forEach((line, i) => {
     const ly = y + i * lineH;
