@@ -382,8 +382,8 @@ export function drawTopicBadge(
 // ZONE 5 — FOOTER (990–1080px)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-/** Bandeau signature bas avec coordonnées complètes */
-export function drawHCFooterBar(ctx: CanvasRenderingContext2D, theme: ServiceTheme, agencyAddress?: string) {
+/** Bandeau signature bas avec coordonnées complètes + picto univers */
+export function drawHCFooterBar(ctx: CanvasRenderingContext2D, theme: ServiceTheme, agencyAddress?: string, pictoSrc?: string) {
   const height = ZONES.FOOTER_HEIGHT;
   const y = ZONES.FOOTER_START;
 
@@ -414,11 +414,20 @@ export function drawHCFooterBar(ctx: CanvasRenderingContext2D, theme: ServiceThe
   const coords = '📞 05 58 35 21 38  ·  ✉ dax@helpconfort.com  ·  🌐 www.helpconfort-40.fr';
   ctx.fillText(coords, 50, y + 78);
 
-  // ─── Universe label (right side) ───
-  ctx.textAlign = 'right';
-  ctx.font = '22px sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,0.85)';
-  ctx.fillText(theme.label, SIZE - 50, y + 42);
+  // ─── Universe picto (right side, full height) ───
+  if (pictoSrc) {
+    const img = new Image();
+    img.src = pictoSrc;
+    // Draw picto centered right, filling footer height with padding
+    const pictoSize = height - 24;
+    const pictoX = SIZE - pictoSize - 30;
+    const pictoY = y + 12;
+    try {
+      ctx.globalAlpha = 0.9;
+      ctx.drawImage(img, pictoX, pictoY, pictoSize, pictoSize);
+      ctx.globalAlpha = 1;
+    } catch { /* picto optional */ }
+  }
   ctx.textAlign = 'left';
 }
 
