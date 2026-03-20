@@ -169,7 +169,7 @@ export function sanitizeSubText(raw: string): string {
 /** Sanitize CTA: short action text */
 export function sanitizeCTA(raw: string): string {
   if (!raw) return '';
-  let text = raw.trim();
+  let text = replaceExpertVocab(raw.trim());
   if (text.length > CTA_MAX_CHARS) {
     text = text.slice(0, CTA_MAX_CHARS).trim();
     const lastSpace = text.lastIndexOf(' ');
