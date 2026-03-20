@@ -161,11 +161,96 @@ Deno.serve(async (req) => {
     const color = SERVICE_COLORS[universe] || SERVICE_COLORS.general;
     const serviceLabel = SERVICE_LABELS[universe] || SERVICE_LABELS.general;
     const title = suggestion.title || '';
-    const hook = aiPayload.hook || title;
-    const cta = aiPayload.cta || 'Demandez un devis gratuit';
+    const rawHook = aiPayload.hook || title;
+    const rawCta = aiPayload.cta || 'Demandez un devis gratuit';
     const visualPrompt = aiPayload.visual_prompt || '';
     const topicType = suggestion.topic_type || 'seasonal_tip';
-    const caption = suggestion.caption_base_fr || '';
+    const rawCaption = suggestion.caption_base_fr || '';
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // ÉTAPE 0 : COPYWRITING IA — Réécriture cohérente du hook/sous-texte
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    let hook = rawHook;
+    let caption = rawCaption;
+    let cta = rawCta;
+
+    try {
+      console.log('[social-visual-generate] Generating coherent marketing copy...');
+      const copywritingPrompt = `Tu es un copywriter publicitaire expert pour une entreprise française de dépannage à domicile (plomberie, électricité, serrurerie, vitrerie, etc.) appelée "Help Confort".
+
+Contexte :
+- Univers/métier : ${serviceLabel}
+- Titre original : "${title}"
+- Hook original : "${rawHook}"
+- Sous-texte original : "${rawCaption}"
+- CTA original : "${rawCta}"
+- Type de post : ${topicType}
+
+MISSION : Réécris ces textes pour un visuel publicitaire social media (Instagram/Facebook).
+
+RÈGLES STRICTES :
+1. HOOK (phrase principale) :
+   - EXACTEMENT 3 à 5 mots
+   - Maximum 30 caractères
+   - Phrase COMPLÈTE, percutante, qui a du SENS
+   - Doit donner envie d'agir ou créer un sentiment d'urgence
+   - JAMAIS de phrase absurde, coupée ou incohérente
+   - Exemples bons : "Anticipez avant l'été", "Votre confort mérite mieux", "Agissez avant qu'il soit trop tard"
+   - Exemples MAUVAIS : "Le printemps ne revient pas", "Chaleur sans retour possible"
+
+2. SOUS-TEXTE (phrase secondaire) :
+   - EXACTEMENT 6 à 10 mots
+   - Maximum 55 caractères
+   - Phrase complète avec un point final
+   - Explique ou complète le hook
+   - Exemples bons : "Un diagnostic rapide pour protéger votre habitat.", "Nos experts interviennent dans les 24h."
+
+3. CTA (bouton d'action) :
+   - EXACTEMENT 2 à 4 mots
+   - Maximum 22 caractères
+   - Verbe d'action à l'infinitif ou impératif
+   - Exemples bons : "Demander un devis", "Prendre rendez-vous", "Nous contacter"
+
+Réponds UNIQUEMENT en JSON :
+{"hook": "...", "subtext": "...", "cta": "..."}`;
+
+      const copyResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-3-flash-preview',
+          messages: [{ role: 'user', content: copywritingPrompt }],
+          response_format: { type: 'json_object' },
+        }),
+      });
+
+      if (copyResponse.ok) {
+        const copyData = await copyResponse.json();
+        const rawContent = copyData.choices?.[0]?.message?.content || '';
+        try {
+          const parsed = JSON.parse(rawContent);
+          if (parsed.hook && parsed.hook.length <= 32 && parsed.hook.split(/\s+/).length <= 5) {
+            hook = parsed.hook;
+          }
+          if (parsed.subtext && parsed.subtext.length <= 60) {
+            caption = parsed.subtext;
+          }
+          if (parsed.cta && parsed.cta.length <= 25) {
+            cta = parsed.cta;
+          }
+          console.log('[social-visual-generate] AI copywriting result:', { hook, caption, cta });
+        } catch (parseErr) {
+          console.warn('[social-visual-generate] Failed to parse copywriting JSON, using originals:', rawContent);
+        }
+      } else {
+        console.warn('[social-visual-generate] Copywriting API returned', copyResponse.status, '— using originals');
+      }
+    } catch (copyErr) {
+      console.warn('[social-visual-generate] Copywriting step failed, using originals:', copyErr);
+    }
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -346,27 +431,29 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
 
 1. HOOK TEXT (MAIN MESSAGE — BIG, BOLD, HIGH CONTRAST):
    "${hookText}"
-   - Position: Lower-center area of the image (bottom 40%)
-   - Style: VERY LARGE white bold text, ALL CAPS
+   - Position: LOWER area of the image — approximately Y=660 to Y=780 (bottom 35%)
+   - NEVER in the middle of the image — must be LOW, just above the sub-text
+   - Style: VERY LARGE white bold text (minimum 50px equivalent), ALL CAPS
    - Must have a dark semi-transparent backdrop/shadow for readability
    - Maximum 2 lines
-   - CRITICAL: Write this text EXACTLY as provided, letter by letter. Do NOT modify, truncate, add words, or split it differently.
+   - CRITICAL: Write this text EXACTLY as provided, letter by letter
 
-2. SUB-TEXT (Secondary message — smaller):
+2. SUB-TEXT (Secondary message — CLEARLY READABLE):
    "${subText}"
-   - Position: Just below the hook text
-   - Style: Smaller white text, regular weight
+   - Position: Just below the hook text, approximately Y=790 to Y=860
+   - Style: White text, regular weight, MINIMUM 28px equivalent — must be EASILY READABLE on a phone screen
+   - NOT tiny — this is important information that must be legible
    - Maximum 2 lines — the COMPLETE text must appear
-   - CRITICAL: Write this text EXACTLY as provided. Do NOT truncate or add "…"
+   - CRITICAL: Write this text EXACTLY as provided. Do NOT truncate
 
 3. CTA BUTTON:
    "${ctaText}"
-   - Position: Bottom area, above the footer
+   - Position: Below sub-text, approximately Y=870 to Y=930, HORIZONTALLY CENTERED
    - Style: Rounded button shape, bright orange (#FFB705) background, dark text
-   - Bold, compact, must fit on ONE LINE — never overflow or cut
+   - Bold, compact, must fit on ONE LINE — perfectly centered in the image width
 
 4. FOOTER BAR:
-   - Position: Very bottom of the image (last 80-90px)
+   - Position: Very bottom of the image (last 90px, Y=940 to Y=1080)
    - Style: Solid blue bar (#0092DD) full width
    - Text: "HelpConfort — DEPAN40${agencyAddress ? ' — ' + agencyAddress : ''}" in white, left-aligned
    - Right side: "${serviceLabel}" in smaller white text
@@ -379,28 +466,23 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
 
 6. LOGO (top-left corner) — STRICT RULE:
    - DO NOT create, draw, or invent any logo
-   - DO NOT write "HC" as a logo substitute
-   - DO NOT write "Help Confort" as standalone text pretending to be a logo
-   - Leave the top-left area EMPTY — the real logo is added later by the template system
-   - This is NON-NEGOTIABLE
+   - Leave the top-left area EMPTY — the real logo is added later
 
 DESIGN RULES:
 - The background image must remain FULLY VISIBLE behind all overlays
-- Use semi-transparent dark gradients behind text areas for readability
-- Text must be PERFECTLY LEGIBLE at phone screen size
+- Use semi-transparent dark gradient ONLY in the bottom 40% for text readability
+- All text must be PERFECTLY LEGIBLE at phone screen size (especially the sub-text!)
 - Color palette: White text, Blue #0092DD, Orange #FFB705, Dark gray #2F2F2F
-- The result must look like a PROFESSIONAL social media advertisement
-- NO extra decorative elements beyond what's specified
+- NO extra decorative elements, badges, dates, or categories
 - Keep the square 1080x1080 format
-- ZONES MUST NOT OVERLAP: hook, sub-text, CTA, and footer each have their own space
+- ZONES MUST NOT OVERLAP
 
-CRITICAL QUALITY CHECK — VERIFY BEFORE OUTPUT:
-✅ Hook text is COMPLETE and EXACTLY as provided (no "…", no truncation, no extra words)
-✅ Sub-text is COMPLETE (no "…", no truncation)
-✅ CTA text fits entirely inside the button on ONE line
-✅ NO fake logo in top-left — that area must be empty
-✅ No elements overlap each other
-✅ All text is correctly spelled and perfectly readable`;
+CRITICAL QUALITY CHECK:
+✅ Hook text is EXACTLY as provided, positioned LOW (not mid-image)
+✅ Sub-text is COMPLETE and LARGE ENOUGH to read on a phone
+✅ CTA button is CENTERED horizontally
+✅ NO fake logo in top-left
+✅ No elements overlap`;
 
     const compMessages = [{
       role: 'user',

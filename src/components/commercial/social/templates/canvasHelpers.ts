@@ -27,13 +27,13 @@ export const ZONES = {
   TOP_START: 0,
   TOP_END: 100,       // Logo + pills
   IMAGE_START: 100,
-  IMAGE_END: 580,     // Pure image zone (reduced to give more text space)
-  TEXT_START: 590,     // Hook + subtext (raised)
-  TEXT_END: 910,       // Max bottom of text
-  CTA_START: 915,     // CTA button
-  CTA_END: 980,
-  FOOTER_START: 990,
-  FOOTER_HEIGHT: 90,
+  IMAGE_END: 620,     // Pure image zone
+  TEXT_START: 660,     // Hook + subtext — LOWER, just above CTA, not mid-image
+  TEXT_END: 900,       // Max bottom of text
+  CTA_START: 910,     // CTA button
+  CTA_END: 975,
+  FOOTER_START: 985,
+  FOOTER_HEIGHT: 95,
   MARGIN_X: 70,       // Left/right margin for text
   TEXT_WIDTH: 940,     // SIZE - 2*MARGIN_X
 } as const;
@@ -48,7 +48,7 @@ const HOOK_FONT_MIN = 38;
 const SUB_MAX_CHARS = 60;
 const SUB_MAX_WORDS = 10;
 const SUB_MAX_LINES = 2;
-const SUB_FONT = 24;
+const SUB_FONT = 30;
 
 const CTA_MAX_CHARS = 25;
 const CTA_FONT = 24;
