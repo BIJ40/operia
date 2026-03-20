@@ -143,6 +143,7 @@ export function auditCoverage(): CoverageReport {
   const gaps: CoverageGap[] = [];
   let covered = 0;
   let total = 0;
+  const totalAtoms = getTextAtomsCount();
 
   for (const universe of ALL_UNIVERSES) {
     for (const func of ALL_FUNCTIONS) {
