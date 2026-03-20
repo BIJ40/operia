@@ -18,7 +18,7 @@ import { SocialListView } from '@/components/commercial/social/SocialListView';
 import { SocialPostDetailPanel } from '@/components/commercial/social/SocialPostDetailPanel';
 
 type ViewMode = 'calendar' | 'list';
-type TopicFilter = 'all' | 'urgence' | 'prevention' | 'amelioration' | 'conseil' | 'preuve' | 'saisonnier' | 'contre_exemple' | 'pedagogique';
+type TopicFilter = 'all' | 'urgence' | 'prevention' | 'amelioration' | 'conseil' | 'preuve' | 'saisonnier' | 'contre_exemple' | 'pedagogique' | 'prospection';
 
 const TOPIC_LABELS: Record<TopicFilter, string> = {
   all: 'Tous',
@@ -30,6 +30,7 @@ const TOPIC_LABELS: Record<TopicFilter, string> = {
   saisonnier: 'Saison',
   contre_exemple: 'Contre-ex.',
   pedagogique: 'Pédago.',
+  prospection: 'Prospection',
 };
 
 export default function SocialHubPage() {

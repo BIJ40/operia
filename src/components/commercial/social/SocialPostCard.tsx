@@ -28,6 +28,7 @@ const TOPIC_LABELS: Record<string, string> = {
   saisonnier: 'Saisonnier',
   contre_exemple: 'Contre-exemple',
   pedagogique: 'Pédagogique',
+  prospection: 'Prospection & Marque',
 };
 
 interface SocialPostCardProps {

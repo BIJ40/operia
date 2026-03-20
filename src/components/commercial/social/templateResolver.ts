@@ -40,6 +40,7 @@ export function resolveSocialTemplate(input: TemplateResolverInput): SocialTempl
     saisonnier: 'awareness_card',
     contre_exemple: 'tip_card',
     pedagogique: 'educational_card',
+    prospection: 'brand_card',
     // Legacy types (backward compatibility)
     awareness_day: 'awareness_card',
     seasonal_tip: 'tip_card',
