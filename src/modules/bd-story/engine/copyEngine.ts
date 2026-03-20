@@ -171,7 +171,7 @@ export function auditCoverage(): CoverageReport {
   }
 
   return {
-    totalAtoms: TEXT_ATOMS.length,
+    totalAtoms,
     coveredCombinations: covered,
     totalPossibleCombinations: total,
     coveragePercent: Math.round((covered / total) * 100),
