@@ -82,10 +82,22 @@ export type TimeContext =
   | 'matin' | 'midi' | 'apres_midi' | 'soir' | 'nuit'
   | 'pluie' | 'hiver' | 'ete' | 'printemps' | 'automne';
 
+export type SeasonContext = 'printemps' | 'ete' | 'automne' | 'hiver';
+export type WeatherContext = 'beau' | 'pluie' | 'orage' | 'neige' | 'canicule' | 'brouillard' | 'vent';
+export type OccupancyContext =
+  | 'famille_presente' | 'enfants_seuls' | 'senior_seul'
+  | 'maison_vide' | 'invites_attendus' | 'retour_vacances'
+  | 'magasin_ouvert' | 'locataire_absent' | 'travaux_en_cours';
+export type VisualMood = 'calme' | 'stressant' | 'urgence' | 'cosy' | 'degrade' | 'lumineux' | 'sombre';
+
 export interface LocationContext {
   propertyType: PropertyType;
   room: RoomContext;
   time: TimeContext;
+  season?: SeasonContext;
+  weather?: WeatherContext;
+  occupancy?: OccupancyContext;
+  visualMood?: VisualMood;
 }
 
 // ============================================================================
