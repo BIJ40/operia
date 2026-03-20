@@ -61,7 +61,8 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   isRegenerating?: boolean;
 }) {
   const hasVariants = suggestion.variants && suggestion.variants.length > 0;
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [rawPreviewUrl, setRawPreviewUrl] = useState<string | null>(null);
+  const [composedPreviewUrl, setComposedPreviewUrl] = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [renderModeOverride, setRenderModeOverride] = useState<'canvas' | 'image' | null>(null);
 
@@ -69,14 +70,21 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const { data: assets = [], isLoading: assetsLoading } = useSocialVisualAssets(suggestion.id);
   const generateMutation = useGenerateSocialVisual();
 
-  const latestAsset = assets[0] || null;
-  // When AI asset exists, default to 'image' (already composed with text+branding — no double layer)
-  const renderMode = renderModeOverride ?? (latestAsset ? 'image' : 'canvas');
+  const rawAsset = useMemo(
+    () => assets.find((asset) => asset.generation_meta?.composition_mode === 'bg_only') || null,
+    [assets],
+  );
+  const composedAsset = useMemo(
+    () => assets.find((asset) => asset.generation_meta?.composition_mode === 'composed') || assets[0] || null,
+    [assets],
+  );
+  const badgeAsset = composedAsset || rawAsset;
+  const renderMode = renderModeOverride ?? (rawAsset ? 'canvas' : composedAsset ? 'image' : 'canvas');
   const setRenderMode = setRenderModeOverride;
-  const hasPreview = Boolean(previewUrl);
+  const hasPreview = Boolean(rawPreviewUrl || composedPreviewUrl);
   const showPreviewSkeleton = (assetsLoading || loadingPreview) && !hasPreview;
 
-  // Build canvas payload from suggestion + AI image as background
+  // Build canvas payload from suggestion + raw AI background only
   const aiPayload = (suggestion as any).ai_payload || {};
   const canvasPayload: SocialTemplatePayload = useMemo(() => ({
     title: suggestion.title,
@@ -84,37 +92,43 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
     universe: suggestion.universe,
     platform: suggestion.platform_targets?.[0] || null,
     date: suggestion.suggestion_date,
-    mediaUrl: previewUrl || null,
+    mediaUrl: rawPreviewUrl || null,
     hook: aiPayload.hook || suggestion.title,
     cta: aiPayload.cta || null,
-  }), [suggestion, previewUrl, aiPayload]);
+  }), [suggestion, rawPreviewUrl, aiPayload]);
 
   const templateId = useMemo(() => resolveSocialTemplate({
     topic_type: suggestion.topic_type,
-    hasMedia: !!previewUrl,
+    hasMedia: !!rawPreviewUrl,
     universe: suggestion.universe,
-  }), [suggestion.topic_type, previewUrl, suggestion.universe]);
+  }), [suggestion.topic_type, rawPreviewUrl, suggestion.universe]);
 
-  // Load signed URL for latest asset
+  // Load signed URLs for raw and composed assets separately
   useEffect(() => {
-    if (!latestAsset) {
-      setPreviewUrl(null);
+    if (!rawAsset && !composedAsset) {
+      setRawPreviewUrl(null);
+      setComposedPreviewUrl(null);
       setLoadingPreview(false);
       return;
     }
 
     let cancelled = false;
-    setLoadingPreview(!previewUrl);
+    setLoadingPreview(true);
 
-    getSignedVisualUrl(latestAsset.storage_path)
-      .then((url) => {
+    Promise.all([
+      rawAsset ? getSignedVisualUrl(rawAsset.storage_path) : Promise.resolve(null),
+      composedAsset ? getSignedVisualUrl(composedAsset.storage_path) : Promise.resolve(null),
+    ])
+      .then(([rawUrl, composedUrl]) => {
         if (!cancelled) {
-          setPreviewUrl(url);
+          setRawPreviewUrl(rawUrl);
+          setComposedPreviewUrl(composedUrl);
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setPreviewUrl((current) => current);
+          setRawPreviewUrl((current) => current);
+          setComposedPreviewUrl((current) => current);
         }
       })
       .finally(() => {
@@ -126,16 +140,16 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
     return () => {
       cancelled = true;
     };
-  }, [latestAsset?.id, latestAsset?.storage_path, previewUrl]);
+  }, [rawAsset?.id, rawAsset?.storage_path, composedAsset?.id, composedAsset?.storage_path]);
 
   const handleGenerate = useCallback(() => {
+    setLoadingPreview(true);
     generateMutation.mutate(
       { suggestionId: suggestion.id },
       {
         onSuccess: (data) => {
           if (data?.signed_url) {
-            setPreviewUrl(data.signed_url);
-            setLoadingPreview(false);
+            setComposedPreviewUrl(data.signed_url);
           }
         },
       }
@@ -143,10 +157,14 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   }, [suggestion.id, generateMutation]);
 
   const handleDownload = useCallback(() => {
-    if (latestAsset) {
-      downloadSocialVisual(latestAsset.storage_path);
+    const assetToDownload = renderMode === 'image'
+      ? (rawAsset || composedAsset)
+      : (composedAsset || rawAsset);
+
+    if (assetToDownload) {
+      downloadSocialVisual(assetToDownload.storage_path);
     }
-  }, [latestAsset]);
+  }, [renderMode, rawAsset, composedAsset]);
 
   return (
     <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-200px)] pr-1">
@@ -165,9 +183,9 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
           <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
             Aperçu visuel
           </p>
-          {latestAsset?.generation_meta?.source && (
+          {badgeAsset?.generation_meta?.source && (
             <Badge variant="outline" className="text-[9px]">
-              {latestAsset.generation_meta.source === 'ai_nanobana_v1' ? '✨ IA' : 'Canvas'}
+              {badgeAsset.generation_meta.source === 'ai_nanobana_v1' ? '✨ IA' : 'Canvas'}
             </Badge>
           )}
         </div>
@@ -195,13 +213,33 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
         {showPreviewSkeleton ? (
           <Skeleton className="w-full aspect-square rounded-lg" />
         ) : renderMode === 'canvas' ? (
-          <SocialVisualCanvas
-            payload={canvasPayload}
-            templateId={templateId}
-          />
-        ) : previewUrl ? (
+          rawPreviewUrl ? (
+            <SocialVisualCanvas
+              payload={canvasPayload}
+              templateId={templateId}
+            />
+          ) : composedPreviewUrl ? (
+            <div className="flex flex-col items-center justify-center py-8 bg-muted/30 rounded-lg border border-dashed border-border text-center px-4">
+              <Sparkles className="w-8 h-8 text-muted-foreground/30 mb-2" />
+              <p className="text-xs text-muted-foreground">Canvas indisponible sur cet ancien visuel</p>
+              <p className="text-[10px] text-muted-foreground/50 mt-1">Régénérez pour obtenir un fond brut sans texte.</p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 bg-muted/30 rounded-lg border border-dashed border-border">
+              <Sparkles className="w-8 h-8 text-muted-foreground/30 mb-2" />
+              <p className="text-xs text-muted-foreground">Aucun visuel généré</p>
+              <p className="text-[10px] text-muted-foreground/50 mt-1">Cliquez pour générer un visuel IA</p>
+            </div>
+          )
+        ) : rawPreviewUrl ? (
           <div className="relative rounded-lg overflow-hidden border border-border">
-            <img src={previewUrl} alt="Aperçu visuel" className="w-full h-auto" />
+            <img src={rawPreviewUrl} alt="Aperçu image brute" className="w-full h-auto" />
+          </div>
+        ) : composedPreviewUrl ? (
+          <div className="flex flex-col items-center justify-center py-8 bg-muted/30 rounded-lg border border-dashed border-border text-center px-4">
+            <Sparkles className="w-8 h-8 text-muted-foreground/30 mb-2" />
+            <p className="text-xs text-muted-foreground">Image brute indisponible sur cet ancien visuel</p>
+            <p className="text-[10px] text-muted-foreground/50 mt-1">Régénérez pour obtenir le fond sans texte.</p>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-8 bg-muted/30 rounded-lg border border-dashed border-border">
@@ -215,7 +253,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
         <div className="flex gap-1.5">
           <Button
             size="sm"
-            variant={latestAsset ? 'outline' : 'default'}
+            variant={composedAsset || rawAsset ? 'outline' : 'default'}
             className="h-7 text-xs gap-1 flex-1"
             onClick={handleGenerate}
             disabled={generateMutation.isPending}
@@ -225,7 +263,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
                 <Loader2 className="w-3 h-3 animate-spin" />
                 Génération IA…
               </>
-            ) : latestAsset ? (
+            ) : composedAsset || rawAsset ? (
               <>
                 <RefreshCw className="w-3 h-3" />
                 Régénérer
@@ -237,7 +275,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
               </>
             )}
           </Button>
-          {latestAsset && (
+          {(composedAsset || rawAsset) && (
             <Button
               size="sm"
               variant="ghost"
