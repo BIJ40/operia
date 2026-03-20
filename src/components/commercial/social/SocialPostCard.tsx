@@ -43,9 +43,12 @@ export function SocialPostCard({ suggestion, onApprove, onReject, onRegenerate, 
   const statusInfo = STATUS_LABELS[suggestion.status] || STATUS_LABELS.draft;
   const [isSendingWebhook, setIsSendingWebhook] = useState(false);
 
+  // Normalize hashtags: strip any leading #/## and re-add single #
+  const normalizeTag = (h: string) => `#${h.replace(/^#+/, '')}`;
+
   const fullCopyText = [
     suggestion.caption_base_fr,
-    suggestion.hashtags?.length > 0 ? suggestion.hashtags.map(h => `#${h}`).join(' ') : '',
+    suggestion.hashtags?.length > 0 ? suggestion.hashtags.map(normalizeTag).join(' ') : '',
   ].filter(Boolean).join('\n\n');
 
   const handleCopy = async () => {
@@ -113,7 +116,7 @@ export function SocialPostCard({ suggestion, onApprove, onReject, onRegenerate, 
         {suggestion.hashtags?.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2 pt-2 border-t border-border/50">
             {suggestion.hashtags.map(h => (
-              <span key={h} className="text-[10px] text-primary">#{h}</span>
+              <span key={h} className="text-[10px] text-primary">{normalizeTag(h)}</span>
             ))}
           </div>
         )}
