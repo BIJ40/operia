@@ -39,13 +39,14 @@ export const ZONES = {
 } as const;
 
 // ─── Text constraints ───────────────────────────────────────
-const HOOK_MAX_CHARS = 45;
-const HOOK_MAX_WORDS = 8;
+const HOOK_MAX_CHARS = 40;
+const HOOK_MAX_WORDS = 6;
 const HOOK_MAX_LINES = 2;
 const HOOK_FONT_MAX = 62;
 const HOOK_FONT_MIN = 42;
 
-const SUB_MAX_CHARS = 70;
+const SUB_MAX_CHARS = 60;
+const SUB_MAX_WORDS = 12;
 const SUB_MAX_LINES = 1;
 const SUB_FONT = 26;
 
