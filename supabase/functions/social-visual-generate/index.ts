@@ -864,6 +864,7 @@ MANDATORY QUALITY CHECKLIST (if ANY fails, regenerate):
       jsonHeaders,
       generatedCopy,
       hasBeforeAfter,
+      visualStyle,
     );
 
     if ('response' in composedSave) {
