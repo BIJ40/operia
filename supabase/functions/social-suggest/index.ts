@@ -682,7 +682,30 @@ Ex: "Changement d'heure" → "VOLET BLOQUÉ APRÈS LE CHANGEMENT D'HEURE ?"
 Ex: "Journée de l'eau" → "CETTE FUITE INVISIBLE COÛTAIT 40€/MOIS"
 Ex: "Pâques" → "PANNE DE CHAUFFE-EAU LA VEILLE D'UN REPAS DE FAMILLE ?"
 
-INTERDIT :
+═══════════════════════════════════════════
+EXCEPTION — POSTS DÉCALÉS / HUMOUR (FÊTES & ÉVÉNEMENTS FUN)
+═══════════════════════════════════════════
+Certains événements calendaires ont le tag "decale" ou "humour".
+Pour CES posts uniquement, tu DOIS abandonner le ton sérieux et créer un contenu DRÔLE, DÉCALÉ, VIRAL.
+
+Le post doit être DIRECTEMENT LIÉ à l'événement et FAIRE RIRE.
+L'humour vient du CROISEMENT entre le métier (plomberie, serrurerie, etc.) et l'événement.
+
+EXEMPLES DE BONS POSTS DÉCALÉS :
+- 🐟 1er avril → "DES POISSONS DANS VOS CANALISATIONS ?" + visual: un plombier qui essaie d'attraper des poissons sortant d'un robinet avec une épuisette, scène absurde et drôle
+- 🎃 Halloween → "CE BRUIT DANS LES TUYAUX LA NUIT..." + visual: un robinet qui fuit avec une ombre effrayante, ambiance film d'horreur
+- 🎭 Carnaval → "MÊME DÉGUISÉ, VOTRE PLOMBIER VOUS RECONNAÎT" + visual: un technicien en costume de carnaval avec sa caisse à outils
+- Star Wars Day → "QUE LA FORCE SOIT AVEC VOTRE CHAUFFE-EAU" + visual: un technicien en pose Jedi devant un chauffe-eau qui fume
+
+RÈGLES POUR LES POSTS DÉCALÉS :
+- Le hook doit faire SOURIRE immédiatement
+- Le visual_prompt doit décrire une scène ABSURDE, DRÔLE, SURRÉALISTE mais toujours liée au métier
+- La caption reste courte, fun, et se termine par un CTA léger ("On est là même le 1er avril 😉")
+- Le storytelling_type est "conseil_expert" mais le ton est humoristique
+- L'univers métier doit être respecté (si indiqué par l'événement)
+- Ces posts visent l'ENGAGEMENT et le PARTAGE, pas la conversion directe → lead_score 40-60
+
+INTERDIT pour les posts NON décalés :
 - Hooks informatifs ("C'est la journée de...", "Pensez à...", "Saviez-vous que...")
 - Hooks trop longs (max 8 mots)
 - Hooks sans tension ni émotion
@@ -749,7 +772,14 @@ BONS visuels (visual_prompt) :
 - "Tableau électrique ouvert avec câbles en désordre, traces de chaleur"
 - "Serrure de porte d'entrée cassée, cylindre sorti, vue rapprochée"
 
-MAUVAIS visuels (INTERDITS) :
+EXCEPTION POUR POSTS DÉCALÉS — VISUELS HUMORISTIQUES :
+Pour les posts tagués "decale" ou "humour", le visual_prompt DOIT être DRÔLE et SURRÉALISTE :
+- "Un plombier en bleu de travail essayant d'attraper des poissons rouges qui jaillissent d'un robinet de cuisine avec une épuisette, eau partout, scène absurde et comique, éclairage lumineux"
+- "Un technicien déguisé en fantôme essayant de réparer un radiateur dans une maison décorée Halloween, toiles d'araignée, ambiance fun"
+- "Un électricien en costume de super-héros devant un tableau électrique qui fait des étincelles colorées comme un feu d'artifice"
+Ces visuels doivent faire SOURIRE et être PARTAGÉS. Ils restent liés au métier mais dans un registre absurde/comique.
+
+MAUVAIS visuels (INTERDITS sauf posts décalés) :
 - "Maison propre avec volets" → zéro tension, banque d'image
 - "Famille souriante dans son salon" → hors sujet
 - "Main tenant une clé" → trop générique
@@ -758,7 +788,7 @@ MAUVAIS visuels (INTERDITS) :
 Composition :
 - ZOOM sur le problème (pas la maison entière)
 - Ambiance : lumière dramatique, impression d'urgence ou de désagrément
-- Le spectateur doit penser "Ah oui, ça m'est arrivé"
+- Le spectateur doit penser "Ah oui, ça m'est arrivé" (ou rire si post décalé)
 
 ═══════════════════════════════════════════
 BRANDING — DISCRET ET EFFICACE
