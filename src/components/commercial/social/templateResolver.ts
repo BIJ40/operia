@@ -8,7 +8,7 @@
  * - JAMAIS de photo IA pour illustrer de faux travaux.
  */
 
-export type SocialTemplateId = 'realisation_card' | 'tip_card' | 'awareness_card' | 'brand_card';
+export type SocialTemplateId = 'realisation_card' | 'tip_card' | 'awareness_card' | 'brand_card' | 'educational_card';
 
 export interface TemplateResolverInput {
   topic_type: string;
