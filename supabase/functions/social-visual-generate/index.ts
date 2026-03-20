@@ -128,6 +128,7 @@ import { callAiWithFallback, getAiKeys, type AiChatMessage } from '../_shared/ai
 async function callImageAIWithFallback(
   _apiKey: string,
   messages: any[],
+  preferredModel?: string,
 ): Promise<{ ok: true; data: any; model: string } | { ok: false; status: number; error: string }> {
   const { openaiKey } = getAiKeys();
 
