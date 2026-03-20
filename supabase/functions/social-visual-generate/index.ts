@@ -167,6 +167,11 @@ Deno.serve(async (req) => {
     const topicType = suggestion.topic_type || 'seasonal_tip';
     const rawCaption = suggestion.caption_base_fr || '';
 
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      return new Response(JSON.stringify({ error: 'Service IA non configuré' }), { status: 500, headers: jsonHeaders });
+    }
+
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // ÉTAPE 0 : COPYWRITING IA — Réécriture cohérente du hook/sous-texte
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -176,43 +181,41 @@ Deno.serve(async (req) => {
 
     try {
       console.log('[social-visual-generate] Generating coherent marketing copy...');
-      const copywritingPrompt = `Tu es un copywriter publicitaire expert pour une entreprise française de dépannage à domicile (plomberie, électricité, serrurerie, vitrerie, etc.) appelée "Help Confort".
+      const copywritingPrompt = `Tu es un copywriter publicitaire expert pour une entreprise française de dépannage à domicile appelée Help Confort.
 
 Contexte :
-- Univers/métier : ${serviceLabel}
+- Univers : ${serviceLabel}
 - Titre original : "${title}"
 - Hook original : "${rawHook}"
 - Sous-texte original : "${rawCaption}"
 - CTA original : "${rawCta}"
 - Type de post : ${topicType}
 
-MISSION : Réécris ces textes pour un visuel publicitaire social media (Instagram/Facebook).
+MISSION : produire un texte publicitaire court, naturel, crédible et immédiatement compréhensible pour un visuel social media.
 
 RÈGLES STRICTES :
-1. HOOK (phrase principale) :
-   - EXACTEMENT 3 à 5 mots
-   - Maximum 30 caractères
-   - Phrase COMPLÈTE, percutante, qui a du SENS
-   - Doit donner envie d'agir ou créer un sentiment d'urgence
-   - JAMAIS de phrase absurde, coupée ou incohérente
-   - Exemples bons : "Anticipez avant l'été", "Votre confort mérite mieux", "Agissez avant qu'il soit trop tard"
-   - Exemples MAUVAIS : "Le printemps ne revient pas", "Chaleur sans retour possible"
+1. HOOK :
+- 3 à 5 mots maximum
+- 30 caractères maximum
+- phrase complète, claire, naturelle
+- jamais absurde, jamais poétique bizarre, jamais tronquée
+- interdit : formulations comme "Le printemps ne revient pas"
+- ton : concret, utile, orienté action
 
-2. SOUS-TEXTE (phrase secondaire) :
-   - EXACTEMENT 6 à 10 mots
-   - Maximum 55 caractères
-   - Phrase complète avec un point final
-   - Explique ou complète le hook
-   - Exemples bons : "Un diagnostic rapide pour protéger votre habitat.", "Nos experts interviennent dans les 24h."
+2. SOUS-TEXTE :
+- 6 à 10 mots maximum
+- 55 caractères maximum
+- une phrase complète avec point final
+- doit compléter le hook de façon simple et lisible
+- jamais de date, jamais d'événement calendaire inutile, jamais de texte décoratif
 
-3. CTA (bouton d'action) :
-   - EXACTEMENT 2 à 4 mots
-   - Maximum 22 caractères
-   - Verbe d'action à l'infinitif ou impératif
-   - Exemples bons : "Demander un devis", "Prendre rendez-vous", "Nous contacter"
+3. CTA :
+- 2 à 4 mots maximum
+- 22 caractères maximum
+- action claire
 
-Réponds UNIQUEMENT en JSON :
-{"hook": "...", "subtext": "...", "cta": "..."}`;
+Réponds UNIQUEMENT en JSON valide avec exactement ces clés :
+{"hook":"...","subtext":"...","cta":"..."}`;
 
       const copyResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
@@ -250,11 +253,6 @@ Réponds UNIQUEMENT en JSON :
       }
     } catch (copyErr) {
       console.warn('[social-visual-generate] Copywriting step failed, using originals:', copyErr);
-    }
-
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: 'Service IA non configuré' }), { status: 500, headers: jsonHeaders });
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -377,6 +375,7 @@ ADDITIONAL REQUIREMENTS:
       realPhotoUrl,
       'bg_only',
       jsonHeaders,
+      generatedCopy,
     );
 
     if ('response' in backgroundSave) {
@@ -422,8 +421,9 @@ ADDITIONAL REQUIREMENTS:
     };
 
     const hookText = sanitizeHookForAI(hook || title || 'Anticipez vos travaux');
-    const subText = sanitizeSubForAI(caption || '');
+    const subText = sanitizeSubForAI(caption || 'Un accompagnement simple pour votre habitat.');
     const ctaText = (cta || 'Demander un devis').toUpperCase().slice(0, 25);
+    const generatedCopy = { hook: hookText, subtext: subText, cta: ctaText };
 
     const compositionPrompt = `You are a professional social media graphic designer. Take this background image and create a FINAL SOCIAL MEDIA AD CREATIVE (1080x1080) by adding the following text overlay elements.
 
@@ -434,6 +434,7 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
    - Position: LOWER area of the image — approximately Y=660 to Y=780 (bottom 35%)
    - NEVER in the middle of the image — must be LOW, just above the sub-text
    - Style: VERY LARGE white bold text (minimum 50px equivalent), ALL CAPS
+   - Alignment: centered horizontally
    - Must have a dark semi-transparent backdrop/shadow for readability
    - Maximum 2 lines
    - CRITICAL: Write this text EXACTLY as provided, letter by letter
@@ -442,6 +443,7 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
    "${subText}"
    - Position: Just below the hook text, approximately Y=790 to Y=860
    - Style: White text, regular weight, MINIMUM 28px equivalent — must be EASILY READABLE on a phone screen
+   - Alignment: centered horizontally under the hook
    - NOT tiny — this is important information that must be legible
    - Maximum 2 lines — the COMPLETE text must appear
    - CRITICAL: Write this text EXACTLY as provided. Do NOT truncate
@@ -471,15 +473,14 @@ MANDATORY TEXT ELEMENTS TO ADD ON THE IMAGE:
 DESIGN RULES:
 - The background image must remain FULLY VISIBLE behind all overlays
 - Use semi-transparent dark gradient ONLY in the bottom 40% for text readability
-- All text must be PERFECTLY LEGIBLE at phone screen size (especially the sub-text!)
-- Color palette: White text, Blue #0092DD, Orange #FFB705, Dark gray #2F2F2F
+- All text must be PERFECTLY LEGIBLE at phone screen size
 - NO extra decorative elements, badges, dates, or categories
 - Keep the square 1080x1080 format
 - ZONES MUST NOT OVERLAP
 
 CRITICAL QUALITY CHECK:
-✅ Hook text is EXACTLY as provided, positioned LOW (not mid-image)
-✅ Sub-text is COMPLETE and LARGE ENOUGH to read on a phone
+✅ Hook text is EXACTLY as provided and centered
+✅ Sub-text is COMPLETE, centered, and readable
 ✅ CTA button is CENTERED horizontally
 ✅ NO fake logo in top-left
 ✅ No elements overlap`;
@@ -532,6 +533,7 @@ CRITICAL QUALITY CHECK:
       realPhotoUrl,
       'composed',
       jsonHeaders,
+      generatedCopy,
     );
 
     if ('response' in composedSave) {
@@ -566,6 +568,7 @@ async function persistAsset(
   realPhotoUrl: string | null,
   compositionMode: 'composed' | 'bg_only',
   headers: Record<string, string>,
+  generatedCopy?: { hook: string; subtext: string; cta: string },
 ): Promise<
   | { assetId: string; storagePath: string; signedUrl: string | null; mode: 'photo' | 'generated' }
   | { response: Response }
@@ -612,10 +615,11 @@ async function persistAsset(
         platform: 'base',
         universe,
         generated_at: now.toISOString(),
-        source: realPhotoUrl ? 'ai_photo_edit_v4' : 'ai_generated_v4',
+        source: realPhotoUrl ? 'ai_photo_edit_v5' : 'ai_generated_v5',
         mode,
         composition_mode: compositionMode,
-        prompt_version: compositionMode === 'bg_only' ? 'v4_background' : 'v4_composed',
+        prompt_version: compositionMode === 'bg_only' ? 'v5_background' : 'v5_composed',
+        generated_copy: generatedCopy ?? null,
       },
     })
     .select('id, storage_path, created_at')

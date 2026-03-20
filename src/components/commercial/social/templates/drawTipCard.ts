@@ -54,7 +54,7 @@ export async function drawTipCard(ctx: CanvasRenderingContext2D, payload: Social
   if (payload.caption) {
     drawSubText(ctx, payload.caption, {
       y: hookBottom + 14,
-      align: 'left',
+      align: 'center',
     });
   }
 
