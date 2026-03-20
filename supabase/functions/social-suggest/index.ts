@@ -180,7 +180,7 @@ const AWARENESS_DAYS = buildAwarenessDays(new Date().getFullYear());
 
 const NORMALIZED_UNIVERSES = ['plomberie', 'electricite', 'serrurerie', 'vitrerie', 'menuiserie', 'renovation', 'volets', 'pmr', 'general'] as const;
 const VALID_PLATFORMS = ['facebook', 'instagram', 'google_business', 'linkedin'] as const;
-const VALID_TOPIC_TYPES = ['awareness_day', 'seasonal_tip', 'realisation', 'local_branding'] as const;
+const VALID_TOPIC_TYPES = ['awareness_day', 'seasonal_tip', 'realisation', 'local_branding', 'educational'] as const;
 const VALID_LEAD_TYPES = ['urgence', 'prevention', 'amelioration', 'preuve_sociale', 'saisonnier'] as const;
 const VALID_TARGET_INTENTS = ['besoin_immediat', 'besoin_latent', 'curiosite', 'education'] as const;
 const VALID_URGENCY_LEVELS = ['low', 'medium', 'high'] as const;
@@ -420,7 +420,7 @@ const SUGGEST_TOOL = {
               caption_base_fr: { type: 'string', description: 'Texte complet du post : hook + storytelling (situation → problème → intervention → résultat) + CTA. Publiable sans modification.' },
               cta: { type: 'string', description: "CTA court et GÉNÉRIQUE (jamais de nom de ville). Ex: \"Prendre RDV\", \"En savoir plus\", \"Demander un devis\", \"Nous contacter\"" },
               hashtags: { type: 'array', items: { type: 'string' }, description: 'Hashtags (max 10)' },
-              topic_type: { type: 'string', enum: ['awareness_day', 'seasonal_tip', 'realisation', 'local_branding'] },
+              topic_type: { type: 'string', enum: ['awareness_day', 'seasonal_tip', 'realisation', 'local_branding', 'educational'] },
               topic_key: { type: 'string', description: 'Identifiant unique du sujet' },
               visual_type: { type: 'string', enum: ['photo', 'illustration', 'before_after', 'quote'] },
               universe: { type: 'string', enum: ['plomberie', 'electricite', 'serrurerie', 'vitrerie', 'menuiserie', 'renovation', 'volets', 'pmr', 'general'] },
@@ -1090,7 +1090,21 @@ RAPPEL CRITIQUE — PRESSION CONVERSION
 - visual_prompt = scène RÉALISTE habitat français, JAMAIS un fond vide
 - JAMAIS inventer de faux cas client — rester GÉNÉRAL et EXPERT
 - Le topic_type "realisation" est INTERDIT sauf s'il y a de vraies photos (realisation_id valide)
-- Espacer les posts de 1-2 jours, couvrir le mois entier`;
+- Espacer les posts de 1-2 jours, couvrir le mois entier
+
+═══════════════════════════════════════════
+CATÉGORIE : CONTENU PÉDAGOGIQUE (topic_type = "educational")
+═══════════════════════════════════════════
+Inclure 2-3 posts pédagogiques par mois. Objectif : rendre un sujet technique compréhensible en 30 secondes.
+Visuels de type : schéma simple, comparaison, chiffre clé, process.
+RÈGLES :
+- UNE seule idée par visuel
+- Pas de texte long, pas de graphique complexe, pas de jargon
+- Hook basé sur un chiffre ou une prise de conscience ("80% des fuites sont évitables")
+- Explication simple et directe (max 10 mots)
+- CTA = action directe
+INTERDICTION : contenu scolaire, explication longue, design type powerpoint
+OBLIGATION : le post doit apporter une VALEUR IMMÉDIATE et rester actionnable`;
 
     }
 
@@ -1232,6 +1246,7 @@ RAPPEL CRITIQUE — PRESSION CONVERSION
       let sourceType = 'ai_seasonal';
       if (s.topic_type === 'awareness_day') sourceType = 'ai_awareness';
       else if (s.topic_type === 'realisation') sourceType = 'ai_realisation';
+      else if (s.topic_type === 'educational') sourceType = 'ai_educational';
       if (regenerateSingle) sourceType = 'regenerated';
 
       const aiPayload = {

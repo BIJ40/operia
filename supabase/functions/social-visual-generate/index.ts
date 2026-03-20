@@ -74,6 +74,7 @@ const GENERAL_TOPIC_LABELS: Record<string, string> = {
   seasonal_tip: 'Conseil',
   realisation: 'Réalisation',
   local_branding: 'Votre agence',
+  educational: 'Le saviez-vous ?',
 };
 
 // ─── Multi-model fallback for image generation ─────────────

@@ -10,6 +10,7 @@ import { drawRealisationCard } from './templates/drawRealisationCard';
 import { drawTipCard } from './templates/drawTipCard';
 import { drawAwarenessCard } from './templates/drawAwarenessCard';
 import { drawBrandCard } from './templates/drawBrandCard';
+import { drawEducationalCard } from './templates/drawEducationalCard';
 
 export interface SocialTemplatePayload {
   title: string;
@@ -37,6 +38,7 @@ const TEMPLATE_RENDERERS: Record<SocialTemplateId, (ctx: CanvasRenderingContext2
   tip_card: drawTipCard,
   awareness_card: drawAwarenessCard,
   brand_card: drawBrandCard,
+  educational_card: drawEducationalCard,
 };
 
 export function SocialVisualCanvas({ payload, templateId, onRendered }: SocialVisualCanvasProps) {

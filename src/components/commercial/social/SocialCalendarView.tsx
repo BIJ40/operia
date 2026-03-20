@@ -16,6 +16,7 @@ const TOPIC_COLORS: Record<string, string> = {
   seasonal_tip: 'bg-blue-100 border-blue-300 text-blue-800 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300',
   realisation: 'bg-orange-100 border-orange-300 text-orange-800 dark:bg-orange-900/30 dark:border-orange-700 dark:text-orange-300',
   local_branding: 'bg-violet-100 border-violet-300 text-violet-800 dark:bg-violet-900/30 dark:border-violet-700 dark:text-violet-300',
+  educational: 'bg-amber-100 border-amber-300 text-amber-800 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-300',
 };
 
 const TOPIC_DOT_COLORS: Record<string, string> = {
@@ -23,6 +24,7 @@ const TOPIC_DOT_COLORS: Record<string, string> = {
   seasonal_tip: 'bg-blue-500',
   realisation: 'bg-orange-500',
   local_branding: 'bg-violet-500',
+  educational: 'bg-amber-500',
 };
 
 interface SocialCalendarViewProps {

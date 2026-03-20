@@ -80,6 +80,7 @@ const GENERAL_TOPIC_LABELS: Record<string, string> = {
   seasonal_tip: 'Conseil',
   realisation: 'Réalisation',
   local_branding: 'Votre agence',
+  educational: 'Le saviez-vous ?',
 };
 
 export function getGeneralLabel(topicType?: string | null): string {

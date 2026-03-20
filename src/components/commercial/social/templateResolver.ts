@@ -8,7 +8,7 @@
  * - JAMAIS de photo IA pour illustrer de faux travaux.
  */
 
-export type SocialTemplateId = 'realisation_card' | 'tip_card' | 'awareness_card' | 'brand_card';
+export type SocialTemplateId = 'realisation_card' | 'tip_card' | 'awareness_card' | 'brand_card' | 'educational_card';
 
 export interface TemplateResolverInput {
   topic_type: string;
@@ -42,7 +42,12 @@ export function resolveSocialTemplate(input: TemplateResolverInput): SocialTempl
     return 'awareness_card';
   }
 
-  // 4. Branding local, ou fallback pour réalisation sans photo
+  // 4. Contenu pédagogique (schéma / chiffres)
+  if (topic_type === 'educational') {
+    return 'educational_card';
+  }
+
+  // 5. Branding local, ou fallback pour réalisation sans photo
   return 'brand_card';
 }
 
