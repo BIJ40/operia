@@ -180,10 +180,75 @@ const AWARENESS_DAYS = buildAwarenessDays(new Date().getFullYear());
 
 const NORMALIZED_UNIVERSES = ['plomberie', 'electricite', 'serrurerie', 'vitrerie', 'menuiserie', 'renovation', 'volets', 'pmr', 'general'] as const;
 const VALID_PLATFORMS = ['facebook', 'instagram', 'google_business', 'linkedin'] as const;
-const VALID_TOPIC_TYPES = ['awareness_day', 'seasonal_tip', 'realisation', 'local_branding', 'educational'] as const;
+const VALID_TOPIC_TYPES = ['urgence', 'prevention', 'amelioration', 'conseil', 'preuve', 'saisonnier', 'contre_exemple', 'pedagogique'] as const;
 const VALID_LEAD_TYPES = ['urgence', 'prevention', 'amelioration', 'preuve_sociale', 'saisonnier'] as const;
 const VALID_TARGET_INTENTS = ['besoin_immediat', 'besoin_latent', 'curiosite', 'education'] as const;
 const VALID_URGENCY_LEVELS = ['low', 'medium', 'high'] as const;
+
+// ─── Weekly structure (shuffled each week for variety) ───
+const WEEKLY_CATEGORIES = ['urgence', 'prevention', 'amelioration', 'conseil', 'preuve', 'contre_exemple', 'pedagogique'] as const;
+
+function shuffleArray<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildWeeklySchedule(daysInMonth: number, year: number, month: number): { day: number; category: string }[] {
+  const schedule: { day: number; category: string }[] = [];
+  let weekPool: string[] = [];
+  
+  for (let d = 1; d <= daysInMonth; d++) {
+    if (weekPool.length === 0) {
+      weekPool = shuffleArray([...WEEKLY_CATEGORIES]);
+    }
+    schedule.push({ day: d, category: weekPool.shift()! });
+  }
+  return schedule;
+}
+
+// ─── Universe rotation rules ───
+const UNIVERSE_RULES = {
+  minGapDays: 3,
+  maxPerWeek: 2,
+  maxPerMonth: 6,
+};
+
+// ─── Format distribution ───
+const FORMAT_DISTRIBUTION = {
+  punchline: 20, // hook seul
+  court: 30,     // hook + CTA
+  moyen: 40,     // hook + 1 phrase + CTA
+  long: 10,      // hook + 2 phrases + CTA
+};
+
+// ─── Fatigue score (anti-repetition perçue) ───
+function computeFatigueScore(
+  current: { universe: string; topic_type: string; hook: string },
+  recent: { universe: string; topic_type: string; hook: string }[],
+): number {
+  let score = 0;
+  const last3 = recent.slice(-3);
+  
+  // Same universe in last 2 posts
+  if (last3.length > 0 && last3[last3.length - 1].universe === current.universe) score += 2;
+  if (last3.length > 1 && last3[last3.length - 2].universe === current.universe) score += 1;
+  
+  // Same intent/category in last post
+  if (last3.length > 0 && last3[last3.length - 1].topic_type === current.topic_type) score += 2;
+  
+  // Similar hook pattern (first 3 words match)
+  const currentStart = current.hook.split(/\s+/).slice(0, 3).join(' ').toLowerCase();
+  for (const r of last3) {
+    const rStart = r.hook.split(/\s+/).slice(0, 3).join(' ').toLowerCase();
+    if (currentStart === rStart) score += 3;
+  }
+  
+  return score;
+}
 
 // ─── Post category rotation for fallback slots (score 1 events replaced) ───
 const POST_CATEGORIES_ROTATION = [
