@@ -92,8 +92,8 @@ function buildAwarenessDays(year: number): AwarenessDay[] {
     { month: 4, day: 7,  label: "🧹 Grand ménage de printemps — check-up complet maison", tags: ["entretien","habitat"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","electricite","renovation"], ctaHint: "check_up_maison" },
     { month: 4, day: 11, label: "Journée mondiale Parkinson — adapter le logement PMR", tags: ["pmr","sante","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["pmr"], ctaHint: "adaptation_logement" },
     { month: 4, day: 15, label: "Préparer terrasse & extérieurs pour les beaux jours", tags: ["habitat","menuiserie","volets"], contentTypeHint: "pedagogique", preferredUniverses: ["menuiserie","volets","renovation"], ctaHint: "amenagement_exterieur" },
-    { month: easter.month, day: easter.day, label: "🐣 Pâques — votre maison prête pour recevoir la famille", tags: ["confort","habitat","famille","fete"], contentTypeHint: "lifestyle", preferredUniverses: ["renovation","general"], ctaHint: "maison_accueillante" },
-    { month: easterMon.month, day: easterMon.day, label: "Lundi de Pâques — profitez du pont pour vos petits travaux", tags: ["renovation","habitat","weekend","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["renovation","menuiserie"], ctaHint: "travaux_weekend" },
+    { month: easter.month, day: easter.day, label: "🐣 Pâques — repas de famille, invités : votre maison est-elle prête ? Vérifiez plomberie & confort avant le week-end pascal", tags: ["confort","habitat","famille","fete","paques"], contentTypeHint: "lifestyle", preferredUniverses: ["renovation","general"], ctaHint: "maison_accueillante" },
+    { month: easterMon.month, day: easterMon.day, label: "🐰 Lundi de Pâques — jour férié, pont pascal : le bon moment pour ces petits travaux repoussés depuis des mois", tags: ["renovation","habitat","weekend","fete","paques","pont"], contentTypeHint: "pedagogique", preferredUniverses: ["renovation","menuiserie"], ctaHint: "travaux_weekend" },
     { month: 4, day: 22, label: "🌍 Jour de la Terre — rénovation éco-responsable", tags: ["energie","renovation","environnement","fete"], contentTypeHint: "pedagogique", preferredUniverses: ["renovation"], ctaHint: "renovation_ecologique" },
     { month: 4, day: 28, label: "🔒 Journée sécurité au travail — sécurisez aussi votre maison", tags: ["securite","electricite","serrurerie","fete"], contentTypeHint: "prevention", preferredUniverses: ["electricite","serrurerie"], ctaHint: "diagnostic_securite" },
 
@@ -960,14 +960,24 @@ L'univers détermine le badge, la couleur et le picto du visuel final.
 Si l'événement a un univers spécifique (plomberie, electricite, serrurerie, volets...), le post DOIT être dans cet univers.
 Si l'événement est "general" → utilise "general".
 
-RÈGLE CRITIQUE — COHÉRENCE THÈME / CONTENU :
+RÈGLE CRITIQUE — COHÉRENCE THÈME / CONTENU (ZÉRO TOLÉRANCE) :
 Le hook, la caption, le visual_prompt et le CTA doivent être EN RAPPORT DIRECT avec l'événement calendaire.
-Exemples :
-- 1er avril → humour, blagues, pannes insolites, poisson d'avril (PAS un sujet sérieux sans rapport)
-- Pâques → famille, recevoir à la maison, préparation (PAS un sujet technique déconnecté)
-- Journée de l'eau → fuites, économies d'eau (PAS un problème électrique)
+Le LABEL de chaque journée contient le SUJET EXACT — tu DOIS t'en inspirer directement.
+Si le label mentionne "Pâques", "famille", "repas" → le post DOIT parler de Pâques, famille, fête.
+Si le label mentionne "pont pascal", "petits travaux" → le post DOIT parler du pont, week-end prolongé, bricolage.
+Un post awareness_day dont le contenu n'a AUCUN rapport avec le label est un ÉCHEC.
+
+Exemples BONS :
+- 🐣 Pâques → "PANNE DE CHAUFFE-EAU LA VEILLE DU REPAS DE PÂQUES ?" (lié à la fête)
+- 🐰 Lundi de Pâques → "CE PONT DE PÂQUES, RÉPAREZ ENFIN CE QUI TRAÎNE !" (lié au pont)
+- 1er avril → humour, poisson d'avril, pannes insolites
+- Journée de l'eau → fuites, économies d'eau
 - Halloween → pannes effrayantes, ambiance sombre
-Le visual_prompt DOIT illustrer l'ambiance de l'événement, pas un sujet métier générique.
+
+Exemples MAUVAIS (INTERDITS) :
+- Pâques → post sur une fuite sans mention de Pâques → REJETÉ
+- Lundi de Pâques → post sur un disjoncteur sans mention du pont → REJETÉ
+Le visual_prompt DOIT aussi illustrer l'ambiance de l'événement (Pâques = ambiance familiale, déco, etc.).
 
 JOURNÉES THÉMATIQUES DU MOIS (TOUTES doivent être couvertes) :
 ${monthAwareness.map(a => `- ${a.day}/${month}: ${a.label} | UNIVERS OBLIGATOIRE: ${a.preferredUniverses[0]} | tags: ${a.tags.join(', ')}`).join('\n')}
