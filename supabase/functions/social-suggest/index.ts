@@ -12,6 +12,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
 import { handleCorsPreflightOrReject, getCorsHeaders } from '../_shared/cors.ts';
 import { getUserContext, assertAgencyAccess } from '../_shared/auth.ts';
 import { validateUUID } from '../_shared/validation.ts';
+import { type HookEntry, type HookIntent, getFullHookLibrary, getSeasonFromMonth, getHooksForContext, buildHookLibraryPrompt } from '../_shared/hookLibrary.ts';
 import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 
 // ─── Easter calculation (Meeus/Jones/Butcher algorithm) ───
