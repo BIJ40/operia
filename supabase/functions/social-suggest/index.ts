@@ -52,6 +52,8 @@ interface AwarenessDay {
   relevanceScore: 1 | 2 | 3;
   /** 1=inspiration/branding, 2=réflexion/amélioration, 3=urgence/besoin immédiat */
   intentScore: 1 | 2 | 3;
+  /** Calendar-first angle for non-business days */
+  calendarAngle?: 'interne' | 'image_marque' | 'leger' | 'disponibilite' | 'metier';
 }
 
 // ─── Build awareness days for a given year (dynamic Easter + fixed dates) ───
