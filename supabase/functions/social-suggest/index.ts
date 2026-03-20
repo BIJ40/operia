@@ -738,12 +738,11 @@ Deno.serve(async (req) => {
         .filter(Boolean) as string[]
     );
 
-    // ─── Cross-month 21-day gap detection ───────────────
-    // Load last 21 days of previous month's suggestions to avoid near-duplicates
-    const prevMonthDate = new Date(year, month - 2, 1); // month-1 in 0-based, then -1 more
+    // ─── Cross-month universe gap detection (3 days) ───
+    const prevMonthDate = new Date(year, month - 2, 1);
     const prevMonthKey = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, '0')}`;
     const daysInPrevMonth = new Date(prevMonthDate.getFullYear(), prevMonthDate.getMonth() + 1, 0).getDate();
-    const cutoffDay = daysInPrevMonth - 21; // only last 21 days of prev month
+    const cutoffDay = daysInPrevMonth - 3; // only last 3 days of prev month (universe gap = 3 days)
 
     const { data: prevMonthSuggestions } = await adminSupabase
       .from('social_content_suggestions')
@@ -760,9 +759,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Build a string for the AI prompt with recent themes to avoid
     const recentThemesWarning = recentPrevUniverses.length > 0
-      ? `\n\nTHÈMES RÉCENTS DU MOIS PRÉCÉDENT (à espacer d'au moins 21 jours) :\n${recentPrevUniverses.map(r => `- ${r.date}: univers "${r.universe}"`).join('\n')}\nSi un univers apparaît ici, NE PAS le réutiliser dans les 21 premiers jours du mois cible.`
+      ? `\n\nTHÈMES RÉCENTS DU MOIS PRÉCÉDENT (gap minimum 3 jours) :\n${recentPrevUniverses.map(r => `- ${r.date}: univers "${r.universe}"`).join('\n')}\nSi un univers apparaît ici, NE PAS le réutiliser dans les 3 premiers jours du mois cible.`
       : '';
 
     // ─── Regeneration logic ──────────────────────────
