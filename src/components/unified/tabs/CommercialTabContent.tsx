@@ -23,6 +23,7 @@ import { VeilleApporteursTab } from '@/prospection/pages/VeilleApporteursTab';
 
 const RealisationsPage = lazy(() => import('@/realisations/pages/RealisationsPage'));
 const SocialHubPage = lazy(() => import('@/pages/commercial/SocialHubPage'));
+const BdStoryPage = lazy(() => import('@/pages/commercial/BdStoryPage'));
 const SignatureGeneratorPage = lazy(() => import('@/pages/commercial/SignatureGeneratorPage'));
 
 /** Mapping tab id → module key */
