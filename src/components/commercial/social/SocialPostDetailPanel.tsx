@@ -66,6 +66,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const [keywords, setKeywords] = useState('');
   const [includeVan, setIncludeVan] = useState(false);
   const [universeOverride, setUniverseOverride] = useState<string>('');
+  const [imageModel, setImageModel] = useState<string>('auto');
 
   const UNIVERSE_OPTIONS = [
     { value: '', label: '— Auto (IA)' },
