@@ -230,7 +230,7 @@ Deno.serve(async (req) => {
 
     try {
       console.log('[social-visual-generate] Generating coherent marketing copy...');
-      const copywritingPrompt = `Tu es un copywriter publicitaire expert pour une entreprise française de dépannage à domicile appelée Help Confort.
+      const copywritingPrompt = `Tu es un copywriter publicitaire spécialisé pour une entreprise française de dépannage à domicile appelée Help Confort.
 
 Contexte :
 - Univers : ${serviceLabel}
