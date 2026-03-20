@@ -10,7 +10,7 @@ import {
   drawCinematicOverlay, drawUniversePill, roundRect,
 } from './canvasHelpers';
 import bannerSrc from '@/assets/banniere_helpconfort.jpg';
-import logoSrc from '@/assets/help-confort-services-logo.png';
+import logoSrc from '@/assets/help-confort-house-icon.png';
 import type { SocialTemplatePayload } from '../SocialVisualCanvas';
 
 export async function drawBrandCard(ctx: CanvasRenderingContext2D, payload: SocialTemplatePayload) {
