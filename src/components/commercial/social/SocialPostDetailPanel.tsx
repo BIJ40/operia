@@ -185,11 +185,10 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   }, [suggestion.id, generateMutation, freePrompt, keywords, includeVan, universeOverride, imageModel]);
 
   const handleDownload = useCallback(() => {
-    const assetToDownload = renderMode === 'image'
-      ? (rawAsset || composedAsset)
-      : (composedAsset || rawAsset);
+    // Always prioritize composed (final) asset, fallback to raw background
+    const assetToDownload = composedAsset || rawAsset;
     if (assetToDownload) downloadSocialVisual(assetToDownload.storage_path);
-  }, [renderMode, rawAsset, composedAsset]);
+  }, [composedAsset, rawAsset]);
 
   return (
     <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-200px)] pr-1">
