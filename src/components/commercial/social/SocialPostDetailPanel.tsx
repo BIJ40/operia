@@ -335,6 +335,18 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
                   Inclure le véhicule HC
                 </Label>
               </div>
+              <div>
+                <Label className="text-[10px] text-muted-foreground">🤖 Modèle image</Label>
+                <select
+                  value={imageModel}
+                  onChange={(e) => setImageModel(e.target.value)}
+                  className="mt-1 w-full h-7 text-xs rounded-md border border-input bg-background px-2"
+                >
+                  <option value="auto">🔄 Auto (DALL-E → Gemini)</option>
+                  <option value="dall-e-3">🎨 DALL-E 3 (OpenAI)</option>
+                  <option value="gemini">🌐 Gemini Imagen (Google)</option>
+                </select>
+              </div>
             </div>
           )}
         </div>
