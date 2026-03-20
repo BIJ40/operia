@@ -898,25 +898,51 @@ IMPORTANT : lead_score doit refléter le potentiel réel de conversion client.`;
     } else {
       userPrompt = `Génère ${targetPostCount} suggestions de posts social media PREMIUM pour le mois ${month}/${year}.
 
-RÉPARTITION BUSINESS OBLIGATOIRE sur ${targetPostCount} posts :
-- ~40% PROBLÈMES CONCRETS (leads directs, urgences habitat)
-- ~30% CONSEILS EXPERTS (valeur ajoutée, toujours via un problème)
-- ~20% SAISONNIERS (anticipation, prévention liée au calendrier)
+═══════════════════════════════════════════
+PRIORITÉ N°1 — CALENDRIER & ÉVÉNEMENTS
+═══════════════════════════════════════════
+CHAQUE journée thématique ci-dessous DOIT générer un post.
+Les jours fériés, fêtes et événements calendaires sont la COLONNE VERTÉBRALE du planning éditorial.
+Ils servent de PRÉTEXTE pour parler d'un VRAI problème métier (jamais un post informatif neutre).
+
+JOURNÉES THÉMATIQUES DU MOIS (TOUTES doivent être couvertes) :
+${monthAwareness.map(a => `- ${a.day}/${month}: ${a.label} (tags: ${a.tags.join(', ')}, univers: ${a.preferredUniverses.join('/')})`).join('\n')}
+
+Les posts restants (pour atteindre ${targetPostCount}) doivent compléter avec des problèmes métiers concrets espacés régulièrement dans le mois.
+
+═══════════════════════════════════════════
+RÉPARTITION SUR ${targetPostCount} POSTS
+═══════════════════════════════════════════
+- ~50% CALENDAIRE (jours fériés, fêtes, événements → prétexte problème métier)
+- ~25% PROBLÈMES CONCRETS (leads directs, urgences habitat)
+- ~15% CONSEILS EXPERTS (valeur ajoutée, toujours via un problème)
 - ~10% CRÉATIF / BRANDING LOCAL (visibilité, proximité)
 
-JOURNÉES THÉMATIQUES DU MOIS :
-${monthAwareness.map(a => `- ${a.day}/${month}: ${a.label} (tags: ${a.tags.join(', ')})`).join('\n')}
+═══════════════════════════════════════════
+ANTI-REDONDANCE — GAP MINIMUM 21 JOURS
+═══════════════════════════════════════════
+Un même univers/thème ne doit PAS apparaître deux fois en moins de 21 jours.
+Cela inclut le mois précédent : si un post "volets" existe le 28 du mois dernier,
+NE PAS faire de post "volets" avant le 18 du mois cible.
+${recentThemesWarning}
 
 SUJETS DÉJÀ EXISTANTS (à ne pas dupliquer) :
 ${[...existingTopicKeys].join(', ') || '(aucun)'}
 
+RÉALISATIONS EXPLOITABLES :
+${exploitableReals.length > 0 
+  ? exploitableReals.map(r => `- "${r.title}" (ID: ${r.id}, univers: ${r.universe || 'inconnu'}, avant/après: ${r.hasBeforeAfter ? 'oui' : 'non'})`).join('\n')
+  : '(aucune)'}
+
 RAPPEL CRITIQUE :
+- MINIMUM ${targetPostCount} posts, répartis sur tout le mois (pas de clusters)
 - Chaque post DOIT avoir un hook stop-scroll, un CTA business, un visual_prompt exploitable
 - lead_score DOIT refléter le potentiel réel de conversion
 - Posts urgence (fuite, panne, sécurité) → lead_score > 80, urgency_level = high
 - visual_prompt = scène RÉALISTE habitat français, JAMAIS un fond vide
 - JAMAIS inventer de faux cas client ou fausse intervention — rester GÉNÉRAL et EXPERT
-- Le topic_type "realisation" est INTERDIT sauf s'il y a de vraies photos (realisation_id valide)`;
+- Le topic_type "realisation" est INTERDIT sauf s'il y a de vraies photos (realisation_id valide)
+- Espacer les posts de 1-2 jours entre eux, couvrir le mois entier du 1er au dernier jour`;
 
     }
 
