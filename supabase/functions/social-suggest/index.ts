@@ -1308,86 +1308,36 @@ RAPPEL CRITIQUE — 1 POST/JOUR, MACHINE ÉDITORIALE
 
     }
 
-    // ─── AI call with automatic fallback across models ───
-    const FALLBACK_MODELS = [
-      'google/gemini-3-flash-preview',
-      'google/gemini-2.5-flash',
-      'google/gemini-2.5-pro',
-      'openai/gpt-5-mini',
-    ];
+    // ─── AI call with OpenAI (principal) + Claude (fallback) ───
+    const { callAiWithFallback } = await import('../_shared/aiClient.ts');
 
     const aiPayload = {
       messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
+        { role: 'system' as const, content: systemPrompt },
+        { role: 'user' as const, content: userPrompt },
       ],
       tools: [SUGGEST_TOOL],
       tool_choice: { type: 'function', function: { name: 'generate_social_suggestions' } },
       stream: false,
       temperature: 0.7,
+      model: 'gpt-4o',
     };
 
-    let aiResponse: Response | null = null;
-    let lastError = '';
-    let lastStatus = 0;
+    const aiResult = await callAiWithFallback(aiPayload);
 
-    for (const model of FALLBACK_MODELS) {
-      console.log(`[social-suggest] Trying model: ${model}`);
-      try {
-        const resp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ ...aiPayload, model }),
-        });
-
-        if (resp.ok) {
-          aiResponse = resp;
-          console.log(`[social-suggest] Success with model: ${model}`);
-          break;
-        }
-
-        lastStatus = resp.status;
-        lastError = await resp.text();
-        console.warn(`[social-suggest] Model ${model} failed (${resp.status}): ${lastError.slice(0, 200)}`);
-
-        // 402 = credits exhausted — no point trying other models
-        if (resp.status === 402) {
-          return new Response(JSON.stringify({ error: 'Crédits IA insuffisants.' }), {
-            status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
-
-        // For 429 or 5xx, try next model
-        if (resp.status === 429 || resp.status >= 500) {
-          // Brief pause before trying next model
-          await new Promise(r => setTimeout(r, 1000));
-          continue;
-        }
-
-        // Other errors (400, 403...) — unlikely to be model-specific, stop
-        break;
-      } catch (fetchErr) {
-        console.error(`[social-suggest] Fetch error for ${model}:`, fetchErr);
-        lastError = String(fetchErr);
-        await new Promise(r => setTimeout(r, 1000));
-        continue;
-      }
-    }
-
-    if (!aiResponse) {
-      console.error('[social-suggest] All models failed. Last:', lastStatus, lastError.slice(0, 300));
-      if (lastStatus === 429) {
-        return new Response(JSON.stringify({ error: 'Tous les modèles IA sont saturés, réessayez dans quelques minutes.' }), {
+    if (!aiResult.ok) {
+      console.error('[social-suggest] AI failed:', aiResult.status, aiResult.error.slice(0, 300));
+      if (aiResult.status === 429) {
+        return new Response(JSON.stringify({ error: 'Service IA saturé, réessayez dans quelques minutes.' }), {
           status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      return new Response(JSON.stringify({ error: 'Service IA indisponible', details: lastStatus }), {
+      return new Response(JSON.stringify({ error: 'Service IA indisponible', details: aiResult.status }), {
         status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    console.log(`[social-suggest] AI success via ${aiResult.provider}`);
 
     const aiText = await aiResponse.text();
     let aiData: any;
