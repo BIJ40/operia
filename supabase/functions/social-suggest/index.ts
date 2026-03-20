@@ -1090,7 +1090,21 @@ RAPPEL CRITIQUE — PRESSION CONVERSION
 - visual_prompt = scène RÉALISTE habitat français, JAMAIS un fond vide
 - JAMAIS inventer de faux cas client — rester GÉNÉRAL et EXPERT
 - Le topic_type "realisation" est INTERDIT sauf s'il y a de vraies photos (realisation_id valide)
-- Espacer les posts de 1-2 jours, couvrir le mois entier`;
+- Espacer les posts de 1-2 jours, couvrir le mois entier
+
+═══════════════════════════════════════════
+CATÉGORIE : CONTENU PÉDAGOGIQUE (topic_type = "educational")
+═══════════════════════════════════════════
+Inclure 2-3 posts pédagogiques par mois. Objectif : rendre un sujet technique compréhensible en 30 secondes.
+Visuels de type : schéma simple, comparaison, chiffre clé, process.
+RÈGLES :
+- UNE seule idée par visuel
+- Pas de texte long, pas de graphique complexe, pas de jargon
+- Hook basé sur un chiffre ou une prise de conscience ("80% des fuites sont évitables")
+- Explication simple et directe (max 10 mots)
+- CTA = action directe
+INTERDICTION : contenu scolaire, explication longue, design type powerpoint
+OBLIGATION : le post doit apporter une VALEUR IMMÉDIATE et rester actionnable`;
 
     }
 
