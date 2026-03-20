@@ -32,6 +32,7 @@ const TOPIC_DOT_COLORS: Record<string, string> = {
   saisonnier: 'bg-orange-500',
   contre_exemple: 'bg-rose-500',
   pedagogique: 'bg-amber-500',
+  prospection: 'bg-teal-500',
 };
 
 interface SocialCalendarViewProps {

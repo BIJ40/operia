@@ -891,14 +891,36 @@ Toute analogie faible, contenu forcé ou phrase marketing creuse = REJETÉ.
 ═══════════════════════════════════════════
 Chaque post DOIT avoir un topic_type parmi :
 
-1. "urgence" — fuite, panne, casse, sécurité (20% du mois, ~6 posts)
-2. "prevention" — éviter une panne, anticiper (15%, ~4-5 posts)
-3. "amelioration" — confort, esthétique, valorisation (15%, ~4-5 posts)
-4. "conseil" — tips concrets, utiles, actionnables (10%, ~3 posts)
-5. "preuve" — intervention rapide, savoir-faire technicien, proximité, réalisation, témoignage, avant/après, process (10%, ~3 posts)
-6. "saisonnier" — météo réelle, période (10%, ~3 posts)
-7. "contre_exemple" — erreur fréquente, "ce qu'il ne faut pas faire", contraste technicien vs bricoleur (10%, ~3 posts)
-8. "pedagogique" — schéma, chiffre clé, "le saviez-vous ?", valeur immédiate (10%, ~3 posts)
+1. "urgence" — fuite, panne, casse, sécurité (~6 posts/mois)
+2. "prevention" — éviter une panne, anticiper (~4 posts)
+3. "amelioration" — confort, esthétique, valorisation (~4 posts)
+4. "conseil" — tips concrets, utiles, actionnables (~3 posts)
+5. "preuve" — intervention rapide, savoir-faire technicien, proximité, réalisation, témoignage, avant/après, process (~3 posts)
+6. "saisonnier" — météo réelle, période (~3 posts)
+7. "contre_exemple" — erreur fréquente, "ce qu'il ne faut pas faire", contraste technicien vs bricoleur (~3 posts)
+8. "pedagogique" — schéma, chiffre clé, "le saviez-vous ?", valeur immédiate (~3 posts)
+9. "prospection" — CONTENU COMMERCIAL & MARQUE, PAS du terrain (~4 posts/mois, ~1/semaine)
+
+═══════════════════════════════════════════
+CATÉGORIE "PROSPECTION" — DÉTAIL OBLIGATOIRE
+═══════════════════════════════════════════
+Cette catégorie est DIFFÉRENTE de toutes les autres. Elle ne parle PAS de problème métier.
+Elle présente L'ENTREPRISE sous un angle COMMERCIAL, STRATÉGIQUE ou CRÉATIF.
+
+SOUS-TYPES OBLIGATOIRES (varier chaque semaine) :
+a) ZONE D'INTERVENTION — "On intervient dans tout le Sud-Landes et Pays Basque" avec carte mentale ou description géographique
+b) PANORAMA MÉTIERS — Présenter L'ENSEMBLE des métiers (plomberie, électricité, serrurerie, vitrerie, menuiserie, volets, PMR, rénovation) en un seul post
+c) PARTENAIRES & PRESCRIPTEURS — "Assurances, agences immobilières, syndics : ils nous font confiance" → cibler les apporteurs d'affaires
+d) COMMERCIAL CRÉATIF — Surprendre : chiffre clé sur l'entreprise, coulisses de l'équipe, engagement qualité, véhicules de la flotte, certifications, valeurs, etc.
+
+RÈGLES PROSPECTION :
+- universe = "general" (pas de métier spécifique)
+- storytelling_type = "proximite_locale" ou "temoignage_client"
+- lead_type = "preuve_sociale"
+- Le visuel peut être : carte géographique stylisée, infographie métiers, photo équipe, véhicule HC, logo partenaires
+- visual_prompt doit décrire un visuel COMMERCIAL (pas un problème technique)
+- Le CTA peut être "Découvrir nos services", "Devenir partenaire", "Nous contacter"
+- Ces posts sont DIFFÉRENTS visuellement des autres : plus corporate, plus marque
 
 ═══════════════════════════════════════════
 PRESSION CONVERSION (OBLIGATOIRE)

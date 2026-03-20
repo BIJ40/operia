@@ -39,6 +39,7 @@ const TOPIC_LABELS: Record<string, string> = {
   saisonnier: 'Saison',
   contre_exemple: 'Contre-ex.',
   pedagogique: 'Pédago.',
+  prospection: 'Prospection',
 };
 
 interface SocialListViewProps {
