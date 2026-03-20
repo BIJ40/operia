@@ -413,6 +413,7 @@ Deno.serve(async (req) => {
       universeOverride?: string;
       tone?: string;
       audience?: string;
+      imageModel?: string;
     } | undefined;
 
     if (!suggestionId || !agencyId) {
