@@ -97,6 +97,19 @@ export default function BdStoryPage() {
             </Select>
           </div>
 
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Format</Label>
+            <Select value={render.renderMode} onValueChange={(v) => render.setRenderMode(v as RenderMode)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="4">⭐ 4 cases premium</SelectItem>
+                <SelectItem value="12">📖 12 cases complète</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <Button
             onClick={() => handleGenerateAndRender({})}
             disabled={isGenerating || render.isRendering}
@@ -107,12 +120,12 @@ export default function BdStoryPage() {
             {(isGenerating || render.isRendering) ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                {render.isRendering ? `Rendu ${render.renderProgress}/12` : 'Génération…'}
+                {render.isRendering ? `Rendu ${render.renderProgress}/${render.renderTotal}` : 'Génération…'}
               </>
             ) : (
               <>
                 <Sparkles className="w-4 h-4" />
-                Générer la BD finale
+                Générer la BD {render.renderMode === '4' ? 'premium' : 'finale'}
               </>
             )}
           </Button>
