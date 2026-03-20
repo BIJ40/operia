@@ -21,6 +21,12 @@ const VAN_REFERENCE_URLS = [
   `${SUPABASE_URL}/storage/v1/object/public/brand-assets/van-ref3.jpg`,
   `${SUPABASE_URL}/storage/v1/object/public/brand-assets/van-ref4.jpg`,
   `${SUPABASE_URL}/storage/v1/object/public/brand-assets/van-ref5.jpg`,
+  `${SUPABASE_URL}/storage/v1/object/public/brand-assets/van-ref6.jpg`,
+  `${SUPABASE_URL}/storage/v1/object/public/brand-assets/van-ref7.jpg`,
+  `${SUPABASE_URL}/storage/v1/object/public/brand-assets/van-ref8.jpg`,
+  `${SUPABASE_URL}/storage/v1/object/public/brand-assets/van-ref9.jpg`,
+  `${SUPABASE_URL}/storage/v1/object/public/brand-assets/van-ref10.jpg`,
+  `${SUPABASE_URL}/storage/v1/object/public/brand-assets/van-ref11.jpg`,
 ];
 // Verify van reference URLs are accessible, return only valid ones
 async function getVerifiedVanReferenceUrls(): Promise<string[]> {
