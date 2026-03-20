@@ -42,9 +42,11 @@ type AiResult = AiCompletionResult | AiCompletionError;
 
 const OPENAI_BASE = 'https://api.openai.com/v1/chat/completions';
 const ANTHROPIC_BASE = 'https://api.anthropic.com/v1/messages';
+const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 const DEFAULT_OPENAI_MODEL = 'gpt-4o';
 const DEFAULT_ANTHROPIC_MODEL = 'claude-sonnet-4-20250514';
+const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
 
 // ─── OpenAI caller ────────────────────────────────────
 
