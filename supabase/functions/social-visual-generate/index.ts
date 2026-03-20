@@ -471,7 +471,8 @@ Deno.serve(async (req) => {
     const serviceLabel = universe === 'general'
       ? (GENERAL_TOPIC_LABELS[topicType] || SERVICE_LABELS.general)
       : (SERVICE_LABELS[universe] || SERVICE_LABELS.general);
-    console.log(`[social-visual-generate] Universe: ${universe} (override: ${visualCustomization?.universeOverride || 'none'})`);
+    const preferredImageModel = visualCustomization?.imageModel || undefined;
+    console.log(`[social-visual-generate] Universe: ${universe} (override: ${visualCustomization?.universeOverride || 'none'}), imageModel: ${preferredImageModel || 'auto'}`);
     const title = suggestion.title || '';
     const rawHook = aiPayload.hook || title;
     const rawCta = aiPayload.cta || 'Demandez un devis gratuit';
