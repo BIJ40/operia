@@ -34,10 +34,10 @@ export const CTA_ENTRIES: CtaEntry[] = [
   { text: 'Rapide, propre, efficace.', mode: 'general' },
   { text: 'On remet en état.', mode: 'general' },
   { text: 'Votre maison entre de bonnes mains.', mode: 'general' },
-  { text: 'Contactez HelpConfort.', mode: 'message' },
+  { text: 'Contactez HelpConfort dès maintenant.', mode: 'message' },
   { text: 'On vous dépanne rapidement.', mode: 'intervention' },
   { text: 'Un problème ? Une solution.', mode: 'general' },
-  { text: 'Intervention maîtrisée.', mode: 'intervention' },
+  { text: 'Intervention maîtrisée et rapide.', mode: 'intervention' },
   { text: 'On vous simplifie la vie.', mode: 'general' },
 ];
 
