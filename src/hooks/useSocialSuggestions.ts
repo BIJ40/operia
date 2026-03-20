@@ -8,6 +8,7 @@
  * - variant non publiable si suggestion non approved
  */
 
+import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -56,13 +57,14 @@ export interface SocialVariant {
 }
 
 // ─── Fetch suggestions for a month ───────────────────────────
-export function useSocialSuggestions(monthKey: string) {
+export function useSocialSuggestions(monthKey: string, pollingEnabled = false) {
   const { agencyId } = useAuth();
 
   return useQuery({
     queryKey: ['social-suggestions', agencyId, monthKey],
     enabled: !!agencyId && !!monthKey,
-    staleTime: 60_000,
+    staleTime: pollingEnabled ? 0 : 60_000,
+    refetchInterval: pollingEnabled ? 3_000 : false,
     queryFn: async (): Promise<SocialSuggestion[]> => {
       if (!agencyId) return [];
 
@@ -102,11 +104,13 @@ export function useSocialSuggestions(monthKey: string) {
 }
 
 // ─── Generate suggestions (invoke edge function) ─────────────
+// Returns { mutation, isGenerating } so the page can enable polling
 export function useGenerateSuggestions() {
   const { agencyId } = useAuth();
   const queryClient = useQueryClient();
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: async ({ month, year, regenerateSingle, suggestionId, prompt, targetDates }: {
       month: number;
       year: number;
@@ -115,7 +119,8 @@ export function useGenerateSuggestions() {
       prompt?: { tone?: string; keywords?: string; audience?: string; length?: string; freePrompt?: string };
       targetDates?: string[];
     }) => {
-      // Allow up to 5 minutes for AI generation (31 posts can be slow)
+      setIsGenerating(true);
+
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 300_000);
 
@@ -156,15 +161,22 @@ export function useGenerateSuggestions() {
       return data;
     },
     onSuccess: (data) => {
+      setIsGenerating(false);
       const monthKey = data.month_key;
       queryClient.invalidateQueries({ queryKey: ['social-suggestions', agencyId, monthKey] });
       toast.success(`${data.generated_count} suggestions générées`);
     },
     onError: (err: any) => {
+      setIsGenerating(false);
       const msg = err?.message || 'Erreur lors de la génération';
       toast.error(msg);
     },
+    onSettled: () => {
+      setIsGenerating(false);
+    },
   });
+
+  return { ...mutation, isGenerating };
 }
 
 // ─── Update suggestion status ────────────────────────────────
