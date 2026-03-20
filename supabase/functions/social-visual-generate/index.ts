@@ -148,10 +148,15 @@ async function callImageAIWithFallback(
       messages: [{
         role: 'user',
         content: [
-          { type: 'text', text: `Analyze this image and create a detailed prompt for DALL-E 3 to recreate/enhance it as a professional social media ad background (1080x1080).
-The prompt should describe: the scene, lighting, composition, colors, and mood.
-Keep the authentic feel. Make the bottom 40% darker for text overlay.
-Reply with ONLY the DALL-E prompt text, nothing else. Max 900 characters.` },
+          { type: 'text', text: `Analyze this/these image(s) and create a detailed prompt for DALL-E 3 to generate a social media ad background (1080x1080) inspired by these photos.
+
+CRITICAL RULES:
+- If a van/vehicle is shown: describe it as "a white Renault Master van with a blue diagonal wave/swoosh graphic covering the lower half of each side, small colorful circular service icons on the side panel, roof rack with ladders on top"
+- Keep the scene REALISTIC and GROUNDED — like a real photo from a French residential street
+- NOT futuristic, NOT corporate, NOT conference room, NOT high-tech
+- Natural daylight, French residential neighborhood setting
+- Make the bottom 40% darker for text overlay
+- Reply with ONLY the DALL-E prompt text, nothing else. Max 900 characters.` },
           ...inputImages.map(url => ({ type: 'image_url', image_url: { url } })),
         ] as any,
       }],
