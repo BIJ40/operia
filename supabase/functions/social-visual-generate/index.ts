@@ -243,7 +243,7 @@ Réponds UNIQUEMENT en JSON valide avec exactement ces clés :
       });
 
       if (copyResult.ok) {
-        const rawContent = copyData.choices?.[0]?.message?.content || '';
+        const rawContent = copyResult.data.choices?.[0]?.message?.content || '';
         try {
           const parsed = JSON.parse(rawContent);
           if (parsed.hook && parsed.hook.length <= 32 && parsed.hook.split(/\s+/).length <= 5) {
