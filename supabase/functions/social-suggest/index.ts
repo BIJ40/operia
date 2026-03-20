@@ -1131,15 +1131,33 @@ FORMAT DES POSTS (variation obligatoire) :
 - 10% LONG : hook + 2 phrases sous-texte + CTA
 
 ═══════════════════════════════════════════
-PRIORITÉ (DANS CET ORDRE)
+STRATÉGIE CALENDAIRE (CRITIQUE)
 ═══════════════════════════════════════════
-1. UTILITÉ pour le client
-2. CRÉDIBILITÉ
-3. LIEN MÉTIER
-4. CONVERSION (appel, devis, contact)
-5. Calendrier EN DERNIER
+Les journées spéciales sont traitées selon leur NIVEAU DE PERTINENCE MÉTIER :
 
-Le calendrier est un BONUS, pas une obligation.
+- relevance 3 → contenu métier DIRECT. Le thème calendaire EST le sujet métier (ex: Journée de l'eau → plomberie).
+- relevance 2 → angle utile OU prévention. L'événement sert de PRÉTEXTE à un angle métier soft.
+- relevance 1 → topic_type = "calendar". AUCUN contenu métier forcé. Post HUMAIN, IMAGE DE MARQUE ou LÉGER uniquement.
+
+INTERDICTION ABSOLUE pour relevance 1 :
+- forcer un lien métier
+- transformer une fête en post commercial
+- ajouter un conseil technique hors contexte
+- mentionner travaux, rénovation, dépannage
+
+MAPPING ANGLE → CONTENU (pour les jours calendaires relevance 1) :
+- interne → équipe, terrain, coulisses, valorisation
+- image_marque → crédibilité, présence locale, sérieux
+- leger → clin d'œil, message simple, présence de marque
+- creatif → visuel fun/décalé assumé
+- disponibilite → "même les jours fériés, on est là"
+- emotionnel → famille, confort, chaleur humaine
+
+PRIORITÉ GLOBALE :
+1. Si jour calendaire relevance 1 → calendrier IMPOSE le sujet
+2. Si jour calendaire relevance 2 → angle métier soft possible
+3. Si jour calendaire relevance 3 → contenu métier direct
+4. Sinon → post métier classique selon la rotation
 
 ═══════════════════════════════════════════
 RAPPEL FINAL — RESPECT DES CATÉGORIES
