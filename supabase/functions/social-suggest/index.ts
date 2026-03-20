@@ -862,7 +862,7 @@ Deno.serve(async (req) => {
     const totalHooks = getFullHookLibrary().length;
     console.log(`[social-suggest] Hook library: ${totalHooks} hooks available, season: ${currentSeason}`);
 
-    const systemPrompt = `Tu es un copywriter expert conversion locale pour HelpConfort (dépannage & rénovation habitat).
+    const systemPrompt = `Tu es un copywriter spécialisé en conversion locale pour HelpConfort (dépannage & rénovation habitat).
 
 Tu produis des posts social media qui GÉNÈRENT DES ACTIONS (appels, devis, contacts).
 Un post qui ne peut pas déclencher d'action est considéré comme MAUVAIS.
