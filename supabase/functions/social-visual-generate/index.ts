@@ -374,16 +374,44 @@ CRITICAL COMPOSITION RULES — THIS IMAGE IS A BACKGROUND FOR A SOCIAL MEDIA AD:
                           universe === 'general' || universe === 'local_branding';
 
       if (sceneHasVan) {
-        // Use multi-modal prompt with multiple real van reference photos
-        const refUrls = getVanReferenceUrls();
-        bgMessages = [{
-          role: 'user',
-          content: [
-            { 
-              type: 'text', 
-              text: `Generate a REALISTIC PHOTOGRAPH designed as a SOCIAL MEDIA AD BACKGROUND (1080x1080 square).
+        // RULE: Never generate a van without verified reference photos
+        const refUrls = await getVerifiedVanReferenceUrls();
+        
+        if (refUrls.length === 0) {
+          // No reference photos accessible — generate scene WITHOUT van
+          console.warn('[social-visual-generate] No van reference photos accessible — generating without van');
+          const noVanScene = sceneDescription
+            .replace(/van|transit|renault master|utilitaire/gi, '')
+            .replace(/parked|garé/gi, '')
+            + '. Do NOT include any vehicle, van, truck or car in this image.';
+          bgMessages = [{
+            role: 'user',
+            content: `Generate a REALISTIC PHOTOGRAPH designed as a SOCIAL MEDIA AD BACKGROUND (1080x1080 square).
 
-REFERENCE IMAGES: The attached photos show the EXACT company van from multiple angles. Study them carefully and reproduce the van EXACTLY as shown:
+SCENE TO PHOTOGRAPH:
+${noVanScene}
+
+${AD_COMPOSITION_RULES}
+
+IMPORTANT: Do NOT generate any vehicle, van, truck, or car in this image. Focus only on the technician and the work scene.
+
+ADDITIONAL REQUIREMENTS:
+- This must look like a REAL PHOTOGRAPH taken on-site by a professional photographer
+- Close-up framing on the problem (NOT the whole building/house)
+- Dramatic natural lighting with a cinematic feel
+- The bottom third should naturally be darker (floor, shadow, dark surface)
+- High resolution feel, sharp details on the main subject`,
+          }];
+        } else {
+          // Use multi-modal prompt with verified real van reference photos
+          bgMessages = [{
+            role: 'user',
+            content: [
+              { 
+                type: 'text', 
+                text: `Generate a REALISTIC PHOTOGRAPH designed as a SOCIAL MEDIA AD BACKGROUND (1080x1080 square).
+
+REFERENCE IMAGES: The ${refUrls.length} attached photos show the EXACT company van from multiple angles. Study them carefully and reproduce the van EXACTLY as shown:
 - White Renault Master van body (NOT Ford Transit, NOT Mercedes Sprinter)
 - Large blue diagonal wave/swoosh pattern on the sides — gradient from sky blue at the top to deep navy at the bottom. The wave starts near the front wheel and sweeps diagonally upward toward the rear roof
 - 6 small colorful circular service icons on the side panel
@@ -404,10 +432,11 @@ ADDITIONAL REQUIREMENTS:
 - The bottom third should naturally be darker (floor, shadow, dark surface)
 - High resolution feel, sharp details on the main subject
 - Do NOT add any text, logos, or words to the image`
-            },
-            ...refUrls.map(url => ({ type: 'image_url' as const, image_url: { url } })),
-          ],
-        }];
+              },
+              ...refUrls.map(url => ({ type: 'image_url' as const, image_url: { url } })),
+            ],
+          }];
+        }
       } else {
         bgMessages = [{
           role: 'user',
@@ -417,6 +446,8 @@ SCENE TO PHOTOGRAPH:
 ${sceneDescription}
 
 ${AD_COMPOSITION_RULES}
+
+IMPORTANT: Do NOT generate any vehicle, van, truck, or car in this image. No vehicles at all.
 
 ADDITIONAL REQUIREMENTS:
 - This must look like a REAL PHOTOGRAPH taken on-site by a professional photographer
