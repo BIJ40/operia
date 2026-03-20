@@ -281,6 +281,7 @@ CRITICAL RULES:
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // ROUTE B: No input images (or Gemini failed above) → DALL-E 3 primary
+  // Skip DALL-E if user explicitly forced Gemini (already tried above)
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   
   // Truncate prompt for DALL-E 3 (max 4000 chars)
@@ -288,6 +289,7 @@ CRITICAL RULES:
     prompt = prompt.slice(0, 3900);
   }
 
+  if (!forceGemini) {
   console.log(`[callImageAI] Generating image via DALL-E 3 (text-only)...`);
   try {
     const response = await fetch('https://api.openai.com/v1/images/generations', {
