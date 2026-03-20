@@ -99,7 +99,7 @@ export async function generateAllPanelImages(
     onProgress?.(plan.panelNumber, result);
     
     // Small delay between requests to avoid rate limiting
-    if (plan.panelNumber < 12) {
+    if (plan.panelNumber < plans.length) {
       await new Promise(resolve => setTimeout(resolve, 1500));
     }
   }

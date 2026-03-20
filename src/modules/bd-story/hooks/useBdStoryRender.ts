@@ -85,7 +85,7 @@ export function useBdStoryRender(agencyId: string) {
       const totalPanels = plans.length;
       await (supabase as any).from('bd_story_renders').insert({
         agency_id: agencyId,
-        story_id: story.id || null,
+        story_id: null,
         status: successCount === totalPanels ? 'complete' : successCount > 0 ? 'partial' : 'error',
         render_provider: 'gemini',
         style_preset: stylePreset,
