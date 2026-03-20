@@ -120,9 +120,8 @@ async function callImageAIWithFallback(
 ): Promise<{ ok: true; data: any; model: string } | { ok: false; status: number; error: string }> {
   const { openaiKey } = getAiKeys();
 
-  // Extract the text prompt from messages
+  // Extract the text prompt and any input images from messages
   let prompt = '';
-  let inputImageUrl: string | null = null;
   const inputImages: string[] = [];
   
   for (const msg of messages) {
@@ -138,12 +137,105 @@ async function callImageAIWithFallback(
     }
   }
 
-  // If we have input images, use GPT-4o for image understanding + editing
-  // (DALL-E 3 cannot accept input images for editing in the standard API)
-  if (inputImages.length > 0) {
-    console.log(`[callImageAI] Has ${inputImages.length} input image(s) — using gpt-4o for understanding`);
+  const hasInputImages = inputImages.length > 0;
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // ROUTE A: Input images present → Gemini FIRST (can process images natively)
+  // DALL-E 3 CANNOT accept input images, so Gemini is the only option here
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  if (hasInputImages) {
+    console.log(`[callImageAI] Has ${inputImages.length} input image(s) — using Gemini (native image input)`);
     
-    // Use GPT-4o to analyze the image and create a detailed DALL-E prompt
+    const geminiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
+    if (geminiKey) {
+      try {
+        // Build Gemini parts with text + images
+        const geminiParts: any[] = [{ text: prompt }];
+        
+        for (const imgUrl of inputImages) {
+          if (imgUrl.startsWith('data:')) {
+            // Base64 data URL → extract mime and data
+            const match = imgUrl.match(/^data:([^;]+);base64,(.+)$/);
+            if (match) {
+              geminiParts.push({
+                inlineData: { mimeType: match[1], data: match[2] },
+              });
+            }
+          } else {
+            // HTTP URL → fetch and convert to base64
+            try {
+              const imgResp = await fetch(imgUrl);
+              if (imgResp.ok) {
+                const imgBuf = await imgResp.arrayBuffer();
+                const imgBytes = new Uint8Array(imgBuf);
+                let binary = '';
+                for (let i = 0; i < imgBytes.length; i++) {
+                  binary += String.fromCharCode(imgBytes[i]);
+                }
+                const b64 = btoa(binary);
+                const contentType = imgResp.headers.get('content-type') || 'image/jpeg';
+                geminiParts.push({
+                  inlineData: { mimeType: contentType, data: b64 },
+                });
+                console.log(`[callImageAI] Fetched reference image (${contentType}, ${Math.round(imgBuf.byteLength / 1024)}KB)`);
+              } else {
+                console.warn(`[callImageAI] Failed to fetch reference image: ${imgResp.status}`);
+              }
+            } catch (fetchErr) {
+              console.warn(`[callImageAI] Error fetching reference image:`, fetchErr);
+            }
+          }
+        }
+
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiKey}`;
+        const geminiResponse = await fetch(geminiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: geminiParts }],
+            generationConfig: {
+              responseModalities: ['TEXT', 'IMAGE'],
+            },
+          }),
+        });
+
+        if (geminiResponse.ok) {
+          const geminiData = await geminiResponse.json();
+          const parts = geminiData.candidates?.[0]?.content?.parts || [];
+          const imagePart = parts.find((p: any) => p.inlineData);
+          
+          if (imagePart?.inlineData) {
+            const mimeType = imagePart.inlineData.mimeType || 'image/png';
+            const imageUrl = `data:${mimeType};base64,${imagePart.inlineData.data}`;
+            console.log('[callImageAI] Gemini generated image with real photo references successfully');
+            return {
+              ok: true,
+              data: {
+                choices: [{
+                  message: {
+                    role: 'assistant',
+                    content: '',
+                    images: [{ type: 'image_url', image_url: { url: imageUrl } }],
+                  },
+                }],
+              },
+              model: 'gemini-imagen',
+            };
+          }
+          console.warn('[callImageAI] Gemini returned OK but no image part');
+        } else {
+          const errText = await geminiResponse.text();
+          console.error(`[callImageAI] Gemini with images failed (${geminiResponse.status}):`, errText.slice(0, 300));
+        }
+      } catch (err) {
+        console.error('[callImageAI] Gemini with images error:', err);
+      }
+    } else {
+      console.warn('[callImageAI] No GOOGLE_GEMINI_API_KEY — cannot process input images');
+    }
+
+    // Fallback for image inputs: use GPT-4o to analyze → DALL-E text-only generation
+    console.log('[callImageAI] Gemini failed with images, falling back to GPT-4o analysis → DALL-E...');
     const analysisResult = await callAiWithFallback({
       messages: [{
         role: 'user',
@@ -171,13 +263,16 @@ CRITICAL RULES:
     }
   }
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // ROUTE B: No input images (or Gemini failed above) → DALL-E 3 primary
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  
   // Truncate prompt for DALL-E 3 (max 4000 chars)
   if (prompt.length > 3900) {
     prompt = prompt.slice(0, 3900);
   }
 
-  // Call DALL-E 3 for image generation
-  console.log(`[callImageAI] Generating image via DALL-E 3...`);
+  console.log(`[callImageAI] Generating image via DALL-E 3 (text-only)...`);
   try {
     const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
@@ -198,28 +293,26 @@ CRITICAL RULES:
     if (!response.ok) {
       const errText = await response.text();
       console.error(`[callImageAI] DALL-E 3 error (${response.status}):`, errText.slice(0, 300));
-      // Don't return yet — try Gemini fallback below
     } else {
       const data = await response.json();
       const b64 = data.data?.[0]?.b64_json;
       
       if (b64) {
         const imageUrl = `data:image/png;base64,${b64}`;
-        const normalizedData = {
-          choices: [{
-            message: {
-              role: 'assistant',
-              content: data.data?.[0]?.revised_prompt || '',
-              images: [{
-                type: 'image_url',
-                image_url: { url: imageUrl },
-              }],
-            },
-          }],
-        };
-
         console.log(`[callImageAI] DALL-E 3 image generated successfully`);
-        return { ok: true, data: normalizedData, model: 'dall-e-3' };
+        return {
+          ok: true,
+          data: {
+            choices: [{
+              message: {
+                role: 'assistant',
+                content: data.data?.[0]?.revised_prompt || '',
+                images: [{ type: 'image_url', image_url: { url: imageUrl } }],
+              },
+            }],
+          },
+          model: 'dall-e-3',
+        };
       }
       console.error('[callImageAI] DALL-E 3 returned no image data');
     }
@@ -227,10 +320,10 @@ CRITICAL RULES:
     console.error('[callImageAI] DALL-E 3 fetch error:', err);
   }
 
-  // ─── Fallback: Gemini Imagen ───
+  // ─── Fallback: Gemini Imagen (text-only) ───
   const geminiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
   if (geminiKey) {
-    console.log('[callImageAI] DALL-E failed, falling back to Gemini Imagen...');
+    console.log('[callImageAI] DALL-E failed, falling back to Gemini Imagen (text-only)...');
     await new Promise(r => setTimeout(r, 500));
     try {
       const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiKey}`;
@@ -253,20 +346,20 @@ CRITICAL RULES:
         if (imagePart?.inlineData) {
           const mimeType = imagePart.inlineData.mimeType || 'image/png';
           const imageUrl = `data:${mimeType};base64,${imagePart.inlineData.data}`;
-          const normalizedData = {
-            choices: [{
-              message: {
-                role: 'assistant',
-                content: '',
-                images: [{
-                  type: 'image_url',
-                  image_url: { url: imageUrl },
-                }],
-              },
-            }],
+          console.log('[callImageAI] Gemini text-only image generated successfully');
+          return {
+            ok: true,
+            data: {
+              choices: [{
+                message: {
+                  role: 'assistant',
+                  content: '',
+                  images: [{ type: 'image_url', image_url: { url: imageUrl } }],
+                },
+              }],
+            },
+            model: 'gemini-imagen',
           };
-          console.log('[callImageAI] Gemini image generated successfully');
-          return { ok: true, data: normalizedData, model: 'gemini-imagen' };
         }
       }
       const errText = await geminiResponse.text();
