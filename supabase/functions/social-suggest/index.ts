@@ -772,7 +772,14 @@ BONS visuels (visual_prompt) :
 - "Tableau électrique ouvert avec câbles en désordre, traces de chaleur"
 - "Serrure de porte d'entrée cassée, cylindre sorti, vue rapprochée"
 
-MAUVAIS visuels (INTERDITS) :
+EXCEPTION POUR POSTS DÉCALÉS — VISUELS HUMORISTIQUES :
+Pour les posts tagués "decale" ou "humour", le visual_prompt DOIT être DRÔLE et SURRÉALISTE :
+- "Un plombier en bleu de travail essayant d'attraper des poissons rouges qui jaillissent d'un robinet de cuisine avec une épuisette, eau partout, scène absurde et comique, éclairage lumineux"
+- "Un technicien déguisé en fantôme essayant de réparer un radiateur dans une maison décorée Halloween, toiles d'araignée, ambiance fun"
+- "Un électricien en costume de super-héros devant un tableau électrique qui fait des étincelles colorées comme un feu d'artifice"
+Ces visuels doivent faire SOURIRE et être PARTAGÉS. Ils restent liés au métier mais dans un registre absurde/comique.
+
+MAUVAIS visuels (INTERDITS sauf posts décalés) :
 - "Maison propre avec volets" → zéro tension, banque d'image
 - "Famille souriante dans son salon" → hors sujet
 - "Main tenant une clé" → trop générique
@@ -781,7 +788,7 @@ MAUVAIS visuels (INTERDITS) :
 Composition :
 - ZOOM sur le problème (pas la maison entière)
 - Ambiance : lumière dramatique, impression d'urgence ou de désagrément
-- Le spectateur doit penser "Ah oui, ça m'est arrivé"
+- Le spectateur doit penser "Ah oui, ça m'est arrivé" (ou rire si post décalé)
 
 ═══════════════════════════════════════════
 BRANDING — DISCRET ET EFFICACE
