@@ -103,7 +103,7 @@ function buildAwarenessDays(year: number): AwarenessDay[] {
     { month: 4, day: 28, label: "🔒 Journée sécurité au travail — sécurisez aussi votre maison", tags: ["securite","electricite","serrurerie","fete"], contentTypeHint: "prevention", preferredUniverses: ["electricite","serrurerie"], ctaHint: "diagnostic_securite", relevanceScore: 3, intentScore: 3 },
 
     // ════════════════ MAI ════════════════
-    { month: 5, day: 1,  label: "🌷 Fête du travail — sécuriser sa maison pour le pont de mai", tags: ["securite","serrurerie","fete"], contentTypeHint: "prevention", preferredUniverses: ["serrurerie"], ctaHint: "securisation_pont", relevanceScore: 3, intentScore: 3 },
+    { month: 5, day: 1,  label: "🌷 1er Mai — Fête du travail : nos techniciens au service de votre confort toute l'année", tags: ["branding","equipe","fete"], contentTypeHint: "interne", preferredUniverses: ["general"], ctaHint: "engagement_equipe", relevanceScore: 3, intentScore: 3 },
     { month: 5, day: 4,  label: "Star Wars Day — que la force soit avec vos installations", tags: ["humour","engagement","decale"], contentTypeHint: "decale", preferredUniverses: ["general"], ctaHint: "engagement_communaute", relevanceScore: 1, intentScore: 1 },
     { month: 5, day: 8,  label: "8 mai — pont = cambriolages : sécurisez vos accès", tags: ["securite","serrurerie","fete"], contentTypeHint: "prevention", preferredUniverses: ["serrurerie"], ctaHint: "securisation_pont", relevanceScore: 3, intentScore: 3 },
     { month: 5, day: 10, label: "Entretien climatisation avant l'été", tags: ["entretien","confort"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","electricite"], ctaHint: "entretien_clim", relevanceScore: 3, intentScore: 2 },
@@ -1215,8 +1215,8 @@ CONTRAINTES :
 ${singleContext.original_realisation_id ? `- Réalisation liée : ${singleContext.original_realisation_id}` : ''}
 ${promptCustomization}
 
-ÉVÉNEMENTS PERTINENTS CE MOIS (utilise-les UNIQUEMENT si l'angle est naturel et crédible) :
-${pertinentEvents.map(a => `- ${a.day}/${month}: ${a.label} | univers: ${a.preferredUniverses[0]} | LIEN DIRECT MÉTIER`).join('\n') || '(aucun)'}
+ÉVÉNEMENTS OBLIGATOIRES CE MOIS — Le post de CE JOUR PRÉCIS DOIT parler de cet événement. L'événement est le THÈME PRINCIPAL du post, pas un simple prétexte :
+${pertinentEvents.map(a => `- ⚠️ ${a.day}/${month}: "${a.label}" → Le post du ${a.day} DOIT être sur ce thème. Univers: ${a.preferredUniverses[0]}`).join('\n') || '(aucun)'}
 ${optionalEvents.length > 0 ? `\nÉVÉNEMENTS OPTIONNELS (à utiliser SEULEMENT si un angle crédible existe, sinon ignorer) :\n${optionalEvents.map(a => `- ${a.day}/${month}: ${a.label} | univers: ${a.preferredUniverses[0]} | OPTIONNEL`).join('\n')}` : ''}
 
 RÉALISATIONS EXPLOITABLES :
@@ -1298,12 +1298,11 @@ L'ordre change chaque semaine pour éviter la prévisibilité.
 ${scheduleLines}
 
 ═══════════════════════════════════════════
-ÉVÉNEMENTS À LIEN DIRECT MÉTIER (prioritaires)
+ÉVÉNEMENTS OBLIGATOIRES (le post de CE JOUR doit traiter CE THÈME)
 ═══════════════════════════════════════════
-Ces événements ont un lien DIRECT avec l'habitat/dépannage. Utilise-les comme PRÉTEXTE pour un vrai problème.
-Respecte l'univers indiqué. Le topic_type reste celui assigné au jour.
+Ces événements sont le THÈME PRINCIPAL du post du jour. Ne les utilise pas comme simple prétexte — le post doit PARLER de l'événement, avec un angle métier Help Confort.
 
-${pertinentEvents.map(a => `- ${a.day}/${month}: ${a.label} | UNIVERS: ${a.preferredUniverses[0]} | priorité: ${a.relevanceScore * a.intentScore}`).join('\n') || '(aucun événement pertinent ce mois)'}
+${pertinentEvents.map(a => `- ⚠️ JOUR ${a.day}/${month}: "${a.label}" | UNIVERS: ${a.preferredUniverses[0]} | Le post du ${a.day} DOIT traiter ce sujet`).join('\n') || '(aucun événement pertinent ce mois)'}
 
 ═══════════════════════════════════════════
 ÉVÉNEMENTS OPTIONNELS (score 2 — NE PAS FORCER)
