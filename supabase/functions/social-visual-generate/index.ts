@@ -389,10 +389,8 @@ CRITICAL COMPOSITION RULES — THIS IMAGE IS A BACKGROUND FOR A SOCIAL MEDIA AD:
 
       console.log('[social-visual-generate] Scene description:', sceneDescription.slice(0, 200));
 
-      // Check if the scene mentions a van — if so, pass the real van photo as reference
-      const sceneHasVan = sceneDescription.toLowerCase().includes('van') || 
-                          sceneDescription.toLowerCase().includes('transit') ||
-                          universe === 'general' || universe === 'local_branding';
+      // Include the real van ONLY when explicitly requested by the user
+      const sceneHasVan = visualCustomization?.includeVan === true;
 
       if (sceneHasVan) {
         // RULE: Never generate a van without verified reference photos
