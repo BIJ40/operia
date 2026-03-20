@@ -1020,39 +1020,83 @@ RAPPEL CRITIQUE :
 
     }
 
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-3-flash-preview',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        tools: [SUGGEST_TOOL],
-        tool_choice: { type: 'function', function: { name: 'generate_social_suggestions' } },
-        stream: false,
-        temperature: 0.7,
-      }),
-    });
+    // ─── AI call with automatic fallback across models ───
+    const FALLBACK_MODELS = [
+      'google/gemini-3-flash-preview',
+      'google/gemini-2.5-flash',
+      'google/gemini-2.5-pro',
+      'openai/gpt-5-mini',
+    ];
 
-    if (!aiResponse.ok) {
-      const errText = await aiResponse.text();
-      console.error('[social-suggest] AI error:', aiResponse.status, errText);
-      if (aiResponse.status === 429) {
-        return new Response(JSON.stringify({ error: 'Trop de requêtes, réessayez dans quelques minutes.' }), {
+    const aiPayload = {
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      tools: [SUGGEST_TOOL],
+      tool_choice: { type: 'function', function: { name: 'generate_social_suggestions' } },
+      stream: false,
+      temperature: 0.7,
+    };
+
+    let aiResponse: Response | null = null;
+    let lastError = '';
+    let lastStatus = 0;
+
+    for (const model of FALLBACK_MODELS) {
+      console.log(`[social-suggest] Trying model: ${model}`);
+      try {
+        const resp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ ...aiPayload, model }),
+        });
+
+        if (resp.ok) {
+          aiResponse = resp;
+          console.log(`[social-suggest] Success with model: ${model}`);
+          break;
+        }
+
+        lastStatus = resp.status;
+        lastError = await resp.text();
+        console.warn(`[social-suggest] Model ${model} failed (${resp.status}): ${lastError.slice(0, 200)}`);
+
+        // 402 = credits exhausted — no point trying other models
+        if (resp.status === 402) {
+          return new Response(JSON.stringify({ error: 'Crédits IA insuffisants.' }), {
+            status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // For 429 or 5xx, try next model
+        if (resp.status === 429 || resp.status >= 500) {
+          // Brief pause before trying next model
+          await new Promise(r => setTimeout(r, 1000));
+          continue;
+        }
+
+        // Other errors (400, 403...) — unlikely to be model-specific, stop
+        break;
+      } catch (fetchErr) {
+        console.error(`[social-suggest] Fetch error for ${model}:`, fetchErr);
+        lastError = String(fetchErr);
+        await new Promise(r => setTimeout(r, 1000));
+        continue;
+      }
+    }
+
+    if (!aiResponse) {
+      console.error('[social-suggest] All models failed. Last:', lastStatus, lastError.slice(0, 300));
+      if (lastStatus === 429) {
+        return new Response(JSON.stringify({ error: 'Tous les modèles IA sont saturés, réessayez dans quelques minutes.' }), {
           status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      if (aiResponse.status === 402) {
-        return new Response(JSON.stringify({ error: 'Crédits IA insuffisants.' }), {
-          status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      return new Response(JSON.stringify({ error: 'Erreur du service IA', details: aiResponse.status }), {
+      return new Response(JSON.stringify({ error: 'Service IA indisponible', details: lastStatus }), {
         status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
