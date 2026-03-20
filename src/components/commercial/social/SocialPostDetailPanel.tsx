@@ -145,8 +145,13 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
 
   const handleGenerate = useCallback(() => {
     setLoadingPreview(true);
+    const visualCustomization = (freePrompt || keywords || includeVan) ? {
+      freePrompt: freePrompt || undefined,
+      keywords: keywords || undefined,
+      includeVan,
+    } : undefined;
     generateMutation.mutate(
-      { suggestionId: suggestion.id },
+      { suggestionId: suggestion.id, visualCustomization },
       {
         onSuccess: (data) => {
           if (data?.signed_url) setComposedPreviewUrl(data.signed_url);
@@ -157,7 +162,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
         },
       }
     );
-  }, [suggestion.id, generateMutation]);
+  }, [suggestion.id, generateMutation, freePrompt, keywords, includeVan]);
 
   const handleDownload = useCallback(() => {
     const assetToDownload = renderMode === 'image'
