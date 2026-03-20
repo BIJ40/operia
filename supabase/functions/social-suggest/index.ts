@@ -1169,10 +1169,12 @@ Pour "conseil" : tip pratique + actionnable → CTA.
 Pour "contre_exemple" : erreur fréquente + contraste pro → CTA.
 Pour "prospection" : PAS de problème technique. Présente l'ÉQUIPE, la ZONE, les MÉTIERS, les VALEURS, les PARTENAIRES. Ton chaleureux et corporate. → CTA découverte/contact. VARIE les sous-types chaque semaine (zone, équipe, métiers, valeurs, partenaires, créatif).
 Pour "preuve" : OBLIGATOIREMENT lié à une VRAIE réalisation (realisation_id REQUIS). Utilise les photos réelles avant/après. visual_type DOIT être "before_after" si avant/après dispo, sinon "photo". INTERDIT de générer du contenu inventé pour cette catégorie. Le hook doit mettre en avant le résultat concret. → CTA confiance.
+Pour "calendar" : JAMAIS de contenu métier. Post adapté à la date : équipe (interne), présence locale (image_marque), clin d'œil (léger), fun (créatif), disponibilité, émotion. Le ton est CHALEUREUX et HUMAIN. Le CTA est doux ("Bonne fête !", "On pense à vous", "Notre équipe vous souhaite..."). universe = "general". La pression conversion est NULLE pour cette catégorie.
 Pour "saisonnier" : lien météo/période réelle → CTA anticipation.
 
 CHAQUE catégorie a sa PROPRE tonalité. Ne PAS tout transformer en "urgence métier".
 Le topic_type assigné à chaque jour est OBLIGATOIRE — ne jamais le remplacer par un autre.
+Si un jour a un événement calendaire relevance 1, le topic_type DOIT être "calendar", pas autre chose.
 
 VOCABULAIRE INTERDIT :
 - Ne jamais utiliser le mot "expert" ou "expertise". Préférer "technicien", "technicien qualifié", "professionnel", "spécialiste".
