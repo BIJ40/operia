@@ -613,7 +613,7 @@ Deno.serve(async (req) => {
     }
 
     const approvedCount = (existingSuggestions || []).filter(s => s.status === 'approved' || protectedSuggestionIds.has(s.id)).length;
-    const targetPostCount = regenerateSingle ? 1 : Math.max(4, 12 - approvedCount);
+    const targetPostCount = regenerateSingle ? 1 : Math.max(8, 20 - approvedCount);
 
     // ─── AI Generation ──────────────────────────────
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
