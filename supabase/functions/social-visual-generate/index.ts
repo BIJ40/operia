@@ -371,8 +371,22 @@ CRITICAL COMPOSITION RULES — THIS IMAGE IS A BACKGROUND FOR A SOCIAL MEDIA AD:
         ],
       }];
     } else {
-      const sceneDescription = visualPrompt ||
-        `Professional French home ${getSceneForUniverse(universe)}, realistic close-up showing a real problem or urgent situation`;
+      // USER CUSTOMIZATION OVERRIDES: if the user provided a visual directive, it takes priority
+      const userDirective = visualCustomization?.freePrompt || '';
+      const userKeywords = visualCustomization?.keywords || '';
+      const customOverride = userDirective
+        ? `USER DIRECTIVE (HIGHEST PRIORITY — override all defaults): ${userDirective}${userKeywords ? `. Visual keywords: ${userKeywords}` : ''}`
+        : '';
+
+      const baseScene = userDirective
+        ? userDirective
+        : (visualPrompt || `Professional French home ${getSceneForUniverse(universe)}, realistic close-up showing a real problem or urgent situation`);
+      
+      const sceneDescription = customOverride
+        ? `${baseScene}\n\n${customOverride}`
+        : baseScene;
+
+      console.log('[social-visual-generate] Scene description:', sceneDescription.slice(0, 200));
 
       // Check if the scene mentions a van — if so, pass the real van photo as reference
       const sceneHasVan = sceneDescription.toLowerCase().includes('van') || 
