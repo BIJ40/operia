@@ -849,7 +849,7 @@ ADDITIONAL REQUIREMENTS:
         content: `Generate a realistic photograph for a social media ad (1080x1080 square). Scene: ${getSceneForUniverse(universe)}. Professional photography, cinematic lighting, bottom third darker. No text, no logos, no watermarks.`,
       }];
       
-      const retryResult = await callImageAIWithFallback(LOVABLE_API_KEY, retryMessages);
+      const retryResult = await callImageAIWithFallback(LOVABLE_API_KEY, retryMessages, preferredImageModel);
       if (retryResult.ok) {
         bgImageUrl = retryResult.data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
       }
