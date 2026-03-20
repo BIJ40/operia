@@ -82,24 +82,24 @@ export function getTheme(universe?: string | null): ServiceTheme {
 // TEXT SANITIZATION — Auto-optimize copy for canvas
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-/** Sanitize hook: max words, max chars, no truncation marks */
+/** Sanitize hook: max 5 words, max 32 chars, MUST be complete — never truncated */
 export function sanitizeHook(raw: string): string {
   if (!raw) return '';
   let text = raw.trim();
   // Remove trailing ellipsis/dots
   text = text.replace(/[…\.]+$/, '').trim();
-  // Limit words
+  // Limit words (strict: 5 max)
   const words = text.split(/\s+/);
   if (words.length > HOOK_MAX_WORDS) {
     text = words.slice(0, HOOK_MAX_WORDS).join(' ');
   }
-  // Limit chars
+  // Limit chars (strict: 32 max)
   if (text.length > HOOK_MAX_CHARS) {
     const cut = text.slice(0, HOOK_MAX_CHARS);
     const lastSpace = cut.lastIndexOf(' ');
-    text = lastSpace > HOOK_MAX_CHARS * 0.5 ? cut.slice(0, lastSpace) : cut;
+    text = lastSpace > 10 ? cut.slice(0, lastSpace) : cut;
   }
-  // Remove trailing punctuation artifacts
+  // Clean trailing punctuation artifacts (but keep sentence-ending ones)
   text = text.replace(/[\s,;:]+$/, '').trim();
   return text;
 }
