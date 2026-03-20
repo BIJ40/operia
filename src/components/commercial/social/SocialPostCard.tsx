@@ -89,7 +89,15 @@ export function SocialPostCard({ suggestion, onApprove, onReject, onRegenerate, 
       )}
 
       {/* Caption */}
-      <div className="bg-muted/50 rounded-md p-3 border border-border">
+      <div className="relative group bg-muted/50 rounded-md p-3 pr-9 border border-border">
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+          title="Copier le texte"
+        >
+          <Copy className="w-3.5 h-3.5" />
+        </button>
         <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
           {suggestion.caption_base_fr}
         </p>
