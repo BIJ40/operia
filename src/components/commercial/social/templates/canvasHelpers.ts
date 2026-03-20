@@ -38,20 +38,20 @@ export const ZONES = {
   TEXT_WIDTH: 940,     // SIZE - 2*MARGIN_X
 } as const;
 
-// ─── Text constraints ───────────────────────────────────────
-const HOOK_MAX_CHARS = 50;
-const HOOK_MAX_WORDS = 8;
-const HOOK_MAX_LINES = 3;
+// ─── Text constraints — STRICT (verrouillé) ────────────────
+const HOOK_MAX_CHARS = 32;
+const HOOK_MAX_WORDS = 5;
+const HOOK_MAX_LINES = 2;
 const HOOK_FONT_MAX = 58;
 const HOOK_FONT_MIN = 38;
 
-const SUB_MAX_CHARS = 90;
-const SUB_MAX_WORDS = 18;
+const SUB_MAX_CHARS = 60;
+const SUB_MAX_WORDS = 10;
 const SUB_MAX_LINES = 2;
 const SUB_FONT = 24;
 
-const CTA_MAX_CHARS = 40;
-const CTA_FONT = 22;
+const CTA_MAX_CHARS = 25;
+const CTA_FONT = 24;
 
 // ─── Universe Style Map ─────────────────────────────────────
 export interface ServiceTheme {
