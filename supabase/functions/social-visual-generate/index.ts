@@ -375,6 +375,7 @@ ADDITIONAL REQUIREMENTS:
       realPhotoUrl,
       'bg_only',
       jsonHeaders,
+      generatedCopy,
     );
 
     if ('response' in backgroundSave) {
