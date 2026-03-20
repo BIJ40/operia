@@ -203,7 +203,7 @@ async function callImageAIWithFallback(
           }
         }
 
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${geminiKey}`;
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-image-generation:generateContent?key=${geminiKey}`;
         const geminiResponse = await fetch(geminiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -346,7 +346,7 @@ CRITICAL RULES:
     console.log('[callImageAI] Trying Gemini Imagen (text-only)...');
     await new Promise(r => setTimeout(r, 500));
     try {
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${geminiKey}`;
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-image-generation:generateContent?key=${geminiKey}`;
       const geminiResponse = await fetch(geminiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -867,7 +867,7 @@ ADDITIONAL REQUIREMENTS:
     let bgImageUrl = bgData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
     // Sometimes the model returns OK but no image — retry once with a simpler prompt
-    if (!bgImageUrl || !bgImageUrl.startsWith('data:image')) {
+    if (!bgImageUrl || (!bgImageUrl.startsWith('data:image') && !bgImageUrl.startsWith('http'))) {
       console.warn('[social-visual-generate] Model returned OK but no image. Response keys:', JSON.stringify(Object.keys(bgData?.choices?.[0]?.message || {})));
       console.warn('[social-visual-generate] Retrying with simplified prompt...');
       
@@ -882,9 +882,29 @@ ADDITIONAL REQUIREMENTS:
       }
     }
 
-    if (!bgImageUrl || !bgImageUrl.startsWith('data:image')) {
+    if (!bgImageUrl || (!bgImageUrl.startsWith('data:image') && !bgImageUrl.startsWith('http'))) {
       console.error('[social-visual-generate] No background image generated after retry');
       return new Response(JSON.stringify({ error: "Aucune image de fond générée" }), { status: 502, headers: jsonHeaders });
+    }
+
+    // If DALL-E returned an https URL, download and convert to data:image base64
+    if (bgImageUrl.startsWith('http')) {
+      console.log('[social-visual-generate] Converting DALL-E URL to base64...');
+      try {
+        const imgResp = await fetch(bgImageUrl);
+        if (imgResp.ok) {
+          const buf = await imgResp.arrayBuffer();
+          const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+          const ct = imgResp.headers.get('content-type') || 'image/png';
+          bgImageUrl = `data:${ct};base64,${b64}`;
+        } else {
+          console.error('[social-visual-generate] Failed to download DALL-E image:', imgResp.status);
+          return new Response(JSON.stringify({ error: "Impossible de télécharger l'image DALL-E" }), { status: 502, headers: jsonHeaders });
+        }
+      } catch (dlErr) {
+        console.error('[social-visual-generate] DALL-E download error:', dlErr);
+        return new Response(JSON.stringify({ error: "Erreur téléchargement image" }), { status: 502, headers: jsonHeaders });
+      }
     }
 
     console.log('[social-visual-generate] Background image generated via', bgResult.model, '. Saving raw background...');
