@@ -2288,16 +2288,17 @@ export type Database = {
         Row: {
           agency_id: string
           batch_id: string | null
+          bible_violation_count: number
           board_prompt_master: string | null
           campaign_mode: string | null
           client_profile_slug: string | null
-          coupling_score_total: number | null
           created_at: string
           created_by: string | null
           cta_mode: string | null
           diversity_score: number | null
           id: string
           is_favorite: boolean | null
+          narrative_distance_score: number | null
           panels: Json
           problem_slug: string
           status: string
@@ -2317,16 +2318,17 @@ export type Database = {
         Insert: {
           agency_id: string
           batch_id?: string | null
+          bible_violation_count?: number
           board_prompt_master?: string | null
           campaign_mode?: string | null
           client_profile_slug?: string | null
-          coupling_score_total?: number | null
           created_at?: string
           created_by?: string | null
           cta_mode?: string | null
           diversity_score?: number | null
           id?: string
           is_favorite?: boolean | null
+          narrative_distance_score?: number | null
           panels?: Json
           problem_slug: string
           status?: string
@@ -2346,16 +2348,17 @@ export type Database = {
         Update: {
           agency_id?: string
           batch_id?: string | null
+          bible_violation_count?: number
           board_prompt_master?: string | null
           campaign_mode?: string | null
           client_profile_slug?: string | null
-          coupling_score_total?: number | null
           created_at?: string
           created_by?: string | null
           cta_mode?: string | null
           diversity_score?: number | null
           id?: string
           is_favorite?: boolean | null
+          narrative_distance_score?: number | null
           panels?: Json
           problem_slug?: string
           status?: string
