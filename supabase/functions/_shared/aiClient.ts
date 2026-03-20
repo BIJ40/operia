@@ -394,7 +394,7 @@ export function getAiKeys(): { openaiKey: string; anthropicKey: string | null; g
 }
 
 /**
- * Appel IA avec fallback automatique : OpenAI → Claude → Gemini
+ * Appel IA avec fallback automatique : OpenAI → Gemini → Claude
  * Compatible avec le format OpenAI (messages, tools, etc.)
  */
 export async function callAiWithFallback(options: AiCompletionOptions): Promise<AiResult> {
@@ -410,25 +410,25 @@ export async function callAiWithFallback(options: AiCompletionOptions): Promise<
     return openaiResult;
   }
 
-  // 2. Fallback to Claude (if key available and not streaming)
-  if (anthropicKey && !options.stream) {
-    console.log('[aiClient] OpenAI failed, falling back to Claude...');
-    await new Promise(r => setTimeout(r, 500));
-    const anthropicResult = await callAnthropic(anthropicKey, options);
-    if (anthropicResult.ok) return anthropicResult;
-    
-    console.warn('[aiClient] Claude also failed, trying Gemini...');
-  }
-
-  // 3. Fallback to Gemini (if key available and not streaming)
+  // 2. Fallback to Gemini (if key available and not streaming)
   if (geminiKey && !options.stream) {
-    console.log('[aiClient] Falling back to Gemini...');
+    console.log('[aiClient] OpenAI failed, falling back to Gemini...');
     await new Promise(r => setTimeout(r, 500));
     const geminiResult = await callGemini(geminiKey, options);
     if (geminiResult.ok) return geminiResult;
 
-    console.error('[aiClient] All providers failed (OpenAI, Claude, Gemini)');
-    return geminiResult;
+    console.warn('[aiClient] Gemini also failed, trying Claude...');
+  }
+
+  // 3. Fallback to Claude (if key available and not streaming)
+  if (anthropicKey && !options.stream) {
+    console.log('[aiClient] Falling back to Claude...');
+    await new Promise(r => setTimeout(r, 500));
+    const anthropicResult = await callAnthropic(anthropicKey, options);
+    if (anthropicResult.ok) return anthropicResult;
+    
+    console.error('[aiClient] All providers failed (OpenAI, Gemini, Claude)');
+    return anthropicResult;
   }
 
   return openaiResult;
