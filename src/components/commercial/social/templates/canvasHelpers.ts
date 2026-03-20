@@ -246,11 +246,11 @@ export function drawGradientBg(ctx: CanvasRenderingContext2D, color1: string, co
 export async function drawHCLogo(ctx: CanvasRenderingContext2D, logoSrc: string, _position: 'top-left' | 'top-center' = 'top-left') {
   try {
     const img = await loadImage(logoSrc);
-    const logoH = 52;
+    const logoH = 68;
     const logoRatio = img.naturalWidth / img.naturalHeight;
     const logoW = logoH * logoRatio;
-    const padX = 14;
-    const padY = 10;
+    const padX = 16;
+    const padY = 12;
     const bgW = logoW + padX * 2;
     const bgH = logoH + padY * 2;
     const x = 25;
