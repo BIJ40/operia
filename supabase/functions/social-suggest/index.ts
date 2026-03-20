@@ -214,7 +214,7 @@ function buildWeeklySchedule(daysInMonth: number, year: number, month: number): 
 const UNIVERSE_RULES = {
   minGapDays: 3,
   maxPerWeek: 2,
-  maxPerMonth: 6,
+  maxPerMonth: 4, // Reduced from 6 to force more diversity
 };
 
 // ─── Format distribution ───
@@ -520,14 +520,35 @@ function validateAndNormalizeSuggestions(
     }
   }
 
-  // Rule 3: max per week/month universe enforcement (log warning only, don't reject at this stage)
+  // Rule 3: max per month universe enforcement — ACTIVELY redistribute excess
   const universeCounts: Record<string, number> = {};
   for (const p of finalResult) {
     universeCounts[p.universe] = (universeCounts[p.universe] || 0) + 1;
   }
-  for (const [uni, count] of Object.entries(universeCounts)) {
-    if (uni !== 'general' && count > UNIVERSE_RULES.maxPerMonth) {
-      console.warn(`[social-suggest] Universe "${uni}" appears ${count} times (max ${UNIVERSE_RULES.maxPerMonth})`);
+
+  // Find universes that are under-represented for redistribution
+  const allSpecificUniverses = ['plomberie', 'electricite', 'serrurerie', 'vitrerie', 'menuiserie', 'renovation', 'volets', 'pmr'];
+  const underUsed = allSpecificUniverses.filter(u => (universeCounts[u] || 0) < 2);
+
+  for (let i = 0; i < finalResult.length; i++) {
+    const p = finalResult[i];
+    if (p.universe === 'general') continue; // general is always OK
+    const count = universeCounts[p.universe] || 0;
+    if (count > UNIVERSE_RULES.maxPerMonth) {
+      // Find an under-used universe to reassign
+      if (underUsed.length > 0) {
+        const newUni = underUsed.shift()!;
+        console.log(`[social-suggest] Redistributing "${p.universe}" → "${newUni}" (was ${count}x, max ${UNIVERSE_RULES.maxPerMonth})`);
+        universeCounts[p.universe]--;
+        universeCounts[newUni] = (universeCounts[newUni] || 0) + 1;
+        finalResult[i] = { ...p, universe: newUni };
+      } else {
+        // Fallback to general
+        console.log(`[social-suggest] Redistributing "${p.universe}" → "general" (was ${count}x, max ${UNIVERSE_RULES.maxPerMonth})`);
+        universeCounts[p.universe]--;
+        universeCounts['general'] = (universeCounts['general'] || 0) + 1;
+        finalResult[i] = { ...p, universe: 'general' };
+      }
     }
   }
 
@@ -1084,10 +1105,11 @@ PLATFORM VARIANTS :
 ANTI-RÉPÉTITION & ANTI-FATIGUE (CRITIQUE — MODE DAILY CONTENT) :
 - Pas 2 posts consécutifs même univers
 - Pas 2 posts consécutifs même catégorie (topic_type)
-- Même univers : gap minimum 3 jours, max 2 par semaine, max 6 par mois
+- Même univers (hors general) : gap minimum 3 jours, max 2 par semaine, MAX 4 PAR MOIS
 - Variation obligatoire du ton : alterner question, affirmation, alerte, conseil, chiffre
 - Si un post ressemble trop au précédent → REJETER ET REFAIRE
 - Varier les univers : alterner plomberie, electricite, serrurerie, volets, menuiserie, vitrerie, pmr, renovation
+- MINIMUM 4 posts "prospection" par mois (1 par semaine), répartis sur les sous-types : zone, métiers, équipe, partenaires, valeurs, créatif
 - 1 post par jour, couvrir le mois entier
 
 FORMAT DES POSTS (variation obligatoire) :
