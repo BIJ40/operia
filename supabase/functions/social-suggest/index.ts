@@ -356,7 +356,7 @@ function validateAndNormalizeSuggestions(
     if (dayNum < 1 || dayNum > daysInMonth) date = `${monthKey}-15`;
 
     // 2. topic_type
-    const topicType = (VALID_TOPIC_TYPES as readonly string[]).includes(s.topic_type) ? s.topic_type : 'seasonal_tip';
+    const topicType = (VALID_TOPIC_TYPES as readonly string[]).includes(s.topic_type) ? s.topic_type : 'conseil';
 
     // 3. topic_key dedup
     const topicKey = String(s.topic_key || `${topicType}_${date}`);
