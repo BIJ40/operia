@@ -96,22 +96,6 @@ async function callImageAIWithFallback(
   return { ok: false, status: result.status, error: result.error };
 }
 
-      // 429 = rate limited → try next model
-      if (response.status === 429) {
-        console.log(`[social-visual-generate] ${model} rate limited, trying next...`);
-        continue;
-      }
-
-      continue;
-    } catch (err) {
-      console.error(`[social-visual-generate] ${model} fetch error:`, err);
-      continue;
-    }
-  }
-
-  return { ok: false, status: lastStatus, error: lastError };
-}
-
 Deno.serve(async (req) => {
   const corsResult = handleCorsPreflightOrReject(req);
   if (corsResult) return corsResult;
