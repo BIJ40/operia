@@ -77,62 +77,23 @@ const GENERAL_TOPIC_LABELS: Record<string, string> = {
   educational: 'Le saviez-vous ?',
 };
 
-// ─── Multi-model fallback for image generation ─────────────
-const IMAGE_MODELS = [
-  'google/gemini-3.1-flash-image-preview',  // Nano Banana 2 (fast + quality)
-  'google/gemini-2.5-flash-image',           // Nano Banana 1 (fallback)
-  'google/gemini-3-pro-image-preview',       // Pro (last resort, slower)
-];
+// ─── Multi-model fallback for text/image AI (OpenAI + Claude) ─────────────
+import { callAiWithFallback, getAiKeys, type AiChatMessage } from '../_shared/aiClient.ts';
 
 async function callImageAIWithFallback(
-  apiKey: string,
+  _apiKey: string,
   messages: any[],
 ): Promise<{ ok: true; data: any; model: string } | { ok: false; status: number; error: string }> {
-  let lastStatus = 502;
-  let lastError = 'All models failed';
+  // Use OpenAI gpt-4o for image understanding/composition
+  const result = await callAiWithFallback({
+    messages: messages as AiChatMessage[],
+    model: 'gpt-4o',
+  });
 
-  for (const model of IMAGE_MODELS) {
-    console.log(`[social-visual-generate] Trying model: ${model}`);
-    try {
-      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ model, messages, modalities: ['image', 'text'] }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log(`[social-visual-generate] Success with model: ${model}`);
-        return { ok: true, data, model };
-      }
-
-      const errText = await response.text();
-      console.warn(`[social-visual-generate] ${model} returned ${response.status}: ${errText.slice(0, 200)}`);
-      lastStatus = response.status;
-      lastError = errText;
-
-      // 402 = no credits → same billing, stop
-      if (response.status === 402) {
-        return { ok: false, status: 402, error: 'Crédits IA insuffisants.' };
-      }
-
-      // 429 = rate limited → try next model
-      if (response.status === 429) {
-        console.log(`[social-visual-generate] ${model} rate limited, trying next...`);
-        continue;
-      }
-
-      continue;
-    } catch (err) {
-      console.error(`[social-visual-generate] ${model} fetch error:`, err);
-      continue;
-    }
+  if (result.ok) {
+    return { ok: true, data: result.data, model: `${result.provider}/gpt-4o` };
   }
-
-  return { ok: false, status: lastStatus, error: lastError };
+  return { ok: false, status: result.status, error: result.error };
 }
 
 Deno.serve(async (req) => {
@@ -216,10 +177,12 @@ Deno.serve(async (req) => {
     // topicType already declared above
     const rawCaption = suggestion.caption_base_fr || '';
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: 'Service IA non configuré' }), { status: 500, headers: jsonHeaders });
+    // Validate AI keys are available
+    let AI_KEYS_VALID = true;
+    try { getAiKeys(); } catch (e) {
+      return new Response(JSON.stringify({ error: (e as Error).message }), { status: 500, headers: jsonHeaders });
     }
+    const LOVABLE_API_KEY = 'unused'; // kept for callImageAIWithFallback signature compat
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // ÉTAPE 0 : COPYWRITING IA — Réécriture cohérente du hook/sous-texte
@@ -273,21 +236,13 @@ RÈGLES STRICTES :
 Réponds UNIQUEMENT en JSON valide avec exactement ces clés :
 {"hook":"...","subtext":"...","cta":"..."}`;
 
-      const copyResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-3-flash-preview',
-          messages: [{ role: 'user', content: copywritingPrompt }],
-          response_format: { type: 'json_object' },
-        }),
+      const copyResult = await callAiWithFallback({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: copywritingPrompt }],
+        response_format: { type: 'json_object' },
       });
 
-      if (copyResponse.ok) {
-        const copyData = await copyResponse.json();
+      if (copyResult.ok) {
         const rawContent = copyData.choices?.[0]?.message?.content || '';
         try {
           const parsed = JSON.parse(rawContent);
