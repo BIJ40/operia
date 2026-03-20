@@ -4,7 +4,7 @@
  * Inclut un audit de couverture interne
  */
 
-import { GeneratedPanel, NarrativeFunction, ProblemUniverse, UrgencyLevel } from '../types/bdStory.types';
+import { AtomUsageState, GeneratedPanel, NarrativeFunction, ProblemUniverse, TextAtomEntry, UrgencyLevel } from '../types/bdStory.types';
 import { getTextAtoms, getTextAtomsCount } from '../data/textAtoms';
 import { StorySelection } from './selectionEngine';
 
@@ -16,6 +16,29 @@ function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+function chooseTextAtom(candidates: TextAtomEntry[], atomUsageState?: AtomUsageState): TextAtomEntry {
+  if (candidates.length === 1 || !atomUsageState) {
+    return pickRandom(candidates);
+  }
+
+  const ranked = [...candidates]
+    .map(candidate => {
+      const usageCount = atomUsageState.atomUsageCount[candidate.text] || 0;
+      const recentPenalty = atomUsageState.recentAtomTexts.includes(candidate.text) ? 100 : 0;
+      const score = Math.random() - usageCount * 8 - recentPenalty;
+      return { candidate, score };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  return ranked[0].candidate;
+}
+
+function registerAtomUsage(text: string, atomUsageState?: AtomUsageState): void {
+  if (!atomUsageState) return;
+  atomUsageState.atomUsageCount[text] = (atomUsageState.atomUsageCount[text] || 0) + 1;
+  atomUsageState.recentAtomTexts = [text, ...atomUsageState.recentAtomTexts.filter(entry => entry !== text)].slice(0, 40);
+}
+
 // ============================================================================
 // TEXT SELECTION — cascading fallback
 // ============================================================================
@@ -25,7 +48,8 @@ function findText(
   universe: ProblemUniverse,
   tone: 'rassurant' | 'pedagogique' | 'reactif' | 'proximite',
   urgencyLevel: UrgencyLevel,
-  usedTexts: Set<string>
+  usedTexts: Set<string>,
+  atomUsageState?: AtomUsageState
 ): string {
   // Level 1: exact match (universe + function + tone + urgency)
   let candidates = getTextAtoms(narrativeFunction, universe)
@@ -67,7 +91,7 @@ function findText(
     return '…'; // Ultimate fallback
   }
 
-  const selected = pickRandom(candidates);
+  const selected = chooseTextAtom(candidates, atomUsageState);
   return selected.text;
 }
 
@@ -85,7 +109,8 @@ function getCtaText(selection: StorySelection): string {
 
 export function fillPanelTexts(
   panels: GeneratedPanel[],
-  selection: StorySelection
+  selection: StorySelection,
+  atomUsageState?: AtomUsageState
 ): GeneratedPanel[] {
   const usedTexts = new Set<string>();
 
@@ -100,11 +125,13 @@ export function fillPanelTexts(
         selection.problem.universe,
         selection.tone,
         selection.problem.urgencyLevel,
-        usedTexts
+        usedTexts,
+        atomUsageState
       );
     }
 
     usedTexts.add(text);
+    registerAtomUsage(text, atomUsageState);
 
     return { ...panel, text };
   });
@@ -120,6 +147,7 @@ export interface CoverageReport {
   totalPossibleCombinations: number;
   coveragePercent: number;
   gaps: CoverageGap[];
+  weakGaps: CoverageGap[];
 }
 
 export interface CoverageGap {
@@ -176,5 +204,6 @@ export function auditCoverage(): CoverageReport {
     totalPossibleCombinations: total,
     coveragePercent: Math.round((covered / total) * 100),
     gaps: gaps.filter(g => g.available === 0), // Only show zero-coverage
+    weakGaps: gaps.filter(g => g.available === 1),
   };
 }

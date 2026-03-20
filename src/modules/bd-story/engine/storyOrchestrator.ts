@@ -3,7 +3,7 @@
  * Pipeline complet : Selection → Compose → Copy → Validate → Score → Diversity → Visual
  */
 
-import { BdStoryGenerationInput, BdStoryGenerationOutput, GeneratedStory } from '../types/bdStory.types';
+import { AtomUsageState, BdStoryGenerationInput, BdStoryGenerationOutput, GeneratedStory, ProblemUniverse } from '../types/bdStory.types';
 import { generateSelection } from './selectionEngine';
 import { composeSkeleton, assembleStory, buildOutput } from './storyComposer';
 import { fillPanelTexts } from './copyEngine';
@@ -17,6 +17,14 @@ import { generateBoardPrompt, fillVisualPrompts } from './visualPromptEngine';
 // ============================================================================
 
 const MAX_GENERATION_ATTEMPTS = 5;
+const EMPTY_BATCH_COUNTS: Record<ProblemUniverse, number> = {
+  plomberie: 0,
+  electricite: 0,
+  serrurerie: 0,
+  vitrerie: 0,
+  menuiserie: 0,
+  peinture_renovation: 0,
+};
 
 // ============================================================================
 // GENERATE ONE STORY
@@ -37,7 +45,7 @@ export function generateStory(
     const skeleton = composeSkeleton(selection);
 
     // 3. Fill texts
-    const panelsWithText = fillPanelTexts(skeleton, selection);
+    const panelsWithText = fillPanelTexts(skeleton, selection, input.atomUsageState);
 
     // 4. Assemble story
     let story = assembleStory(selection, panelsWithText, input);
@@ -80,7 +88,7 @@ export function generateStory(
     // Emergency fallback — generate without diversity checks
     const selection = generateSelection(input);
     const skeleton = composeSkeleton(selection);
-    const panelsWithText = fillPanelTexts(skeleton, selection);
+    const panelsWithText = fillPanelTexts(skeleton, selection, input.atomUsageState);
     let story = assembleStory(selection, panelsWithText, input);
     story = fillVisualPrompts(story);
     story = { ...story, validation: validateStory(story) };
@@ -101,11 +109,25 @@ export function generateBatch(
 ): BdStoryGenerationOutput[] {
   const results: BdStoryGenerationOutput[] = [];
   const accumulated = [...existingStories];
+  const batchCounts: Record<ProblemUniverse, number> = { ...EMPTY_BATCH_COUNTS };
+  const atomUsageState: AtomUsageState = { atomUsageCount: {}, recentAtomTexts: [] };
 
-  for (const input of inputs) {
-    const result = generateStory(input, accumulated);
+  for (let i = 0; i < inputs.length; i++) {
+    const input = inputs[i];
+    const enrichedInput: BdStoryGenerationInput = {
+      ...input,
+      batchState: {
+        generatedCount: i,
+        countsByUniverse: { ...batchCounts },
+        targetSize: inputs.length,
+      },
+      atomUsageState,
+    };
+
+    const result = generateStory(enrichedInput, accumulated);
     results.push(result);
     accumulated.push(result.story);
+    batchCounts[result.story.universe] = (batchCounts[result.story.universe] || 0) + 1;
   }
 
   return results;

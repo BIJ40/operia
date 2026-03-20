@@ -338,6 +338,25 @@ export interface BdStoryGenerationInput {
   avoidRecentStoryKeys?: string[];
   avoidRecentProblemSlugs?: string[];
   avoidRecentTechnicianSlugs?: string[];
+  batchState?: BatchState;
+  batchUniverseQuotas?: Record<ProblemUniverse, BatchUniverseQuota>;
+  atomUsageState?: AtomUsageState;
+}
+
+export interface BatchUniverseQuota {
+  minPct: number;
+  maxPct: number;
+}
+
+export interface BatchState {
+  generatedCount: number;
+  countsByUniverse: Record<ProblemUniverse, number>;
+  targetSize: number;
+}
+
+export interface AtomUsageState {
+  atomUsageCount: Record<string, number>;
+  recentAtomTexts: string[];
 }
 
 export interface BdStoryGenerationOutput {
