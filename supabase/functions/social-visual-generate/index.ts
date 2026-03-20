@@ -827,7 +827,7 @@ ADDITIONAL REQUIREMENTS:
 
     console.log('[social-visual-generate] Generating background image...');
 
-    const bgResult = await callImageAIWithFallback(LOVABLE_API_KEY, bgMessages);
+    const bgResult = await callImageAIWithFallback(LOVABLE_API_KEY, bgMessages, preferredImageModel);
 
     if (!bgResult.ok) {
       if (bgResult.status === 402) {
