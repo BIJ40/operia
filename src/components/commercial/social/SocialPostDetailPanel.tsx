@@ -117,7 +117,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
     hook: generatedCopy?.hook || aiPayload.hook || suggestion.title,
     cta: generatedCopy?.cta || aiPayload.cta || null,
     topicType: suggestion.topic_type,
-  }), [suggestion, rawPreviewUrl, aiPayload, generatedCopy]);
+  }), [suggestion, rawPreviewUrl, aiPayload, generatedCopy, effectiveUniverse]);
 
   const templateId = useMemo(() => resolveSocialTemplate({
     topic_type: suggestion.topic_type,
