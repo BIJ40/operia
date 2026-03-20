@@ -150,9 +150,13 @@ async function callImageAIWithFallback(
   }
 
   const hasInputImages = inputImages.length > 0;
+  const forceGemini = preferredModel === 'gemini';
+  const forceDalle = preferredModel === 'dall-e-3';
+
+  console.log(`[callImageAI] preferredModel=${preferredModel || 'auto'}, hasInputImages=${hasInputImages}, forceGemini=${forceGemini}, forceDalle=${forceDalle}`);
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // ROUTE A: Input images present → Gemini FIRST (can process images natively)
+  // ROUTE A: Input images present OR user forced Gemini → Gemini FIRST
   // DALL-E 3 CANNOT accept input images, so Gemini is the only option here
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   if (hasInputImages) {
