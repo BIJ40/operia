@@ -69,7 +69,7 @@ export function useBdStoryGenerate({ agencyId }: UseGenerateOptions) {
           story_json: JSON.parse(JSON.stringify(story)),
           board_prompt_master: result.boardPromptMaster,
           diversity_score: story.diversityScore?.totalScore ?? 0,
-          narrative_distance_score: story.diversityScore?.narrativeDistance ?? 0,
+          narrative_distance_score: story.diversityScore?.sameStoryFamily ?? 0,
           validation_is_valid: story.validation.isValid,
           validation_issue_count: story.validation.issues.length,
           bible_violation_count: bibleViolations,
