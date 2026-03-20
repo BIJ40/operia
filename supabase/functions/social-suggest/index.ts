@@ -753,18 +753,17 @@ function validateAndNormalizeSuggestions(
     const dayNum = parseInt(date.split('-')[2]);
     if (dayNum < 1 || dayNum > daysInMonth) date = `${monthKey}-15`;
 
-    // 2. topic_type — CALENDAR-FIRST: if this day has a calendar event with non-metier angle, force "calendar"
+    // 2. topic_type and universe — EDITORIAL CALENDAR FIRST
     let topicType = (VALID_TOPIC_TYPES as readonly string[]).includes(s.topic_type) ? s.topic_type : 'conseil';
     const actualDay = parseInt(date.split('-')[2]);
-    const matchingAwareness = AWARENESS_DAYS.find(a => a.month === month && a.day === actualDay);
     
-    if (matchingAwareness && matchingAwareness.calendarAngle && matchingAwareness.calendarAngle !== 'metier') {
-      // Calendar-first: this is a human/brand/light/availability day — force calendar type
-      topicType = 'calendar';
-    } else if (weeklySchedule) {
-      const scheduledDay = weeklySchedule.find(ws => ws.day === dayNum);
-      if (scheduledDay && (VALID_TOPIC_TYPES as readonly string[]).includes(scheduledDay.category)) {
-        topicType = scheduledDay.category;
+    // Look up editorial calendar for this day
+    const editorialEntry = weeklySchedule?.find(ws => ws.day === actualDay);
+    
+    if (editorialEntry) {
+      // Editorial calendar overrides both topic_type and universe
+      if ((VALID_TOPIC_TYPES as readonly string[]).includes(editorialEntry.category)) {
+        topicType = editorialEntry.category;
       }
     }
 
@@ -773,16 +772,13 @@ function validateAndNormalizeSuggestions(
     if (seenTopicKeys.has(topicKey) || existingTopicKeys.has(topicKey)) continue;
     seenTopicKeys.add(topicKey);
 
-    // 4. universe — for calendar/non-metier, force general. For metier events, use preferred universe.
+    // 4. universe — editorial calendar is the source of truth
     let universe = (NORMALIZED_UNIVERSES as readonly string[]).includes(s.universe) ? s.universe : 'general';
-    if (matchingAwareness && matchingAwareness.preferredUniverses.length > 0) {
-      const preferredUni = matchingAwareness.preferredUniverses[0];
-      if ((NORMALIZED_UNIVERSES as readonly string[]).includes(preferredUni)) {
-        universe = preferredUni;
-      }
+    if (editorialEntry && editorialEntry.universe && (NORMALIZED_UNIVERSES as readonly string[]).includes(editorialEntry.universe)) {
+      universe = editorialEntry.universe;
     }
-    // Force general for calendar and prospection
-    if (topicType === 'calendar' || topicType === 'prospection') {
+    // Force general for prospection (always)
+    if (topicType === 'prospection') {
       universe = 'general';
     }
 
