@@ -103,7 +103,7 @@ function buildAwarenessDays(year: number): AwarenessDay[] {
     { month: 4, day: 28, label: "🔒 Journée sécurité au travail — sécurisez aussi votre maison", tags: ["securite","electricite","serrurerie","fete"], contentTypeHint: "prevention", preferredUniverses: ["electricite","serrurerie"], ctaHint: "diagnostic_securite", relevanceScore: 3, intentScore: 3 },
 
     // ════════════════ MAI ════════════════
-    { month: 5, day: 1,  label: "🌷 Fête du travail — sécuriser sa maison pour le pont de mai", tags: ["securite","serrurerie","fete"], contentTypeHint: "prevention", preferredUniverses: ["serrurerie"], ctaHint: "securisation_pont", relevanceScore: 3, intentScore: 3 },
+    { month: 5, day: 1,  label: "🌷 1er Mai — Fête du travail : nos techniciens au service de votre confort toute l'année", tags: ["branding","equipe","fete"], contentTypeHint: "interne", preferredUniverses: ["general"], ctaHint: "engagement_equipe", relevanceScore: 3, intentScore: 3 },
     { month: 5, day: 4,  label: "Star Wars Day — que la force soit avec vos installations", tags: ["humour","engagement","decale"], contentTypeHint: "decale", preferredUniverses: ["general"], ctaHint: "engagement_communaute", relevanceScore: 1, intentScore: 1 },
     { month: 5, day: 8,  label: "8 mai — pont = cambriolages : sécurisez vos accès", tags: ["securite","serrurerie","fete"], contentTypeHint: "prevention", preferredUniverses: ["serrurerie"], ctaHint: "securisation_pont", relevanceScore: 3, intentScore: 3 },
     { month: 5, day: 10, label: "Entretien climatisation avant l'été", tags: ["entretien","confort"], contentTypeHint: "prevention", preferredUniverses: ["plomberie","electricite"], ctaHint: "entretien_clim", relevanceScore: 3, intentScore: 2 },
