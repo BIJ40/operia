@@ -887,6 +887,26 @@ ADDITIONAL REQUIREMENTS:
       return new Response(JSON.stringify({ error: "Aucune image de fond générée" }), { status: 502, headers: jsonHeaders });
     }
 
+    // If DALL-E returned an https URL, download and convert to data:image base64
+    if (bgImageUrl.startsWith('http')) {
+      console.log('[social-visual-generate] Converting DALL-E URL to base64...');
+      try {
+        const imgResp = await fetch(bgImageUrl);
+        if (imgResp.ok) {
+          const buf = await imgResp.arrayBuffer();
+          const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+          const ct = imgResp.headers.get('content-type') || 'image/png';
+          bgImageUrl = `data:${ct};base64,${b64}`;
+        } else {
+          console.error('[social-visual-generate] Failed to download DALL-E image:', imgResp.status);
+          return new Response(JSON.stringify({ error: "Impossible de télécharger l'image DALL-E" }), { status: 502, headers: jsonHeaders });
+        }
+      } catch (dlErr) {
+        console.error('[social-visual-generate] DALL-E download error:', dlErr);
+        return new Response(JSON.stringify({ error: "Erreur téléchargement image" }), { status: 502, headers: jsonHeaders });
+      }
+    }
+
     console.log('[social-visual-generate] Background image generated via', bgResult.model, '. Saving raw background...');
 
     const backgroundSave = await persistAsset(
