@@ -47,7 +47,7 @@ export async function drawEducationalCard(ctx: CanvasRenderingContext2D, payload
   
   // Badge "Le saviez-vous ?"
   const badgeText = '💡 Le saviez-vous ?';
-  ctx.font = `bold 26px ${HC.FONT}`;
+  ctx.font = `bold 26px Arial, sans-serif`;
   const badgeW = ctx.measureText(badgeText).width + 32;
   const badgeX = SIZE - badgeW - 40;
   const badgeY = 38;

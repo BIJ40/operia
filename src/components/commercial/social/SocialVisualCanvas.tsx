@@ -11,8 +11,6 @@ import { drawTipCard } from './templates/drawTipCard';
 import { drawAwarenessCard } from './templates/drawAwarenessCard';
 import { drawBrandCard } from './templates/drawBrandCard';
 import { drawEducationalCard } from './templates/drawEducationalCard';
-import { drawAwarenessCard } from './templates/drawAwarenessCard';
-import { drawBrandCard } from './templates/drawBrandCard';
 
 export interface SocialTemplatePayload {
   title: string;
