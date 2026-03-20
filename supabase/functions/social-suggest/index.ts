@@ -1304,12 +1304,26 @@ RÈGLES :
 - Chaque post DOIT contenir un DÉCLENCHEUR de conversion
 - Pas de contenu calendaire forcé`;
     } else {
-      // Build weekly schedule string for the prompt
+      // Build weekly schedule string for the prompt — with calendar override
       const scheduleLines = weeklySchedule.map(s => {
         const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(s.day).padStart(2, '0')}`;
-        const event = monthAwareness.find(a => a.day === s.day);
-        const eventNote = event ? ` | événement: "${event.label}" (score: ${event.relevanceScore})` : '';
-        return `- ${dateStr}: catégorie "${s.category}"${eventNote}`;
+        // Check if this day has a calendar event
+        const calEvent = calendarOnlyEvents.find(a => a.day === s.day);
+        const pertEvent = pertinentEvents.find(a => a.day === s.day);
+        const optEvent = optionalEvents.find(a => a.day === s.day);
+        
+        if (calEvent) {
+          // relevance 1 → FORCE calendar type
+          const angleDesc = ANGLE_DESCRIPTIONS[calEvent.calendarAngle || 'leger'] || 'ANGLE LÉGER';
+          return `- ${dateStr}: ⚠️ CALENDAIRE → topic_type="calendar" | "${calEvent.label}" | ${angleDesc} | Utilisation: ${calEvent.useHint || ''} | universe="general" | AUCUN contenu métier`;
+        }
+        if (pertEvent) {
+          return `- ${dateStr}: catégorie "${s.category}" | ⚠️ ÉVÉNEMENT MÉTIER: "${pertEvent.label}" | univers: ${pertEvent.preferredUniverses[0]} | Utilisation: ${pertEvent.useHint || ''}`;
+        }
+        if (optEvent) {
+          return `- ${dateStr}: catégorie "${s.category}" | événement optionnel: "${optEvent.label}" (utiliser SEULEMENT si angle naturel)`;
+        }
+        return `- ${dateStr}: catégorie "${s.category}"`;
       }).join('\n');
 
       userPrompt = `Génère EXACTEMENT ${targetPostCount} suggestions de posts (1 PAR JOUR) pour le mois ${month}/${year}.
@@ -1318,24 +1332,32 @@ RÈGLES :
 PLANNING QUOTIDIEN (1 POST/JOUR — STRUCTURE SEMI-ALÉATOIRE)
 ═══════════════════════════════════════════
 Chaque jour a une catégorie assignée. Le topic_type du post DOIT correspondre.
-L'ordre change chaque semaine pour éviter la prévisibilité.
+EXCEPTION : les jours marqués "CALENDAIRE" → topic_type DOIT être "calendar" (pas la catégorie assignée).
 
 ${scheduleLines}
 
 ═══════════════════════════════════════════
-ÉVÉNEMENTS OBLIGATOIRES (le post de CE JOUR doit traiter CE THÈME)
+JOURS CALENDAIRES (relevance 1 — AUCUN MÉTIER)
 ═══════════════════════════════════════════
-Ces événements sont le THÈME PRINCIPAL du post du jour. Ne les utilise pas comme simple prétexte — le post doit PARLER de l'événement, avec un angle métier Help Confort.
+Ces jours ont topic_type = "calendar". Le contenu est HUMAIN, pas technique.
+INTERDIT : conseil métier, contenu technique, angle travaux, conversion agressive.
+L'angle éditorial est indiqué pour chaque jour. Le hook doit être chaleureux/humain.
 
-${pertinentEvents.map(a => `- ⚠️ JOUR ${a.day}/${month}: "${a.label}" | UNIVERS: ${a.preferredUniverses[0]} | Le post du ${a.day} DOIT traiter ce sujet`).join('\n') || '(aucun événement pertinent ce mois)'}
+${calendarOnlyEvents.map(a => `- ⚠️ JOUR ${a.day}/${month}: "${a.label}" → angle: ${a.calendarAngle || 'leger'} | ${a.useHint || ''}`).join('\n') || '(aucun)'}
 
 ═══════════════════════════════════════════
-ÉVÉNEMENTS OPTIONNELS (score 2 — NE PAS FORCER)
+ÉVÉNEMENTS MÉTIER DIRECTS (relevance 3 — LIEN MÉTIER OBLIGATOIRE)
+═══════════════════════════════════════════
+Le post du jour DOIT traiter ce thème avec un angle métier Help Confort.
+
+${pertinentEvents.map(a => `- ⚠️ JOUR ${a.day}/${month}: "${a.label}" | UNIVERS: ${a.preferredUniverses[0]} | ${a.useHint || ''}`).join('\n') || '(aucun)'}
+
+═══════════════════════════════════════════
+ÉVÉNEMENTS OPTIONNELS (relevance 2 — NE PAS FORCER)
 ═══════════════════════════════════════════
 S'ils ne produisent pas un angle naturel → IGNORER.
-Max 3 événements par semaine.
 
-${optionalEvents.map(a => `- ${a.day}/${month}: ${a.label} | univers: ${a.preferredUniverses[0]} | OPTIONNEL`).join('\n') || '(aucun)'}
+${optionalEvents.map(a => `- ${a.day}/${month}: ${a.label} | angle: ${a.calendarAngle || 'leger'} | ${a.useHint || ''} | OPTIONNEL`).join('\n') || '(aucun)'}
 
 ═══════════════════════════════════════════
 ANTI-REDONDANCE — GAP MINIMUM 3 JOURS
@@ -1360,31 +1382,21 @@ ${exploitableReals.length > 0
 FORMAT DES POSTS (VARIATION OBLIGATOIRE)
 ═══════════════════════════════════════════
 Répartir les ${targetPostCount} posts selon :
-- ~20% PUNCHLINE : hook seul (visuel ultra impactant, aucun texte additionnel)
+- ~20% PUNCHLINE : hook seul
 - ~30% COURT : hook + CTA direct
 - ~40% MOYEN : hook + 1 phrase de bénéfice + CTA
-- ~10% LONG : hook + 2 phrases (problème + solution) + CTA
-
-═══════════════════════════════════════════
-CATÉGORIE "preuve" — SOUS-TYPES
-═══════════════════════════════════════════
-Les posts "preuve" doivent varier entre :
-- réalisation (avec photo réelle si dispo)
-- avant/après
-- témoignage client (anonymisé)
-- process d'intervention
+- ~10% LONG : hook + 2 phrases + CTA
 
 ═══════════════════════════════════════════
 RAPPEL CRITIQUE — 1 POST/JOUR, MACHINE ÉDITORIALE
 ═══════════════════════════════════════════
 - EXACTEMENT ${targetPostCount} posts, UN par jour du mois
-- Chaque post DOIT contenir un DÉCLENCHEUR (perte d'argent, inconfort, risque, gain, simplicité)
-- Un post sans déclencheur est INVALIDE
-- lead_score DOIT refléter le potentiel RÉEL de conversion
-- visual_prompt = scène RÉALISTE habitat français
+- Posts métier DOIVENT contenir un DÉCLENCHEUR (perte d'argent, inconfort, risque, gain, simplicité)
+- Posts "calendar" n'ont PAS besoin de déclencheur commercial — leur objectif est la PRÉSENCE et l'IMAGE
+- lead_score DOIT refléter le potentiel RÉEL de conversion (posts calendar = lead_score 10-30)
+- visual_prompt = scène RÉALISTE pour métier, scène HUMAINE/FESTIVE pour calendar
 - JAMAIS inventer de faux cas client
-- Chaque post doit être PERÇU comme DIFFÉRENT du précédent (anti-fatigue)
-- topic_type DOIT être l'une des 8 catégories valides : urgence, prevention, amelioration, conseil, preuve, saisonnier, contre_exemple, pedagogique`;
+- topic_type DOIT être l'une des catégories valides : urgence, prevention, amelioration, conseil, preuve, saisonnier, contre_exemple, pedagogique, prospection, calendar`;
 
     }
 
