@@ -499,7 +499,8 @@ Deno.serve(async (req) => {
 
     const agencyName = agency?.label || 'Help Confort';
     const agencyCity = agency?.ville || '';
-    const agencyZone = agencyCity ? `${agencyCity} (${agency?.code_postal || ''})` : '';
+    // Force "Landes & Pays Basque" — never use "Dax" alone
+    const agencyZone = 'Landes & Pays Basque';
 
     // Realisations with media
     const sixMonthsAgo = new Date();
@@ -818,6 +819,9 @@ Tu ne dois JAMAIS laisser croire qu'une intervention réelle est montrée.
 
 FORMULATIONS STRICTEMENT INTERDITES :
 - "Notre agence de Dax a remplacé..."
+- "Help Confort Dax" → TOUJOURS utiliser "Help Confort Landes & Pays Basque"
+- "Chez Help Confort Dax" → TOUJOURS "Chez Help Confort Landes & Pays Basque"
+- Ne JAMAIS mentionner "Dax" seul comme zone — toujours "Landes & Pays Basque"
 - "Cet habitant de [ville] avait un problème de..."
 - "Intervention réalisée chez un client..."
 - "Avant/après d'un remplacement..."
@@ -843,8 +847,8 @@ RÉPARTITION :
 - 10% CRÉATIF / BRANDING LOCAL (visibilité, proximité)
 
 LOCALISATION :
-${agencyZone ? `Zone : ${agencyZone}. Intégrer subtilement la localisation.` : "Adapter avec proximité locale."}
-${agencyName ? `Agence : ${agencyName}.` : ''}
+Zone : Landes & Pays Basque. TOUJOURS utiliser "Landes & Pays Basque", JAMAIS "Dax" seul.
+${agencyName ? `Agence : ${agencyName.replace(/Dax/gi, 'Landes & Pays Basque')}.` : ''}
 
 PLATFORM VARIANTS :
 - Facebook → storytelling + proximité + émotion
