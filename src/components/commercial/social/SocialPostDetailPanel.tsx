@@ -1,34 +1,25 @@
 /**
  * SocialPostDetailPanel — Panneau latéral droit.
- * Affiche le détail complet du post sélectionné avec variantes, hashtags, actions.
- * Phase 3 V2 : génération IA via edge function (plus de canvas client).
+ * Affiche le détail complet du post : texte, visuel IA, actions.
+ * Simplifié : pas de variantes plateforme, pas de customization panel.
  */
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { Share2, ExternalLink, ImagePlus, Download, RefreshCw, Loader2, Sparkles } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Share2, ImagePlus, Download, RefreshCw, Loader2, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SocialPostCard } from './SocialPostCard';
-import { VisualCustomizationPanel, type VisualCustomization } from './VisualCustomizationPanel';
 import { SocialVisualCanvas, canvasToBlob, type SocialTemplatePayload } from './SocialVisualCanvas';
 import { resolveSocialTemplate } from './templateResolver';
 import { useSocialVisualAssets, useGenerateSocialVisual, downloadSocialVisual, getSignedVisualUrl } from '@/hooks/useSocialVisualAssets';
 import type { SocialSuggestion } from '@/hooks/useSocialSuggestions';
 
-const PLATFORM_ICONS: Record<string, string> = {
-  facebook: '📘',
-  instagram: '📷',
-  google_business: '📍',
-  linkedin: '💼',
-};
-
 interface SocialPostDetailPanelProps {
   suggestion: SocialSuggestion | null;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
-  onRegenerate: (id: string, prompt?: any) => void;
+  onRegenerate: (id: string) => void;
   isRegenerating?: boolean;
 }
 
@@ -39,7 +30,7 @@ export function SocialPostDetailPanel({ suggestion, onApprove, onReject, onRegen
         <Share2 className="w-10 h-10 text-muted-foreground/30" />
         <p className="text-sm text-muted-foreground">Sélectionnez un post</p>
         <p className="text-xs text-muted-foreground/50 max-w-[200px]">
-          Le détail du post s'affichera ici avec les variantes par plateforme.
+          Le détail du post s'affichera ici avec le visuel et les actions.
         </p>
       </div>
     );
@@ -58,15 +49,13 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   suggestion: SocialSuggestion;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
-  onRegenerate: (id: string, prompt?: any) => void;
+  onRegenerate: (id: string) => void;
   isRegenerating?: boolean;
 }) {
-  const hasVariants = suggestion.variants && suggestion.variants.length > 0;
   const [rawPreviewUrl, setRawPreviewUrl] = useState<string | null>(null);
   const [composedPreviewUrl, setComposedPreviewUrl] = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [renderModeOverride, setRenderModeOverride] = useState<'canvas' | 'image' | null>(null);
-  const [visualCustomization, setVisualCustomization] = useState<VisualCustomization | null>(null);
 
   // Visual assets
   const { data: assets = [], isLoading: assetsLoading } = useSocialVisualAssets(suggestion.id);
@@ -86,7 +75,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const hasPreview = Boolean(rawPreviewUrl || composedPreviewUrl);
   const showPreviewSkeleton = (assetsLoading || loadingPreview) && !hasPreview;
 
-  // Build canvas payload from suggestion + latest generated marketing copy
+  // Build canvas payload
   const aiPayload = (suggestion as any).ai_payload || {};
   const generatedCopy = (rawAsset?.generation_meta?.generated_copy || composedAsset?.generation_meta?.generated_copy || null) as {
     hook?: string;
@@ -111,7 +100,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
     universe: suggestion.universe,
   }), [suggestion.topic_type, rawPreviewUrl, suggestion.universe]);
 
-  // Load signed URLs for raw and composed assets separately
+  // Load signed URLs
   useEffect(() => {
     if (!rawAsset && !composedAsset) {
       setRawPreviewUrl(null);
@@ -140,41 +129,29 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
         }
       })
       .finally(() => {
-        if (!cancelled) {
-          setLoadingPreview(false);
-        }
+        if (!cancelled) setLoadingPreview(false);
       });
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [rawAsset?.id, rawAsset?.storage_path, composedAsset?.id, composedAsset?.storage_path]);
 
   const handleGenerate = useCallback(() => {
     setLoadingPreview(true);
     generateMutation.mutate(
-      {
-        suggestionId: suggestion.id,
-        ...(visualCustomization ? { visualCustomization } : {}),
-      },
+      { suggestionId: suggestion.id },
       {
         onSuccess: (data) => {
-          if (data?.signed_url) {
-            setComposedPreviewUrl(data.signed_url);
-          }
+          if (data?.signed_url) setComposedPreviewUrl(data.signed_url);
         },
       }
     );
-  }, [suggestion.id, generateMutation, visualCustomization]);
+  }, [suggestion.id, generateMutation]);
 
   const handleDownload = useCallback(() => {
     const assetToDownload = renderMode === 'image'
       ? (rawAsset || composedAsset)
       : (composedAsset || rawAsset);
-
-    if (assetToDownload) {
-      downloadSocialVisual(assetToDownload.storage_path);
-    }
+    if (assetToDownload) downloadSocialVisual(assetToDownload.storage_path);
   }, [renderMode, rawAsset, composedAsset]);
 
   return (
@@ -225,10 +202,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
           <Skeleton className="w-full aspect-square rounded-lg" />
         ) : renderMode === 'canvas' ? (
           rawPreviewUrl ? (
-            <SocialVisualCanvas
-              payload={canvasPayload}
-              templateId={templateId}
-            />
+            <SocialVisualCanvas payload={canvasPayload} templateId={templateId} />
           ) : composedPreviewUrl ? (
             <div className="flex flex-col items-center justify-center py-8 bg-muted/30 rounded-lg border border-dashed border-border text-center px-4">
               <Sparkles className="w-8 h-8 text-muted-foreground/30 mb-2" />
@@ -260,12 +234,6 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
           </div>
         )}
 
-        {/* Visual customization panel */}
-        <VisualCustomizationPanel
-          onCustomize={setVisualCustomization}
-          disabled={generateMutation.isPending}
-        />
-
         {/* Actions */}
         <div className="flex gap-1.5">
           <Button
@@ -283,7 +251,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
             ) : composedAsset || rawAsset ? (
               <>
                 <RefreshCw className="w-3 h-3" />
-                Régénérer{visualCustomization ? ' (personnalisé)' : ''}
+                Régénérer
               </>
             ) : (
               <>
@@ -305,51 +273,6 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
           )}
         </div>
       </div>
-
-      {/* Platform variants detail */}
-      {hasVariants && (
-        <div className="border-t border-border pt-3">
-          <Tabs defaultValue={suggestion.variants![0].platform}>
-            <TabsList className="h-7 w-full justify-start">
-              {suggestion.variants!.map(v => (
-                <TabsTrigger key={v.platform} value={v.platform} className="text-[10px] h-6 gap-1">
-                  <span>{PLATFORM_ICONS[v.platform] || '📱'}</span>
-                  <span className="capitalize hidden sm:inline">{v.platform.replace('_', ' ')}</span>
-                </TabsTrigger>
-              ))}
-            </TabsList>
-
-            {suggestion.variants!.map(v => (
-              <TabsContent key={v.platform} value={v.platform} className="mt-2">
-                <div className="space-y-2">
-                  <div className="bg-muted/30 rounded p-2 border border-border/50">
-                    <p className="text-xs text-foreground leading-relaxed whitespace-pre-wrap">
-                      {v.caption_fr}
-                    </p>
-                  </div>
-                  {v.cta && (
-                    <div className="flex items-center gap-1 text-xs text-primary">
-                      <ExternalLink className="w-3 h-3" />
-                      <span>{v.cta}</span>
-                    </div>
-                  )}
-                  {v.hashtags?.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {v.hashtags.map(h => (
-                        <span key={h} className="text-[10px] text-primary/70">#{h}</span>
-                      ))}
-                    </div>
-                  )}
-                  <div className="flex gap-1">
-                    <Badge variant="outline" className="text-[9px]">{v.format || '1080x1080'}</Badge>
-                    <Badge variant="secondary" className="text-[9px] capitalize">{v.status}</Badge>
-                  </div>
-                </div>
-              </TabsContent>
-            ))}
-          </Tabs>
-        </div>
-      )}
     </div>
   );
 }

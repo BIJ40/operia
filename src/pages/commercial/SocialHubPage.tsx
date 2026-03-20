@@ -1,11 +1,6 @@
 /**
  * SocialHubPage — Page principale du module Social Hub (HC Social)
- * Phase 2 : Fonctionnel avec génération IA, CRUD, calendrier et liste.
- *
- * Conventions figées :
- * - Storage path : {agency_id}/{year}/{month}/{suggestion_id}/{filename}
- * - Univers normalisés : plomberie, electricite, serrurerie, vitrerie, menuiserie, renovation, volets, pmr, general
- * - Statuts : suggestion = validation éditoriale, variant = statut plateforme, calendar = exécution planning
+ * Simplifié : pas de filtre plateforme, jours sélectionnables pour régénération ciblée.
  */
 
 import { useState, useMemo, useCallback } from 'react';
@@ -24,7 +19,6 @@ import { SocialPostDetailPanel } from '@/components/commercial/social/SocialPost
 
 type ViewMode = 'calendar' | 'list';
 type TopicFilter = 'all' | 'awareness_day' | 'seasonal_tip' | 'realisation' | 'local_branding';
-type PlatformFilter = 'all' | 'facebook' | 'instagram' | 'google_business' | 'linkedin';
 
 const TOPIC_LABELS: Record<TopicFilter, string> = {
   all: 'Tous',
@@ -34,20 +28,12 @@ const TOPIC_LABELS: Record<TopicFilter, string> = {
   local_branding: 'Marque',
 };
 
-const PLATFORM_LABELS: Record<PlatformFilter, string> = {
-  all: 'Toutes',
-  facebook: 'Facebook',
-  instagram: 'Instagram',
-  google_business: 'Google',
-  linkedin: 'LinkedIn',
-};
-
 export default function SocialHubPage() {
   const [currentMonth, setCurrentMonth] = useState(() => startOfMonth(new Date()));
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   const [topicFilter, setTopicFilter] = useState<TopicFilter>('all');
-  const [platformFilter, setPlatformFilter] = useState<PlatformFilter>('all');
   const [selectedSuggestionId, setSelectedSuggestionId] = useState<string | null>(null);
+  const [selectedDays, setSelectedDays] = useState<Set<string>>(new Set());
 
   const monthKey = format(currentMonth, 'yyyy-MM');
   const monthLabel = format(currentMonth, 'MMMM yyyy', { locale: fr });
@@ -63,13 +49,9 @@ export default function SocialHubPage() {
   const filteredSuggestions = useMemo(() => {
     return suggestions.filter(s => {
       if (topicFilter !== 'all' && s.topic_type !== topicFilter) return false;
-      if (platformFilter !== 'all') {
-        const targets = Array.isArray(s.platform_targets) ? s.platform_targets : [];
-        if (!targets.includes(platformFilter)) return false;
-      }
       return true;
     });
-  }, [suggestions, topicFilter, platformFilter]);
+  }, [suggestions, topicFilter]);
 
   // Selected suggestion
   const selectedSuggestion = useMemo(
@@ -90,16 +72,42 @@ export default function SocialHubPage() {
     updateStatusMutation.mutate({ id, status: 'rejected', monthKey });
   }, [updateStatusMutation, monthKey]);
 
-  const handleRegenerate = useCallback((id: string, prompt?: { tone?: string; keywords?: string; audience?: string; length?: string }) => {
-    generateMutation.mutate({ month, year, regenerateSingle: true, suggestionId: id, prompt });
+  const handleRegenerate = useCallback((id: string) => {
+    generateMutation.mutate({ month, year, regenerateSingle: true, suggestionId: id });
   }, [generateMutation, month, year]);
+
+  // Day multi-select
+  const handleToggleDay = useCallback((dateKey: string) => {
+    setSelectedDays(prev => {
+      const next = new Set(prev);
+      if (next.has(dateKey)) next.delete(dateKey);
+      else next.add(dateKey);
+      return next;
+    });
+  }, []);
+
+  const handleRegenerateSelectedDays = useCallback(() => {
+    // Regenerate suggestions for each selected day
+    const dates = Array.from(selectedDays);
+    // Find suggestion IDs for selected days
+    const idsToRegenerate = suggestions
+      .filter(s => dates.includes(s.suggestion_date))
+      .map(s => s.id);
+
+    if (idsToRegenerate.length === 0) return;
+
+    // Regenerate each one
+    for (const id of idsToRegenerate) {
+      generateMutation.mutate({ month, year, regenerateSingle: true, suggestionId: id });
+    }
+    setSelectedDays(new Set());
+  }, [selectedDays, suggestions, generateMutation, month, year]);
 
   // Stats
   const stats = useMemo(() => {
     const total = suggestions.length;
     const approved = suggestions.filter(s => s.status === 'approved').length;
-    const draft = suggestions.filter(s => s.status === 'draft').length;
-    return { total, approved, draft };
+    return { total, approved };
   }, [suggestions]);
 
   return (
@@ -136,11 +144,11 @@ export default function SocialHubPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
         {/* Month nav */}
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setCurrentMonth(m => subMonths(m, 1))}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setCurrentMonth(m => subMonths(m, 1)); setSelectedDays(new Set()); }}>
             <ChevronLeft className="w-4 h-4" />
           </Button>
           <span className="text-sm font-medium min-w-[120px] text-center capitalize">{monthLabel}</span>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setCurrentMonth(m => addMonths(m, 1))}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setCurrentMonth(m => addMonths(m, 1)); setSelectedDays(new Set()); }}>
             <ChevronRight className="w-4 h-4" />
           </Button>
         </div>
@@ -162,25 +170,14 @@ export default function SocialHubPage() {
           </ToggleGroupItem>
         </ToggleGroup>
 
-        {/* Filters */}
-        <div className="flex gap-2 ml-auto">
+        {/* Topic filter */}
+        <div className="ml-auto">
           <Select value={topicFilter} onValueChange={(v) => setTopicFilter(v as TopicFilter)}>
             <SelectTrigger className="h-8 w-[130px] text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {Object.entries(TOPIC_LABELS).map(([k, v]) => (
-                <SelectItem key={k} value={k} className="text-xs">{v}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={platformFilter} onValueChange={(v) => setPlatformFilter(v as PlatformFilter)}>
-            <SelectTrigger className="h-8 w-[120px] text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(PLATFORM_LABELS).map(([k, v]) => (
                 <SelectItem key={k} value={k} className="text-xs">{v}</SelectItem>
               ))}
             </SelectContent>
@@ -205,6 +202,10 @@ export default function SocialHubPage() {
                 suggestions={filteredSuggestions}
                 selectedId={selectedSuggestionId}
                 onSelect={setSelectedSuggestionId}
+                selectedDays={selectedDays}
+                onToggleDay={handleToggleDay}
+                onRegenerateSelected={handleRegenerateSelectedDays}
+                isRegenerating={generateMutation.isPending}
               />
             ) : (
               <SocialListView
