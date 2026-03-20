@@ -167,6 +167,11 @@ Deno.serve(async (req) => {
     const topicType = suggestion.topic_type || 'seasonal_tip';
     const rawCaption = suggestion.caption_base_fr || '';
 
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      return new Response(JSON.stringify({ error: 'Service IA non configuré' }), { status: 500, headers: jsonHeaders });
+    }
+
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // ÉTAPE 0 : COPYWRITING IA — Réécriture cohérente du hook/sous-texte
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -176,43 +181,41 @@ Deno.serve(async (req) => {
 
     try {
       console.log('[social-visual-generate] Generating coherent marketing copy...');
-      const copywritingPrompt = `Tu es un copywriter publicitaire expert pour une entreprise française de dépannage à domicile (plomberie, électricité, serrurerie, vitrerie, etc.) appelée "Help Confort".
+      const copywritingPrompt = `Tu es un copywriter publicitaire expert pour une entreprise française de dépannage à domicile appelée Help Confort.
 
 Contexte :
-- Univers/métier : ${serviceLabel}
+- Univers : ${serviceLabel}
 - Titre original : "${title}"
 - Hook original : "${rawHook}"
 - Sous-texte original : "${rawCaption}"
 - CTA original : "${rawCta}"
 - Type de post : ${topicType}
 
-MISSION : Réécris ces textes pour un visuel publicitaire social media (Instagram/Facebook).
+MISSION : produire un texte publicitaire court, naturel, crédible et immédiatement compréhensible pour un visuel social media.
 
 RÈGLES STRICTES :
-1. HOOK (phrase principale) :
-   - EXACTEMENT 3 à 5 mots
-   - Maximum 30 caractères
-   - Phrase COMPLÈTE, percutante, qui a du SENS
-   - Doit donner envie d'agir ou créer un sentiment d'urgence
-   - JAMAIS de phrase absurde, coupée ou incohérente
-   - Exemples bons : "Anticipez avant l'été", "Votre confort mérite mieux", "Agissez avant qu'il soit trop tard"
-   - Exemples MAUVAIS : "Le printemps ne revient pas", "Chaleur sans retour possible"
+1. HOOK :
+- 3 à 5 mots maximum
+- 30 caractères maximum
+- phrase complète, claire, naturelle
+- jamais absurde, jamais poétique bizarre, jamais tronquée
+- interdit : formulations comme "Le printemps ne revient pas"
+- ton : concret, utile, orienté action
 
-2. SOUS-TEXTE (phrase secondaire) :
-   - EXACTEMENT 6 à 10 mots
-   - Maximum 55 caractères
-   - Phrase complète avec un point final
-   - Explique ou complète le hook
-   - Exemples bons : "Un diagnostic rapide pour protéger votre habitat.", "Nos experts interviennent dans les 24h."
+2. SOUS-TEXTE :
+- 6 à 10 mots maximum
+- 55 caractères maximum
+- une phrase complète avec point final
+- doit compléter le hook de façon simple et lisible
+- jamais de date, jamais d'événement calendaire inutile, jamais de texte décoratif
 
-3. CTA (bouton d'action) :
-   - EXACTEMENT 2 à 4 mots
-   - Maximum 22 caractères
-   - Verbe d'action à l'infinitif ou impératif
-   - Exemples bons : "Demander un devis", "Prendre rendez-vous", "Nous contacter"
+3. CTA :
+- 2 à 4 mots maximum
+- 22 caractères maximum
+- action claire
 
-Réponds UNIQUEMENT en JSON :
-{"hook": "...", "subtext": "...", "cta": "..."}`;
+Réponds UNIQUEMENT en JSON valide avec exactement ces clés :
+{"hook":"...","subtext":"...","cta":"..."}`;
 
       const copyResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
@@ -250,11 +253,6 @@ Réponds UNIQUEMENT en JSON :
       }
     } catch (copyErr) {
       console.warn('[social-visual-generate] Copywriting step failed, using originals:', copyErr);
-    }
-
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: 'Service IA non configuré' }), { status: 500, headers: jsonHeaders });
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
