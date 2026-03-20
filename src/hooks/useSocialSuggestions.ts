@@ -117,23 +117,22 @@ export function useGenerateSuggestions() {
     }) => {
       // Allow up to 5 minutes for AI generation (31 posts can be slow)
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 300_000);
+      const timeoutId = setTimeout(() => controller.abort(), 300_000);
 
-      try {
-        const { data, error } = await supabase.functions.invoke('social-suggest', {
-          body: {
-            agency_id: agencyId,
-            month,
-            year,
-            regenerate_single: regenerateSingle || false,
-            suggestion_id: suggestionId || null,
-            prompt: prompt || null,
-            target_dates: targetDates || null,
-          },
-        });
-        clearTimeout(timeout);
+      const { data, error } = await supabase.functions.invoke('social-suggest', {
+        body: {
+          agency_id: agencyId,
+          month,
+          year,
+          regenerate_single: regenerateSingle || false,
+          suggestion_id: suggestionId || null,
+          prompt: prompt || null,
+          target_dates: targetDates || null,
+        },
+      });
+      clearTimeout(timeoutId);
 
-        if (error) {
+      if (error) {
         let message = error.message || 'Erreur lors de la génération';
         try {
           const status = (error as any)?.context?.status;
