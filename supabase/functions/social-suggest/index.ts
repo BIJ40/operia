@@ -412,9 +412,16 @@ function validateAndNormalizeSuggestions(
     const title = String(s.title || '').substring(0, 200);
     if (title.length < 3) continue;
 
-    // 8. hashtags
+    // 8. hashtags — normalize: ensure single # prefix, no ##
     const hashtags = Array.isArray(s.hashtags)
-      ? s.hashtags.filter((h: any) => typeof h === 'string' && h.length > 0).slice(0, 10)
+      ? s.hashtags
+          .filter((h: any) => typeof h === 'string' && h.length > 0)
+          .map((h: string) => {
+            const clean = h.replace(/^#+/, '');
+            return clean ? `#${clean}` : '';
+          })
+          .filter((h: string) => h.length > 1)
+          .slice(0, 10)
       : [];
 
     // 9. platform variants
@@ -575,7 +582,7 @@ const SUGGEST_TOOL = {
               content_angle: { type: 'string', description: 'Angle éditorial en 1 phrase' },
               caption_base_fr: { type: 'string', description: "Texte NATUREL prêt à publier sur les réseaux sociaux. INTERDIT d'écrire 'HOOK :', 'CTA :', 'SOUS-TEXTE :' ou tout label structurel. Le texte doit être fluide, comme un vrai post Facebook/Instagram. Exemple : 'Votre robinet fuit depuis des semaines ? Chaque jour, c est 40€ de plus sur votre facture. Appelez-nous, on intervient en 1h.'" },
               cta: { type: 'string', description: "CTA court et GÉNÉRIQUE (jamais de nom de ville). Ex: \"Prendre RDV\", \"En savoir plus\", \"Demander un devis\", \"Nous contacter\"" },
-              hashtags: { type: 'array', items: { type: 'string' }, description: 'Hashtags (max 10)' },
+              hashtags: { type: 'array', items: { type: 'string' }, description: 'Hashtags (max 10). Chaque hashtag DOIT commencer par UN SEUL # (jamais ##). Ex: ["#plomberie", "#chauffage", "#depannage"]' },
               topic_type: { type: 'string', enum: ['urgence', 'prevention', 'amelioration', 'conseil', 'preuve', 'saisonnier', 'contre_exemple', 'pedagogique', 'prospection'] },
               topic_key: { type: 'string', description: 'Identifiant unique du sujet' },
               visual_type: { type: 'string', enum: ['photo', 'illustration', 'before_after', 'quote'] },
