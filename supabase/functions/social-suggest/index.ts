@@ -345,7 +345,7 @@ const SUGGEST_TOOL = {
               hook: { type: 'string', description: "Première ligne STOP-SCROLL : choc, curiosité, problème concret. Ex: \"Cette fuite coûtait 300€/mois sans que le client s'en rende compte.\"" },
               content_angle: { type: 'string', description: 'Angle éditorial en 1 phrase' },
               caption_base_fr: { type: 'string', description: 'Texte complet du post : hook + storytelling (situation → problème → intervention → résultat) + CTA. Publiable sans modification.' },
-              cta: { type: 'string', description: "CTA business naturel et fluide. Ex: \"Besoin d'un diagnostic ?\", \"Contactez-nous avant que ça empire\"" },
+              cta: { type: 'string', description: "CTA court et GÉNÉRIQUE (jamais de nom de ville). Ex: \"Prendre RDV\", \"En savoir plus\", \"Demander un devis\", \"Nous contacter\"" },
               hashtags: { type: 'array', items: { type: 'string' }, description: 'Hashtags (max 10)' },
               topic_type: { type: 'string', enum: ['awareness_day', 'seasonal_tip', 'realisation', 'local_branding'] },
               topic_key: { type: 'string', description: 'Identifiant unique du sujet' },

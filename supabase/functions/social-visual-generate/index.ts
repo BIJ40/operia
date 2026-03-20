@@ -212,7 +212,9 @@ RÈGLES STRICTES :
 3. CTA :
 - 2 à 4 mots maximum
 - 22 caractères maximum
-- action claire
+- action claire et GÉNÉRIQUE (jamais de nom de ville, jamais de localisation)
+- exemples autorisés : "Prendre RDV", "En savoir plus", "Nous contacter", "Demander un devis"
+- INTERDIT : "À Dax", "À DAX", "Sur Bayonne", ou toute mention géographique
 
 Réponds UNIQUEMENT en JSON valide avec exactement ces clés :
 {"hook":"...","subtext":"...","cta":"..."}`;
