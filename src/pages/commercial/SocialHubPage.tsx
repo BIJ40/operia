@@ -45,9 +45,9 @@ export default function SocialHubPage() {
   const month = currentMonth.getMonth() + 1;
   const year = currentMonth.getFullYear();
 
-  // Data hooks
-  const { data: suggestions = [], isLoading } = useSocialSuggestions(monthKey);
+  // Data hooks — poll every 3s while generation is in progress
   const generateMutation = useGenerateSuggestions();
+  const { data: suggestions = [], isLoading } = useSocialSuggestions(monthKey, generateMutation.isGenerating);
   const updateStatusMutation = useUpdateSuggestionStatus();
 
   // Filter suggestions
