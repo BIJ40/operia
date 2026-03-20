@@ -1094,7 +1094,7 @@ Pour "pedagogique" : contenu UTILE + valeur immédiate → CTA doux.
 Pour "conseil" : tip pratique + actionnable → CTA.
 Pour "contre_exemple" : erreur fréquente + contraste pro → CTA.
 Pour "prospection" : présentation entreprise/zone/partenaires → CTA découverte.
-Pour "preuve" : savoir-faire technicien, réalisation, témoignage → CTA confiance.
+Pour "preuve" : OBLIGATOIREMENT lié à une VRAIE réalisation (realisation_id REQUIS). Utilise les photos réelles avant/après. visual_type DOIT être "before_after" si avant/après dispo, sinon "photo". INTERDIT de générer du contenu inventé pour cette catégorie. Le hook doit mettre en avant le résultat concret. → CTA confiance.
 Pour "saisonnier" : lien météo/période réelle → CTA anticipation.
 
 CHAQUE catégorie a sa PROPRE tonalité. Ne PAS tout transformer en "urgence métier".
