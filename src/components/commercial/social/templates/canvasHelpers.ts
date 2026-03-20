@@ -40,10 +40,10 @@ export const ZONES = {
 
 // ─── Text constraints — STRICT (verrouillé) ────────────────
 const HOOK_MAX_CHARS = 32;
-const HOOK_MAX_WORDS = 5;
-const HOOK_MAX_LINES = 2;
+const HOOK_MAX_WORDS = 8;
+const HOOK_MAX_LINES = 3;
 const HOOK_FONT_MAX = 72;
-const HOOK_FONT_MIN = 44;
+const HOOK_FONT_MIN = 36;
 
 const SUB_MAX_CHARS = 60;
 const SUB_MAX_WORDS = 10;
