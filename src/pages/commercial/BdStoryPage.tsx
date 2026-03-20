@@ -16,6 +16,7 @@ import { BdStoryVisualBoard } from '@/modules/bd-story/ui/BdStoryVisualBoard';
 import { BdStoryCharacterLibrary } from '@/modules/bd-story/ui/BdStoryCharacterLibrary';
 import { BdStoryGenerationInput, GeneratedStory } from '@/modules/bd-story/types/bdStory.types';
 import { StylePreset } from '@/modules/bd-story/engine/imageRenderService';
+import { RenderMode } from '@/modules/bd-story/hooks/useBdStoryRender';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
