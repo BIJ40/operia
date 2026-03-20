@@ -723,14 +723,14 @@ async function persistAsset(
 
 function getSceneForUniverse(universe: string): string {
   const scenes: Record<string, string> = {
-    plomberie: 'A technician in a blue polo shirt kneeling under a kitchen sink fixing a water leak, toolbox open nearby, water puddle on tile floor, urgency feeling, blue-tinted lighting. A white van with blue wave design visible through the window parked outside',
-    electricite: 'A technician in a blue work jacket inspecting an electrical panel with a flashlight, professional tools visible, warm orange dramatic lighting. A white van with blue swoosh parked in front of the house visible in background',
-    serrurerie: 'A technician in blue uniform working on a front door lock at night, professional locksmith tools, security urgency, dark moody lighting with a white service van with blue wave graphics parked nearby',
-    menuiserie: 'A technician in blue polo measuring a damaged wooden window frame, professional carpentry tools, visible damage needing repair',
+    plomberie: 'A technician in a blue polo shirt kneeling under a kitchen sink fixing a water leak, toolbox open nearby, water puddle on tile floor, urgency feeling, blue-tinted lighting, realistic French apartment interior',
+    electricite: 'A technician in a blue work jacket inspecting an electrical panel with a flashlight, professional tools visible, warm orange dramatic lighting, French residential electrical closet',
+    serrurerie: 'A technician in blue uniform working on a front door lock at night, professional locksmith tools laid out, security urgency, dark moody cinematic lighting, French apartment building entrance',
+    menuiserie: 'A technician in blue polo measuring a damaged wooden window frame, professional carpentry tools, visible damage needing repair, French building facade',
     vitrerie: 'cracked window glass in French apartment, broken pane with spider web crack pattern, cold light coming through, a technician in blue uniform assessing the damage',
-    volets: 'A technician in blue uniform repairing a stuck roller shutter on a French building facade, white van with blue wave design parked in front',
+    volets: 'A technician in blue uniform repairing a stuck roller shutter on a French building facade, tools and ladder visible, natural daylight',
     pmr: 'A technician in blue polo shirt installing grab bars in a bathroom for accessibility, elderly-friendly renovation context, professional and caring atmosphere',
-    renovation: 'Two technicians in blue uniforms working in an apartment mid-renovation, professional tools and equipment, white van with blue wave visible outside',
+    renovation: 'Two technicians in blue uniforms working in an apartment mid-renovation, professional tools and equipment, bright natural light from windows',
     general: 'A white Ford Transit van with a large blue wave/swoosh design on the sides parked in front of a French residential home, roof rack with ladders, professional home service atmosphere, clean and trustworthy, a technician in blue polo shirt walking toward the house carrying a toolbox',
   };
   return scenes[universe] || scenes.general;
