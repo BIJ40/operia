@@ -77,6 +77,40 @@ const GENERAL_TOPIC_LABELS: Record<string, string> = {
   educational: 'Le saviez-vous ?',
 };
 
+// ─── Visual Style Modes (réaliste 80% / optimisé 10% / créatif 10%) ───
+type VisualStyle = 'realiste' | 'optimise' | 'creatif';
+
+function resolveVisualStyle(topicType: string): VisualStyle {
+  const allowCreatif = topicType === 'contre_exemple' || topicType === 'pedagogique';
+  const roll = Math.random() * 100;
+  if (allowCreatif && roll >= 90) return 'creatif';
+  if (roll >= 80) return 'optimise';
+  return 'realiste';
+}
+
+const VISUAL_STYLE_DIRECTIVES: Record<VisualStyle, string> = {
+  realiste: `STYLE VISUEL : RÉALISTE TERRAIN (mode dominant)
+- Photo de chantier, maison, intervention RÉELLE
+- Imperfections légères AUTORISÉES (poussière, câbles visibles, mur pas parfait)
+- Lumière NATURELLE uniquement (fenêtre, extérieur, lampe de chantier)
+- INTERDIT : éclairage studio, rendu glossy, perfection type catalogue IKEA
+- INTERDIT : tuyauterie parfaite irréaliste, surfaces trop propres
+- INTERDIT : rendu 3D, cinéma, publicité luxe
+- Le visuel DOIT pouvoir être confondu avec une VRAIE photo d'intervention`,
+  optimise: `STYLE VISUEL : RÉALISTE OPTIMISÉ (légèrement amélioré mais crédible)
+- Scène propre et bien cadrée, lisible
+- Éclairage naturel légèrement amélioré (pas studio)
+- Installation nette, environnement rangé
+- TOUJOURS PLAUSIBLE — un professionnel du métier doit trouver ça crédible
+- Pas de rendu publicitaire luxe, pas de perfection artificielle`,
+  creatif: `STYLE VISUEL : CRÉATIF ASSUMÉ (humour, décalé — volontairement irréel)
+- Le côté irréel doit être ÉVIDENT et IMMÉDIAT (pas entre-deux)
+- Exemples autorisés : robot plombier, super-héros dépannage, animal mascotte, scène humoristique
+- Ton fun, mémorable, original
+- RÈGLE CLÉ : si c'est irréel, ça doit être CLAIREMENT voulu et drôle
+- JAMAIS de visuel "presque réel mais bizarre" — soit 100% réaliste, soit 100% décalé`,
+};
+
 // ─── Image generation via OpenAI DALL-E 3 ─────────────
 import { callAiWithFallback, getAiKeys, type AiChatMessage } from '../_shared/aiClient.ts';
 
