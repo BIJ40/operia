@@ -281,15 +281,28 @@ ADDITIONAL REQUIREMENTS:
       return new Response(JSON.stringify({ error: "Aucune image de fond générée" }), { status: 502, headers: jsonHeaders });
     }
 
-    console.log('[social-visual-generate] Background image generated via', bgResult.model, '. Starting composition pass...');
+    console.log('[social-visual-generate] Background image generated via', bgResult.model, '. Saving raw background...');
+
+    const backgroundSave = await persistAsset(
+      adminSupabase,
+      bgImageUrl,
+      agencyId,
+      suggestionId,
+      universe,
+      realPhotoUrl,
+      'bg_only',
+      jsonHeaders,
+    );
+
+    if ('response' in backgroundSave) {
+      return backgroundSave.response;
+    }
+
+    console.log('[social-visual-generate] Raw background saved. Starting composition pass...');
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // ÉTAPE 3 : COMPOSITION FINALE — SUPERPOSER TEXTE + BRANDING
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 2e passe IA : on envoie l'image de fond + instructions de composition
-    // pour que l'IA intègre le texte marketing directement dans l'image.
-
-    // ── Sanitize texts: enforce strict copywriting rules ──
     const sanitizeHookForAI = (raw: string): string => {
       let t = raw.trim().replace(/[…\.]+$/, '').trim();
       const words = t.split(/\s+/);
@@ -376,8 +389,8 @@ DESIGN RULES:
 
 CRITICAL QUALITY CHECK — The AI MUST verify before outputting:
 ✅ Hook text is COMPLETE (no "…", no truncation, exactly as provided)
-✅ Sub-text is COMPLETE and fits on 1 line (no "…", no truncation)
-✅ No text marked "HC" or fake logo — use only the official logo or leave empty
+✅ Sub-text is COMPLETE and can span 2 lines if needed (no "…", no truncation)
+✅ No text marked "HC" or fake logo — always use the full Help Confort Landes & Pays Basque branding block
 ✅ All text is correctly spelled and perfectly readable`;
 
     const compMessages = [{
@@ -391,25 +404,60 @@ CRITICAL QUALITY CHECK — The AI MUST verify before outputting:
     const compResult = await callImageAIWithFallback(LOVABLE_API_KEY, compMessages);
 
     if (!compResult.ok) {
-      console.warn('[social-visual-generate] Composition failed, falling back to background-only image');
-      return await saveAndReturn(adminSupabase, bgImageUrl, agencyId, suggestionId, universe, realPhotoUrl, 'bg_only', jsonHeaders);
+      console.warn('[social-visual-generate] Composition failed, returning raw background asset');
+      return new Response(JSON.stringify({
+        success: true,
+        asset_id: backgroundSave.assetId,
+        storage_path: backgroundSave.storagePath,
+        signed_url: backgroundSave.signedUrl,
+        mode: backgroundSave.mode,
+        composition_mode: 'bg_only',
+      }), { status: 200, headers: jsonHeaders });
     }
 
     const compData = compResult.data;
     const finalImageUrl = compData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
     if (!finalImageUrl || !finalImageUrl.startsWith('data:image')) {
-      console.warn('[social-visual-generate] Composition pass returned no image, using background');
-      return await saveAndReturn(adminSupabase, bgImageUrl, agencyId, suggestionId, universe, realPhotoUrl, 'bg_only', jsonHeaders);
+      console.warn('[social-visual-generate] Composition pass returned no image, returning raw background asset');
+      return new Response(JSON.stringify({
+        success: true,
+        asset_id: backgroundSave.assetId,
+        storage_path: backgroundSave.storagePath,
+        signed_url: backgroundSave.signedUrl,
+        mode: backgroundSave.mode,
+        composition_mode: 'bg_only',
+      }), { status: 200, headers: jsonHeaders });
     }
 
     console.log('[social-visual-generate] Composition complete! Saving final creative...');
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // ÉTAPE 4 : SAUVEGARDER LE VISUEL FINAL COMPOSÉ
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    const composedSave = await persistAsset(
+      adminSupabase,
+      finalImageUrl,
+      agencyId,
+      suggestionId,
+      universe,
+      realPhotoUrl,
+      'composed',
+      jsonHeaders,
+    );
 
-    return await saveAndReturn(adminSupabase, finalImageUrl, agencyId, suggestionId, universe, realPhotoUrl, 'composed', jsonHeaders);
+    if ('response' in composedSave) {
+      return composedSave.response;
+    }
+
+    return new Response(JSON.stringify({
+      success: true,
+      asset_id: composedSave.assetId,
+      storage_path: composedSave.storagePath,
+      signed_url: composedSave.signedUrl,
+      background_asset_id: backgroundSave.assetId,
+      background_storage_path: backgroundSave.storagePath,
+      background_signed_url: backgroundSave.signedUrl,
+      mode: composedSave.mode,
+      composition_mode: 'composed',
+    }), { status: 200, headers: jsonHeaders });
 
   } catch (err) {
     console.error('[social-visual-generate] Unhandled error:', err);
@@ -417,8 +465,8 @@ CRITICAL QUALITY CHECK — The AI MUST verify before outputting:
   }
 });
 
-// ─── Save image to storage and return response ─────────────
-async function saveAndReturn(
+// ─── Save image to storage and return metadata ───────────────
+async function persistAsset(
   adminSupabase: any,
   imageDataUrl: string,
   agencyId: string,
@@ -427,7 +475,10 @@ async function saveAndReturn(
   realPhotoUrl: string | null,
   compositionMode: 'composed' | 'bg_only',
   headers: Record<string, string>,
-) {
+): Promise<
+  | { assetId: string; storagePath: string; signedUrl: string | null; mode: 'photo' | 'generated' }
+  | { response: Response }
+> {
   const base64Data = imageDataUrl.split(',')[1];
   const binaryStr = atob(base64Data);
   const bytes = new Uint8Array(binaryStr.length);
@@ -449,7 +500,7 @@ async function saveAndReturn(
 
   if (uploadError) {
     console.error('[social-visual-generate] Upload error:', uploadError);
-    return new Response(JSON.stringify({ error: 'Erreur upload: ' + uploadError.message }), { status: 500, headers });
+    return { response: new Response(JSON.stringify({ error: 'Erreur upload: ' + uploadError.message }), { status: 500, headers }) };
   }
 
   const visualStrategy = realPhotoUrl ? 'photo_realisation' : 'illustration_generee';
@@ -473,7 +524,7 @@ async function saveAndReturn(
         source: realPhotoUrl ? 'ai_photo_edit_v4' : 'ai_generated_v4',
         mode,
         composition_mode: compositionMode,
-        prompt_version: 'v4_composed',
+        prompt_version: compositionMode === 'bg_only' ? 'v4_background' : 'v4_composed',
       },
     })
     .select('id, storage_path, created_at')
@@ -481,7 +532,7 @@ async function saveAndReturn(
 
   if (insertError) {
     console.error('[social-visual-generate] Insert error:', insertError);
-    return new Response(JSON.stringify({ error: 'Erreur persistance asset' }), { status: 500, headers });
+    return { response: new Response(JSON.stringify({ error: 'Erreur persistance asset' }), { status: 500, headers }) };
   }
 
   const { data: signedData } = await adminSupabase.storage
@@ -490,14 +541,12 @@ async function saveAndReturn(
 
   console.log('[social-visual-generate] Success:', asset.id, 'mode:', mode, 'composition:', compositionMode);
 
-  return new Response(JSON.stringify({
-    success: true,
-    asset_id: asset.id,
-    storage_path: storagePath,
-    signed_url: signedData?.signedUrl || null,
+  return {
+    assetId: asset.id,
+    storagePath,
+    signedUrl: signedData?.signedUrl || null,
     mode,
-    composition_mode: compositionMode,
-  }), { status: 200, headers });
+  };
 }
 
 // ─── Helpers ────────────────────────────────────────────────
