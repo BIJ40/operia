@@ -22,9 +22,17 @@ const VAN_REFERENCE_URLS = [
   `${SUPABASE_URL}/storage/v1/object/public/brand-assets/van-ref4.jpg`,
   `${SUPABASE_URL}/storage/v1/object/public/brand-assets/van-ref5.jpg`,
 ];
-// Use ALL references for maximum fidelity
-function getVanReferenceUrls(): string[] {
-  return [...VAN_REFERENCE_URLS];
+// Verify van reference URLs are accessible, return only valid ones
+async function getVerifiedVanReferenceUrls(): Promise<string[]> {
+  const verified: string[] = [];
+  for (const url of VAN_REFERENCE_URLS) {
+    try {
+      const resp = await fetch(url, { method: 'HEAD' });
+      if (resp.ok) verified.push(url);
+    } catch { /* skip unavailable */ }
+  }
+  console.log(`[social-visual-generate] Van references verified: ${verified.length}/${VAN_REFERENCE_URLS.length}`);
+  return verified;
 }
 
 const SERVICE_COLORS: Record<string, string> = {
