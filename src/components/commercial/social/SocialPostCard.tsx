@@ -39,10 +39,15 @@ export function SocialPostCard({ suggestion, onApprove, onReject, onRegenerate, 
   const statusInfo = STATUS_LABELS[suggestion.status] || STATUS_LABELS.draft;
   const [isSendingWebhook, setIsSendingWebhook] = useState(false);
 
+  const fullCopyText = [
+    suggestion.caption_base_fr,
+    suggestion.hashtags?.length > 0 ? suggestion.hashtags.map(h => `#${h}`).join(' ') : '',
+  ].filter(Boolean).join('\n\n');
+
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(suggestion.caption_base_fr);
-      toast.success('Texte copié');
+      await navigator.clipboard.writeText(fullCopyText);
+      toast.success('Texte + hashtags copiés');
     } catch {
       toast.error('Impossible de copier');
     }
