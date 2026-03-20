@@ -206,7 +206,7 @@ export default function SocialHubPage() {
                 selectedDays={selectedDays}
                 onToggleDay={handleToggleDay}
                 onRegenerateSelected={handleRegenerateSelectedDays}
-                isRegenerating={generateMutation.isPending}
+                isRegenerating={generateMutation.isGenerating}
               />
             ) : (
               <SocialListView
