@@ -412,9 +412,16 @@ function validateAndNormalizeSuggestions(
     const title = String(s.title || '').substring(0, 200);
     if (title.length < 3) continue;
 
-    // 8. hashtags
+    // 8. hashtags — normalize: ensure single # prefix, no ##
     const hashtags = Array.isArray(s.hashtags)
-      ? s.hashtags.filter((h: any) => typeof h === 'string' && h.length > 0).slice(0, 10)
+      ? s.hashtags
+          .filter((h: any) => typeof h === 'string' && h.length > 0)
+          .map((h: string) => {
+            const clean = h.replace(/^#+/, '');
+            return clean ? `#${clean}` : '';
+          })
+          .filter((h: string) => h.length > 1)
+          .slice(0, 10)
       : [];
 
     // 9. platform variants
