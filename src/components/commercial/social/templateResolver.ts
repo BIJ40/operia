@@ -42,7 +42,12 @@ export function resolveSocialTemplate(input: TemplateResolverInput): SocialTempl
     return 'awareness_card';
   }
 
-  // 4. Branding local, ou fallback pour réalisation sans photo
+  // 4. Contenu pédagogique (schéma / chiffres)
+  if (topic_type === 'educational') {
+    return 'educational_card';
+  }
+
+  // 5. Branding local, ou fallback pour réalisation sans photo
   return 'brand_card';
 }
 
