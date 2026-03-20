@@ -104,20 +104,23 @@ export function sanitizeHook(raw: string): string {
   return text;
 }
 
-/** Sanitize subtext: single complete sentence, no truncation */
+/** Sanitize subtext: single complete sentence, max 12 words, no truncation */
 export function sanitizeSubText(raw: string): string {
   if (!raw) return '';
   let text = raw.trim();
   // Remove trailing ellipsis
   text = text.replace(/[…]+$/, '').trim();
+  // Limit words first (max 12)
+  const words = text.split(/\s+/);
+  if (words.length > SUB_MAX_WORDS) {
+    text = words.slice(0, SUB_MAX_WORDS).join(' ');
+  }
   // Limit chars — cut at last complete word
   if (text.length > SUB_MAX_CHARS) {
     const cut = text.slice(0, SUB_MAX_CHARS);
     const lastSpace = cut.lastIndexOf(' ');
     text = lastSpace > SUB_MAX_CHARS * 0.4 ? cut.slice(0, lastSpace) : cut;
-    // Ensure it ends cleanly
     text = text.replace(/[\s,;:]+$/, '').trim();
-    // Add period if doesn't end with punctuation
     if (!/[.!?]$/.test(text)) text += '.';
   }
   return text;
