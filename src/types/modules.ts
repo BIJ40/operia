@@ -42,7 +42,7 @@ export const MODULES = {
   'commercial.prospects': 'commercial.prospects',
   'commercial.realisations': 'commercial.realisations',
   'commercial.social': 'commercial.social',
-  'commercial.bd_story': 'commercial.bd_story',
+  
   'commercial.signature': 'commercial.signature',
   'commercial.realisations.photos': 'commercial.realisations.photos',
   'commercial.realisations.generer_avap': 'commercial.realisations.generer_avap',
@@ -474,18 +474,6 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
       { key: 'generate', path: 'commercial.social.generate', label: 'Générer', description: 'Générer des suggestions IA', defaultEnabled: true, routes: [] },
       { key: 'publish', path: 'commercial.social.publish', label: 'Publier', description: 'Planifier et publier', defaultEnabled: true, routes: [] },
     ],
-  },
-  // Module BD Story
-  {
-    key: 'commercial.bd_story',
-    label: 'BD Story',
-    description: 'Génération de planches BD métier pour la communication',
-    icon: 'BookImage',
-    category: 'commercial',
-    uiSubTab: 'bd_story',
-    defaultForRoles: [],
-    minRole: 'franchisee_admin',
-    options: [],
   },
   // reseau_franchiseur — INTERFACE DE RÔLE (N3+), pas un module standard.
   // Conservé dans MODULE_DEFINITIONS pour compatibilité technique (EnabledModules, user_modules legacy)
