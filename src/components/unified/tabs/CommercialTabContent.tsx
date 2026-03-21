@@ -4,7 +4,7 @@
  */
 
 import { lazy, Suspense, useState, useCallback, useMemo } from 'react';
-import { Building2, GitCompare, UserSearch, Radar, Camera, Share2, BookImage, Stamp, Loader2 } from 'lucide-react';
+import { Building2, GitCompare, UserSearch, Radar, Camera, Share2, Stamp, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, type PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
@@ -23,7 +23,6 @@ import { VeilleApporteursTab } from '@/prospection/pages/VeilleApporteursTab';
 
 const RealisationsPage = lazy(() => import('@/realisations/pages/RealisationsPage'));
 const SocialHubPage = lazy(() => import('@/pages/commercial/SocialHubPage'));
-const BdStoryPage = lazy(() => import('@/pages/commercial/BdStoryPage'));
 const SignatureGeneratorPage = lazy(() => import('@/pages/commercial/SignatureGeneratorPage'));
 
 /** Mapping tab id → module key */
@@ -34,7 +33,6 @@ const TAB_MODULE_MAP: Record<string, ModuleKey> = {
   prospects: 'commercial.prospects',
   realisations: 'commercial.realisations',
   social: 'commercial.social',
-  bd_story: 'commercial.bd_story',
   signature: 'commercial.signature',
 };
 
@@ -71,8 +69,6 @@ function CommercialInner() {
   const { getShortLabel } = useModuleLabels();
   const { mode: navMode } = useNavigationMode();
 
-  // B: 'Suivi client', 'Comparateur', 'Veille', 'Prospects' = option labels of prospection module, not standalone modules
-  // A: 'Réalisations' = module commercial.realisations → use resolver
   const allTabs: PillTabConfig[] = useMemo(() => [
     { id: 'apporteurs', label: 'Suivi client', icon: Building2 },
     { id: 'comparateur', label: 'Comparateur', icon: GitCompare },
@@ -80,7 +76,6 @@ function CommercialInner() {
     { id: 'prospects', label: 'Prospects', icon: UserSearch },
     { id: 'realisations', label: getShortLabel('commercial.realisations', 'Réalisations'), icon: Camera },
     { id: 'social', label: getShortLabel('commercial.social', 'Social'), icon: Share2 },
-    { id: 'bd_story', label: getShortLabel('commercial.bd_story', 'BD Story'), icon: BookImage },
     { id: 'signature', label: getShortLabel('commercial.signature', 'Signatures'), icon: Stamp },
   ], [getShortLabel]);
 
@@ -143,12 +138,6 @@ function CommercialInner() {
         <TabsContent value="social" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
             <SocialHubPage />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="bd_story" className="mt-4">
-          <Suspense fallback={<LoadingFallback />}>
-            <BdStoryPage />
           </Suspense>
         </TabsContent>
 
