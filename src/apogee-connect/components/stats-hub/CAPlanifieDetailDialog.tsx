@@ -691,36 +691,83 @@ function KpiMiniClickable({ icon: Icon, label, value, color, onClick }: {
   );
 }
 
+type SortKey = 'label' | 'ville' | 'planningDate' | 'devisHT' | 'heuresTech' | 'univers';
+type SortDir = 'asc' | 'desc';
+
 function ProjectTable({ projects, showHours }: { projects: PlanifiedProject[]; showHours?: boolean }) {
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir(key === 'devisHT' || key === 'heuresTech' ? 'desc' : 'asc');
+    }
+  };
+
+  const sorted = useMemo(() => {
+    if (!sortKey) return projects;
+    return [...projects].sort((a, b) => {
+      let cmp = 0;
+      switch (sortKey) {
+        case 'label': cmp = (a.label || a.reference).localeCompare(b.label || b.reference); break;
+        case 'ville': cmp = (a.ville || '').localeCompare(b.ville || ''); break;
+        case 'planningDate': cmp = a.planningDate.getTime() - b.planningDate.getTime(); break;
+        case 'devisHT': cmp = a.devisHT - b.devisHT; break;
+        case 'heuresTech': cmp = a.heuresTech - b.heuresTech; break;
+        case 'univers': cmp = a.univers.localeCompare(b.univers); break;
+      }
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  }, [projects, sortKey, sortDir]);
+
   if (projects.length === 0) {
     return <p className="text-xs text-muted-foreground text-center py-4">Aucun dossier</p>;
   }
+
+  const SortHeader = ({ label, col, align }: { label: string; col: SortKey; align?: string }) => (
+    <button
+      onClick={() => handleSort(col)}
+      className={cn(
+        "flex items-center gap-0.5 hover:text-foreground transition-colors cursor-pointer select-none",
+        align === 'right' && "justify-end",
+        sortKey === col && "text-foreground"
+      )}
+    >
+      {label}
+      {sortKey === col && (
+        <span className="text-[8px] ml-0.5">{sortDir === 'asc' ? '▲' : '▼'}</span>
+      )}
+    </button>
+  );
+
+  const gridCols = showHours
+    ? "grid-cols-[1fr_120px_100px_90px_80px_60px_90px]"
+    : "grid-cols-[1fr_120px_100px_90px_80px_90px]";
 
   return (
     <div className="space-y-1 max-h-[400px] overflow-y-auto">
       <div className={cn(
         "grid gap-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wide pb-1 border-b",
-        showHours
-          ? "grid-cols-[1fr_100px_90px_80px_60px_90px]"
-          : "grid-cols-[1fr_100px_90px_80px_90px]"
+        gridCols
       )}>
-        <span>Nom</span>
-        <span>Ville</span>
-        <span>Date planif.</span>
-        <span className="text-right">Montant HT</span>
-        {showHours && <span className="text-right">Heures</span>}
-        <span>Univers</span>
+        <SortHeader label="Client" col="label" />
+        <SortHeader label="Ville" col="ville" />
+        <SortHeader label="Date planif." col="planningDate" />
+        <SortHeader label="Montant HT" col="devisHT" align="right" />
+        {showHours && <SortHeader label="Heures" col="heuresTech" align="right" />}
+        <SortHeader label="Univers" col="univers" />
       </div>
-      {projects.map(p => (
+      {sorted.map(p => (
         <div key={p.projectId} className={cn(
           "grid gap-2 items-center text-xs py-1.5 border-b border-border/40 last:border-0",
-          showHours
-            ? "grid-cols-[1fr_100px_90px_80px_60px_90px]"
-            : "grid-cols-[1fr_100px_90px_80px_90px]"
+          gridCols
         )}>
           <div className="min-w-0">
             <span className="font-medium truncate block">{p.label || p.reference}</span>
-            {p.label && <span className="text-muted-foreground truncate block text-[10px] font-mono">{p.reference}</span>}
+            <span className="text-muted-foreground truncate block text-[10px] font-mono">{p.reference}</span>
           </div>
           <span className="text-muted-foreground truncate">{p.ville || '—'}</span>
           <span className="text-muted-foreground">{format(p.planningDate, 'dd MMM yyyy', { locale: fr })}</span>
