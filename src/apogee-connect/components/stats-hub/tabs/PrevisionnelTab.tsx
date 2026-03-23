@@ -133,6 +133,8 @@ export function PrevisionnelTab() {
   const { isAgencyReady } = useAgency();
   const { data, rawData, isLoading } = useChargeTravauxAVenir();
   const [showAllDossiers, setShowAllDossiers] = useState(false);
+  const [selectedEtat, setSelectedEtat] = useState<string | null>(null);
+  const [dossiersExplorerOpen, setDossiersExplorerOpen] = useState(false);
 
   const chartData = useMemo(() => {
     if (!data?.parUnivers) return [];
