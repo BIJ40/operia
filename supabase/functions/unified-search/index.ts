@@ -538,7 +538,8 @@ function aiSearchRouteV3(
   context: AiSearchContext,
   resolvedEntities: ResolvedEntities,
   metricResult: { metric: MetricSignature | null; scores: MetricScore[] },
-  now: Date
+  now: Date,
+  forceStats: boolean = false
 ): AiSearchRoutedRequest {
   const corrections: string[] = [];
   const routingSource = 'nlv3';
