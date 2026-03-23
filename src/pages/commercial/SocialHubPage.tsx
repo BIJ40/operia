@@ -202,10 +202,10 @@ export default function SocialHubPage() {
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className="flex gap-4 min-h-[500px]">
+        <div className="flex min-h-[500px] relative">
           {/* Left: Calendar or List — collapsible */}
           {!isDetailExpanded && (
-            <div className="flex-1 min-w-0 rounded-lg border border-border bg-card p-3">
+            <div className="flex-1 min-w-0 rounded-lg border border-border bg-card p-3 mr-0">
               {filteredSuggestions.length === 0 ? (
                 <EmptyState viewMode={viewMode} monthKey={monthKey} />
               ) : viewMode === 'calendar' ? (
@@ -229,22 +229,22 @@ export default function SocialHubPage() {
             </div>
           )}
 
+          {/* Toggle handle — vertical bar between panels */}
+          <div className="flex items-center self-stretch z-10">
+            <button
+              onClick={() => setIsDetailExpanded(prev => !prev)}
+              title={isDetailExpanded ? 'Afficher le calendrier' : 'Agrandir l\'aperçu visuel'}
+              className="flex items-center justify-center w-6 h-16 rounded-md bg-primary/10 hover:bg-primary/20 border border-border transition-colors cursor-pointer my-auto"
+            >
+              {isDetailExpanded ? <PanelLeftOpen className="w-4 h-4 text-primary" /> : <PanelLeftClose className="w-4 h-4 text-primary" />}
+            </button>
+          </div>
+
           {/* Right: Detail panel — expandable */}
           <div className={cn(
             'rounded-lg border border-border bg-card p-3 transition-all duration-200',
             isDetailExpanded ? 'flex-1' : 'w-[340px] shrink-0'
           )}>
-            <div className="flex items-center mb-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={() => setIsDetailExpanded(prev => !prev)}
-                title={isDetailExpanded ? 'Replier le panneau' : 'Agrandir le panneau'}
-              >
-                {isDetailExpanded ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
-              </Button>
-            </div>
             <SocialPostDetailPanel
               suggestion={selectedSuggestion}
               onApprove={handleApprove}
