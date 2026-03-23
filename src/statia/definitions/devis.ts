@@ -742,7 +742,7 @@ export const caPlanifie: StatDefinition = {
     
     // Helper: récupérer le projectId avec tous les alias possibles
     const getProjectId = (x: any): number | null => {
-      const v = x?.projectId ?? x?.project_id ?? x?.refId ?? x?.ref_id ?? x?.dossierId ?? x?.dossier_id ?? null;
+      const v = x?.projectId ?? x?.project_id ?? x?.refId ?? x?.ref_id ?? x?.dossierId ?? x?.dossier_id ?? x?.data?.projectId ?? null;
       return v == null ? null : Number(v);
     };
     
@@ -755,7 +755,12 @@ export const caPlanifie: StatDefinition = {
     // Helper: vérifier si le devis est accepté (to order)
     const isAcceptedDevis = (d: any): boolean => {
       const status = String(d?.status ?? d?.state ?? d?.statut ?? d?.data?.state ?? d?.data?.status ?? '').trim().toLowerCase();
-      return status === 'to order' || status === 'to_order' || status === 'order';
+      return [
+        'to order', 'to_order', 'order',
+        'accepted', 'signed', 'validated',
+        'commande', 'commandé', 'à commander',
+        'devis_accepte', 'devis_valide',
+      ].includes(status);
     };
     
     // 1️⃣ Règle métier "mois dominant" : compter 100% du CA sur le mois
@@ -768,7 +773,7 @@ export const caPlanifie: StatDefinition = {
       const pid = getProjectId(itv);
       if (!pid) continue;
       
-      const dateStr = itv.date ?? itv.start ?? itv.dateDebut ?? itv.data?.date;
+      const dateStr = itv.date ?? itv.start ?? itv.dateDebut ?? itv.dateReelle ?? itv.data?.date;
       const d = parseDate(dateStr);
       if (!d) continue;
       
