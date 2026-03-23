@@ -15,7 +15,7 @@ interface WarmPageContainerProps {
   /** Contenu à droite du header (boutons, etc.) */
   headerRight?: React.ReactNode;
   /** Largeur max du contenu */
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '6xl' | 'full';
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '6xl' | '7xl' | 'full';
   /** Padding vertical */
   padding?: 'compact' | 'normal' | 'spacious';
 }
