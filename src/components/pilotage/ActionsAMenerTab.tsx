@@ -14,7 +14,7 @@ import { toast } from '@/hooks/use-toast';
 import { ConditionalRender } from '@/components/PermissionGuard';
 import { cn } from '@/lib/utils';
 
-type FilterType = 'all' | 'late' | 'a_facturer' | 'devis_a_faire' | 'relance_technicien';
+type FilterType = 'all' | 'late' | 'a_facturer' | 'devis_a_faire' | 'relance_technicien' | 'a_planifier_tvx' | 'a_commander';
 
 export function ActionsAMenerTab() {
   const { isAgencyReady, currentAgency } = useAgency();
