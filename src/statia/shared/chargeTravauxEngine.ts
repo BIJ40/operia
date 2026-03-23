@@ -155,9 +155,15 @@ export interface ChargeTravauxResult {
  * Indexe les interventions par projectId (gère string et number)
  */
 function groupInterventionsByProjectId(interventions: any[]): Map<number, any[]> {
+  const EXCLUDED_TYPES = new Set(['th', 'sav', 'rt', 'releve technique', 'relevé technique', 'rdv technique', 'rdvtech']);
   const map = new Map<number, any[]>();
 
   for (const itv of interventions) {
+    // Exclure TH, SAV, RT du CA prévisionnel
+    const t2 = String(itv?.type2 ?? itv?.data?.type2 ?? '').trim().toLowerCase();
+    const t1 = String(itv?.type ?? itv?.data?.type ?? '').trim().toLowerCase();
+    if (EXCLUDED_TYPES.has(t2) || EXCLUDED_TYPES.has(t1) || t2.includes('sav') || t1.includes('sav')) continue;
+
     const pid = itv?.projectId ?? itv?.project_id;
     if (!pid) continue;
 
