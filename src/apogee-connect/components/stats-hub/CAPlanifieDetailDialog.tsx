@@ -4,8 +4,10 @@
  */
 
 import { useMemo } from 'react';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
+
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Euro, FolderOpen, Clock, TrendingUp, PieChart as PieChartIcon, BarChart3, Calendar } from 'lucide-react';
 import {
@@ -18,6 +20,7 @@ interface PlanifiedProject {
   projectId: number;
   reference: string;
   label: string;
+  ville: string;
   univers: string;
   etatWorkflow: string;
   etatWorkflowLabel: string;
@@ -121,8 +124,6 @@ function usePlanifiedProjects(props: Omit<Props, 'open' | 'onOpenChange'>): Plan
     const devisByPid = new Map<number, any[]>();
     for (const d of devis) { const pid = getProjectId(d); if (pid != null) { if (!devisByPid.has(pid)) devisByPid.set(pid, []); devisByPid.get(pid)!.push(d); } }
 
-    // Règle métier "mois dominant" : compter 100% du CA sur le mois
-    // qui contient le plus d'interventions (tie-break = premier mois chrono)
     const periodStartMonth = `${periodStart.getFullYear()}-${String(periodStart.getMonth() + 1).padStart(2, '0')}`;
     const periodEndMonth = `${periodEnd.getFullYear()}-${String(periodEnd.getMonth() + 1).padStart(2, '0')}`;
 
@@ -136,7 +137,7 @@ function usePlanifiedProjects(props: Omit<Props, 'open' | 'onOpenChange'>): Plan
       const projectItvs = itvByPid.get(projectId) || [];
       let totalHours = 0;
 
-      // Phase A : compter les interventions par mois pour ce projet
+      // Phase A : compter les interventions futures par mois
       const monthCounts = new Map<string, { count: number; firstDate: Date }>();
       for (const itv of projectItvs) {
         const d = getInterventionPlanningDate(itv);
@@ -156,7 +157,7 @@ function usePlanifiedProjects(props: Omit<Props, 'open' | 'onOpenChange'>): Plan
 
       if (monthCounts.size === 0) continue;
 
-      // Phase B : déterminer le mois dominant
+      // Phase B : mois dominant
       let dominantMonth = '';
       let dominantCount = 0;
       let bestDate: Date | null = null;
@@ -172,21 +173,28 @@ function usePlanifiedProjects(props: Omit<Props, 'open' | 'onOpenChange'>): Plan
       if (!dominantMonth || dominantMonth < periodStartMonth || dominantMonth > periodEndMonth) continue;
       if (!bestDate) continue;
 
+      // Phase D : ne retenir que les projets avec devis accepté (cohérence tuile)
       const projectDevis = devisByPid.get(projectId) || [];
       let devisHT = 0;
+      let hasAcceptedDevis = false;
       for (const d of projectDevis) {
         if (!isDevisToOrder(d)) continue;
         devisHT = parseNum(d.data?.totalHT) || parseNum(d.totalHT) || parseNum(d.amount) || 0;
-        if (devisHT > 0) break;
+        if (devisHT > 0) { hasAcceptedDevis = true; break; }
       }
+
+      if (!hasAcceptedDevis) continue;
 
       const universes = (project?.data?.universes as string[]) || ['Non classé'];
       const state = project?.data?.state ?? project?.state ?? '';
+      const clientName = project?.data?.clientName ?? project?.data?.client_name ?? project?.data?.nom ?? '';
+      const ville = project?.data?.ville ?? project?.data?.city ?? '';
 
       results.push({
         projectId,
         reference: project?.data?.reference || project?.reference || `#${projectId}`,
-        label: project?.data?.label || project?.label || '',
+        label: clientName || project?.data?.label || project?.label || '',
+        ville,
         univers: normalizeUnivers(universes[0]),
         etatWorkflow: state,
         etatWorkflowLabel: state === 'to_planify_tvx' ? 'À planifier' : state === 'devis_to_order' ? 'À commander' : state === 'wait_fourn' ? 'Att. fourn.' : state,
@@ -391,28 +399,24 @@ export function CAPlanifieDetailDialog({ open, onOpenChange, ...dataProps }: Pro
               {planifiedProjects.length === 0 ? (
                 <p className="text-xs text-muted-foreground text-center py-4">Aucun dossier planifié sur cette période</p>
               ) : (
-                <div className="space-y-1 max-h-[240px] overflow-y-auto">
-                  <div className="grid grid-cols-[1fr_100px_80px_80px_60px] gap-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wide pb-1 border-b">
-                    <span>Référence</span>
+                <div className="space-y-1 max-h-[300px] overflow-y-auto">
+                  <div className="grid grid-cols-[1fr_100px_90px_80px_90px] gap-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wide pb-1 border-b">
+                    <span>Nom</span>
+                    <span>Ville</span>
+                    <span>Date planif.</span>
+                    <span className="text-right">Montant HT</span>
                     <span>Univers</span>
-                    <span className="text-right">Devis HT</span>
-                    <span className="text-right">Heures</span>
-                    <span className="text-right">État</span>
                   </div>
                   {planifiedProjects.map(p => (
-                    <div key={p.projectId} className="grid grid-cols-[1fr_100px_80px_80px_60px] gap-2 items-center text-xs py-1.5 border-b border-border/40 last:border-0">
+                    <div key={p.projectId} className="grid grid-cols-[1fr_100px_90px_80px_90px] gap-2 items-center text-xs py-1.5 border-b border-border/40 last:border-0">
                       <div className="min-w-0">
-                        <span className="font-mono font-medium truncate block">{p.reference}</span>
-                        {p.label && <span className="text-muted-foreground truncate block text-[10px]">{p.label.slice(0, 40)}</span>}
+                        <span className="font-medium truncate block">{p.label || p.reference}</span>
+                        {p.label && <span className="text-muted-foreground truncate block text-[10px] font-mono">{p.reference}</span>}
                       </div>
-                      <span className="text-muted-foreground truncate">{p.univers}</span>
+                      <span className="text-muted-foreground truncate">{p.ville || '—'}</span>
+                      <span className="text-muted-foreground">{format(p.planningDate, 'dd MMM yyyy', { locale: fr })}</span>
                       <span className="text-right font-medium">{p.devisHT > 0 ? fmtCurrency(p.devisHT) : '—'}</span>
-                      <span className="text-right text-muted-foreground">{p.heuresTech > 0 ? `${Math.round(p.heuresTech)}h` : '—'}</span>
-                      <div className="flex justify-end">
-                        <Badge variant="outline" className="text-[9px] px-1 py-0" style={{ borderColor: ETAT_COLORS[p.etatWorkflow] || 'hsl(var(--border))' }}>
-                          {p.etatWorkflowLabel}
-                        </Badge>
-                      </div>
+                      <span className="text-muted-foreground truncate">{p.univers}</span>
                     </div>
                   ))}
                 </div>

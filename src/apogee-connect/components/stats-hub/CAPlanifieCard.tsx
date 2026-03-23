@@ -92,11 +92,11 @@ export function CAPlanifieCard({ projects, interventions, devis, factures }: CAP
   }, [selectedMonth, selectedYear]);
 
   const { caPlanifie, caPlanifieDevisCount } = useMemo(() => {
-    const startMs = selectedPeriod.start.getTime();
-    const endMs = selectedPeriod.end.getTime();
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const todayMs = today.getTime();
-    const isInRangeAndFuture = (d: Date) => { const t = d.getTime(); return t >= startMs && t <= endMs && t >= todayMs; };
+
+    const periodStartMonth = `${selectedPeriod.start.getFullYear()}-${String(selectedPeriod.start.getMonth() + 1).padStart(2, '0')}`;
+    const periodEndMonth = `${selectedPeriod.end.getFullYear()}-${String(selectedPeriod.end.getMonth() + 1).padStart(2, '0')}`;
 
     const facturedProjectIds = new Set<number>();
     for (const f of factures) { const pid = getProjectId(f); if (pid != null) facturedProjectIds.add(pid); }
@@ -116,12 +116,31 @@ export function CAPlanifieCard({ projects, interventions, devis, factures }: CAP
       if (facturedProjectIds.has(projectId)) continue;
 
       const projectInterventions = interventionsByProjectId.get(projectId) || [];
-      const hasInterventionInPeriod = projectInterventions.some((itv) => {
-        const planningDate = getInterventionPlanningDate(itv);
-        return planningDate ? isInRangeAndFuture(planningDate) : false;
-      });
 
-      if (!hasInterventionInPeriod) continue;
+      // Phase A : compter les interventions futures par mois
+      const monthCounts = new Map<string, number>();
+      for (const itv of projectInterventions) {
+        const d = getInterventionPlanningDate(itv);
+        if (d && d.getTime() >= todayMs) {
+          const mk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          monthCounts.set(mk, (monthCounts.get(mk) || 0) + 1);
+        }
+      }
+
+      if (monthCounts.size === 0) continue;
+
+      // Phase B : mois dominant
+      let dominantMonth = '';
+      let dominantCount = 0;
+      for (const [month, cnt] of monthCounts) {
+        if (cnt > dominantCount || (cnt === dominantCount && month < dominantMonth)) {
+          dominantMonth = month;
+          dominantCount = cnt;
+        }
+      }
+
+      // Phase C : ne retenir que si le mois dominant est dans la période
+      if (!dominantMonth || dominantMonth < periodStartMonth || dominantMonth > periodEndMonth) continue;
 
       const projectDevis = devisByProjectId.get(projectId) || [];
       for (const d of projectDevis) {
