@@ -1,40 +1,36 @@
 
 
-# Plan : Intégrer les avatars équipe dans la génération IA
+# Plan : Ajouter la photo d'équipe comme asset Social Hub
 
-## Problème
+## Contexte
 
-Les avatars team sont uniquement utilisés dans le rendu canvas client (`drawBrandCard`). L'edge function `social-visual-generate` ne les connaît pas.
+L'utilisateur fournit une photo de groupe illustrée (lui en blanc + une partie de l'équipe HelpConfort). Cette image doit être disponible comme visuel utilisable dans les publications Social Hub, notamment pour les posts "équipe" / "brand" / "prospection".
 
-## Solution
+## Actions
 
-Deux options, du plus simple au plus ambitieux :
+### 1. Copier l'image dans les assets
 
-### Option A — Canvas-first pour les posts équipe (rapide)
+Stocker l'image dans `src/assets/team/team-group-photo.png` aux côtés des avatars individuels existants.
 
-Forcer le rendu **canvas** (avec avatars) comme visuel principal pour les posts `prospection` et `calendar`, au lieu de lancer la génération IA.
+### 2. Exporter dans `templateAssets.ts`
 
-- Modifier le flux de génération : si `topicType` est `prospection` ou `calendar`, utiliser le canvas `brand_card` avec `drawTeamGrid` comme visuel final
-- Le canvas est exporté en PNG et stocké dans le bucket comme un visuel normal
-- Avantage : les avatars apparaissent immédiatement, pas besoin de toucher l'edge function
+Ajouter un export `getTeamGroupPhotoSrc()` dans `src/components/commercial/social/templates/templateAssets.ts` pour rendre l'image accessible aux templates canvas.
 
-### Option B — Injecter les avatars dans le prompt IA (plus complexe)
+### 3. Intégrer dans `drawBrandCard.ts`
 
-- Uploader les avatars dans le bucket `brand-assets`
-- Dans l'edge function, quand le post est de type équipe, inclure les URLs des avatars comme images de référence dans le prompt Gemini
-- Demander au modèle d'intégrer ces visages dans la scène
+Modifier le template `brand_card` pour utiliser cette photo de groupe comme alternative visuelle :
+- Quand `showTeam` est activé (posts prospection/calendar), alterner entre la grille d'avatars individuels et cette photo de groupe
+- Ou utiliser cette photo comme fond/illustration principale dans la ZONE 2 du canvas
 
-Problème : la fidélité des visages via prompt IA est très faible. Les résultats seront aléatoires.
+### 4. Rendre disponible comme média dans le Social Hub
 
-### Recommandation
+Référencer cette image dans les options de médias disponibles pour les publications, afin qu'elle puisse être sélectionnée manuellement lors de la création d'un post.
 
-**Option A** — c'est plus fiable et immédiat. Les avatars illustrés sont déjà de bonne qualité, le canvas `brand_card` les affiche bien en grille avec branding HC.
+## Fichiers impactés
 
-## Fichiers impactés (Option A)
-
-| Fichier | Modification |
+| Fichier | Action |
 |---|---|
-| `src/hooks/useSocialVisualAssets.ts` | Ajouter une fonction `generateCanvasVisual` qui exporte le canvas en PNG et l'uploade dans le bucket |
-| Composant de génération visuelle | Détecter `topicType === 'prospection' || 'calendar'` → utiliser le canvas au lieu de l'edge function |
-| `drawBrandCard.ts` | Déjà prêt (drawTeamGrid existe) |
+| `src/assets/team/team-group-photo.png` | Nouveau — copie de l'image uploadée |
+| `src/components/commercial/social/templates/templateAssets.ts` | Ajouter export photo de groupe |
+| `src/components/commercial/social/templates/drawBrandCard.ts` | Utiliser la photo de groupe comme option de rendu |
 
