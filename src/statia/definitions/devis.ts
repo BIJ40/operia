@@ -758,8 +758,11 @@ export const caPlanifie: StatDefinition = {
       return status === 'to order' || status === 'to_order' || status === 'order';
     };
     
-    // 1️⃣ Identifier les dossiers planifiés dans la période
-    const plannedProjects = new Set<number>();
+    // 1️⃣ Règle métier "mois dominant" : compter 100% du CA sur le mois
+    //    qui contient le plus d'interventions (tie-break = premier mois chrono)
+    
+    // Phase A : grouper les interventions par (projectId, mois YYYY-MM)
+    const itvCountByProjectMonth = new Map<number, Map<string, number>>();
     
     for (const itv of interventions ?? []) {
       const pid = getProjectId(itv);
@@ -768,9 +771,38 @@ export const caPlanifie: StatDefinition = {
       const dateStr = itv.date ?? itv.start ?? itv.dateDebut ?? itv.data?.date;
       const d = parseDate(dateStr);
       if (!d) continue;
-      if (d < dateMin || d > dateMax) continue;
       
-      plannedProjects.add(pid);
+      const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      
+      if (!itvCountByProjectMonth.has(pid)) {
+        itvCountByProjectMonth.set(pid, new Map());
+      }
+      const monthMap = itvCountByProjectMonth.get(pid)!;
+      monthMap.set(monthKey, (monthMap.get(monthKey) || 0) + 1);
+    }
+    
+    // Phase B : pour chaque projet, déterminer le mois dominant
+    // Phase C : ne retenir le projet que si son mois dominant est dans [dateMin, dateMax]
+    const dateMinMonth = `${dateMin.getFullYear()}-${String(dateMin.getMonth() + 1).padStart(2, '0')}`;
+    const dateMaxMonth = `${dateMax.getFullYear()}-${String(dateMax.getMonth() + 1).padStart(2, '0')}`;
+    
+    const plannedProjects = new Set<number>();
+    
+    for (const [pid, monthMap] of itvCountByProjectMonth) {
+      let dominantMonth = '';
+      let dominantCount = 0;
+      
+      for (const [month, count] of monthMap) {
+        if (count > dominantCount || (count === dominantCount && month < dominantMonth)) {
+          dominantMonth = month;
+          dominantCount = count;
+        }
+      }
+      
+      // Ne retenir que si le mois dominant tombe dans la période demandée
+      if (dominantMonth >= dateMinMonth && dominantMonth <= dateMaxMonth) {
+        plannedProjects.add(pid);
+      }
     }
     
     // 2️⃣ Récupérer les devis acceptés par dossier (1 seul devis max par dossier)
