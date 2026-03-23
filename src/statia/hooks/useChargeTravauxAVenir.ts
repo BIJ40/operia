@@ -36,11 +36,14 @@ const getProjectId = (obj: any): number | null => {
 };
 
 const getInterventionPlanningDate = (itv: any): Date | null => {
-  const direct = toDate(itv?.dateReelle ?? itv?.date);
+  const direct = toDate(itv?.dateReelle ?? itv?.date ?? itv?.start ?? itv?.dateDebut ?? itv?.data?.date);
   if (direct) return direct;
-  const visites = Array.isArray(itv?.visites) ? itv.visites : [];
+  const visites = [
+    ...(Array.isArray(itv?.visites) ? itv.visites : []),
+    ...(Array.isArray(itv?.data?.visites) ? itv.data.visites : []),
+  ];
   for (const v of visites) {
-    const dv = toDate(v?.dateReelle ?? v?.date);
+    const dv = toDate(v?.dateReelle ?? v?.date ?? v?.start ?? v?.dateDebut);
     if (dv) return dv;
   }
   return null;
