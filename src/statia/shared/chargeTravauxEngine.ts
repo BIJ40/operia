@@ -278,9 +278,20 @@ function extractHoursFromIntervention(
   for (const visite of visites) {
     const visiteUsers = getUserIds(visite);
     const visiteCreneaux = Array.isArray(visite?.creneaux) ? visite.creneaux : [];
-    const durationHours =
-      getDurationHoursFromCreneaux(visiteCreneaux) ||
-      (parseNumericValue(visite?.duree) || parseNumericValue(visite?.dureeMinutes) || parseNumericValue(visite?.duration) || parseNumericValue(visite?.tempsPrevu)) / 60;
+    
+    // Priorité 1 : créneaux avec debut/fin ou duree en minutes
+    let durationHours = getDurationHoursFromCreneaux(visiteCreneaux);
+    
+    // Priorité 2 : dureeMinutes (en minutes → /60)
+    if (durationHours <= 0) {
+      const mins = parseNumericValue(visite?.dureeMinutes);
+      if (mins > 0) durationHours = mins / 60;
+    }
+    
+    // Priorité 3 : duree / tempsPrevu / duration (en HEURES, pas de /60)
+    if (durationHours <= 0) {
+      durationHours = parseNumericValue(visite?.duree) || parseNumericValue(visite?.tempsPrevu) || parseNumericValue(visite?.duration) || 0;
+    }
 
     if (durationHours <= 0) continue;
 
