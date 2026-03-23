@@ -18,7 +18,8 @@ export type TitleKey =
   | 'productivite'
   | 'map'
   | 'recouvrement'
-  | 'actions_a_mener';
+  | 'actions_a_mener'
+  | 'ca_par_jour';
 
 interface TitleVariant {
   title: string;
