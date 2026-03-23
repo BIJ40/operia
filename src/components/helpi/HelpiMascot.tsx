@@ -5,6 +5,52 @@ import { supabase } from '@/integrations/supabase/client';
 import { HelpiChatBubble } from './HelpiChatBubble';
 import helpiMascot from '@/assets/helpi/helpi-mascot.png';
 
+/** Format the unified-search response into a readable answer */
+function formatHelpiResponse(data: any, error: any): string {
+  if (error) return 'Désolé, une erreur est survenue.';
+  if (!data) return 'Je n\'ai pas trouvé de réponse.';
+
+  if (data.type === 'stat' && data.result) {
+    const r = data.result;
+    const label = r.label || r.metricId || 'Résultat';
+    const period = r.period
+      ? `du ${new Date(r.period.from).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })} au ${new Date(r.period.to).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`
+      : '';
+
+    if (r.displayText) return r.displayText;
+
+    if (r.ranking && r.ranking.length > 0) {
+      const lines = r.ranking.slice(0, 5).map((item: any, i: number) =>
+        `${i + 1}. **${item.label || item.name}** — ${fmtVal(item.value, r.unit)}`
+      );
+      return `📊 **${label}** ${period}\n\n${lines.join('\n')}`;
+    }
+
+    if (r.value !== undefined && r.value !== null) {
+      if (r.hasData === false || (r.value === 0 && r.dataCount === 0)) {
+        return `📊 **${label}** ${period}\n\nAucune donnée trouvée pour cette période.`;
+      }
+      return `📊 **${label}** ${period}\n\n**${fmtVal(r.value, r.unit)}**${r.dataCount ? ` (${r.dataCount} éléments)` : ''}`;
+    }
+  }
+
+  if (data.type === 'doc' && data.result?.answer) return data.result.answer;
+  if (data.type === 'error' || data.type === 'access_denied') return data.error?.message || 'Erreur lors de la recherche.';
+  if (data.type === 'ambiguous' && Array.isArray(data.result)) {
+    const lines = data.result.map((o: any) => `• ${o.label || o.metricId}`);
+    return `🤔 Question ambiguë. Vouliez-vous dire :\n\n${lines.join('\n')}`;
+  }
+
+  return data?.result?.answer || data?.answer || 'Je n\'ai pas compris votre question. Essayez de reformuler.';
+}
+
+function fmtVal(value: number, unit?: string): string {
+  if (unit === '€' || unit === 'euros') return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
+  if (unit === '%') return `${value.toFixed(1)}%`;
+  if (unit === 'jours' || unit === 'j') return `${value} jours`;
+  return new Intl.NumberFormat('fr-FR').format(value);
+}
+
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
