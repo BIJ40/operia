@@ -590,20 +590,72 @@ const WEEKLY_CATEGORIES = ['urgence', 'prevention', 'amelioration', 'conseil', '
 function buildWeeklySchedule(daysInMonth: number, year: number, month: number): DaySchedule[] {
   // Primary: use editorial calendar
   const editorial = buildEditorialSchedule(month, year);
-  if (editorial.length >= daysInMonth) return editorial;
-  
-  // Fallback: fill missing days with random categories
   const coveredDays = new Set(editorial.map(e => e.day));
-  let weekPool: string[] = [];
   const result = [...editorial];
-  
-  for (let d = 1; d <= daysInMonth; d++) {
-    if (coveredDays.has(d)) continue;
-    if (weekPool.length === 0) {
-      weekPool = shuffleArray([...WEEKLY_CATEGORIES]);
+
+  // INJECT awareness days (relevance 2-3) into the schedule as MANDATORY entries
+  // This ensures thematic days dominate over random category rotation
+  const monthAwareness = AWARENESS_DAYS.filter(d => d.month === month && d.relevanceScore >= 2);
+  for (const aw of monthAwareness) {
+    if (coveredDays.has(aw.day)) continue; // editorial calendar already has this day
+    coveredDays.add(aw.day);
+
+    // Determine topic_type from awareness day properties
+    let category: string;
+    if (aw.relevanceScore === 1) {
+      category = 'calendar';
+    } else if (aw.relevanceScore === 3) {
+      // Direct métier link — use the contentTypeHint or map to a topic_type
+      const hintMap: Record<string, string> = {
+        pedagogique: 'pedagogique',
+        prevention: 'prevention',
+        preuve: 'preuve',
+        interne: 'prospection',
+        image_marque: 'prospection',
+        commercial: 'prospection',
+        disponibilite: 'calendar',
+        creatif: 'calendar',
+        leger: 'calendar',
+      };
+      category = hintMap[aw.contentTypeHint] || aw.contentTypeHint || 'pedagogique';
+    } else {
+      // relevance 2 — soft angle, can be pedagogique/prevention/prospection
+      const hintMap2: Record<string, string> = {
+        pedagogique: 'pedagogique',
+        prevention: 'prevention',
+        preuve: 'preuve',
+        interne: 'prospection',
+        image_marque: 'prospection',
+        commercial: 'prospection',
+      };
+      category = hintMap2[aw.contentTypeHint] || 'pedagogique';
     }
-    result.push({ day: d, category: weekPool.shift()!, universe: 'general', theme: '', isCalendar: false });
+
+    const universe = aw.preferredUniverses?.[0] || 'general';
+    // Theme = awareness label + useHint for fusion potential
+    const theme = `${aw.label}${aw.useHint ? ' — ' + aw.useHint : ''}`;
+
+    result.push({
+      day: aw.day,
+      category,
+      universe,
+      theme,
+      isCalendar: category === 'calendar',
+    });
   }
+
+  // Fill remaining days with random category rotation
+  if (result.length < daysInMonth) {
+    let weekPool: string[] = [];
+    for (let d = 1; d <= daysInMonth; d++) {
+      if (coveredDays.has(d)) continue;
+      if (weekPool.length === 0) {
+        weekPool = shuffleArray([...WEEKLY_CATEGORIES]);
+      }
+      result.push({ day: d, category: weekPool.shift()!, universe: 'general', theme: '', isCalendar: false });
+    }
+  }
+
   return result.sort((a, b) => a.day - b.day);
 }
 
@@ -1535,13 +1587,26 @@ FORMAT DES POSTS (variation obligatoire) :
 - 10% LONG : hook + 2 phrases sous-texte + CTA
 
 ═══════════════════════════════════════════
-STRATÉGIE CALENDAIRE (CRITIQUE)
+STRATÉGIE CALENDAIRE (CRITIQUE — PRIORITÉ N°1)
 ═══════════════════════════════════════════
-Les journées spéciales sont traitées selon leur NIVEAU DE PERTINENCE MÉTIER :
+Les journées mondiales/nationales DOMINENT le planning. Elles ne sont PAS un "bonus" — elles sont le THÈME PRINCIPAL quand elles existent.
 
-- relevance 3 → contenu métier DIRECT. Le thème calendaire EST le sujet métier (ex: Journée de l'eau → plomberie).
-- relevance 2 → angle utile OU prévention. L'événement sert de PRÉTEXTE à un angle métier soft.
-- relevance 1 → topic_type = "calendar". AUCUN contenu métier forcé. Post HUMAIN, IMAGE DE MARQUE ou LÉGER uniquement.
+HIÉRARCHIE DE PRIORITÉ POUR CHAQUE JOUR :
+1. SI une journée mondiale/nationale avec relevance 3 existe → LE POST DOIT ÊTRE SUR CE THÈME. C'est le sujet principal. Le métier et la journée FUSIONNENT naturellement.
+   Exemple : "Journée mondiale de l'eau" + plomberie → post sur les fuites d'eau, la consommation, le gaspillage.
+2. SI une journée avec relevance 2 existe → L'UTILISER comme angle principal si le lien est crédible. FUSIONNER avec un angle métier.
+   Exemple : "Journée des consommateurs" → transparence des devis, engagement qualité HelpConfort.
+3. SI une journée avec relevance 1 existe → topic_type = "calendar". Post humain/image, AUCUN contenu métier forcé.
+4. SEULEMENT si AUCUNE journée intéressante n'existe ce jour-là → post métier classique selon la rotation.
+
+FUSION JOURNÉE + MÉTIER (ENCOURAGÉ pour relevance 2-3) :
+- Prendre la journée comme PRÉTEXTE et la RELIER naturellement au métier
+- Le hook DOIT mentionner ou faire référence à la journée
+- Le contenu métier DOIT être lié à la thématique de la journée
+- Exemples de fusion réussie :
+  • "Jour de la Terre" + rénovation → "Rénover éco-responsable, ça commence chez vous"
+  • "Journée sécurité au travail" + électricité → "Votre tableau électrique est-il aux normes ?"
+  • "Journée Parkinson" + PMR → "Adapter son logement pour vivre mieux chez soi"
 
 INTERDICTION ABSOLUE pour relevance 1 :
 - forcer un lien métier
@@ -1549,18 +1614,10 @@ INTERDICTION ABSOLUE pour relevance 1 :
 - ajouter un conseil technique hors contexte
 - mentionner travaux, rénovation, dépannage
 
-MAPPING ANGLE → CONTENU (pour les jours calendaires relevance 1) :
-- interne → équipe, terrain, coulisses, valorisation
-- image_marque → crédibilité, présence locale, sérieux
-- leger → clin d'œil, message simple, présence de marque
-- creatif → visuel fun/décalé assumé
-- disponibilite → "même les jours fériés, on est là"
-- emotionnel → famille, confort, chaleur humaine
-
 PRIORITÉ GLOBALE :
-1. Si jour calendaire relevance 1 → calendrier IMPOSE le sujet
-2. Si jour calendaire relevance 2 → angle métier soft possible
-3. Si jour calendaire relevance 3 → contenu métier direct
+1. Si jour calendaire relevance 3 → la journée EST le sujet, fusionné avec le métier
+2. Si jour calendaire relevance 2 → angle métier soft INSPIRÉ par la journée
+3. Si jour calendaire relevance 1 → calendrier IMPOSE le sujet (humain, image, léger)
 4. Sinon → post métier classique selon la rotation
 
 ═══════════════════════════════════════════
