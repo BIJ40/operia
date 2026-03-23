@@ -46,6 +46,7 @@ interface UnifiedSearchRequestBody {
   query: string;
   now?: string;
   conversationHistory?: Array<{ role: string; content: string }>;
+  forceStats?: boolean;
 }
 
 interface AiSearchContext {
