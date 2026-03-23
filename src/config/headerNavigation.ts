@@ -1,5 +1,5 @@
 import {
-  BarChart3, Activity, ListChecks, FileCheck, AlertTriangle,
+  BarChart3, Activity, ListChecks, AlertTriangle,
   ShoppingCart, Users as UsersIcon, Search, Eye, TrendingUp,
   Users, Car, Handshake, CalendarDays, MessagesSquare,
   FolderOpen, Headphones, HelpCircle, Kanban, Shield, Building2,
@@ -43,7 +43,7 @@ export const HEADER_NAV_GROUPS: HeaderNavGroup[] = [
       { label: 'Statistiques', icon: BarChart3, tab: 'pilotage', description: 'Tableaux de bord et KPIs', scope: 'pilotage.statistiques', subTabKey: 'pilotage_sub_tab', subTabValue: 'stats' },
       { label: 'Performance', icon: Activity, tab: 'pilotage', description: 'Indicateurs de performance', scope: 'pilotage.performance', subTabKey: 'pilotage_sub_tab', subTabValue: 'performance' },
       { label: 'Actions à mener', icon: ListChecks, tab: 'pilotage', description: 'Suivi des actions', scope: 'pilotage.actions_a_mener', subTabKey: 'pilotage_sub_tab', subTabValue: 'actions' },
-      { label: 'Devis acceptés', icon: FileCheck, tab: 'pilotage', description: 'Suivi des devis signés', scope: 'pilotage.devis_acceptes', subTabKey: 'pilotage_sub_tab', subTabValue: 'devis-acceptes' },
+      
       { label: 'Incohérences', icon: AlertTriangle, tab: 'pilotage', description: 'Alertes et anomalies', scope: 'pilotage.incoherences', subTabKey: 'pilotage_sub_tab', subTabValue: 'anomalies' },
       { label: 'Résultat', icon: TrendingUp, tab: 'pilotage', description: 'Performance financière', scope: 'pilotage.resultat', subTabKey: 'pilotage_sub_tab', subTabValue: 'resultat' },
       { label: 'Rentabilité', icon: TrendingUp, tab: 'pilotage', description: 'Rentabilité dossier', scope: 'pilotage.rentabilite', subTabKey: 'pilotage_sub_tab', subTabValue: 'rentabilite' },

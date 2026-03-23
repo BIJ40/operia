@@ -9,7 +9,7 @@
 import { lazy, Suspense, useMemo } from 'react';
 import { 
   FileText, Users2, Loader2, Users, CalendarDays, 
-  Car, FolderOpen, Settings, Eye, Activity, Target, FileCheck, AlertTriangle, MapPin
+  Car, FolderOpen, Settings, Eye, Activity, Target, AlertTriangle, MapPin
 } from 'lucide-react';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { ModuleKey } from '@/types/modules';
@@ -31,12 +31,12 @@ const PerformanceDashboard = lazy(() =>
   import('@/components/performance/PerformanceDashboard').then(m => ({ default: m.PerformanceDashboard }))
 );
 const ProspectionTabContent = lazy(() => import('@/prospection/pages/ProspectionTabContent'));
-const DevisAcceptesView = lazy(() => import('@/apogee-connect/components/DevisAcceptesView'));
+
 const AnomaliesDevisDossierView = lazy(() => import('@/apogee-connect/components/AnomaliesDevisDossierView'));
 const ZonesDeplacementTab = lazy(() => import('@/components/organisation/ZonesDeplacementTab'));
 
 // Types pour les niveaux de navigation
-type OutilsMainTab = 'actions' | 'apporteurs' | 'administratif' | 'parc' | 'performance' | 'prospection' | 'devis-acceptes' | 'anomalies';
+type OutilsMainTab = 'actions' | 'apporteurs' | 'administratif' | 'parc' | 'performance' | 'prospection' | 'anomalies';
 type ApporteursSubTab = 'espace';
 type AdminSubTab = 'reunions' | 'plannings' | 'documents' | 'zones';
 
@@ -236,7 +236,7 @@ export default function DiversTabContent() {
     { id: 'parc', label: getShortLabel('organisation.parc', 'Parc'), icon: Car, accent: 'green', requiresModule: 'organisation.parc' },
     { id: 'performance', label: 'Performance', icon: Activity, accent: 'pink', requiresModule: 'pilotage.agence' },
     { id: 'prospection', label: getShortLabel('prospection', 'Commercial'), icon: Target, accent: 'orange', requiresModule: 'prospection' },
-    { id: 'devis-acceptes', label: 'Devis acceptés', icon: FileCheck, accent: 'teal', requiresModule: 'pilotage.agence' },
+    
     { id: 'anomalies', label: 'Incohérences', icon: AlertTriangle, accent: 'pink', requiresModule: 'pilotage.agence' },
   ], [getShortLabel]);
 
@@ -282,11 +282,6 @@ export default function DiversTabContent() {
           </Suspense>
         </TabsContent>
 
-        <TabsContent value="devis-acceptes" className="mt-6 animate-fade-in">
-          <Suspense fallback={<LoadingFallback />}>
-            <DevisAcceptesView />
-          </Suspense>
-        </TabsContent>
 
         <TabsContent value="anomalies" className="mt-6 animate-fade-in">
           <Suspense fallback={<LoadingFallback />}>

@@ -56,7 +56,7 @@ describe('Dynamic nav labels follow admin renames', () => {
       'pilotage.statistiques.previsionnel',
       'pilotage.performance',
       'pilotage.actions_a_mener',
-      'pilotage.devis_acceptes',
+      
       'pilotage.incoherences',
       'commercial.realisations',
       'organisation.apporteurs',

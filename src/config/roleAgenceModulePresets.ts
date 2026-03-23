@@ -49,7 +49,7 @@ export const N2_ASSIGNABLE_MODULES: { key: ModuleKey; fallbackLabel: string; cat
   { key: 'pilotage.statistiques', fallbackLabel: 'Statistiques', category: 'Pilotage' },
   { key: 'pilotage.performance', fallbackLabel: 'Performance', category: 'Pilotage' },
   { key: 'pilotage.actions_a_mener', fallbackLabel: 'Actions à mener', category: 'Pilotage' },
-  { key: 'pilotage.devis_acceptes', fallbackLabel: 'Devis acceptés', category: 'Pilotage' },
+  
   { key: 'pilotage.incoherences', fallbackLabel: 'Incohérences', category: 'Pilotage' },
   { key: 'pilotage.resultat', fallbackLabel: 'Résultat', category: 'Pilotage' },
   { key: 'pilotage.rentabilite', fallbackLabel: 'Rentabilité', category: 'Pilotage' },
