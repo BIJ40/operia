@@ -343,31 +343,9 @@ export default function DashboardStatic() {
         animate="visible"
         className="space-y-6"
       >
-        {/* NIVEAU 1 - HERO ROW: Carte RDV + Indicateurs Globaux */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* Carte RDV (demi-tuile) */}
-          <motion.div variants={itemVariants}>
-            <DashboardMapWidget agencySlug={agence} className="h-full" />
-          </motion.div>
-
-          {/* Indicateurs Globaux (demi-tuile) */}
-          <motion.div variants={itemVariants}>
-            <WarmCard
-              variant="blue"
-              animate={false}
-              className="h-full"
-            >
-              <HumanTitle titleKey="kpis" icon={BarChart3} iconColor="text-warm-blue" size="lg" />
-              <div className="mt-4">
-                <IndicateursGlobauxWidget />
-              </div>
-            </WarmCard>
-          </motion.div>
-        </div>
-
-        {/* NIVEAU 2 - 5 TUILES ALIGNÉES */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          {/* CA par Univers */}
+        {/* NIVEAU 1 - HERO ROW: CA Univers (1col) + Carte (2col) + En un coup d'œil (2col) */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          {/* CA par Univers — remonté ici */}
           <motion.div variants={itemVariants}>
             <WarmCard
               variant="blue"
@@ -382,6 +360,28 @@ export default function DashboardStatic() {
             </WarmCard>
           </motion.div>
 
+          {/* Carte RDV (2 colonnes) */}
+          <motion.div variants={itemVariants} className="lg:col-span-2">
+            <DashboardMapWidget agencySlug={agence} className="h-full" />
+          </motion.div>
+
+          {/* Indicateurs Globaux (2 colonnes) */}
+          <motion.div variants={itemVariants} className="lg:col-span-2">
+            <WarmCard
+              variant="blue"
+              animate={false}
+              className="h-full"
+            >
+              <HumanTitle titleKey="kpis" icon={BarChart3} iconColor="text-warm-blue" size="lg" />
+              <div className="mt-4">
+                <IndicateursGlobauxWidget />
+              </div>
+            </WarmCard>
+          </motion.div>
+        </div>
+
+        {/* NIVEAU 2 - 4 TUILES ALIGNÉES */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* CA par Apporteur */}
           <motion.div variants={itemVariants}>
             <WarmCard
@@ -435,7 +435,6 @@ export default function DashboardStatic() {
               animate={false}
               className="h-full cursor-pointer"
               onClick={() => {
-                // Navigate to pilotage > actions tab
                 window.dispatchEvent(new CustomEvent('session-state-change', { detail: { key: 'workspace_tab', value: 'pilotage' } }));
                 setTimeout(() => {
                   window.dispatchEvent(new CustomEvent('session-state-change', { detail: { key: 'pilotage_sub_tab', value: 'actions' } }));
