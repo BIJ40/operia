@@ -343,15 +343,45 @@ export default function DashboardStatic() {
         animate="visible"
         className="space-y-6"
       >
-        {/* NIVEAU 1 - HERO ROW: Carte RDV + Indicateurs Globaux */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* Carte RDV */}
-          <motion.div variants={itemVariants}>
+        {/* LAYOUT 2 RANGÉES avec colonne gauche qui déborde */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4" style={{ gridTemplateRows: 'auto auto' }}>
+          
+          {/* COL GAUCHE — span 2 rows : CA Univers (pictos) + brique vide dessous */}
+          <div className="lg:row-span-2 flex flex-col gap-4">
+            {/* CA par Univers — déborde sur les 2 lignes */}
+            <motion.div variants={itemVariants}>
+              <WarmCard
+                variant="blue"
+                icon={PieChart}
+                animate={false}
+              >
+                <HumanTitle titleKey="ca_univers" icon={PieChart} iconColor="text-warm-blue" size="sm" />
+                <div className="mt-3">
+                  <CAParUniversWidget />
+                </div>
+              </WarmCard>
+            </motion.div>
+
+            {/* Brique vide — occupe le reste de la hauteur */}
+            <motion.div variants={itemVariants} className="flex-1">
+              <WarmCard
+                variant="blue"
+                animate={false}
+                className="h-full min-h-[80px]"
+              >
+                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                  {/* Espace réservé */}
+                </div>
+              </WarmCard>
+            </motion.div>
+          </div>
+
+          {/* LIGNE 1 — Carte RDV (2 cols) + En un coup d'œil (2 cols) */}
+          <motion.div variants={itemVariants} className="lg:col-span-2">
             <DashboardMapWidget agencySlug={agence} className="h-full" />
           </motion.div>
 
-          {/* Indicateurs Globaux */}
-          <motion.div variants={itemVariants}>
+          <motion.div variants={itemVariants} className="lg:col-span-2">
             <WarmCard
               variant="blue"
               animate={false}
@@ -363,70 +393,29 @@ export default function DashboardStatic() {
               </div>
             </WarmCard>
           </motion.div>
-        </div>
 
-        {/* NIVEAU 2 - 5 TUILES : la première (CA Univers) plus compacte */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-start">
-          {/* CA par Univers — plus compact que les autres */}
+          {/* LIGNE 2 — 4 tuiles (colonnes 2-5) */}
           <motion.div variants={itemVariants}>
-            <WarmCard
-              variant="blue"
-              icon={PieChart}
-              animate={false}
-            >
-              <HumanTitle titleKey="ca_univers" icon={PieChart} iconColor="text-warm-blue" size="sm" />
-              <div className="mt-3">
-                <CAParUniversWidget />
-              </div>
-            </WarmCard>
-          </motion.div>
-
-          {/* CA par Apporteur */}
-          <motion.div variants={itemVariants}>
-            <WarmCard
-              variant="blue"
-              icon={TrendingUp}
-              animate={false}
-              className="h-full"
-            >
+            <WarmCard variant="blue" icon={TrendingUp} animate={false} className="h-full">
               <HumanTitle titleKey="ca_apporteurs" icon={TrendingUp} iconColor="text-warm-blue" size="sm" />
-              <div className="mt-3">
-                <CAApporteursWidget />
-              </div>
+              <div className="mt-3"><CAApporteursWidget /></div>
             </WarmCard>
           </motion.div>
 
-          {/* Top Techniciens (compact) */}
           <motion.div variants={itemVariants}>
-            <WarmCard
-              variant="blue"
-              icon={Trophy}
-              animate={false}
-              className="h-full"
-            >
+            <WarmCard variant="blue" icon={Trophy} animate={false} className="h-full">
               <HumanTitle titleKey="top_techniciens" icon={Trophy} iconColor="text-warm-blue" size="sm" />
-              <div className="mt-3">
-                <Top3TechniciensWidget />
-              </div>
+              <div className="mt-3"><Top3TechniciensWidget /></div>
             </WarmCard>
           </motion.div>
 
-          {/* Charge de travail / Productivité */}
           <motion.div variants={itemVariants}>
-            <WarmCard
-              variant="blue"
-              icon={Users}
-              animate={false}
-              className="h-full"
-            >
+            <WarmCard variant="blue" icon={Users} animate={false} className="h-full">
               <HumanTitle titleKey="productivite" icon={Users} iconColor="text-warm-blue" size="sm" />
-              <div className="mt-3">
-                <TechniciensProdWidget />
-              </div>
+              <div className="mt-3"><TechniciensProdWidget /></div>
             </WarmCard>
           </motion.div>
 
-          {/* Actions à mener */}
           <motion.div variants={itemVariants}>
             <WarmCard
               variant="blue"
