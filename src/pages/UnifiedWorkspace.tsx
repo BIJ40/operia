@@ -238,7 +238,7 @@ function UnifiedWorkspaceContent() {
         
         <ImageModal />
         <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
-        {hasProPlan && <HelpiMascot />}
+        
         
       </TooltipProvider>
     </AiUnifiedProvider>
