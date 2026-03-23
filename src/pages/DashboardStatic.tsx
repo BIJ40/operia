@@ -408,7 +408,7 @@ export default function DashboardStatic() {
           </motion.div>
 
           <motion.div variants={itemVariants}>
-            <WarmCard variant="blue" icon={Users} animate={false} className="h-full">
+            <WarmCard variant="blue" animate={false} className="h-full">
               <HumanTitle titleKey="productivite" icon={Users} iconColor="text-warm-blue" size="sm" />
               <div className="mt-3"><TechniciensProdWidget /></div>
             </WarmCard>
