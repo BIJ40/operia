@@ -430,6 +430,10 @@ Deno.serve(async (req) => {
       audience?: string;
       imageModel?: string;
     } | undefined;
+    const editExisting = body.edit_existing as {
+      sourceStoragePath: string;
+      editInstruction: string;
+    } | undefined;
 
     if (!suggestionId || !agencyId) {
       return new Response(JSON.stringify({ error: 'suggestion_id et agency_id requis' }), { status: 400, headers: jsonHeaders });
@@ -496,6 +500,108 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: (e as Error).message }), { status: 500, headers: jsonHeaders });
     }
     const LOVABLE_API_KEY = 'unused'; // kept for callImageAIWithFallback signature compat
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // MODE ÉDITION : Modifier un visuel existant au lieu de repartir de zéro
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    if (editExisting?.sourceStoragePath && editExisting?.editInstruction) {
+      console.log(`[social-visual-generate] EDIT MODE — modifying existing visual: ${editExisting.sourceStoragePath}`);
+      
+      // 1. Download the existing image from storage
+      const { data: signedUrlData } = await adminSupabase.storage
+        .from('social-visuals')
+        .createSignedUrl(editExisting.sourceStoragePath, 300);
+      
+      if (!signedUrlData?.signedUrl) {
+        return new Response(JSON.stringify({ error: 'Impossible de récupérer le visuel existant' }), { status: 404, headers: jsonHeaders });
+      }
+
+      // 2. Fetch image and convert to base64
+      const existingImgResp = await fetch(signedUrlData.signedUrl);
+      if (!existingImgResp.ok) {
+        return new Response(JSON.stringify({ error: 'Erreur téléchargement du visuel existant' }), { status: 502, headers: jsonHeaders });
+      }
+      const existingBuf = await existingImgResp.arrayBuffer();
+      const existingBytes = new Uint8Array(existingBuf);
+      let existingBinary = '';
+      for (let i = 0; i < existingBytes.length; i++) {
+        existingBinary += String.fromCharCode(existingBytes[i]);
+      }
+      const existingB64 = btoa(existingBinary);
+      const existingContentType = existingImgResp.headers.get('content-type') || 'image/png';
+      const existingDataUrl = `data:${existingContentType};base64,${existingB64}`;
+
+      console.log(`[social-visual-generate] Edit instruction: "${editExisting.editInstruction}"`);
+
+      // 3. Send to Gemini image edit
+      const editMessages = [{
+        role: 'user',
+        content: [
+          { 
+            type: 'text', 
+            text: `You are editing an existing social media ad image (1080x1080).
+
+MODIFICATION REQUESTED BY THE USER:
+"${editExisting.editInstruction}"
+
+RULES:
+- Apply ONLY the requested modification
+- Keep EVERYTHING ELSE exactly the same (composition, colors, branding, text, layout)
+- If the user asks to add something, integrate it naturally into the existing scene
+- If the user asks to change something, change only that specific element
+- Maintain the same quality and style
+- Keep the 1080x1080 square format
+- Keep all existing text, logos, and branding elements unless the user explicitly asks to change them
+- The result must look like a professional edit, not a completely new image` 
+          },
+          { type: 'image_url', image_url: { url: existingDataUrl } },
+        ],
+      }];
+
+      const editResult = await callImageAIWithFallback(LOVABLE_API_KEY, editMessages, 'gemini');
+
+      if (!editResult.ok) {
+        if (editResult.status === 402) {
+          return new Response(JSON.stringify({ error: 'Crédits IA insuffisants.' }), { status: 402, headers: jsonHeaders });
+        }
+        return new Response(JSON.stringify({ error: editResult.error || 'Erreur lors de la modification du visuel' }), { status: editResult.status || 502, headers: jsonHeaders });
+      }
+
+      const editedImageUrl = editResult.data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+      if (!editedImageUrl || !editedImageUrl.startsWith('data:image')) {
+        return new Response(JSON.stringify({ error: 'Le modèle n\'a pas pu modifier l\'image. Essayez une instruction différente.' }), { status: 502, headers: jsonHeaders });
+      }
+
+      console.log('[social-visual-generate] Edit successful, saving modified visual...');
+
+      // 4. Save the edited image
+      const editSave = await persistAsset(
+        adminSupabase,
+        editedImageUrl,
+        agencyId,
+        suggestionId,
+        universe,
+        null,
+        'composed',
+        jsonHeaders,
+        undefined,
+        false,
+        'edited',
+      );
+
+      if ('response' in editSave) {
+        return editSave.response;
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        asset_id: editSave.assetId,
+        storage_path: editSave.storagePath,
+        signed_url: editSave.signedUrl,
+        mode: 'edited',
+        composition_mode: 'composed',
+      }), { status: 200, headers: jsonHeaders });
+    }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // ÉTAPE 0 : COPYWRITING IA — Réécriture cohérente du hook/sous-texte

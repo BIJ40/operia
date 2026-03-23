@@ -54,7 +54,7 @@ export function useGenerateSocialVisual() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ suggestionId, visualCustomization }: {
+    mutationFn: async ({ suggestionId, visualCustomization, editExisting }: {
       suggestionId: string;
       visualCustomization?: {
         freePrompt?: string;
@@ -63,6 +63,11 @@ export function useGenerateSocialVisual() {
         universeOverride?: string;
         tone?: string;
         audience?: string;
+        imageModel?: string;
+      };
+      editExisting?: {
+        sourceStoragePath: string;
+        editInstruction: string;
       };
     }) => {
       if (!agencyId) throw new Error('Agence non identifiée');
@@ -72,11 +77,11 @@ export function useGenerateSocialVisual() {
           suggestion_id: suggestionId,
           agency_id: agencyId,
           ...(visualCustomization ? { visual_customization: visualCustomization } : {}),
+          ...(editExisting ? { edit_existing: editExisting } : {}),
         },
       });
 
       if (error) {
-        // supabase-js wraps non-2xx as FunctionsHttpError
         const status = (error as any)?.context?.status;
         if (status === 429) throw new Error('Trop de requêtes — attendez 1-2 minutes puis réessayez.');
         if (status === 402) throw new Error('Crédits IA insuffisants. Rechargez votre solde dans les paramètres.');
