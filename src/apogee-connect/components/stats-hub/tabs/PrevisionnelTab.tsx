@@ -279,10 +279,10 @@ export function PrevisionnelTab() {
             <TooltipProvider delayDuration={200}>
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center gap-6 flex-wrap">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setDossiersExplorerOpen(true)}>
                     <FolderOpen className="h-5 w-5 text-helpconfort-blue" />
                     <span className="text-2xl font-bold">{totaux.nbDossiers}</span>
-                    <span className="text-muted-foreground">dossiers total</span>
+                    <span className="text-muted-foreground underline decoration-dashed underline-offset-4">dossiers total</span>
                   </div>
                   <div className="h-8 w-px bg-border hidden md:block" />
                   <Tooltip>
