@@ -157,10 +157,17 @@ export function HelpiMascot() {
       <motion.button
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
-        onClick={() => setIsOpen(prev => !prev)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen(prev => !prev);
+        }}
         className="w-16 h-16 rounded-full bg-primary shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center overflow-hidden border-2 border-primary-foreground/20"
       >
-        <img src={helpiMascot} alt="Helpi" className="w-12 h-12 object-contain" />
+        <div
+          className="w-12 h-12 bg-contain bg-center bg-no-repeat pointer-events-none"
+          style={{ backgroundImage: `url(${helpiMascot})` }}
+          aria-label="Helpi"
+        />
       </motion.button>
     </div>
   );
