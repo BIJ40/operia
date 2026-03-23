@@ -38,6 +38,7 @@ interface Props {
   interventions: any[];
   devis: any[];
   factures: any[];
+  clients?: any[];
   periodStart: Date;
   periodEnd: Date;
   periodLabel: string;
