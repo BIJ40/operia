@@ -506,17 +506,29 @@ Deno.serve(async (req) => {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     if (editExisting?.sourceStoragePath && editExisting?.editInstruction) {
       console.log(`[social-visual-generate] EDIT MODE — modifying existing visual: ${editExisting.sourceStoragePath}`);
-      
-      // 1. Download the existing image from storage
+
+      const { data: sourceAsset } = await adminSupabase
+        .from('social_visual_assets')
+        .select('generation_meta')
+        .eq('agency_id', agencyId)
+        .eq('suggestion_id', suggestionId)
+        .eq('storage_path', editExisting.sourceStoragePath)
+        .maybeSingle();
+
+      const sourceCompositionMode = (sourceAsset as any)?.generation_meta?.composition_mode === 'bg_only'
+        ? 'bg_only'
+        : 'composed';
+      const isTeamVisual = topicType === 'prospection' || topicType === 'calendar';
+      const faceSensitiveRequest = /visage|visages|face|tête|tetes|équipe|technicien/i.test(editExisting.editInstruction);
+
       const { data: signedUrlData } = await adminSupabase.storage
         .from('social-visuals')
         .createSignedUrl(editExisting.sourceStoragePath, 300);
-      
+
       if (!signedUrlData?.signedUrl) {
         return new Response(JSON.stringify({ error: 'Impossible de récupérer le visuel existant' }), { status: 404, headers: jsonHeaders });
       }
 
-      // 2. Fetch image and convert to base64
       const existingImgResp = await fetch(signedUrlData.signedUrl);
       if (!existingImgResp.ok) {
         return new Response(JSON.stringify({ error: 'Erreur téléchargement du visuel existant' }), { status: 502, headers: jsonHeaders });
@@ -531,28 +543,51 @@ Deno.serve(async (req) => {
       const existingContentType = existingImgResp.headers.get('content-type') || 'image/png';
       const existingDataUrl = `data:${existingContentType};base64,${existingB64}`;
 
-      console.log(`[social-visual-generate] Edit instruction: "${editExisting.editInstruction}"`);
+      console.log(`[social-visual-generate] Edit instruction: "${editExisting.editInstruction}" (source: ${sourceCompositionMode})`);
 
-      // 3. Send to Gemini image edit
+      const sourceRules = sourceCompositionMode === 'bg_only'
+        ? `SOURCE TYPE: background-only scene.
+- Modify only the photographed/illustrated scene.
+- DO NOT add, remove, rewrite, distort, or invent any text, CTA, logo, footer, badge, or branding overlay.
+- Preserve the same framing and overall composition unless the user explicitly asks otherwise.`
+        : `SOURCE TYPE: final composed ad.
+- Apply only the requested visual modification.
+- Keep all visible text, CTA, footer, and branding readable and unchanged unless the user explicitly asks to change them.
+- Do not crop or damage words.`;
+
+      const teamRules = isTeamVisual
+        ? `TEAM CONSISTENCY:
+- Keep a balanced group composition.
+- Never transform the image into a single-face portrait unless the user explicitly asks for a close-up.
+- Preserve multiple team members with coherent proportions and natural spacing.`
+        : '';
+
+      const faceRules = faceSensitiveRequest
+        ? `FACE CONSISTENCY:
+- Preserve the existing faces and the same number of visible people.
+- Do not replace the group with one dominant face.
+- Keep faces natural, coherent, and secondary to the requested edit.`
+        : '';
+
       const editMessages = [{
         role: 'user',
         content: [
-          { 
-            type: 'text', 
-            text: `You are editing an existing social media ad image (1080x1080).
+          {
+            type: 'text',
+            text: `You are editing an existing 1080x1080 social visual.
 
-MODIFICATION REQUESTED BY THE USER:
+USER REQUEST:
 "${editExisting.editInstruction}"
 
-RULES:
-- Apply ONLY the requested modification
-- Keep EVERYTHING ELSE exactly the same (composition, colors, branding, text, layout)
-- If the user asks to add something, integrate it naturally into the existing scene
-- If the user asks to change something, change only that specific element
-- Maintain the same quality and style
-- Keep the 1080x1080 square format
-- Keep all existing text, logos, and branding elements unless the user explicitly asks to change them
-- The result must look like a professional edit, not a completely new image` 
+${sourceRules}
+${teamRules}
+${faceRules}
+
+GENERAL RULES:
+- Apply ONLY the requested change.
+- Keep everything else as stable as possible.
+- Integrate additions naturally into the existing scene.
+- The result must look like a professional edit, not a brand new unrelated image.`
           },
           { type: 'image_url', image_url: { url: existingDataUrl } },
         ],
@@ -574,7 +609,6 @@ RULES:
 
       console.log('[social-visual-generate] Edit successful, saving modified visual...');
 
-      // 4. Save the edited image
       const editSave = await persistAsset(
         adminSupabase,
         editedImageUrl,
@@ -582,7 +616,7 @@ RULES:
         suggestionId,
         universe,
         null,
-        'composed',
+        sourceCompositionMode,
         jsonHeaders,
         undefined,
         false,
@@ -599,7 +633,7 @@ RULES:
         storage_path: editSave.storagePath,
         signed_url: editSave.signedUrl,
         mode: 'edited',
-        composition_mode: 'composed',
+        composition_mode: sourceCompositionMode,
       }), { status: 200, headers: jsonHeaders });
     }
 

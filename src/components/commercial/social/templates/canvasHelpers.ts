@@ -114,24 +114,29 @@ function replaceExpertVocab(text: string): string {
     .replace(/\bexpertise\b/gi, 'savoir-faire');
 }
 
-/** Sanitize hook: max 5 words, max 32 chars, MUST be complete — never truncated */
+/** Sanitize hook: short, complete, and punchy — never a broken clause */
 export function sanitizeHook(raw: string): string {
   if (!raw) return '';
   let text = replaceExpertVocab(raw.trim());
-  // Remove trailing ellipsis/dots
   text = text.replace(/[…\.]+$/, '').trim();
-  // Limit words (strict: 5 max)
+
+  // Prefer a complete first clause when the source is a long title
+  const firstClause = text.split(/[,:;–—-]/)[0]?.trim();
+  if (firstClause && firstClause.length >= 10) {
+    text = firstClause;
+  }
+
   const words = text.split(/\s+/);
   if (words.length > HOOK_MAX_WORDS) {
     text = words.slice(0, HOOK_MAX_WORDS).join(' ');
   }
-  // Limit chars (strict: 32 max)
+
   if (text.length > HOOK_MAX_CHARS) {
     const cut = text.slice(0, HOOK_MAX_CHARS);
     const lastSpace = cut.lastIndexOf(' ');
     text = lastSpace > 10 ? cut.slice(0, lastSpace) : cut;
   }
-  // Clean trailing punctuation artifacts (but keep sentence-ending ones)
+
   text = text.replace(/[\s,;:]+$/, '').trim();
   return text;
 }
