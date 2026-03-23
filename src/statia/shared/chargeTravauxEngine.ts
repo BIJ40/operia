@@ -324,9 +324,16 @@ function calculateDevisHTForProject(projectDevis: any[]): number {
 /**
  * Vérifie si un devis est "to order" (accepté/commandé)
  */
+const VALID_DEVIS_TO_ORDER_STATES = new Set([
+  'to order', 'to_order', 'order',
+  'accepted', 'signed', 'validated',
+  'commande', 'commandé', 'à commander',
+  'devis_accepte', 'devis_valide',
+]);
+
 function isDevisToOrder(d: any): boolean {
   const state = String(d?.state ?? d?.status ?? d?.data?.state ?? '').trim().toLowerCase();
-  return state === 'to order' || state === 'to_order' || state === 'order';
+  return VALID_DEVIS_TO_ORDER_STATES.has(state);
 }
 
 /**

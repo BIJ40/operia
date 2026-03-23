@@ -68,9 +68,16 @@ const getInterventionPlanningDate = (itv: any): Date | null => {
   return null;
 };
 
+const VALID_DEVIS_STATES = new Set([
+  'to order', 'to_order', 'order',
+  'accepted', 'signed', 'validated',
+  'commande', 'commandé', 'à commander',
+  'devis_accepte', 'devis_valide',
+]);
+
 const isDevisToOrder = (d: any): boolean => {
   const state = String(d?.state ?? d?.status ?? d?.data?.state ?? '').trim().toLowerCase();
-  return state === 'to order' || state === 'to_order' || state === 'order';
+  return VALID_DEVIS_STATES.has(state);
 };
 
 const parseNum = (v: any): number => {
@@ -118,7 +125,13 @@ function usePlanifiedProjects(props: Omit<Props, 'open' | 'onOpenChange'>): Plan
     const todayMs = today.getTime();
 
     const facturedIds = new Set<number>();
-    for (const f of factures) { const pid = getProjectId(f); if (pid != null) facturedIds.add(pid); }
+    for (const f of factures) {
+      const pid = getProjectId(f);
+      if (pid == null) continue;
+      const typeFacture = String(f?.typeFacture ?? f?.type ?? f?.data?.typeFacture ?? '').toLowerCase();
+      if (typeFacture.includes('acompte') || typeFacture.includes('proforma')) continue;
+      facturedIds.add(pid);
+    }
 
     const itvByPid = new Map<number, any[]>();
     for (const itv of interventions) { const pid = getProjectId(itv); if (pid != null) { if (!itvByPid.has(pid)) itvByPid.set(pid, []); itvByPid.get(pid)!.push(itv); } }
