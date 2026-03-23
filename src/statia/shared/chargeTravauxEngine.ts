@@ -13,6 +13,9 @@ const STATE_MAPPING: Record<string, string> = {
 // États éligibles (clés API)
 const ETATS_ELIGIBLES = new Set(['to_planify_tvx', 'devis_to_order', 'wait_fourn']);
 
+// États d'intervention à exclure (annulés ou à reprogrammer)
+const ITV_ETATS_EXCLUS = new Set(['to_reprog', 'canceled', 'cancelled', 'annulé', 'annule']);
+
 // États de devis éligibles (on exclut draft, rejected, canceled)
 const DEVIS_ETATS_EXCLUS = new Set(['draft', 'rejected', 'canceled']);
 
@@ -171,10 +174,16 @@ function getInterventionId(obj: any): string | null {
 /**
  * Indexe les interventions par projectId (gère les alias projectId/refId/dossierId)
  */
+function isExcludedInterventionState(itv: any): boolean {
+  const state = String(itv?.state ?? itv?.data?.state ?? itv?.status ?? itv?.data?.status ?? '').trim().toLowerCase();
+  return ITV_ETATS_EXCLUS.has(state);
+}
+
 function groupInterventionsByProjectId(interventions: any[]): Map<number, any[]> {
   const map = new Map<number, any[]>();
 
   for (const itv of interventions) {
+    if (isExcludedInterventionState(itv)) continue;
     const key = getProjectId(itv);
     if (key == null) continue;
 

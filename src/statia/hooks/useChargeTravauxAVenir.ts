@@ -130,8 +130,12 @@ export function useChargeTravauxAVenir() {
 
     // Exclure TH, SAV, RT du CA prévisionnel
     const EXCLUDED_ITV_TYPES = new Set(['th', 'sav', 'rt', 'releve technique', 'relevé technique', 'rdv technique', 'rdvtech']);
+    const EXCLUDED_ITV_STATES = new Set(['to_reprog', 'canceled', 'cancelled', 'annulé', 'annule']);
     const interventionsByProjectId = new Map<number, any[]>();
     for (const itv of interventions) {
+      // Exclure les RDV annulés ou à reprogrammer
+      const itvState = String(itv?.state ?? itv?.data?.state ?? itv?.status ?? itv?.data?.status ?? '').trim().toLowerCase();
+      if (EXCLUDED_ITV_STATES.has(itvState)) continue;
       const t2 = String(itv?.type2 ?? itv?.data?.type2 ?? '').trim().toLowerCase();
       const t1 = String(itv?.type ?? itv?.data?.type ?? '').trim().toLowerCase();
       if (EXCLUDED_ITV_TYPES.has(t2) || EXCLUDED_ITV_TYPES.has(t1) || t2.includes('sav') || t1.includes('sav')) continue;
