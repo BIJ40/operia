@@ -1,10 +1,10 @@
 /**
  * PilotageTabContent - Onglet "Pilotage"
- * Sous-onglets : Stats, Performance, Actions à mener, Devis acceptés, Incohérences
+ * Sous-onglets : Stats, Performance, Actions à mener, Incohérences
  */
 
 import { lazy, Suspense, useMemo } from 'react';
-import { BarChart3, Activity, Settings, FileCheck, AlertTriangle, TrendingUp, PieChart, Loader2 } from 'lucide-react';
+import { BarChart3, Activity, Settings, AlertTriangle, TrendingUp, PieChart, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
@@ -22,12 +22,11 @@ const PerformanceDashboard = lazy(() =>
 const ActionsAMenerTab = lazy(() => 
   import('@/components/pilotage/ActionsAMenerTab').then(m => ({ default: m.ActionsAMenerTab }))
 );
-const DevisAcceptesView = lazy(() => import('@/apogee-connect/components/DevisAcceptesView'));
 const AnomaliesDevisDossierView = lazy(() => import('@/apogee-connect/components/AnomaliesDevisDossierView'));
 const ResultatTabContent = lazy(() => import('@/components/financial/ResultatTabContent'));
 const RentabiliteTabContent = lazy(() => import('@/components/profitability/RentabiliteTabContent'));
 
-type PilotageSubTab = 'stats' | 'performance' | 'actions' | 'devis-acceptes' | 'anomalies' | 'resultat' | 'rentabilite';
+type PilotageSubTab = 'stats' | 'performance' | 'actions' | 'anomalies' | 'resultat' | 'rentabilite';
 
 function LoadingFallback() {
   return (
@@ -42,12 +41,10 @@ export default function PilotageTabContent() {
   const { getShortLabel } = useModuleLabels();
   const { mode: navMode } = useNavigationMode();
 
-  // All pilotage sub-tabs are real modules → dynamic labels from registry
   const allTabs: (PillTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
     { id: 'stats', label: getShortLabel('pilotage.statistiques', 'Statistiques'), icon: BarChart3, accent: 'blue', requiresModule: 'pilotage.statistiques' },
     { id: 'performance', label: getShortLabel('pilotage.performance', 'Performance'), icon: Activity, accent: 'pink', requiresModule: 'pilotage.performance' },
     { id: 'actions', label: getShortLabel('pilotage.actions_a_mener', 'Actions à mener'), icon: Settings, accent: 'orange', requiresModule: 'pilotage.actions_a_mener' },
-    { id: 'devis-acceptes', label: getShortLabel('pilotage.devis_acceptes', 'Devis acceptés'), icon: FileCheck, accent: 'teal', requiresModule: 'pilotage.devis_acceptes' },
     { id: 'anomalies', label: getShortLabel('pilotage.incoherences', 'Incohérences'), icon: AlertTriangle, accent: 'pink', requiresModule: 'pilotage.incoherences' },
     { id: 'resultat', label: getShortLabel('pilotage.resultat', 'Résultat'), icon: TrendingUp, accent: 'green', requiresModule: 'pilotage.resultat' },
     { id: 'rentabilite', label: getShortLabel('pilotage.rentabilite', 'Rentabilité'), icon: PieChart, accent: 'green', requiresModule: 'pilotage.rentabilite' },
@@ -56,7 +53,6 @@ export default function PilotageTabContent() {
   const visibleTabs = useMemo(() => {
     return allTabs
       .filter(tab => {
-        // Hide non-deployed modules from navigation (even for admins)
         if (tab.requiresModule && !isDeployedModule(tab.requiresModule)) return false;
         return true;
       })
@@ -93,12 +89,6 @@ export default function PilotageTabContent() {
         <TabsContent value="actions" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
             <ActionsAMenerTab />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="devis-acceptes" className="mt-4">
-          <Suspense fallback={<LoadingFallback />}>
-            <DevisAcceptesView />
           </Suspense>
         </TabsContent>
 

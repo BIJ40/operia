@@ -29,7 +29,7 @@ export const MODULES = {
   'pilotage.statistiques.exports': 'pilotage.statistiques.exports',
   'pilotage.performance': 'pilotage.performance',
   'pilotage.actions_a_mener': 'pilotage.actions_a_mener',
-  'pilotage.devis_acceptes': 'pilotage.devis_acceptes',
+  
   'pilotage.incoherences': 'pilotage.incoherences',
   'pilotage.resultat': 'pilotage.resultat',
   'pilotage.rentabilite': 'pilotage.rentabilite',
