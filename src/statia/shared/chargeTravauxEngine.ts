@@ -332,13 +332,15 @@ function calculateDevisHTForProject(projectDevis: any[]): number {
  */
 const VALID_DEVIS_TO_ORDER_STATES = new Set([
   'to order', 'to_order', 'order',
-  'accepted', 'signed', 'validated',
-  'commande', 'commandé', 'à commander',
-  'devis_accepte', 'devis_valide',
+  'accepted', 'accepté', 'accepte',
+  'signed', 'signé', 'signe',
+  'validated', 'validé', 'valide',
+  'commande', 'commandé', 'commandee', 'à commander', 'a commander',
+  'devis_accepte', 'devis_valide', 'devis_accepté', 'devis_validé',
 ]);
 
 function isDevisToOrder(d: any): boolean {
-  const state = String(d?.state ?? d?.status ?? d?.data?.state ?? '').trim().toLowerCase();
+  const state = String(d?.state ?? d?.status ?? d?.data?.state ?? d?.etat ?? d?.data?.etat ?? '').trim().toLowerCase();
   return VALID_DEVIS_TO_ORDER_STATES.has(state);
 }
 

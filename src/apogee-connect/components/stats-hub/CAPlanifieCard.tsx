@@ -50,13 +50,15 @@ const getInterventionPlanningDate = (itv: any): Date | null => {
 
 const VALID_DEVIS_STATES = new Set([
   'to order', 'to_order', 'order',
-  'accepted', 'signed', 'validated',
-  'commande', 'commandé', 'à commander',
-  'devis_accepte', 'devis_valide',
+  'accepted', 'accepté', 'accepte',
+  'signed', 'signé', 'signe',
+  'validated', 'validé', 'valide',
+  'commande', 'commandé', 'commandee', 'à commander', 'a commander',
+  'devis_accepte', 'devis_valide', 'devis_accepté', 'devis_validé',
 ]);
 
 const isDevisToOrder = (d: any): boolean => {
-  const state = String(d?.state ?? d?.status ?? d?.data?.state ?? '').trim().toLowerCase();
+  const state = String(d?.state ?? d?.status ?? d?.data?.state ?? d?.etat ?? d?.data?.etat ?? '').trim().toLowerCase();
   return VALID_DEVIS_STATES.has(state);
 };
 
@@ -118,8 +120,18 @@ export function CAPlanifieCard({ projects, interventions, devis, factures, clien
       facturedProjectIds.add(pid);
     }
 
+    // Exclure TH, SAV, RT du CA prévisionnel
+    const EXCLUDED_ITV_TYPES = new Set(['th', 'sav', 'rt', 'releve technique', 'relevé technique', 'rdv technique', 'rdvtech']);
     const interventionsByProjectId = new Map<number, any[]>();
-    for (const itv of interventions) { const pid = getProjectId(itv); if (pid == null) continue; if (!interventionsByProjectId.has(pid)) interventionsByProjectId.set(pid, []); interventionsByProjectId.get(pid)!.push(itv); }
+    for (const itv of interventions) {
+      const t2 = String(itv?.type2 ?? itv?.data?.type2 ?? '').trim().toLowerCase();
+      const t1 = String(itv?.type ?? itv?.data?.type ?? '').trim().toLowerCase();
+      if (EXCLUDED_ITV_TYPES.has(t2) || EXCLUDED_ITV_TYPES.has(t1) || t2.includes('sav') || t1.includes('sav')) continue;
+      const pid = getProjectId(itv);
+      if (pid == null) continue;
+      if (!interventionsByProjectId.has(pid)) interventionsByProjectId.set(pid, []);
+      interventionsByProjectId.get(pid)!.push(itv);
+    }
 
     const devisByProjectId = new Map<number, any[]>();
     for (const d of devis) { const pid = getProjectId(d); if (pid == null) continue; if (!devisByProjectId.has(pid)) devisByProjectId.set(pid, []); devisByProjectId.get(pid)!.push(d); }
