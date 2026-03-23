@@ -550,7 +550,10 @@ function aiSearchRouteV3(
   
   // If query has explicit doc keywords like "comment", force doc mode
   let queryType: 'stats' | 'doc';
-  if (hasDocIntent) {
+  if (forceStats) {
+    queryType = 'stats';
+    corrections.push('type:forced_stats');
+  } else if (hasDocIntent) {
     queryType = 'doc';
     if (hasStatsIntent) {
       corrections.push('type:stats→doc (doc_keyword_priority)');
