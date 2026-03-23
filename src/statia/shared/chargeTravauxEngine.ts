@@ -310,9 +310,10 @@ function extractHoursFromIntervention(
     };
   }
 
-  const interventionUsers = getUserIds(intervention);
+  // duree/tempsPrevu en HEURES (pas de /60), dureeMinutes en minutes
   const directDurationHours =
-    (parseNumericValue(intervention?.duree) || parseNumericValue(intervention?.tempsPrevu) || parseNumericValue(intervention?.duration)) / 60;
+    parseNumericValue(intervention?.duree) || parseNumericValue(intervention?.tempsPrevu) || parseNumericValue(intervention?.duration) ||
+    (parseNumericValue(intervention?.dureeMinutes) / 60) || 0;
 
   if (directDurationHours > 0) {
     const nbTechs = interventionUsers.length || 1;
