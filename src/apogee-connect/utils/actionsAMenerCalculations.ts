@@ -348,12 +348,9 @@ export function buildActionsAMener(
     }
   });
   
-  // Trier par ancienneté (dateDepart la plus ancienne en premier) et garder les 10 plus anciens
-  aPlanifierCandidates.sort((a, b) => a.dateDepart.getTime() - b.dateDepart.getTime());
-  aCommanderCandidates.sort((a, b) => a.dateDepart.getTime() - b.dateDepart.getTime());
-  
-  actions.push(...aPlanifierCandidates.slice(0, 10));
-  actions.push(...aCommanderCandidates.slice(0, 10));
+  // Ajouter tous les candidats (plus de limite à 10)
+  actions.push(...aPlanifierCandidates);
+  actions.push(...aCommanderCandidates);
   
   // Marquer les actions qui vont passer en retard dans J+1 et filtrer
   const tomorrow = addDays(today, 1);
@@ -363,11 +360,10 @@ export function buildActionsAMener(
       isDueSoon: !action.isLate && action.deadline <= tomorrow,
     }))
     .filter(action => {
-      // Toujours garder les actions "à planifier" et "à commander" (pas de filtre deadline)
-      if (action.actionType === 'a_planifier_tvx' || action.actionType === 'a_commander') return true;
-      // Garder toutes les actions déjà en retard
+      // Garder toutes les actions en retard
       if (action.isLate) return true;
       // Pour les actions "à venir", ne garder que celles dont la deadline est demain ou avant
+      return action.deadline <= tomorrow;
       return action.deadline <= tomorrow;
     });
   
