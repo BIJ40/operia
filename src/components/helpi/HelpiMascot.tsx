@@ -34,14 +34,20 @@ function formatHelpiResponse(data: any, error: any): string {
     }
   }
 
-  if (data.type === 'doc' && data.result?.answer) return data.result.answer;
+  // Doc responses should not appear (forceStats), but handle gracefully
+  if (data.type === 'doc') return '🔍 Je suis spécialisé dans les statistiques. Reformulez votre question avec des données chiffrées (CA, dossiers, factures…).';
   if (data.type === 'error' || data.type === 'access_denied') return data.error?.message || 'Erreur lors de la recherche.';
   if (data.type === 'ambiguous' && Array.isArray(data.result)) {
     const lines = data.result.map((o: any) => `• ${o.label || o.metricId}`);
     return `🤔 Question ambiguë. Vouliez-vous dire :\n\n${lines.join('\n')}`;
   }
 
-  return data?.result?.answer || data?.answer || 'Je n\'ai pas compris votre question. Essayez de reformuler.';
+  // Stat type but no value extracted
+  if (data.type === 'stat' && data.result) {
+    return '📊 J\'ai identifié votre question mais je n\'ai pas pu calculer le résultat. Essayez de préciser la période ou la métrique.';
+  }
+
+  return '🔍 Je n\'ai pas compris votre question. Essayez par exemple :\n• "Quel est mon CA en mars ?"\n• "Combien de dossiers ce mois-ci ?"\n• "Mon meilleur technicien en 2025 ?"';
 }
 
 function fmtVal(value: any, unit?: string): string {
