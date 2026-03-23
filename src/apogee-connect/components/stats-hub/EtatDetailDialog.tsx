@@ -93,9 +93,10 @@ export function EtatDetailDialog({ open, onOpenChange, etat, etatStats, projets,
   }, [clients]);
 
   const getClientName = useCallback((p: ChargeTravauxProjet): string => {
-    const label = p.label || '';
-    if (label && label !== String(p.projectId)) return label;
-    return clientMap.get(p.projectId) || `Dossier ${p.reference || p.projectId}`;
+    // Priority: client lookup → then fallback to label
+    const fromClient = clientMap.get(p.projectId);
+    if (fromClient) return fromClient;
+    return p.label || `Dossier ${p.reference || p.projectId}`;
   }, [clientMap]);
 
   // Projets filtrés pour cet état
