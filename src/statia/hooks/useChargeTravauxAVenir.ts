@@ -29,26 +29,38 @@ const toDate = (v: unknown): Date | null => {
 };
 
 const getProjectId = (obj: any): number | null => {
-  const raw = obj?.projectId ?? obj?.project_id ?? obj?.project?.id;
+  const raw = obj?.projectId ?? obj?.project_id ?? obj?.project?.id ?? obj?.refId ?? obj?.ref_id ?? obj?.dossierId ?? obj?.dossier_id ?? obj?.data?.projectId;
   if (raw == null) return null;
   const n = Number(raw);
   return Number.isFinite(n) ? n : null;
 };
 
 const getInterventionPlanningDate = (itv: any): Date | null => {
-  const direct = toDate(itv?.dateReelle ?? itv?.date);
+  const direct = toDate(itv?.dateReelle ?? itv?.date ?? itv?.start ?? itv?.dateDebut ?? itv?.data?.date);
   if (direct) return direct;
-  const visites = Array.isArray(itv?.visites) ? itv.visites : [];
+  const visites = [
+    ...(Array.isArray(itv?.visites) ? itv.visites : []),
+    ...(Array.isArray(itv?.data?.visites) ? itv.data.visites : []),
+  ];
   for (const v of visites) {
-    const dv = toDate(v?.dateReelle ?? v?.date);
+    const dv = toDate(v?.dateReelle ?? v?.date ?? v?.start ?? v?.dateDebut);
     if (dv) return dv;
   }
   return null;
 };
 
+const VALID_DEVIS_STATES = new Set([
+  'to order', 'to_order', 'order',
+  'accepted', 'accepté', 'accepte',
+  'signed', 'signé', 'signe',
+  'validated', 'validé', 'valide',
+  'commande', 'commandé', 'commandee', 'à commander', 'a commander',
+  'devis_accepte', 'devis_valide', 'devis_accepté', 'devis_validé',
+]);
+
 const isDevisToOrder = (d: any): boolean => {
-  const state = String(d?.state ?? d?.status ?? d?.data?.state ?? '').trim().toLowerCase();
-  return state === 'to order' || state === 'to_order' || state === 'order';
+  const state = String(d?.state ?? d?.status ?? d?.data?.state ?? d?.etat ?? d?.data?.etat ?? '').trim().toLowerCase();
+  return VALID_DEVIS_STATES.has(state);
 };
 
 const parseNumericValue = (value: any): number => {
@@ -101,30 +113,32 @@ export function useChargeTravauxAVenir() {
     if (!globalQuery.data) return { caPlanifie: 0, caPlanifieDevisCount: 0 };
     
     const { projects, interventions, devis, factures } = globalQuery.data;
-    const startMs = dateRange.start.getTime();
-    const endMs = dateRange.end.getTime();
     
     // Date du jour à minuit pour le filtre J+0 minimum
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayMs = today.getTime();
 
-    // Doit être dans la période ET >= aujourd'hui (prévisionnel uniquement)
-    const isInRangeAndFuture = (d: Date) => {
-      const t = d.getTime();
-      return t >= startMs && t <= endMs && t >= todayMs;
-    };
+    const periodStartMonth = `${dateRange.start.getFullYear()}-${String(dateRange.start.getMonth() + 1).padStart(2, '0')}`;
+    const periodEndMonth = `${dateRange.end.getFullYear()}-${String(dateRange.end.getMonth() + 1).padStart(2, '0')}`;
 
-    // Créer un Set des projectIds déjà facturés
+    // Créer un Set des projectIds déjà facturés (exclure acomptes/proforma)
     const facturedProjectIds = new Set<number>();
     for (const f of factures) {
       const pid = getProjectId(f);
-      if (pid != null) facturedProjectIds.add(pid);
+      if (pid == null) continue;
+      const typeFacture = String(f?.typeFacture ?? f?.type ?? f?.data?.typeFacture ?? f?.data?.type ?? '').toLowerCase();
+      if (typeFacture.includes('acompte') || typeFacture.includes('proforma')) continue;
+      facturedProjectIds.add(pid);
     }
 
-    // Indexer les interventions par projectId
+    // Exclure TH, SAV, RT du CA prévisionnel
+    const EXCLUDED_ITV_TYPES = new Set(['th', 'sav', 'rt', 'releve technique', 'relevé technique', 'rdv technique', 'rdvtech']);
     const interventionsByProjectId = new Map<number, any[]>();
     for (const itv of interventions) {
+      const t2 = String(itv?.type2 ?? itv?.data?.type2 ?? '').trim().toLowerCase();
+      const t1 = String(itv?.type ?? itv?.data?.type ?? '').trim().toLowerCase();
+      if (EXCLUDED_ITV_TYPES.has(t2) || EXCLUDED_ITV_TYPES.has(t1) || t2.includes('sav') || t1.includes('sav')) continue;
       const pid = getProjectId(itv);
       if (pid == null) continue;
       if (!interventionsByProjectId.has(pid)) interventionsByProjectId.set(pid, []);
@@ -146,20 +160,36 @@ export function useChargeTravauxAVenir() {
     for (const project of projects) {
       const projectId = Number(project?.id);
       if (!Number.isFinite(projectId)) continue;
-
-      // Exclure les projets déjà facturés
       if (facturedProjectIds.has(projectId)) continue;
 
-      // Vérifier si ce projet a une intervention planifiée dans la période
       const projectInterventions = interventionsByProjectId.get(projectId) || [];
-      const hasInterventionInPeriod = projectInterventions.some((itv) => {
-        const planningDate = getInterventionPlanningDate(itv);
-        return planningDate && isInRangeAndFuture(planningDate);
-      });
 
-      if (!hasInterventionInPeriod) continue;
+      // Phase A : compter les interventions futures par mois
+      const monthCounts = new Map<string, number>();
+      for (const itv of projectInterventions) {
+        const d = getInterventionPlanningDate(itv);
+        if (d && d.getTime() >= todayMs) {
+          const mk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          monthCounts.set(mk, (monthCounts.get(mk) || 0) + 1);
+        }
+      }
 
-      // Chercher un devis "to order" pour ce projet
+      if (monthCounts.size === 0) continue;
+
+      // Phase B : mois dominant
+      let dominantMonth = '';
+      let dominantCount = 0;
+      for (const [month, cnt] of monthCounts) {
+        if (cnt > dominantCount || (cnt === dominantCount && month < dominantMonth)) {
+          dominantMonth = month;
+          dominantCount = cnt;
+        }
+      }
+
+      // Phase C : ne retenir que si le mois dominant est dans la période
+      if (!dominantMonth || dominantMonth < periodStartMonth || dominantMonth > periodEndMonth) continue;
+
+      // Chercher un devis accepté pour ce projet
       const projectDevis = devisByProjectId.get(projectId) || [];
       for (const d of projectDevis) {
         if (!isDevisToOrder(d)) continue;
@@ -171,7 +201,7 @@ export function useChargeTravauxAVenir() {
         if (montant > 0) {
           caPlanifie += montant;
           caPlanifieDevisCount++;
-          break; // 1 seul devis to_order par projet
+          break;
         }
       }
     }
