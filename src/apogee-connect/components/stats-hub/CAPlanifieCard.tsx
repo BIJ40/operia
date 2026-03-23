@@ -87,7 +87,7 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 }
 };
 
-export function CAPlanifieCard({ projects, interventions, devis, factures }: CAPlanifieCardProps) {
+export function CAPlanifieCard({ projects, interventions, devis, factures, clients }: CAPlanifieCardProps) {
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
