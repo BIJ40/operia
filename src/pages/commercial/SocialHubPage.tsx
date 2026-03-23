@@ -40,6 +40,7 @@ export default function SocialHubPage() {
   const [topicFilter, setTopicFilter] = useState<TopicFilter>('all');
   const [selectedSuggestionId, setSelectedSuggestionId] = useState<string | null>(null);
   const [selectedDays, setSelectedDays] = useState<Set<string>>(new Set());
+  const [isDetailExpanded, setIsDetailExpanded] = useState(false);
 
   const monthKey = format(currentMonth, 'yyyy-MM');
   const monthLabel = format(currentMonth, 'MMMM yyyy', { locale: fr });
