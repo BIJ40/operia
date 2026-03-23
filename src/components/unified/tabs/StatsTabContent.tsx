@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useMemo } from 'react';
+import { cn } from '@/lib/utils';
 import { useNavigationMode } from '@/hooks/useNavigationMode';
 import { Tv, LayoutDashboard, Building2, Users, Layers, AlertTriangle, CalendarClock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
