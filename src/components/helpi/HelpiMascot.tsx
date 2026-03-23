@@ -63,10 +63,7 @@ export function HelpiMascot() {
         },
       });
 
-      const answer =
-        data?.result?.answer ||
-        data?.answer ||
-        (error ? 'Désolé, une erreur est survenue.' : 'Je n\'ai pas trouvé de réponse.');
+      const answer = formatHelpiResponse(data, error);
 
       setMessages(prev => [
         ...prev,
