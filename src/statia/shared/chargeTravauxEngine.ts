@@ -835,7 +835,7 @@ export function computeChargeTravauxAvenirParUnivers(
   for (const p of parProjet) {
     const intervs = byProjectId.get(Number(p.projectId)) || [];
     for (const itv of intervs) {
-      const { heuresTech: hTech } = extractHoursFromIntervention(itv);
+      const { heuresTech: hTech } = extractHoursFromIntervention(itv, creneauxByInterventionId);
       if (hTech === 0) continue;
       const ids: string[] = [];
       const uid = itv?.userId ?? itv?.user_id;
