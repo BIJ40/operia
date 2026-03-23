@@ -46,12 +46,20 @@ export default function StatsTabContent() {
     { id: 'previsionnel', label: getShortLabel('pilotage.statistiques.previsionnel', 'Prévisionnel'), icon: CalendarClock, requiresModule: 'pilotage.statistiques.previsionnel' },
   ], [getShortLabel]);
 
+  const { isDeployedModule } = usePermissions();
+
   const visibleTabs = useMemo(() => {
-    return statsTabs.map(tab => {
-      if (!tab.requiresModule) return tab;
-      return { ...tab, disabled: !hasModule(tab.requiresModule) };
-    });
-  }, [hasModule, statsTabs]);
+    return statsTabs
+      .filter(tab => {
+        // Hide non-deployed modules entirely
+        if (tab.requiresModule && !isDeployedModule(tab.requiresModule)) return false;
+        return true;
+      })
+      .map(tab => {
+        if (!tab.requiresModule) return tab;
+        return { ...tab, disabled: !hasModule(tab.requiresModule) };
+      });
+  }, [hasModule, isDeployedModule, statsTabs]);
 
   const effectiveTab = (visibleTabs.find(t => t.id === activeTab && !t.disabled)) ? activeTab : ((visibleTabs.find(t => !t.disabled)?.id as TabId) ?? 'general');
 
