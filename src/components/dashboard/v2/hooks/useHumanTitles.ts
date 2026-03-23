@@ -17,7 +17,8 @@ export type TitleKey =
   | 'panier_moyen'
   | 'productivite'
   | 'map'
-  | 'recouvrement';
+  | 'recouvrement'
+  | 'actions_a_mener';
 
 interface TitleVariant {
   title: string;
