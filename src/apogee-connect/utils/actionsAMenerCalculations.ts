@@ -268,6 +268,78 @@ export function buildActionsAMener(
     });
   });
   
+  // === RÈGLE 4 & 5: Dossiers "À planifier travaux" et "À commander" — top 10 plus anciens ===
+  const aPlanifierCandidates: ActionRow[] = [];
+  const aCommanderCandidates: ActionRow[] = [];
+  
+  projects.forEach(project => {
+    const status = normalizeStatus(project.state || project.data?.etape || project.data?.step);
+    if (status.includes('clotur') || status.includes('archive') || status.includes('annule')) return;
+    
+    const clientId = project.clientId || project.client_id || project.data?.commanditaireId;
+    const client = clientId ? clientsMap.get(clientId) : null;
+    const clientName = client?.nom || client?.name || client?.raisonSociale || 'Client inconnu';
+    const ref = project.ref || `#${project.id}`;
+    const label = project.name || project.label || 'Sans libellé';
+    
+    const history = project.data?.history;
+    const statusChanges = Array.isArray(history) 
+      ? history.filter((h: any) => h.kind === 2 && typeof h.labelKind === 'string')
+          .sort((a: any, b: any) => {
+            const dA = parseDate(a.dateModif);
+            const dB = parseDate(b.dateModif);
+            return (dA?.getTime() || 0) - (dB?.getTime() || 0);
+          })
+      : [];
+    
+    const lastStatusChange = statusChanges.length > 0 ? statusChanges[statusChanges.length - 1] : null;
+    
+    // Règle 4: À planifier travaux
+    if (lastStatusChange?.labelKind?.includes('=> A planifier') || lastStatusChange?.labelKind?.includes('=> À planifier')) {
+      const dateDepart = parseDate(lastStatusChange.dateModif) || parseDate(project.updated_at) || parseDate(project.created_at) || today;
+      const daysInState = differenceInDays(today, dateDepart);
+      aPlanifierCandidates.push({
+        projectId: project.id,
+        ref,
+        label,
+        statut: 'À planifier travaux',
+        actionLabel: ACTION_LABELS.a_planifier_tvx,
+        actionType: 'a_planifier_tvx',
+        deadline: dateDepart, // Utilisé pour le tri par ancienneté
+        dateDepart,
+        isLate: false,
+        clientName,
+        daysLate: daysInState,
+      });
+    }
+    
+    // Règle 5: À commander
+    if (lastStatusChange?.labelKind?.includes('=> A commander') || lastStatusChange?.labelKind?.includes('=> À commander')) {
+      const dateDepart = parseDate(lastStatusChange.dateModif) || parseDate(project.updated_at) || parseDate(project.created_at) || today;
+      const daysInState = differenceInDays(today, dateDepart);
+      aCommanderCandidates.push({
+        projectId: project.id,
+        ref,
+        label,
+        statut: 'À commander',
+        actionLabel: ACTION_LABELS.a_commander,
+        actionType: 'a_commander',
+        deadline: dateDepart,
+        dateDepart,
+        isLate: false,
+        clientName,
+        daysLate: daysInState,
+      });
+    }
+  });
+  
+  // Trier par ancienneté (dateDepart la plus ancienne en premier) et garder les 10 plus anciens
+  aPlanifierCandidates.sort((a, b) => a.dateDepart.getTime() - b.dateDepart.getTime());
+  aCommanderCandidates.sort((a, b) => a.dateDepart.getTime() - b.dateDepart.getTime());
+  
+  actions.push(...aPlanifierCandidates.slice(0, 10));
+  actions.push(...aCommanderCandidates.slice(0, 10));
+  
   // Marquer les actions qui vont passer en retard dans J+1 et filtrer
   const tomorrow = addDays(today, 1);
   const filteredActions = actions
@@ -276,9 +348,10 @@ export function buildActionsAMener(
       isDueSoon: !action.isLate && action.deadline <= tomorrow,
     }))
     .filter(action => {
+      // Toujours garder les actions "à planifier" et "à commander" (pas de filtre deadline)
+      if (action.actionType === 'a_planifier_tvx' || action.actionType === 'a_commander') return true;
       // Garder toutes les actions déjà en retard
       if (action.isLate) return true;
-      
       // Pour les actions "à venir", ne garder que celles dont la deadline est demain ou avant
       return action.deadline <= tomorrow;
     });
