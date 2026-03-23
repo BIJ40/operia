@@ -20,6 +20,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
 import { Button } from '@/components/ui/button';
 import { CAPlanifieCard } from '../CAPlanifieCard';
 import { PilotageAvanceSection } from '../previsionnel/PilotageAvanceSection';
+import { EtatDetailDialog } from '../EtatDetailDialog';
+import { DossiersExplorerDialog } from '../DossiersExplorerDialog';
 
 // Formatage monétaire
 const formatCurrency = (value: number): string => {
