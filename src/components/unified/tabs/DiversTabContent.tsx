@@ -31,7 +31,7 @@ const PerformanceDashboard = lazy(() =>
   import('@/components/performance/PerformanceDashboard').then(m => ({ default: m.PerformanceDashboard }))
 );
 const ProspectionTabContent = lazy(() => import('@/prospection/pages/ProspectionTabContent'));
-const DevisAcceptesView = lazy(() => import('@/apogee-connect/components/DevisAcceptesView'));
+
 const AnomaliesDevisDossierView = lazy(() => import('@/apogee-connect/components/AnomaliesDevisDossierView'));
 const ZonesDeplacementTab = lazy(() => import('@/components/organisation/ZonesDeplacementTab'));
 
