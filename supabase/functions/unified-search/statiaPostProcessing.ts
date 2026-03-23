@@ -189,6 +189,7 @@ export function pourcentageFromResult(result: StatResult): PostProcessedResult {
 // ═══════════════════════════════════════════════════════════════
 
 function formatValue(value: number, unit: string): string {
+  if (!Number.isFinite(value)) return 'Aucune donnée exploitable';
   if (unit === '€') {
     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
   }
