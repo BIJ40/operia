@@ -29,7 +29,7 @@ const toDate = (v: unknown): Date | null => {
 };
 
 const getProjectId = (obj: any): number | null => {
-  const raw = obj?.projectId ?? obj?.project_id ?? obj?.project?.id;
+  const raw = obj?.projectId ?? obj?.project_id ?? obj?.project?.id ?? obj?.refId ?? obj?.ref_id ?? obj?.dossierId ?? obj?.dossier_id ?? obj?.data?.projectId;
   if (raw == null) return null;
   const n = Number(raw);
   return Number.isFinite(n) ? n : null;
