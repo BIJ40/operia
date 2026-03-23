@@ -232,7 +232,7 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
   // Show loading state while fetching smart token data
   if (isLoadingSmartData) {
     return (
-      <div className="container mx-auto py-6 flex items-center justify-center min-h-[400px]">
+      <div className="container mx-auto max-w-7xl py-6 flex items-center justify-center min-h-[400px]">
         <div className="text-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
           <p className="text-muted-foreground">Chargement des données...</p>
