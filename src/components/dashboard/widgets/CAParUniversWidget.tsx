@@ -1,5 +1,5 @@
 /**
- * Widget CA par Univers - utilise la période du dashboard
+ * Widget CA par Univers — Grille 2×4 avec pictos et barres circulaires
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -8,6 +8,7 @@ import { getMetricForAgency } from '@/statia/api/getMetricForAgency';
 import { getGlobalApogeeDataServices } from '@/statia/adapters/dataServiceAdapter';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDashboardPeriod } from '@/pages/DashboardStatic';
+import { getPictoSrc } from '@/components/commercial/social/templates/templateAssets';
 
 interface UniversData {
   name: string;
@@ -15,13 +16,76 @@ interface UniversData {
   color?: string;
 }
 
+// Mapping nom univers → clé picto
+const UNIVERS_PICTO_KEY: Record<string, string> = {
+  plomberie: 'plomberie',
+  electricite: 'electricite',
+  électricité: 'electricite',
+  serrurerie: 'serrurerie',
+  menuiserie: 'menuiserie',
+  vitrerie: 'vitrerie',
+  'volets roulants': 'volets',
+  volets: 'volets',
+  volet: 'volets',
+  pmr: 'pmr',
+  renovation: 'renovation',
+  rénovation: 'renovation',
+};
+
+function getUniversPicto(name: string): string | undefined {
+  const norm = name.toLowerCase().trim();
+  for (const [pattern, key] of Object.entries(UNIVERS_PICTO_KEY)) {
+    if (norm.includes(pattern)) return getPictoSrc(key);
+  }
+  return undefined;
+}
+
+function RingProgress({ percentage, pictoSrc, size = 64 }: { percentage: number; pictoSrc?: string; size?: number }) {
+  const strokeWidth = 5;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (Math.min(percentage, 100) / 100) * circumference;
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="transform -rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="hsl(var(--muted))"
+          strokeWidth={strokeWidth}
+          className="opacity-30"
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="hsl(var(--primary))"
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          className="transition-all duration-1000 ease-out"
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        {pictoSrc ? (
+          <img src={pictoSrc} alt="" className="w-7 h-7 object-contain" />
+        ) : (
+          <span className="text-xs font-bold text-muted-foreground">—</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function CAParUniversWidget() {
   const { agence } = useProfile();
   const agencySlug = agence || '';
-
-  // Utiliser la période du dashboard parent
   const { dateRange } = useDashboardPeriod();
-
   const services = getGlobalApogeeDataServices();
 
   const { data, isLoading } = useQuery({
@@ -36,34 +100,28 @@ export function CAParUniversWidget() {
 
   if (isLoading) {
     return (
-      <div className="space-y-2">
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-8" />
+      <div className="grid grid-cols-2 gap-3">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} className="flex flex-col items-center gap-1">
+            <Skeleton className="w-16 h-16 rounded-full" />
+            <Skeleton className="h-3 w-14" />
+          </div>
         ))}
       </div>
     );
   }
 
-  // Parser les données selon la structure retournée par StatIA
   const universData: UniversData[] = [];
-  
+
   if (data) {
-    // Format attendu: { value: Record<string, { name, ca, color }> } ou directement Record<...>
     const dataObj = data.value ?? data;
-    
     if (dataObj && typeof dataObj === 'object' && !Array.isArray(dataObj)) {
       Object.entries(dataObj as Record<string, unknown>).forEach(([key, val]) => {
-        // Ignorer les clés de métadonnées
         if (key === 'value' || key === 'metadata' || key === 'breakdown') return;
-        
         if (typeof val === 'object' && val !== null) {
           const item = val as { name?: string; ca?: number; color?: string };
           if (item.ca !== undefined) {
-            universData.push({
-              name: item.name || key,
-              ca: item.ca,
-              color: item.color,
-            });
+            universData.push({ name: item.name || key, ca: item.ca, color: item.color });
           }
         } else if (typeof val === 'number') {
           universData.push({ name: key, ca: val });
@@ -72,17 +130,7 @@ export function CAParUniversWidget() {
     }
   }
 
-  // Trier par CA décroissant
   universData.sort((a, b) => b.ca - a.ca);
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
-
   const total = universData.reduce((sum, u) => sum + u.ca, 0);
 
   if (!universData.length) {
@@ -93,22 +141,23 @@ export function CAParUniversWidget() {
     );
   }
 
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
+
   return (
-    <div className="space-y-2">
-      {universData.slice(0, 5).map((univers, index) => {
+    <div className="grid grid-cols-2 gap-3">
+      {universData.slice(0, 8).map((univers, index) => {
         const percentage = total > 0 ? (univers.ca / total) * 100 : 0;
+        const pictoSrc = getUniversPicto(univers.name);
         return (
-          <div key={index} className="space-y-1">
-            <div className="flex justify-between text-sm">
-              <span className="font-medium truncate">{univers.name}</span>
-              <span className="text-muted-foreground">{formatCurrency(univers.ca)}</span>
-            </div>
-            <div className="h-2 bg-muted rounded-full overflow-hidden">
-              <div
-                className="h-full bg-warm-blue/80 rounded-full transition-all"
-                style={{ width: `${percentage}%` }}
-              />
-            </div>
+          <div key={index} className="flex flex-col items-center gap-1">
+            <RingProgress percentage={percentage} pictoSrc={pictoSrc} />
+            <span className="text-xs font-medium text-foreground truncate max-w-[80px] text-center">
+              {univers.name}
+            </span>
+            <span className="text-[10px] text-muted-foreground">
+              {Math.round(percentage)}% · {formatCurrency(univers.ca)}
+            </span>
           </div>
         );
       })}
