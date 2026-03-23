@@ -399,27 +399,27 @@ export function CAPlanifieDetailDialog({ open, onOpenChange, ...dataProps }: Pro
               {planifiedProjects.length === 0 ? (
                 <p className="text-xs text-muted-foreground text-center py-4">Aucun dossier planifié sur cette période</p>
               ) : (
-                <div className="space-y-1 max-h-[240px] overflow-y-auto">
-                  <div className="grid grid-cols-[1fr_100px_80px_80px_60px] gap-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wide pb-1 border-b">
-                    <span>Référence</span>
+                <div className="space-y-1 max-h-[300px] overflow-y-auto">
+                  <div className="grid grid-cols-[1fr_100px_90px_80px_90px] gap-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wide pb-1 border-b">
+                    <span>Nom</span>
+                    <span>Ville</span>
+                    <span>Date planif.</span>
+                    <span className="text-right">Montant HT</span>
                     <span>Univers</span>
-                    <span className="text-right">Devis HT</span>
-                    <span className="text-right">Heures</span>
-                    <span className="text-right">État</span>
                   </div>
                   {planifiedProjects.map(p => (
-                    <div key={p.projectId} className="grid grid-cols-[1fr_100px_80px_80px_60px] gap-2 items-center text-xs py-1.5 border-b border-border/40 last:border-0">
+                    <div key={p.projectId} className="grid grid-cols-[1fr_100px_90px_80px_90px] gap-2 items-center text-xs py-1.5 border-b border-border/40 last:border-0">
                       <div className="min-w-0">
-                        <span className="font-mono font-medium truncate block">{p.reference}</span>
-                        {p.label && <span className="text-muted-foreground truncate block text-[10px]">{p.label.slice(0, 40)}</span>}
+                        <span className="font-medium truncate block">{p.label || p.reference}</span>
+                        {p.label && <span className="text-muted-foreground truncate block text-[10px] font-mono">{p.reference}</span>}
                       </div>
-                      <span className="text-muted-foreground truncate">{p.univers}</span>
+                      <span className="text-muted-foreground truncate">{p.ville || '—'}</span>
+                      <span className="text-muted-foreground">{format(p.planningDate, 'dd MMM yyyy', { locale: fr })}</span>
                       <span className="text-right font-medium">{p.devisHT > 0 ? fmtCurrency(p.devisHT) : '—'}</span>
-                      <span className="text-right text-muted-foreground">{p.heuresTech > 0 ? `${Math.round(p.heuresTech)}h` : '—'}</span>
-                      <div className="flex justify-end">
-                        <Badge variant="outline" className="text-[9px] px-1 py-0" style={{ borderColor: ETAT_COLORS[p.etatWorkflow] || 'hsl(var(--border))' }}>
-                          {p.etatWorkflowLabel}
-                        </Badge>
+                      <span className="text-muted-foreground truncate">{p.univers}</span>
+                    </div>
+                  ))}
+                </div>
                       </div>
                     </div>
                   ))}
