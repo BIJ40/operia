@@ -44,11 +44,13 @@ function formatHelpiResponse(data: any, error: any): string {
   return data?.result?.answer || data?.answer || 'Je n\'ai pas compris votre question. Essayez de reformuler.';
 }
 
-function fmtVal(value: number, unit?: string): string {
-  if (unit === '€' || unit === 'euros') return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
-  if (unit === '%') return `${value.toFixed(1)}%`;
-  if (unit === 'jours' || unit === 'j') return `${value} jours`;
-  return new Intl.NumberFormat('fr-FR').format(value);
+function fmtVal(value: any, unit?: string): string {
+  const num = typeof value === 'number' ? value : parseFloat(String(value));
+  if (isNaN(num)) return String(value ?? '—');
+  if (unit === '€' || unit === 'euros') return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(num);
+  if (unit === '%') return `${num.toFixed(1)}%`;
+  if (unit === 'jours' || unit === 'j') return `${num} jours`;
+  return new Intl.NumberFormat('fr-FR').format(num);
 }
 
 interface ChatMessage {
