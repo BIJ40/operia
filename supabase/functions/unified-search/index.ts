@@ -46,6 +46,7 @@ interface UnifiedSearchRequestBody {
   query: string;
   now?: string;
   conversationHistory?: Array<{ role: string; content: string }>;
+  forceStats?: boolean;
 }
 
 interface AiSearchContext {
@@ -1109,6 +1110,13 @@ serve(async (req) => {
       : { metric: null, scores: metricScores };
 
     const routed = aiSearchRouteV3(query, tokenized, extractedWithEntityOverride, period, context, resolvedEntities, metricResult, now);
+    
+    // forceStats: if Helpi sends this flag, override doc routing to stats
+    if (body.forceStats && routed.type === 'doc') {
+      console.log(`[unified-search] forceStats: overriding doc→stats`);
+      routed.type = 'stats';
+    }
+    
     console.log(`[unified-search] Routed: type=${routed.type}, metric=${routed.parsed?.metricId || 'none'}`);
 
     // ══════════════════════════════════════════════════════════
