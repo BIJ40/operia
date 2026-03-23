@@ -102,8 +102,8 @@ export function useChargeTravauxAVenir() {
   // Calculer les stats globales à partir des données brutes
   const globalStats = useMemo(() => {
     if (!globalQuery.data) return null;
-    const { projects, interventions, devis } = globalQuery.data;
-    return computeChargeTravauxAvenirParUnivers(projects, interventions, devis);
+    const { projects, interventions, devis, creneaux } = globalQuery.data;
+    return computeChargeTravauxAvenirParUnivers(projects, interventions, devis, creneaux);
   }, [globalQuery.data]);
 
   // Calculer le CA Planifié filtré par période (côté client, pas de refetch)
