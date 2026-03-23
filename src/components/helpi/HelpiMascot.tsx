@@ -109,6 +109,7 @@ export function HelpiMascot() {
         },
       });
 
+      console.log('[Helpi] Response:', JSON.stringify(data, null, 2)?.slice(0, 500));
       const answer = formatHelpiResponse(data, error);
 
       setMessages(prev => [
