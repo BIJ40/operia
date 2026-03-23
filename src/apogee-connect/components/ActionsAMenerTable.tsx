@@ -95,7 +95,8 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
             <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Réf.</th>
             <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Type</th>
             <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Étape</th>
-            <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Date</th>
+            <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Date entrée</th>
+            <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Expiration</th>
             <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground hidden md:table-cell">Client</th>
             <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground hidden lg:table-cell">Détail</th>
             <th className="text-right py-2 px-3 text-xs font-medium text-muted-foreground w-10"></th>
@@ -147,18 +148,25 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
                   </span>
                 </td>
 
-                {/* Date */}
+                {/* Date entrée */}
                 <td className="py-2.5 px-3 hidden sm:table-cell">
                   <span className={cn(
                     "text-xs",
                     isLate ? "text-destructive font-bold" : "text-muted-foreground"
                   )}>
                     {format(action.dateDepart, 'dd/MM/yyyy', { locale: fr })}
+                  </span>
+                </td>
+
+                {/* Expiration */}
+                <td className="py-2.5 px-3 hidden sm:table-cell">
+                  <span className={cn(
+                    "text-xs",
+                    isLate ? "text-destructive font-bold" : "text-muted-foreground"
+                  )}>
+                    {format(action.deadline, 'dd/MM/yyyy', { locale: fr })}
                     {isLate && action.daysLate != null && action.daysLate > 0 && (
                       <span className="ml-1 text-destructive font-bold">+{action.daysLate}j</span>
-                    )}
-                    {!isLate && action.actionType !== 'a_planifier_tvx' && action.actionType !== 'a_commander' && action.daysLate != null && action.daysLate > 0 && (
-                      <span className="ml-1 text-muted-foreground">({action.daysLate}j)</span>
                     )}
                   </span>
                 </td>
