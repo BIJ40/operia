@@ -1,7 +1,9 @@
 export type ActionType = 
   | 'devis_a_faire'
   | 'a_facturer'
-  | 'relance_technicien';
+  | 'relance_technicien'
+  | 'a_planifier_tvx'
+  | 'a_commander';
 
 export type ActionRow = {
   projectId: number;
