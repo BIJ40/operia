@@ -4,6 +4,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Share2, ChevronLeft, ChevronRight, CalendarDays, List, Sparkles, Loader2 } from 'lucide-react';
@@ -11,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 import { useSocialSuggestions, useGenerateSuggestions, useUpdateSuggestionStatus } from '@/hooks/useSocialSuggestions';
 import { SocialCalendarView } from '@/components/commercial/social/SocialCalendarView';
@@ -39,6 +41,7 @@ export default function SocialHubPage() {
   const [topicFilter, setTopicFilter] = useState<TopicFilter>('all');
   const [selectedSuggestionId, setSelectedSuggestionId] = useState<string | null>(null);
   const [selectedDays, setSelectedDays] = useState<Set<string>>(new Set());
+  const [isDetailExpanded, setIsDetailExpanded] = useState(false);
 
   const monthKey = format(currentMonth, 'yyyy-MM');
   const monthLabel = format(currentMonth, 'MMMM yyyy', { locale: fr });
@@ -199,33 +202,49 @@ export default function SocialHubPage() {
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-7 gap-4 min-h-[500px]">
-          {/* Left: Calendar or List — larger */}
-          <div className="lg:col-span-5 rounded-lg border border-border bg-card p-3">
-            {filteredSuggestions.length === 0 ? (
-              <EmptyState viewMode={viewMode} monthKey={monthKey} />
-            ) : viewMode === 'calendar' ? (
-              <SocialCalendarView
-                currentMonth={currentMonth}
-                suggestions={filteredSuggestions}
-                selectedId={selectedSuggestionId}
-                onSelect={setSelectedSuggestionId}
-                selectedDays={selectedDays}
-                onToggleDay={handleToggleDay}
-                onRegenerateSelected={handleRegenerateSelectedDays}
-                isRegenerating={generateMutation.isGenerating}
-              />
-            ) : (
-              <SocialListView
-                suggestions={filteredSuggestions}
-                selectedId={selectedSuggestionId}
-                onSelect={setSelectedSuggestionId}
-              />
-            )}
-          </div>
+        <div className="flex gap-4 min-h-[500px]">
+          {/* Left: Calendar or List — collapsible */}
+          {!isDetailExpanded && (
+            <div className="flex-1 min-w-0 rounded-lg border border-border bg-card p-3">
+              {filteredSuggestions.length === 0 ? (
+                <EmptyState viewMode={viewMode} monthKey={monthKey} />
+              ) : viewMode === 'calendar' ? (
+                <SocialCalendarView
+                  currentMonth={currentMonth}
+                  suggestions={filteredSuggestions}
+                  selectedId={selectedSuggestionId}
+                  onSelect={setSelectedSuggestionId}
+                  selectedDays={selectedDays}
+                  onToggleDay={handleToggleDay}
+                  onRegenerateSelected={handleRegenerateSelectedDays}
+                  isRegenerating={generateMutation.isGenerating}
+                />
+              ) : (
+                <SocialListView
+                  suggestions={filteredSuggestions}
+                  selectedId={selectedSuggestionId}
+                  onSelect={setSelectedSuggestionId}
+                />
+              )}
+            </div>
+          )}
 
-          {/* Right: Detail panel — compact */}
-          <div className="lg:col-span-2 rounded-lg border border-border bg-card p-3">
+          {/* Right: Detail panel — expandable */}
+          <div className={cn(
+            'rounded-lg border border-border bg-card p-3 transition-all duration-200',
+            isDetailExpanded ? 'flex-1' : 'w-[340px] shrink-0'
+          )}>
+            <div className="flex items-center mb-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setIsDetailExpanded(prev => !prev)}
+                title={isDetailExpanded ? 'Replier le panneau' : 'Agrandir le panneau'}
+              >
+                {isDetailExpanded ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+              </Button>
+            </div>
             <SocialPostDetailPanel
               suggestion={selectedSuggestion}
               onApprove={handleApprove}
