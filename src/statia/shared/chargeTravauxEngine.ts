@@ -680,10 +680,15 @@ export function computeChargeTravauxAvenirParUnivers(
     // includedInChargeCalc: heures > 0 et (technicien ou date planifiée)
     const includedInChargeCalc = heuresTech > 0 && (technicianIds.length > 0 || hasPlannedDate);
 
+    const rawClientId = project?.clientId ?? project?.client_id ?? project?.data?.clientId ?? project?.data?.client_id;
+    const dossierLabel = project?.label || project?.name || project?.data?.label || project?.data?.name || '';
+
     parProjet.push({
       projectId,
+      clientId: rawClientId ?? undefined,
+      dossierLabel,
       reference: project.ref || project.reference,
-      label: project.label || project.name,
+      label: dossierLabel,
       etatWorkflow: state,
       etatWorkflowLabel: etatLabel,
       universes: normalizedUniverses,
