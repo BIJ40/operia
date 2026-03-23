@@ -6,7 +6,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useDashboardPeriod } from '@/pages/DashboardStatic';
-import { DataService } from '@/apogee-connect/services/dataService';
+import { getGlobalApogeeDataServices } from '@/statia/adapters/dataServiceAdapter';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
@@ -34,14 +34,17 @@ export function CAParTrancheHoraireWidget() {
   const { agence } = useProfile();
   const agencySlug = agence || '';
   const { dateRange } = useDashboardPeriod();
+  const services = getGlobalApogeeDataServices();
 
   const { data, isLoading } = useQuery({
     queryKey: ['widget-ca-jour-semaine', agencySlug, dateRange.start.toISOString(), dateRange.end.toISOString()],
     queryFn: async () => {
       if (!agencySlug) return null;
 
-      const apiData = await DataService.loadAllData(true, false, agencySlug);
-      const factures = apiData.factures || [];
+      const factures = await services.getFactures(agencySlug, {
+        start: dateRange.start,
+        end: dateRange.end,
+      });
 
       const startTime = dateRange.start.getTime();
       const endTime = dateRange.end.getTime();
@@ -49,15 +52,17 @@ export function CAParTrancheHoraireWidget() {
       const result = JOURS.map(j => ({ ...j, ca: 0 }));
 
       for (const facture of factures) {
-        const dateStr = facture.date;
+        const dateStr = (facture as any).date || (facture as any).dateReelle;
         if (!dateStr) continue;
         const d = new Date(dateStr);
         if (isNaN(d.getTime())) continue;
         if (d.getTime() < startTime || d.getTime() > endTime) continue;
 
-        // Exclure avoirs (traités en négatif)
-        const type = (facture.typeFacture || facture.state || '').toString().toLowerCase();
-        const raw = typeof facture.totalHT === 'number' ? facture.totalHT : parseFloat(String(facture.totalHT || '0'));
+        const totalHT = (facture as any).totalHT;
+        const raw = typeof totalHT === 'number' ? totalHT : parseFloat(String(totalHT || '0'));
+        
+        // Avoirs en négatif
+        const type = ((facture as any).typeFacture || (facture as any).state || '').toString().toLowerCase();
         const amount = type === 'avoir' ? -Math.abs(raw) : Math.abs(raw);
         if (amount === 0) continue;
 
@@ -87,7 +92,6 @@ export function CAParTrancheHoraireWidget() {
   const formatCurrency = (v: number) =>
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v);
 
-  // Map filtered data back to correct colors
   const getColorIndex = (key: string) => JOURS.findIndex(j => j.key === key);
 
   return (
