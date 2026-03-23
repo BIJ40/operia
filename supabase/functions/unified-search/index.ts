@@ -1167,7 +1167,10 @@ serve(async (req) => {
       // CACHE: Désactivé pour métriques sensibles + requêtes filtrées
       // ════════════════════════════════════════════════════════════
       const forceNoCacheMetrics = new Set(['ca_par_technicien', 'top_techniciens_ca']);
-      const skipCache = forceNoCacheMetrics.has(parsed.metricId) || !!(parsed.technicienId || parsed.apporteurId);
+      const skipCache =
+        !!body.forceStats ||
+        forceNoCacheMetrics.has(parsed.metricId) ||
+        !!(parsed.technicienId || parsed.apporteurId);
       console.log(`[unified-search] Cache: metric=${parsed.metricId}, skipCache=${skipCache}`);
       const cached = skipCache ? null : await getCacheEntry(supabase, cacheKey);
       if (cached) { console.log('[unified-search] Cache hit'); result = cached; fromCache = true; }
