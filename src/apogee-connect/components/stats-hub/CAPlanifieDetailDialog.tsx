@@ -233,7 +233,7 @@ function usePlanifiedProjects(props: Omit<Props, 'open' | 'onOpenChange'>): Plan
     }
 
     return results.sort((a, b) => b.devisHT - a.devisHT);
-  }, [projects, interventions, devis, factures, periodStart, periodEnd]);
+  }, [projects, interventions, devis, factures, clients, periodStart, periodEnd]);
 }
 
 // --- Custom tooltip ---
