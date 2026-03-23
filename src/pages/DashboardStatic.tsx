@@ -417,7 +417,6 @@ export default function DashboardStatic() {
           <motion.div variants={itemVariants}>
             <WarmCard
               variant="blue"
-              icon={AlertTriangle}
               animate={false}
               className="h-full cursor-pointer"
               onClick={() => {
