@@ -213,12 +213,14 @@ function usePlanifiedProjects(props: Omit<Props, 'open' | 'onOpenChange'>): Plan
 
       const universes = (project?.data?.universes as string[]) || ['Non classé'];
       const state = project?.data?.state ?? project?.state ?? '';
-      const clientName = project?.data?.clientName ?? project?.data?.client_name ?? project?.data?.nom ?? '';
-      const ville = project?.data?.ville ?? project?.data?.city ?? '';
+      const clientId = Number(project?.clientId ?? project?.client_id);
+      const client = Number.isFinite(clientId) ? clientsById.get(clientId) : null;
+      const clientName = client?.nom ?? client?.raisonSociale ?? client?.name ?? client?.prenom ?? '';
+      const ville = project?.data?.ville ?? project?.data?.city ?? client?.ville ?? '';
 
       results.push({
         projectId,
-        reference: project?.data?.reference || project?.reference || `#${projectId}`,
+        reference: project?.ref || project?.data?.reference || project?.reference || `#${projectId}`,
         label: clientName || project?.data?.label || project?.label || '',
         ville,
         univers: normalizeUnivers(universes[0]),
