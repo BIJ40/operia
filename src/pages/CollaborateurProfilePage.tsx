@@ -38,7 +38,7 @@ export default function CollaborateurProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-8 px-4 space-y-6">
+      <div className="container mx-auto max-w-7xl py-8 px-4 space-y-6">
         <Skeleton className="h-20 w-full" />
         <Skeleton className="h-10 w-full" />
         <div className="grid md:grid-cols-2 gap-6">
