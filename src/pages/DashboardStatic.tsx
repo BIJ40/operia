@@ -34,6 +34,7 @@ import { Top3TechniciensWidget } from '@/components/dashboard/widgets/Top3Techni
 import { CAParUniversWidget } from '@/components/dashboard/widgets/CAParUniversWidget';
 import { CAApporteursWidget } from '@/components/dashboard/widgets/CAApporteursWidget';
 import { TechniciensProdWidget } from '@/components/dashboard/widgets/TechniciensProdWidget';
+import { ActionsAMenerWidget } from '@/components/dashboard/widgets/ActionsAMenerWidget';
 import { TechnicienPersonnelKPIs } from '@/components/dashboard/TechnicienPersonnelKPIs';
 import { AssistantePersonnelKPIs } from '@/components/dashboard/AssistantePersonnelKPIs';
 
