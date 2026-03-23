@@ -351,7 +351,6 @@ export default function DashboardStatic() {
             <motion.div variants={itemVariants}>
               <WarmCard
                 variant="blue"
-                icon={PieChart}
                 animate={false}
               >
                 <HumanTitle titleKey="ca_univers" icon={PieChart} iconColor="text-warm-blue" size="sm" />
@@ -395,21 +394,21 @@ export default function DashboardStatic() {
 
           {/* LIGNE 2 — 4 tuiles (colonnes 2-5) */}
           <motion.div variants={itemVariants}>
-            <WarmCard variant="blue" icon={TrendingUp} animate={false} className="h-full">
+            <WarmCard variant="blue" animate={false} className="h-full">
               <HumanTitle titleKey="ca_apporteurs" icon={TrendingUp} iconColor="text-warm-blue" size="sm" />
               <div className="mt-3"><CAApporteursWidget /></div>
             </WarmCard>
           </motion.div>
 
           <motion.div variants={itemVariants}>
-            <WarmCard variant="blue" icon={Trophy} animate={false} className="h-full">
+            <WarmCard variant="blue" animate={false} className="h-full">
               <HumanTitle titleKey="top_techniciens" icon={Trophy} iconColor="text-warm-blue" size="sm" />
               <div className="mt-3"><Top3TechniciensWidget /></div>
             </WarmCard>
           </motion.div>
 
           <motion.div variants={itemVariants}>
-            <WarmCard variant="blue" icon={Users} animate={false} className="h-full">
+            <WarmCard variant="blue" animate={false} className="h-full">
               <HumanTitle titleKey="productivite" icon={Users} iconColor="text-warm-blue" size="sm" />
               <div className="mt-3"><TechniciensProdWidget /></div>
             </WarmCard>
@@ -418,7 +417,6 @@ export default function DashboardStatic() {
           <motion.div variants={itemVariants}>
             <WarmCard
               variant="blue"
-              icon={AlertTriangle}
               animate={false}
               className="h-full cursor-pointer"
               onClick={() => {
