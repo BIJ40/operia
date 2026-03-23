@@ -74,13 +74,14 @@ export function useChargeTravauxAVenir() {
     queryFn: async () => {
       if (!agencySlug) return null;
       const services = getGlobalApogeeDataServices();
-      const [projects, interventions, devis, factures] = await Promise.all([
+      const [projects, interventions, devis, factures, clients] = await Promise.all([
         services.getProjects(agencySlug, undefined),
         services.getInterventions(agencySlug, undefined),
         services.getDevis(agencySlug, undefined),
         services.getFactures(agencySlug, undefined),
+        services.getClients(agencySlug, undefined),
       ]);
-      return { projects, interventions, devis, factures };
+      return { projects, interventions, devis, factures, clients };
     },
     enabled: isAgencyReady && !!agencySlug,
     staleTime: 1000 * 60 * 5, // 5 minutes
