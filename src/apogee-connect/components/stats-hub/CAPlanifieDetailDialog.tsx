@@ -465,9 +465,9 @@ export function CAPlanifieDetailDialog({ open, onOpenChange, ...dataProps }: Pro
                       <BarChart
                         data={byWeek}
                         margin={{ left: 0, right: 10 }}
-                        onClick={(data) => {
+                        onClick={(data: any) => {
                           if (data?.activeLabel) {
-                            const weekLabel = data.activeLabel;
+                            const weekLabel = String(data.activeLabel);
                             const weekNum = parseInt(weekLabel.replace('S', ''));
                             const count = byWeek.find(w => w.name === weekLabel)?.count ?? 0;
                             setDrill({
