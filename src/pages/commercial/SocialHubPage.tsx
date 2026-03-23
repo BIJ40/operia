@@ -229,49 +229,47 @@ export default function SocialHubPage() {
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className="flex min-h-[500px] relative">
-          {/* Left: Calendar or List — collapsible */}
-          {!isDetailExpanded && (
-            <div className="flex-1 min-w-0 rounded-lg border border-border bg-card p-3 mr-0">
-              {filteredSuggestions.length === 0 ? (
-                <EmptyState viewMode={viewMode} monthKey={monthKey} />
-              ) : viewMode === 'calendar' ? (
-                <SocialCalendarView
-                  currentMonth={currentMonth}
-                  suggestions={filteredSuggestions}
-                  selectedId={selectedSuggestionId}
-                  onSelect={setSelectedSuggestionId}
-                  selectedDays={selectedDays}
-                  onToggleDay={handleToggleDay}
-                  onRegenerateSelected={handleRegenerateSelectedDays}
-                  isRegenerating={generateMutation.isGenerating}
-                />
-              ) : (
-                <SocialListView
-                  suggestions={filteredSuggestions}
-                  selectedId={selectedSuggestionId}
-                  onSelect={setSelectedSuggestionId}
-                />
-              )}
-            </div>
-          )}
-
-          {/* Toggle handle — vertical bar between panels */}
-          <div className="flex items-center self-stretch z-10">
-            <button
-              onClick={() => setIsDetailExpanded(prev => !prev)}
-              title={isDetailExpanded ? 'Afficher le calendrier' : 'Agrandir l\'aperçu visuel'}
-              className="flex items-center justify-center w-4 h-24 rounded-sm bg-primary/10 hover:bg-primary/20 border border-border transition-colors cursor-pointer my-auto"
-            >
-              {isDetailExpanded ? <PanelLeftOpen className="w-4 h-4 text-primary" /> : <PanelLeftClose className="w-4 h-4 text-primary" />}
-            </button>
+        <div className="flex min-h-[500px] relative" ref={containerRef}>
+          {/* Left: Calendar or List */}
+          <div className="flex-1 min-w-0 rounded-lg border border-border bg-card p-3 mr-0">
+            {filteredSuggestions.length === 0 ? (
+              <EmptyState viewMode={viewMode} monthKey={monthKey} />
+            ) : viewMode === 'calendar' ? (
+              <SocialCalendarView
+                currentMonth={currentMonth}
+                suggestions={filteredSuggestions}
+                selectedId={selectedSuggestionId}
+                onSelect={setSelectedSuggestionId}
+                selectedDays={selectedDays}
+                onToggleDay={handleToggleDay}
+                onRegenerateSelected={handleRegenerateSelectedDays}
+                isRegenerating={generateMutation.isGenerating}
+              />
+            ) : (
+              <SocialListView
+                suggestions={filteredSuggestions}
+                selectedId={selectedSuggestionId}
+                onSelect={setSelectedSuggestionId}
+              />
+            )}
           </div>
 
-          {/* Right: Detail panel — expandable */}
-          <div className={cn(
-            'rounded-lg border border-border bg-card p-3 transition-all duration-200',
-            isDetailExpanded ? 'flex-1' : 'w-[340px] shrink-0'
-          )}>
+          {/* Draggable resize handle */}
+          <div
+            onMouseDown={handleMouseDown}
+            className="flex items-center self-stretch z-10 cursor-col-resize group"
+            title="Glisser pour ajuster la taille"
+          >
+            <div className="flex items-center justify-center w-3 h-20 rounded-sm bg-primary/10 group-hover:bg-primary/25 border border-border transition-colors my-auto">
+              <GripVertical className="w-3 h-3 text-primary/60 group-hover:text-primary" />
+            </div>
+          </div>
+
+          {/* Right: Detail panel — resizable */}
+          <div
+            className="rounded-lg border border-border bg-card p-3 shrink-0"
+            style={{ width: detailWidth }}
+          >
             <SocialPostDetailPanel
               suggestion={selectedSuggestion}
               onApprove={handleApprove}
