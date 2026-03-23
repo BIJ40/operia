@@ -175,8 +175,8 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const handleGenerate = useCallback(async () => {
     setLoadingPreview(true);
 
-    // Canvas-first for team posts (prospection/calendar) — uses local avatars
-    if (isTeamPost && renderedCanvasRef.current && agencyId) {
+    // Canvas-first ONLY for initial generation of team posts (no existing visual)
+    if (isTeamPost && !hasExistingVisual && renderedCanvasRef.current && agencyId) {
       try {
         const blob = await canvasToBlob(renderedCanvasRef.current);
         const result = await uploadCanvasVisual(blob, agencyId, suggestion.id);
@@ -194,7 +194,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
       return;
     }
 
-    // Standard AI generation for other post types
+    // AI generation for all other cases (including regeneration of team posts)
     const visualCustomization = (freePrompt || keywords || includeVan || universeOverride || imageModel !== 'auto') ? {
       freePrompt: freePrompt || undefined,
       keywords: keywords || undefined,
@@ -206,7 +206,13 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
       { suggestionId: suggestion.id, visualCustomization },
       {
         onSuccess: (data) => {
-          if (data?.signed_url) setComposedPreviewUrl(data.signed_url);
+          if (data?.signed_url) {
+            setComposedPreviewUrl(data.signed_url);
+            // Also update raw preview if background URL is provided
+            if ((data as any)?.background_signed_url) {
+              setRawPreviewUrl((data as any).background_signed_url);
+            }
+          }
           setLoadingPreview(false);
           setFreePrompt('');
           setKeywords('');
@@ -217,7 +223,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
         },
       }
     );
-  }, [suggestion.id, isTeamPost, agencyId, generateMutation, freePrompt, keywords, includeVan, universeOverride, imageModel]);
+  }, [suggestion.id, isTeamPost, hasExistingVisual, agencyId, generateMutation, freePrompt, keywords, includeVan, universeOverride, imageModel]);
 
   const handleEditExisting = useCallback(async () => {
     if (!editInstruction.trim() || !existingStoragePath) return;
