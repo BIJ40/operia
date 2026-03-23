@@ -71,7 +71,7 @@ function UnifiedWorkspaceContent() {
   const effectiveAuth = useEffectiveAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [loginOpen, setLoginOpen] = useState(false);
-  const { hasRequiredPlan: hasProPlan } = usePlanAccess('PRO');
+  
   
   // Support URL ?tab=XXX pour navigation directe
   const urlTab = searchParams.get('tab') as UnifiedTab | null;
