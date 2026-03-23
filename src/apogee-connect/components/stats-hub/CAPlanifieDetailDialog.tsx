@@ -127,9 +127,6 @@ function usePlanifiedProjects(props: Omit<Props, 'open' | 'onOpenChange'>): Plan
   const { projects, interventions, devis, factures, clients, periodStart, periodEnd } = props;
 
   return useMemo(() => {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const todayMs = today.getTime();
-
     // Build client lookup by id
     const clientsById = new Map<number, any>();
     for (const c of (clients || [])) {
@@ -177,11 +174,11 @@ function usePlanifiedProjects(props: Omit<Props, 'open' | 'onOpenChange'>): Plan
       const projectItvs = itvByPid.get(projectId) || [];
       let totalHours = 0;
 
-      // Phase A : compter les interventions futures par mois
+      // Phase A : compter toutes les interventions du projet par mois de planification
       const monthCounts = new Map<string, { count: number; firstDate: Date }>();
       for (const itv of projectItvs) {
         const d = getInterventionPlanningDate(itv);
-        if (d && d.getTime() >= todayMs) {
+        if (d) {
           const mk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
           const existing = monthCounts.get(mk);
           if (!existing) {
