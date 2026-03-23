@@ -169,6 +169,9 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
 
   const isTeamPost = suggestion.topic_type === 'prospection' || suggestion.topic_type === 'calendar';
 
+  const hasExistingVisual = Boolean(composedAsset || rawAsset);
+  const existingStoragePath = composedAsset?.storage_path || rawAsset?.storage_path || '';
+
   const handleGenerate = useCallback(async () => {
     setLoadingPreview(true);
 
@@ -215,6 +218,31 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
       }
     );
   }, [suggestion.id, isTeamPost, agencyId, generateMutation, freePrompt, keywords, includeVan, universeOverride, imageModel]);
+
+  const handleEditExisting = useCallback(async () => {
+    if (!editInstruction.trim() || !existingStoragePath) return;
+    setLoadingPreview(true);
+    generateMutation.mutate(
+      {
+        suggestionId: suggestion.id,
+        editExisting: {
+          sourceStoragePath: existingStoragePath,
+          editInstruction: editInstruction.trim(),
+        },
+      },
+      {
+        onSuccess: (data) => {
+          if (data?.signed_url) setComposedPreviewUrl(data.signed_url);
+          setLoadingPreview(false);
+          setEditInstruction('');
+          toast.success('Visuel modifié avec succès');
+        },
+        onError: () => {
+          setLoadingPreview(false);
+        },
+      }
+    );
+  }, [suggestion.id, editInstruction, existingStoragePath, generateMutation]);
 
   const handleDownload = useCallback(async () => {
     if (renderMode === 'canvas' && renderedCanvasRef.current) {
