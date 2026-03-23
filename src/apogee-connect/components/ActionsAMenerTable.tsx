@@ -95,7 +95,8 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
             <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Réf.</th>
             <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Type</th>
             <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Étape</th>
-            <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Date</th>
+            <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Date entrée</th>
+            <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Expiration</th>
             <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground hidden md:table-cell">Client</th>
             <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground hidden lg:table-cell">Détail</th>
             <th className="text-right py-2 px-3 text-xs font-medium text-muted-foreground w-10"></th>
