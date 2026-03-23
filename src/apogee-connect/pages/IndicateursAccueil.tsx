@@ -471,6 +471,7 @@ export default function IndicateursAccueil() {
         </div>
         {data?.monthlyCAData && <MonthlyCAChart data={data.monthlyCAData} />}
       </div>
+      {hasProPlan && <HelpiMascot />}
     </div>
   );
 }
