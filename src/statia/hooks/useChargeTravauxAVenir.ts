@@ -127,16 +127,23 @@ export function useChargeTravauxAVenir() {
       return t >= startMs && t <= endMs && t >= todayMs;
     };
 
-    // Créer un Set des projectIds déjà facturés
+    // Créer un Set des projectIds déjà facturés (exclure acomptes/proforma)
     const facturedProjectIds = new Set<number>();
     for (const f of factures) {
       const pid = getProjectId(f);
-      if (pid != null) facturedProjectIds.add(pid);
+      if (pid == null) continue;
+      const typeFacture = String(f?.typeFacture ?? f?.type ?? f?.data?.typeFacture ?? f?.data?.type ?? '').toLowerCase();
+      if (typeFacture.includes('acompte') || typeFacture.includes('proforma')) continue;
+      facturedProjectIds.add(pid);
     }
 
-    // Indexer les interventions par projectId
+    // Exclure TH, SAV, RT du CA prévisionnel
+    const EXCLUDED_ITV_TYPES = new Set(['th', 'sav', 'rt', 'releve technique', 'relevé technique', 'rdv technique', 'rdvtech']);
     const interventionsByProjectId = new Map<number, any[]>();
     for (const itv of interventions) {
+      const t2 = String(itv?.type2 ?? itv?.data?.type2 ?? '').trim().toLowerCase();
+      const t1 = String(itv?.type ?? itv?.data?.type ?? '').trim().toLowerCase();
+      if (EXCLUDED_ITV_TYPES.has(t2) || EXCLUDED_ITV_TYPES.has(t1) || t2.includes('sav') || t1.includes('sav')) continue;
       const pid = getProjectId(itv);
       if (pid == null) continue;
       if (!interventionsByProjectId.has(pid)) interventionsByProjectId.set(pid, []);

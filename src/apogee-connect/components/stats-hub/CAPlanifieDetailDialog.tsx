@@ -141,7 +141,7 @@ function usePlanifiedProjects(props: Omit<Props, 'open' | 'onOpenChange'>): Plan
     for (const f of factures) {
       const pid = getProjectId(f);
       if (pid == null) continue;
-      const typeFacture = String(f?.typeFacture ?? f?.type ?? f?.data?.typeFacture ?? '').toLowerCase();
+      const typeFacture = String(f?.typeFacture ?? f?.type ?? f?.data?.typeFacture ?? f?.data?.type ?? '').toLowerCase();
       if (typeFacture.includes('acompte') || typeFacture.includes('proforma')) continue;
       facturedIds.add(pid);
     }
