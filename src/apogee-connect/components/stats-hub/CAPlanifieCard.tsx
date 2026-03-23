@@ -241,6 +241,7 @@ export function CAPlanifieCard({ projects, interventions, devis, factures, clien
         interventions={interventions}
         devis={devis}
         factures={factures}
+        clients={clients}
         periodStart={selectedPeriod.start}
         periodEnd={selectedPeriod.end}
         periodLabel={selectedPeriod.label}

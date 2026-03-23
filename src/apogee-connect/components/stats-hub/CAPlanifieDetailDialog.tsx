@@ -122,7 +122,7 @@ const normalizeUnivers = (u: string) => {
 
 // --- Hook to compute detailed data ---
 function usePlanifiedProjects(props: Omit<Props, 'open' | 'onOpenChange'>): PlanifiedProject[] {
-  const { projects, interventions, devis, factures, periodStart, periodEnd } = props;
+  const { projects, interventions, devis, factures, clients, periodStart, periodEnd } = props;
 
   return useMemo(() => {
     const today = new Date(); today.setHours(0, 0, 0, 0);
