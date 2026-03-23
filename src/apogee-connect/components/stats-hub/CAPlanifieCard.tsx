@@ -119,11 +119,26 @@ export function CAPlanifieCard({ projects, interventions, devis, factures, clien
 
     // Exclure TH, SAV, RT du CA prévisionnel
     const EXCLUDED_ITV_TYPES = new Set(['th', 'sav', 'rt', 'releve technique', 'relevé technique', 'rdv technique', 'rdvtech']);
+    const EXCLUDED_ITV_STATES = new Set(['to_reprog', 'canceled', 'cancelled', 'annulé', 'annule']);
+    
+    // Mois courant = plancher pour le prévisionnel
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    
     const interventionsByProjectId = new Map<number, any[]>();
     for (const itv of interventions) {
+      const itvState = String(itv?.state ?? itv?.data?.state ?? itv?.status ?? itv?.data?.status ?? '').trim().toLowerCase();
+      if (EXCLUDED_ITV_STATES.has(itvState)) continue;
       const t2 = String(itv?.type2 ?? itv?.data?.type2 ?? '').trim().toLowerCase();
       const t1 = String(itv?.type ?? itv?.data?.type ?? '').trim().toLowerCase();
       if (EXCLUDED_ITV_TYPES.has(t2) || EXCLUDED_ITV_TYPES.has(t1) || t2.includes('sav') || t1.includes('sav')) continue;
+      
+      // Exclure les interventions dont la date est dans un mois antérieur au mois courant
+      const itvDate = getInterventionPlanningDate(itv);
+      if (itvDate) {
+        const itvMonth = `${itvDate.getFullYear()}-${String(itvDate.getMonth() + 1).padStart(2, '0')}`;
+        if (itvMonth < currentMonth) continue;
+      }
+      
       const pid = getProjectId(itv);
       if (pid == null) continue;
       if (!interventionsByProjectId.has(pid)) interventionsByProjectId.set(pid, []);
