@@ -367,13 +367,15 @@ export function buildActionsAMener(
       return action.deadline <= tomorrow;
     });
   
-  // Trier par daysLate décroissant (plus en retard en premier), puis par deadline croissante
+  // Trier : en retard (isLate) d'abord par daysLate décroissant, puis les autres par daysLate décroissant
   filteredActions.sort((a, b) => {
-    // D'abord les retards les plus importants
+    // Les en retard en premier
+    if (a.isLate && !b.isLate) return -1;
+    if (!a.isLate && b.isLate) return 1;
+    // Au sein du même groupe, par daysLate décroissant
     const daysA = a.daysLate ?? 0;
     const daysB = b.daysLate ?? 0;
-    if (daysA !== daysB) return daysB - daysA;
-    return a.deadline.getTime() - b.deadline.getTime();
+    return daysB - daysA;
   });
   
   return filteredActions;
