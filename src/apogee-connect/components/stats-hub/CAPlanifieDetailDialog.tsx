@@ -145,15 +145,30 @@ function usePlanifiedProjects(props: Omit<Props, 'open' | 'onOpenChange'>): Plan
 
     // Exclure les interventions de type TH, SAV, RT du CA prévisionnel
     const EXCLUDED_TYPES = new Set(['th', 'sav', 'rt', 'releve technique', 'relevé technique', 'rdv technique', 'rdvtech']);
+    const EXCLUDED_STATES = new Set(['to_reprog', 'canceled', 'cancelled', 'annulé', 'annule']);
     const isExcludedItv = (itv: any): boolean => {
       const t2 = String(itv?.type2 ?? itv?.data?.type2 ?? '').trim().toLowerCase();
       const t1 = String(itv?.type ?? itv?.data?.type ?? '').trim().toLowerCase();
       return EXCLUDED_TYPES.has(t2) || EXCLUDED_TYPES.has(t1) || t2.includes('sav') || t1.includes('sav');
     };
+    const isExcludedState = (itv: any): boolean => {
+      const state = String(itv?.state ?? itv?.data?.state ?? itv?.status ?? itv?.data?.status ?? '').trim().toLowerCase();
+      return EXCLUDED_STATES.has(state);
+    };
+
+    // Mois courant = plancher pour le prévisionnel
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
     const itvByPid = new Map<number, any[]>();
     for (const itv of interventions) {
-      if (isExcludedItv(itv)) continue;
+      if (isExcludedItv(itv) || isExcludedState(itv)) continue;
+      // Exclure les interventions dans des mois antérieurs au mois courant
+      const itvDate = getInterventionPlanningDate(itv);
+      if (itvDate) {
+        const itvMonth = `${itvDate.getFullYear()}-${String(itvDate.getMonth() + 1).padStart(2, '0')}`;
+        if (itvMonth < currentMonth) continue;
+      }
       const pid = getProjectId(itv);
       if (pid != null) { if (!itvByPid.has(pid)) itvByPid.set(pid, []); itvByPid.get(pid)!.push(itv); }
     }
