@@ -22,7 +22,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { ChevronDown, BarChart3, Trophy, PieChart, TrendingUp, Users, Building2, Network, MapPin, AlertTriangle } from 'lucide-react';
+import { ChevronDown, BarChart3, Trophy, PieChart, TrendingUp, Users, Building2, Network, MapPin, AlertTriangle, Clock } from 'lucide-react';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { useProfile } from '@/contexts/ProfileContext';
 import { usePermissions } from '@/contexts/PermissionsContext';

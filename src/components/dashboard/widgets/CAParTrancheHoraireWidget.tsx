@@ -49,14 +49,14 @@ export function CAParTrancheHoraireWidget() {
       const result = JOURS.map(j => ({ ...j, ca: 0 }));
 
       for (const facture of factures) {
-        const dateStr = facture.date || facture.dateReelle || facture.dateEmission;
+        const dateStr = facture.date;
         if (!dateStr) continue;
         const d = new Date(dateStr);
         if (isNaN(d.getTime())) continue;
         if (d.getTime() < startTime || d.getTime() > endTime) continue;
 
         // Exclure avoirs (traités en négatif)
-        const type = (facture.typeFacture || facture.data?.type || facture.state || '').toString().toLowerCase();
+        const type = (facture.typeFacture || facture.state || '').toString().toLowerCase();
         const raw = typeof facture.totalHT === 'number' ? facture.totalHT : parseFloat(String(facture.totalHT || '0'));
         const amount = type === 'avoir' ? -Math.abs(raw) : Math.abs(raw);
         if (amount === 0) continue;
