@@ -70,6 +70,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const [includeVan, setIncludeVan] = useState(false);
   const [universeOverride, setUniverseOverride] = useState<string>('');
   const [imageModel, setImageModel] = useState<string>('auto');
+  const [editInstruction, setEditInstruction] = useState('');
   const renderedCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const UNIVERSE_OPTIONS = [
