@@ -420,10 +420,6 @@ export function CAPlanifieDetailDialog({ open, onOpenChange, ...dataProps }: Pro
                     </div>
                   ))}
                 </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               )}
             </div>
           </div>
