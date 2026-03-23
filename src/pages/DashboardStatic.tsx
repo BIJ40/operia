@@ -35,6 +35,7 @@ import { CAParUniversWidget } from '@/components/dashboard/widgets/CAParUniversW
 import { CAApporteursWidget } from '@/components/dashboard/widgets/CAApporteursWidget';
 import { TechniciensProdWidget } from '@/components/dashboard/widgets/TechniciensProdWidget';
 import { ActionsAMenerWidget } from '@/components/dashboard/widgets/ActionsAMenerWidget';
+import { CAParTrancheHoraireWidget } from '@/components/dashboard/widgets/CAParTrancheHoraireWidget';
 import { TechnicienPersonnelKPIs } from '@/components/dashboard/TechnicienPersonnelKPIs';
 import { AssistantePersonnelKPIs } from '@/components/dashboard/AssistantePersonnelKPIs';
 
@@ -367,9 +368,9 @@ export default function DashboardStatic() {
                 animate={false}
                 className="h-full"
               >
-                <div className="flex items-center justify-center h-full min-h-[60px] text-muted-foreground text-xs">
-                  {/* Espace disponible */}
-                </div>
+                <HumanTitle titleKey="ca_univers" icon={PieChart} iconColor="text-warm-blue" size="sm" showSubtitle={false} />
+                <p className="text-[10px] text-muted-foreground -mt-1 mb-2 ml-6">Par tranche horaire</p>
+                <CAParTrancheHoraireWidget />
               </WarmCard>
             </motion.div>
           </div>
