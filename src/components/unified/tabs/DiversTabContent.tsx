@@ -9,7 +9,7 @@
 import { lazy, Suspense, useMemo } from 'react';
 import { 
   FileText, Users2, Loader2, Users, CalendarDays, 
-  Car, FolderOpen, Settings, Eye, Activity, Target, FileCheck, AlertTriangle, MapPin
+  Car, FolderOpen, Settings, Eye, Activity, Target, AlertTriangle, MapPin
 } from 'lucide-react';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { ModuleKey } from '@/types/modules';
