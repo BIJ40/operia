@@ -15,6 +15,107 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.10.4",
+    title: "Dashboard Layout — Grille 2×4 Univers & Élargissement App",
+    date: "2026-03-23",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // ÉLARGISSEMENT ZONE DE CONTENU
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Nouvelle largeur max-w-app (1600px) remplaçant max-w-7xl (1280px) sur l\'ensemble de l\'application' },
+      { type: 'improvement', description: 'Valeur centralisée dans tailwind.config.ts (maxWidth.app) pour cohérence globale' },
+      { type: 'improvement', description: 'Migration de ~43 fichiers (header, dashboard, onglets, pages admin, layouts franchiseur) vers max-w-app' },
+      { type: 'improvement', description: 'Marges latérales ~160px de chaque côté sur écran 1920px, équivalent à la largeur de l\'onglet Profil' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // REFONTE WIDGET RÉPARTITION CA PAR UNIVERS
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Widget "Répartition" redesigné en grille 2×4 avec les 8 pictos univers (plomberie, électricité, serrurerie, menuiserie, vitrerie, volets, PMR, rénovation)' },
+      { type: 'feature', description: 'Barres de progression circulaires SVG autour de chaque picto, remplies selon le % du CA' },
+      { type: 'improvement', description: 'Affichage du pourcentage et du montant CA sous chaque univers' },
+      { type: 'improvement', description: 'Mapping intelligent des noms d\'univers vers les pictos (normalisation lowercase, synonymes)' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // RÉORGANISATION LAYOUT DASHBOARD
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Hero row en grille 5 colonnes : CA Univers (1 col) + Carte (2 cols) + En un coup d\'œil (2 cols)' },
+      { type: 'improvement', description: 'Tuile "Où se fait le CA" remontée à gauche de la carte dans la hero row' },
+      { type: 'improvement', description: 'Rangée du bas passée de 5 à 4 tuiles (CA Apporteurs, Top Tech, Productivité, Actions)' },
+      { type: 'improvement', description: 'Alignement parfait des colonnes entre les deux rangées du dashboard' },
+    ],
+  },
+  {
+    version: "V0.10.3",
+    title: "Warm Dashboard V2 — Design & Widgets StatIA",
+    date: "2026-03-20",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // DASHBOARD WARM REDESIGN
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Nouveau design "Warm Dashboard" avec cartes arrondies, couleurs pastel et titres conversationnels' },
+      { type: 'feature', description: 'Hero section avec carte RDV + indicateurs globaux côte à côte pour N2+' },
+      { type: 'feature', description: 'WarmCard : composant carte avec variantes couleur (blue, purple, green, orange) et animations framer-motion' },
+      { type: 'feature', description: 'HumanTitle : titres humains et engageants ("En un coup d\'œil", "Où se fait le CA", "Vos champions")' },
+      { type: 'improvement', description: 'Greeting dynamique selon l\'heure (Bonjour/Bon après-midi/Bonsoir) avec prénom utilisateur' },
+      { type: 'improvement', description: 'Sélecteur de période avec persistance sessionStorage (J/S/M/T/A avec J-1, S-1, M-1)' },
+      { type: 'improvement', description: 'Sélecteur d\'année pour la période "Année" avec popover dédié' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // WIDGETS STATIA DASHBOARD
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Widget Indicateurs Globaux : CA, interventions, heures productives, panier moyen avec tendances' },
+      { type: 'feature', description: 'Widget Top 3 Techniciens : podium avec CA et heures facturées' },
+      { type: 'feature', description: 'Widget CA Apporteurs : top apporteurs avec barres horizontales' },
+      { type: 'feature', description: 'Widget Productivité Techniciens : tableau compact CA/heure par tech' },
+      { type: 'feature', description: 'Widget Actions à Mener : compteur alertes avec navigation vers Pilotage' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // LAYOUTS PAR RÔLE
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Layout N1 Technicien : KPIs personnels (TechnicienPersonnelKPIs)' },
+      { type: 'feature', description: 'Layout N1 Assistante : KPIs personnels (AssistantePersonnelKPIs)' },
+      { type: 'feature', description: 'Layout N3/N4 Franchiseur : placeholder vue réseau' },
+      { type: 'improvement', description: 'Context DashboardPeriodContext partagé entre tous les widgets' },
+    ],
+  },
+  {
+    version: "V0.10.2",
+    title: "Carte Dashboard — Widget Mapbox intégré",
+    date: "2026-03-19",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // WIDGET CARTE DASHBOARD
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'DashboardMapWidget : carte Mapbox intégrée au dashboard avec RDV du jour' },
+      { type: 'feature', description: 'Compteurs RDV et techniciens affichés dans le header compact de la carte' },
+      { type: 'feature', description: 'Bouton agrandir pour ouvrir la carte en plein écran (dialog)' },
+      { type: 'feature', description: 'Filtrage technicien par pastilles cliquables dans la vue agrandie' },
+      { type: 'improvement', description: 'Pins colorés par technicien avec numérotation mode tournée' },
+      { type: 'improvement', description: 'Chargement lazy de la carte Mapbox pour performance' },
+    ],
+  },
+  {
+    version: "V0.10.1",
+    title: "Pilotage Financier — Bridge StatIA & Charges",
+    date: "2026-03-19",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // BRIDGE STATIA → P&L
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'useStatiaFinancialBridge : auto-population des champs P&L depuis les métriques Apogée' },
+      { type: 'feature', description: 'Remplissage automatique : CA total, nb factures, nb interventions, heures facturées, panier moyen, CA/heure' },
+      { type: 'feature', description: 'Ventilation CA par univers (plomberie, électricité, menuiserie, serrurerie, vitrerie, volets, autres)' },
+      { type: 'improvement', description: 'Vérification cohérence : somme univers = CA total avec ajustement arrondi sur "Autres"' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // GESTION DES CHARGES
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Table agency_financial_charges pour charges fixes et variables' },
+      { type: 'feature', description: 'Catégories de charges : loyer, assurances, véhicules, télécom, comptabilité, publicité, etc.' },
+      { type: 'improvement', description: 'Charges réparties par mois avec période de validité (start_month, end_month)' },
+    ],
+  },
+  {
     version: "V0.10.0",
     title: "Mode Tournée Technicien — Carte des RDV",
     date: "2026-03-18",
