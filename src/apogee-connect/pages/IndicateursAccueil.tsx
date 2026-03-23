@@ -24,6 +24,7 @@ export default function IndicateursAccueil() {
   const { agencyChangeCounter, currentAgency, isAgencyReady } = useAgency();
   const userAgency = currentAgency?.id || "";
   const [selectedYear, setSelectedYear] = useState<number>(2025);
+  const { hasRequiredPlan: hasProPlan } = usePlanAccess('PRO');
 
   // StatIA V1: Hook centralisé pour les indicateurs
   const { data: statiaData, isLoading: statiaLoading, error: statiaError } = useStatiaIndicateurs(selectedYear);
