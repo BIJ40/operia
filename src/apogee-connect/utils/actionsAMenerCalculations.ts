@@ -367,8 +367,14 @@ export function buildActionsAMener(
       return action.deadline <= tomorrow;
     });
   
-  // Trier par deadline croissante (plus urgentes en premier)
-  filteredActions.sort((a, b) => a.deadline.getTime() - b.deadline.getTime());
+  // Trier par daysLate décroissant (plus en retard en premier), puis par deadline croissante
+  filteredActions.sort((a, b) => {
+    // D'abord les retards les plus importants
+    const daysA = a.daysLate ?? 0;
+    const daysB = b.daysLate ?? 0;
+    if (daysA !== daysB) return daysB - daysA;
+    return a.deadline.getTime() - b.deadline.getTime();
+  });
   
   return filteredActions;
 }
