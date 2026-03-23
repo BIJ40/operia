@@ -17,7 +17,8 @@ export type TitleKey =
   | 'panier_moyen'
   | 'productivite'
   | 'map'
-  | 'recouvrement';
+  | 'recouvrement'
+  | 'actions_a_mener';
 
 interface TitleVariant {
   title: string;
@@ -81,6 +82,11 @@ const TITLE_VARIANTS: Record<TitleKey, TitleVariant[]> = {
     { title: "À encaisser", subtitle: "Factures en attente de règlement" },
     { title: "Paiements attendus", subtitle: "Suivi du recouvrement" },
     { title: "Relances", subtitle: "Factures à surveiller" },
+  ],
+  actions_a_mener: [
+    { title: "Actions à mener", subtitle: "Dossiers en retard à traiter" },
+    { title: "À ne pas oublier", subtitle: "Vos dossiers les plus urgents" },
+    { title: "Ça urge !", subtitle: "Les retards à rattraper" },
   ],
 };
 

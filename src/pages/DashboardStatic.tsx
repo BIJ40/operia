@@ -22,7 +22,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { ChevronDown, BarChart3, Trophy, PieChart, TrendingUp, Users, Building2, Network, MapPin } from 'lucide-react';
+import { ChevronDown, BarChart3, Trophy, PieChart, TrendingUp, Users, Building2, Network, MapPin, AlertTriangle } from 'lucide-react';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { useProfile } from '@/contexts/ProfileContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
@@ -34,6 +34,7 @@ import { Top3TechniciensWidget } from '@/components/dashboard/widgets/Top3Techni
 import { CAParUniversWidget } from '@/components/dashboard/widgets/CAParUniversWidget';
 import { CAApporteursWidget } from '@/components/dashboard/widgets/CAApporteursWidget';
 import { TechniciensProdWidget } from '@/components/dashboard/widgets/TechniciensProdWidget';
+import { ActionsAMenerWidget } from '@/components/dashboard/widgets/ActionsAMenerWidget';
 import { TechnicienPersonnelKPIs } from '@/components/dashboard/TechnicienPersonnelKPIs';
 import { AssistantePersonnelKPIs } from '@/components/dashboard/AssistantePersonnelKPIs';
 
@@ -364,8 +365,8 @@ export default function DashboardStatic() {
           </motion.div>
         </div>
 
-        {/* NIVEAU 2 - 4 TUILES ALIGNÉES: CA + Techniciens + Charge */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* NIVEAU 2 - 5 TUILES ALIGNÉES */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {/* CA par Univers */}
           <motion.div variants={itemVariants}>
             <WarmCard
@@ -422,6 +423,33 @@ export default function DashboardStatic() {
               <HumanTitle titleKey="productivite" icon={Users} iconColor="text-warm-blue" size="sm" />
               <div className="mt-3">
                 <TechniciensProdWidget />
+              </div>
+            </WarmCard>
+          </motion.div>
+
+          {/* Actions à mener */}
+          <motion.div variants={itemVariants}>
+            <WarmCard
+              variant="blue"
+              icon={AlertTriangle}
+              animate={false}
+              className="h-full cursor-pointer"
+              onClick={() => {
+                // Navigate to pilotage > actions tab
+                window.dispatchEvent(new CustomEvent('session-state-change', { detail: { key: 'workspace_tab', value: 'pilotage' } }));
+                setTimeout(() => {
+                  window.dispatchEvent(new CustomEvent('session-state-change', { detail: { key: 'pilotage_sub_tab', value: 'actions' } }));
+                }, 100);
+              }}
+            >
+              <HumanTitle titleKey="actions_a_mener" icon={AlertTriangle} iconColor="text-warm-red" size="sm" />
+              <div className="mt-3">
+                <ActionsAMenerWidget onNavigate={() => {
+                  window.dispatchEvent(new CustomEvent('session-state-change', { detail: { key: 'workspace_tab', value: 'pilotage' } }));
+                  setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent('session-state-change', { detail: { key: 'pilotage_sub_tab', value: 'actions' } }));
+                  }, 100);
+                }} />
               </div>
             </WarmCard>
           </motion.div>
