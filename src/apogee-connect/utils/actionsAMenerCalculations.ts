@@ -273,7 +273,8 @@ export function buildActionsAMener(
   const aCommanderCandidates: ActionRow[] = [];
   
   projects.forEach(project => {
-    const status = normalizeStatus(project.state || project.data?.etape || project.data?.step);
+    const rawState = (project.state || project.data?.etape || project.data?.step || '').toString().toLowerCase().trim();
+    const status = normalizeStatus(rawState);
     if (status.includes('clotur') || status.includes('archive') || status.includes('annule')) return;
     
     const clientId = project.clientId || project.client_id || project.data?.commanditaireId;
@@ -282,22 +283,35 @@ export function buildActionsAMener(
     const ref = project.ref || `#${project.id}`;
     const label = project.name || project.label || 'Sans libellé';
     
+    // Détection par STATE du projet (pas par historique)
+    const isAPlanifier = rawState === 'to_planify_tvx' || rawState === 'to_planify' || rawState === 'a planifier travaux' || rawState === 'a_planifier_tvx';
+    const isACommander = rawState === 'devis_to_order' || rawState === 'to_order' || rawState === 'a commander' || rawState === 'a_commander';
+    
+    if (!isAPlanifier && !isACommander) return;
+    
+    // Chercher la date d'entrée dans l'état via l'historique (kind === 2)
+    let dateDepart: Date = parseDate(project.updated_at) || parseDate(project.created_at) || today;
     const history = project.data?.history;
-    const statusChanges = Array.isArray(history) 
-      ? history.filter((h: any) => h.kind === 2 && typeof h.labelKind === 'string')
-          .sort((a: any, b: any) => {
-            const dA = parseDate(a.dateModif);
-            const dB = parseDate(b.dateModif);
-            return (dA?.getTime() || 0) - (dB?.getTime() || 0);
-          })
-      : [];
+    if (Array.isArray(history)) {
+      const statusChanges = history
+        .filter((h: any) => h.kind === 2 && typeof h.labelKind === 'string')
+        .sort((a: any, b: any) => {
+          const dA = parseDate(a.dateModif);
+          const dB = parseDate(b.dateModif);
+          return (dA?.getTime() || 0) - (dB?.getTime() || 0);
+        });
+      
+      // Prendre le dernier changement de statut comme date d'entrée
+      if (statusChanges.length > 0) {
+        const last = statusChanges[statusChanges.length - 1];
+        const parsed = parseDate(last.dateModif);
+        if (parsed) dateDepart = parsed;
+      }
+    }
     
-    const lastStatusChange = statusChanges.length > 0 ? statusChanges[statusChanges.length - 1] : null;
+    const daysInState = differenceInDays(today, dateDepart);
     
-    // Règle 4: À planifier travaux
-    if (lastStatusChange?.labelKind?.includes('=> A planifier') || lastStatusChange?.labelKind?.includes('=> À planifier')) {
-      const dateDepart = parseDate(lastStatusChange.dateModif) || parseDate(project.updated_at) || parseDate(project.created_at) || today;
-      const daysInState = differenceInDays(today, dateDepart);
+    if (isAPlanifier) {
       aPlanifierCandidates.push({
         projectId: project.id,
         ref,
@@ -305,7 +319,7 @@ export function buildActionsAMener(
         statut: 'À planifier travaux',
         actionLabel: ACTION_LABELS.a_planifier_tvx,
         actionType: 'a_planifier_tvx',
-        deadline: dateDepart, // Utilisé pour le tri par ancienneté
+        deadline: dateDepart,
         dateDepart,
         isLate: false,
         clientName,
@@ -313,10 +327,7 @@ export function buildActionsAMener(
       });
     }
     
-    // Règle 5: À commander
-    if (lastStatusChange?.labelKind?.includes('=> A commander') || lastStatusChange?.labelKind?.includes('=> À commander')) {
-      const dateDepart = parseDate(lastStatusChange.dateModif) || parseDate(project.updated_at) || parseDate(project.created_at) || today;
-      const daysInState = differenceInDays(today, dateDepart);
+    if (isACommander) {
       aCommanderCandidates.push({
         projectId: project.id,
         ref,
