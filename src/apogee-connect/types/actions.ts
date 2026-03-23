@@ -38,4 +38,6 @@ export const ACTION_LABELS: Record<ActionType, string> = {
   devis_a_faire: 'Rédiger le devis',
   a_facturer: 'Émettre la facture',
   relance_technicien: 'Relancer le technicien',
+  a_planifier_tvx: 'Planifier les travaux',
+  a_commander: 'Passer la commande',
 };
