@@ -368,8 +368,8 @@ export default function DashboardStatic() {
                 animate={false}
                 className="h-full"
               >
-                <HumanTitle titleKey="ca_univers" icon={PieChart} iconColor="text-warm-blue" size="sm" showSubtitle={false} />
-                <p className="text-[10px] text-muted-foreground -mt-1 mb-2 ml-6">Par tranche horaire</p>
+                <HumanTitle titleKey="ca_par_jour" icon={Clock} iconColor="text-warm-blue" size="sm" showSubtitle={false} />
+                <p className="text-[10px] text-muted-foreground -mt-1 mb-2 ml-6">Répartition hebdomadaire</p>
                 <CAParTrancheHoraireWidget />
               </WarmCard>
             </motion.div>
