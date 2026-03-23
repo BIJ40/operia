@@ -422,7 +422,7 @@ export function CAPlanifieDetailDialog({ open, onOpenChange, ...dataProps }: Pro
                           data={byEtat}
                           layout="vertical"
                           margin={{ left: 10, right: 10 }}
-                          onClick={(data) => {
+                          onClick={(data: any) => {
                             if (data?.activePayload?.[0]) {
                               const etatKey = data.activePayload[0].payload.key;
                               const etatLabel = data.activePayload[0].payload.name;
