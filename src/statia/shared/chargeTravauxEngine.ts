@@ -310,6 +310,7 @@ function extractHoursFromIntervention(
     };
   }
 
+  const interventionUsers = getUserIds(intervention);
   // duree/tempsPrevu en HEURES (pas de /60), dureeMinutes en minutes
   const directDurationHours =
     parseNumericValue(intervention?.duree) || parseNumericValue(intervention?.tempsPrevu) || parseNumericValue(intervention?.duration) ||
