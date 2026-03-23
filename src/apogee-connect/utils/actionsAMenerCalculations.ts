@@ -354,17 +354,16 @@ export function buildActionsAMener(
   
   // Marquer les actions qui vont passer en retard dans J+1 et filtrer
   const tomorrow = addDays(today, 1);
+  const threeDaysFromNow = addDays(today, 3);
   const filteredActions = actions
     .map(action => ({
       ...action,
-      isDueSoon: !action.isLate && action.deadline <= tomorrow,
+      isDueSoon: !action.isLate && action.deadline <= threeDaysFromNow,
     }))
     .filter(action => {
-      // Garder toutes les actions en retard
       if (action.isLate) return true;
-      // Pour les actions "à venir", ne garder que celles dont la deadline est demain ou avant
-      return action.deadline <= tomorrow;
-      return action.deadline <= tomorrow;
+      // Garder les actions dont la deadline est dans 3 jours max
+      return action.deadline <= threeDaysFromNow;
     });
   
   // Trier : en retard (isLate) d'abord par daysLate décroissant, puis les autres par daysLate décroissant
