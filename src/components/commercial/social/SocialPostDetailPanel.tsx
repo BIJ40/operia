@@ -18,7 +18,8 @@ import { toast } from 'sonner';
 import { SocialPostCard } from './SocialPostCard';
 import { SocialVisualCanvas, canvasToBlob, type SocialTemplatePayload } from './SocialVisualCanvas';
 import { resolveSocialTemplate } from './templateResolver';
-import { useSocialVisualAssets, useGenerateSocialVisual, downloadSocialVisual, getSignedVisualUrl } from '@/hooks/useSocialVisualAssets';
+import { useSocialVisualAssets, useGenerateSocialVisual, downloadSocialVisual, getSignedVisualUrl, uploadCanvasVisual } from '@/hooks/useSocialVisualAssets';
+import { useAuth } from '@/contexts/AuthContext';
 import type { SocialSuggestion } from '@/hooks/useSocialSuggestions';
 
 interface SocialPostDetailPanelProps {
