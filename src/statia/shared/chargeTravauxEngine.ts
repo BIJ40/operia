@@ -21,6 +21,8 @@ const DEVIS_ETATS_EXCLUS = new Set(['draft', 'rejected', 'canceled']);
 
 export interface ChargeTravauxProjet {
   projectId: number | string;
+  clientId?: number | string;
+  dossierLabel?: string;
   reference?: string;
   label?: string;
   etatWorkflow: string;
