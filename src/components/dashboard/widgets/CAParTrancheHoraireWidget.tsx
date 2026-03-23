@@ -42,12 +42,12 @@ export function CAParTrancheHoraireWidget() {
       const result = TRANCHES.map(t => ({ ...t, ca: 0 }));
 
       for (const facture of factures) {
-        const dateStr = facture.date || facture.dateFacture;
+        const dateStr = facture.date;
         if (!dateStr) continue;
         const d = new Date(dateStr);
         if (d.getTime() < startTime || d.getTime() > endTime) continue;
 
-        const amount = Math.abs(parseFloat(facture.totalHT || facture.montantHT || '0'));
+        const amount = Math.abs(typeof facture.totalHT === 'number' ? facture.totalHT : parseFloat(String(facture.totalHT || '0')));
         if (amount === 0) continue;
 
         const hour = d.getHours();
