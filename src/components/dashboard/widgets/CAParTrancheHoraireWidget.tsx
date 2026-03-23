@@ -7,8 +7,10 @@ import { useQuery } from '@tanstack/react-query';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useDashboardPeriod } from '@/pages/DashboardStatic';
 import { getGlobalApogeeDataServices } from '@/statia/adapters/dataServiceAdapter';
+import { DataService } from '@/apogee-connect/services/dataService';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { parseISO, isWithinInterval } from 'date-fns';
 
 const COLORS = [
   'hsl(210, 70%, 55%)',   // Lundi
@@ -21,13 +23,13 @@ const COLORS = [
 ];
 
 const JOURS = [
-  { key: 'lun', label: 'Lundi', dayIndex: 1 },
-  { key: 'mar', label: 'Mardi', dayIndex: 2 },
-  { key: 'mer', label: 'Mercredi', dayIndex: 3 },
-  { key: 'jeu', label: 'Jeudi', dayIndex: 4 },
-  { key: 'ven', label: 'Vendredi', dayIndex: 5 },
-  { key: 'sam', label: 'Samedi', dayIndex: 6 },
-  { key: 'dim', label: 'Dimanche', dayIndex: 0 },
+  { key: 'lun', label: 'Lun', dayIndex: 1 },
+  { key: 'mar', label: 'Mar', dayIndex: 2 },
+  { key: 'mer', label: 'Mer', dayIndex: 3 },
+  { key: 'jeu', label: 'Jeu', dayIndex: 4 },
+  { key: 'ven', label: 'Ven', dayIndex: 5 },
+  { key: 'sam', label: 'Sam', dayIndex: 6 },
+  { key: 'dim', label: 'Dim', dayIndex: 0 },
 ];
 
 export function CAParTrancheHoraireWidget() {
@@ -46,29 +48,33 @@ export function CAParTrancheHoraireWidget() {
         end: dateRange.end,
       });
 
-      const startTime = dateRange.start.getTime();
-      const endTime = dateRange.end.getTime();
-
       const result = JOURS.map(j => ({ ...j, ca: 0 }));
 
       for (const facture of factures) {
-        const dateStr = (facture as any).date || (facture as any).dateReelle;
+        // Utiliser le même champ date que le reste du code
+        const dateStr = (facture as any).date 
+          || (facture as any).dateReelle 
+          || (facture as any).dateIntervention;
         if (!dateStr) continue;
-        const d = new Date(dateStr);
-        if (isNaN(d.getTime())) continue;
-        if (d.getTime() < startTime || d.getTime() > endTime) continue;
-
-        const totalHT = (facture as any).totalHT;
-        const raw = typeof totalHT === 'number' ? totalHT : parseFloat(String(totalHT || '0'));
         
-        // Avoirs en négatif
-        const type = ((facture as any).typeFacture || (facture as any).state || '').toString().toLowerCase();
-        const amount = type === 'avoir' ? -Math.abs(raw) : Math.abs(raw);
-        if (amount === 0) continue;
+        try {
+          const d = parseISO(dateStr);
+          if (!isWithinInterval(d, { start: dateRange.start, end: dateRange.end })) continue;
 
-        const dayIndex = d.getDay();
-        const jour = result.find(j => j.dayIndex === dayIndex);
-        if (jour) jour.ca += amount;
+          // Utiliser la méthode métier pour extraire le montant HT
+          const amount = DataService.getFactureTotalHT(facture);
+          if (amount === 0) continue;
+
+          // Avoirs en négatif
+          const type = ((facture as any).typeFacture || (facture as any).state || '').toString().toLowerCase();
+          const signedAmount = type === 'avoir' ? -Math.abs(amount) : Math.abs(amount);
+
+          const dayIndex = d.getDay();
+          const jour = result.find(j => j.dayIndex === dayIndex);
+          if (jour) jour.ca += signedAmount;
+        } catch {
+          continue;
+        }
       }
 
       return result.filter(j => j.ca > 0);
