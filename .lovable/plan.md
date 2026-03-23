@@ -1,35 +1,31 @@
 
 
-# Ajouter les dossiers "À planifier travaux" et "À commander" dans Actions à mener
+# Élargir la zone de contenu (header + pages)
 
 ## Objectif
-Afficher deux nouvelles sections dans l'onglet "Actions à mener" :
-1. **Les 10 dossiers "À planifier travaux"** (state `to_planify_tvx`) les plus anciens (basé sur la date de passage à cet état dans l'historique)
-2. **Les 10 dossiers "À commander"** (state `devis_to_order`) les plus anciens (idem)
+Passer de `max-w-7xl` (1280px) à une largeur plus grande, tout en conservant des marges de chaque côté (~80-100px, équivalent à la largeur de l'onglet "Profil"). Cela donne environ **1600px** de max-width sur un écran standard.
 
-## Plan de modification
+## Approche
 
-### 1. Étendre les types (`src/apogee-connect/types/actions.ts`)
-- Ajouter `'a_planifier_tvx' | 'a_commander'` au type `ActionType`
-- Ajouter les labels correspondants dans `ACTION_LABELS`
-- Ajouter les délais dans `ActionsConfig` et `DEFAULT_CONFIG` (ex: 7 jours par défaut)
+### 1. Définir la nouvelle largeur dans Tailwind config
+Ajouter une valeur custom `max-w-app` dans `tailwind.config.ts` → `maxWidth: { app: '1600px' }`. Cela centralise la valeur et facilite les ajustements futurs.
 
-### 2. Ajouter la logique de détection (`src/apogee-connect/utils/actionsAMenerCalculations.ts`)
-- Ajouter deux nouvelles règles dans `buildActionsAMener` :
-  - **Règle 4** : Projets avec `state === 'to_planify_tvx'` — chercher dans l'historique (`kind === 2`) le passage `=> À planifier` pour obtenir la `dateDepart`, trier par ancienneté, garder les 10 plus anciens
-  - **Règle 5** : Projets avec `state === 'devis_to_order'` — chercher `=> À commander` dans l'historique, même logique, 10 plus anciens
-- Fallback si pas d'historique : utiliser `project.updated_at` ou `project.created_at`
-- Ces actions ne sont pas filtrées par deadline (toujours affichées), triées par ancienneté décroissante
+### 2. Remplacer `max-w-7xl` par `max-w-app` partout
+Fichiers impactés (~43 fichiers) — remplacement global de `max-w-7xl` par `max-w-app` :
 
-### 3. Ajouter les filtres dans le composant (`src/components/pilotage/ActionsAMenerTab.tsx`)
-- Ajouter deux nouveaux boutons-filtres pills pour "À planifier" et "À commander"
-- Couleurs : bleu ciel pour planifier, orange pour commander (cohérent avec le reste de l'app)
-- Étendre le type `FilterType` avec `'a_planifier_tvx' | 'a_commander'`
+- **Header** : `src/components/navigation/MainHeader.tsx`
+- **Dashboard** : `src/pages/DashboardStatic.tsx`
+- **Onglets principaux** : `PilotageTabContent`, `StatsTabContent`, `CommercialTabContent`, `OrganisationTabContent`, `AdminHubContent`, `AideTabContent`, `GuidesTabContent`, `DiversTabContent`
+- **Pages admin** : `AdminAgencies`, `AdminApogeeGuides`, `AdminHelpConfortBackup`, `TDRUsersPage`
+- **Layouts** : `AppLayout`, `WorkspaceNavLinks`, `FranchiseurView`, `FranchiseurPageContainer`
+- **Pages détail** : `CollaborateurProfilePage`, `FranchiseurAgencyProfile`, `ApporteursPage`, `ApogeeTicketsHistory`
+- Et tous les autres fichiers utilisant `max-w-7xl`
 
-### Fichiers impactés
-| Fichier | Action |
+### Détail technique
+| Fichier | Modification |
 |---|---|
-| `src/apogee-connect/types/actions.ts` | Ajout types + labels |
-| `src/apogee-connect/utils/actionsAMenerCalculations.ts` | 2 nouvelles règles de détection |
-| `src/components/pilotage/ActionsAMenerTab.tsx` | 2 nouveaux filtres UI |
+| `tailwind.config.ts` | Ajouter `maxWidth: { app: '1600px' }` dans `theme.extend` |
+| ~43 fichiers `.tsx` | Remplacer `max-w-7xl` → `max-w-app` |
+
+La valeur de 1600px laisse ~160px de marge de chaque côté sur un écran 1920px, soit environ la largeur d'un onglet de navigation.
 
