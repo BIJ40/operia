@@ -193,8 +193,14 @@ export function CAPlanifieCard({ projects, interventions, devis, factures, clien
     return { caPlanifie: total, caPlanifieDevisCount: count };
   }, [projects, interventions, devis, factures, selectedPeriod.start, selectedPeriod.end]);
 
+  // Empêcher de naviguer avant le mois courant (c'est du prévisionnel)
+  const currentMonthIdx = now.getMonth();
+  const currentYearIdx = now.getFullYear();
+  const canGoPrev = selectedYear > currentYearIdx || (selectedYear === currentYearIdx && selectedMonth > currentMonthIdx);
+
   const handlePrevMonth = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!canGoPrev) return;
     const newDate = addMonths(setYear(setMonth(new Date(), selectedMonth), selectedYear), -1);
     setSelectedMonth(newDate.getMonth());
     setSelectedYear(newDate.getFullYear());
