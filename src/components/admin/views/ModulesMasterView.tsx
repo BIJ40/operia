@@ -409,7 +409,7 @@ const MODULE_ROUTES: Record<string, ModuleRouteEntry> = {
   'pilotage.statistiques': { route: '/?tab=pilotage', subTabKey: 'pilotage_sub_tab', subTabValue: 'stats' },
   'pilotage.performance': { route: '/?tab=pilotage', subTabKey: 'pilotage_sub_tab', subTabValue: 'performance' },
   'pilotage.actions_a_mener': { route: '/?tab=pilotage', subTabKey: 'pilotage_sub_tab', subTabValue: 'actions' },
-  'pilotage.devis_acceptes': { route: '/?tab=pilotage', subTabKey: 'pilotage_sub_tab', subTabValue: 'devis-acceptes' },
+  
   'pilotage.incoherences': { route: '/?tab=pilotage', subTabKey: 'pilotage_sub_tab', subTabValue: 'anomalies' },
   'pilotage.resultat': { route: '/?tab=pilotage', subTabKey: 'pilotage_sub_tab', subTabValue: 'resultat' },
   'pilotage.rentabilite': { route: '/?tab=pilotage', subTabKey: 'pilotage_sub_tab', subTabValue: 'rentabilite' },

@@ -1,36 +1,35 @@
 
 
-# Plan : Ajouter la photo d'équipe comme asset Social Hub
+# Ajouter les dossiers "À planifier travaux" et "À commander" dans Actions à mener
 
-## Contexte
+## Objectif
+Afficher deux nouvelles sections dans l'onglet "Actions à mener" :
+1. **Les 10 dossiers "À planifier travaux"** (state `to_planify_tvx`) les plus anciens (basé sur la date de passage à cet état dans l'historique)
+2. **Les 10 dossiers "À commander"** (state `devis_to_order`) les plus anciens (idem)
 
-L'utilisateur fournit une photo de groupe illustrée (lui en blanc + une partie de l'équipe HelpConfort). Cette image doit être disponible comme visuel utilisable dans les publications Social Hub, notamment pour les posts "équipe" / "brand" / "prospection".
+## Plan de modification
 
-## Actions
+### 1. Étendre les types (`src/apogee-connect/types/actions.ts`)
+- Ajouter `'a_planifier_tvx' | 'a_commander'` au type `ActionType`
+- Ajouter les labels correspondants dans `ACTION_LABELS`
+- Ajouter les délais dans `ActionsConfig` et `DEFAULT_CONFIG` (ex: 7 jours par défaut)
 
-### 1. Copier l'image dans les assets
+### 2. Ajouter la logique de détection (`src/apogee-connect/utils/actionsAMenerCalculations.ts`)
+- Ajouter deux nouvelles règles dans `buildActionsAMener` :
+  - **Règle 4** : Projets avec `state === 'to_planify_tvx'` — chercher dans l'historique (`kind === 2`) le passage `=> À planifier` pour obtenir la `dateDepart`, trier par ancienneté, garder les 10 plus anciens
+  - **Règle 5** : Projets avec `state === 'devis_to_order'` — chercher `=> À commander` dans l'historique, même logique, 10 plus anciens
+- Fallback si pas d'historique : utiliser `project.updated_at` ou `project.created_at`
+- Ces actions ne sont pas filtrées par deadline (toujours affichées), triées par ancienneté décroissante
 
-Stocker l'image dans `src/assets/team/team-group-photo.png` aux côtés des avatars individuels existants.
+### 3. Ajouter les filtres dans le composant (`src/components/pilotage/ActionsAMenerTab.tsx`)
+- Ajouter deux nouveaux boutons-filtres pills pour "À planifier" et "À commander"
+- Couleurs : bleu ciel pour planifier, orange pour commander (cohérent avec le reste de l'app)
+- Étendre le type `FilterType` avec `'a_planifier_tvx' | 'a_commander'`
 
-### 2. Exporter dans `templateAssets.ts`
-
-Ajouter un export `getTeamGroupPhotoSrc()` dans `src/components/commercial/social/templates/templateAssets.ts` pour rendre l'image accessible aux templates canvas.
-
-### 3. Intégrer dans `drawBrandCard.ts`
-
-Modifier le template `brand_card` pour utiliser cette photo de groupe comme alternative visuelle :
-- Quand `showTeam` est activé (posts prospection/calendar), alterner entre la grille d'avatars individuels et cette photo de groupe
-- Ou utiliser cette photo comme fond/illustration principale dans la ZONE 2 du canvas
-
-### 4. Rendre disponible comme média dans le Social Hub
-
-Référencer cette image dans les options de médias disponibles pour les publications, afin qu'elle puisse être sélectionnée manuellement lors de la création d'un post.
-
-## Fichiers impactés
-
+### Fichiers impactés
 | Fichier | Action |
 |---|---|
-| `src/assets/team/team-group-photo.png` | Nouveau — copie de l'image uploadée |
-| `src/components/commercial/social/templates/templateAssets.ts` | Ajouter export photo de groupe |
-| `src/components/commercial/social/templates/drawBrandCard.ts` | Utiliser la photo de groupe comme option de rendu |
+| `src/apogee-connect/types/actions.ts` | Ajout types + labels |
+| `src/apogee-connect/utils/actionsAMenerCalculations.ts` | 2 nouvelles règles de détection |
+| `src/components/pilotage/ActionsAMenerTab.tsx` | 2 nouveaux filtres UI |
 

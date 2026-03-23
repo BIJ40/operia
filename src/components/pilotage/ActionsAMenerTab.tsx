@@ -14,7 +14,7 @@ import { toast } from '@/hooks/use-toast';
 import { ConditionalRender } from '@/components/PermissionGuard';
 import { cn } from '@/lib/utils';
 
-type FilterType = 'all' | 'late' | 'a_facturer' | 'devis_a_faire' | 'relance_technicien';
+type FilterType = 'all' | 'late' | 'a_facturer' | 'devis_a_faire' | 'relance_technicien' | 'a_planifier_tvx' | 'a_commander';
 
 export function ActionsAMenerTab() {
   const { isAgencyReady, currentAgency } = useAgency();
@@ -164,6 +164,34 @@ export function ActionsAMenerTab() {
                       <span className="text-[10px] text-muted-foreground">Relances</span>
                       <span className="text-xs font-bold text-purple-600 dark:text-purple-400">
                         {actions.filter(a => a.actionType === 'relance_technicien').length}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => setActiveFilter('a_planifier_tvx')}
+                      className={cn(
+                        "flex items-center gap-1 rounded-full border px-2 py-0.5 transition-all cursor-pointer hover:scale-105",
+                        activeFilter === 'a_planifier_tvx' 
+                          ? "border-sky-500 bg-sky-500/20 ring-2 ring-sky-500/30" 
+                          : "border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/30 hover:bg-sky-100 dark:hover:bg-sky-900/40"
+                      )}
+                    >
+                      <span className="text-[10px] text-muted-foreground">À planifier</span>
+                      <span className="text-xs font-bold text-sky-600 dark:text-sky-400">
+                        {actions.filter(a => a.actionType === 'a_planifier_tvx').length}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => setActiveFilter('a_commander')}
+                      className={cn(
+                        "flex items-center gap-1 rounded-full border px-2 py-0.5 transition-all cursor-pointer hover:scale-105",
+                        activeFilter === 'a_commander' 
+                          ? "border-orange-500 bg-orange-500/20 ring-2 ring-orange-500/30" 
+                          : "border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/30 hover:bg-orange-100 dark:hover:bg-orange-900/40"
+                      )}
+                    >
+                      <span className="text-[10px] text-muted-foreground">À commander</span>
+                      <span className="text-xs font-bold text-orange-600 dark:text-orange-400">
+                        {actions.filter(a => a.actionType === 'a_commander').length}
                       </span>
                     </button>
                   </>

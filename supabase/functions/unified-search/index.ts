@@ -46,6 +46,7 @@ interface UnifiedSearchRequestBody {
   query: string;
   now?: string;
   conversationHistory?: Array<{ role: string; content: string }>;
+  forceStats?: boolean;
 }
 
 interface AiSearchContext {
@@ -537,7 +538,8 @@ function aiSearchRouteV3(
   context: AiSearchContext,
   resolvedEntities: ResolvedEntities,
   metricResult: { metric: MetricSignature | null; scores: MetricScore[] },
-  now: Date
+  now: Date,
+  forceStats: boolean = false
 ): AiSearchRoutedRequest {
   const corrections: string[] = [];
   const routingSource = 'nlv3';
@@ -548,7 +550,10 @@ function aiSearchRouteV3(
   
   // If query has explicit doc keywords like "comment", force doc mode
   let queryType: 'stats' | 'doc';
-  if (hasDocIntent) {
+  if (forceStats) {
+    queryType = 'stats';
+    corrections.push('type:forced_stats');
+  } else if (hasDocIntent) {
     queryType = 'doc';
     if (hasStatsIntent) {
       corrections.push('type:stats→doc (doc_keyword_priority)');
@@ -1108,7 +1113,17 @@ serve(async (req) => {
       ? { metric: getMetricSignature(finalMetricId)!, scores: metricScores }
       : { metric: null, scores: metricScores };
 
-    const routed = aiSearchRouteV3(query, tokenized, extractedWithEntityOverride, period, context, resolvedEntities, metricResult, now);
+    const routed = aiSearchRouteV3(
+      query,
+      tokenized,
+      extractedWithEntityOverride,
+      period,
+      context,
+      resolvedEntities,
+      metricResult,
+      now,
+      !!body.forceStats
+    );
     console.log(`[unified-search] Routed: type=${routed.type}, metric=${routed.parsed?.metricId || 'none'}`);
 
     // ══════════════════════════════════════════════════════════
@@ -1152,7 +1167,10 @@ serve(async (req) => {
       // CACHE: Désactivé pour métriques sensibles + requêtes filtrées
       // ════════════════════════════════════════════════════════════
       const forceNoCacheMetrics = new Set(['ca_par_technicien', 'top_techniciens_ca']);
-      const skipCache = forceNoCacheMetrics.has(parsed.metricId) || !!(parsed.technicienId || parsed.apporteurId);
+      const skipCache =
+        !!body.forceStats ||
+        forceNoCacheMetrics.has(parsed.metricId) ||
+        !!(parsed.technicienId || parsed.apporteurId);
       console.log(`[unified-search] Cache: metric=${parsed.metricId}, skipCache=${skipCache}`);
       const cached = skipCache ? null : await getCacheEntry(supabase, cacheKey);
       if (cached) { console.log('[unified-search] Cache hit'); result = cached; fromCache = true; }

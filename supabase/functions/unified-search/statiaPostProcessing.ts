@@ -157,12 +157,16 @@ export function tableauFromResult(result: StatResult, entityType: string = 'enti
  * Retourne une valeur brute (pas de ranking)
  */
 export function rawValueFromResult(result: StatResult): PostProcessedResult {
+  const rawValue = typeof result.value === 'number' ? result.value : Number(result.value ?? 0);
+  const safeValue = Number.isFinite(rawValue) ? rawValue : 0;
+  const hasUsableData = result.hasData !== false && result.value !== null && result.value !== undefined && Number.isFinite(rawValue);
+
   return {
     type: 'raw_value',
-    value: result.value,
+    value: safeValue,
     unit: result.unit,
-    hasData: result.hasData !== false && result.value !== 0,
-    displayText: formatValue(result.value, result.unit)
+    hasData: hasUsableData,
+    displayText: hasUsableData ? formatValue(safeValue, result.unit) : 'Aucune donnée exploitable pour cette période.'
   };
 }
 
@@ -185,6 +189,7 @@ export function pourcentageFromResult(result: StatResult): PostProcessedResult {
 // ═══════════════════════════════════════════════════════════════
 
 function formatValue(value: number, unit: string): string {
+  if (!Number.isFinite(value)) return 'Aucune donnée exploitable';
   if (unit === '€') {
     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
   }

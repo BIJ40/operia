@@ -13,11 +13,16 @@ const STATE_MAPPING: Record<string, string> = {
 // États éligibles (clés API)
 const ETATS_ELIGIBLES = new Set(['to_planify_tvx', 'devis_to_order', 'wait_fourn']);
 
+// États d'intervention à exclure (annulés ou à reprogrammer)
+const ITV_ETATS_EXCLUS = new Set(['to_reprog', 'canceled', 'cancelled', 'annulé', 'annule']);
+
 // États de devis éligibles (on exclut draft, rejected, canceled)
 const DEVIS_ETATS_EXCLUS = new Set(['draft', 'rejected', 'canceled']);
 
 export interface ChargeTravauxProjet {
   projectId: number | string;
+  clientId?: number | string;
+  dossierLabel?: string;
   reference?: string;
   label?: string;
   etatWorkflow: string;
@@ -152,18 +157,37 @@ export interface ChargeTravauxResult {
 }
 
 /**
- * Indexe les interventions par projectId (gère string et number)
+ * Extrait un projectId robuste depuis les différentes formes renvoyées par Apogée
  */
+function getProjectId(obj: any): number | null {
+  const raw = obj?.projectId ?? obj?.project_id ?? obj?.project?.id ?? obj?.refId ?? obj?.ref_id ?? obj?.dossierId ?? obj?.dossier_id ?? obj?.data?.projectId;
+  if (raw == null) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+function getInterventionId(obj: any): string | null {
+  const raw = obj?.id ?? obj?.interventionId ?? obj?.intervention_id ?? obj?.data?.interventionId;
+  if (raw == null) return null;
+  const s = String(raw).trim();
+  return s.length > 0 ? s : null;
+}
+
+/**
+ * Indexe les interventions par projectId (gère les alias projectId/refId/dossierId)
+ */
+function isExcludedInterventionState(itv: any): boolean {
+  const state = String(itv?.state ?? itv?.data?.state ?? itv?.status ?? itv?.data?.status ?? '').trim().toLowerCase();
+  return ITV_ETATS_EXCLUS.has(state);
+}
+
 function groupInterventionsByProjectId(interventions: any[]): Map<number, any[]> {
   const map = new Map<number, any[]>();
 
   for (const itv of interventions) {
-    const pid = itv?.projectId ?? itv?.project_id;
-    if (!pid) continue;
+    const key = getProjectId(itv);
+    if (key == null) continue;
 
-    const key = Number(pid);
-    if (isNaN(key)) continue;
-    
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(itv);
   }
@@ -178,12 +202,9 @@ function groupDevisByProjectId(devis: any[]): Map<number, any[]> {
   const map = new Map<number, any[]>();
 
   for (const d of devis) {
-    const pid = d?.projectId ?? d?.project_id;
-    if (!pid) continue;
+    const key = getProjectId(d);
+    if (key == null) continue;
 
-    const key = Number(pid);
-    if (isNaN(key)) continue;
-    
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(d);
   }
@@ -192,70 +213,176 @@ function groupDevisByProjectId(devis: any[]): Map<number, any[]> {
 }
 
 /**
- * Extrait les heures depuis le chiffrage d'une intervention
- * Chemin: intervention.data.chiffrage.postes[].items[].data.nbHeures/nbTechs
- * Fallback: dFields avec EXPORT_generiqueSlug "nombre_de techniciens" / "temps_total d'intervention"
+ * Indexe les créneaux par interventionId
  */
-function extractHoursFromIntervention(intervention: any): { heuresRdv: number; heuresTech: number; nbTechs: number; blocksCount: number } {
-  const chiffrage = intervention?.data?.chiffrage;
-  if (!chiffrage?.postes || !Array.isArray(chiffrage.postes)) {
-    return { heuresRdv: 0, heuresTech: 0, nbTechs: 0, blocksCount: 0 };
+function groupCreneauxByInterventionId(creneaux: any[] = []): Map<string, any[]> {
+  const map = new Map<string, any[]>();
+
+  for (const c of creneaux) {
+    const key = getInterventionId(c);
+    if (!key) continue;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(c);
   }
+
+  return map;
+}
+
+function getUserIds(raw: any): string[] {
+  const values = raw?.usersIds ?? raw?.userIds ?? raw?.data?.usersIds ?? raw?.data?.userIds ?? [];
+  if (!Array.isArray(values)) return [];
+  return values.map((v: any) => String(v)).filter(Boolean);
+}
+
+function getDurationHoursFromCreneaux(creneaux: any[] = []): number {
+  let hours = 0;
+
+  for (const c of creneaux) {
+    if (c?.debut && c?.fin) {
+      const [dh, dm] = String(c.debut).split(':').map(Number);
+      const [fh, fm] = String(c.fin).split(':').map(Number);
+      if ([dh, dm, fh, fm].every((n) => Number.isFinite(n))) {
+        const minutes = (fh * 60 + fm) - (dh * 60 + dm);
+        if (minutes > 0) hours += minutes / 60;
+        continue;
+      }
+    }
+
+    const durationMinutes =
+      parseNumericValue(c?.duree) ||
+      parseNumericValue(c?.dureeMinutes) ||
+      parseNumericValue(c?.duration);
+
+    if (durationMinutes > 0) {
+      hours += durationMinutes / 60;
+    }
+  }
+
+  return hours;
+}
+
+/**
+ * Extrait les heures depuis le chiffrage (RT) en priorité, puis fallback sur visites/créneaux
+ */
+function extractHoursFromIntervention(
+  intervention: any,
+  creneauxByInterventionId?: Map<string, any[]>
+): { heuresRdv: number; heuresTech: number; nbTechs: number; blocksCount: number } {
+
+  // === PRIORITÉ 1 : Chiffrage (relevé technique) — source la plus fiable ===
+  const chiffrage = intervention?.data?.chiffrage;
+  if (chiffrage?.postes && Array.isArray(chiffrage.postes)) {
+    let chiffrageHeures = 0;
+    let chiffrageHeuresTech = 0;
+    let chiffrageMaxNbTechs = 0;
+    let blocksCount = 0;
+
+    for (const poste of chiffrage.postes) {
+      const items = poste?.items || [];
+      for (const item of items) {
+        if (!item?.IS_BLOCK || item?.slug !== 'chiffrage') continue;
+        const data = item.data || {};
+        blocksCount++;
+
+        let nbHeures = parseNumericValue(data.nbHeures);
+        let nbTechs = parseNumericValue(data.nbTechs);
+
+        if (nbHeures === 0 || nbTechs === 0) {
+          const subItems = data.subItems || [];
+          for (const sub of subItems) {
+            if (!sub?.IS_BLOCK || sub?.slug !== 'dfields') continue;
+            const dFields = sub.data?.dFields || [];
+            for (const df of dFields) {
+              const slug = String(df.EXPORT_generiqueSlug || '').toLowerCase();
+              if (slug.includes('nombre_de techniciens') || slug.includes('nombre_de_techniciens')) {
+                const val = parseNumericValue(df.value);
+                if (val > 0 && nbTechs === 0) nbTechs = val;
+              }
+              if (slug.includes("temps_total d'intervention") || slug.includes("temps_total_d'intervention") || slug.includes('temps_total')) {
+                const val = parseNumericValue(df.value);
+                if (val > 0 && nbHeures === 0) nbHeures = val;
+              }
+            }
+          }
+        }
+
+        if (nbHeures <= 0) continue;
+        if (nbTechs <= 0) nbTechs = 1;
+
+        chiffrageHeures += nbHeures;
+        chiffrageHeuresTech += nbHeures * nbTechs;
+        chiffrageMaxNbTechs = Math.max(chiffrageMaxNbTechs, nbTechs);
+      }
+    }
+
+    if (chiffrageHeures > 0) {
+      return {
+        heuresRdv: chiffrageHeures,
+        heuresTech: chiffrageHeuresTech,
+        nbTechs: chiffrageMaxNbTechs,
+        blocksCount,
+      };
+    }
+  }
+
+  // === PRIORITÉ 2 : Visites avec créneaux (planning réel) ===
+  const visites = [
+    ...(Array.isArray(intervention?.visites) ? intervention.visites : []),
+    ...(Array.isArray(intervention?.data?.visites) ? intervention.data.visites : []),
+  ];
 
   let totalHeures = 0;
   let totalHeuresTech = 0;
   let maxNbTechs = 0;
-  let blocksCount = 0;
 
-  for (const poste of chiffrage.postes) {
-    const items = poste?.items || [];
+  for (const visite of visites) {
+    const visiteUsers = getUserIds(visite);
+    const visiteCreneaux = Array.isArray(visite?.creneaux) ? visite.creneaux : [];
     
-    for (const item of items) {
-      if (!item?.IS_BLOCK || item?.slug !== 'chiffrage') continue;
-      
-      const data = item.data || {};
-      blocksCount++;
-
-      // 1) Lecture directe nbHeures / nbTechs
-      let nbHeures = parseNumericValue(data.nbHeures);
-      let nbTechs = parseNumericValue(data.nbTechs);
-
-      // 2) Fallback: chercher dans les dFields si valeurs vides ou nulles
-      if (nbHeures === 0 || nbTechs === 0) {
-        const subItems = data.subItems || [];
-        
-        for (const sub of subItems) {
-          if (!sub?.IS_BLOCK || sub?.slug !== 'dfields') continue;
-          
-          const dFields = sub.data?.dFields || [];
-          
-          for (const df of dFields) {
-            const slug = String(df.EXPORT_generiqueSlug || '').toLowerCase();
-            
-            if (slug.includes('nombre_de techniciens') || slug.includes('nombre_de_techniciens')) {
-              const val = parseNumericValue(df.value);
-              if (val > 0 && nbTechs === 0) nbTechs = val;
-            }
-            
-            if (slug.includes("temps_total d'intervention") || slug.includes("temps_total_d'intervention") || slug.includes('temps_total')) {
-              const val = parseNumericValue(df.value);
-              if (val > 0 && nbHeures === 0) nbHeures = val;
-            }
-          }
-        }
-      }
-
-      // Validation finale
-      if (nbHeures <= 0) continue;
-      if (nbTechs <= 0) nbTechs = 1;
-
-      totalHeures += nbHeures;
-      totalHeuresTech += nbHeures * nbTechs; // 2 tech × 6h = 12h main d'œuvre
-      maxNbTechs = Math.max(maxNbTechs, nbTechs);
+    // créneaux avec debut/fin ou duree en minutes
+    let durationHours = getDurationHoursFromCreneaux(visiteCreneaux);
+    
+    // Fallback : duree en minutes → /60
+    if (durationHours <= 0) {
+      const mins = parseNumericValue(visite?.duree) || parseNumericValue(visite?.dureeMinutes) || parseNumericValue(visite?.duration) || parseNumericValue(visite?.tempsPrevu) || 0;
+      if (mins > 0) durationHours = mins / 60;
     }
+
+    if (durationHours <= 0) continue;
+
+    const nbTechs = visiteUsers.length || parseNumericValue(visite?.nbTechs) || 1;
+    totalHeures += durationHours;
+    totalHeuresTech += durationHours * nbTechs;
+    maxNbTechs = Math.max(maxNbTechs, nbTechs);
   }
 
-  return { heuresRdv: totalHeures, heuresTech: totalHeuresTech, nbTechs: maxNbTechs, blocksCount };
+  if (totalHeures > 0) {
+    return { heuresRdv: totalHeures, heuresTech: totalHeuresTech, nbTechs: maxNbTechs, blocksCount: 0 };
+  }
+
+  // === PRIORITÉ 3 : Durée directe sur l'intervention (en minutes → /60) ===
+  const interventionUsers = getUserIds(intervention);
+  const directMins = parseNumericValue(intervention?.duree) || parseNumericValue(intervention?.tempsPrevu) || parseNumericValue(intervention?.duration) || 0;
+  if (directMins > 0) {
+    const directHours = directMins / 60;
+    const nbTechs = interventionUsers.length || 1;
+    return { heuresRdv: directHours, heuresTech: directHours * nbTechs, nbTechs, blocksCount: 0 };
+  }
+
+  // === PRIORITÉ 4 : Créneaux standalone ===
+  const interventionId = getInterventionId(intervention);
+  const standaloneCreneaux = interventionId && creneauxByInterventionId ? (creneauxByInterventionId.get(interventionId) || []) : [];
+  const creneauxHours = getDurationHoursFromCreneaux(standaloneCreneaux);
+  if (creneauxHours > 0) {
+    const ids = new Set<string>();
+    for (const c of standaloneCreneaux) {
+      for (const uid of getUserIds(c)) ids.add(uid);
+    }
+    const nbTechs = ids.size || 1;
+    return { heuresRdv: creneauxHours, heuresTech: creneauxHours * nbTechs, nbTechs, blocksCount: 0 };
+  }
+
+  return { heuresRdv: 0, heuresTech: 0, nbTechs: 0, blocksCount: 0 };
 }
 
 /**
@@ -324,9 +451,18 @@ function calculateDevisHTForProject(projectDevis: any[]): number {
 /**
  * Vérifie si un devis est "to order" (accepté/commandé)
  */
+const VALID_DEVIS_TO_ORDER_STATES = new Set([
+  'to order', 'to_order', 'order',
+  'accepted', 'accepté', 'accepte',
+  'signed', 'signé', 'signe',
+  'validated', 'validé', 'valide',
+  'commande', 'commandé', 'commandee', 'à commander', 'a commander',
+  'devis_accepte', 'devis_valide', 'devis_accepté', 'devis_validé',
+]);
+
 function isDevisToOrder(d: any): boolean {
-  const state = String(d?.state ?? d?.status ?? d?.data?.state ?? '').trim().toLowerCase();
-  return state === 'to order' || state === 'to_order' || state === 'order';
+  const state = String(d?.state ?? d?.status ?? d?.data?.state ?? d?.etat ?? d?.data?.etat ?? '').trim().toLowerCase();
+  return VALID_DEVIS_TO_ORDER_STATES.has(state);
 }
 
 /**
@@ -358,11 +494,13 @@ function calculateCAPlanifieForProject(projectDevis: any[]): number {
 export function computeChargeTravauxAvenirParUnivers(
   projects: any[],
   interventions: any[],
-  devis: any[] = []
+  devis: any[] = [],
+  creneaux: any[] = []
 ): ChargeTravauxResult {
-  // Index des interventions et devis par projectId
+  // Index des interventions, devis et créneaux
   const byProjectId = groupInterventionsByProjectId(interventions);
   const devisByProjectId = groupDevisByProjectId(devis);
+  const creneauxByInterventionId = groupCreneauxByInterventionId(creneaux);
 
   const debug = {
     totalProjects: projects.length,
@@ -425,7 +563,7 @@ export function computeChargeTravauxAvenirParUnivers(
     let maxNbTechs = 0;
 
     for (const itv of intervs) {
-      const { heuresRdv: hRdv, heuresTech: hTech, nbTechs: nTech, blocksCount } = extractHoursFromIntervention(itv);
+      const { heuresRdv: hRdv, heuresTech: hTech, nbTechs: nTech, blocksCount } = extractHoursFromIntervention(itv, creneauxByInterventionId);
       heuresRdv += hRdv;
       heuresTech += hTech;
       maxNbTechs = Math.max(maxNbTechs, nTech);
@@ -542,10 +680,15 @@ export function computeChargeTravauxAvenirParUnivers(
     // includedInChargeCalc: heures > 0 et (technicien ou date planifiée)
     const includedInChargeCalc = heuresTech > 0 && (technicianIds.length > 0 || hasPlannedDate);
 
+    const rawClientId = project?.clientId ?? project?.client_id ?? project?.data?.clientId ?? project?.data?.client_id;
+    const dossierLabel = project?.label || project?.name || project?.data?.label || project?.data?.name || '';
+
     parProjet.push({
       projectId,
+      clientId: rawClientId ?? undefined,
+      dossierLabel,
       reference: project.ref || project.reference,
-      label: project.label || project.name,
+      label: dossierLabel,
       etatWorkflow: state,
       etatWorkflowLabel: etatLabel,
       universes: normalizedUniverses,
@@ -703,7 +846,7 @@ export function computeChargeTravauxAvenirParUnivers(
   for (const p of parProjet) {
     const intervs = byProjectId.get(Number(p.projectId)) || [];
     for (const itv of intervs) {
-      const { heuresTech: hTech } = extractHoursFromIntervention(itv);
+      const { heuresTech: hTech } = extractHoursFromIntervention(itv, creneauxByInterventionId);
       if (hTech === 0) continue;
       const ids: string[] = [];
       const uid = itv?.userId ?? itv?.user_id;
@@ -765,7 +908,7 @@ export function computeChargeTravauxAvenirParUnivers(
     // Try to place by real intervention date first
     for (const itv of intervs) {
       const dates = getInterventionDates(itv);
-      const { heuresTech: hTech } = extractHoursFromIntervention(itv);
+      const { heuresTech: hTech } = extractHoursFromIntervention(itv, creneauxByInterventionId);
       for (const d of dates) {
         const dMs = d.getTime();
         if (dMs < currentMonday.getTime() || dMs >= weekEndMs.getTime()) continue;

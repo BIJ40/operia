@@ -268,23 +268,114 @@ export function buildActionsAMener(
     });
   });
   
+  // === RÈGLE 4 & 5: Dossiers "À planifier travaux" et "À commander" — top 10 plus anciens ===
+  const aPlanifierCandidates: ActionRow[] = [];
+  const aCommanderCandidates: ActionRow[] = [];
+  
+  projects.forEach(project => {
+    const rawState = (project.state || project.data?.etape || project.data?.step || '').toString().toLowerCase().trim();
+    const status = normalizeStatus(rawState);
+    if (status.includes('clotur') || status.includes('archive') || status.includes('annule')) return;
+    
+    const clientId = project.clientId || project.client_id || project.data?.commanditaireId;
+    const client = clientId ? clientsMap.get(clientId) : null;
+    const clientName = client?.nom || client?.name || client?.raisonSociale || 'Client inconnu';
+    const ref = project.ref || `#${project.id}`;
+    const label = project.name || project.label || 'Sans libellé';
+    
+    // Détection par STATE du projet (pas par historique)
+    const isAPlanifier = rawState === 'to_planify_tvx' || rawState === 'to_planify' || rawState === 'a planifier travaux' || rawState === 'a_planifier_tvx';
+    const isACommander = rawState === 'devis_to_order' || rawState === 'to_order' || rawState === 'a commander' || rawState === 'a_commander';
+    
+    if (!isAPlanifier && !isACommander) return;
+    
+    // Chercher la date d'entrée dans l'état via l'historique (kind === 2)
+    let dateDepart: Date = parseDate(project.updated_at) || parseDate(project.created_at) || today;
+    const history = project.data?.history;
+    if (Array.isArray(history)) {
+      const statusChanges = history
+        .filter((h: any) => h.kind === 2 && typeof h.labelKind === 'string')
+        .sort((a: any, b: any) => {
+          const dA = parseDate(a.dateModif);
+          const dB = parseDate(b.dateModif);
+          return (dA?.getTime() || 0) - (dB?.getTime() || 0);
+        });
+      
+      // Prendre le dernier changement de statut comme date d'entrée
+      if (statusChanges.length > 0) {
+        const last = statusChanges[statusChanges.length - 1];
+        const parsed = parseDate(last.dateModif);
+        if (parsed) dateDepart = parsed;
+      }
+    }
+    
+    const daysInState = differenceInDays(today, dateDepart);
+    
+    if (isAPlanifier) {
+      const deadline = addDays(dateDepart, config.delai_a_planifier_tvx);
+      const isLate = deadline < today;
+      aPlanifierCandidates.push({
+        projectId: project.id,
+        ref,
+        label,
+        statut: 'À planifier travaux',
+        actionLabel: ACTION_LABELS.a_planifier_tvx,
+        actionType: 'a_planifier_tvx',
+        deadline,
+        dateDepart,
+        isLate,
+        clientName,
+        daysLate: isLate ? differenceInDays(today, deadline) : daysInState,
+      });
+    }
+    
+    if (isACommander) {
+      const deadline = addDays(dateDepart, config.delai_a_commander);
+      const isLate = deadline < today;
+      aCommanderCandidates.push({
+        projectId: project.id,
+        ref,
+        label,
+        statut: 'À commander',
+        actionLabel: ACTION_LABELS.a_commander,
+        actionType: 'a_commander',
+        deadline,
+        dateDepart,
+        isLate,
+        clientName,
+        daysLate: isLate ? differenceInDays(today, deadline) : daysInState,
+      });
+    }
+  });
+  
+  // Ajouter tous les candidats (plus de limite à 10)
+  actions.push(...aPlanifierCandidates);
+  actions.push(...aCommanderCandidates);
+  
   // Marquer les actions qui vont passer en retard dans J+1 et filtrer
   const tomorrow = addDays(today, 1);
+  const threeDaysFromNow = addDays(today, 3);
   const filteredActions = actions
     .map(action => ({
       ...action,
-      isDueSoon: !action.isLate && action.deadline <= tomorrow,
+      isDueSoon: !action.isLate && action.deadline <= threeDaysFromNow,
     }))
     .filter(action => {
-      // Garder toutes les actions déjà en retard
       if (action.isLate) return true;
-      
-      // Pour les actions "à venir", ne garder que celles dont la deadline est demain ou avant
-      return action.deadline <= tomorrow;
+      // Garder les actions dont la deadline est dans 3 jours max
+      return action.deadline <= threeDaysFromNow;
     });
   
-  // Trier par deadline croissante (plus urgentes en premier)
-  filteredActions.sort((a, b) => a.deadline.getTime() - b.deadline.getTime());
+  // Trier : en retard (isLate) d'abord par daysLate décroissant, puis les autres par daysLate décroissant
+  filteredActions.sort((a, b) => {
+    // Les en retard en premier
+    if (a.isLate && !b.isLate) return -1;
+    if (!a.isLate && b.isLate) return 1;
+    // Au sein du même groupe, par daysLate décroissant
+    const daysA = a.daysLate ?? 0;
+    const daysB = b.daysLate ?? 0;
+    return daysB - daysA;
+  });
   
   return filteredActions;
 }

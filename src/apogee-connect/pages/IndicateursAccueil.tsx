@@ -15,6 +15,8 @@ import { logWarn, logError } from "@/lib/logger";
 import { useStatiaIndicateurs } from "@/statia/hooks/useStatiaIndicateurs";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ROUTES } from "@/config/routes";
+import { HelpiMascot } from "@/components/helpi/HelpiMascot";
+import { usePlanAccess } from "@/hooks/access-rights/usePlanAccess";
 
 export default function IndicateursAccueil() {
   const { filters } = useFilters();
@@ -22,6 +24,7 @@ export default function IndicateursAccueil() {
   const { agencyChangeCounter, currentAgency, isAgencyReady } = useAgency();
   const userAgency = currentAgency?.id || "";
   const [selectedYear, setSelectedYear] = useState<number>(2025);
+  const { hasRequiredPlan: hasProPlan } = usePlanAccess('PRO');
 
   // StatIA V1: Hook centralisé pour les indicateurs
   const { data: statiaData, isLoading: statiaLoading, error: statiaError } = useStatiaIndicateurs(selectedYear);
@@ -82,7 +85,7 @@ export default function IndicateursAccueil() {
   }
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4 sm:space-y-6">
+    <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 space-y-4 sm:space-y-6">
       <PageHeader
         title="Indicateurs généraux"
         subtitle="Vue d'ensemble des KPI de votre agence"
@@ -468,6 +471,7 @@ export default function IndicateursAccueil() {
         </div>
         {data?.monthlyCAData && <MonthlyCAChart data={data.monthlyCAData} />}
       </div>
+      {hasProPlan && <HelpiMascot />}
     </div>
   );
 }

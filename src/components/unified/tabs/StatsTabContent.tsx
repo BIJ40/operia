@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useMemo } from 'react';
+import { cn } from '@/lib/utils';
 import { useNavigationMode } from '@/hooks/useNavigationMode';
 import { Tv, LayoutDashboard, Building2, Users, Layers, AlertTriangle, CalendarClock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -46,12 +47,20 @@ export default function StatsTabContent() {
     { id: 'previsionnel', label: getShortLabel('pilotage.statistiques.previsionnel', 'Prévisionnel'), icon: CalendarClock, requiresModule: 'pilotage.statistiques.previsionnel' },
   ], [getShortLabel]);
 
+  const { isDeployedModule } = usePermissions();
+
   const visibleTabs = useMemo(() => {
-    return statsTabs.map(tab => {
-      if (!tab.requiresModule) return tab;
-      return { ...tab, disabled: !hasModule(tab.requiresModule) };
-    });
-  }, [hasModule, statsTabs]);
+    return statsTabs
+      .filter(tab => {
+        // Hide non-deployed modules entirely
+        if (tab.requiresModule && !isDeployedModule(tab.requiresModule)) return false;
+        return true;
+      })
+      .map(tab => {
+        if (!tab.requiresModule) return tab;
+        return { ...tab, disabled: !hasModule(tab.requiresModule) };
+      });
+  }, [hasModule, isDeployedModule, statsTabs]);
 
   const effectiveTab = (visibleTabs.find(t => t.id === activeTab && !t.disabled)) ? activeTab : ((visibleTabs.find(t => !t.disabled)?.id as TabId) ?? 'general');
 
@@ -72,7 +81,7 @@ export default function StatsTabContent() {
   };
 
   return (
-    <div className={navMode === 'header' ? 'pt-1 px-2 sm:px-4 space-y-3' : 'py-6 px-2 sm:px-4 space-y-4'}>
+    <div className={cn("container mx-auto max-w-7xl", navMode === 'header' ? 'pt-1 px-2 sm:px-4 space-y-3' : 'py-6 px-2 sm:px-4 space-y-4')}>
       <Tabs value={effectiveTab} onValueChange={(v) => setActiveTab(v as TabId)}>
         <PillTabsList tabs={visibleTabs} variant={navMode === 'header' ? 'switcher' : 'pill'} />
 

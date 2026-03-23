@@ -72,6 +72,7 @@ function UnifiedWorkspaceContent() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [loginOpen, setLoginOpen] = useState(false);
   
+  
   // Support URL ?tab=XXX pour navigation directe
   const urlTab = searchParams.get('tab') as UnifiedTab | null;
   const [activeTab, setActiveTabState] = useSessionState<UnifiedTab>('unified_workspace_tab', urlTab || 'accueil');
@@ -237,6 +238,7 @@ function UnifiedWorkspaceContent() {
         
         <ImageModal />
         <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
+        
         
       </TooltipProvider>
     </AiUnifiedProvider>

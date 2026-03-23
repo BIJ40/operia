@@ -16,6 +16,7 @@ export interface ApogeeDataServices {
   getProjects: (agencySlug: string, dateRange: DateRange) => Promise<any[]>;
   getUsers: (agencySlug: string) => Promise<any[]>;
   getClients: (agencySlug: string) => Promise<any[]>;
+  getCreneaux?: (agencySlug: string, dateRange?: DateRange) => Promise<any[]>;
 }
 
 /**

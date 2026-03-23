@@ -28,26 +28,38 @@ const toDate = (v: unknown): Date | null => {
 };
 
 const getProjectId = (obj: any): number | null => {
-  const raw = obj?.projectId ?? obj?.project_id ?? obj?.project?.id;
+  const raw = obj?.projectId ?? obj?.project_id ?? obj?.project?.id ?? obj?.refId ?? obj?.ref_id ?? obj?.dossierId ?? obj?.dossier_id ?? obj?.data?.projectId;
   if (raw == null) return null;
   const n = Number(raw);
   return Number.isFinite(n) ? n : null;
 };
 
 const getInterventionPlanningDate = (itv: any): Date | null => {
-  const direct = toDate(itv?.dateReelle ?? itv?.date);
+  const direct = toDate(itv?.dateReelle ?? itv?.date ?? itv?.start ?? itv?.dateDebut ?? itv?.data?.date);
   if (direct) return direct;
-  const visites = Array.isArray(itv?.visites) ? itv.visites : [];
+  const visites = [
+    ...(Array.isArray(itv?.visites) ? itv.visites : []),
+    ...(Array.isArray(itv?.data?.visites) ? itv.data.visites : []),
+  ];
   for (const v of visites) {
-    const dv = toDate(v?.dateReelle ?? v?.date);
+    const dv = toDate(v?.dateReelle ?? v?.date ?? v?.start ?? v?.dateDebut);
     if (dv) return dv;
   }
   return null;
 };
 
+const VALID_DEVIS_STATES = new Set([
+  'to order', 'to_order', 'order',
+  'accepted', 'accepté', 'accepte',
+  'signed', 'signé', 'signe',
+  'validated', 'validé', 'valide',
+  'commande', 'commandé', 'commandee', 'à commander', 'a commander',
+  'devis_accepte', 'devis_valide', 'devis_accepté', 'devis_validé',
+]);
+
 const isDevisToOrder = (d: any): boolean => {
-  const state = String(d?.state ?? d?.status ?? d?.data?.state ?? '').trim().toLowerCase();
-  return state === 'to order' || state === 'to_order' || state === 'order';
+  const state = String(d?.state ?? d?.status ?? d?.data?.state ?? d?.etat ?? d?.data?.etat ?? '').trim().toLowerCase();
+  return VALID_DEVIS_STATES.has(state);
 };
 
 const parseNumericValue = (value: any): number => {
@@ -62,6 +74,7 @@ interface CAPlanifieCardProps {
   interventions: any[];
   devis: any[];
   factures: any[];
+  clients?: any[];
 }
 
 const MONTHS = [
@@ -76,7 +89,7 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 }
 };
 
-export function CAPlanifieCard({ projects, interventions, devis, factures }: CAPlanifieCardProps) {
+export function CAPlanifieCard({ projects, interventions, devis, factures, clients }: CAPlanifieCardProps) {
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
@@ -92,17 +105,45 @@ export function CAPlanifieCard({ projects, interventions, devis, factures }: CAP
   }, [selectedMonth, selectedYear]);
 
   const { caPlanifie, caPlanifieDevisCount } = useMemo(() => {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const todayMs = today.getTime();
-
     const periodStartMonth = `${selectedPeriod.start.getFullYear()}-${String(selectedPeriod.start.getMonth() + 1).padStart(2, '0')}`;
     const periodEndMonth = `${selectedPeriod.end.getFullYear()}-${String(selectedPeriod.end.getMonth() + 1).padStart(2, '0')}`;
 
     const facturedProjectIds = new Set<number>();
-    for (const f of factures) { const pid = getProjectId(f); if (pid != null) facturedProjectIds.add(pid); }
+    for (const f of factures) {
+      const pid = getProjectId(f);
+      if (pid == null) continue;
+      const typeFacture = String(f?.typeFacture ?? f?.type ?? f?.data?.typeFacture ?? f?.data?.type ?? '').toLowerCase();
+      if (typeFacture.includes('acompte') || typeFacture.includes('proforma')) continue;
+      facturedProjectIds.add(pid);
+    }
 
+    // Exclure TH, SAV, RT du CA prévisionnel
+    const EXCLUDED_ITV_TYPES = new Set(['th', 'sav', 'rt', 'releve technique', 'relevé technique', 'rdv technique', 'rdvtech']);
+    const EXCLUDED_ITV_STATES = new Set(['to_reprog', 'canceled', 'cancelled', 'annulé', 'annule']);
+    
+    // Mois courant = plancher pour le prévisionnel
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    
     const interventionsByProjectId = new Map<number, any[]>();
-    for (const itv of interventions) { const pid = getProjectId(itv); if (pid == null) continue; if (!interventionsByProjectId.has(pid)) interventionsByProjectId.set(pid, []); interventionsByProjectId.get(pid)!.push(itv); }
+    for (const itv of interventions) {
+      const itvState = String(itv?.state ?? itv?.data?.state ?? itv?.status ?? itv?.data?.status ?? '').trim().toLowerCase();
+      if (EXCLUDED_ITV_STATES.has(itvState)) continue;
+      const t2 = String(itv?.type2 ?? itv?.data?.type2 ?? '').trim().toLowerCase();
+      const t1 = String(itv?.type ?? itv?.data?.type ?? '').trim().toLowerCase();
+      if (EXCLUDED_ITV_TYPES.has(t2) || EXCLUDED_ITV_TYPES.has(t1) || t2.includes('sav') || t1.includes('sav')) continue;
+      
+      // Exclure les interventions dont la date est dans un mois antérieur au mois courant
+      const itvDate = getInterventionPlanningDate(itv);
+      if (itvDate) {
+        const itvMonth = `${itvDate.getFullYear()}-${String(itvDate.getMonth() + 1).padStart(2, '0')}`;
+        if (itvMonth < currentMonth) continue;
+      }
+      
+      const pid = getProjectId(itv);
+      if (pid == null) continue;
+      if (!interventionsByProjectId.has(pid)) interventionsByProjectId.set(pid, []);
+      interventionsByProjectId.get(pid)!.push(itv);
+    }
 
     const devisByProjectId = new Map<number, any[]>();
     for (const d of devis) { const pid = getProjectId(d); if (pid == null) continue; if (!devisByProjectId.has(pid)) devisByProjectId.set(pid, []); devisByProjectId.get(pid)!.push(d); }
@@ -117,14 +158,13 @@ export function CAPlanifieCard({ projects, interventions, devis, factures }: CAP
 
       const projectInterventions = interventionsByProjectId.get(projectId) || [];
 
-      // Phase A : compter les interventions futures par mois
+      // Phase A : compter toutes les interventions du projet par mois de planification
       const monthCounts = new Map<string, number>();
       for (const itv of projectInterventions) {
         const d = getInterventionPlanningDate(itv);
-        if (d && d.getTime() >= todayMs) {
-          const mk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-          monthCounts.set(mk, (monthCounts.get(mk) || 0) + 1);
-        }
+        if (!d) continue;
+        const mk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        monthCounts.set(mk, (monthCounts.get(mk) || 0) + 1);
       }
 
       if (monthCounts.size === 0) continue;
@@ -224,6 +264,7 @@ export function CAPlanifieCard({ projects, interventions, devis, factures }: CAP
         interventions={interventions}
         devis={devis}
         factures={factures}
+        clients={clients}
         periodStart={selectedPeriod.start}
         periodEnd={selectedPeriod.end}
         periodLabel={selectedPeriod.label}
