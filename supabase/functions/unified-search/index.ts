@@ -1113,14 +1113,17 @@ serve(async (req) => {
       ? { metric: getMetricSignature(finalMetricId)!, scores: metricScores }
       : { metric: null, scores: metricScores };
 
-    const routed = aiSearchRouteV3(query, tokenized, extractedWithEntityOverride, period, context, resolvedEntities, metricResult, now);
-    
-    // forceStats: if Helpi sends this flag, override doc routing to stats
-    if (body.forceStats && routed.type === 'doc') {
-      console.log(`[unified-search] forceStats: overriding doc→stats`);
-      routed.type = 'stats';
-    }
-    
+    const routed = aiSearchRouteV3(
+      query,
+      tokenized,
+      extractedWithEntityOverride,
+      period,
+      context,
+      resolvedEntities,
+      metricResult,
+      now,
+      !!body.forceStats
+    );
     console.log(`[unified-search] Routed: type=${routed.type}, metric=${routed.parsed?.metricId || 'none'}`);
 
     // ══════════════════════════════════════════════════════════
