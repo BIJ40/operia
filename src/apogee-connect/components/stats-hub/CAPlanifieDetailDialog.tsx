@@ -18,6 +18,7 @@ interface PlanifiedProject {
   projectId: number;
   reference: string;
   label: string;
+  ville: string;
   univers: string;
   etatWorkflow: string;
   etatWorkflowLabel: string;
