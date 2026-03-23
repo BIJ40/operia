@@ -60,7 +60,7 @@ function FranchiseurAgencyProfileContent() {
 
   if (!agency) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="container mx-auto max-w-7xl p-6">
         <Card className="rounded-2xl border-l-4 border-l-destructive">
           <CardContent className="py-12 text-center">
             <p className="text-muted-foreground">Agence non trouvée</p>
