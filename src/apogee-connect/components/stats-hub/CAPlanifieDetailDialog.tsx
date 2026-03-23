@@ -68,9 +68,16 @@ const getInterventionPlanningDate = (itv: any): Date | null => {
   return null;
 };
 
+const VALID_DEVIS_STATES = new Set([
+  'to order', 'to_order', 'order',
+  'accepted', 'signed', 'validated',
+  'commande', 'commandé', 'à commander',
+  'devis_accepte', 'devis_valide',
+]);
+
 const isDevisToOrder = (d: any): boolean => {
   const state = String(d?.state ?? d?.status ?? d?.data?.state ?? '').trim().toLowerCase();
-  return state === 'to order' || state === 'to_order' || state === 'order';
+  return VALID_DEVIS_STATES.has(state);
 };
 
 const parseNum = (v: any): number => {
