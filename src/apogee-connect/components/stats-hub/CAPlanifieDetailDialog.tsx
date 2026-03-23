@@ -128,6 +128,13 @@ function usePlanifiedProjects(props: Omit<Props, 'open' | 'onOpenChange'>): Plan
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const todayMs = today.getTime();
 
+    // Build client lookup by id
+    const clientsById = new Map<number, any>();
+    for (const c of (clients || [])) {
+      const cid = Number(c?.id);
+      if (Number.isFinite(cid)) clientsById.set(cid, c);
+    }
+
     const facturedIds = new Set<number>();
     for (const f of factures) {
       const pid = getProjectId(f);
