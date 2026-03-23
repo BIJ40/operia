@@ -72,6 +72,7 @@ interface CAPlanifieCardProps {
   interventions: any[];
   devis: any[];
   factures: any[];
+  clients?: any[];
 }
 
 const MONTHS = [
