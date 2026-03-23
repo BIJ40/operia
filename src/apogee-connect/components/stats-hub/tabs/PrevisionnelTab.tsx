@@ -219,7 +219,11 @@ export function PrevisionnelTab() {
           const Icon = config.icon;
           return (
             <motion.div key={etatStats.etat} variants={itemVariants}>
-              <Card className={`border-l-4 ${config.bgClass}`} style={{ borderLeftColor: config.color }}>
+              <Card
+                className={`border-l-4 ${config.bgClass} cursor-pointer hover:shadow-md transition-shadow`}
+                style={{ borderLeftColor: config.color }}
+                onClick={() => setSelectedEtat(etatStats.etat)}
+              >
                 {/* Header */}
                 <div className="flex items-start justify-between p-4 pb-2">
                   <h4 className="text-sm font-medium text-muted-foreground">{etatStats.etatLabel}</h4>
