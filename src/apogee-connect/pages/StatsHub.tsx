@@ -49,8 +49,11 @@ function StatsHubContent() {
   const { hasModule } = usePermissions();
 
   const visibleTabs = useMemo(() => {
-    return TABS_CONFIG.filter(tab => hasModule(TAB_MODULE_KEYS[tab.id]));
-  }, [hasModule]);
+    return TABS_CONFIG.filter(tab => {
+      const moduleKey = TAB_MODULE_KEYS[tab.id];
+      return hasModule(moduleKey) && isDeployedModule(moduleKey);
+    });
+  }, [hasModule, isDeployedModule]);
 
   const effectiveTab = visibleTabs.some(t => t.id === activeTab) ? activeTab : (visibleTabs[0]?.id as TabId ?? 'general');
 
