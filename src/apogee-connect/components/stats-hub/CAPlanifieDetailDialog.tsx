@@ -124,6 +124,11 @@ function usePlanifiedProjects(props: Omit<Props, 'open' | 'onOpenChange'>): Plan
     const devisByPid = new Map<number, any[]>();
     for (const d of devis) { const pid = getProjectId(d); if (pid != null) { if (!devisByPid.has(pid)) devisByPid.set(pid, []); devisByPid.get(pid)!.push(d); } }
 
+    // Règle métier "mois dominant" : compter 100% du CA sur le mois
+    // qui contient le plus d'interventions (tie-break = premier mois chrono)
+    const periodStartMonth = `${periodStart.getFullYear()}-${String(periodStart.getMonth() + 1).padStart(2, '0')}`;
+    const periodEndMonth = `${periodEnd.getFullYear()}-${String(periodEnd.getMonth() + 1).padStart(2, '0')}`;
+
     const results: PlanifiedProject[] = [];
 
     for (const project of projects) {
@@ -132,19 +137,42 @@ function usePlanifiedProjects(props: Omit<Props, 'open' | 'onOpenChange'>): Plan
       if (facturedIds.has(projectId)) continue;
 
       const projectItvs = itvByPid.get(projectId) || [];
-      let bestDate: Date | null = null;
       let totalHours = 0;
 
+      // Phase A : compter les interventions par mois pour ce projet
+      const monthCounts = new Map<string, { count: number; firstDate: Date }>();
       for (const itv of projectItvs) {
         const d = getInterventionPlanningDate(itv);
-        if (d && isInRange(d)) {
-          if (!bestDate || d < bestDate) bestDate = d;
+        if (d && d.getTime() >= todayMs) {
+          const mk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          const existing = monthCounts.get(mk);
+          if (!existing) {
+            monthCounts.set(mk, { count: 1, firstDate: d });
+          } else {
+            existing.count++;
+            if (d < existing.firstDate) existing.firstDate = d;
+          }
         }
-        // Extract hours
         const hrs = parseNum(itv?.data?.dureeRdv ?? itv?.dureeRdv ?? itv?.data?.heureTechnicien ?? itv?.heureTechnicien ?? 0);
         totalHours += hrs;
       }
 
+      if (monthCounts.size === 0) continue;
+
+      // Phase B : déterminer le mois dominant
+      let dominantMonth = '';
+      let dominantCount = 0;
+      let bestDate: Date | null = null;
+      for (const [month, { count, firstDate }] of monthCounts) {
+        if (count > dominantCount || (count === dominantCount && month < dominantMonth)) {
+          dominantMonth = month;
+          dominantCount = count;
+          bestDate = firstDate;
+        }
+      }
+
+      // Phase C : ne retenir que si le mois dominant est dans la période
+      if (!dominantMonth || dominantMonth < periodStartMonth || dominantMonth > periodEndMonth) continue;
       if (!bestDate) continue;
 
       const projectDevis = devisByPid.get(projectId) || [];
