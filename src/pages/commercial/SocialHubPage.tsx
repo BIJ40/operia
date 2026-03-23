@@ -4,6 +4,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Share2, ChevronLeft, ChevronRight, CalendarDays, List, Sparkles, Loader2 } from 'lucide-react';
