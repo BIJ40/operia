@@ -1587,13 +1587,26 @@ FORMAT DES POSTS (variation obligatoire) :
 - 10% LONG : hook + 2 phrases sous-texte + CTA
 
 ═══════════════════════════════════════════
-STRATÉGIE CALENDAIRE (CRITIQUE)
+STRATÉGIE CALENDAIRE (CRITIQUE — PRIORITÉ N°1)
 ═══════════════════════════════════════════
-Les journées spéciales sont traitées selon leur NIVEAU DE PERTINENCE MÉTIER :
+Les journées mondiales/nationales DOMINENT le planning. Elles ne sont PAS un "bonus" — elles sont le THÈME PRINCIPAL quand elles existent.
 
-- relevance 3 → contenu métier DIRECT. Le thème calendaire EST le sujet métier (ex: Journée de l'eau → plomberie).
-- relevance 2 → angle utile OU prévention. L'événement sert de PRÉTEXTE à un angle métier soft.
-- relevance 1 → topic_type = "calendar". AUCUN contenu métier forcé. Post HUMAIN, IMAGE DE MARQUE ou LÉGER uniquement.
+HIÉRARCHIE DE PRIORITÉ POUR CHAQUE JOUR :
+1. SI une journée mondiale/nationale avec relevance 3 existe → LE POST DOIT ÊTRE SUR CE THÈME. C'est le sujet principal. Le métier et la journée FUSIONNENT naturellement.
+   Exemple : "Journée mondiale de l'eau" + plomberie → post sur les fuites d'eau, la consommation, le gaspillage.
+2. SI une journée avec relevance 2 existe → L'UTILISER comme angle principal si le lien est crédible. FUSIONNER avec un angle métier.
+   Exemple : "Journée des consommateurs" → transparence des devis, engagement qualité HelpConfort.
+3. SI une journée avec relevance 1 existe → topic_type = "calendar". Post humain/image, AUCUN contenu métier forcé.
+4. SEULEMENT si AUCUNE journée intéressante n'existe ce jour-là → post métier classique selon la rotation.
+
+FUSION JOURNÉE + MÉTIER (ENCOURAGÉ pour relevance 2-3) :
+- Prendre la journée comme PRÉTEXTE et la RELIER naturellement au métier
+- Le hook DOIT mentionner ou faire référence à la journée
+- Le contenu métier DOIT être lié à la thématique de la journée
+- Exemples de fusion réussie :
+  • "Jour de la Terre" + rénovation → "Rénover éco-responsable, ça commence chez vous"
+  • "Journée sécurité au travail" + électricité → "Votre tableau électrique est-il aux normes ?"
+  • "Journée Parkinson" + PMR → "Adapter son logement pour vivre mieux chez soi"
 
 INTERDICTION ABSOLUE pour relevance 1 :
 - forcer un lien métier
@@ -1601,18 +1614,10 @@ INTERDICTION ABSOLUE pour relevance 1 :
 - ajouter un conseil technique hors contexte
 - mentionner travaux, rénovation, dépannage
 
-MAPPING ANGLE → CONTENU (pour les jours calendaires relevance 1) :
-- interne → équipe, terrain, coulisses, valorisation
-- image_marque → crédibilité, présence locale, sérieux
-- leger → clin d'œil, message simple, présence de marque
-- creatif → visuel fun/décalé assumé
-- disponibilite → "même les jours fériés, on est là"
-- emotionnel → famille, confort, chaleur humaine
-
 PRIORITÉ GLOBALE :
-1. Si jour calendaire relevance 1 → calendrier IMPOSE le sujet
-2. Si jour calendaire relevance 2 → angle métier soft possible
-3. Si jour calendaire relevance 3 → contenu métier direct
+1. Si jour calendaire relevance 3 → la journée EST le sujet, fusionné avec le métier
+2. Si jour calendaire relevance 2 → angle métier soft INSPIRÉ par la journée
+3. Si jour calendaire relevance 1 → calendrier IMPOSE le sujet (humain, image, léger)
 4. Sinon → post métier classique selon la rotation
 
 ═══════════════════════════════════════════
