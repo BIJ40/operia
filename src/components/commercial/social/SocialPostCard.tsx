@@ -1,14 +1,15 @@
 /**
  * SocialPostCard — Carte de suggestion dans le panneau détail.
- * Actions : approuver, rejeter, régénérer, copier le texte, planifier.
+ * Actions : approuver, rejeter, copier le texte, reformuler, renvoyer webhook.
  */
 
 import { useState } from 'react';
-import { Check, X, RefreshCw, Copy, Calendar, Loader2 } from 'lucide-react';
+import { Check, X, Copy, Loader2, Send, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import type { SocialSuggestion } from '@/hooks/useSocialSuggestions';
 
 const STATUS_LABELS: Record<string, { label: string; variant: string }> = {
@@ -19,10 +20,16 @@ const STATUS_LABELS: Record<string, { label: string; variant: string }> = {
 };
 
 const TOPIC_LABELS: Record<string, string> = {
-  awareness_day: 'Journée thématique',
-  seasonal_tip: 'Conseil saisonnier',
-  realisation: 'Réalisation',
-  local_branding: 'Marque & confiance',
+  urgence: 'Urgence',
+  prevention: 'Prévention',
+  amelioration: 'Amélioration',
+  conseil: 'Conseil pratique',
+  preuve: 'Preuve & réassurance',
+  saisonnier: 'Saisonnier',
+  contre_exemple: 'Contre-exemple',
+  pedagogique: 'Pédagogique',
+  prospection: 'Prospection & Marque',
+  calendar: 'Calendaire',
 };
 
 interface SocialPostCardProps {
@@ -35,13 +42,40 @@ interface SocialPostCardProps {
 
 export function SocialPostCard({ suggestion, onApprove, onReject, onRegenerate, isRegenerating }: SocialPostCardProps) {
   const statusInfo = STATUS_LABELS[suggestion.status] || STATUS_LABELS.draft;
+  const [isSendingWebhook, setIsSendingWebhook] = useState(false);
+
+  // Normalize hashtags: strip any leading #/## and re-add single #
+  const normalizeTag = (h: string) => `#${h.replace(/^#+/, '')}`;
+
+  const fullCopyText = [
+    suggestion.caption_base_fr,
+    suggestion.hashtags?.length > 0 ? suggestion.hashtags.map(normalizeTag).join(' ') : '',
+  ].filter(Boolean).join('\n\n');
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(suggestion.caption_base_fr);
-      toast.success('Texte copié');
+      await navigator.clipboard.writeText(fullCopyText);
+      toast.success('Texte + hashtags copiés');
     } catch {
       toast.error('Impossible de copier');
+    }
+  };
+
+  const handleResendWebhook = async () => {
+    setIsSendingWebhook(true);
+    try {
+      const { error, data } = await supabase.functions.invoke('dispatch-social-webhook', {
+        body: { suggestion_id: suggestion.id, agency_id: suggestion.agency_id },
+      });
+      if (error || data?.error) {
+        toast.error('Échec de l\'envoi webhook : ' + (error?.message || data?.error));
+      } else {
+        toast.success('Webhook renvoyé avec succès (PUBLI)');
+      }
+    } catch (err: any) {
+      toast.error('Erreur webhook : ' + err.message);
+    } finally {
+      setIsSendingWebhook(false);
     }
   };
 
@@ -67,21 +101,27 @@ export function SocialPostCard({ suggestion, onApprove, onReject, onRegenerate, 
         </div>
       )}
 
-      {/* Caption */}
-      <div className="bg-muted/50 rounded-md p-3 border border-border">
+      {/* Caption + hashtags with copy icon */}
+      <div className="relative group bg-muted/50 rounded-md p-3 pr-9 border border-border">
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+          title="Copier texte + hashtags"
+        >
+          <Copy className="w-3.5 h-3.5" />
+        </button>
         <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
           {suggestion.caption_base_fr}
         </p>
+        {suggestion.hashtags?.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2 pt-2 border-t border-border/50">
+            {suggestion.hashtags.map(h => (
+              <span key={h} className="text-[10px] text-primary">{normalizeTag(h)}</span>
+            ))}
+          </div>
+        )}
       </div>
-
-      {/* Hashtags */}
-      {suggestion.hashtags?.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {suggestion.hashtags.map(h => (
-            <span key={h} className="text-[10px] text-primary">#{h}</span>
-          ))}
-        </div>
-      )}
 
       {/* Meta */}
       <div className="flex flex-wrap gap-1.5">
@@ -96,24 +136,8 @@ export function SocialPostCard({ suggestion, onApprove, onReject, onRegenerate, 
         )}
       </div>
 
-      {/* Platform variants preview */}
-      {suggestion.variants && suggestion.variants.length > 0 && (
-        <div className="space-y-1">
-          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-            Variantes plateforme
-          </p>
-          <div className="flex gap-1">
-            {suggestion.variants.map(v => (
-              <Badge key={v.id} variant="outline" className="text-[10px] capitalize">
-                {v.platform.replace('_', ' ')}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Actions */}
-      <div className="flex gap-1.5 pt-1 border-t border-border">
+      <div className="flex flex-wrap gap-1.5 pt-1 border-t border-border">
         {suggestion.status === 'draft' && (
           <>
             <Button size="sm" variant="default" className="h-7 text-xs gap-1" onClick={() => onApprove(suggestion.id)}>
@@ -126,17 +150,29 @@ export function SocialPostCard({ suggestion, onApprove, onReject, onRegenerate, 
         )}
         <Button
           size="sm"
-          variant="ghost"
+          variant="outline"
           className="h-7 text-xs gap-1"
           onClick={() => onRegenerate(suggestion.id)}
           disabled={isRegenerating || suggestion.status === 'approved'}
         >
           {isRegenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-          Régénérer
+          Reformuler
         </Button>
         <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={handleCopy}>
           <Copy className="w-3 h-3" /> Copier
         </Button>
+        {suggestion.status === 'approved' && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs gap-1"
+            onClick={handleResendWebhook}
+            disabled={isSendingWebhook}
+          >
+            {isSendingWebhook ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+            Renvoyer webhook
+          </Button>
+        )}
       </div>
     </div>
   );

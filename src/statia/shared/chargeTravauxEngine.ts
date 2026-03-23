@@ -460,7 +460,7 @@ export function computeChargeTravauxAvenirParUnivers(
 
     // --- Enrichissement pilotage avancé ---
     // createdAt & ageDays
-    const rawCreatedAt = project?.createdAt ?? project?.data?.createdAt ?? null;
+    const rawCreatedAt = project?.created_at ?? project?.date ?? project?.createdAt ?? project?.data?.createdAt ?? null;
     const createdAtStr = rawCreatedAt ? String(rawCreatedAt) : null;
     let ageDays: number | null = null;
     if (createdAtStr) {
@@ -490,14 +490,27 @@ export function computeChargeTravauxAvenirParUnivers(
     }
     if (!hasPlannedDate) dataQualityFlags.push('missing_planned_date');
 
-    // technicianIds
+    // technicianIds — comprehensive extraction (aligned with caParTechnicienCore)
     const techIdSet = new Set<string>();
     for (const itv of intervs) {
       const uid = itv?.userId ?? itv?.user_id;
       if (uid) techIdSet.add(String(uid));
       const uids = itv?.usersIds ?? itv?.data?.usersIds;
-      if (Array.isArray(uids)) {
-        for (const u of uids) if (u) techIdSet.add(String(u));
+      if (Array.isArray(uids)) for (const u of uids) { if (u) techIdSet.add(String(u)); }
+      // From visites
+      const visites = itv?.visites ?? itv?.data?.visites ?? [];
+      if (Array.isArray(visites)) {
+        for (const v of visites) {
+          const vIds = v?.usersIds ?? v?.userIds ?? [];
+          if (Array.isArray(vIds)) for (const u of vIds) { if (u) techIdSet.add(String(u)); }
+        }
+      }
+      // From biV3.items
+      const biV3Items = itv?.data?.biV3?.items;
+      if (Array.isArray(biV3Items)) {
+        for (const item of biV3Items) {
+          if (Array.isArray(item?.usersIds)) for (const u of item.usersIds) { if (u) techIdSet.add(String(u)); }
+        }
       }
     }
     const technicianIds = Array.from(techIdSet);
@@ -697,6 +710,21 @@ export function computeChargeTravauxAvenirParUnivers(
       if (uid) ids.push(String(uid));
       const uids = itv?.usersIds ?? itv?.data?.usersIds;
       if (Array.isArray(uids)) for (const u of uids) { if (u && !ids.includes(String(u))) ids.push(String(u)); }
+      // From visites
+      const visites = itv?.visites ?? itv?.data?.visites ?? [];
+      if (Array.isArray(visites)) {
+        for (const v of visites) {
+          const vIds = v?.usersIds ?? v?.userIds ?? [];
+          if (Array.isArray(vIds)) for (const u of vIds) { const s = String(u); if (u && !ids.includes(s)) ids.push(s); }
+        }
+      }
+      // From biV3.items
+      const biV3Items = itv?.data?.biV3?.items;
+      if (Array.isArray(biV3Items)) {
+        for (const item of biV3Items) {
+          if (Array.isArray(item?.usersIds)) for (const u of item.usersIds) { const s = String(u); if (u && !ids.includes(s)) ids.push(s); }
+        }
+      }
       if (ids.length === 0) continue;
       const share = hTech / ids.length;
       for (const tid of ids) {
@@ -732,6 +760,9 @@ export function computeChargeTravauxAvenirParUnivers(
 
   for (const p of parProjet) {
     const intervs = byProjectId.get(Number(p.projectId)) || [];
+    let placedByDate = false;
+
+    // Try to place by real intervention date first
     for (const itv of intervs) {
       const dates = getInterventionDates(itv);
       const { heuresTech: hTech } = extractHoursFromIntervention(itv);
@@ -744,9 +775,25 @@ export function computeChargeTravauxAvenirParUnivers(
           if (dMs >= bucket.start.getTime() && dMs < bucketEnd.getTime()) {
             bucket.hours += hTech;
             bucket.projectIds.add(p.projectId);
+            placedByDate = true;
             break;
           }
         }
+      }
+    }
+
+    // If no date found, distribute by workflow status
+    if (!placedByDate && p.totalHeuresTech > 0) {
+      let targetWeekIdx: number;
+      switch (p.etatWorkflow) {
+        case 'to_planify_tvx': targetWeekIdx = 1; break; // S+1
+        case 'devis_to_order': targetWeekIdx = 2; break;  // S+2
+        case 'wait_fourn': targetWeekIdx = 3; break;       // S+3
+        default: targetWeekIdx = 2; break;
+      }
+      if (targetWeekIdx < weekBuckets.length) {
+        weekBuckets[targetWeekIdx].hours += p.totalHeuresTech;
+        weekBuckets[targetWeekIdx].projectIds.add(p.projectId);
       }
     }
   }

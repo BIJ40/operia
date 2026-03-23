@@ -2222,6 +2222,286 @@ export type Database = {
           },
         ]
       }
+      bd_story_batches: {
+        Row: {
+          agency_id: string
+          bible_ok_count: number | null
+          campaign_mode: string | null
+          coverage_percent: number | null
+          created_at: string
+          created_by: string | null
+          diversity_score_avg: number | null
+          generated_size: number | null
+          id: string
+          input_params: Json | null
+          report: Json | null
+          requested_size: number
+          status: string
+          updated_at: string
+          valid_count: number | null
+        }
+        Insert: {
+          agency_id: string
+          bible_ok_count?: number | null
+          campaign_mode?: string | null
+          coverage_percent?: number | null
+          created_at?: string
+          created_by?: string | null
+          diversity_score_avg?: number | null
+          generated_size?: number | null
+          id?: string
+          input_params?: Json | null
+          report?: Json | null
+          requested_size: number
+          status?: string
+          updated_at?: string
+          valid_count?: number | null
+        }
+        Update: {
+          agency_id?: string
+          bible_ok_count?: number | null
+          campaign_mode?: string | null
+          coverage_percent?: number | null
+          created_at?: string
+          created_by?: string | null
+          diversity_score_avg?: number | null
+          generated_size?: number | null
+          id?: string
+          input_params?: Json | null
+          report?: Json | null
+          requested_size?: number
+          status?: string
+          updated_at?: string
+          valid_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bd_story_batches_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bd_story_character_visuals: {
+        Row: {
+          active: boolean | null
+          agency_id: string
+          created_at: string | null
+          display_name: string
+          id: string
+          must_keep: Json | null
+          outfit_rules: Json | null
+          reference_image_urls: string[] | null
+          role: string
+          slug: string
+          updated_at: string | null
+          visual_identity: Json | null
+        }
+        Insert: {
+          active?: boolean | null
+          agency_id: string
+          created_at?: string | null
+          display_name: string
+          id?: string
+          must_keep?: Json | null
+          outfit_rules?: Json | null
+          reference_image_urls?: string[] | null
+          role?: string
+          slug: string
+          updated_at?: string | null
+          visual_identity?: Json | null
+        }
+        Update: {
+          active?: boolean | null
+          agency_id?: string
+          created_at?: string | null
+          display_name?: string
+          id?: string
+          must_keep?: Json | null
+          outfit_rules?: Json | null
+          reference_image_urls?: string[] | null
+          role?: string
+          slug?: string
+          updated_at?: string | null
+          visual_identity?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bd_story_character_visuals_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bd_story_renders: {
+        Row: {
+          agency_id: string
+          created_at: string | null
+          final_board_url: string | null
+          id: string
+          panels_render: Json | null
+          render_debug: Json | null
+          render_provider: string | null
+          status: string
+          story_id: string | null
+          style_preset: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string | null
+          final_board_url?: string | null
+          id?: string
+          panels_render?: Json | null
+          render_debug?: Json | null
+          render_provider?: string | null
+          status?: string
+          story_id?: string | null
+          style_preset?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string | null
+          final_board_url?: string | null
+          id?: string
+          panels_render?: Json | null
+          render_debug?: Json | null
+          render_provider?: string | null
+          status?: string
+          story_id?: string | null
+          style_preset?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bd_story_renders_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bd_story_renders_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "bd_story_stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bd_story_stories: {
+        Row: {
+          agency_id: string
+          batch_id: string | null
+          bible_violation_count: number
+          board_prompt_master: string | null
+          campaign_mode: string | null
+          client_profile_slug: string | null
+          created_at: string
+          created_by: string | null
+          cta_mode: string | null
+          diversity_score: number | null
+          id: string
+          is_favorite: boolean | null
+          narrative_distance_score: number | null
+          panels: Json
+          problem_slug: string
+          status: string
+          story_family: string
+          story_json: Json
+          story_key: string
+          summary: string | null
+          technician_slug: string
+          template_key: string
+          title: string
+          tone: string | null
+          universe: string
+          updated_at: string
+          validation_is_valid: boolean
+          validation_issue_count: number
+        }
+        Insert: {
+          agency_id: string
+          batch_id?: string | null
+          bible_violation_count?: number
+          board_prompt_master?: string | null
+          campaign_mode?: string | null
+          client_profile_slug?: string | null
+          created_at?: string
+          created_by?: string | null
+          cta_mode?: string | null
+          diversity_score?: number | null
+          id?: string
+          is_favorite?: boolean | null
+          narrative_distance_score?: number | null
+          panels?: Json
+          problem_slug: string
+          status?: string
+          story_family: string
+          story_json?: Json
+          story_key: string
+          summary?: string | null
+          technician_slug: string
+          template_key: string
+          title: string
+          tone?: string | null
+          universe: string
+          updated_at?: string
+          validation_is_valid?: boolean
+          validation_issue_count?: number
+        }
+        Update: {
+          agency_id?: string
+          batch_id?: string | null
+          bible_violation_count?: number
+          board_prompt_master?: string | null
+          campaign_mode?: string | null
+          client_profile_slug?: string | null
+          created_at?: string
+          created_by?: string | null
+          cta_mode?: string | null
+          diversity_score?: number | null
+          id?: string
+          is_favorite?: boolean | null
+          narrative_distance_score?: number | null
+          panels?: Json
+          problem_slug?: string
+          status?: string
+          story_family?: string
+          story_json?: Json
+          story_key?: string
+          summary?: string | null
+          technician_slug?: string
+          template_key?: string
+          title?: string
+          tone?: string | null
+          universe?: string
+          updated_at?: string
+          validation_is_valid?: boolean
+          validation_issue_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bd_story_stories_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bd_story_stories_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "bd_story_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blocks: {
         Row: {
           attachments: Json | null
@@ -8334,6 +8614,90 @@ export type Database = {
         }
         Relationships: []
       }
+      signature_configs: {
+        Row: {
+          agency_status: string | null
+          auto_mode: boolean | null
+          color_palette: Json | null
+          created_at: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          region: string | null
+          season: string | null
+          style: string | null
+          temporal_event: string | null
+          theme: string | null
+          typography: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          agency_status?: string | null
+          auto_mode?: boolean | null
+          color_palette?: Json | null
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          region?: string | null
+          season?: string | null
+          style?: string | null
+          temporal_event?: string | null
+          theme?: string | null
+          typography?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          agency_status?: string | null
+          auto_mode?: boolean | null
+          color_palette?: Json | null
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          region?: string | null
+          season?: string | null
+          style?: string | null
+          temporal_event?: string | null
+          theme?: string | null
+          typography?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      signature_templates_registry: {
+        Row: {
+          base_background: string | null
+          default_palette: Json | null
+          font_pair: string | null
+          id: string
+          layout_type: string | null
+          overlay_rules: Json | null
+          region: string | null
+        }
+        Insert: {
+          base_background?: string | null
+          default_palette?: Json | null
+          font_pair?: string | null
+          id: string
+          layout_type?: string | null
+          overlay_rules?: Json | null
+          region?: string | null
+        }
+        Update: {
+          base_background?: string | null
+          default_palette?: Json | null
+          font_pair?: string | null
+          id?: string
+          layout_type?: string | null
+          overlay_rules?: Json | null
+          region?: string | null
+        }
+        Relationships: []
+      }
       social_calendar_entries: {
         Row: {
           agency_id: string
@@ -8425,6 +8789,7 @@ export type Database = {
           universe: string | null
           updated_at: string
           visual_type: string
+          webhook_sent_at: string | null
         }
         Insert: {
           agency_id: string
@@ -8449,6 +8814,7 @@ export type Database = {
           universe?: string | null
           updated_at?: string
           visual_type: string
+          webhook_sent_at?: string | null
         }
         Update: {
           agency_id?: string
@@ -8473,6 +8839,7 @@ export type Database = {
           universe?: string | null
           updated_at?: string
           visual_type?: string
+          webhook_sent_at?: string | null
         }
         Relationships: [
           {
@@ -9887,6 +10254,57 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_signature_profiles: {
+        Row: {
+          agency_name: string
+          created_at: string | null
+          email: string
+          first_name: string
+          id: string
+          job_title: string | null
+          last_name: string
+          logo_url: string | null
+          phone: string
+          updated_at: string | null
+          user_id: string
+          validated: boolean | null
+          validated_at: string | null
+          website: string | null
+        }
+        Insert: {
+          agency_name: string
+          created_at?: string | null
+          email: string
+          first_name: string
+          id?: string
+          job_title?: string | null
+          last_name: string
+          logo_url?: string | null
+          phone: string
+          updated_at?: string | null
+          user_id: string
+          validated?: boolean | null
+          validated_at?: string | null
+          website?: string | null
+        }
+        Update: {
+          agency_name?: string
+          created_at?: string | null
+          email?: string
+          first_name?: string
+          id?: string
+          job_title?: string | null
+          last_name?: string
+          logo_url?: string | null
+          phone?: string
+          updated_at?: string | null
+          user_id?: string
+          validated?: boolean | null
+          validated_at?: string | null
+          website?: string | null
         }
         Relationships: []
       }

@@ -54,18 +54,34 @@ export function useGenerateSocialVisual() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ suggestionId }: { suggestionId: string }) => {
+    mutationFn: async ({ suggestionId, visualCustomization, editExisting }: {
+      suggestionId: string;
+      visualCustomization?: {
+        freePrompt?: string;
+        keywords?: string;
+        includeVan?: boolean;
+        universeOverride?: string;
+        tone?: string;
+        audience?: string;
+        imageModel?: string;
+      };
+      editExisting?: {
+        sourceStoragePath: string;
+        editInstruction: string;
+      };
+    }) => {
       if (!agencyId) throw new Error('Agence non identifiée');
 
       const { data, error } = await supabase.functions.invoke('social-visual-generate', {
         body: {
           suggestion_id: suggestionId,
           agency_id: agencyId,
+          ...(visualCustomization ? { visual_customization: visualCustomization } : {}),
+          ...(editExisting ? { edit_existing: editExisting } : {}),
         },
       });
 
       if (error) {
-        // supabase-js wraps non-2xx as FunctionsHttpError
         const status = (error as any)?.context?.status;
         if (status === 429) throw new Error('Trop de requêtes — attendez 1-2 minutes puis réessayez.');
         if (status === 402) throw new Error('Crédits IA insuffisants. Rechargez votre solde dans les paramètres.');
@@ -91,6 +107,57 @@ export function useGenerateSocialVisual() {
   });
 }
 
+// ─── Upload canvas-rendered visual to storage ──────────────
+export async function uploadCanvasVisual(
+  blob: Blob,
+  agencyId: string,
+  suggestionId: string,
+): Promise<{ storagePath: string; signedUrl: string | null } | null> {
+  const timestamp = Date.now();
+  const storagePath = `${agencyId}/${new Date().getFullYear()}/${String(new Date().getMonth() + 1).padStart(2, '0')}/${suggestionId}/canvas-team-${timestamp}.png`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('social-visuals')
+    .upload(storagePath, blob, { contentType: 'image/png', upsert: true });
+
+  if (uploadError) {
+    console.error('Canvas upload error:', uploadError);
+    return null;
+  }
+
+  // Insert asset record
+  const db = supabase as any;
+  const { error: insertError } = await db
+    .from('social_visual_assets')
+    .insert({
+      agency_id: agencyId,
+      suggestion_id: suggestionId,
+      visual_type: 'illustration_generee',
+      storage_path: storagePath,
+      mime_type: 'image/png',
+      width: 1080,
+      height: 1080,
+      theme_key: 'general',
+      generation_meta: {
+        mode: 'canvas_team',
+        source: 'canvas_brand_card',
+        composition_mode: 'composed',
+        generated_at: new Date().toISOString(),
+      },
+    });
+
+  if (insertError) {
+    console.error('Canvas asset insert error:', insertError);
+    return null;
+  }
+
+  const { data: signedData } = await supabase.storage
+    .from('social-visuals')
+    .createSignedUrl(storagePath, 3600);
+
+  return { storagePath, signedUrl: signedData?.signedUrl || null };
+}
+
 // ─── Download visual (signed URL) ───────────────────────────
 export async function downloadSocialVisual(storagePath: string, filename?: string) {
   const { data, error } = await supabase.storage
@@ -102,11 +169,21 @@ export async function downloadSocialVisual(storagePath: string, filename?: strin
     return;
   }
 
-  const link = document.createElement('a');
-  link.href = data.signedUrl;
-  link.download = filename || storagePath.split('/').pop() || 'visual.png';
-  link.click();
-  toast.success('Téléchargement lancé');
+  try {
+    const response = await fetch(data.signedUrl);
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename || storagePath.split('/').pop() || 'visual.png';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(blobUrl);
+    toast.success('Téléchargement lancé');
+  } catch {
+    toast.error('Erreur lors du téléchargement');
+  }
 }
 
 // ─── Get signed URL for display ─────────────────────────────

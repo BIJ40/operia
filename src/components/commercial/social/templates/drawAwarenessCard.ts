@@ -1,82 +1,61 @@
 /**
- * Template : awareness_card — Journée de sensibilisation 1080x1080
+ * Template : awareness_card — Créa journée sensibilisation 1080x1080
+ * V6 — Logo endossé + picto univers.
  */
-import { SIZE, truncateText, wrapText, getTheme, roundRect } from './canvasHelpers';
+import {
+  SIZE, loadImage, drawCover,
+  getTheme, HC, ZONES,
+  drawHCFooterBar, drawHCLogo,
+  drawGradientBg, drawCinematicOverlay, drawHookText, drawSubText,
+  drawCTAButton, drawUniversePill,
+} from './canvasHelpers';
+import { getLogoSrc, getPictoSrc } from './templateAssets';
 import type { SocialTemplatePayload } from '../SocialVisualCanvas';
 
 export async function drawAwarenessCard(ctx: CanvasRenderingContext2D, payload: SocialTemplatePayload) {
-  const theme = getTheme(payload.universe);
-  const title = truncateText(payload.title || 'Journée thématique', 80);
-  const caption = truncateText(payload.caption || '', 250);
-  const date = payload.date || '';
+  const theme = getTheme(payload.universe, payload.topicType);
+  const cta = payload.cta || 'Contactez-nous';
 
-  // Background — darker, editorial feel
-  ctx.fillStyle = '#1A1A2E';
-  ctx.fillRect(0, 0, SIZE, SIZE);
-
-  // Accent stripe left
-  ctx.fillStyle = theme.bg;
-  ctx.fillRect(0, 0, 16, SIZE);
-
-  // Accent circle top-right
-  ctx.fillStyle = theme.bg;
-  ctx.globalAlpha = 0.12;
-  ctx.beginPath();
-  ctx.arc(SIZE + 60, -60, 350, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.globalAlpha = 1;
-
-  // Date badge
-  if (date) {
+  // ─── ZONE 2: Background ───
+  if (payload.mediaUrl) {
+    try {
+      const img = await loadImage(payload.mediaUrl);
+      drawCover(ctx, img, 0, 0, SIZE, SIZE);
+      drawCinematicOverlay(ctx, 0.72);
+    } catch {
+      ctx.fillStyle = '#1A1A2E';
+      ctx.fillRect(0, 0, SIZE, SIZE);
+    }
+  } else {
+    drawGradientBg(ctx, '#1A1A2E', '#0D0D1A');
     ctx.fillStyle = theme.bg;
-    roundRect(ctx, 60, 60, ctx.measureText(date).width * 2.5 + 40, 50, 25);
+    ctx.globalAlpha = 0.10;
+    ctx.beginPath();
+    ctx.arc(SIZE + 40, -40, 340, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 24px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText(date, 80, 94);
+    ctx.globalAlpha = 1;
   }
 
-  // Large title
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 56px sans-serif';
-  ctx.textAlign = 'left';
-  const titleLines = wrapText(ctx, title, SIZE - 140);
-  let y = 220;
-  titleLines.slice(0, 3).forEach((line) => {
-    ctx.fillText(line, 60, y);
-    y += 68;
+  // ─── ZONE 1: Top bar ───
+  await drawHCLogo(ctx, getLogoSrc(), 'top-left');
+  await drawUniversePill(ctx, theme, 35, getPictoSrc(payload.universe));
+
+  // ─── ZONE 3: Hook + subtext ───
+  const { bottomY: hookBottom } = drawHookText(ctx, payload.hook || payload.title || 'Journée thématique', {
+    y: ZONES.TEXT_START,
+    align: 'left',
   });
 
-  // Divider line
-  y += 10;
-  ctx.fillStyle = theme.bg;
-  ctx.fillRect(60, y, 120, 4);
-  y += 40;
+  if (payload.caption) {
+    drawSubText(ctx, payload.caption, {
+      y: hookBottom + 14,
+      align: 'center',
+    });
+  }
 
-  // Caption
-  ctx.fillStyle = 'rgba(255,255,255,0.8)';
-  ctx.font = '28px sans-serif';
-  const capLines = wrapText(ctx, caption, SIZE - 140);
-  capLines.slice(0, 6).forEach((line) => {
-    ctx.fillText(line, 60, y);
-    y += 38;
-  });
+  // ─── ZONE 4: CTA ───
+  drawCTAButton(ctx, cta, { align: 'center' });
 
-  // Universe label
-  ctx.fillStyle = theme.labelColor;
-  ctx.font = '22px sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText(theme.label, 60, SIZE - 140);
-
-  // Bottom bar
-  const bottomY = SIZE - 80;
-  ctx.fillStyle = theme.accent;
-  ctx.fillRect(0, bottomY, SIZE, 80);
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 22px sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText('Prévention & Habitat', 60, bottomY + 48);
-  ctx.textAlign = 'right';
-  ctx.fillText('Help Confort', SIZE - 60, bottomY + 48);
+  // ─── ZONE 5: Footer ───
+  await drawHCFooterBar(ctx, theme, undefined, getPictoSrc(payload.universe));
 }

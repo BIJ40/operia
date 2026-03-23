@@ -4,7 +4,7 @@
  */
 
 import { lazy, Suspense, useState, useCallback, useMemo } from 'react';
-import { Building2, GitCompare, UserSearch, Radar, Camera, Share2, Loader2 } from 'lucide-react';
+import { Building2, GitCompare, UserSearch, Radar, Camera, Share2, Stamp, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, type PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
@@ -23,6 +23,7 @@ import { VeilleApporteursTab } from '@/prospection/pages/VeilleApporteursTab';
 
 const RealisationsPage = lazy(() => import('@/realisations/pages/RealisationsPage'));
 const SocialHubPage = lazy(() => import('@/pages/commercial/SocialHubPage'));
+const SignatureGeneratorPage = lazy(() => import('@/pages/commercial/SignatureGeneratorPage'));
 
 /** Mapping tab id → module key */
 const TAB_MODULE_MAP: Record<string, ModuleKey> = {
@@ -32,6 +33,7 @@ const TAB_MODULE_MAP: Record<string, ModuleKey> = {
   prospects: 'commercial.prospects',
   realisations: 'commercial.realisations',
   social: 'commercial.social',
+  signature: 'commercial.signature',
 };
 
 function LoadingFallback() {
@@ -67,8 +69,6 @@ function CommercialInner() {
   const { getShortLabel } = useModuleLabels();
   const { mode: navMode } = useNavigationMode();
 
-  // B: 'Suivi client', 'Comparateur', 'Veille', 'Prospects' = option labels of prospection module, not standalone modules
-  // A: 'Réalisations' = module commercial.realisations → use resolver
   const allTabs: PillTabConfig[] = useMemo(() => [
     { id: 'apporteurs', label: 'Suivi client', icon: Building2 },
     { id: 'comparateur', label: 'Comparateur', icon: GitCompare },
@@ -76,6 +76,7 @@ function CommercialInner() {
     { id: 'prospects', label: 'Prospects', icon: UserSearch },
     { id: 'realisations', label: getShortLabel('commercial.realisations', 'Réalisations'), icon: Camera },
     { id: 'social', label: getShortLabel('commercial.social', 'Social'), icon: Share2 },
+    { id: 'signature', label: getShortLabel('commercial.signature', 'Signatures'), icon: Stamp },
   ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {
@@ -137,6 +138,12 @@ function CommercialInner() {
         <TabsContent value="social" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
             <SocialHubPage />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="signature" className="mt-4">
+          <Suspense fallback={<LoadingFallback />}>
+            <SignatureGeneratorPage />
           </Suspense>
         </TabsContent>
       </Tabs>

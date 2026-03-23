@@ -1,6 +1,6 @@
 /**
  * SocialVisualCanvas — Moteur de rendu visuel social 1080×1080.
- * Utilise le templateResolver pour choisir le template et dessine sur un <canvas>.
+ * V3 — "Ad-Ready" : chaque visuel est une créa publicitaire prête à poster.
  */
 
 import { useRef, useEffect, useState, useCallback } from 'react';
@@ -10,6 +10,7 @@ import { drawRealisationCard } from './templates/drawRealisationCard';
 import { drawTipCard } from './templates/drawTipCard';
 import { drawAwarenessCard } from './templates/drawAwarenessCard';
 import { drawBrandCard } from './templates/drawBrandCard';
+import { drawEducationalCard } from './templates/drawEducationalCard';
 
 export interface SocialTemplatePayload {
   title: string;
@@ -18,6 +19,14 @@ export interface SocialTemplatePayload {
   platform?: string | null;
   date?: string;
   mediaUrl?: string | null;
+  /** Hook publicitaire — 3 à 6 mots, affiché GROS dans le visuel */
+  hook?: string | null;
+  /** Call-to-action — texte du bouton ("Demandez un devis", etc.) */
+  cta?: string | null;
+  /** Topic type — used to determine badge label for 'general' universe */
+  topicType?: string | null;
+  /** Show team avatars in visual (for brand/prospection posts) */
+  showTeam?: boolean;
 }
 
 interface SocialVisualCanvasProps {
@@ -31,6 +40,7 @@ const TEMPLATE_RENDERERS: Record<SocialTemplateId, (ctx: CanvasRenderingContext2
   tip_card: drawTipCard,
   awareness_card: drawAwarenessCard,
   brand_card: drawBrandCard,
+  educational_card: drawEducationalCard,
 };
 
 export function SocialVisualCanvas({ payload, templateId, onRendered }: SocialVisualCanvasProps) {

@@ -3,6 +3,7 @@ import {
   ShoppingCart, Users as UsersIcon, Search, Eye, TrendingUp,
   Users, Car, Handshake, CalendarDays, MessagesSquare,
   FolderOpen, Headphones, HelpCircle, Kanban, Shield, Building2,
+  Share2, Stamp,
   type LucideIcon,
 } from 'lucide-react';
 import type { UnifiedTab } from '@/components/unified/workspace/types';
@@ -59,6 +60,8 @@ export const HEADER_NAV_GROUPS: HeaderNavGroup[] = [
       { label: 'Veille', icon: Eye, tab: 'commercial', description: 'Veille concurrentielle', scope: 'commercial.veille', subTabKey: 'commercial_sub_tab', subTabValue: 'veille' },
       { label: 'Prospects', icon: ShoppingCart, tab: 'commercial', description: 'Suivi des prospects', scope: 'commercial.prospects', subTabKey: 'commercial_sub_tab', subTabValue: 'prospects' },
       { label: 'Réalisations', icon: TrendingUp, tab: 'commercial', description: 'Chiffres et bilans', scope: 'commercial.realisations', subTabKey: 'commercial_sub_tab', subTabValue: 'realisations' },
+      { label: 'Social', icon: Share2, tab: 'commercial', description: 'Réseaux sociaux', scope: 'commercial.social', subTabKey: 'commercial_sub_tab', subTabValue: 'social' },
+      { label: 'Signatures', icon: Stamp, tab: 'commercial', description: 'Signatures email', scope: 'commercial.signature', subTabKey: 'commercial_sub_tab', subTabValue: 'signature' },
     ],
   },
   {

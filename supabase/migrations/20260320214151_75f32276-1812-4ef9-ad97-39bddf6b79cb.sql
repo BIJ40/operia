@@ -1,0 +1,1 @@
+ALTER FUNCTION public.bd_story_updated_at() SET search_path = public;

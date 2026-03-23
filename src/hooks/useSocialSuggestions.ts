@@ -8,6 +8,7 @@
  * - variant non publiable si suggestion non approved
  */
 
+import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -56,13 +57,18 @@ export interface SocialVariant {
 }
 
 // ─── Fetch suggestions for a month ───────────────────────────
-export function useSocialSuggestions(monthKey: string) {
+export function useSocialSuggestions(
+  monthKey: string,
+  pollingEnabled = false,
+  onPollResult?: (count: number) => void,
+) {
   const { agencyId } = useAuth();
 
   return useQuery({
     queryKey: ['social-suggestions', agencyId, monthKey],
     enabled: !!agencyId && !!monthKey,
-    staleTime: 60_000,
+    staleTime: pollingEnabled ? 0 : 60_000,
+    refetchInterval: pollingEnabled ? 3_000 : false,
     queryFn: async (): Promise<SocialSuggestion[]> => {
       if (!agencyId) return [];
 
@@ -75,7 +81,13 @@ export function useSocialSuggestions(monthKey: string) {
         .order('suggestion_date', { ascending: true });
 
       if (error) throw error;
-      if (!suggestions?.length) return [];
+      if (!suggestions?.length) {
+        onPollResult?.(0);
+        return [];
+      }
+
+      // Notify polling observer
+      onPollResult?.(suggestions.length);
 
       // Fetch variants for all suggestions
       const suggestionIds = suggestions.map(s => s.id);
@@ -102,41 +114,89 @@ export function useSocialSuggestions(monthKey: string) {
 }
 
 // ─── Generate suggestions (invoke edge function) ─────────────
+// Fire-and-forget: starts the edge function, then polling detects completion.
 export function useGenerateSuggestions() {
   const { agencyId } = useAuth();
   const queryClient = useQueryClient();
+  const [isGenerating, setIsGenerating] = useState(false);
+  const prevCountRef = { current: -1 };
+  const stableCountRef = { current: 0 };
+  const expectedMinRef = { current: 0 };
 
-  return useMutation({
-    mutationFn: async ({ month, year, regenerateSingle, suggestionId }: {
+  // Call this from the polling query to auto-detect completion
+  const checkGenerationDone = useCallback((currentCount: number) => {
+    if (!isGenerating) return;
+    // Wait for at least a few suggestions before checking stability
+    if (currentCount < expectedMinRef.current && currentCount < 5) {
+      prevCountRef.current = currentCount;
+      stableCountRef.current = 0;
+      return;
+    }
+    if (currentCount === prevCountRef.current && currentCount > 0) {
+      stableCountRef.current += 1;
+      // Stable for 3 consecutive polls (9s) → generation done
+      if (stableCountRef.current >= 3) {
+        setIsGenerating(false);
+        stableCountRef.current = 0;
+        prevCountRef.current = -1;
+        toast.success(`${currentCount} suggestions générées`);
+      }
+    } else {
+      stableCountRef.current = 0;
+    }
+    prevCountRef.current = currentCount;
+  }, [isGenerating]);
+
+  const mutation = useMutation({
+    mutationFn: async ({ month, year, regenerateSingle, suggestionId, prompt, targetDates }: {
       month: number;
       year: number;
       regenerateSingle?: boolean;
       suggestionId?: string;
+      prompt?: { tone?: string; keywords?: string; audience?: string; length?: string; freePrompt?: string };
+      targetDates?: string[];
     }) => {
-      const { data, error } = await supabase.functions.invoke('social-suggest', {
+      // Reset polling detection
+      prevCountRef.current = -1;
+      stableCountRef.current = 0;
+      expectedMinRef.current = regenerateSingle ? 1 : (targetDates?.length || 20);
+      setIsGenerating(true);
+
+      // Fire-and-forget: don't await the full response
+      supabase.functions.invoke('social-suggest', {
         body: {
           agency_id: agencyId,
           month,
           year,
           regenerate_single: regenerateSingle || false,
           suggestion_id: suggestionId || null,
+          prompt: prompt || null,
+          target_dates: targetDates || null,
         },
+      }).then(({ data, error }) => {
+        if (error || data?.error) {
+          console.error('[social-suggest] Edge function error:', error || data?.error);
+          // If polling hasn't already stopped it, force stop
+          if (isGenerating) {
+            setIsGenerating(false);
+            const msg = error?.message || data?.error || 'Erreur lors de la génération';
+            toast.error(msg);
+          }
+        }
+        // If polling already detected completion, this is a no-op
+        const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+        queryClient.invalidateQueries({ queryKey: ['social-suggestions', agencyId, monthKey] });
+      }).catch(() => {
+        // Network error — polling will handle the generated suggestions
+        console.warn('[social-suggest] Network timeout — polling handles results');
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      return data;
-    },
-    onSuccess: (data) => {
-      const monthKey = data.month_key;
-      queryClient.invalidateQueries({ queryKey: ['social-suggestions', agencyId, monthKey] });
-      toast.success(`${data.generated_count} suggestions générées`);
-    },
-    onError: (err: any) => {
-      const msg = err?.message || 'Erreur lors de la génération';
-      toast.error(msg);
+      // Return immediately so the mutation resolves fast
+      return { month_key: `${year}-${String(month).padStart(2, '0')}` };
     },
   });
+
+  return { ...mutation, isGenerating, checkGenerationDone };
 }
 
 // ─── Update suggestion status ────────────────────────────────
@@ -164,10 +224,45 @@ export function useUpdateSuggestionStatus() {
           .eq('agency_id', agencyId);
       }
 
+      // If approved → check if suggestion_date is today or past → send webhook immediately
+      // If future date → webhook will be dispatched by daily cron job
+      if (status === 'approved' && agencyId) {
+        // Fetch the suggestion to get its date
+        const { data: suggData } = await supabase
+          .from('social_content_suggestions')
+          .select('suggestion_date')
+          .eq('id', id)
+          .single();
+
+        const suggestionDate = suggData?.suggestion_date;
+        const today = new Date().toISOString().slice(0, 10);
+        const isPastOrToday = !suggestionDate || suggestionDate <= today;
+
+        if (isPastOrToday) {
+          supabase.functions.invoke('dispatch-social-webhook', {
+            body: { suggestion_id: id, agency_id: agencyId },
+          }).then(({ error: whErr, data: whData }) => {
+            if (whErr || whData?.error) {
+              console.warn('[social-webhook] Dispatch PUBLI failed:', whErr?.message || whData?.error);
+              toast.error('Post approuvé mais l\'envoi webhook a échoué');
+            } else {
+              toast.success('Post approuvé & envoyé (PUBLI)');
+            }
+          }).catch((err: any) => {
+            console.warn('[social-webhook] Dispatch PUBLI error:', err);
+          });
+        } else {
+          toast.success(`Post approuvé — publication programmée le ${new Date(suggestionDate).toLocaleDateString('fr-FR')}`);
+        }
+      }
+
       return { id, status, monthKey };
     },
-    onSuccess: ({ monthKey }) => {
+    onSuccess: ({ status, monthKey }) => {
       queryClient.invalidateQueries({ queryKey: ['social-suggestions', agencyId, monthKey] });
+      if (status !== 'approved') {
+        // For approved, the toast is handled by the webhook callback above
+      }
     },
     onError: () => {
       toast.error('Erreur lors de la mise à jour');

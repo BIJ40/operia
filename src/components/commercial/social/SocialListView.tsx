@@ -19,17 +19,29 @@ const STATUS_COLUMNS = [
 ] as const;
 
 const TOPIC_BADGE_VARIANTS: Record<string, string> = {
-  awareness_day: 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300',
-  seasonal_tip: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-  realisation: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
-  local_branding: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
+  urgence: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+  prevention: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+  amelioration: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+  conseil: 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',
+  preuve: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
+  saisonnier: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
+  contre_exemple: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
+  pedagogique: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  prospection: 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300',
+  calendar: 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',
 };
 
 const TOPIC_LABELS: Record<string, string> = {
-  awareness_day: 'Journée',
-  seasonal_tip: 'Conseil',
-  realisation: 'Réalisation',
-  local_branding: 'Marque',
+  urgence: 'Urgence',
+  prevention: 'Prévention',
+  amelioration: 'Amélioration',
+  conseil: 'Conseil',
+  preuve: 'Preuve',
+  saisonnier: 'Saison',
+  contre_exemple: 'Contre-ex.',
+  pedagogique: 'Pédago.',
+  prospection: 'Prospection',
+  calendar: 'Calendaire',
 };
 
 interface SocialListViewProps {
@@ -93,7 +105,7 @@ export function SocialListView({ suggestions, selectedId, onSelect }: SocialList
                 <div className="flex items-center gap-1 flex-wrap">
                   <span className={cn(
                     'inline-flex text-[9px] px-1.5 py-0.5 rounded-full font-medium',
-                    TOPIC_BADGE_VARIANTS[s.topic_type] || TOPIC_BADGE_VARIANTS.seasonal_tip,
+                    TOPIC_BADGE_VARIANTS[s.topic_type] || TOPIC_BADGE_VARIANTS.conseil,
                   )}>
                     {TOPIC_LABELS[s.topic_type] || s.topic_type}
                   </span>

@@ -5,6 +5,8 @@ import "./index.css";
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { initSentry } from "./lib/sentry";
 import { verifySecurityHeaders, auditExposedSecrets } from "./lib/observability/security-headers-check";
+import { APP_VERSION } from './config/version';
+import { FORCE_UPDATE_SESSION_KEY, VERSION_CHECK_KEY } from './hooks/useVersionCheck';
 
 // Initialize Sentry before rendering
 initSentry();
@@ -35,19 +37,79 @@ try {
   // ignore
 }
 
-// Safe SW registration — skip entirely in sandboxed iframes (Lovable preview)
+const PREVIEW_BOOTSTRAP_PARAM = '__lovable_preview_refresh';
+const PREVIEW_BOOTSTRAP_TTL_MS = 15_000;
+
+// Safe SW registration — disabled in Lovable preview and sandboxed frames
+const isLovablePreview = () => {
+  try {
+    return window.location.hostname.startsWith('id-preview--') || window.self !== window.top;
+  } catch {
+    return window.location.hostname.startsWith('id-preview--');
+  }
+};
+
+const clearPreviewRuntimeCaches = async () => {
+  try {
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+    }
+
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+    }
+
+    sessionStorage.removeItem(FORCE_UPDATE_SESSION_KEY);
+    localStorage.removeItem(VERSION_CHECK_KEY);
+  } catch {
+    // ignore preview cleanup failures
+  }
+};
+
 const canRegisterSW = () => {
   try {
-    return !!navigator.serviceWorker;
+    return !!navigator.serviceWorker && window.isSecureContext && !isLovablePreview();
   } catch {
     return false;
   }
 };
 
+if (isLovablePreview()) {
+  try {
+    const previewUrl = new URL(window.location.href);
+    const refreshMarker = previewUrl.searchParams.get(PREVIEW_BOOTSTRAP_PARAM);
+    const refreshTimestamp = refreshMarker ? Number(refreshMarker.split(':').pop()) : Number.NaN;
+    const needsFreshBootstrap = !Number.isFinite(refreshTimestamp) || (Date.now() - refreshTimestamp) > PREVIEW_BOOTSTRAP_TTL_MS;
+
+    if (needsFreshBootstrap) {
+      previewUrl.searchParams.set(PREVIEW_BOOTSTRAP_PARAM, `${APP_VERSION}:${Date.now()}`);
+      void clearPreviewRuntimeCaches().finally(() => {
+        window.location.replace(previewUrl.toString());
+      });
+    } else {
+      void clearPreviewRuntimeCaches();
+    }
+  } catch {
+    void clearPreviewRuntimeCaches();
+  }
+}
+
 if (canRegisterSW()) {
   // @ts-ignore - virtual module provided by vite-plugin-pwa
   import('virtual:pwa-register').then(({ registerSW }: any) => {
-    registerSW({ immediate: true });
+    let updateSW: ((reloadPage?: boolean) => Promise<void>) | undefined;
+
+    updateSW = registerSW({
+      immediate: true,
+      onNeedRefresh() {
+        void updateSW?.(true);
+      },
+      onRegisteredSW(_swUrl: string, registration: ServiceWorkerRegistration | undefined) {
+        void registration?.update();
+      },
+    });
   }).catch(() => {
     // SW registration not available
   });
