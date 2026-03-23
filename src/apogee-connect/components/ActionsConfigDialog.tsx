@@ -113,6 +113,46 @@ export function ActionsConfigDialog() {
               <span className="text-sm text-muted-foreground">jours</span>
             </div>
           </div>
+
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="a-planifier-tvx" className="text-right text-sm">
+              À planifier travaux
+            </Label>
+            <div className="col-span-3 flex items-center gap-2">
+              <Input
+                id="a-planifier-tvx"
+                type="number"
+                min="1"
+                value={localConfig.delai_a_planifier_tvx}
+                onChange={(e) => setLocalConfig({
+                  ...localConfig,
+                  delai_a_planifier_tvx: parseInt(e.target.value) || 1
+                })}
+                className="w-24"
+              />
+              <span className="text-sm text-muted-foreground">jours</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="a-commander" className="text-right text-sm">
+              À commander
+            </Label>
+            <div className="col-span-3 flex items-center gap-2">
+              <Input
+                id="a-commander"
+                type="number"
+                min="1"
+                value={localConfig.delai_a_commander}
+                onChange={(e) => setLocalConfig({
+                  ...localConfig,
+                  delai_a_commander: parseInt(e.target.value) || 1
+                })}
+                className="w-24"
+              />
+              <span className="text-sm text-muted-foreground">jours</span>
+            </div>
+          </div>
         </div>
 
         <DialogFooter className="gap-2">

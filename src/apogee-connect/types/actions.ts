@@ -26,12 +26,16 @@ export type ActionsConfig = {
   delai_devis_a_faire: number;
   delai_a_facturer: number;
   delai_relance_technicien: number;
+  delai_a_planifier_tvx: number;
+  delai_a_commander: number;
 };
 
 export const DEFAULT_CONFIG: ActionsConfig = {
   delai_devis_a_faire: 2,
   delai_a_facturer: 3,
   delai_relance_technicien: 3,
+  delai_a_planifier_tvx: 7,
+  delai_a_commander: 7,
 };
 
 export const ACTION_LABELS: Record<ActionType, string> = {

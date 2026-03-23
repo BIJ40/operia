@@ -35,6 +35,8 @@ export function useActionsConfig() {
         delai_devis_a_faire: data.delai_devis_a_faire,
         delai_a_facturer: data.delai_a_facturer,
         delai_relance_technicien: data.delai_relance_technicien,
+        delai_a_planifier_tvx: (data as any).delai_a_planifier_tvx ?? DEFAULT_CONFIG.delai_a_planifier_tvx,
+        delai_a_commander: (data as any).delai_a_commander ?? DEFAULT_CONFIG.delai_a_commander,
       } as ActionsConfig;
     },
   });

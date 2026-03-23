@@ -312,6 +312,8 @@ export function buildActionsAMener(
     const daysInState = differenceInDays(today, dateDepart);
     
     if (isAPlanifier) {
+      const deadline = addDays(dateDepart, config.delai_a_planifier_tvx);
+      const isLate = deadline < today;
       aPlanifierCandidates.push({
         projectId: project.id,
         ref,
@@ -319,15 +321,17 @@ export function buildActionsAMener(
         statut: 'À planifier travaux',
         actionLabel: ACTION_LABELS.a_planifier_tvx,
         actionType: 'a_planifier_tvx',
-        deadline: dateDepart,
+        deadline,
         dateDepart,
-        isLate: false,
+        isLate,
         clientName,
-        daysLate: daysInState,
+        daysLate: isLate ? differenceInDays(today, deadline) : daysInState,
       });
     }
     
     if (isACommander) {
+      const deadline = addDays(dateDepart, config.delai_a_commander);
+      const isLate = deadline < today;
       aCommanderCandidates.push({
         projectId: project.id,
         ref,
@@ -335,11 +339,11 @@ export function buildActionsAMener(
         statut: 'À commander',
         actionLabel: ACTION_LABELS.a_commander,
         actionType: 'a_commander',
-        deadline: dateDepart,
+        deadline,
         dateDepart,
-        isLate: false,
+        isLate,
         clientName,
-        daysLate: daysInState,
+        daysLate: isLate ? differenceInDays(today, deadline) : daysInState,
       });
     }
   });
