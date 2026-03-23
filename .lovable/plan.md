@@ -1,77 +1,40 @@
 
 
-# Plan : Avatars équipe HelpConfort dans le Social Hub
+# Plan : Intégrer les avatars équipe dans la génération IA
 
-## Contexte
+## Problème
 
-Deux images de groupe montrent les collaborateurs HelpConfort en style illustration. L'objectif est d'isoler chaque visage, les stocker comme avatars individuels, et les intégrer dans les visuels Social Hub (notamment les posts "brand" / équipe).
+Les avatars team sont uniquement utilisés dans le rendu canvas client (`drawBrandCard`). L'edge function `social-visual-generate` ne les connaît pas.
 
-## Phase 1 — Extraction et stockage des avatars
+## Solution
 
-**Action** : Découper chaque visage des 2 images uploadées via le script AI (Gemini image edit) ou manuellement, puis les stocker dans `src/assets/team/`.
+Deux options, du plus simple au plus ambitieux :
 
-Noms proposés (à confirmer selon identification) :
+### Option A — Canvas-first pour les posts équipe (rapide)
 
-Image 1 (8 personnes) :
-- `team-femme-1.png` (brune, gauche)
-- `team-homme-1.png`
-- `team-homme-2.png` (chauve)
-- `team-homme-3.png` (barbe grise)
-- `team-homme-4.png` (brun, polo bleu HC)
-- `team-femme-2.png` (lunettes)
-- `team-homme-5.png` (barbe, costaud)
-- `team-homme-6.png` (chauve)
+Forcer le rendu **canvas** (avec avatars) comme visuel principal pour les posts `prospection` et `calendar`, au lieu de lancer la génération IA.
 
-Image 2 (7 personnes) :
-- `team-homme-7.png` à `team-homme-11.png`
-- `team-femme-3.png` (brune courte)
-- etc.
+- Modifier le flux de génération : si `topicType` est `prospection` ou `calendar`, utiliser le canvas `brand_card` avec `drawTeamGrid` comme visuel final
+- Le canvas est exporté en PNG et stocké dans le bucket comme un visuel normal
+- Avantage : les avatars apparaissent immédiatement, pas besoin de toucher l'edge function
 
-**Question clé** : Peux-tu nommer chaque personne (prénom/rôle) pour que les avatars soient correctement identifiés ? Sinon je les numérote.
+### Option B — Injecter les avatars dans le prompt IA (plus complexe)
 
-## Phase 2 — Registre des collaborateurs
+- Uploader les avatars dans le bucket `brand-assets`
+- Dans l'edge function, quand le post est de type équipe, inclure les URLs des avatars comme images de référence dans le prompt Gemini
+- Demander au modèle d'intégrer ces visages dans la scène
 
-Créer `src/data/teamMembers.ts` :
+Problème : la fidélité des visages via prompt IA est très faible. Les résultats seront aléatoires.
 
-```typescript
-export interface TeamMember {
-  slug: string;
-  displayName: string;
-  role: 'technicien' | 'secretaire' | 'commercial' | 'dirigeant';
-  avatarImport: string; // chemin vers l'asset
-  universe?: string[];  // univers métier si technicien
-}
-```
+### Recommandation
 
-## Phase 3 — Intégration dans le canvas Social
+**Option A** — c'est plus fiable et immédiat. Les avatars illustrés sont déjà de bonne qualité, le canvas `brand_card` les affiche bien en grille avec branding HC.
 
-Modifier le template `brand_card` (et potentiellement `awareness_card`) pour :
+## Fichiers impactés (Option A)
 
-- Quand un post est de type "équipe" / "brand" / "prospection" sans photo media, afficher les avatars de l'équipe dans la **ZONE 2** (100–620px) en grille ou ligne
-- Dessiner les portraits en cercle avec bordure HC bleue
-- Afficher le prénom sous chaque avatar
-- Garder le hook + CTA dans les zones 3-4 comme aujourd'hui
-
-## Phase 4 — Intégration dans la génération IA
-
-Modifier `social-visual-generate` pour :
-- Quand le topic_type est `prospection`, `calendar` (brand), ou quand le prompt mentionne l'équipe → inclure les URLs des avatars team dans le prompt de génération comme contexte visuel
-- Les avatars seraient uploadés dans le bucket `brand-assets` pour être accessibles par l'edge function
-
-## Fichiers impactés
-
-| Fichier | Action |
-|---------|--------|
-| `src/assets/team/*.png` | Nouveau — avatars individuels découpés |
-| `src/data/teamMembers.ts` | Nouveau — registre collaborateurs |
-| `src/components/commercial/social/templates/templateAssets.ts` | Ajouter exports avatars |
-| `src/components/commercial/social/templates/drawBrandCard.ts` | Ajouter rendu avatars équipe en ZONE 2 |
-| `src/components/commercial/social/SocialVisualCanvas.tsx` | Étendre payload avec `showTeam?: boolean` |
-| `supabase/functions/social-visual-generate/index.ts` | Référencer les avatars pour les posts équipe |
-
-## Prérequis avant implémentation
-
-Je dois d'abord découper les visages. Pour ça, j'ai besoin de savoir :
-- Peux-tu associer un prénom à chaque visage ? (ex: "la brune à gauche = Amandine")
-- Sinon, je les numérote et tu les renommes après
+| Fichier | Modification |
+|---|---|
+| `src/hooks/useSocialVisualAssets.ts` | Ajouter une fonction `generateCanvasVisual` qui exporte le canvas en PNG et l'uploade dans le bucket |
+| Composant de génération visuelle | Détecter `topicType === 'prospection' || 'calendar'` → utiliser le canvas au lieu de l'edge function |
+| `drawBrandCard.ts` | Déjà prêt (drawTeamGrid existe) |
 
