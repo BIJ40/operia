@@ -39,7 +39,7 @@ export function WorkspaceTabBar({
 }: WorkspaceTabBarProps) {
   return (
     <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm print:hidden">
-      <div className="container mx-auto max-w-7xl px-4 pt-3 pb-0">
+      <div className="container mx-auto max-w-app px-4 pt-3 pb-0">
         <div className="flex items-end justify-between gap-4">
           <TabsList className="h-auto p-0 bg-transparent flex flex-nowrap gap-1 items-end justify-start flex-1 overflow-x-auto scrollbar-hide">
             {tabs.map((tab) => {
@@ -75,7 +75,7 @@ export function WorkspaceTabBar({
           <ProfileMenu tabButtonClass={tabButtonClass} />
         </div>
       </div>
-      <div className="container mx-auto max-w-7xl px-4">
+      <div className="container mx-auto max-w-app px-4">
         <div className="border-t-2 border-primary/50 bg-background"></div>
       </div>
     </div>

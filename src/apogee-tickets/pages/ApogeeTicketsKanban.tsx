@@ -253,7 +253,7 @@ function ApogeeTicketsKanbanContent({ roleInfo, embedded = false }: { roleInfo: 
   };
 
   return (
-    <div className={embedded ? "space-y-4" : "container mx-auto max-w-7xl py-8 px-4 space-y-6"}>
+    <div className={embedded ? "space-y-4" : "container mx-auto max-w-app py-8 px-4 space-y-6"}>
       {!embedded && (
         <PageHeader 
           title="Ticketing - Kanban"

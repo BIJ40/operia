@@ -185,7 +185,7 @@ export default function DocTemplatesPage() {
   };
 
   return (
-    <div className="container mx-auto max-w-7xl py-6 space-y-6">
+    <div className="container mx-auto max-w-app py-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Gestion des Templates</h1>

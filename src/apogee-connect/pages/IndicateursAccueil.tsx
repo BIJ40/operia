@@ -85,7 +85,7 @@ export default function IndicateursAccueil() {
   }
 
   return (
-    <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 space-y-4 sm:space-y-6">
+    <div className="container mx-auto max-w-app px-4 sm:px-6 lg:px-8 py-6 space-y-4 sm:space-y-6">
       <PageHeader
         title="Indicateurs généraux"
         subtitle="Vue d'ensemble des KPI de votre agence"
