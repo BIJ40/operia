@@ -13,8 +13,6 @@
  */
 
 import { lazy, Suspense, useMemo, useState, useCallback, useEffect } from 'react';
-import { HelpiMascot } from '@/components/helpi/HelpiMascot';
-import { usePlanAccess } from '@/hooks/access-rights/usePlanAccess';
 import { useSearchParams } from 'react-router-dom';
 import { 
   Home, BarChart3, ShoppingCart, 
@@ -73,7 +71,7 @@ function UnifiedWorkspaceContent() {
   const effectiveAuth = useEffectiveAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [loginOpen, setLoginOpen] = useState(false);
-  const { hasRequiredPlan: hasProPlan } = usePlanAccess('PRO');
+  
   
   // Support URL ?tab=XXX pour navigation directe
   const urlTab = searchParams.get('tab') as UnifiedTab | null;
@@ -240,7 +238,7 @@ function UnifiedWorkspaceContent() {
         
         <ImageModal />
         <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
-        {hasProPlan && <HelpiMascot />}
+        
         
       </TooltipProvider>
     </AiUnifiedProvider>
