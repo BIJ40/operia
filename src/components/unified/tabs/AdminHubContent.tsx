@@ -22,6 +22,7 @@ import {
   ModulesMasterView,
 } from '@/components/admin/views';
 import { lazy, Suspense, useCallback, useEffect } from 'react';
+import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 import { useSessionState } from '@/hooks/useSessionState';
 import { usePersistedTab } from '@/hooks/usePersistedState';
@@ -129,7 +130,7 @@ export default function AdminHubContent() {
 
   return (
     <DomainAccentProvider accent="red">
-    <div className={navMode === 'header' ? 'pt-1 space-y-3' : 'py-6 space-y-6'}>
+    <div className={cn("container mx-auto max-w-7xl", navMode === 'header' ? 'pt-1 space-y-3' : 'py-6 space-y-6')}>
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         {/* Main Tabs - Style Pill or Switcher */}
         <PillTabsList tabs={ADMIN_MAIN_TABS} variant={navMode === 'header' ? 'switcher' : 'pill'} />

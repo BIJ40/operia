@@ -4,6 +4,7 @@
  */
 
 import { lazy, Suspense, useMemo } from 'react';
+import { cn } from '@/lib/utils';
 import { Users, Handshake, CalendarDays, Users2, Car, FileText, Shield, MapPin, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
@@ -72,7 +73,7 @@ export default function OrganisationTabContent() {
 
   return (
     <DomainAccentProvider accent="green">
-    <div className={navMode === 'header' ? 'pt-1 px-2 sm:px-4 space-y-3' : 'py-6 px-2 sm:px-4 space-y-4'}>
+    <div className={cn("container mx-auto max-w-7xl", navMode === 'header' ? 'pt-1 px-2 sm:px-4 space-y-3' : 'py-6 px-2 sm:px-4 space-y-4')}>
       <Tabs value={effectiveTab} onValueChange={(v) => setActiveTab(v as OrganisationSubTab)}>
         {navMode === 'tabs' && <PillTabsList tabs={visibleTabs} />}
 

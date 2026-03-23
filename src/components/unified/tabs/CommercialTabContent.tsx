@@ -4,6 +4,7 @@
  */
 
 import { lazy, Suspense, useState, useCallback, useMemo } from 'react';
+import { cn } from '@/lib/utils';
 import { Building2, GitCompare, UserSearch, Radar, Camera, Share2, Stamp, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, type PillTabConfig } from '@/components/ui/pill-tabs';
@@ -109,7 +110,7 @@ function CommercialInner() {
   }
 
   return (
-    <div className={navMode === 'header' ? 'pt-1 px-2 sm:px-4 space-y-3' : 'py-6 px-2 sm:px-4 space-y-4'}>
+    <div className={cn("container mx-auto max-w-7xl", navMode === 'header' ? 'pt-1 px-2 sm:px-4 space-y-3' : 'py-6 px-2 sm:px-4 space-y-4')}>
       <Tabs value={effectiveTab} onValueChange={setActiveTab}>
         {navMode === 'tabs' && <PillTabsList tabs={visibleTabs} />}
 

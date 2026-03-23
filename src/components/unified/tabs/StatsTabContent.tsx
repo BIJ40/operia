@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useMemo } from 'react';
+import { cn } from '@/lib/utils';
 import { useNavigationMode } from '@/hooks/useNavigationMode';
 import { Tv, LayoutDashboard, Building2, Users, Layers, AlertTriangle, CalendarClock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -80,7 +81,7 @@ export default function StatsTabContent() {
   };
 
   return (
-    <div className={navMode === 'header' ? 'pt-1 px-2 sm:px-4 space-y-3' : 'py-6 px-2 sm:px-4 space-y-4'}>
+    <div className={cn("container mx-auto max-w-7xl", navMode === 'header' ? 'pt-1 px-2 sm:px-4 space-y-3' : 'py-6 px-2 sm:px-4 space-y-4')}>
       <Tabs value={effectiveTab} onValueChange={(v) => setActiveTab(v as TabId)}>
         <PillTabsList tabs={visibleTabs} variant={navMode === 'header' ? 'switcher' : 'pill'} />
 
