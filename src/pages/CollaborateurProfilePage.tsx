@@ -60,7 +60,7 @@ export default function CollaborateurProfilePage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto max-w-7xl py-8 px-4">
       <CollaboratorProfile
         collaborator={collaborator}
         canManage={canManage}

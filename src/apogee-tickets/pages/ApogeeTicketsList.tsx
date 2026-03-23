@@ -281,7 +281,7 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
   const showingList = activeTabId === null && !isLateTabActive && !isNewTabActive && !isRepliesTabActive;
 
   return (
-    <div className={embedded ? "flex flex-col h-full" : "container mx-auto py-8 px-4 flex flex-col h-[calc(100vh-6rem)]"}>
+    <div className={embedded ? "flex flex-col h-full" : "container mx-auto max-w-7xl py-8 px-4 flex flex-col h-[calc(100vh-6rem)]"}>
       {!embedded && (
         <PageHeader 
           title="Ticketing - Liste"

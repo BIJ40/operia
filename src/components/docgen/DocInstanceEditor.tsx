@@ -242,7 +242,7 @@ export default function DocInstanceEditor({ instance, onBack }: DocInstanceEdito
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto max-w-7xl py-6 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={onBack}>
