@@ -61,3 +61,14 @@ export function getTeamAvatarSrcs(count: number = 6): string[] {
   const shuffled = [...TEAM_AVATARS].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, Math.min(count, TEAM_AVATARS.length));
 }
+
+/** Returns the team group photo source, or undefined if not available */
+export function getTeamGroupPhotoSrc(): string | undefined {
+  // Will be available once team-group-photo.png is added to assets
+  try {
+    // Dynamic import not possible at runtime, so we check if the asset was bundled
+    return undefined; // Placeholder until image is re-uploaded
+  } catch {
+    return undefined;
+  }
+}
