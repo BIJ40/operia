@@ -49,7 +49,7 @@ function FranchiseurAgencyProfileContent() {
 
   if (agencyLoading) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="container mx-auto max-w-7xl p-6">
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-muted rounded w-1/3"></div>
           <div className="h-48 bg-muted rounded"></div>
