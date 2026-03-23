@@ -248,7 +248,7 @@ export default function DiversTabContent() {
   }, [hasModule, mainTabsConfig]);
 
   return (
-    <div className="py-6 px-2 sm:px-4 space-y-6">
+    <div className="container mx-auto max-w-7xl py-6 px-2 sm:px-4 space-y-6">
       <Tabs value={activeMainTab} onValueChange={(v) => setActiveMainTab(v as OutilsMainTab)}>
         <PillTabsList tabs={visibleTabs} />
 

@@ -78,7 +78,7 @@ export default function GuidesTabContent() {
 
   return (
     <DomainAccentProvider accent="purple">
-    <div className={navMode === 'header' ? 'pt-1 px-2 sm:px-4 space-y-3' : 'py-3 px-2 sm:px-4 space-y-4'}>
+    <div className={cn("container mx-auto max-w-7xl", navMode === 'header' ? 'pt-1 px-2 sm:px-4 space-y-3' : 'py-3 px-2 sm:px-4 space-y-4')}>
       <Tabs value={activeGuide} onValueChange={(v) => setActiveGuide(v as GuideTab)}>
         <PillTabsList tabs={visibleTabs} variant={navMode === 'header' ? 'switcher' : 'pill'} />
 
