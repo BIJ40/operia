@@ -51,7 +51,7 @@ export default function CollaborateurProfilePage() {
 
   if (!collaborator) {
     return (
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto max-w-7xl py-8 px-4">
         <div className="text-center py-12">
           <p className="text-muted-foreground">Collaborateur non trouvé</p>
         </div>
