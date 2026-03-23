@@ -301,7 +301,7 @@ export default function AdminApogeeGuides() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 space-y-6">
+    <div className="container mx-auto max-w-7xl py-8 px-4 space-y-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Apogee Guides (RAG)</CardTitle>
