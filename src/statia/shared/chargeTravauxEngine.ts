@@ -13,6 +13,9 @@ const STATE_MAPPING: Record<string, string> = {
 // États éligibles (clés API)
 const ETATS_ELIGIBLES = new Set(['to_planify_tvx', 'devis_to_order', 'wait_fourn']);
 
+// États d'intervention à exclure (annulés ou à reprogrammer)
+const ITV_ETATS_EXCLUS = new Set(['to_reprog', 'canceled', 'cancelled', 'annulé', 'annule']);
+
 // États de devis éligibles (on exclut draft, rejected, canceled)
 const DEVIS_ETATS_EXCLUS = new Set(['draft', 'rejected', 'canceled']);
 
