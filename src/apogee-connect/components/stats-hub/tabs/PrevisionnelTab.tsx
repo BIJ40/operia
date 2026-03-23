@@ -728,6 +728,27 @@ export function PrevisionnelTab() {
           </Card>
         </motion.div>
       )}
+
+      {/* Dialog état détaillé */}
+      {selectedEtat && parEtat && (
+        <EtatDetailDialog
+          open={!!selectedEtat}
+          onOpenChange={(o) => { if (!o) setSelectedEtat(null); }}
+          etat={selectedEtat}
+          etatStats={parEtat.find(e => e.etat === selectedEtat) || { etat: selectedEtat, etatLabel: selectedEtat, nbDossiers: 0, totalHeuresRdv: 0, totalHeuresTech: 0, totalNbTechs: 0, devisHT: 0 }}
+          projets={parProjet || []}
+          universStats={parUnivers || []}
+          clients={rawData?.clients}
+        />
+      )}
+
+      {/* Dialog explorateur dossiers */}
+      <DossiersExplorerDialog
+        open={dossiersExplorerOpen}
+        onOpenChange={setDossiersExplorerOpen}
+        projets={parProjet || []}
+        clients={rawData?.clients}
+      />
     </motion.div>
   );
 }
