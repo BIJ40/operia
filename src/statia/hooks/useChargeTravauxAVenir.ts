@@ -79,7 +79,7 @@ export function useChargeTravauxAVenir() {
         services.getInterventions(agencySlug, undefined),
         services.getDevis(agencySlug, undefined),
         services.getFactures(agencySlug, undefined),
-        services.getClients(agencySlug, undefined),
+        services.getClients(agencySlug),
       ]);
       return { projects, interventions, devis, factures, clients };
     },
