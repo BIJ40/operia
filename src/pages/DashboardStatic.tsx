@@ -368,9 +368,9 @@ export default function DashboardStatic() {
                 animate={false}
                 className="h-full"
               >
-                <div className="flex items-center justify-center h-full min-h-[60px] text-muted-foreground text-xs">
-                  {/* Espace disponible */}
-                </div>
+                <HumanTitle titleKey="ca_univers" icon={PieChart} iconColor="text-warm-blue" size="sm" showSubtitle={false} />
+                <p className="text-[10px] text-muted-foreground -mt-1 mb-2 ml-6">Par tranche horaire</p>
+                <CAParTrancheHoraireWidget />
               </WarmCard>
             </motion.div>
           </div>
