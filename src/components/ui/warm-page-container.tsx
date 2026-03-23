@@ -44,7 +44,7 @@ export function WarmPageContainer({
   title,
   description,
   headerRight,
-  maxWidth = '6xl',
+  maxWidth = '7xl',
   padding = 'normal',
 }: WarmPageContainerProps) {
   return (
