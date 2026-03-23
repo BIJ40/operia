@@ -351,7 +351,6 @@ export default function DashboardStatic() {
             <motion.div variants={itemVariants}>
               <WarmCard
                 variant="blue"
-                icon={PieChart}
                 animate={false}
               >
                 <HumanTitle titleKey="ca_univers" icon={PieChart} iconColor="text-warm-blue" size="sm" />
