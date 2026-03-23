@@ -25,6 +25,8 @@ export interface SocialTemplatePayload {
   cta?: string | null;
   /** Topic type — used to determine badge label for 'general' universe */
   topicType?: string | null;
+  /** Show team avatars in visual (for brand/prospection posts) */
+  showTeam?: boolean;
 }
 
 interface SocialVisualCanvasProps {
