@@ -109,11 +109,8 @@ function usePlanifiedProjects(props: Omit<Props, 'open' | 'onOpenChange'>): Plan
   const { projects, interventions, devis, factures, periodStart, periodEnd } = props;
 
   return useMemo(() => {
-    const startMs = periodStart.getTime();
-    const endMs = periodEnd.getTime();
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const todayMs = today.getTime();
-    const isInRange = (d: Date) => { const t = d.getTime(); return t >= startMs && t <= endMs && t >= todayMs; };
 
     const facturedIds = new Set<number>();
     for (const f of factures) { const pid = getProjectId(f); if (pid != null) facturedIds.add(pid); }
