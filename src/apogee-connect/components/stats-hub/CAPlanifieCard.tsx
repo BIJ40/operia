@@ -105,9 +105,6 @@ export function CAPlanifieCard({ projects, interventions, devis, factures, clien
   }, [selectedMonth, selectedYear]);
 
   const { caPlanifie, caPlanifieDevisCount } = useMemo(() => {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const todayMs = today.getTime();
-
     const periodStartMonth = `${selectedPeriod.start.getFullYear()}-${String(selectedPeriod.start.getMonth() + 1).padStart(2, '0')}`;
     const periodEndMonth = `${selectedPeriod.end.getFullYear()}-${String(selectedPeriod.end.getMonth() + 1).padStart(2, '0')}`;
 
@@ -146,14 +143,13 @@ export function CAPlanifieCard({ projects, interventions, devis, factures, clien
 
       const projectInterventions = interventionsByProjectId.get(projectId) || [];
 
-      // Phase A : compter les interventions futures par mois
+      // Phase A : compter toutes les interventions du projet par mois de planification
       const monthCounts = new Map<string, number>();
       for (const itv of projectInterventions) {
         const d = getInterventionPlanningDate(itv);
-        if (d && d.getTime() >= todayMs) {
-          const mk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-          monthCounts.set(mk, (monthCounts.get(mk) || 0) + 1);
-        }
+        if (!d) continue;
+        const mk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        monthCounts.set(mk, (monthCounts.get(mk) || 0) + 1);
       }
 
       if (monthCounts.size === 0) continue;
