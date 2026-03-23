@@ -105,6 +105,11 @@ export function createApogeeDataServicesAdapter(): ApogeeDataServices {
       const data = await loadDataIfNeeded(agencySlug);
       return data.clients || [];
     },
+
+    getCreneaux: async (agencySlug: string) => {
+      const data = await loadDataIfNeeded(agencySlug);
+      return data.creneaux || [];
+    },
   };
 }
 

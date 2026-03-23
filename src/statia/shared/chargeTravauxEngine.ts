@@ -152,33 +152,37 @@ export interface ChargeTravauxResult {
 }
 
 /**
- * Indexe les interventions par projectId (gère string et number)
+ * Extrait un projectId robuste depuis les différentes formes renvoyées par Apogée
+ */
+function getProjectId(obj: any): number | null {
+  const raw = obj?.projectId ?? obj?.project_id ?? obj?.project?.id ?? obj?.refId ?? obj?.ref_id ?? obj?.dossierId ?? obj?.dossier_id ?? obj?.data?.projectId;
+  if (raw == null) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+function getInterventionId(obj: any): string | null {
+  const raw = obj?.id ?? obj?.interventionId ?? obj?.intervention_id ?? obj?.data?.interventionId;
+  if (raw == null) return null;
+  const s = String(raw).trim();
+  return s.length > 0 ? s : null;
+}
+
+/**
+ * Indexe les interventions par projectId (gère les alias projectId/refId/dossierId)
  */
 function groupInterventionsByProjectId(interventions: any[]): Map<number, any[]> {
   const map = new Map<number, any[]>();
 
   for (const itv of interventions) {
-    const pid = itv?.projectId ?? itv?.project_id;
-    if (!pid) continue;
+    const key = getProjectId(itv);
+    if (key == null) continue;
 
-    const key = Number(pid);
-    if (isNaN(key)) continue;
-    
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(itv);
   }
 
   return map;
-}
-
-/**
- * Vérifie si une intervention est de type TH/SAV/RT (exclue du CA prévisionnel uniquement)
- */
-const CA_EXCLUDED_ITV_TYPES = new Set(['th', 'sav', 'rt', 'releve technique', 'relevé technique', 'rdv technique', 'rdvtech']);
-function isExcludedFromCA(itv: any): boolean {
-  const t2 = String(itv?.type2 ?? itv?.data?.type2 ?? '').trim().toLowerCase();
-  const t1 = String(itv?.type ?? itv?.data?.type ?? '').trim().toLowerCase();
-  return CA_EXCLUDED_ITV_TYPES.has(t2) || CA_EXCLUDED_ITV_TYPES.has(t1) || t2.includes('sav') || t1.includes('sav');
 }
 
 /**
@@ -188,12 +192,9 @@ function groupDevisByProjectId(devis: any[]): Map<number, any[]> {
   const map = new Map<number, any[]>();
 
   for (const d of devis) {
-    const pid = d?.projectId ?? d?.project_id;
-    if (!pid) continue;
+    const key = getProjectId(d);
+    if (key == null) continue;
 
-    const key = Number(pid);
-    if (isNaN(key)) continue;
-    
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(d);
   }
@@ -202,51 +203,163 @@ function groupDevisByProjectId(devis: any[]): Map<number, any[]> {
 }
 
 /**
- * Extrait les heures depuis le chiffrage d'une intervention
- * Chemin: intervention.data.chiffrage.postes[].items[].data.nbHeures/nbTechs
- * Fallback: dFields avec EXPORT_generiqueSlug "nombre_de techniciens" / "temps_total d'intervention"
+ * Indexe les créneaux par interventionId
  */
-function extractHoursFromIntervention(intervention: any): { heuresRdv: number; heuresTech: number; nbTechs: number; blocksCount: number } {
+function groupCreneauxByInterventionId(creneaux: any[] = []): Map<string, any[]> {
+  const map = new Map<string, any[]>();
+
+  for (const c of creneaux) {
+    const key = getInterventionId(c);
+    if (!key) continue;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(c);
+  }
+
+  return map;
+}
+
+function getUserIds(raw: any): string[] {
+  const values = raw?.usersIds ?? raw?.userIds ?? raw?.data?.usersIds ?? raw?.data?.userIds ?? [];
+  if (!Array.isArray(values)) return [];
+  return values.map((v: any) => String(v)).filter(Boolean);
+}
+
+function getDurationHoursFromCreneaux(creneaux: any[] = []): number {
+  let hours = 0;
+
+  for (const c of creneaux) {
+    if (c?.debut && c?.fin) {
+      const [dh, dm] = String(c.debut).split(':').map(Number);
+      const [fh, fm] = String(c.fin).split(':').map(Number);
+      if ([dh, dm, fh, fm].every((n) => Number.isFinite(n))) {
+        const minutes = (fh * 60 + fm) - (dh * 60 + dm);
+        if (minutes > 0) hours += minutes / 60;
+        continue;
+      }
+    }
+
+    const durationMinutes =
+      parseNumericValue(c?.duree) ||
+      parseNumericValue(c?.dureeMinutes) ||
+      parseNumericValue(c?.duration);
+
+    if (durationMinutes > 0) {
+      hours += durationMinutes / 60;
+    }
+  }
+
+  return hours;
+}
+
+/**
+ * Extrait les heures depuis le planning réel d'abord (visites / créneaux), puis fallback sur le chiffrage
+ */
+function extractHoursFromIntervention(
+  intervention: any,
+  creneauxByInterventionId?: Map<string, any[]>
+): { heuresRdv: number; heuresTech: number; nbTechs: number; blocksCount: number } {
+  let totalHeures = 0;
+  let totalHeuresTech = 0;
+  let maxNbTechs = 0;
+
+  const visites = [
+    ...(Array.isArray(intervention?.visites) ? intervention.visites : []),
+    ...(Array.isArray(intervention?.data?.visites) ? intervention.data.visites : []),
+  ];
+
+  for (const visite of visites) {
+    const visiteUsers = getUserIds(visite);
+    const visiteCreneaux = Array.isArray(visite?.creneaux) ? visite.creneaux : [];
+    const durationHours =
+      getDurationHoursFromCreneaux(visiteCreneaux) ||
+      (parseNumericValue(visite?.duree) || parseNumericValue(visite?.dureeMinutes) || parseNumericValue(visite?.duration) || parseNumericValue(visite?.tempsPrevu)) / 60;
+
+    if (durationHours <= 0) continue;
+
+    const nbTechs = visiteUsers.length || parseNumericValue(visite?.nbTechs) || 1;
+    totalHeures += durationHours;
+    totalHeuresTech += durationHours * nbTechs;
+    maxNbTechs = Math.max(maxNbTechs, nbTechs);
+  }
+
+  if (totalHeures > 0) {
+    return {
+      heuresRdv: totalHeures,
+      heuresTech: totalHeuresTech,
+      nbTechs: maxNbTechs,
+      blocksCount: 0,
+    };
+  }
+
+  const interventionUsers = getUserIds(intervention);
+  const directDurationHours =
+    (parseNumericValue(intervention?.duree) || parseNumericValue(intervention?.tempsPrevu) || parseNumericValue(intervention?.duration)) / 60;
+
+  if (directDurationHours > 0) {
+    const nbTechs = interventionUsers.length || 1;
+    return {
+      heuresRdv: directDurationHours,
+      heuresTech: directDurationHours * nbTechs,
+      nbTechs,
+      blocksCount: 0,
+    };
+  }
+
+  const interventionId = getInterventionId(intervention);
+  const standaloneCreneaux = interventionId && creneauxByInterventionId ? (creneauxByInterventionId.get(interventionId) || []) : [];
+  const creneauxHours = getDurationHoursFromCreneaux(standaloneCreneaux);
+  if (creneauxHours > 0) {
+    const ids = new Set<string>();
+    for (const c of standaloneCreneaux) {
+      for (const uid of getUserIds(c)) ids.add(uid);
+    }
+    const nbTechs = ids.size || 1;
+    return {
+      heuresRdv: creneauxHours,
+      heuresTech: creneauxHours * nbTechs,
+      nbTechs,
+      blocksCount: 0,
+    };
+  }
+
   const chiffrage = intervention?.data?.chiffrage;
   if (!chiffrage?.postes || !Array.isArray(chiffrage.postes)) {
     return { heuresRdv: 0, heuresTech: 0, nbTechs: 0, blocksCount: 0 };
   }
 
-  let totalHeures = 0;
-  let totalHeuresTech = 0;
-  let maxNbTechs = 0;
+  let fallbackHeures = 0;
+  let fallbackHeuresTech = 0;
+  let fallbackMaxNbTechs = 0;
   let blocksCount = 0;
 
   for (const poste of chiffrage.postes) {
     const items = poste?.items || [];
-    
+
     for (const item of items) {
       if (!item?.IS_BLOCK || item?.slug !== 'chiffrage') continue;
-      
+
       const data = item.data || {};
       blocksCount++;
 
-      // 1) Lecture directe nbHeures / nbTechs
       let nbHeures = parseNumericValue(data.nbHeures);
       let nbTechs = parseNumericValue(data.nbTechs);
 
-      // 2) Fallback: chercher dans les dFields si valeurs vides ou nulles
       if (nbHeures === 0 || nbTechs === 0) {
         const subItems = data.subItems || [];
-        
+
         for (const sub of subItems) {
           if (!sub?.IS_BLOCK || sub?.slug !== 'dfields') continue;
-          
+
           const dFields = sub.data?.dFields || [];
-          
+
           for (const df of dFields) {
             const slug = String(df.EXPORT_generiqueSlug || '').toLowerCase();
-            
+
             if (slug.includes('nombre_de techniciens') || slug.includes('nombre_de_techniciens')) {
               const val = parseNumericValue(df.value);
               if (val > 0 && nbTechs === 0) nbTechs = val;
             }
-            
+
             if (slug.includes("temps_total d'intervention") || slug.includes("temps_total_d'intervention") || slug.includes('temps_total')) {
               const val = parseNumericValue(df.value);
               if (val > 0 && nbHeures === 0) nbHeures = val;
@@ -255,17 +368,16 @@ function extractHoursFromIntervention(intervention: any): { heuresRdv: number; h
         }
       }
 
-      // Validation finale
       if (nbHeures <= 0) continue;
       if (nbTechs <= 0) nbTechs = 1;
 
-      totalHeures += nbHeures;
-      totalHeuresTech += nbHeures * nbTechs; // 2 tech × 6h = 12h main d'œuvre
-      maxNbTechs = Math.max(maxNbTechs, nbTechs);
+      fallbackHeures += nbHeures;
+      fallbackHeuresTech += nbHeures * nbTechs;
+      fallbackMaxNbTechs = Math.max(fallbackMaxNbTechs, nbTechs);
     }
   }
 
-  return { heuresRdv: totalHeures, heuresTech: totalHeuresTech, nbTechs: maxNbTechs, blocksCount };
+  return { heuresRdv: fallbackHeures, heuresTech: fallbackHeuresTech, nbTechs: fallbackMaxNbTechs, blocksCount };
 }
 
 /**
@@ -377,11 +489,13 @@ function calculateCAPlanifieForProject(projectDevis: any[]): number {
 export function computeChargeTravauxAvenirParUnivers(
   projects: any[],
   interventions: any[],
-  devis: any[] = []
+  devis: any[] = [],
+  creneaux: any[] = []
 ): ChargeTravauxResult {
-  // Index des interventions et devis par projectId
+  // Index des interventions, devis et créneaux
   const byProjectId = groupInterventionsByProjectId(interventions);
   const devisByProjectId = groupDevisByProjectId(devis);
+  const creneauxByInterventionId = groupCreneauxByInterventionId(creneaux);
 
   const debug = {
     totalProjects: projects.length,
@@ -444,7 +558,7 @@ export function computeChargeTravauxAvenirParUnivers(
     let maxNbTechs = 0;
 
     for (const itv of intervs) {
-      const { heuresRdv: hRdv, heuresTech: hTech, nbTechs: nTech, blocksCount } = extractHoursFromIntervention(itv);
+      const { heuresRdv: hRdv, heuresTech: hTech, nbTechs: nTech, blocksCount } = extractHoursFromIntervention(itv, creneauxByInterventionId);
       heuresRdv += hRdv;
       heuresTech += hTech;
       maxNbTechs = Math.max(maxNbTechs, nTech);
@@ -722,7 +836,7 @@ export function computeChargeTravauxAvenirParUnivers(
   for (const p of parProjet) {
     const intervs = byProjectId.get(Number(p.projectId)) || [];
     for (const itv of intervs) {
-      const { heuresTech: hTech } = extractHoursFromIntervention(itv);
+      const { heuresTech: hTech } = extractHoursFromIntervention(itv, creneauxByInterventionId);
       if (hTech === 0) continue;
       const ids: string[] = [];
       const uid = itv?.userId ?? itv?.user_id;
@@ -784,7 +898,7 @@ export function computeChargeTravauxAvenirParUnivers(
     // Try to place by real intervention date first
     for (const itv of intervs) {
       const dates = getInterventionDates(itv);
-      const { heuresTech: hTech } = extractHoursFromIntervention(itv);
+      const { heuresTech: hTech } = extractHoursFromIntervention(itv, creneauxByInterventionId);
       for (const d of dates) {
         const dMs = d.getTime();
         if (dMs < currentMonday.getTime() || dMs >= weekEndMs.getTime()) continue;

@@ -86,14 +86,15 @@ export function useChargeTravauxAVenir() {
     queryFn: async () => {
       if (!agencySlug) return null;
       const services = getGlobalApogeeDataServices();
-      const [projects, interventions, devis, factures, clients] = await Promise.all([
+      const [projects, interventions, devis, factures, clients, creneaux] = await Promise.all([
         services.getProjects(agencySlug, undefined),
         services.getInterventions(agencySlug, undefined),
         services.getDevis(agencySlug, undefined),
         services.getFactures(agencySlug, undefined),
         services.getClients(agencySlug),
+        services.getCreneaux?.(agencySlug, undefined) ?? Promise.resolve([]),
       ]);
-      return { projects, interventions, devis, factures, clients };
+      return { projects, interventions, devis, factures, clients, creneaux };
     },
     enabled: isAgencyReady && !!agencySlug,
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -102,8 +103,8 @@ export function useChargeTravauxAVenir() {
   // Calculer les stats globales à partir des données brutes
   const globalStats = useMemo(() => {
     if (!globalQuery.data) return null;
-    const { projects, interventions, devis } = globalQuery.data;
-    return computeChargeTravauxAvenirParUnivers(projects, interventions, devis);
+    const { projects, interventions, devis, creneaux } = globalQuery.data;
+    return computeChargeTravauxAvenirParUnivers(projects, interventions, devis, creneaux);
   }, [globalQuery.data]);
 
   // Calculer le CA Planifié filtré par période (côté client, pas de refetch)
