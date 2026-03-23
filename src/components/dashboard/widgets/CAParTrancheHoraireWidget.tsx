@@ -1,5 +1,6 @@
 /**
- * Widget CA par Tranche Horaire — Camembert simple
+ * Widget CA par Jour de la Semaine — Camembert
+ * Montre la répartition du CA selon les jours de la semaine
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -10,17 +11,23 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 const COLORS = [
-  'hsl(210, 70%, 55%)',  // Matin
-  'hsl(150, 55%, 45%)',  // Midi
-  'hsl(35, 80%, 55%)',   // Après-midi
-  'hsl(280, 50%, 55%)',  // Soir
+  'hsl(210, 70%, 55%)',   // Lundi
+  'hsl(150, 55%, 45%)',   // Mardi
+  'hsl(35, 80%, 55%)',    // Mercredi
+  'hsl(280, 50%, 55%)',   // Jeudi
+  'hsl(350, 65%, 55%)',   // Vendredi
+  'hsl(180, 50%, 45%)',   // Samedi
+  'hsl(45, 70%, 50%)',    // Dimanche
 ];
 
-const TRANCHES = [
-  { key: 'matin', label: 'Matin', min: 6, max: 12 },
-  { key: 'midi', label: '12h-14h', min: 12, max: 14 },
-  { key: 'aprem', label: 'Après-midi', min: 14, max: 18 },
-  { key: 'soir', label: 'Après 18h', min: 18, max: 24 },
+const JOURS = [
+  { key: 'lun', label: 'Lundi', dayIndex: 1 },
+  { key: 'mar', label: 'Mardi', dayIndex: 2 },
+  { key: 'mer', label: 'Mercredi', dayIndex: 3 },
+  { key: 'jeu', label: 'Jeudi', dayIndex: 4 },
+  { key: 'ven', label: 'Vendredi', dayIndex: 5 },
+  { key: 'sam', label: 'Samedi', dayIndex: 6 },
+  { key: 'dim', label: 'Dimanche', dayIndex: 0 },
 ];
 
 export function CAParTrancheHoraireWidget() {
@@ -29,7 +36,7 @@ export function CAParTrancheHoraireWidget() {
   const { dateRange } = useDashboardPeriod();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['widget-ca-tranche-horaire', agencySlug, dateRange.start.toISOString(), dateRange.end.toISOString()],
+    queryKey: ['widget-ca-jour-semaine', agencySlug, dateRange.start.toISOString(), dateRange.end.toISOString()],
     queryFn: async () => {
       if (!agencySlug) return null;
 
@@ -39,27 +46,27 @@ export function CAParTrancheHoraireWidget() {
       const startTime = dateRange.start.getTime();
       const endTime = dateRange.end.getTime();
 
-      const result = TRANCHES.map(t => ({ ...t, ca: 0 }));
+      const result = JOURS.map(j => ({ ...j, ca: 0 }));
 
       for (const facture of factures) {
         const dateStr = facture.date;
         if (!dateStr) continue;
         const d = new Date(dateStr);
+        if (isNaN(d.getTime())) continue;
         if (d.getTime() < startTime || d.getTime() > endTime) continue;
 
-        const amount = Math.abs(typeof facture.totalHT === 'number' ? facture.totalHT : parseFloat(String(facture.totalHT || '0')));
+        // Exclure avoirs (traités en négatif)
+        const type = (facture.typeFacture || facture.state || '').toString().toLowerCase();
+        const raw = typeof facture.totalHT === 'number' ? facture.totalHT : parseFloat(String(facture.totalHT || '0'));
+        const amount = type === 'avoir' ? -Math.abs(raw) : Math.abs(raw);
         if (amount === 0) continue;
 
-        const hour = d.getHours();
-        for (const tranche of result) {
-          if (hour >= tranche.min && hour < tranche.max) {
-            tranche.ca += amount;
-            break;
-          }
-        }
+        const dayIndex = d.getDay();
+        const jour = result.find(j => j.dayIndex === dayIndex);
+        if (jour) jour.ca += amount;
       }
 
-      return result.filter(t => t.ca > 0);
+      return result.filter(j => j.ca > 0);
     },
     enabled: !!agencySlug,
     staleTime: 5 * 60 * 1000,
@@ -72,13 +79,16 @@ export function CAParTrancheHoraireWidget() {
   if (!data || data.length === 0) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground text-xs">
-        Aucune donnée
+        Aucune donnée sur la période
       </div>
     );
   }
 
   const formatCurrency = (v: number) =>
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v);
+
+  // Map filtered data back to correct colors
+  const getColorIndex = (key: string) => JOURS.findIndex(j => j.key === key);
 
   return (
     <div className="flex flex-col items-center">
@@ -95,8 +105,8 @@ export function CAParTrancheHoraireWidget() {
             paddingAngle={3}
             strokeWidth={0}
           >
-            {data.map((_, i) => (
-              <Cell key={i} fill={COLORS[i % COLORS.length]} />
+            {data.map((entry) => (
+              <Cell key={entry.key} fill={COLORS[getColorIndex(entry.key)]} />
             ))}
           </Pie>
           <Tooltip
@@ -106,10 +116,10 @@ export function CAParTrancheHoraireWidget() {
         </PieChart>
       </ResponsiveContainer>
       <div className="flex flex-wrap justify-center gap-x-3 gap-y-0.5 mt-1">
-        {data.map((t, i) => (
-          <div key={t.key} className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-            <span className="text-[10px] text-muted-foreground">{t.label}</span>
+        {data.map((j) => (
+          <div key={j.key} className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[getColorIndex(j.key)] }} />
+            <span className="text-[10px] text-muted-foreground">{j.label}</span>
           </div>
         ))}
       </div>
