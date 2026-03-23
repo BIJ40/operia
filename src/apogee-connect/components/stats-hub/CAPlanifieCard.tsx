@@ -224,8 +224,8 @@ export function CAPlanifieCard({ projects, interventions, devis, factures, clien
                 </div>
                 <div className="px-4 pb-4">
                   <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground mb-1">
-                    <Button variant="ghost" size="icon" className="h-4 w-4 p-0" onClick={handlePrevMonth} disabled={!canGoPrev}>
-                      <ChevronLeft className={`h-2.5 w-2.5 ${!canGoPrev ? 'opacity-30' : ''}`} />
+                    <Button variant="ghost" size="icon" className="h-4 w-4 p-0" onClick={handlePrevMonth}>
+                      <ChevronLeft className="h-2.5 w-2.5" />
                     </Button>
                     <span className="font-medium">{MONTHS[selectedMonth].label.slice(0, 3)}. {selectedYear}</span>
                     <Button variant="ghost" size="icon" className="h-4 w-4 p-0" onClick={handleNextMonth}>
