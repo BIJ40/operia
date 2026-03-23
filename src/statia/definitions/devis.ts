@@ -773,7 +773,7 @@ export const caPlanifie: StatDefinition = {
       const pid = getProjectId(itv);
       if (!pid) continue;
       
-      const dateStr = itv.date ?? itv.start ?? itv.dateDebut ?? itv.data?.date;
+      const dateStr = itv.date ?? itv.start ?? itv.dateDebut ?? itv.dateReelle ?? itv.data?.date;
       const d = parseDate(dateStr);
       if (!d) continue;
       
