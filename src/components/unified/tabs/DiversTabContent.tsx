@@ -236,7 +236,7 @@ export default function DiversTabContent() {
     { id: 'parc', label: getShortLabel('organisation.parc', 'Parc'), icon: Car, accent: 'green', requiresModule: 'organisation.parc' },
     { id: 'performance', label: 'Performance', icon: Activity, accent: 'pink', requiresModule: 'pilotage.agence' },
     { id: 'prospection', label: getShortLabel('prospection', 'Commercial'), icon: Target, accent: 'orange', requiresModule: 'prospection' },
-    { id: 'devis-acceptes', label: 'Devis acceptés', icon: FileCheck, accent: 'teal', requiresModule: 'pilotage.agence' },
+    
     { id: 'anomalies', label: 'Incohérences', icon: AlertTriangle, accent: 'pink', requiresModule: 'pilotage.agence' },
   ], [getShortLabel]);
 
