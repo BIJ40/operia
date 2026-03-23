@@ -121,8 +121,6 @@ function usePlanifiedProjects(props: Omit<Props, 'open' | 'onOpenChange'>): Plan
     const devisByPid = new Map<number, any[]>();
     for (const d of devis) { const pid = getProjectId(d); if (pid != null) { if (!devisByPid.has(pid)) devisByPid.set(pid, []); devisByPid.get(pid)!.push(d); } }
 
-    // Règle métier "mois dominant" : compter 100% du CA sur le mois
-    // qui contient le plus d'interventions (tie-break = premier mois chrono)
     const periodStartMonth = `${periodStart.getFullYear()}-${String(periodStart.getMonth() + 1).padStart(2, '0')}`;
     const periodEndMonth = `${periodEnd.getFullYear()}-${String(periodEnd.getMonth() + 1).padStart(2, '0')}`;
 
@@ -136,7 +134,7 @@ function usePlanifiedProjects(props: Omit<Props, 'open' | 'onOpenChange'>): Plan
       const projectItvs = itvByPid.get(projectId) || [];
       let totalHours = 0;
 
-      // Phase A : compter les interventions par mois pour ce projet
+      // Phase A : compter les interventions futures par mois
       const monthCounts = new Map<string, { count: number; firstDate: Date }>();
       for (const itv of projectItvs) {
         const d = getInterventionPlanningDate(itv);
@@ -156,7 +154,7 @@ function usePlanifiedProjects(props: Omit<Props, 'open' | 'onOpenChange'>): Plan
 
       if (monthCounts.size === 0) continue;
 
-      // Phase B : déterminer le mois dominant
+      // Phase B : mois dominant
       let dominantMonth = '';
       let dominantCount = 0;
       let bestDate: Date | null = null;
@@ -172,21 +170,28 @@ function usePlanifiedProjects(props: Omit<Props, 'open' | 'onOpenChange'>): Plan
       if (!dominantMonth || dominantMonth < periodStartMonth || dominantMonth > periodEndMonth) continue;
       if (!bestDate) continue;
 
+      // Phase D : ne retenir que les projets avec devis accepté (cohérence tuile)
       const projectDevis = devisByPid.get(projectId) || [];
       let devisHT = 0;
+      let hasAcceptedDevis = false;
       for (const d of projectDevis) {
         if (!isDevisToOrder(d)) continue;
         devisHT = parseNum(d.data?.totalHT) || parseNum(d.totalHT) || parseNum(d.amount) || 0;
-        if (devisHT > 0) break;
+        if (devisHT > 0) { hasAcceptedDevis = true; break; }
       }
+
+      if (!hasAcceptedDevis) continue;
 
       const universes = (project?.data?.universes as string[]) || ['Non classé'];
       const state = project?.data?.state ?? project?.state ?? '';
+      const clientName = project?.data?.clientName ?? project?.data?.client_name ?? project?.data?.nom ?? '';
+      const ville = project?.data?.ville ?? project?.data?.city ?? '';
 
       results.push({
         projectId,
         reference: project?.data?.reference || project?.reference || `#${projectId}`,
-        label: project?.data?.label || project?.label || '',
+        label: clientName || project?.data?.label || project?.label || '',
+        ville,
         univers: normalizeUnivers(universes[0]),
         etatWorkflow: state,
         etatWorkflowLabel: state === 'to_planify_tvx' ? 'À planifier' : state === 'devis_to_order' ? 'À commander' : state === 'wait_fourn' ? 'Att. fourn.' : state,
