@@ -107,6 +107,7 @@ export function HelpiMascot() {
       const { data, error } = await supabase.functions.invoke('unified-search', {
         body: {
           query: q,
+          forceStats: true,
           conversationHistory: history.length > 0 ? history : undefined,
         },
       });
