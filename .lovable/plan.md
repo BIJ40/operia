@@ -1,36 +1,92 @@
 
 
-# Plan : Ajouter la photo d'équipe comme asset Social Hub
+# Plan : Mascotte Helpi — Assistant stats intelligent (Plan PRO)
 
-## Contexte
+## Concept
 
-L'utilisateur fournit une photo de groupe illustrée (lui en blanc + une partie de l'équipe HelpConfort). Cette image doit être disponible comme visuel utilisable dans les publications Social Hub, notamment pour les posts "équipe" / "brand" / "prospection".
+Un personnage "Helpi" (mascotte illustrée HC) affiché en bas à droite de la page d'accueil Indicateurs, uniquement pour les agences au plan PRO (ou override). Au clic, une bulle de BD s'ouvre pour saisir une question. La réponse apparait dans une seconde bulle en dessous, style bande dessinée.
 
-## Actions
+## Controle d'accès
 
-### 1. Copier l'image dans les assets
+- Utiliser `usePlanAccess('PRO')` pour conditionner l'affichage
+- Les N5+ (bypass) voient aussi la mascotte
+- Si plan insuffisant : mascotte invisible (pas grisée, absente)
 
-Stocker l'image dans `src/assets/team/team-group-photo.png` aux côtés des avatars individuels existants.
+## Fichiers a creer
 
-### 2. Exporter dans `templateAssets.ts`
+| Fichier | Description |
+|---|---|
+| `src/assets/helpi/helpi-mascot.svg` | Mascotte SVG inline — personnage sympathique style cartoon aux couleurs HC (bleu/orange), casquette ou casque de chantier, souriant |
+| `src/components/helpi/HelpiMascot.tsx` | Composant principal : mascotte flottante + bulles BD |
+| `src/components/helpi/HelpiChatBubble.tsx` | Bulle de saisie (question) + bulle de réponse, style BD avec queues de bulle |
 
-Ajouter un export `getTeamGroupPhotoSrc()` dans `src/components/commercial/social/templates/templateAssets.ts` pour rendre l'image accessible aux templates canvas.
+## Architecture du composant HelpiMascot
 
-### 3. Intégrer dans `drawBrandCard.ts`
+```text
+┌─────────────────────────────┐
+│  Bulle réponse (BD style)   │  ← apparait après réponse
+│  "Vous avez 116 dossiers…"  │
+└──────────┬──────────────────┘
+           │ (queue de bulle)
+┌──────────┴──────────────────┐
+│  Bulle question (input)     │  ← apparait au clic mascotte
+│  "Posez votre question..."  │
+└──────────┬──────────────────┘
+           │ (queue de bulle)
+       ┌───┴───┐
+       │ HELPI │  ← mascotte cliquable, fixed bottom-right
+       │  😊   │
+       └───────┘
+```
 
-Modifier le template `brand_card` pour utiliser cette photo de groupe comme alternative visuelle :
-- Quand `showTeam` est activé (posts prospection/calendar), alterner entre la grille d'avatars individuels et cette photo de groupe
-- Ou utiliser cette photo comme fond/illustration principale dans la ZONE 2 du canvas
+- **Position** : `fixed bottom-6 right-6 z-50`
+- **Clic mascotte** → toggle bulle de saisie (input + send)
+- **Envoi question** → appel edge function `unified-search` avec la query
+- **Réponse** → affichée dans bulle BD au-dessus, rendue en markdown
+- **Historique** : afficher les 3-4 derniers échanges max (bulles empilées)
+- **Fermeture** : clic hors des bulles ou bouton X
 
-### 4. Rendre disponible comme média dans le Social Hub
+## Intégration
 
-Référencer cette image dans les options de médias disponibles pour les publications, afin qu'elle puisse être sélectionnée manuellement lors de la création d'un post.
+Dans `IndicateursAccueil.tsx`, ajouter en fin de page :
+
+```tsx
+import { HelpiMascot } from '@/components/helpi/HelpiMascot';
+import { usePlanAccess } from '@/hooks/access-rights/usePlanAccess';
+
+// Dans le composant :
+const { hasRequiredPlan } = usePlanAccess('PRO');
+
+// En fin de JSX :
+{hasRequiredPlan && <HelpiMascot />}
+```
+
+## Style bulles BD
+
+- Fond blanc, border-radius arrondi, ombre douce
+- Queue de bulle triangulaire pointant vers le bas (question) ou vers la mascotte (réponse)
+- Animation d'apparition (scale + fade)
+- Bulle question : input + bouton send inline
+- Bulle réponse : markdown rendu, texte qui s'affiche progressivement (typewriter optionnel)
+
+## Appel backend
+
+Réutiliser l'edge function `unified-search` existante :
+
+```typescript
+const { data } = await supabase.functions.invoke('unified-search', {
+  body: { query: userQuestion }
+});
+```
+
+La réponse contient déjà un champ `answer` en markdown.
 
 ## Fichiers impactés
 
 | Fichier | Action |
 |---|---|
-| `src/assets/team/team-group-photo.png` | Nouveau — copie de l'image uploadée |
-| `src/components/commercial/social/templates/templateAssets.ts` | Ajouter export photo de groupe |
-| `src/components/commercial/social/templates/drawBrandCard.ts` | Utiliser la photo de groupe comme option de rendu |
+| `src/assets/helpi/helpi-mascot.svg` | Nouveau — mascotte SVG |
+| `src/components/helpi/HelpiMascot.tsx` | Nouveau — composant principal |
+| `src/components/helpi/HelpiChatBubble.tsx` | Nouveau — bulles BD |
+| `src/apogee-connect/pages/IndicateursAccueil.tsx` | Ajouter `<HelpiMascot />` conditionné au plan PRO |
 
