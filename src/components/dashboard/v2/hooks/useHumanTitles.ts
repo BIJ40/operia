@@ -83,6 +83,11 @@ const TITLE_VARIANTS: Record<TitleKey, TitleVariant[]> = {
     { title: "Paiements attendus", subtitle: "Suivi du recouvrement" },
     { title: "Relances", subtitle: "Factures à surveiller" },
   ],
+  actions_a_mener: [
+    { title: "Actions à mener", subtitle: "Dossiers en retard à traiter" },
+    { title: "À ne pas oublier", subtitle: "Vos dossiers les plus urgents" },
+    { title: "Ça urge !", subtitle: "Les retards à rattraper" },
+  ],
 };
 
 // Cache des indices par session pour éviter le re-render random
