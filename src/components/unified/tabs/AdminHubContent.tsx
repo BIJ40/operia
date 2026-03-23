@@ -22,6 +22,7 @@ import {
   ModulesMasterView,
 } from '@/components/admin/views';
 import { lazy, Suspense, useCallback, useEffect } from 'react';
+import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 import { useSessionState } from '@/hooks/useSessionState';
 import { usePersistedTab } from '@/hooks/usePersistedState';
