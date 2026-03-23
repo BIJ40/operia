@@ -73,7 +73,7 @@ export default function OrganisationTabContent() {
 
   return (
     <DomainAccentProvider accent="green">
-    <div className={cn("container mx-auto max-w-7xl", navMode === 'header' ? 'pt-1 px-2 sm:px-4 space-y-3' : 'py-6 px-2 sm:px-4 space-y-4')}>
+    <div className={cn("container mx-auto max-w-app", navMode === 'header' ? 'pt-1 px-2 sm:px-4 space-y-3' : 'py-6 px-2 sm:px-4 space-y-4')}>
       <Tabs value={effectiveTab} onValueChange={(v) => setActiveTab(v as OrganisationSubTab)}>
         {navMode === 'tabs' && <PillTabsList tabs={visibleTabs} />}
 

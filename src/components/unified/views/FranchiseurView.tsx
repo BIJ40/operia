@@ -156,7 +156,7 @@ function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FranchiseurTab)} className="flex flex-col h-screen">
         {/* Tab bar fixe en haut */}
         <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm">
-          <div className="container mx-auto max-w-7xl px-4 pt-3 pb-0">
+          <div className="container mx-auto max-w-app px-4 pt-3 pb-0">
             <div className="flex items-end justify-between gap-4">
               <TabsList className="h-auto p-0 bg-transparent flex flex-nowrap gap-1 items-end justify-start flex-1 overflow-x-auto scrollbar-hide">
                 {sortedTabs.map((tab) => {
@@ -188,7 +188,7 @@ function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
             </div>
           </div>
           {/* Ligne de bordure qui se connecte aux onglets */}
-          <div className="container mx-auto max-w-7xl px-4">
+          <div className="container mx-auto max-w-app px-4">
             <div className="border-t-2 border-primary/50 bg-background"></div>
           </div>
         </div>

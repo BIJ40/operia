@@ -40,7 +40,7 @@ export default function ApogeeTicketsAdmin() {
   }
   
   return (
-    <div className="container mx-auto max-w-7xl p-6 space-y-6">
+    <div className="container mx-auto max-w-app p-6 space-y-6">
       <div className="flex items-center gap-3">
         <Shield className="h-8 w-8 text-primary" />
         <div>
