@@ -15,6 +15,8 @@ import { logWarn, logError } from "@/lib/logger";
 import { useStatiaIndicateurs } from "@/statia/hooks/useStatiaIndicateurs";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ROUTES } from "@/config/routes";
+import { HelpiMascot } from "@/components/helpi/HelpiMascot";
+import { usePlanAccess } from "@/hooks/access-rights/usePlanAccess";
 
 export default function IndicateursAccueil() {
   const { filters } = useFilters();
