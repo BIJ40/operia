@@ -221,6 +221,35 @@ async function callImageAIWithFallback(
             };
           }
           console.warn('[callImageAI] Gateway returned OK but no image in response');
+          // Retry once without reference images (content moderation may have blocked)
+          if (hasInputImages && requiresReferenceFaithfulness) {
+            console.log('[callImageAI] Retrying Gemini without reference images (text-only prompt)...');
+            try {
+              const retryResp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${lovableKey}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  model: 'google/gemini-2.5-flash-image',
+                  messages: [{ role: 'user', content: [contentParts.find((p: any) => p.type === 'text') || contentParts[0]] }],
+                  modalities: ['image', 'text'],
+                }),
+              });
+              if (retryResp.ok) {
+                const retryData = await retryResp.json();
+                const retryImg = retryData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+                if (retryImg) {
+                  console.log('[callImageAI] Retry without references succeeded');
+                  return { ok: true, data: retryData, model: 'gemini-imagen' };
+                }
+              }
+              console.warn('[callImageAI] Retry without references also failed');
+            } catch (retryErr) {
+              console.error('[callImageAI] Retry error:', retryErr);
+            }
+          }
         } else {
           const errText = await gatewayResp.text();
           console.error(`[callImageAI] Lovable AI Gateway failed (${gatewayResp.status}):`, errText.slice(0, 300));
@@ -233,12 +262,8 @@ async function callImageAIWithFallback(
     }
 
     if (requiresReferenceFaithfulness) {
-      console.error('[callImageAI] Gemini failed and DALL-E fallback is disabled to preserve reference fidelity');
-      return {
-        ok: false,
-        status: 502,
-        error: "Gemini n'a pas pu générer le visuel à partir des images de référence. DALL-E a été volontairement bloqué pour ne pas trahir le vrai véhicule.",
-      };
+      // Last resort: fall through to DALL-E instead of hard-failing
+      console.warn('[callImageAI] Gemini failed with references — allowing DALL-E fallback as last resort');
     }
     // forceGemini without reference images → allow DALL-E fallback
     if (forceGemini && !hasInputImages) {
