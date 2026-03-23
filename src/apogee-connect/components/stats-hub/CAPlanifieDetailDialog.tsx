@@ -144,8 +144,20 @@ function usePlanifiedProjects(props: Omit<Props, 'open' | 'onOpenChange'>): Plan
       facturedIds.add(pid);
     }
 
+    // Exclure les interventions de type TH, SAV, RT du CA prévisionnel
+    const EXCLUDED_TYPES = new Set(['th', 'sav', 'rt', 'releve technique', 'relevé technique', 'rdv technique', 'rdvtech']);
+    const isExcludedItv = (itv: any): boolean => {
+      const t2 = String(itv?.type2 ?? itv?.data?.type2 ?? '').trim().toLowerCase();
+      const t1 = String(itv?.type ?? itv?.data?.type ?? '').trim().toLowerCase();
+      return EXCLUDED_TYPES.has(t2) || EXCLUDED_TYPES.has(t1) || t2.includes('sav') || t1.includes('sav');
+    };
+
     const itvByPid = new Map<number, any[]>();
-    for (const itv of interventions) { const pid = getProjectId(itv); if (pid != null) { if (!itvByPid.has(pid)) itvByPid.set(pid, []); itvByPid.get(pid)!.push(itv); } }
+    for (const itv of interventions) {
+      if (isExcludedItv(itv)) continue;
+      const pid = getProjectId(itv);
+      if (pid != null) { if (!itvByPid.has(pid)) itvByPid.set(pid, []); itvByPid.get(pid)!.push(itv); }
+    }
 
     const devisByPid = new Map<number, any[]>();
     for (const d of devis) { const pid = getProjectId(d); if (pid != null) { if (!devisByPid.has(pid)) devisByPid.set(pid, []); devisByPid.get(pid)!.push(d); } }
