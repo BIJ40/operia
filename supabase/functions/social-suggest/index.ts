@@ -590,20 +590,72 @@ const WEEKLY_CATEGORIES = ['urgence', 'prevention', 'amelioration', 'conseil', '
 function buildWeeklySchedule(daysInMonth: number, year: number, month: number): DaySchedule[] {
   // Primary: use editorial calendar
   const editorial = buildEditorialSchedule(month, year);
-  if (editorial.length >= daysInMonth) return editorial;
-  
-  // Fallback: fill missing days with random categories
   const coveredDays = new Set(editorial.map(e => e.day));
-  let weekPool: string[] = [];
   const result = [...editorial];
-  
-  for (let d = 1; d <= daysInMonth; d++) {
-    if (coveredDays.has(d)) continue;
-    if (weekPool.length === 0) {
-      weekPool = shuffleArray([...WEEKLY_CATEGORIES]);
+
+  // INJECT awareness days (relevance 2-3) into the schedule as MANDATORY entries
+  // This ensures thematic days dominate over random category rotation
+  const monthAwareness = AWARENESS_DAYS.filter(d => d.month === month && d.relevanceScore >= 2);
+  for (const aw of monthAwareness) {
+    if (coveredDays.has(aw.day)) continue; // editorial calendar already has this day
+    coveredDays.add(aw.day);
+
+    // Determine topic_type from awareness day properties
+    let category: string;
+    if (aw.relevanceScore === 1) {
+      category = 'calendar';
+    } else if (aw.relevanceScore === 3) {
+      // Direct métier link — use the contentTypeHint or map to a topic_type
+      const hintMap: Record<string, string> = {
+        pedagogique: 'pedagogique',
+        prevention: 'prevention',
+        preuve: 'preuve',
+        interne: 'prospection',
+        image_marque: 'prospection',
+        commercial: 'prospection',
+        disponibilite: 'calendar',
+        creatif: 'calendar',
+        leger: 'calendar',
+      };
+      category = hintMap[aw.contentTypeHint] || aw.contentTypeHint || 'pedagogique';
+    } else {
+      // relevance 2 — soft angle, can be pedagogique/prevention/prospection
+      const hintMap2: Record<string, string> = {
+        pedagogique: 'pedagogique',
+        prevention: 'prevention',
+        preuve: 'preuve',
+        interne: 'prospection',
+        image_marque: 'prospection',
+        commercial: 'prospection',
+      };
+      category = hintMap2[aw.contentTypeHint] || 'pedagogique';
     }
-    result.push({ day: d, category: weekPool.shift()!, universe: 'general', theme: '', isCalendar: false });
+
+    const universe = aw.preferredUniverses?.[0] || 'general';
+    // Theme = awareness label + useHint for fusion potential
+    const theme = `${aw.label}${aw.useHint ? ' — ' + aw.useHint : ''}`;
+
+    result.push({
+      day: aw.day,
+      category,
+      universe,
+      theme,
+      isCalendar: category === 'calendar',
+    });
   }
+
+  // Fill remaining days with random category rotation
+  if (result.length < daysInMonth) {
+    let weekPool: string[] = [];
+    for (let d = 1; d <= daysInMonth; d++) {
+      if (coveredDays.has(d)) continue;
+      if (weekPool.length === 0) {
+        weekPool = shuffleArray([...WEEKLY_CATEGORIES]);
+      }
+      result.push({ day: d, category: weekPool.shift()!, universe: 'general', theme: '', isCalendar: false });
+    }
+  }
+
   return result.sort((a, b) => a.day - b.day);
 }
 
