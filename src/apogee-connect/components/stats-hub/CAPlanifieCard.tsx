@@ -72,6 +72,7 @@ interface CAPlanifieCardProps {
   interventions: any[];
   devis: any[];
   factures: any[];
+  clients?: any[];
 }
 
 const MONTHS = [
@@ -86,7 +87,7 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 }
 };
 
-export function CAPlanifieCard({ projects, interventions, devis, factures }: CAPlanifieCardProps) {
+export function CAPlanifieCard({ projects, interventions, devis, factures, clients }: CAPlanifieCardProps) {
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
@@ -240,6 +241,7 @@ export function CAPlanifieCard({ projects, interventions, devis, factures }: CAP
         interventions={interventions}
         devis={devis}
         factures={factures}
+        clients={clients}
         periodStart={selectedPeriod.start}
         periodEnd={selectedPeriod.end}
         periodLabel={selectedPeriod.label}

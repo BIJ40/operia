@@ -249,6 +249,7 @@ export function PrevisionnelTab() {
             interventions={rawData.interventions}
             devis={rawData.devis}
             factures={rawData.factures}
+            clients={rawData.clients}
           />
         )}
 

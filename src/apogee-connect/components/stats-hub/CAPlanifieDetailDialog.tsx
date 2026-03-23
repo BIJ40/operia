@@ -38,6 +38,7 @@ interface Props {
   interventions: any[];
   devis: any[];
   factures: any[];
+  clients?: any[];
   periodStart: Date;
   periodEnd: Date;
   periodLabel: string;
@@ -121,11 +122,18 @@ const normalizeUnivers = (u: string) => {
 
 // --- Hook to compute detailed data ---
 function usePlanifiedProjects(props: Omit<Props, 'open' | 'onOpenChange'>): PlanifiedProject[] {
-  const { projects, interventions, devis, factures, periodStart, periodEnd } = props;
+  const { projects, interventions, devis, factures, clients, periodStart, periodEnd } = props;
 
   return useMemo(() => {
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const todayMs = today.getTime();
+
+    // Build client lookup by id
+    const clientsById = new Map<number, any>();
+    for (const c of (clients || [])) {
+      const cid = Number(c?.id);
+      if (Number.isFinite(cid)) clientsById.set(cid, c);
+    }
 
     const facturedIds = new Set<number>();
     for (const f of factures) {
@@ -205,12 +213,14 @@ function usePlanifiedProjects(props: Omit<Props, 'open' | 'onOpenChange'>): Plan
 
       const universes = (project?.data?.universes as string[]) || ['Non classé'];
       const state = project?.data?.state ?? project?.state ?? '';
-      const clientName = project?.data?.clientName ?? project?.data?.client_name ?? project?.data?.nom ?? '';
-      const ville = project?.data?.ville ?? project?.data?.city ?? '';
+      const clientId = Number(project?.clientId ?? project?.client_id);
+      const client = Number.isFinite(clientId) ? clientsById.get(clientId) : null;
+      const clientName = client?.nom ?? client?.raisonSociale ?? client?.name ?? client?.prenom ?? '';
+      const ville = project?.data?.ville ?? project?.data?.city ?? client?.ville ?? '';
 
       results.push({
         projectId,
-        reference: project?.data?.reference || project?.reference || `#${projectId}`,
+        reference: project?.ref || project?.data?.reference || project?.reference || `#${projectId}`,
         label: clientName || project?.data?.label || project?.label || '',
         ville,
         univers: normalizeUnivers(universes[0]),
@@ -223,7 +233,7 @@ function usePlanifiedProjects(props: Omit<Props, 'open' | 'onOpenChange'>): Plan
     }
 
     return results.sort((a, b) => b.devisHT - a.devisHT);
-  }, [projects, interventions, devis, factures, periodStart, periodEnd]);
+  }, [projects, interventions, devis, factures, clients, periodStart, periodEnd]);
 }
 
 // --- Custom tooltip ---
