@@ -178,7 +178,7 @@ export default function ApogeeTicketsHistoryPage({ embedded = false }: ApogeeTic
   };
 
   return (
-    <div className={embedded ? "space-y-4" : "container mx-auto py-8 px-4 space-y-6"}>
+    <div className={embedded ? "space-y-4" : "container mx-auto max-w-7xl py-8 px-4 space-y-6"}>
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-4">

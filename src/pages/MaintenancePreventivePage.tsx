@@ -29,7 +29,7 @@ export default function MaintenancePreventivePage({ embedded = false }: Maintena
     <VehicleTabsProvider vehicles={vehicles}>
       <div className={embedded 
         ? "flex flex-col h-full" 
-        : "container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col h-[calc(100vh-6rem)]"
+        : "container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 flex flex-col h-[calc(100vh-6rem)]"
       }>
         {!embedded && (
           <PageHeader

@@ -21,7 +21,7 @@ const ApogeeDocumentsExplorer = lazy(() => import('@/apogee-connect/components/A
 
 function StatiaErrorFallback({ error }: { error: Error }) {
   return (
-    <div className="container mx-auto py-6 px-4">
+    <div className="container mx-auto max-w-7xl py-6 px-4">
       <Alert variant="destructive">
         <AlertTriangle className="h-4 w-4" />
         <AlertTitle>Erreur StatIA</AlertTitle>

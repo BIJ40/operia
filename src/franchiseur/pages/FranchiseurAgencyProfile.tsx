@@ -49,7 +49,7 @@ function FranchiseurAgencyProfileContent() {
 
   if (agencyLoading) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="container mx-auto max-w-7xl p-6">
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-muted rounded w-1/3"></div>
           <div className="h-48 bg-muted rounded"></div>
@@ -60,7 +60,7 @@ function FranchiseurAgencyProfileContent() {
 
   if (!agency) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="container mx-auto max-w-7xl p-6">
         <Card className="rounded-2xl border-l-4 border-l-destructive">
           <CardContent className="py-12 text-center">
             <p className="text-muted-foreground">Agence non trouvée</p>
@@ -71,7 +71,7 @@ function FranchiseurAgencyProfileContent() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto max-w-7xl p-6 space-y-6">
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-3">

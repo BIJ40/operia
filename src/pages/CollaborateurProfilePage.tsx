@@ -38,7 +38,7 @@ export default function CollaborateurProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-8 px-4 space-y-6">
+      <div className="container mx-auto max-w-7xl py-8 px-4 space-y-6">
         <Skeleton className="h-20 w-full" />
         <Skeleton className="h-10 w-full" />
         <div className="grid md:grid-cols-2 gap-6">
@@ -51,7 +51,7 @@ export default function CollaborateurProfilePage() {
 
   if (!collaborator) {
     return (
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto max-w-7xl py-8 px-4">
         <div className="text-center py-12">
           <p className="text-muted-foreground">Collaborateur non trouvé</p>
         </div>
@@ -60,7 +60,7 @@ export default function CollaborateurProfilePage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto max-w-7xl py-8 px-4">
       <CollaboratorProfile
         collaborator={collaborator}
         canManage={canManage}
