@@ -557,7 +557,7 @@ export function computeChargeTravauxAvenirParUnivers(
     let maxNbTechs = 0;
 
     for (const itv of intervs) {
-      const { heuresRdv: hRdv, heuresTech: hTech, nbTechs: nTech, blocksCount } = extractHoursFromIntervention(itv);
+      const { heuresRdv: hRdv, heuresTech: hTech, nbTechs: nTech, blocksCount } = extractHoursFromIntervention(itv, creneauxByInterventionId);
       heuresRdv += hRdv;
       heuresTech += hTech;
       maxNbTechs = Math.max(maxNbTechs, nTech);
