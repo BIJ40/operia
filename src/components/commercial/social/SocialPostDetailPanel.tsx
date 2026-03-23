@@ -444,24 +444,62 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
           )}
         </div>
 
+        {/* ─── Modifier le visuel existant ─── */}
+        {hasExistingVisual && (
+          <div className="border border-border rounded-lg overflow-hidden">
+            <div className="px-3 py-2 space-y-2">
+              <Label className="text-[10px] text-muted-foreground flex items-center gap-1">
+                <ImagePlus className="w-3 h-3" /> Modifier ce visuel
+              </Label>
+              <Textarea
+                value={editInstruction}
+                onChange={(e) => setEditInstruction(e.target.value)}
+                placeholder="Ex : rends l'image plus réaliste, ajoute un fourgon, change le fond en extérieur…"
+                className="text-xs min-h-[44px] resize-none"
+              />
+              <Button
+                size="sm"
+                className="h-7 text-xs gap-1 w-full"
+                onClick={handleEditExisting}
+                disabled={generateMutation.isPending || !editInstruction.trim()}
+              >
+                {generateMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Modification en cours…
+                  </>
+                ) : (
+                  <>
+                    <ImagePlus className="w-3 h-3" />
+                    Appliquer la modification
+                  </>
+                )}
+              </Button>
+              <p className="text-[9px] text-muted-foreground/60">
+                L'IA modifiera le visuel actuel en conservant la composition de base.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex gap-1.5">
           <Button
             size="sm"
-            variant={composedAsset || rawAsset ? 'outline' : 'default'}
+            variant={hasExistingVisual ? 'outline' : 'default'}
             className="h-7 text-xs gap-1 flex-1"
             onClick={handleGenerate}
             disabled={generateMutation.isPending}
           >
-            {generateMutation.isPending ? (
+            {generateMutation.isPending && !editInstruction.trim() ? (
               <>
                 <Loader2 className="w-3 h-3 animate-spin" />
                 Génération IA…
               </>
-            ) : composedAsset || rawAsset ? (
+            ) : hasExistingVisual ? (
               <>
                 <RefreshCw className="w-3 h-3" />
-                Régénérer
+                Régénérer (nouveau)
               </>
             ) : (
               <>
@@ -470,7 +508,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
               </>
             )}
           </Button>
-          {(composedAsset || rawAsset) && (
+          {hasExistingVisual && (
             <Button
               size="sm"
               variant="ghost"
