@@ -41,7 +41,34 @@ export default function SocialHubPage() {
   const [topicFilter, setTopicFilter] = useState<TopicFilter>('all');
   const [selectedSuggestionId, setSelectedSuggestionId] = useState<string | null>(null);
   const [selectedDays, setSelectedDays] = useState<Set<string>>(new Set());
-  const [isDetailExpanded, setIsDetailExpanded] = useState(false);
+  const [detailWidth, setDetailWidth] = useState(340);
+  const isDragging = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isDragging.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const onMouseMove = (ev: MouseEvent) => {
+      if (!isDragging.current || !containerRef.current) return;
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const newWidth = containerRect.right - ev.clientX;
+      setDetailWidth(Math.max(280, Math.min(newWidth, containerRect.width - 200)));
+    };
+
+    const onMouseUp = () => {
+      isDragging.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }, []);
 
   const monthKey = format(currentMonth, 'yyyy-MM');
   const monthLabel = format(currentMonth, 'MMMM yyyy', { locale: fr });
