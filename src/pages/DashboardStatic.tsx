@@ -343,38 +343,23 @@ export default function DashboardStatic() {
         animate="visible"
         className="space-y-6"
       >
-        {/* LAYOUT 2 RANGÉES avec colonne gauche qui déborde */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4" style={{ gridTemplateRows: 'auto auto' }}>
+        {/* LAYOUT: Colonne gauche (CA Univers) chevauche les 2 lignes */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
           
-          {/* COL GAUCHE — span 2 rows : CA Univers (pictos) + brique vide dessous */}
-          <div className="lg:row-span-2 flex flex-col gap-4">
-            {/* CA par Univers — déborde sur les 2 lignes */}
-            <motion.div variants={itemVariants}>
-              <WarmCard
-                variant="blue"
-                icon={PieChart}
-                animate={false}
-              >
-                <HumanTitle titleKey="ca_univers" icon={PieChart} iconColor="text-warm-blue" size="sm" />
-                <div className="mt-3">
-                  <CAParUniversWidget />
-                </div>
-              </WarmCard>
-            </motion.div>
-
-            {/* Brique vide — occupe le reste de la hauteur */}
-            <motion.div variants={itemVariants} className="flex-1">
-              <WarmCard
-                variant="blue"
-                animate={false}
-                className="h-full min-h-[80px]"
-              >
-                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                  {/* Espace réservé */}
-                </div>
-              </WarmCard>
-            </motion.div>
-          </div>
+          {/* CA par Univers — chevauche ligne 1 + ligne 2 */}
+          <motion.div variants={itemVariants} className="lg:row-span-2">
+            <WarmCard
+              variant="blue"
+              icon={PieChart}
+              animate={false}
+              className="h-full"
+            >
+              <HumanTitle titleKey="ca_univers" icon={PieChart} iconColor="text-warm-blue" size="sm" />
+              <div className="mt-3">
+                <CAParUniversWidget />
+              </div>
+            </WarmCard>
+          </motion.div>
 
           {/* LIGNE 1 — Carte RDV (2 cols) + En un coup d'œil (2 cols) */}
           <motion.div variants={itemVariants} className="lg:col-span-2">
