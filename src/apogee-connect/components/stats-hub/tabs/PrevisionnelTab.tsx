@@ -20,6 +20,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
 import { Button } from '@/components/ui/button';
 import { CAPlanifieCard } from '../CAPlanifieCard';
 import { PilotageAvanceSection } from '../previsionnel/PilotageAvanceSection';
+import { EtatDetailDialog } from '../EtatDetailDialog';
+import { DossiersExplorerDialog } from '../DossiersExplorerDialog';
 
 // Formatage monétaire
 const formatCurrency = (value: number): string => {
@@ -131,6 +133,8 @@ export function PrevisionnelTab() {
   const { isAgencyReady } = useAgency();
   const { data, rawData, isLoading } = useChargeTravauxAVenir();
   const [showAllDossiers, setShowAllDossiers] = useState(false);
+  const [selectedEtat, setSelectedEtat] = useState<string | null>(null);
+  const [dossiersExplorerOpen, setDossiersExplorerOpen] = useState(false);
 
   const chartData = useMemo(() => {
     if (!data?.parUnivers) return [];
@@ -215,7 +219,11 @@ export function PrevisionnelTab() {
           const Icon = config.icon;
           return (
             <motion.div key={etatStats.etat} variants={itemVariants}>
-              <Card className={`border-l-4 ${config.bgClass}`} style={{ borderLeftColor: config.color }}>
+              <Card
+                className={`border-l-4 ${config.bgClass} cursor-pointer hover:shadow-md transition-shadow`}
+                style={{ borderLeftColor: config.color }}
+                onClick={() => setSelectedEtat(etatStats.etat)}
+              >
                 {/* Header */}
                 <div className="flex items-start justify-between p-4 pb-2">
                   <h4 className="text-sm font-medium text-muted-foreground">{etatStats.etatLabel}</h4>
@@ -271,10 +279,10 @@ export function PrevisionnelTab() {
             <TooltipProvider delayDuration={200}>
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center gap-6 flex-wrap">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setDossiersExplorerOpen(true)}>
                     <FolderOpen className="h-5 w-5 text-helpconfort-blue" />
                     <span className="text-2xl font-bold">{totaux.nbDossiers}</span>
-                    <span className="text-muted-foreground">dossiers total</span>
+                    <span className="text-muted-foreground underline decoration-dashed underline-offset-4">dossiers total</span>
                   </div>
                   <div className="h-8 w-px bg-border hidden md:block" />
                   <Tooltip>
@@ -720,6 +728,27 @@ export function PrevisionnelTab() {
           </Card>
         </motion.div>
       )}
+
+      {/* Dialog état détaillé */}
+      {selectedEtat && parEtat && (
+        <EtatDetailDialog
+          open={!!selectedEtat}
+          onOpenChange={(o) => { if (!o) setSelectedEtat(null); }}
+          etat={selectedEtat}
+          etatStats={parEtat.find(e => e.etat === selectedEtat) || { etat: selectedEtat, etatLabel: selectedEtat, nbDossiers: 0, totalHeuresRdv: 0, totalHeuresTech: 0, totalNbTechs: 0, devisHT: 0 }}
+          projets={parProjet || []}
+          universStats={parUnivers || []}
+          clients={rawData?.clients}
+        />
+      )}
+
+      {/* Dialog explorateur dossiers */}
+      <DossiersExplorerDialog
+        open={dossiersExplorerOpen}
+        onOpenChange={setDossiersExplorerOpen}
+        projets={parProjet || []}
+        clients={rawData?.clients}
+      />
     </motion.div>
   );
 }
