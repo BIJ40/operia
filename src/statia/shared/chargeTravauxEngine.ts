@@ -380,62 +380,7 @@ function extractHoursFromIntervention(
     return { heuresRdv: creneauxHours, heuresTech: creneauxHours * nbTechs, nbTechs, blocksCount: 0 };
   }
 
-  const chiffrage = intervention?.data?.chiffrage;
-  if (!chiffrage?.postes || !Array.isArray(chiffrage.postes)) {
-    return { heuresRdv: 0, heuresTech: 0, nbTechs: 0, blocksCount: 0 };
-  }
-
-  let fallbackHeures = 0;
-  let fallbackHeuresTech = 0;
-  let fallbackMaxNbTechs = 0;
-  let blocksCount = 0;
-
-  for (const poste of chiffrage.postes) {
-    const items = poste?.items || [];
-
-    for (const item of items) {
-      if (!item?.IS_BLOCK || item?.slug !== 'chiffrage') continue;
-
-      const data = item.data || {};
-      blocksCount++;
-
-      let nbHeures = parseNumericValue(data.nbHeures);
-      let nbTechs = parseNumericValue(data.nbTechs);
-
-      if (nbHeures === 0 || nbTechs === 0) {
-        const subItems = data.subItems || [];
-
-        for (const sub of subItems) {
-          if (!sub?.IS_BLOCK || sub?.slug !== 'dfields') continue;
-
-          const dFields = sub.data?.dFields || [];
-
-          for (const df of dFields) {
-            const slug = String(df.EXPORT_generiqueSlug || '').toLowerCase();
-
-            if (slug.includes('nombre_de techniciens') || slug.includes('nombre_de_techniciens')) {
-              const val = parseNumericValue(df.value);
-              if (val > 0 && nbTechs === 0) nbTechs = val;
-            }
-
-            if (slug.includes("temps_total d'intervention") || slug.includes("temps_total_d'intervention") || slug.includes('temps_total')) {
-              const val = parseNumericValue(df.value);
-              if (val > 0 && nbHeures === 0) nbHeures = val;
-            }
-          }
-        }
-      }
-
-      if (nbHeures <= 0) continue;
-      if (nbTechs <= 0) nbTechs = 1;
-
-      fallbackHeures += nbHeures;
-      fallbackHeuresTech += nbHeures * nbTechs;
-      fallbackMaxNbTechs = Math.max(fallbackMaxNbTechs, nbTechs);
-    }
-  }
-
-  return { heuresRdv: fallbackHeures, heuresTech: fallbackHeuresTech, nbTechs: fallbackMaxNbTechs, blocksCount };
+  return { heuresRdv: 0, heuresTech: 0, nbTechs: 0, blocksCount: 0 };
 }
 
 /**
