@@ -346,20 +346,34 @@ export default function DashboardStatic() {
         {/* LAYOUT: Colonne gauche (CA Univers) chevauche les 2 lignes */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
           
-          {/* CA par Univers — chevauche ligne 1 + ligne 2 */}
-          <motion.div variants={itemVariants} className="lg:row-span-2">
-            <WarmCard
-              variant="blue"
-              icon={PieChart}
-              animate={false}
-              className="h-full"
-            >
-              <HumanTitle titleKey="ca_univers" icon={PieChart} iconColor="text-warm-blue" size="sm" />
-              <div className="mt-3">
-                <CAParUniversWidget />
-              </div>
-            </WarmCard>
-          </motion.div>
+          {/* COL GAUCHE — chevauche les 2 lignes : CA Univers + tuile complémentaire */}
+          <div className="lg:row-span-2 flex flex-col gap-4">
+            <motion.div variants={itemVariants}>
+              <WarmCard
+                variant="blue"
+                icon={PieChart}
+                animate={false}
+              >
+                <HumanTitle titleKey="ca_univers" icon={PieChart} iconColor="text-warm-blue" size="sm" />
+                <div className="mt-3">
+                  <CAParUniversWidget />
+                </div>
+              </WarmCard>
+            </motion.div>
+
+            {/* Tuile complémentaire — comble la hauteur restante */}
+            <motion.div variants={itemVariants} className="flex-1">
+              <WarmCard
+                variant="blue"
+                animate={false}
+                className="h-full"
+              >
+                <div className="flex items-center justify-center h-full min-h-[60px] text-muted-foreground text-xs">
+                  {/* Espace disponible */}
+                </div>
+              </WarmCard>
+            </motion.div>
+          </div>
 
           {/* LIGNE 1 — Carte RDV (2 cols) + En un coup d'œil (2 cols) */}
           <motion.div variants={itemVariants} className="lg:col-span-2">
