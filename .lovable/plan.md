@@ -1,92 +1,63 @@
 
 
-# Plan : Mascotte Helpi — Assistant stats intelligent (Plan PRO)
+# Diagnostic : Dossiers manquants dans CA Planifié
 
-## Concept
+## Cause identifiée
 
-Un personnage "Helpi" (mascotte illustrée HC) affiché en bas à droite de la page d'accueil Indicateurs, uniquement pour les agences au plan PRO (ou override). Au clic, une bulle de BD s'ouvre pour saisir une question. La réponse apparait dans une seconde bulle en dessous, style bande dessinée.
+Le filtre `isDevisToOrder` (ligne 71-74) ne reconnaît que 3 états de devis :
+- `to order`
+- `to_order`
+- `order`
 
-## Controle d'accès
+Or l'API Apogée peut renvoyer d'autres variantes pour un devis validé/accepté : `accepted`, `signed`, `validated`, `commande`, etc.
 
-- Utiliser `usePlanAccess('PRO')` pour conditionner l'affichage
-- Les N5+ (bypass) voient aussi la mascotte
-- Si plan insuffisant : mascotte invisible (pas grisée, absente)
+De plus, la **condition "pas facturé"** exclut tout projet ayant ne serait-ce qu'un acompte ou une facture partielle.
 
-## Fichiers a creer
+## 4 filtres successifs qui éliminent des dossiers
 
-| Fichier | Description |
-|---|---|
-| `src/assets/helpi/helpi-mascot.svg` | Mascotte SVG inline — personnage sympathique style cartoon aux couleurs HC (bleu/orange), casquette ou casque de chantier, souriant |
-| `src/components/helpi/HelpiMascot.tsx` | Composant principal : mascotte flottante + bulles BD |
-| `src/components/helpi/HelpiChatBubble.tsx` | Bulle de saisie (question) + bulle de réponse, style BD avec queues de bulle |
+| # | Condition | Risque d'exclusion abusive |
+|---|---|---|
+| 1 | Pas de facture associée | Un acompte suffit à exclure le dossier |
+| 2 | Intervention future (date >= aujourd'hui) | Interventions sans date ou mal datées |
+| 3 | Mois dominant = mois sélectionné | Dossier à cheval sur 2 mois |
+| 4 | Devis état "to order" avec montant > 0 | **Principale cause** — états non reconnus |
 
-## Architecture du composant HelpiMascot
+## Plan de correction
 
-```text
-┌─────────────────────────────┐
-│  Bulle réponse (BD style)   │  ← apparait après réponse
-│  "Vous avez 116 dossiers…"  │
-└──────────┬──────────────────┘
-           │ (queue de bulle)
-┌──────────┴──────────────────┐
-│  Bulle question (input)     │  ← apparait au clic mascotte
-│  "Posez votre question..."  │
-└──────────┬──────────────────┘
-           │ (queue de bulle)
-       ┌───┴───┐
-       │ HELPI │  ← mascotte cliquable, fixed bottom-right
-       │  😊   │
-       └───────┘
-```
+### 1. Elargir `isDevisToOrder` pour accepter plus d'états valides
 
-- **Position** : `fixed bottom-6 right-6 z-50`
-- **Clic mascotte** → toggle bulle de saisie (input + send)
-- **Envoi question** → appel edge function `unified-search` avec la query
-- **Réponse** → affichée dans bulle BD au-dessus, rendue en markdown
-- **Historique** : afficher les 3-4 derniers échanges max (bulles empilées)
-- **Fermeture** : clic hors des bulles ou bouton X
-
-## Intégration
-
-Dans `IndicateursAccueil.tsx`, ajouter en fin de page :
-
-```tsx
-import { HelpiMascot } from '@/components/helpi/HelpiMascot';
-import { usePlanAccess } from '@/hooks/access-rights/usePlanAccess';
-
-// Dans le composant :
-const { hasRequiredPlan } = usePlanAccess('PRO');
-
-// En fin de JSX :
-{hasRequiredPlan && <HelpiMascot />}
-```
-
-## Style bulles BD
-
-- Fond blanc, border-radius arrondi, ombre douce
-- Queue de bulle triangulaire pointant vers le bas (question) ou vers la mascotte (réponse)
-- Animation d'apparition (scale + fade)
-- Bulle question : input + bouton send inline
-- Bulle réponse : markdown rendu, texte qui s'affiche progressivement (typewriter optionnel)
-
-## Appel backend
-
-Réutiliser l'edge function `unified-search` existante :
+Dans `CAPlanifieDetailDialog.tsx`, modifier le filtre pour inclure les états courants Apogée :
 
 ```typescript
-const { data } = await supabase.functions.invoke('unified-search', {
-  body: { query: userQuestion }
-});
+const VALID_DEVIS_STATES = new Set([
+  'to order', 'to_order', 'order',
+  'accepted', 'signed', 'validated', 
+  'commande', 'commandé', 'à commander',
+]);
+
+const isDevisToOrder = (d: any): boolean => {
+  const state = String(d?.state ?? d?.status ?? d?.data?.state ?? '').trim().toLowerCase();
+  return VALID_DEVIS_STATES.has(state);
+};
 ```
 
-La réponse contient déjà un champ `answer` en markdown.
+### 2. Même correction dans `CAPlanifieCard.tsx`
+
+Le calcul KPI de la tuile utilise un filtre similaire — il faut le synchroniser pour que le nombre de dossiers et le montant correspondent.
+
+### 3. Assouplir la condition "pas facturé"
+
+Ne pas exclure un dossier qui a uniquement un **acompte** (type facture = `acompte`). Seules les factures de type `facture` (définitives) devraient exclure le projet.
+
+### 4. Appliquer la même logique dans `chargeTravauxEngine.ts`
+
+Le moteur StatIA utilise aussi `isDevisToOrder` — harmoniser pour que tous les indicateurs soient cohérents.
 
 ## Fichiers impactés
 
 | Fichier | Action |
 |---|---|
-| `src/assets/helpi/helpi-mascot.svg` | Nouveau — mascotte SVG |
-| `src/components/helpi/HelpiMascot.tsx` | Nouveau — composant principal |
-| `src/components/helpi/HelpiChatBubble.tsx` | Nouveau — bulles BD |
-| `src/apogee-connect/pages/IndicateursAccueil.tsx` | Ajouter `<HelpiMascot />` conditionné au plan PRO |
+| `src/apogee-connect/components/stats-hub/CAPlanifieDetailDialog.tsx` | Elargir `isDevisToOrder`, assouplir filtre factures |
+| `src/apogee-connect/components/stats-hub/CAPlanifieCard.tsx` | Même correction sur le filtre devis |
+| `src/statia/shared/chargeTravauxEngine.ts` | Harmoniser `isDevisToOrder` |
 
