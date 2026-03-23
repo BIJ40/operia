@@ -46,7 +46,7 @@ const TAB_MODULE_KEYS: Record<TabId, ModuleKey> = {
 
 function StatsHubContent() {
   const { activeTab, setActiveTab } = useStatsHub();
-  const { hasModule } = usePermissions();
+  const { hasModule, isDeployedModule } = usePermissions();
 
   const visibleTabs = useMemo(() => {
     return TABS_CONFIG.filter(tab => {
