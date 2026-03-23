@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, AlertTriangle, Clock, BellRing, FileText, Receipt, UserCheck } from 'lucide-react';
+import { ExternalLink, AlertTriangle, Clock, BellRing, FileText, Receipt, UserCheck, CalendarClock, ShoppingCart } from 'lucide-react';
 import { ActionRow, ActionType } from '../types/actions';
 import { DataService } from '../services/dataService';
 import { cn } from '@/lib/utils';
@@ -30,12 +30,24 @@ const ACTION_COLORS: Record<ActionType, { bg: string; border: string; icon: stri
     border: 'border-purple-200 dark:border-purple-800',
     icon: 'text-purple-500'
   },
+  a_planifier_tvx: { 
+    bg: 'bg-sky-50 dark:bg-sky-950/30', 
+    border: 'border-sky-200 dark:border-sky-800',
+    icon: 'text-sky-500'
+  },
+  a_commander: { 
+    bg: 'bg-orange-50 dark:bg-orange-950/30', 
+    border: 'border-orange-200 dark:border-orange-800',
+    icon: 'text-orange-500'
+  },
 };
 
 const ACTION_ICONS: Record<ActionType, typeof FileText> = {
   devis_a_faire: FileText,
   a_facturer: Receipt,
   relance_technicien: UserCheck,
+  a_planifier_tvx: CalendarClock,
+  a_commander: ShoppingCart,
 };
 
 export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTableProps) {
