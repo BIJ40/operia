@@ -430,6 +430,10 @@ Deno.serve(async (req) => {
       audience?: string;
       imageModel?: string;
     } | undefined;
+    const editExisting = body.edit_existing as {
+      sourceStoragePath: string;
+      editInstruction: string;
+    } | undefined;
 
     if (!suggestionId || !agencyId) {
       return new Response(JSON.stringify({ error: 'suggestion_id et agency_id requis' }), { status: 400, headers: jsonHeaders });
