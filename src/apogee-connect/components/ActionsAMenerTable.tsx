@@ -175,7 +175,10 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
 
                 {/* Détail (technicien ou label) */}
                 <td className="py-2.5 px-3 hidden lg:table-cell">
-                  <span className="text-xs text-muted-foreground truncate max-w-[150px] block">
+                  <span className={cn(
+                    "text-xs truncate max-w-[150px] block",
+                    isLate ? "text-destructive font-bold" : "text-muted-foreground"
+                  )}>
                     {getTechnicienName(action) !== '-' ? getTechnicienName(action) : action.label}
                   </span>
                 </td>
