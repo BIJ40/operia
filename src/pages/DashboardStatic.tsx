@@ -343,30 +343,15 @@ export default function DashboardStatic() {
         animate="visible"
         className="space-y-6"
       >
-        {/* NIVEAU 1 - HERO ROW: CA Univers (1col) + Carte (2col) + En un coup d'œil (2col) */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-          {/* CA par Univers — remonté ici */}
+        {/* NIVEAU 1 - HERO ROW: Carte RDV + Indicateurs Globaux */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {/* Carte RDV */}
           <motion.div variants={itemVariants}>
-            <WarmCard
-              variant="blue"
-              icon={PieChart}
-              animate={false}
-              className="h-full"
-            >
-              <HumanTitle titleKey="ca_univers" icon={PieChart} iconColor="text-warm-blue" size="sm" />
-              <div className="mt-3">
-                <CAParUniversWidget />
-              </div>
-            </WarmCard>
-          </motion.div>
-
-          {/* Carte RDV (2 colonnes) */}
-          <motion.div variants={itemVariants} className="lg:col-span-2">
             <DashboardMapWidget agencySlug={agence} className="h-full" />
           </motion.div>
 
-          {/* Indicateurs Globaux (2 colonnes) */}
-          <motion.div variants={itemVariants} className="lg:col-span-2">
+          {/* Indicateurs Globaux */}
+          <motion.div variants={itemVariants}>
             <WarmCard
               variant="blue"
               animate={false}
@@ -380,8 +365,22 @@ export default function DashboardStatic() {
           </motion.div>
         </div>
 
-        {/* NIVEAU 2 - 4 TUILES ALIGNÉES */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* NIVEAU 2 - 5 TUILES : la première (CA Univers) plus compacte */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-start">
+          {/* CA par Univers — plus compact que les autres */}
+          <motion.div variants={itemVariants}>
+            <WarmCard
+              variant="blue"
+              icon={PieChart}
+              animate={false}
+            >
+              <HumanTitle titleKey="ca_univers" icon={PieChart} iconColor="text-warm-blue" size="sm" />
+              <div className="mt-3">
+                <CAParUniversWidget />
+              </div>
+            </WarmCard>
+          </motion.div>
+
           {/* CA par Apporteur */}
           <motion.div variants={itemVariants}>
             <WarmCard
