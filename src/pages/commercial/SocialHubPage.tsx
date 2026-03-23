@@ -199,9 +199,9 @@ export default function SocialHubPage() {
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 min-h-[500px]">
-          {/* Left: Calendar or List — compact */}
-          <div className="lg:col-span-2 rounded-lg border border-border bg-card p-3">
+        <div className="grid grid-cols-1 lg:grid-cols-7 gap-4 min-h-[500px]">
+          {/* Left: Calendar or List — larger */}
+          <div className="lg:col-span-5 rounded-lg border border-border bg-card p-3">
             {filteredSuggestions.length === 0 ? (
               <EmptyState viewMode={viewMode} monthKey={monthKey} />
             ) : viewMode === 'calendar' ? (
@@ -224,8 +224,8 @@ export default function SocialHubPage() {
             )}
           </div>
 
-          {/* Right: Detail panel — larger */}
-          <div className="lg:col-span-3 rounded-lg border border-border bg-card p-4">
+          {/* Right: Detail panel — compact */}
+          <div className="lg:col-span-2 rounded-lg border border-border bg-card p-3">
             <SocialPostDetailPanel
               suggestion={selectedSuggestion}
               onApprove={handleApprove}
