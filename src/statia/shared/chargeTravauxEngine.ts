@@ -897,7 +897,7 @@ export function computeChargeTravauxAvenirParUnivers(
     // Try to place by real intervention date first
     for (const itv of intervs) {
       const dates = getInterventionDates(itv);
-      const { heuresTech: hTech } = extractHoursFromIntervention(itv);
+      const { heuresTech: hTech } = extractHoursFromIntervention(itv, creneauxByInterventionId);
       for (const d of dates) {
         const dMs = d.getTime();
         if (dMs < currentMonday.getTime() || dMs >= weekEndMs.getTime()) continue;
