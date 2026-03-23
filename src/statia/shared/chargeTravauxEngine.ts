@@ -260,37 +260,90 @@ function getDurationHoursFromCreneaux(creneaux: any[] = []): number {
 }
 
 /**
- * Extrait les heures depuis le planning réel d'abord (visites / créneaux), puis fallback sur le chiffrage
+ * Extrait les heures depuis le chiffrage (RT) en priorité, puis fallback sur visites/créneaux
  */
 function extractHoursFromIntervention(
   intervention: any,
   creneauxByInterventionId?: Map<string, any[]>
 ): { heuresRdv: number; heuresTech: number; nbTechs: number; blocksCount: number } {
-  let totalHeures = 0;
-  let totalHeuresTech = 0;
-  let maxNbTechs = 0;
 
+  // === PRIORITÉ 1 : Chiffrage (relevé technique) — source la plus fiable ===
+  const chiffrage = intervention?.data?.chiffrage;
+  if (chiffrage?.postes && Array.isArray(chiffrage.postes)) {
+    let chiffrageHeures = 0;
+    let chiffrageHeuresTech = 0;
+    let chiffrageMaxNbTechs = 0;
+    let blocksCount = 0;
+
+    for (const poste of chiffrage.postes) {
+      const items = poste?.items || [];
+      for (const item of items) {
+        if (!item?.IS_BLOCK || item?.slug !== 'chiffrage') continue;
+        const data = item.data || {};
+        blocksCount++;
+
+        let nbHeures = parseNumericValue(data.nbHeures);
+        let nbTechs = parseNumericValue(data.nbTechs);
+
+        if (nbHeures === 0 || nbTechs === 0) {
+          const subItems = data.subItems || [];
+          for (const sub of subItems) {
+            if (!sub?.IS_BLOCK || sub?.slug !== 'dfields') continue;
+            const dFields = sub.data?.dFields || [];
+            for (const df of dFields) {
+              const slug = String(df.EXPORT_generiqueSlug || '').toLowerCase();
+              if (slug.includes('nombre_de techniciens') || slug.includes('nombre_de_techniciens')) {
+                const val = parseNumericValue(df.value);
+                if (val > 0 && nbTechs === 0) nbTechs = val;
+              }
+              if (slug.includes("temps_total d'intervention") || slug.includes("temps_total_d'intervention") || slug.includes('temps_total')) {
+                const val = parseNumericValue(df.value);
+                if (val > 0 && nbHeures === 0) nbHeures = val;
+              }
+            }
+          }
+        }
+
+        if (nbHeures <= 0) continue;
+        if (nbTechs <= 0) nbTechs = 1;
+
+        chiffrageHeures += nbHeures;
+        chiffrageHeuresTech += nbHeures * nbTechs;
+        chiffrageMaxNbTechs = Math.max(chiffrageMaxNbTechs, nbTechs);
+      }
+    }
+
+    if (chiffrageHeures > 0) {
+      return {
+        heuresRdv: chiffrageHeures,
+        heuresTech: chiffrageHeuresTech,
+        nbTechs: chiffrageMaxNbTechs,
+        blocksCount,
+      };
+    }
+  }
+
+  // === PRIORITÉ 2 : Visites avec créneaux (planning réel) ===
   const visites = [
     ...(Array.isArray(intervention?.visites) ? intervention.visites : []),
     ...(Array.isArray(intervention?.data?.visites) ? intervention.data.visites : []),
   ];
 
+  let totalHeures = 0;
+  let totalHeuresTech = 0;
+  let maxNbTechs = 0;
+
   for (const visite of visites) {
     const visiteUsers = getUserIds(visite);
     const visiteCreneaux = Array.isArray(visite?.creneaux) ? visite.creneaux : [];
     
-    // Priorité 1 : créneaux avec debut/fin ou duree en minutes
+    // créneaux avec debut/fin ou duree en minutes
     let durationHours = getDurationHoursFromCreneaux(visiteCreneaux);
     
-    // Priorité 2 : dureeMinutes (en minutes → /60)
+    // Fallback : duree en minutes → /60
     if (durationHours <= 0) {
-      const mins = parseNumericValue(visite?.dureeMinutes);
+      const mins = parseNumericValue(visite?.duree) || parseNumericValue(visite?.dureeMinutes) || parseNumericValue(visite?.duration) || parseNumericValue(visite?.tempsPrevu) || 0;
       if (mins > 0) durationHours = mins / 60;
-    }
-    
-    // Priorité 3 : duree / tempsPrevu / duration (en HEURES, pas de /60)
-    if (durationHours <= 0) {
-      durationHours = parseNumericValue(visite?.duree) || parseNumericValue(visite?.tempsPrevu) || parseNumericValue(visite?.duration) || 0;
     }
 
     if (durationHours <= 0) continue;
@@ -302,30 +355,19 @@ function extractHoursFromIntervention(
   }
 
   if (totalHeures > 0) {
-    return {
-      heuresRdv: totalHeures,
-      heuresTech: totalHeuresTech,
-      nbTechs: maxNbTechs,
-      blocksCount: 0,
-    };
+    return { heuresRdv: totalHeures, heuresTech: totalHeuresTech, nbTechs: maxNbTechs, blocksCount: 0 };
   }
 
+  // === PRIORITÉ 3 : Durée directe sur l'intervention (en minutes → /60) ===
   const interventionUsers = getUserIds(intervention);
-  // duree/tempsPrevu en HEURES (pas de /60), dureeMinutes en minutes
-  const directDurationHours =
-    parseNumericValue(intervention?.duree) || parseNumericValue(intervention?.tempsPrevu) || parseNumericValue(intervention?.duration) ||
-    (parseNumericValue(intervention?.dureeMinutes) / 60) || 0;
-
-  if (directDurationHours > 0) {
+  const directMins = parseNumericValue(intervention?.duree) || parseNumericValue(intervention?.tempsPrevu) || parseNumericValue(intervention?.duration) || 0;
+  if (directMins > 0) {
+    const directHours = directMins / 60;
     const nbTechs = interventionUsers.length || 1;
-    return {
-      heuresRdv: directDurationHours,
-      heuresTech: directDurationHours * nbTechs,
-      nbTechs,
-      blocksCount: 0,
-    };
+    return { heuresRdv: directHours, heuresTech: directHours * nbTechs, nbTechs, blocksCount: 0 };
   }
 
+  // === PRIORITÉ 4 : Créneaux standalone ===
   const interventionId = getInterventionId(intervention);
   const standaloneCreneaux = interventionId && creneauxByInterventionId ? (creneauxByInterventionId.get(interventionId) || []) : [];
   const creneauxHours = getDurationHoursFromCreneaux(standaloneCreneaux);
@@ -335,70 +377,10 @@ function extractHoursFromIntervention(
       for (const uid of getUserIds(c)) ids.add(uid);
     }
     const nbTechs = ids.size || 1;
-    return {
-      heuresRdv: creneauxHours,
-      heuresTech: creneauxHours * nbTechs,
-      nbTechs,
-      blocksCount: 0,
-    };
+    return { heuresRdv: creneauxHours, heuresTech: creneauxHours * nbTechs, nbTechs, blocksCount: 0 };
   }
 
-  const chiffrage = intervention?.data?.chiffrage;
-  if (!chiffrage?.postes || !Array.isArray(chiffrage.postes)) {
-    return { heuresRdv: 0, heuresTech: 0, nbTechs: 0, blocksCount: 0 };
-  }
-
-  let fallbackHeures = 0;
-  let fallbackHeuresTech = 0;
-  let fallbackMaxNbTechs = 0;
-  let blocksCount = 0;
-
-  for (const poste of chiffrage.postes) {
-    const items = poste?.items || [];
-
-    for (const item of items) {
-      if (!item?.IS_BLOCK || item?.slug !== 'chiffrage') continue;
-
-      const data = item.data || {};
-      blocksCount++;
-
-      let nbHeures = parseNumericValue(data.nbHeures);
-      let nbTechs = parseNumericValue(data.nbTechs);
-
-      if (nbHeures === 0 || nbTechs === 0) {
-        const subItems = data.subItems || [];
-
-        for (const sub of subItems) {
-          if (!sub?.IS_BLOCK || sub?.slug !== 'dfields') continue;
-
-          const dFields = sub.data?.dFields || [];
-
-          for (const df of dFields) {
-            const slug = String(df.EXPORT_generiqueSlug || '').toLowerCase();
-
-            if (slug.includes('nombre_de techniciens') || slug.includes('nombre_de_techniciens')) {
-              const val = parseNumericValue(df.value);
-              if (val > 0 && nbTechs === 0) nbTechs = val;
-            }
-
-            if (slug.includes("temps_total d'intervention") || slug.includes("temps_total_d'intervention") || slug.includes('temps_total')) {
-              const val = parseNumericValue(df.value);
-              if (val > 0 && nbHeures === 0) nbHeures = val;
-            }
-          }
-        }
-      }
-
-      if (nbHeures <= 0) continue;
-      if (nbTechs <= 0) nbTechs = 1;
-
-      fallbackHeures += nbHeures;
-      fallbackHeuresTech += nbHeures * nbTechs;
-      fallbackMaxNbTechs = Math.max(fallbackMaxNbTechs, nbTechs);
-    }
-  }
-
-  return { heuresRdv: fallbackHeures, heuresTech: fallbackHeuresTech, nbTechs: fallbackMaxNbTechs, blocksCount };
+  return { heuresRdv: 0, heuresTech: 0, nbTechs: 0, blocksCount: 0 };
 }
 
 /**
