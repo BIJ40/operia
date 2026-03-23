@@ -59,6 +59,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   onRegenerate: (id: string) => void;
   isRegenerating?: boolean;
 }) {
+  const { agencyId } = useAuth();
   const [rawPreviewUrl, setRawPreviewUrl] = useState<string | null>(null);
   const [composedPreviewUrl, setComposedPreviewUrl] = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
