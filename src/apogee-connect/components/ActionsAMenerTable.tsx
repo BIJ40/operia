@@ -148,18 +148,25 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
                   </span>
                 </td>
 
-                {/* Date */}
+                {/* Date entrée */}
                 <td className="py-2.5 px-3 hidden sm:table-cell">
                   <span className={cn(
                     "text-xs",
                     isLate ? "text-destructive font-bold" : "text-muted-foreground"
                   )}>
                     {format(action.dateDepart, 'dd/MM/yyyy', { locale: fr })}
+                  </span>
+                </td>
+
+                {/* Expiration */}
+                <td className="py-2.5 px-3 hidden sm:table-cell">
+                  <span className={cn(
+                    "text-xs",
+                    isLate ? "text-destructive font-bold" : "text-muted-foreground"
+                  )}>
+                    {format(action.deadline, 'dd/MM/yyyy', { locale: fr })}
                     {isLate && action.daysLate != null && action.daysLate > 0 && (
                       <span className="ml-1 text-destructive font-bold">+{action.daysLate}j</span>
-                    )}
-                    {!isLate && action.actionType !== 'a_planifier_tvx' && action.actionType !== 'a_commander' && action.daysLate != null && action.daysLate > 0 && (
-                      <span className="ml-1 text-muted-foreground">({action.daysLate}j)</span>
                     )}
                   </span>
                 </td>
