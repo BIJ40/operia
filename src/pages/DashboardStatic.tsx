@@ -35,6 +35,7 @@ import { CAParUniversWidget } from '@/components/dashboard/widgets/CAParUniversW
 import { CAApporteursWidget } from '@/components/dashboard/widgets/CAApporteursWidget';
 import { TechniciensProdWidget } from '@/components/dashboard/widgets/TechniciensProdWidget';
 import { ActionsAMenerWidget } from '@/components/dashboard/widgets/ActionsAMenerWidget';
+import { CAParTrancheHoraireWidget } from '@/components/dashboard/widgets/CAParTrancheHoraireWidget';
 import { TechnicienPersonnelKPIs } from '@/components/dashboard/TechnicienPersonnelKPIs';
 import { AssistantePersonnelKPIs } from '@/components/dashboard/AssistantePersonnelKPIs';
 
