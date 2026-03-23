@@ -72,9 +72,9 @@ export function DossiersExplorerDialog({ open, onOpenChange, projets, clients }:
   }, [clients]);
 
   const getClientName = useCallback((p: ChargeTravauxProjet): string => {
-    const label = p.label || '';
-    if (label && label !== String(p.projectId)) return label;
-    return clientMap.get(p.projectId) || `Dossier ${p.reference || p.projectId}`;
+    const fromClient = clientMap.get(p.projectId);
+    if (fromClient) return fromClient;
+    return p.label || `Dossier ${p.reference || p.projectId}`;
   }, [clientMap]);
 
   // Available univers
