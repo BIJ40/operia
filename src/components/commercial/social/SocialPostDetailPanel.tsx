@@ -170,7 +170,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   const isTeamPost = suggestion.topic_type === 'prospection' || suggestion.topic_type === 'calendar';
 
   const hasExistingVisual = Boolean(composedAsset || rawAsset);
-  const existingStoragePath = composedAsset?.storage_path || rawAsset?.storage_path || '';
+  const editSourceStoragePath = rawAsset?.storage_path || composedAsset?.storage_path || '';
 
   const handleGenerate = useCallback(async () => {
     setLoadingPreview(true);
@@ -194,7 +194,6 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
       return;
     }
 
-    // AI generation for all other cases (including regeneration of team posts)
     const visualCustomization = (freePrompt || keywords || includeVan || universeOverride || imageModel !== 'auto') ? {
       freePrompt: freePrompt || undefined,
       keywords: keywords || undefined,
@@ -208,7 +207,6 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
         onSuccess: (data) => {
           if (data?.signed_url) {
             setComposedPreviewUrl(data.signed_url);
-            // Also update raw preview if background URL is provided
             if ((data as any)?.background_signed_url) {
               setRawPreviewUrl((data as any).background_signed_url);
             }
@@ -226,19 +224,26 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   }, [suggestion.id, isTeamPost, hasExistingVisual, agencyId, generateMutation, freePrompt, keywords, includeVan, universeOverride, imageModel]);
 
   const handleEditExisting = useCallback(async () => {
-    if (!editInstruction.trim() || !existingStoragePath) return;
+    if (!editInstruction.trim() || !editSourceStoragePath) return;
     setLoadingPreview(true);
     generateMutation.mutate(
       {
         suggestionId: suggestion.id,
         editExisting: {
-          sourceStoragePath: existingStoragePath,
+          sourceStoragePath: editSourceStoragePath,
           editInstruction: editInstruction.trim(),
         },
       },
       {
         onSuccess: (data) => {
-          if (data?.signed_url) setComposedPreviewUrl(data.signed_url);
+          if (data?.signed_url) {
+            if ((data as any)?.composition_mode === 'bg_only') {
+              setRawPreviewUrl(data.signed_url);
+              setRenderMode('canvas');
+            } else {
+              setComposedPreviewUrl(data.signed_url);
+            }
+          }
           setLoadingPreview(false);
           setEditInstruction('');
           toast.success('Visuel modifié avec succès');
@@ -248,7 +253,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
         },
       }
     );
-  }, [suggestion.id, editInstruction, existingStoragePath, generateMutation]);
+  }, [suggestion.id, editInstruction, editSourceStoragePath, generateMutation, setRenderMode]);
 
   const handleDownload = useCallback(async () => {
     if (renderMode === 'canvas' && renderedCanvasRef.current) {
