@@ -234,7 +234,7 @@ export default function SocialHubPage() {
             <button
               onClick={() => setIsDetailExpanded(prev => !prev)}
               title={isDetailExpanded ? 'Afficher le calendrier' : 'Agrandir l\'aperçu visuel'}
-              className="flex items-center justify-center w-6 h-16 rounded-md bg-primary/10 hover:bg-primary/20 border border-border transition-colors cursor-pointer my-auto"
+              className="flex items-center justify-center w-4 h-24 rounded-sm bg-primary/10 hover:bg-primary/20 border border-border transition-colors cursor-pointer my-auto"
             >
               {isDetailExpanded ? <PanelLeftOpen className="w-4 h-4 text-primary" /> : <PanelLeftClose className="w-4 h-4 text-primary" />}
             </button>
