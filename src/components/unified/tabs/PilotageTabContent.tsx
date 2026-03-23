@@ -4,6 +4,7 @@
  */
 
 import { lazy, Suspense, useMemo } from 'react';
+import { cn } from '@/lib/utils';
 import { BarChart3, Activity, Settings, AlertTriangle, TrendingUp, PieChart, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
