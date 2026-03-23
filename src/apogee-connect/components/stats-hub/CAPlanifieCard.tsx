@@ -193,14 +193,8 @@ export function CAPlanifieCard({ projects, interventions, devis, factures, clien
     return { caPlanifie: total, caPlanifieDevisCount: count };
   }, [projects, interventions, devis, factures, selectedPeriod.start, selectedPeriod.end]);
 
-  // Empêcher de naviguer avant le mois courant (c'est du prévisionnel)
-  const currentMonthIdx = now.getMonth();
-  const currentYearIdx = now.getFullYear();
-  const canGoPrev = selectedYear > currentYearIdx || (selectedYear === currentYearIdx && selectedMonth > currentMonthIdx);
-
   const handlePrevMonth = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!canGoPrev) return;
     const newDate = addMonths(setYear(setMonth(new Date(), selectedMonth), selectedYear), -1);
     setSelectedMonth(newDate.getMonth());
     setSelectedYear(newDate.getFullYear());
@@ -230,8 +224,8 @@ export function CAPlanifieCard({ projects, interventions, devis, factures, clien
                 </div>
                 <div className="px-4 pb-4">
                   <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground mb-1">
-                    <Button variant="ghost" size="icon" className="h-4 w-4 p-0" onClick={handlePrevMonth} disabled={!canGoPrev}>
-                      <ChevronLeft className={`h-2.5 w-2.5 ${!canGoPrev ? 'opacity-30' : ''}`} />
+                    <Button variant="ghost" size="icon" className="h-4 w-4 p-0" onClick={handlePrevMonth}>
+                      <ChevronLeft className="h-2.5 w-2.5" />
                     </Button>
                     <span className="font-medium">{MONTHS[selectedMonth].label.slice(0, 3)}. {selectedYear}</span>
                     <Button variant="ghost" size="icon" className="h-4 w-4 p-0" onClick={handleNextMonth}>

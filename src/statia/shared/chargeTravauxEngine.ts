@@ -183,7 +183,6 @@ function groupInterventionsByProjectId(interventions: any[]): Map<number, any[]>
   const map = new Map<number, any[]>();
 
   for (const itv of interventions) {
-    if (isExcludedInterventionState(itv)) continue;
     const key = getProjectId(itv);
     if (key == null) continue;
 
