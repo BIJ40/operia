@@ -106,7 +106,13 @@ export function CAPlanifieCard({ projects, interventions, devis, factures }: CAP
     const periodEndMonth = `${selectedPeriod.end.getFullYear()}-${String(selectedPeriod.end.getMonth() + 1).padStart(2, '0')}`;
 
     const facturedProjectIds = new Set<number>();
-    for (const f of factures) { const pid = getProjectId(f); if (pid != null) facturedProjectIds.add(pid); }
+    for (const f of factures) {
+      const pid = getProjectId(f);
+      if (pid == null) continue;
+      const typeFacture = String(f?.typeFacture ?? f?.type ?? f?.data?.typeFacture ?? '').toLowerCase();
+      if (typeFacture.includes('acompte') || typeFacture.includes('proforma')) continue;
+      facturedProjectIds.add(pid);
+    }
 
     const interventionsByProjectId = new Map<number, any[]>();
     for (const itv of interventions) { const pid = getProjectId(itv); if (pid == null) continue; if (!interventionsByProjectId.has(pid)) interventionsByProjectId.set(pid, []); interventionsByProjectId.get(pid)!.push(itv); }
