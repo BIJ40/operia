@@ -18,7 +18,8 @@ import { toast } from 'sonner';
 import { SocialPostCard } from './SocialPostCard';
 import { SocialVisualCanvas, canvasToBlob, type SocialTemplatePayload } from './SocialVisualCanvas';
 import { resolveSocialTemplate } from './templateResolver';
-import { useSocialVisualAssets, useGenerateSocialVisual, downloadSocialVisual, getSignedVisualUrl } from '@/hooks/useSocialVisualAssets';
+import { useSocialVisualAssets, useGenerateSocialVisual, downloadSocialVisual, getSignedVisualUrl, uploadCanvasVisual } from '@/hooks/useSocialVisualAssets';
+import { useAuth } from '@/contexts/AuthContext';
 import type { SocialSuggestion } from '@/hooks/useSocialSuggestions';
 
 interface SocialPostDetailPanelProps {
@@ -58,6 +59,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
   onRegenerate: (id: string) => void;
   isRegenerating?: boolean;
 }) {
+  const { agencyId } = useAuth();
   const [rawPreviewUrl, setRawPreviewUrl] = useState<string | null>(null);
   const [composedPreviewUrl, setComposedPreviewUrl] = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
@@ -120,6 +122,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
     hook: generatedCopy?.hook || aiPayload.hook || suggestion.title,
     cta: generatedCopy?.cta || aiPayload.cta || null,
     topicType: suggestion.topic_type,
+    showTeam: suggestion.topic_type === 'prospection' || suggestion.topic_type === 'calendar',
   }), [suggestion, rawPreviewUrl, aiPayload, generatedCopy, effectiveUniverse]);
 
   const templateId = useMemo(() => resolveSocialTemplate({
@@ -163,8 +166,31 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
     return () => { cancelled = true; };
   }, [rawAsset?.id, rawAsset?.storage_path, composedAsset?.id, composedAsset?.storage_path]);
 
-  const handleGenerate = useCallback(() => {
+  const isTeamPost = suggestion.topic_type === 'prospection' || suggestion.topic_type === 'calendar';
+
+  const handleGenerate = useCallback(async () => {
     setLoadingPreview(true);
+
+    // Canvas-first for team posts (prospection/calendar) — uses local avatars
+    if (isTeamPost && renderedCanvasRef.current && agencyId) {
+      try {
+        const blob = await canvasToBlob(renderedCanvasRef.current);
+        const result = await uploadCanvasVisual(blob, agencyId, suggestion.id);
+        if (result?.signedUrl) {
+          setComposedPreviewUrl(result.signedUrl);
+          toast.success('Visuel équipe généré et sauvegardé');
+        } else {
+          toast.error('Erreur lors de l\'upload du visuel équipe');
+        }
+      } catch {
+        toast.error('Erreur lors de la génération du visuel équipe');
+      } finally {
+        setLoadingPreview(false);
+      }
+      return;
+    }
+
+    // Standard AI generation for other post types
     const visualCustomization = (freePrompt || keywords || includeVan || universeOverride || imageModel !== 'auto') ? {
       freePrompt: freePrompt || undefined,
       keywords: keywords || undefined,
@@ -187,7 +213,7 @@ function DetailContent({ suggestion, onApprove, onReject, onRegenerate, isRegene
         },
       }
     );
-  }, [suggestion.id, generateMutation, freePrompt, keywords, includeVan, universeOverride, imageModel]);
+  }, [suggestion.id, isTeamPost, agencyId, generateMutation, freePrompt, keywords, includeVan, universeOverride, imageModel]);
 
   const handleDownload = useCallback(async () => {
     if (renderMode === 'canvas' && renderedCanvasRef.current) {

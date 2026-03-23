@@ -102,6 +102,57 @@ export function useGenerateSocialVisual() {
   });
 }
 
+// ─── Upload canvas-rendered visual to storage ──────────────
+export async function uploadCanvasVisual(
+  blob: Blob,
+  agencyId: string,
+  suggestionId: string,
+): Promise<{ storagePath: string; signedUrl: string | null } | null> {
+  const timestamp = Date.now();
+  const storagePath = `${agencyId}/${new Date().getFullYear()}/${String(new Date().getMonth() + 1).padStart(2, '0')}/${suggestionId}/canvas-team-${timestamp}.png`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('social-visuals')
+    .upload(storagePath, blob, { contentType: 'image/png', upsert: true });
+
+  if (uploadError) {
+    console.error('Canvas upload error:', uploadError);
+    return null;
+  }
+
+  // Insert asset record
+  const db = supabase as any;
+  const { error: insertError } = await db
+    .from('social_visual_assets')
+    .insert({
+      agency_id: agencyId,
+      suggestion_id: suggestionId,
+      visual_type: 'illustration_generee',
+      storage_path: storagePath,
+      mime_type: 'image/png',
+      width: 1080,
+      height: 1080,
+      theme_key: 'general',
+      generation_meta: {
+        mode: 'canvas_team',
+        source: 'canvas_brand_card',
+        composition_mode: 'composed',
+        generated_at: new Date().toISOString(),
+      },
+    });
+
+  if (insertError) {
+    console.error('Canvas asset insert error:', insertError);
+    return null;
+  }
+
+  const { data: signedData } = await supabase.storage
+    .from('social-visuals')
+    .createSignedUrl(storagePath, 3600);
+
+  return { storagePath, signedUrl: signedData?.signedUrl || null };
+}
+
 // ─── Download visual (signed URL) ───────────────────────────
 export async function downloadSocialVisual(storagePath: string, filename?: string) {
   const { data, error } = await supabase.storage
