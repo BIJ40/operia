@@ -492,9 +492,10 @@ export function computeChargeTravauxAvenirParUnivers(
   devis: any[] = [],
   creneaux: any[] = []
 ): ChargeTravauxResult {
-  // Index des interventions et devis par projectId
+  // Index des interventions, devis et créneaux
   const byProjectId = groupInterventionsByProjectId(interventions);
   const devisByProjectId = groupDevisByProjectId(devis);
+  const creneauxByInterventionId = groupCreneauxByInterventionId(creneaux);
 
   const debug = {
     totalProjects: projects.length,
