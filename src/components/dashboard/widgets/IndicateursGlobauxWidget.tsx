@@ -100,10 +100,9 @@ function formatValue(value: number | null | undefined, format: string): string {
 export function IndicateursGlobauxWidget() {
   const { agence } = useProfile();
   const agencySlug = agence || '';
-  const selectedYear = new Date().getFullYear();
-
   // Utiliser la période du dashboard parent
   const { dateRange } = useDashboardPeriod();
+  const selectedYear = dateRange.start.getFullYear();
 
   // Fetch tous les KPIs
   const { data: kpiData, isLoading } = useQuery({
