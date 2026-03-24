@@ -7,7 +7,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { logWarn } from '@/lib/logger';
 
-interface TicketAttachment {
+export type TicketAttachmentSource = 'db' | 'storage';
+
+export interface TicketAttachment {
   id: string;
   ticket_id: string;
   file_name: string;
@@ -17,6 +19,8 @@ interface TicketAttachment {
   uploaded_by: string | null;
   created_at: string;
   file_url?: string;
+  source: TicketAttachmentSource;
+  is_missing?: boolean;
 }
 
 export function useTicketAttachments(ticketId: string | null) {
@@ -28,29 +32,76 @@ export function useTicketAttachments(ticketId: string | null) {
     queryFn: async () => {
       if (!ticketId) return [];
 
-      const { data, error } = await supabase
-        .from('apogee_ticket_attachments')
-        .select('*')
-        .eq('ticket_id', ticketId)
-        .order('created_at', { ascending: false });
+      const [{ data, error }, { data: storageFiles, error: storageError }] = await Promise.all([
+        supabase
+          .from('apogee_ticket_attachments')
+          .select('*')
+          .eq('ticket_id', ticketId)
+          .order('created_at', { ascending: false }),
+        supabase.storage
+          .from('apogee-ticket-attachments')
+          .list(ticketId, { sortBy: { column: 'created_at', order: 'desc' } }),
+      ]);
 
       if (error) throw error;
+      if (storageError) {
+        logWarn('APOGEE_TICKETS', 'Erreur listing storage pièces jointes', { storageError, ticketId });
+      }
 
-      // Générer les URLs signées pour chaque fichier
-      const attachmentsWithUrls = await Promise.all(
+      const validStorageFiles = (storageFiles || []).filter(
+        (file) => file.name && !file.name.startsWith('.') && file.id
+      );
+      const storagePaths = new Set(validStorageFiles.map((file) => `${ticketId}/${file.name}`));
+      const dbPaths = new Set((data || []).map((att) => att.file_path));
+
+      // Générer les URLs signées pour les pièces jointes référencées en base
+      const attachmentsFromDb = await Promise.all(
         (data || []).map(async (att) => {
-          const { data: urlData } = await supabase.storage
-            .from('apogee-ticket-attachments')
-            .createSignedUrl(att.file_path, 3600); // URL valide 1h
+          const hasStorageObject = storagePaths.has(att.file_path);
+          const { data: urlData } = hasStorageObject
+            ? await supabase.storage
+                .from('apogee-ticket-attachments')
+                .createSignedUrl(att.file_path, 3600)
+            : { data: null };
 
           return {
             ...att,
             file_url: urlData?.signedUrl || '',
+            source: 'db' as const,
+            is_missing: !hasStorageObject,
           };
         })
       );
 
-      return attachmentsWithUrls as TicketAttachment[];
+      // Inclure aussi les fichiers présents en storage mais absents de la table SQL
+      const storageOnlyAttachments = await Promise.all(
+        validStorageFiles
+          .filter((file) => !dbPaths.has(`${ticketId}/${file.name}`))
+          .map(async (file) => {
+            const fullPath = `${ticketId}/${file.name}`;
+            const { data: urlData } = await supabase.storage
+              .from('apogee-ticket-attachments')
+              .createSignedUrl(fullPath, 3600);
+
+            return {
+              id: `storage:${fullPath}`,
+              ticket_id: ticketId,
+              file_name: file.name,
+              file_path: fullPath,
+              file_size: file.metadata?.size || null,
+              file_type: file.metadata?.mimetype || null,
+              uploaded_by: null,
+              created_at: file.created_at,
+              file_url: urlData?.signedUrl || '',
+              source: 'storage' as const,
+              is_missing: false,
+            } satisfies TicketAttachment;
+          })
+      );
+
+      return [...attachmentsFromDb, ...storageOnlyAttachments].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      ) as TicketAttachment[];
     },
     enabled: !!ticketId,
   });
@@ -102,7 +153,24 @@ export function useTicketAttachments(ticketId: string | null) {
 
   // Supprimer un fichier
   const deleteMutation = useMutation({
-    mutationFn: async ({ attachmentId, filePath }: { attachmentId: string; filePath: string }) => {
+    mutationFn: async ({
+      attachmentId,
+      filePath,
+      source,
+    }: {
+      attachmentId: string;
+      filePath: string;
+      source: TicketAttachmentSource;
+    }) => {
+      if (source === 'storage') {
+        const { error: storageError } = await supabase.storage
+          .from('apogee-ticket-attachments')
+          .remove([filePath]);
+
+        if (storageError) throw storageError;
+        return;
+      }
+
       // Supprimer de la DB
       const { error: dbError } = await supabase
         .from('apogee_ticket_attachments')
@@ -133,8 +201,8 @@ export function useTicketAttachments(ticketId: string | null) {
     attachments,
     isLoading,
     uploadAttachment: uploadMutation.mutateAsync,
-    deleteAttachment: (id: string, filePath: string) => 
-      deleteMutation.mutate({ attachmentId: id, filePath }),
+    deleteAttachment: (id: string, filePath: string, source: TicketAttachmentSource = 'db') => 
+      deleteMutation.mutate({ attachmentId: id, filePath, source }),
     isUploading: uploadMutation.isPending,
     isDeleting: deleteMutation.isPending,
   };
