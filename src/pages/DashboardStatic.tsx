@@ -22,7 +22,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { ChevronDown, BarChart3, Trophy, PieChart, TrendingUp, Users, Building2, Network, MapPin } from 'lucide-react';
+import { ChevronDown, BarChart3, Trophy, PieChart, TrendingUp, Users, Building2, Network, MapPin, AlertTriangle, Clock } from 'lucide-react';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { useProfile } from '@/contexts/ProfileContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
@@ -34,6 +34,8 @@ import { Top3TechniciensWidget } from '@/components/dashboard/widgets/Top3Techni
 import { CAParUniversWidget } from '@/components/dashboard/widgets/CAParUniversWidget';
 import { CAApporteursWidget } from '@/components/dashboard/widgets/CAApporteursWidget';
 import { TechniciensProdWidget } from '@/components/dashboard/widgets/TechniciensProdWidget';
+import { ActionsAMenerWidget } from '@/components/dashboard/widgets/ActionsAMenerWidget';
+import { CAParTrancheHoraireWidget } from '@/components/dashboard/widgets/CAParTrancheHoraireWidget';
 import { TechnicienPersonnelKPIs } from '@/components/dashboard/TechnicienPersonnelKPIs';
 import { AssistantePersonnelKPIs } from '@/components/dashboard/AssistantePersonnelKPIs';
 
@@ -342,15 +344,43 @@ export default function DashboardStatic() {
         animate="visible"
         className="space-y-6"
       >
-        {/* NIVEAU 1 - HERO ROW: Carte RDV + Indicateurs Globaux */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* Carte RDV (demi-tuile) */}
-          <motion.div variants={itemVariants}>
+        {/* LAYOUT: Colonne gauche (CA Univers) chevauche les 2 lignes */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          
+          {/* COL GAUCHE — chevauche les 2 lignes : CA Univers + tuile complémentaire */}
+          <div className="lg:row-span-2 flex flex-col gap-4">
+            <motion.div variants={itemVariants}>
+              <WarmCard
+                variant="blue"
+                animate={false}
+              >
+                <HumanTitle titleKey="ca_univers" icon={PieChart} iconColor="text-warm-blue" size="sm" />
+                <div className="mt-3">
+                  <CAParUniversWidget />
+                </div>
+              </WarmCard>
+            </motion.div>
+
+            {/* Tuile complémentaire — comble la hauteur restante */}
+            <motion.div variants={itemVariants} className="flex-1">
+              <WarmCard
+                variant="blue"
+                animate={false}
+                className="h-full"
+              >
+                <HumanTitle titleKey="ca_par_jour" icon={Clock} iconColor="text-warm-blue" size="sm" showSubtitle={false} />
+                <p className="text-[10px] text-muted-foreground -mt-1 mb-2 ml-6">Répartition hebdomadaire</p>
+                <CAParTrancheHoraireWidget />
+              </WarmCard>
+            </motion.div>
+          </div>
+
+          {/* LIGNE 1 — Carte RDV (2 cols) + En un coup d'œil (2 cols) */}
+          <motion.div variants={itemVariants} className="lg:col-span-2">
             <DashboardMapWidget agencySlug={agence} className="h-full" />
           </motion.div>
 
-          {/* Indicateurs Globaux (demi-tuile) */}
-          <motion.div variants={itemVariants}>
+          <motion.div variants={itemVariants} className="lg:col-span-2">
             <WarmCard
               variant="blue"
               animate={false}
@@ -362,66 +392,49 @@ export default function DashboardStatic() {
               </div>
             </WarmCard>
           </motion.div>
-        </div>
 
-        {/* NIVEAU 2 - 4 TUILES ALIGNÉES: CA + Techniciens + Charge */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* CA par Univers */}
+          {/* LIGNE 2 — 4 tuiles (colonnes 2-5) */}
           <motion.div variants={itemVariants}>
-            <WarmCard
-              variant="blue"
-              icon={PieChart}
-              animate={false}
-              className="h-full"
-            >
-              <HumanTitle titleKey="ca_univers" icon={PieChart} iconColor="text-warm-blue" size="sm" />
-              <div className="mt-3">
-                <CAParUniversWidget />
-              </div>
-            </WarmCard>
-          </motion.div>
-
-          {/* CA par Apporteur */}
-          <motion.div variants={itemVariants}>
-            <WarmCard
-              variant="blue"
-              icon={TrendingUp}
-              animate={false}
-              className="h-full"
-            >
+            <WarmCard variant="blue" animate={false} className="h-full">
               <HumanTitle titleKey="ca_apporteurs" icon={TrendingUp} iconColor="text-warm-blue" size="sm" />
-              <div className="mt-3">
-                <CAApporteursWidget />
-              </div>
+              <div className="mt-3"><CAApporteursWidget /></div>
             </WarmCard>
           </motion.div>
 
-          {/* Top Techniciens (compact) */}
           <motion.div variants={itemVariants}>
-            <WarmCard
-              variant="blue"
-              icon={Trophy}
-              animate={false}
-              className="h-full"
-            >
+            <WarmCard variant="blue" animate={false} className="h-full">
               <HumanTitle titleKey="top_techniciens" icon={Trophy} iconColor="text-warm-blue" size="sm" />
-              <div className="mt-3">
-                <Top3TechniciensWidget />
-              </div>
+              <div className="mt-3"><Top3TechniciensWidget /></div>
             </WarmCard>
           </motion.div>
 
-          {/* Charge de travail / Productivité */}
+          <motion.div variants={itemVariants}>
+            <WarmCard variant="blue" animate={false} className="h-full">
+              <HumanTitle titleKey="productivite" icon={Users} iconColor="text-warm-blue" size="sm" />
+              <div className="mt-3"><TechniciensProdWidget /></div>
+            </WarmCard>
+          </motion.div>
+
           <motion.div variants={itemVariants}>
             <WarmCard
               variant="blue"
-              icon={Users}
               animate={false}
-              className="h-full"
+              className="h-full cursor-pointer"
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('session-state-change', { detail: { key: 'workspace_tab', value: 'pilotage' } }));
+                setTimeout(() => {
+                  window.dispatchEvent(new CustomEvent('session-state-change', { detail: { key: 'pilotage_sub_tab', value: 'actions' } }));
+                }, 100);
+              }}
             >
-              <HumanTitle titleKey="productivite" icon={Users} iconColor="text-warm-blue" size="sm" />
+              <HumanTitle titleKey="actions_a_mener" icon={AlertTriangle} iconColor="text-warm-red" size="sm" />
               <div className="mt-3">
-                <TechniciensProdWidget />
+                <ActionsAMenerWidget onNavigate={() => {
+                  window.dispatchEvent(new CustomEvent('session-state-change', { detail: { key: 'workspace_tab', value: 'pilotage' } }));
+                  setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent('session-state-change', { detail: { key: 'pilotage_sub_tab', value: 'actions' } }));
+                  }, 100);
+                }} />
               </div>
             </WarmCard>
           </motion.div>
@@ -436,7 +449,7 @@ export default function DashboardStatic() {
   return (
     <DashboardPeriodContext.Provider value={periodConfig}>
       <TooltipProvider delayDuration={0}>
-      <div className="container mx-auto py-6 px-4 max-w-7xl">
+      <div className="container mx-auto py-6 px-4 max-w-app">
         {/* Header avec greeting chaleureux */}
         <motion.div 
           initial={{ opacity: 0, y: -10 }}

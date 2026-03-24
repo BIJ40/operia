@@ -38,7 +38,7 @@ export default function AdminHelpi() {
   if (!canAccess) return null;
 
   return (
-    <div className="container mx-auto max-w-7xl p-6 space-y-6">
+    <div className="container mx-auto max-w-app p-6 space-y-6">
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-lg bg-primary/10">
           <Brain className="h-6 w-6 text-primary" />

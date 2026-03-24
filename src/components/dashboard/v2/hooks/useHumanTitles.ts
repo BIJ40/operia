@@ -17,7 +17,9 @@ export type TitleKey =
   | 'panier_moyen'
   | 'productivite'
   | 'map'
-  | 'recouvrement';
+  | 'recouvrement'
+  | 'actions_a_mener'
+  | 'ca_par_jour';
 
 interface TitleVariant {
   title: string;
@@ -81,6 +83,17 @@ const TITLE_VARIANTS: Record<TitleKey, TitleVariant[]> = {
     { title: "À encaisser", subtitle: "Factures en attente de règlement" },
     { title: "Paiements attendus", subtitle: "Suivi du recouvrement" },
     { title: "Relances", subtitle: "Factures à surveiller" },
+  ],
+  actions_a_mener: [
+    { title: "Actions à mener", subtitle: "Dossiers en retard à traiter" },
+    { title: "À ne pas oublier", subtitle: "Vos dossiers les plus urgents" },
+    { title: "Ça urge !", subtitle: "Les retards à rattraper" },
+  ],
+  ca_par_jour: [
+    { title: "Quand se fait le CA", subtitle: "Répartition par jour" },
+    { title: "Les jours qui comptent", subtitle: "Activité par jour de semaine" },
+    { title: "Le rythme de la semaine", subtitle: "CA jour par jour" },
+    { title: "Vos jours forts", subtitle: "Répartition hebdomadaire" },
   ],
 };
 

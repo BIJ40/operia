@@ -52,7 +52,7 @@ const ROADMAP_ITEMS = [
 
 export default function Roadmap() {
   return (
-    <div className="container mx-auto max-w-7xl px-4 py-6 space-y-8 overflow-hidden">
+    <div className="container mx-auto max-w-app px-4 py-6 space-y-8 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link 

@@ -1,35 +1,60 @@
 
 
-# Ajouter les dossiers "À planifier travaux" et "À commander" dans Actions à mener
+# Refonte widget "Répartition" — Grille 2×4 avec pictos univers et barres circulaires
 
-## Objectif
-Afficher deux nouvelles sections dans l'onglet "Actions à mener" :
-1. **Les 10 dossiers "À planifier travaux"** (state `to_planify_tvx`) les plus anciens (basé sur la date de passage à cet état dans l'historique)
-2. **Les 10 dossiers "À commander"** (state `devis_to_order`) les plus anciens (idem)
+## Constat
 
-## Plan de modification
+Oui, les 8 pictos univers sont bien en stock dans `src/assets/` :
+- `picto-plomberie.png`
+- `picto-electricite.png`
+- `picto-serrurerie.png`
+- `picto-menuiserie.png`
+- `picto-vitrerie.png`
+- `picto-volets.png`
+- `picto-pmr.png`
+- `picto-renovation.png`
 
-### 1. Étendre les types (`src/apogee-connect/types/actions.ts`)
-- Ajouter `'a_planifier_tvx' | 'a_commander'` au type `ActionType`
-- Ajouter les labels correspondants dans `ACTION_LABELS`
-- Ajouter les délais dans `ActionsConfig` et `DEFAULT_CONFIG` (ex: 7 jours par défaut)
+Le widget actuel (`CAParUniversWidget`) affiche une liste verticale avec barres horizontales.
 
-### 2. Ajouter la logique de détection (`src/apogee-connect/utils/actionsAMenerCalculations.ts`)
-- Ajouter deux nouvelles règles dans `buildActionsAMener` :
-  - **Règle 4** : Projets avec `state === 'to_planify_tvx'` — chercher dans l'historique (`kind === 2`) le passage `=> À planifier` pour obtenir la `dateDepart`, trier par ancienneté, garder les 10 plus anciens
-  - **Règle 5** : Projets avec `state === 'devis_to_order'` — chercher `=> À commander` dans l'historique, même logique, 10 plus anciens
-- Fallback si pas d'historique : utiliser `project.updated_at` ou `project.created_at`
-- Ces actions ne sont pas filtrées par deadline (toujours affichées), triées par ancienneté décroissante
+## Ce qui change
 
-### 3. Ajouter les filtres dans le composant (`src/components/pilotage/ActionsAMenerTab.tsx`)
-- Ajouter deux nouveaux boutons-filtres pills pour "À planifier" et "À commander"
-- Couleurs : bleu ciel pour planifier, orange pour commander (cohérent avec le reste de l'app)
-- Étendre le type `FilterType` avec `'a_planifier_tvx' | 'a_commander'`
+Remplacer le contenu du widget par une **grille 2 colonnes × 4 lignes** (8 univers max). Chaque cellule affiche :
+- Le **picto** de l'univers (image ~32px) au centre
+- Une **barre de progression circulaire** (SVG ring) autour du picto, remplie selon le % du CA
+- Le **nom** de l'univers en dessous (texte xs)
+- La **valeur** (CA ou %) en petit
 
-### Fichiers impactés
+## Fichiers impactés
+
 | Fichier | Action |
 |---|---|
-| `src/apogee-connect/types/actions.ts` | Ajout types + labels |
-| `src/apogee-connect/utils/actionsAMenerCalculations.ts` | 2 nouvelles règles de détection |
-| `src/components/pilotage/ActionsAMenerTab.tsx` | 2 nouveaux filtres UI |
+| `src/components/dashboard/widgets/CAParUniversWidget.tsx` | Refonte complète du rendu : grille 2×4, pictos, progress ring SVG |
+
+## Approche technique
+
+1. **Mapping univers → picto** : Réutiliser le dictionnaire `UNIVERSE_PICTOS` de `templateAssets.ts` (ou importer directement les assets). Clé de matching basée sur le nom de l'univers (normalisation lowercase).
+
+2. **Progress ring SVG** : Un cercle SVG avec `stroke-dasharray` / `stroke-dashoffset` pour animer le pourcentage. Rayon ~24px, le picto est positionné au centre en `absolute`.
+
+3. **Layout** : `grid grid-cols-2 gap-3` pour la grille 2×4. Chaque cellule est un flex column centré.
+
+4. **Données** : Même query StatIA qu'actuellement, on garde les 8 premiers univers triés par CA décroissant et on calcule le % par rapport au total.
+
+```text
+┌──────────┬──────────┐
+│  ╭───╮   │  ╭───╮   │
+│  │ 🔧│   │  │ ⚡│   │
+│  ╰───╯   │  ╰───╯   │
+│ Plomberie│ Électri. │
+│  45%     │  22%     │
+├──────────┼──────────┤
+│  ╭───╮   │  ╭───╮   │
+│  │ 🔑│   │  │ 🪟│   │
+│  ╰───╯   │  ╰───╯   │
+│ Serrure. │ Vitrerie │
+│  12%     │  8%      │
+├──────────┼──────────┤
+│  ...     │  ...     │
+└──────────┴──────────┘
+```
 
