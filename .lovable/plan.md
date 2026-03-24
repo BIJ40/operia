@@ -1,60 +1,74 @@
 
 
-# Refonte widget "Répartition" — Grille 2×4 avec pictos univers et barres circulaires
+## Probleme confirme
 
-## Constat
+Sebastien Caron est N1 (franchisee_user, role_level=1) dans une agence PRO (Dax). Tous les modules `pilotage.*` ont `min_role = 2` dans le `module_registry`. La RPC `get_user_effective_modules` filtre ces modules car `1 < 2`. L'override sur `pilotage.statistiques.previsionnel` est bien dans `user_overrides`, mais ses parents (`pilotage`, `pilotage.statistiques`) ne sont ni dans `combined_base` (filtres par min_role) ni dans `user_overrides` (pas d'override direct). La navigation bloque donc l'acces.
 
-Oui, les 8 pictos univers sont bien en stock dans `src/assets/` :
-- `picto-plomberie.png`
-- `picto-electricite.png`
-- `picto-serrurerie.png`
-- `picto-menuiserie.png`
-- `picto-vitrerie.png`
-- `picto-volets.png`
-- `picto-pmr.png`
-- `picto-renovation.png`
+## Solution
 
-Le widget actuel (`CAParUniversWidget`) affiche une liste verticale avec barres horizontales.
+### 1. Migration SQL — Propagation ascendante dans la RPC
 
-## Ce qui change
+Ajouter un CTE `ancestor_grants` dans `get_user_effective_modules` qui, pour chaque override utilisateur, genere automatiquement les cles parentes manquantes.
 
-Remplacer le contenu du widget par une **grille 2 colonnes × 4 lignes** (8 univers max). Chaque cellule affiche :
-- Le **picto** de l'univers (image ~32px) au centre
-- Une **barre de progression circulaire** (SVG ring) autour du picto, remplie selon le % du CA
-- Le **nom** de l'univers en dessous (texte xs)
-- La **valeur** (CA ou %) en petit
-
-## Fichiers impactés
-
-| Fichier | Action |
-|---|---|
-| `src/components/dashboard/widgets/CAParUniversWidget.tsx` | Refonte complète du rendu : grille 2×4, pictos, progress ring SVG |
-
-## Approche technique
-
-1. **Mapping univers → picto** : Réutiliser le dictionnaire `UNIVERSE_PICTOS` de `templateAssets.ts` (ou importer directement les assets). Clé de matching basée sur le nom de l'univers (normalisation lowercase).
-
-2. **Progress ring SVG** : Un cercle SVG avec `stroke-dasharray` / `stroke-dashoffset` pour animer le pourcentage. Rayon ~24px, le picto est positionné au centre en `absolute`.
-
-3. **Layout** : `grid grid-cols-2 gap-3` pour la grille 2×4. Chaque cellule est un flex column centré.
-
-4. **Données** : Même query StatIA qu'actuellement, on garde les 8 premiers univers triés par CA décroissant et on calcule le % par rapport au total.
+Logique :
+- Pour chaque `user_modules` entry, extraire les prefixes parents (ex: `pilotage.statistiques.previsionnel` → `pilotage.statistiques`, `pilotage`)
+- Filtrer ceux deja presents dans `combined_base` ou `user_overrides`
+- Les ajouter au `merged` final avec `enabled = true`
 
 ```text
-┌──────────┬──────────┐
-│  ╭───╮   │  ╭───╮   │
-│  │ 🔧│   │  │ ⚡│   │
-│  ╰───╯   │  ╰───╯   │
-│ Plomberie│ Électri. │
-│  45%     │  22%     │
-├──────────┼──────────┤
-│  ╭───╮   │  ╭───╮   │
-│  │ 🔑│   │  │ 🪟│   │
-│  ╰───╯   │  ╰───╯   │
-│ Serrure. │ Vitrerie │
-│  12%     │  8%      │
-├──────────┼──────────┤
-│  ...     │  ...     │
-└──────────┴──────────┘
+ancestor_grants AS (
+  SELECT DISTINCT ancestor_key AS module_key, true AS enabled, '{}'::jsonb AS options
+  FROM (
+    SELECT
+      array_to_string((string_to_array(um.module_key, '.'))[1:n], '.') AS ancestor_key
+    FROM user_modules um
+    CROSS JOIN generate_series(1, array_length(string_to_array(um.module_key, '.'), 1) - 1) AS n
+    WHERE um.user_id = p_user_id
+      AND array_length(string_to_array(um.module_key, '.'), 1) > 1
+  ) sub
+  -- Only ancestors that exist in registry and are deployed
+  JOIN module_registry mr ON mr.key = sub.ancestor_key AND mr.is_deployed = true
+  -- Not already covered
+  WHERE NOT EXISTS (SELECT 1 FROM combined_base cb WHERE cb.module_key = sub.ancestor_key)
+    AND NOT EXISTS (SELECT 1 FROM user_overrides uo WHERE uo.module_key = sub.ancestor_key)
+)
 ```
+
+Puis dans le `merged` final, ajouter :
+```sql
+UNION ALL
+SELECT ag.module_key, ag.enabled, ag.options FROM ancestor_grants ag
+```
+
+### 2. Hook useAddOverride — Auto-insertion des parents
+
+Modifier `useAddOverride` dans `src/hooks/access-rights/useModuleOverrides.ts` pour inserer automatiquement les cles parentes en batch upsert quand un module hierarchique est ajoute.
+
+```typescript
+// Generer toutes les cles parentes
+const parts = moduleKey.split('.');
+const allKeys = parts.map((_, i) => parts.slice(0, i + 1).join('.'));
+// Upsert batch sur toutes les cles (parent + enfant)
+await supabase.from('user_modules').upsert(
+  allKeys.map(key => ({
+    user_id: userId,
+    module_key: key,
+    options: null,
+    enabled_at: new Date().toISOString(),
+    enabled_by: user?.id || null,
+  })),
+  { onConflict: 'user_id,module_key' }
+);
+```
+
+### Fichiers modifies
+
+1. **Nouvelle migration SQL** — Remplace `get_user_effective_modules` avec le CTE `ancestor_grants`
+2. **`src/hooks/access-rights/useModuleOverrides.ts`** — `useAddOverride` insere les parents automatiquement
+
+### Resultat attendu
+
+- Ajouter un override `pilotage.statistiques.previsionnel` pour un N1 → les overrides `pilotage` et `pilotage.statistiques` sont auto-crees en DB
+- La RPC retourne les trois cles → la navigation Pilotage est accessible
+- Securite : la RPC verifie toujours `is_deployed` sur les ancetres (pas d'acces a des modules caches)
 
