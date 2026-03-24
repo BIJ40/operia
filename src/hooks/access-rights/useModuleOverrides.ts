@@ -86,15 +86,22 @@ export function useAddOverride() {
 
   return useMutation({
     mutationFn: async ({ userId, moduleKey }: { userId: string; moduleKey: string }) => {
+      // Auto-insert all ancestor keys so parent modules are also overridden
+      const parts = moduleKey.split('.');
+      const allKeys = parts.map((_, i) => parts.slice(0, i + 1).join('.'));
+      const now = new Date().toISOString();
       const { error } = await supabase
         .from('user_modules')
-        .upsert({
-          user_id: userId,
-          module_key: moduleKey,
-          options: null,
-          enabled_at: new Date().toISOString(),
-          enabled_by: user?.id || null,
-        }, { onConflict: 'user_id,module_key' });
+        .upsert(
+          allKeys.map(key => ({
+            user_id: userId,
+            module_key: key,
+            options: null,
+            enabled_at: now,
+            enabled_by: user?.id || null,
+          })),
+          { onConflict: 'user_id,module_key' }
+        );
       if (error) throw error;
     },
     onSuccess: () => {
