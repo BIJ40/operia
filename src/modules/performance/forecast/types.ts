@@ -1,21 +1,23 @@
 /**
  * Forecast — Types canoniques
  * Phase 6 Lot 1 — Séparé du moteur historique
+ *
+ * Aucun type forecast ne réutilise directement TechnicianSnapshot.
  */
 
 // ============================================================================
 // HORIZONS
 // ============================================================================
 
-export type ForecastHorizon = 'J+7' | 'J+14' | 'J+30';
+export type ForecastHorizon = '7d' | '14d' | '30d';
 
-export const FORECAST_HORIZONS: ForecastHorizon[] = ['J+7', 'J+14', 'J+30'];
+export const FORECAST_HORIZONS: ForecastHorizon[] = ['7d', '14d', '30d'];
 
 export function horizonToDays(h: ForecastHorizon): number {
   switch (h) {
-    case 'J+7': return 7;
-    case 'J+14': return 14;
-    case 'J+30': return 30;
+    case '7d': return 7;
+    case '14d': return 14;
+    case '30d': return 30;
   }
 }
 
@@ -23,7 +25,7 @@ export function horizonToDays(h: ForecastHorizon): number {
 // CONFIDENCE FORECAST
 // ============================================================================
 
-export type ForecastConfidenceLevel = 'high' | 'medium' | 'low' | 'speculative';
+export type ForecastConfidenceLevel = 'high' | 'medium' | 'low';
 
 export interface ForecastPenalty {
   code: ForecastPenaltyCode;
@@ -42,84 +44,99 @@ export type ForecastPenaltyCode =
   | 'PLANNING_ONLY_ABSENCES';
 
 // ============================================================================
-// CAPACITY FORECAST
+// PROJECTED CAPACITY
 // ============================================================================
 
-export interface ForecastCapacitySnapshot {
-  technicianId: string;
-  horizon: ForecastHorizon;
-
-  /** Capacity théorique (jours ouvrés × heures contrat), en minutes */
-  projectedCapacityMinutes: number;
-
-  /** Capacity après déduction absences connues, en minutes */
-  projectedAvailableMinutes: number;
-
-  /** Minutes perdues à cause des absences futures connues */
+export interface ProjectedCapacity {
+  /** Capacité brute (jours ouvrés × heures contrat) */
+  theoreticalMinutes: number;
+  /** Capacité après déduction absences */
+  adjustedCapacityMinutes: number;
+  /** Capacité réellement disponible (= adjustedCapacityMinutes pour Lot 1, charge déduite au Lot 3) */
+  availableMinutes: number;
+  /** Minutes perdues aux absences */
   absenceImpactMinutes: number;
-
   /** Jours ouvrés dans l'horizon */
   workingDays: number;
-
-  /** Jours d'absence future connus */
+  /** Jours d'absence comptés */
   absenceDays: number;
+  horizon: ForecastHorizon;
+}
 
-  /** Source des heures hebdo */
-  weeklyHoursSource: 'contract' | 'default';
+// ============================================================================
+// FORECAST SNAPSHOT — résultat par technicien
+// ============================================================================
+
+export interface ForecastSnapshot {
+  technicianId: string;
+  name: string;
+  horizon: ForecastHorizon;
+  projectedCapacity: ProjectedCapacity;
   weeklyHours: number;
-
-  /** Confiance du forecast */
+  weeklyHoursSource: 'contract' | 'default';
   forecastConfidenceLevel: ForecastConfidenceLevel;
   forecastConfidenceScore: number;
   forecastPenalties: ForecastPenalty[];
 }
 
 // ============================================================================
-// TENSION (Lot 4 placeholder — types only)
+// TEAM STATS
+// ============================================================================
+
+export interface ForecastTeamStats {
+  horizon: ForecastHorizon;
+  totalTheoreticalMinutes: number;
+  totalAdjustedMinutes: number;
+  totalAvailableMinutes: number;
+  totalAbsenceImpactMinutes: number;
+  technicianCount: number;
+  averageConfidenceLevel: ForecastConfidenceLevel;
+}
+
+// ============================================================================
+// TENSION (Lot 4 stub — types only)
 // ============================================================================
 
 export type PredictedTensionLevel = 'comfort' | 'watch' | 'tension' | 'critical';
 
 // ============================================================================
-// RECOMMENDATION (Lot 5 placeholder — types only)
+// RECOMMENDATION (Lot 5 stub — types only)
 // ============================================================================
 
-export interface Recommendation {
-  type: 'individual' | 'team' | 'business';
-  severity: 'info' | 'warning' | 'critical';
+export interface ForecastRecommendation {
+  level: 'info' | 'warning' | 'critical';
   message: string;
   technicianId?: string;
+  horizon?: ForecastHorizon;
+}
+
+// ============================================================================
+// INPUT
+// ============================================================================
+
+export interface CapacityFutureInput {
+  technicians: Map<string, {
+    id: string;
+    name: string;
+    weeklyHours?: number;
+    isKnown: boolean;
+  }>;
+  absences: Map<string, {
+    technicianId: string;
+    source: 'leave_table' | 'planning_unavailability' | 'none';
+    label: string;
+    days?: number;
+    hours?: number;
+  }>;
+  config: {
+    defaultWeeklyHours: number;
+    holidays: Date[];
+    deductPlanningUnavailability: boolean;
+  };
+  /** The future period to project over. start = tomorrow, end = start + horizon */
+  period: {
+    start: Date;
+    end: Date;
+  };
   horizon: ForecastHorizon;
-}
-
-// ============================================================================
-// FORECAST INPUT / OUTPUT
-// ============================================================================
-
-export interface ForecastTechnicianInput {
-  id: string;
-  name: string;
-  weeklyHours?: number;       // from contract; undefined = default 35h
-  /** Known future absences: array of { date, hours } */
-  futureAbsences: FutureAbsenceEntry[];
-}
-
-export interface FutureAbsenceEntry {
-  date: Date;
-  hours: number;
-  type: string;
-  source: 'rh' | 'planning';
-}
-
-export interface ForecastInput {
-  technicians: ForecastTechnicianInput[];
-  holidays: Date[];
-  defaultWeeklyHours: number;
-  referenceDate?: Date; // defaults to today
-}
-
-export interface ForecastOutput {
-  snapshots: ForecastCapacitySnapshot[];
-  generatedAt: Date;
-  referenceDate: Date;
 }
