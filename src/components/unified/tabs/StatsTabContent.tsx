@@ -73,7 +73,7 @@ export default function StatsTabContent() {
       });
   }, [hasModule, isDeployedModule, statsTabs]);
 
-  const effectiveTab = (visibleTabs.find(t => t.id === activeTab && !t.disabled)) ? activeTab : ((visibleTabs.find(t => !t.disabled)?.id as TabId) ?? 'general');
+  const effectiveTab = (visibleTabs.find(t => t.id === activeTab && !(t as any).disabled)) ? activeTab : ((visibleTabs.find(t => !(t as any).disabled)?.id as TabId) ?? 'general');
 
   useEffect(() => {
     if (effectiveTab !== activeTab) {
