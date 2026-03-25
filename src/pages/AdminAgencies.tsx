@@ -600,6 +600,19 @@ export default function AdminAgencies() {
               />
               <Label htmlFor="is_active">Agence active</Label>
             </div>
+            <div className="grid gap-2">
+              <Label htmlFor="content_webhook_url">Webhook URL (outil externe)</Label>
+              <Input
+                id="content_webhook_url"
+                type="url"
+                value={formData.content_webhook_url}
+                onChange={(e) => setFormData({ ...formData, content_webhook_url: e.target.value })}
+                placeholder="https://example.com/api/receive-photos"
+              />
+              <p className="text-xs text-muted-foreground">
+                URL vers laquelle les réalisations et posts sociaux seront envoyés. Laisser vide pour utiliser le webhook global.
+              </p>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={closeDialog}>
