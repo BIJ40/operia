@@ -92,32 +92,52 @@ export function usePerformanceTerrain(dateRange: DateRange) {
         const users = (loaded?.users || []) as unknown as Record<string, unknown>[];
         const creneaux = (loaded?.creneaux || []) as unknown as Record<string, unknown>[];
 
-        // === LOAD WEEKLY HOURS FROM RH CONTRACTS ===
+        // === LOAD WEEKLY HOURS ===
+        // Hierarchy: collaborator schedule (work_start/end/days) → contract weekly_hours → config default
         const weeklyHoursByApogeeId = new Map<string, number>();
 
         if (effectiveAgencyId) {
           const { data: collaborators } = await supabase
             .from('collaborators')
-            .select('id, apogee_user_id')
+            .select('id, apogee_user_id, work_start, work_end, work_days')
             .eq('agency_id', effectiveAgencyId)
             .not('apogee_user_id', 'is', null);
 
           if (collaborators && collaborators.length > 0) {
-            const collabIds = collaborators.map(c => c.id);
-            const { data: contracts } = await supabase
-              .from('employment_contracts')
-              .select('collaborator_id, weekly_hours')
-              .in('collaborator_id', collabIds)
-              .eq('is_current', true);
-
-            if (contracts) {
-              const weeklyByCollabId = new Map<string, number>();
-              for (const c of contracts) {
-                if (c.weekly_hours) weeklyByCollabId.set(c.collaborator_id, c.weekly_hours);
+            // 1. Compute from schedule fields first
+            for (const collab of collaborators) {
+              if (!collab.apogee_user_id) continue;
+              const scheduleHours = computeWeeklyHoursFromSchedule(
+                collab.work_start,
+                collab.work_end,
+                collab.work_days
+              );
+              if (scheduleHours !== null) {
+                weeklyHoursByApogeeId.set(String(collab.apogee_user_id), scheduleHours);
               }
-              for (const collab of collaborators) {
-                if (collab.apogee_user_id && weeklyByCollabId.has(collab.id)) {
-                  weeklyHoursByApogeeId.set(String(collab.apogee_user_id), weeklyByCollabId.get(collab.id)!);
+            }
+
+            // 2. Fallback: contract weekly_hours for those not yet resolved
+            const unresolvedCollabIds = collaborators
+              .filter(c => c.apogee_user_id && !weeklyHoursByApogeeId.has(String(c.apogee_user_id)))
+              .map(c => c.id);
+
+            if (unresolvedCollabIds.length > 0) {
+              const { data: contracts } = await supabase
+                .from('employment_contracts')
+                .select('collaborator_id, weekly_hours')
+                .in('collaborator_id', unresolvedCollabIds)
+                .eq('is_current', true);
+
+              if (contracts) {
+                const weeklyByCollabId = new Map<string, number>();
+                for (const c of contracts) {
+                  if (c.weekly_hours) weeklyByCollabId.set(c.collaborator_id, c.weekly_hours);
+                }
+                for (const collab of collaborators) {
+                  if (collab.apogee_user_id && !weeklyHoursByApogeeId.has(String(collab.apogee_user_id)) && weeklyByCollabId.has(collab.id)) {
+                    weeklyHoursByApogeeId.set(String(collab.apogee_user_id), weeklyByCollabId.get(collab.id)!);
+                  }
                 }
               }
             }
