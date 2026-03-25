@@ -25,7 +25,45 @@ import { UNKNOWN_TECHNICIAN_POLICY } from './rules';
  * Main engine: compute all technician snapshots from unified work items.
  */
 export function computeTechnicianSnapshots(input: PerformanceEngineInput): PerformanceEngineOutput {
-  const { workItems, technicians, absences, config, period } = input;
+  const { workItems, technicians, absences, config, period, matchLog = [] } = input;
+
+  // Build item→technicians index for matchLog attribution
+  const itemTechIndex = new Map<string, string[]>();
+  for (const item of workItems) {
+    itemTechIndex.set(item.id, item.technicians);
+  }
+
+  // Pre-compute per-tech consolidation traces from matchLog
+  const techConsolidation = new Map<string, { merged: number; keptSeparate: number; discarded: number }>();
+  const techAmbiguousCount = new Map<string, number>();
+
+  for (const entry of matchLog) {
+    // Find technicians involved in this match
+    const techsA = itemTechIndex.get(entry.aId) || [];
+    const techsB = itemTechIndex.get(entry.bId) || [];
+    const involvedTechs = new Set([...techsA, ...techsB]);
+
+    // Is this match ambiguous? Score in grey zone: > 0.3 but below merge threshold
+    const isAmbiguous = entry.score > 0.3 && entry.score < MATCHING_THRESHOLDS.mergeMinScore;
+
+    for (const techId of involvedTechs) {
+      // Consolidation trace
+      if (!techConsolidation.has(techId)) {
+        techConsolidation.set(techId, { merged: 0, keptSeparate: 0, discarded: 0 });
+      }
+      const tc = techConsolidation.get(techId)!;
+      switch (entry.outcome) {
+        case 'merged': tc.merged++; break;
+        case 'kept_separate': tc.keptSeparate++; break;
+        case 'discarded_as_duplicate': tc.discarded++; break;
+      }
+
+      // Ambiguous count
+      if (isAmbiguous) {
+        techAmbiguousCount.set(techId, (techAmbiguousCount.get(techId) || 0) + 1);
+      }
+    }
+  }
 
   // Aggregate per technician
   const techAgg = new Map<string, {
