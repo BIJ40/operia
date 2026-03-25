@@ -17,7 +17,7 @@ import { DegradedStateAlert } from '@/modules/performance/components/DegradedSta
 import { WorkloadBreakdown } from '@/modules/performance/components/WorkloadBreakdown';
 import { ExplainCalculation } from '@/modules/performance/components/ExplainCalculation';
 import { CapacityBreakdown } from '@/modules/performance/components/CapacityBreakdown';
-import type { ConfidenceBreakdown, DataQualityFlags } from '@/modules/performance/engine/types';
+import type { ConfidenceBreakdown, DataQualityFlags, TechnicianSnapshot } from '@/modules/performance/engine/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
