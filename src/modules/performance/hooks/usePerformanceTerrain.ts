@@ -37,6 +37,16 @@ interface DateRange {
   end: Date;
 }
 
+function normalizePersonName(value: string | null | undefined): string {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 /**
  * Compute weekly hours from collaborator schedule fields.
  * work_start/work_end = "HH:MM" strings, work_days = array of day numbers (0=Sun..6=Sat)
@@ -55,17 +65,16 @@ function computeWeeklyHoursFromSchedule(
   if (isNaN(sh) || isNaN(sm) || isNaN(eh) || isNaN(em)) return null;
 
   const dailyMinutes = (eh * 60 + em) - (sh * 60 + sm);
-  if (dailyMinutes <= 0 || dailyMinutes > 14 * 60) return null; // sanity: max 14h/day
+  if (dailyMinutes <= 0 || dailyMinutes > 14 * 60) return null;
 
-  // work_days: count of working days per week; default to 5 if not set
   const daysPerWeek = (workDays && workDays.length > 0)
-    ? workDays.filter(d => d >= 1 && d <= 5).length // only count weekdays
+    ? workDays.filter(d => d >= 1 && d <= 5).length
     : 5;
 
   if (daysPerWeek === 0) return null;
 
   const weeklyHours = Math.round((dailyMinutes * daysPerWeek / 60) * 10) / 10;
-  return weeklyHours > 0 && weeklyHours <= 60 ? weeklyHours : null; // sanity bounds
+  return weeklyHours > 0 && weeklyHours <= 60 ? weeklyHours : null;
 }
 
 export interface PerformanceTerrainData {
@@ -111,6 +120,7 @@ export function usePerformanceTerrain(dateRange: DateRange) {
     ],
     enabled: !!agencySlug && isAgencyReady,
     staleTime: 5 * 60 * 1000,
+    refetchOnMount: 'always',
 
     queryFn: async (): Promise<PerformanceTerrainData | null> => {
       logDebug('PERF_TERRAIN_V2', `Calcul pour ${agencySlug}`, { dateRange });
@@ -130,31 +140,49 @@ export function usePerformanceTerrain(dateRange: DateRange) {
         if (effectiveAgencyId) {
           const { data: collaborators } = await supabase
             .from('collaborators')
-            .select('id, apogee_user_id, work_start, work_end, work_days')
-            .eq('agency_id', effectiveAgencyId)
-            .not('apogee_user_id', 'is', null);
+            .select('id, apogee_user_id, first_name, last_name, work_start, work_end, work_days')
+            .eq('agency_id', effectiveAgencyId);
 
           if (collaborators && collaborators.length > 0) {
+            const uniqueNameToHours = new Map<string, number>();
+            const ambiguousNames = new Set<string>();
+
+            const registerNameFallback = (fullName: string, hours: number) => {
+              const normalized = normalizePersonName(fullName);
+              if (!normalized || hours <= 0) return;
+              if (uniqueNameToHours.has(normalized)) {
+                ambiguousNames.add(normalized);
+                uniqueNameToHours.delete(normalized);
+                return;
+              }
+              if (!ambiguousNames.has(normalized)) {
+                uniqueNameToHours.set(normalized, hours);
+              }
+            };
+
             // 1. Compute from schedule fields first
             for (const collab of collaborators) {
-              if (!collab.apogee_user_id) continue;
               const scheduleHours = computeWeeklyHoursFromSchedule(
                 collab.work_start,
                 collab.work_end,
                 collab.work_days
               );
-              if (scheduleHours !== null) {
+              if (scheduleHours === null) continue;
+
+              if (collab.apogee_user_id != null) {
                 weeklyHoursByApogeeId.set(String(collab.apogee_user_id), scheduleHours);
               }
+
+              const fullName = `${collab.first_name || ''} ${collab.last_name || ''}`.trim();
+              registerNameFallback(fullName, scheduleHours);
             }
 
             // 2. Fallback: contract weekly_hours for those not yet resolved
             const unresolvedCollabIds = collaborators
-              .filter(c => c.apogee_user_id && !weeklyHoursByApogeeId.has(String(c.apogee_user_id)))
+              .filter(c => c.id && (c.apogee_user_id == null || !weeklyHoursByApogeeId.has(String(c.apogee_user_id))))
               .map(c => c.id);
 
             if (unresolvedCollabIds.length > 0) {
-              // Query ALL contracts (not just is_current) ordered by most recent first
               const { data: contracts } = await supabase
                 .from('employment_contracts')
                 .select('collaborator_id, weekly_hours')
@@ -165,45 +193,69 @@ export function usePerformanceTerrain(dateRange: DateRange) {
               if (contracts) {
                 const weeklyByCollabId = new Map<string, number>();
                 for (const c of contracts) {
-                  if (c.weekly_hours) weeklyByCollabId.set(c.collaborator_id, c.weekly_hours);
-                }
-                for (const collab of collaborators) {
-                  if (collab.apogee_user_id && !weeklyHoursByApogeeId.has(String(collab.apogee_user_id)) && weeklyByCollabId.has(collab.id)) {
-                    weeklyHoursByApogeeId.set(String(collab.apogee_user_id), weeklyByCollabId.get(collab.id)!);
+                  if (c.weekly_hours != null && !weeklyByCollabId.has(c.collaborator_id)) {
+                    weeklyByCollabId.set(c.collaborator_id, c.weekly_hours);
                   }
+                }
+
+                for (const collab of collaborators) {
+                  const weeklyHours = weeklyByCollabId.get(collab.id);
+                  if (weeklyHours == null) continue;
+
+                  if (collab.apogee_user_id != null && !weeklyHoursByApogeeId.has(String(collab.apogee_user_id))) {
+                    weeklyHoursByApogeeId.set(String(collab.apogee_user_id), weeklyHours);
+                  }
+
+                  const fullName = `${collab.first_name || ''} ${collab.last_name || ''}`.trim();
+                  registerNameFallback(fullName, weeklyHours);
                 }
               }
             }
-          }
-        }
 
-        // === BUILD TECHNICIAN MAP ===
-        // Règle métier : technicien = is_on === true && data.skills non vide
-        const technicianMap = new Map<string, TechnicianInput>();
-        for (const u of users) {
-          if (!normalizeIsOn(u.is_on)) continue;
+            // 3. Keep name fallback for uniquely matching collaborators not linked by apogee_user_id
+            const weeklyHoursByName = uniqueNameToHours;
 
-          const uData = (u.data || {}) as Record<string, unknown>;
-          const skills = uData.skills;
-          if (!Array.isArray(skills) || skills.length === 0) continue;
+            // === BUILD TECHNICIAN MAP ===
+            // Règle métier : technicien = is_on === true && data.skills non vide
+            const unresolvedTechnicians: string[] = [];
+            const technicianMap = new Map<string, TechnicianInput>();
+            for (const u of users) {
+              if (!normalizeIsOn(u.is_on)) continue;
 
-          const id = String(u.id);
-          const name = `${u.firstname || ''} ${u.name || ''}`.trim() || `Tech ${id}`;
-          const bgColor = (uData.bgcolor as Record<string, unknown>)?.hex as string | undefined;
-          const color = bgColor || (uData.color as Record<string, unknown>)?.hex as string | undefined;
+              const uData = (u.data || {}) as Record<string, unknown>;
+              const skills = uData.skills;
+              if (!Array.isArray(skills) || skills.length === 0) continue;
 
-          technicianMap.set(id, {
-            id,
-            name,
-            color,
-            weeklyHours: weeklyHoursByApogeeId.get(id),
-            isKnown: true,
-          });
-        }
+              const id = String(u.id);
+              const name = `${u.firstname || ''} ${u.name || ''}`.trim() || `Tech ${id}`;
+              const bgColor = (uData.bgcolor as Record<string, unknown>)?.hex as string | undefined;
+              const color = bgColor || (uData.color as Record<string, unknown>)?.hex as string | undefined;
+              const weeklyHours = weeklyHoursByApogeeId.get(id) ?? weeklyHoursByName.get(normalizePersonName(name));
 
-        // === DETECT ABSENCES ===
-        // Priority: RH table (leave_table) > planning heuristic (planning_unavailability)
-        const absences = new Map<string, AbsenceInfo>();
+              if (weeklyHours == null) {
+                unresolvedTechnicians.push(`${name} (#${id})`);
+              }
+
+              technicianMap.set(id, {
+                id,
+                name,
+                color,
+                weeklyHours,
+                isKnown: true,
+              });
+            }
+
+            if (unresolvedTechnicians.length > 0) {
+              logDebug('PERF_TERRAIN_V2', 'Techniciens sans durée hebdo résolue', {
+                unresolvedTechnicians,
+                total: unresolvedTechnicians.length,
+              });
+            }
+
+            // === DETECT ABSENCES ===
+            // Priority: RH table (leave_table) > planning heuristic (planning_unavailability)
+            const absences = new Map<string, AbsenceInfo>();
+
 
         // 1. Inject RH absences if available
         if (rhAbsences && rhAbsences.size > 0) {
