@@ -106,10 +106,19 @@ function useAggregatedQuality(data: ReturnType<typeof usePerformanceTerrain>['da
     // For absenceReliability, use worst across techs
     let worstAbsence: 'reliable' | 'partial' | 'none' = 'reliable';
     for (const s of snapshots) {
-      for (const key of Object.keys(flags) as (keyof DataQualityFlags)[]) {
-        if (s.dataQualityFlags[key]) flags[key] = true;
-      }
+      const f = s.dataQualityFlags;
+      if (f.missingContract) flags.missingContract = true;
+      if (f.missingExplicitDurations) flags.missingExplicitDurations = true;
+      if (f.missingPlanningCoverage) flags.missingPlanningCoverage = true;
+      if (f.missingAbsenceData) flags.missingAbsenceData = true;
+      if (f.highFallbackUsage) flags.highFallbackUsage = true;
+      if (f.duplicateResolutionApplied) flags.duplicateResolutionApplied = true;
+      if (f.partialPeriodCoverage) flags.partialPeriodCoverage = true;
+      // Track worst absence reliability
+      if (f.absenceReliability === 'none') worstAbsence = 'none';
+      else if (f.absenceReliability === 'partial' && worstAbsence !== 'none') worstAbsence = 'partial';
     }
+    flags.absenceReliability = worstAbsence;
 
     return { avgConfidence, flags };
   }, [data]);
