@@ -315,6 +315,31 @@ export function usePerformanceTerrain(dateRange: DateRange) {
         const PLANNING_ABSENCE_TYPES = ['conge', 'congé', 'absence'];
         const absenceAccum = new Map<string, { hours: number; label: string }>();
 
+        // === BUILD ACTIVITY INDEX per tech per ISO week ===
+        // Used to distinguish rest days (4-day week) from real absences
+        // Key: "techId:YYYY-Wxx", Value: Set of day-of-week numbers with activity
+        const activityByTechWeek = new Map<string, Set<number>>();
+        for (const item of planningCreneaux) {
+          const rec = item as Record<string, unknown>;
+          const refType = String(rec.refType || '').toLowerCase();
+          if (refType !== 'visite-interv') continue;
+
+          const rawDate = rec.date || rec.dateStart || rec.start;
+          if (!rawDate) continue;
+          const d = new Date(String(rawDate));
+          if (Number.isNaN(d.getTime())) continue;
+
+          const userIds = (rec.usersIds || []) as unknown[];
+          const weekKey = getISOWeekKey(d);
+          const dow = d.getDay(); // 0=Sun..6=Sat
+
+          for (const uid of userIds) {
+            const k = `${uid}:${weekKey}`;
+            if (!activityByTechWeek.has(k)) activityByTechWeek.set(k, new Set());
+            activityByTechWeek.get(k)!.add(dow);
+          }
+        }
+
         for (const item of planningCreneaux) {
           const rec = item as Record<string, unknown>;
           const refType = String(rec.refType || '').toLowerCase();
@@ -343,6 +368,15 @@ export function usePerformanceTerrain(dateRange: DateRange) {
           const hasDateInPeriod = eventStart && overlapHours > 0;
 
           if (!hasDateInPeriod) continue;
+
+          // === REST DAY DETECTION ===
+          // If a conge spans only 1 calendar day AND the tech has work activity
+          // on other days of the same week, it's a weekly rest day — not a real absence.
+          const spansDays = eventStart && eventEnd
+            ? Math.ceil((eventEnd.getTime() - eventStart.getTime()) / (1000 * 60 * 60 * 24))
+            : dureeRaw > 0 ? Math.ceil(dureeRaw / (60 * 24)) : 1;
+
+          const isSingleDayConge = spansDays <= 1 && isAbsenceType;
 
           // Extract user IDs
           const usersRaw = (rec.usersIds || (rec.data as Record<string, unknown>)?.usersIds || []) as unknown[];
@@ -379,6 +413,21 @@ export function usePerformanceTerrain(dateRange: DateRange) {
           for (const id of ids) {
             // Only accumulate if no RH data for this tech
             if (absences.has(id)) continue;
+
+            // Check if this is a rest day (tech works other days of the same week)
+            if (isSingleDayConge && eventStart) {
+              const weekKey = getISOWeekKey(eventStart);
+              const k = `${id}:${weekKey}`;
+              const activeDays = activityByTechWeek.get(k);
+              if (activeDays && activeDays.size >= 3) {
+                // Tech has ≥3 other active days this week → this is a rest day, skip
+                logDebug('PERF_TERRAIN_V2', `Repos hebdo ignoré pour tech ${id}`, {
+                  date: eventStart.toISOString().slice(0, 10),
+                  activeDaysInWeek: activeDays.size,
+                });
+                continue;
+              }
+            }
 
             const prev = absenceAccum.get(id);
             if (prev) {
