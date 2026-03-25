@@ -1,6 +1,6 @@
 /**
  * Forecast — Types canoniques
- * Phase 6 Lot 1 — Séparé du moteur historique
+ * Phase 6 Lot 1 + Lot 2
  *
  * Aucun type forecast ne réutilise directement TechnicianSnapshot.
  */
@@ -22,7 +22,7 @@ export function horizonToDays(h: ForecastHorizon): number {
 }
 
 // ============================================================================
-// CONFIDENCE FORECAST
+// CONFIDENCE FORECAST (capacity)
 // ============================================================================
 
 export type ForecastConfidenceLevel = 'high' | 'medium' | 'low';
@@ -64,7 +64,118 @@ export interface ProjectedCapacity {
 }
 
 // ============================================================================
-// FORECAST SNAPSHOT — résultat par technicien
+// LOT 2 — WORK SOURCES & CATEGORIES
+// ============================================================================
+
+export type ForecastWorkSource = 'planning' | 'visite' | 'intervention';
+
+export type ForecastWorkCategory = 'productive' | 'non_productive' | 'sav' | 'other';
+
+export type ForecastLoadConfidenceLevel = 'high' | 'medium' | 'low';
+
+// ============================================================================
+// LOT 2 — FORECAST WORK ITEM (unified future work unit)
+// ============================================================================
+
+export interface ForecastWorkItem {
+  id: string;
+  source: ForecastWorkSource;
+  start: Date;
+  end: Date;
+  durationMinutes: number;
+  durationSource: 'explicit' | 'computed' | 'planning' | 'business_default' | 'unknown';
+  technicians: string[];
+  category: ForecastWorkCategory;
+  interventionId?: string;
+  projectId?: string;
+  type?: string;
+  type2?: string;
+  isSav: boolean;
+}
+
+// ============================================================================
+// LOT 2 — COMMITTED WORKLOAD INPUT
+// ============================================================================
+
+export interface CommittedWorkloadInput {
+  interventions: Record<string, unknown>[];
+  creneaux: Record<string, unknown>[];
+  projectsById: Map<string, Record<string, unknown>>;
+  technicians: Map<string, {
+    id: string;
+    name: string;
+    weeklyHours?: number;
+    isKnown: boolean;
+  }>;
+  period: {
+    start: Date;
+    end: Date;
+  };
+  defaultTaskDurationMinutes: number;
+}
+
+// ============================================================================
+// LOT 2 — CONSOLIDATION TRACE
+// ============================================================================
+
+export interface ForecastConsolidationTrace {
+  merged: number;
+  keptSeparate: number;
+  discarded: number;
+  ambiguous: number;
+}
+
+// ============================================================================
+// LOT 2 — COMMITTED WORKLOAD PER TECHNICIAN
+// ============================================================================
+
+export interface ForecastCommittedWorkload {
+  technicianId: string;
+  name: string;
+  horizon: ForecastHorizon;
+  committedMinutes: number;
+  committedProductiveMinutes: number;
+  committedNonProductiveMinutes: number;
+  committedSavMinutes: number;
+  committedOtherMinutes: number;
+  interventionsCount: number;
+  dossiersCount: number;
+  sharedSlots: number;
+  loadConfidenceLevel: ForecastLoadConfidenceLevel;
+  loadPenalties: ForecastPenalty[];
+  sourceBreakdown: {
+    planning: number;
+    visite: number;
+    intervention: number;
+  };
+  durationSourceBreakdown: {
+    explicit: number;
+    computed: number;
+    planning: number;
+    business_default: number;
+    unknown: number;
+  };
+  consolidationTrace: ForecastConsolidationTrace;
+}
+
+// ============================================================================
+// LOT 2 — COMMITTED TEAM STATS
+// ============================================================================
+
+export interface ForecastCommittedTeamStats {
+  horizon: ForecastHorizon;
+  totalCommittedMinutes: number;
+  productiveMinutes: number;
+  nonProductiveMinutes: number;
+  savMinutes: number;
+  otherMinutes: number;
+  totalInterventions: number;
+  totalDossiers: number;
+  averageLoadConfidenceLevel: ForecastLoadConfidenceLevel;
+}
+
+// ============================================================================
+// FORECAST SNAPSHOT — résultat par technicien (enrichi Lot 2)
 // ============================================================================
 
 export interface ForecastSnapshot {
@@ -77,10 +188,16 @@ export interface ForecastSnapshot {
   forecastConfidenceLevel: ForecastConfidenceLevel;
   forecastConfidenceScore: number;
   forecastPenalties: ForecastPenalty[];
+  /** Lot 2 — Committed workload attached after merge */
+  committedWorkload?: ForecastCommittedWorkload;
+  /** Lot 2 — Capacity remaining after committed workload */
+  projectedAvailableMinutesAfterCommitted?: number;
+  /** Lot 2 — Committed load ratio (null if capacity=0) */
+  projectedCommittedLoadRatio?: number | null;
 }
 
 // ============================================================================
-// TEAM STATS
+// TEAM STATS (enrichi Lot 2)
 // ============================================================================
 
 export interface ForecastTeamStats {
@@ -91,6 +208,12 @@ export interface ForecastTeamStats {
   totalAbsenceImpactMinutes: number;
   technicianCount: number;
   averageConfidenceLevel: ForecastConfidenceLevel;
+  /** Lot 2 — total committed minutes across team */
+  totalCommittedMinutes?: number;
+  /** Lot 2 — capacity remaining after committed work */
+  totalAvailableAfterCommittedMinutes?: number;
+  /** Lot 2 — average committed load ratio */
+  averageCommittedLoadRatio?: number | null;
 }
 
 // ============================================================================
@@ -111,7 +234,7 @@ export interface ForecastRecommendation {
 }
 
 // ============================================================================
-// INPUT
+// INPUT (Lot 1)
 // ============================================================================
 
 export interface CapacityFutureInput {
