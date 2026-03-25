@@ -91,6 +91,124 @@ function maskSensitiveData(data: unknown, endpoint: string): unknown {
   return data;
 }
 
+// =============================================================================
+// P0: CONTRÔLE PÉRIMÈTRE DOSSIER APPORTEUR (commanditaireId)
+// =============================================================================
+
+/**
+ * Résout le(s) apogee_client_id autorisé(s) pour un apporteur connecté.
+ * Source de vérité : table `apporteurs.apogee_client_id` via `apporteur_users`.
+ * Fail-closed : retourne tableau vide si impossible à résoudre.
+ */
+async function resolveApporteurCommanditaireIds(
+  supabaseAdmin: SupabaseClient,
+  apporteurId: string
+): Promise<number[]> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('apporteurs')
+      .select('apogee_client_id')
+      .eq('id', apporteurId)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (error || !data?.apogee_client_id) return [];
+    return [Number(data.apogee_client_id)];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Vérifie que le dossier appartient au périmètre de l'apporteur.
+ * Fail-closed : refuse si commanditaireId absent, null, ou mismatch.
+ */
+function verifyApporteurOwnership(
+  projectData: Record<string, unknown>,
+  allowedCommanditaireIds: number[],
+  userId: string,
+  ref: string,
+  agencySlug: string
+): { allowed: boolean; reason?: string; dossierCmdId?: unknown } {
+  // Extraire commanditaireId du dossier (structure Apogée)
+  const dataObj = projectData?.data as Record<string, unknown> | undefined;
+  const cmdId = dataObj?.commanditaireId ?? projectData?.commanditaireId;
+
+  if (cmdId == null) {
+    console.warn(`[PROXY-APOGEE] APPORTEUR ACCESS DENIED: commanditaireId absent. user=${userId.substring(0, 8)}... ref=${ref} agency=${agencySlug}`);
+    return { allowed: false, reason: 'commanditaireId_absent', dossierCmdId: null };
+  }
+
+  const cmdIdNum = Number(cmdId);
+  if (!Number.isFinite(cmdIdNum) || !allowedCommanditaireIds.includes(cmdIdNum)) {
+    console.warn(`[PROXY-APOGEE] APPORTEUR ACCESS DENIED: commanditaireId mismatch. user=${userId.substring(0, 8)}... ref=${ref} agency=${agencySlug} dossier_cmd=${cmdIdNum} allowed_cmds=[${allowedCommanditaireIds.join(',')}]`);
+    return { allowed: false, reason: 'commanditaireId_mismatch', dossierCmdId: cmdIdNum };
+  }
+
+  console.log(`[PROXY-APOGEE] APPORTEUR ACCESS GRANTED: user=${userId.substring(0, 8)}... ref=${ref} agency=${agencySlug} cmd=${cmdIdNum}`);
+  return { allowed: true, dossierCmdId: cmdIdNum };
+}
+
+// =============================================================================
+// P1: MASQUAGE DONNÉES SENSIBLES POUR APPORTEURS — apiGetProjectByRef
+// =============================================================================
+
+/**
+ * Sanitise un objet dossier renvoyé par apiGetProjectByRef pour les apporteurs.
+ * Conserve : ref, state, label, dates, montants, statuts, generatedDocs, universes.
+ * Masque  : adresse complète, téléphones, emails, coordonnées client final.
+ */
+function maskProjectDetailForApporteur(rawData: unknown): unknown {
+  if (!rawData || typeof rawData !== 'object') return rawData;
+
+  const project = rawData as Record<string, unknown>;
+  const dataObj = (project.data && typeof project.data === 'object')
+    ? { ...(project.data as Record<string, unknown>) }
+    : {};
+
+  // Champs sensibles à masquer dans data.*
+  const SENSITIVE_DATA_KEYS = [
+    'email', 'tel', 'tel2', 'tel3', 'telephone', 'phone', 'mobile',
+    'adresse', 'address', 'adr',
+    'proprietaire', 'ownerName', 'ownerEmail', 'ownerPhone',
+    'locataire', 'tenantEmail', 'tenantPhone',
+    'contactEmail', 'contactTel', 'contactPhone',
+  ];
+  for (const key of SENSITIVE_DATA_KEYS) {
+    if (key in dataObj && dataObj[key]) {
+      dataObj[key] = '***';
+    }
+  }
+
+  // Tronquer codePostal à 2 chiffres
+  if (typeof dataObj.codePostal === 'string' && dataObj.codePostal.length >= 2) {
+    dataObj.codePostal = dataObj.codePostal.substring(0, 2) + '***';
+  }
+  if (typeof dataObj.cp === 'string' && dataObj.cp.length >= 2) {
+    dataObj.cp = dataObj.cp.substring(0, 2) + '***';
+  }
+
+  // Champs sensibles au root du projet
+  const SENSITIVE_ROOT_KEYS = [
+    'email', 'tel', 'tel2', 'tel3', 'telephone', 'phone', 'mobile',
+    'adresse', 'address', 'adr',
+  ];
+  const masked: Record<string, unknown> = { ...project, data: dataObj };
+  for (const key of SENSITIVE_ROOT_KEYS) {
+    if (key in masked && masked[key]) {
+      masked[key] = '***';
+    }
+  }
+  if (typeof masked.codePostal === 'string' && (masked.codePostal as string).length >= 2) {
+    masked.codePostal = (masked.codePostal as string).substring(0, 2) + '***';
+  }
+
+  // Conserver explicitement les champs utiles (sécurité par design)
+  // generatedDocs, ref, state, universes, dates, montants, statuts → non touchés
+  return masked;
+}
+
+
 // Endpoints Apogée autorisés (whitelist)
 const ALLOWED_ENDPOINTS = [
   'apiGetUsers',
