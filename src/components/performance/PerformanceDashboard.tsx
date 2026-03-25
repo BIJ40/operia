@@ -426,16 +426,16 @@ function HistoricalPerformanceDashboard() {
       )}
 
       {/* KPIs équipe */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-              <Users className="w-4 h-4" />
+          <CardContent className="py-2.5 px-3">
+            <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-0.5">
+              <Users className="w-3.5 h-3.5" />
               Techniciens
             </div>
-            <div className="text-2xl font-bold">{data.technicians.length}</div>
+            <div className="text-lg font-bold leading-tight">{data.technicians.length}</div>
             {teamInsights && (
-              <div className="text-xs text-muted-foreground mt-1">
+              <div className="text-[10px] text-muted-foreground">
                 {teamInsights.optimal} en équilibre
               </div>
             )}
@@ -443,22 +443,22 @@ function HistoricalPerformanceDashboard() {
         </Card>
 
         <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-              <TrendingUp className="w-4 h-4" />
+          <CardContent className="py-2.5 px-3">
+            <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-0.5">
+              <TrendingUp className="w-3.5 h-3.5" />
               Productivité moy.
             </div>
-            <div className="text-2xl font-bold">
+            <div className="text-lg font-bold leading-tight">
               {formatPercent(data.teamStats.avgProductivityRate * 100)}
             </div>
             <Badge 
               variant="outline" 
               className={
                 data.teamStats.avgProductivityRate >= 0.65 
-                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 mt-1'
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 text-[10px] px-1.5 py-0'
                   : data.teamStats.avgProductivityRate >= 0.5
-                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 mt-1'
-                    : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 mt-1'
+                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 text-[10px] px-1.5 py-0'
+                    : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 text-[10px] px-1.5 py-0'
               }
             >
               {data.teamStats.avgProductivityRate >= 0.65 ? 'Bon niveau' : 'À optimiser'}
@@ -467,16 +467,16 @@ function HistoricalPerformanceDashboard() {
         </Card>
 
         <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-              <Clock className="w-4 h-4" />
+          <CardContent className="py-2.5 px-3">
+            <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-0.5">
+              <Clock className="w-3.5 h-3.5" />
               Charge moyenne
             </div>
-            <div className="text-2xl font-bold">
+            <div className="text-lg font-bold leading-tight">
               {formatPercent(data.teamStats.avgLoadRatio * 100)}
             </div>
             {teamInsights && teamInsights.overload > 0 && (
-              <div className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+              <div className="text-[10px] text-amber-600 dark:text-amber-400">
                 {teamInsights.overload} en surcharge
               </div>
             )}
@@ -484,13 +484,13 @@ function HistoricalPerformanceDashboard() {
         </Card>
 
         <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-              <AlertTriangle className="w-4 h-4" />
+          <CardContent className="py-2.5 px-3">
+            <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-0.5">
+              <AlertTriangle className="w-3.5 h-3.5" />
               SAV total
             </div>
-            <div className="text-2xl font-bold">{data.teamStats.totalSavCount}</div>
-            <div className="text-xs text-muted-foreground mt-1">
+            <div className="text-lg font-bold leading-tight">{data.teamStats.totalSavCount}</div>
+            <div className="text-[10px] text-muted-foreground">
               sur {data.teamStats.totalInterventions} interventions
             </div>
           </CardContent>
@@ -499,13 +499,13 @@ function HistoricalPerformanceDashboard() {
 
       {/* Alertes équipe */}
       {teamInsights && (teamInsights.overload > 0 || teamInsights.underload > 0 || teamInsights.highSav > 0) && (
-        <Card className="border-amber-500/50 bg-amber-500/5">
-          <CardContent className="pt-4">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <div className="font-medium">Points d'attention équipe</div>
-                <ul className="text-sm text-muted-foreground space-y-1">
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardContent className="py-2.5 px-3">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <div className="text-sm font-medium">Points d'attention équipe</div>
+                <ul className="text-xs text-muted-foreground space-y-0.5">
                   {teamInsights.overload > 0 && (
                     <li>{teamInsights.overload} technicien(s) en surcharge - planification à ajuster</li>
                   )}
