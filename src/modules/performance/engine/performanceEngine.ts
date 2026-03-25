@@ -209,7 +209,7 @@ export function computeTechnicianSnapshots(input: PerformanceEngineInput): Perfo
     const dataQualityFlags: DataQualityFlags = {
       missingContract: weeklyHoursSource === 'default',
       missingExplicitDurations: (itemCountBySource['explicit'] || 0) === 0 && agg.items.length > 0,
-      missingPlanningCoverage: agg.items.length === 0 && (!absenceInfo || absenceInfo.totalMinutes === 0),
+      missingPlanningCoverage: agg.items.length === 0 && (!absenceInfo || absenceInfo.days === 0),
       missingAbsenceData: !absenceInfo || absenceInfo.source === 'none',
       absenceReliability,
       highFallbackUsage: highFallback,
