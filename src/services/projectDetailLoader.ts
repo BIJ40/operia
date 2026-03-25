@@ -82,13 +82,13 @@ function setCache(key: string, data: ProjectDetail): void {
  */
 export async function getProjectDetail(
   ref: string,
-  agencySlug: string
+  agencySlug?: string | null
 ): Promise<ProjectDetailResult> {
-  if (!ref || !agencySlug) {
-    return { success: false, error: 'ref et agencySlug requis' };
+  if (!ref) {
+    return { success: false, error: 'ref requis' };
   }
 
-  const key = cacheKey(ref, agencySlug);
+  const key = cacheKey(ref, agencySlug || '_auto');
 
   // 1. Cache hit
   const cached = getCached(key);
@@ -103,7 +103,7 @@ export async function getProjectDetail(
   }
 
   // 3. Fetch
-  const promise = executeDetailFetch(ref, agencySlug, key);
+  const promise = executeDetailFetch(ref, agencySlug || undefined, key);
   inFlight.set(key, promise);
 
   try {
@@ -115,7 +115,7 @@ export async function getProjectDetail(
 
 async function executeDetailFetch(
   ref: string,
-  agencySlug: string,
+  agencySlug: string | undefined,
   key: string
 ): Promise<ProjectDetailResult> {
   try {
