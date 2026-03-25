@@ -373,6 +373,8 @@ export function useApogeeTickets(filters?: TicketFilters) {
           .insert({
             ...ticket,
             created_by_user_id: user?.id,
+            last_modified_at: new Date().toISOString(),
+            last_modified_by_user_id: user?.id,
             needs_completion: !ticket.module || ticket.heat_priority === null || ticket.heat_priority === undefined,
           })
           .select()
@@ -383,6 +385,20 @@ export function useApogeeTickets(filters?: TicketFilters) {
       if (!result.success) {
         throw new Error(result.error?.message || 'Erreur création ticket');
       }
+      
+      // Auto-view: creator should not see their own ticket as "new"
+      if (result.data && user?.id) {
+        supabase
+          .from('apogee_ticket_views')
+          .upsert(
+            { ticket_id: result.data.id, user_id: user.id, viewed_at: new Date().toISOString() },
+            { onConflict: 'ticket_id,user_id' }
+          )
+          .then(() => {
+            queryClient.invalidateQueries({ queryKey: ['apogee-ticket-views'] });
+          });
+      }
+      
       return result.data;
     },
     onSuccess: (data) => {
@@ -432,6 +448,10 @@ export function useApogeeTickets(filters?: TicketFilters) {
         updatePayload.needs_completion = !finalModule || finalHeatPriority === null || finalHeatPriority === undefined;
       }
 
+      // Track who modified and when
+      updatePayload.last_modified_at = new Date().toISOString();
+      updatePayload.last_modified_by_user_id = user?.id;
+
       const result = await safeMutation<ApogeeTicket>(
         supabase
           .from('apogee_tickets')
@@ -479,7 +499,11 @@ export function useApogeeTickets(filters?: TicketFilters) {
       const result = await safeMutation<ApogeeTicket>(
         supabase
           .from('apogee_tickets')
-          .update({ kanban_status: newStatus })
+          .update({ 
+            kanban_status: newStatus,
+            last_modified_at: new Date().toISOString(),
+            last_modified_by_user_id: user?.id,
+          })
           .eq('id', ticketId)
           .select()
           .single(),
