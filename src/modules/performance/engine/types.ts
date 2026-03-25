@@ -60,23 +60,35 @@ export interface CapacityResult {
 // CONFIDENCE
 // ============================================================================
 
+export type ConfidenceLevel = 'high' | 'medium' | 'low';
+
 export interface ConfidenceBreakdown {
   durationConfidence: number;       // % items with explicit/computed duration
   capacityConfidence: number;       // 1.0 if contract, 0.5 if default
   matchingConfidence: number;       // % items without matching ambiguity
   classificationConfidence: number; // % items classified without fallback
   globalConfidenceScore: number;    // weighted sum
+  confidenceLevel: ConfidenceLevel;
+  penalties: ConfidencePenalty[];
+}
+
+export interface ConfidencePenalty {
+  reason: string;
+  value: number;
 }
 
 // ============================================================================
 // DATA QUALITY FLAGS
 // ============================================================================
 
+export type AbsenceReliability = 'none' | 'partial' | 'reliable';
+
 export interface DataQualityFlags {
   missingContract: boolean;
   missingExplicitDurations: boolean;
   missingPlanningCoverage: boolean;
-  missingAbsenceData: boolean;
+  missingAbsenceData: boolean; // kept for legacy compat
+  absenceReliability: AbsenceReliability;
   highFallbackUsage: boolean;
   duplicateResolutionApplied: boolean;
   partialPeriodCoverage: boolean;
@@ -211,6 +223,7 @@ export interface AbsenceInfo {
   source: AbsenceSource;
   label: string;
   days: number;
+  hours?: number; // total absence hours (for half-day support)
 }
 
 export interface MatchLogEntry {
