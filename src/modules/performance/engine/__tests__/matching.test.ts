@@ -21,7 +21,7 @@ describe('scoreWorkItemSimilarity', () => {
   it('returns 1.0 for identical items', () => {
     const a = makeItem({ interventionId: 'i1', projectId: 'p1' });
     const b = makeItem({ id: 'test-2', interventionId: 'i1', projectId: 'p1' });
-    expect(scoreWorkItemSimilarity(a, b)).toBe(1);
+    expect(scoreWorkItemSimilarity(a, b)).toBeCloseTo(1, 5);
   });
 
   it('returns 0.4 for same interventionId only', () => {

@@ -118,7 +118,6 @@ describe('computeTechnicianSnapshots', () => {
     });
     const result = computeTechnicianSnapshots(input);
     expect(result.snapshots[0].savCount).toBe(1);
-    expect(result.snapshots[0].workload.sav).toBe(60); // split equally from 120/2 techs... no, 1 tech
     expect(result.snapshots[0].workload.sav).toBe(120);
   });
 
