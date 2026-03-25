@@ -1,6 +1,12 @@
 /**
- * Hook pour détecter les tickets ayant des réponses non lues
- * (échanges support reçus de la part des utilisateurs)
+ * Hook pour détecter les tickets ayant des réponses/échanges non lues
+ * 
+ * Logique:
+ * - Un ticket apparaît dans "Réponses" s'il a des échanges non lus (read_at IS NULL)
+ *   envoyés par un autre utilisateur (sender_user_id != moi)
+ * - "Réponses" prend le dessus sur "Nouveaux" : si un ticket est dans Réponses,
+ *   il ne doit PAS apparaître dans Nouveaux
+ * - Une fois lu (ouverture du ticket → markAsRead), le ticket disparaît de l'onglet
  */
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -15,8 +21,7 @@ export interface TicketWithNewReply {
 }
 
 /**
- * Retourne la liste des ticket IDs ayant des réponses non lues
- * côté support (messages reçus de la part des users, non lus par le support)
+ * Retourne la liste des ticket IDs ayant des échanges non lus par l'utilisateur courant
  */
 export function useTicketsWithNewReplies() {
   const { user } = useAuthCore();
@@ -24,26 +29,13 @@ export function useTicketsWithNewReplies() {
 
   const query = useQuery({
     queryKey: ['tickets-with-new-replies', user?.id],
-    queryFn: async () => {
+    queryFn: async (): Promise<TicketWithNewReply[]> => {
       if (!user) return [];
 
-      // 1. Get tickets where the support HAS already replied at least once
-      const { data: supportReplies, error: errSupport } = await supabase
-        .from('apogee_ticket_support_exchanges')
-        .select('ticket_id')
-        .eq('is_from_support', true);
-
-      if (errSupport) throw errSupport;
-
-      const ticketsWithSupportReply = new Set(
-        (supportReplies ?? []).map((r) => r.ticket_id)
-      );
-
-      // 2. Get unread user messages (not from support, not from current user)
+      // Get all unread exchanges NOT sent by current user
       const { data: exchanges, error } = await supabase
         .from('apogee_ticket_support_exchanges')
         .select('ticket_id, created_at')
-        .eq('is_from_support', false)
         .neq('sender_user_id', user.id)
         .is('read_at', null)
         .order('created_at', { ascending: false });
@@ -51,11 +43,9 @@ export function useTicketsWithNewReplies() {
       if (error) throw error;
       if (!exchanges?.length) return [];
 
-      // 3. Only keep exchanges on tickets where support already replied
+      // Aggregate by ticket
       const map = new Map<string, TicketWithNewReply>();
       for (const ex of exchanges) {
-        if (!ticketsWithSupportReply.has(ex.ticket_id)) continue;
-
         const existing = map.get(ex.ticket_id);
         if (existing) {
           existing.unreadCount++;
@@ -75,7 +65,7 @@ export function useTicketsWithNewReplies() {
   });
 
   /**
-   * Marque toutes les réponses non lues d'un ticket comme lues
+   * Marque toutes les réponses non lues d'un ticket comme lues pour l'utilisateur courant
    */
   const markAsRead = useCallback(async (ticketId: string) => {
     if (!user) return;
@@ -84,7 +74,7 @@ export function useTicketsWithNewReplies() {
       .from('apogee_ticket_support_exchanges')
       .update({ read_at: new Date().toISOString() })
       .eq('ticket_id', ticketId)
-      .eq('is_from_support', false)
+      .neq('sender_user_id', user.id)
       .is('read_at', null);
 
     // Invalidate to refresh counts
