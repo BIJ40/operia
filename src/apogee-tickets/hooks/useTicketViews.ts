@@ -70,6 +70,7 @@ export function useMarkTicketAsViewed() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['apogee-ticket-views'] });
+      queryClient.invalidateQueries({ queryKey: ['tickets-with-new-replies'] });
     },
   });
 }
