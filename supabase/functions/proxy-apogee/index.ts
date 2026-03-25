@@ -13,7 +13,7 @@
  * - CORS hardened
  */
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
+import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
 import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed } from '../_shared/cors.ts';
 import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 import { captureEdgeException } from '../_shared/sentry.ts';
