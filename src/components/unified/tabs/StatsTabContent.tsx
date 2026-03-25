@@ -12,7 +12,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useStatsHub } from '@/apogee-connect/components/stats-hub/StatsHubContext';
 import { TabId } from '@/apogee-connect/components/stats-hub/types';
 import { GeneralTab, ApporteursTab, TechniciensTab, UniversTab, SAVTab, PrevisionnelTab } from '@/apogee-connect/components/stats-hub/tabs';
-import { GeneralTab, ApporteursTab, TechniciensTab, UniversTab, SAVTab, PrevisionnelTab } from '@/apogee-connect/components/stats-hub/tabs';
 import { PeriodSelector } from '@/apogee-connect/components/filters/PeriodSelector';
 import { PeriodDisplay } from '@/apogee-connect/components/filters/PeriodDisplay';
 import { openInNewTabPreservingPreviewToken } from '@/lib/openInNewTab';
