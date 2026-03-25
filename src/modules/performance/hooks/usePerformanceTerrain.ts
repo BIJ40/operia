@@ -244,8 +244,14 @@ export function usePerformanceTerrain(dateRange: DateRange) {
           if (userId) ids.push(userId);
 
           // Compute duration in hours from créneau
-          const dureeMinutes = Number(rec.duree || (rec.data as Record<string, unknown>)?.duree || 0);
-          let absHours = dureeMinutes > 0 ? dureeMinutes / 60 : 0;
+          // API duree field is in SECONDS (e.g. 73980 = ~20.55h)
+          const dureeRaw = Number(rec.duree || (rec.data as Record<string, unknown>)?.duree || 0);
+          let absHours = 0;
+
+          if (dureeRaw > 0) {
+            // Heuristic: if value > 1440 it's seconds, otherwise minutes
+            absHours = dureeRaw > 1440 ? dureeRaw / 3600 : dureeRaw / 60;
+          }
 
           // If no duree, try start/end
           if (absHours === 0) {
@@ -259,8 +265,6 @@ export function usePerformanceTerrain(dateRange: DateRange) {
 
           // Fallback: 7h if still 0
           if (absHours <= 0) absHours = 7;
-          // Cap at 10h per créneau (sanity)
-          if (absHours > 10) absHours = 10;
 
           const absLabel = combined.includes('maladie') ? 'Arrêt maladie'
             : combined.includes('arret') || combined.includes('arrêt') ? 'En arrêt'
