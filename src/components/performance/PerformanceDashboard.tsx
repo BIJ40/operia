@@ -546,3 +546,47 @@ function HistoricalPerformanceDashboard() {
     </div>
   );
 }
+
+// ============================================================================
+// WRAPPER — Switch Historique / Prévision
+// ============================================================================
+
+const LazyForecast = lazy(() =>
+  import('./forecast/PerformanceForecastDashboard').then(m => ({ default: m.PerformanceForecastDashboard }))
+);
+
+type PerformanceMode = 'historique' | 'prevision';
+
+export function PerformanceDashboard() {
+  const [mode, setMode] = useState<PerformanceMode>('historique');
+
+  return (
+    <div className="space-y-4">
+      {/* Mode selector */}
+      <div className="flex items-center gap-1 bg-muted rounded-lg p-1 w-fit">
+        <Button
+          variant={mode === 'historique' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => setMode('historique')}
+        >
+          Historique
+        </Button>
+        <Button
+          variant={mode === 'prevision' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => setMode('prevision')}
+        >
+          Prévision
+        </Button>
+      </div>
+
+      {mode === 'historique' ? (
+        <HistoricalPerformanceDashboard />
+      ) : (
+        <Suspense fallback={<div className="space-y-4"><Skeleton className="h-8 w-64" /><Skeleton className="h-48" /></div>}>
+          <LazyForecast />
+        </Suspense>
+      )}
+    </div>
+  );
+}
