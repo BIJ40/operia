@@ -115,27 +115,15 @@ export function usePerformanceTerrain(dateRange: DateRange) {
           }
         }
 
-        // === BUILD TECHNICIAN MAP (aligned with buildTechMap from techTools) ===
-        // Source: apiGetUsers via DataService — seuls les techniciens actifs
+        // === BUILD TECHNICIAN MAP ===
+        // Règle métier : technicien = is_on === true && data.skills non vide
         const technicianMap = new Map<string, TechnicianInput>();
         for (const u of users) {
-          // RÈGLE 1: is_on doit être true (normalisé)
           if (!normalizeIsOn(u.is_on)) continue;
 
-          // RÈGLE 2: Exclure les types non-techniciens
-          const userType = String(u.type || '').toLowerCase();
-          if (isExcludedUserType(userType)) continue;
-
-          // RÈGLE 3: Critères d'identification technicien
           const uData = (u.data || {}) as Record<string, unknown>;
-          const hasUniverses = Array.isArray(uData.universes) && (uData.universes as unknown[]).length > 0;
-          const isTechnicien =
-            u.isTechnicien === true ||
-            u.isTechnicien === 1 ||
-            userType === 'technicien' ||
-            (userType === 'utilisateur' && hasUniverses);
-
-          if (!isTechnicien) continue;
+          const skills = uData.skills;
+          if (!Array.isArray(skills) || skills.length === 0) continue;
 
           const id = String(u.id);
           const name = `${u.firstname || ''} ${u.name || ''}`.trim() || `Tech ${id}`;

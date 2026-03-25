@@ -70,6 +70,63 @@ export type Database = {
           },
         ]
       }
+      agencies: {
+        Row: {
+          allmysms_api_key: string | null
+          allmysms_login: string | null
+          allmysms_sender: string | null
+          api_subdomain: string
+          contact_email: string
+          created_at: string
+          google_reviews_url: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          logo_url: string | null
+          name: string
+          primary_color: string | null
+          slug: string
+          stripe_enabled: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          allmysms_api_key?: string | null
+          allmysms_login?: string | null
+          allmysms_sender?: string | null
+          api_subdomain: string
+          contact_email: string
+          created_at?: string
+          google_reviews_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          logo_url?: string | null
+          name: string
+          primary_color?: string | null
+          slug: string
+          stripe_enabled?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          allmysms_api_key?: string | null
+          allmysms_login?: string | null
+          allmysms_sender?: string | null
+          api_subdomain?: string
+          contact_email?: string
+          created_at?: string
+          google_reviews_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          logo_url?: string | null
+          name?: string
+          primary_color?: string | null
+          slug?: string
+          stripe_enabled?: boolean | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       agency_admin_documents: {
         Row: {
           agency_id: string
@@ -889,6 +946,9 @@ export type Database = {
       apogee_agencies: {
         Row: {
           adresse: string | null
+          allmysms_api_key: string | null
+          allmysms_login: string | null
+          allmysms_sender: string | null
           code_postal: string | null
           contact_email: string | null
           contact_phone: string | null
@@ -896,15 +956,24 @@ export type Database = {
           created_at: string
           date_cloture_bilan: string | null
           date_ouverture: string | null
+          google_reviews_url: string | null
           id: string
           is_active: boolean
           label: string
           slug: string
+          stripe_account_id: string | null
+          stripe_enabled: boolean | null
+          suivi_enabled: boolean | null
+          suivi_logo_url: string | null
+          suivi_primary_color: string | null
           updated_at: string
           ville: string | null
         }
         Insert: {
           adresse?: string | null
+          allmysms_api_key?: string | null
+          allmysms_login?: string | null
+          allmysms_sender?: string | null
           code_postal?: string | null
           contact_email?: string | null
           contact_phone?: string | null
@@ -912,15 +981,24 @@ export type Database = {
           created_at?: string
           date_cloture_bilan?: string | null
           date_ouverture?: string | null
+          google_reviews_url?: string | null
           id?: string
           is_active?: boolean
           label: string
           slug: string
+          stripe_account_id?: string | null
+          stripe_enabled?: boolean | null
+          suivi_enabled?: boolean | null
+          suivi_logo_url?: string | null
+          suivi_primary_color?: string | null
           updated_at?: string
           ville?: string | null
         }
         Update: {
           adresse?: string | null
+          allmysms_api_key?: string | null
+          allmysms_login?: string | null
+          allmysms_sender?: string | null
           code_postal?: string | null
           contact_email?: string | null
           contact_phone?: string | null
@@ -928,10 +1006,16 @@ export type Database = {
           created_at?: string
           date_cloture_bilan?: string | null
           date_ouverture?: string | null
+          google_reviews_url?: string | null
           id?: string
           is_active?: boolean
           label?: string
           slug?: string
+          stripe_account_id?: string | null
+          stripe_enabled?: boolean | null
+          suivi_enabled?: boolean | null
+          suivi_logo_url?: string | null
+          suivi_primary_color?: string | null
           updated_at?: string
           ville?: string | null
         }
@@ -6260,6 +6344,36 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          agency_slug: string | null
+          amount_cents: number
+          created_at: string
+          id: string
+          paid_at: string
+          ref_dossier: string
+          stripe_session_id: string | null
+        }
+        Insert: {
+          agency_slug?: string | null
+          amount_cents: number
+          created_at?: string
+          id?: string
+          paid_at?: string
+          ref_dossier: string
+          stripe_session_id?: string | null
+        }
+        Update: {
+          agency_slug?: string | null
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          paid_at?: string
+          ref_dossier?: string
+          stripe_session_id?: string | null
+        }
+        Relationships: []
+      }
       pending_registrations: {
         Row: {
           agency_name: string | null
@@ -7548,6 +7662,30 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_attempts: {
+        Row: {
+          attempted_at: string
+          id: string
+          ip_address: string
+          ref_dossier: string
+          success: boolean
+        }
+        Insert: {
+          attempted_at?: string
+          id?: string
+          ip_address: string
+          ref_dossier: string
+          success?: boolean
+        }
+        Update: {
+          attempted_at?: string
+          id?: string
+          ip_address?: string
+          ref_dossier?: string
+          success?: boolean
+        }
+        Relationships: []
+      }
       rate_limits: {
         Row: {
           created_at: string
@@ -8760,6 +8898,39 @@ export type Database = {
           layout_type?: string | null
           overlay_rules?: Json | null
           region?: string | null
+        }
+        Relationships: []
+      }
+      sms_sent_log: {
+        Row: {
+          agency_slug: string | null
+          error_message: string | null
+          id: string
+          phone_number: string
+          ref_dossier: string
+          sent_at: string
+          status: string | null
+          trigger_type: string
+        }
+        Insert: {
+          agency_slug?: string | null
+          error_message?: string | null
+          id?: string
+          phone_number: string
+          ref_dossier: string
+          sent_at?: string
+          status?: string | null
+          trigger_type?: string
+        }
+        Update: {
+          agency_slug?: string | null
+          error_message?: string | null
+          id?: string
+          phone_number?: string
+          ref_dossier?: string
+          sent_at?: string
+          status?: string | null
+          trigger_type?: string
         }
         Relationships: []
       }
@@ -10545,6 +10716,48 @@ export type Database = {
       }
     }
     Views: {
+      agencies_public: {
+        Row: {
+          created_at: string | null
+          google_reviews_url: string | null
+          id: string | null
+          is_active: boolean | null
+          is_default: boolean | null
+          logo_url: string | null
+          name: string | null
+          primary_color: string | null
+          slug: string | null
+          stripe_enabled: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          google_reviews_url?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          is_default?: boolean | null
+          logo_url?: string | null
+          name?: string | null
+          primary_color?: string | null
+          slug?: string | null
+          stripe_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          google_reviews_url?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          is_default?: boolean | null
+          logo_url?: string | null
+          name?: string | null
+          primary_color?: string | null
+          slug?: string | null
+          stripe_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       agency_financial_summary: {
         Row: {
           achats: number | null
