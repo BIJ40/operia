@@ -639,7 +639,21 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
       </td>
 
       <td className={TD_CLASS}>
-        <PlanBadge plan={node.required_plan} onClick={() => onTogglePlan(node)} dimmed={!node.effectiveDeployed} />
+        <div className="flex items-center gap-1">
+          <PlanBadge plan={node.required_plan} onClick={() => onTogglePlan(node)} dimmed={!node.effectiveDeployed} />
+          {isMissingPlanTier && (
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[240px] text-xs">
+                  Module déployé mais non activé dans aucun plan — aucun utilisateur n'y a accès via son abonnement.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
       </td>
 
       <td className={TD_CLASS}>
