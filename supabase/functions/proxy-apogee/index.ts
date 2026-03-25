@@ -503,11 +503,50 @@ Deno.serve(async (req) => {
     console.log(`[PROXY-APOGEE] Request: ${endpoint} for agency ${targetAgency} by user ${user.id.substring(0, 8)}...`);
 
     // 7bis. EDGE CACHE — Pour apiGetProjectByRef uniquement
+    // Cache séparé pour apporteurs (données masquées) vs internes (données complètes)
+    const cacheUserType = isApporteurUser ? 'apporteur' : 'internal';
     const edgeCacheKey = getEdgeCacheKey(endpoint, targetAgency, filters as Record<string, unknown>);
-    if (edgeCacheKey) {
-      const cachedData = getFromEdgeCache(edgeCacheKey);
+    const typedCacheKey = edgeCacheKey ? `${edgeCacheKey}:${cacheUserType}` : '';
+
+    // P0: Pour apiGetProjectByRef + apporteur → résoudre les commanditaireIds autorisés AVANT le cache
+    let apporteurAllowedCmdIds: number[] = [];
+    if (isApporteurUser && endpoint === 'apiGetProjectByRef') {
+      const supabaseAdmin = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+      apporteurAllowedCmdIds = await resolveApporteurCommanditaireIds(supabaseAdmin, apporteurUser!.apporteur_id);
+
+      if (apporteurAllowedCmdIds.length === 0) {
+        console.warn(`[PROXY-APOGEE] APPORTEUR ACCESS DENIED: no commanditaire mapping. user=${user.id.substring(0, 8)}... ref=${(filters as any)?.ref || 'N/A'} agency=${targetAgency}`);
+        return withCors(req, new Response(
+          JSON.stringify({ success: false, error: 'Accès non autorisé à ce dossier' }),
+          { status: 403, headers: { 'Content-Type': 'application/json' } }
+        ));
+      }
+    }
+
+    // Check edge cache (cache hit still goes through ownership check for apporteurs)
+    if (typedCacheKey) {
+      const cachedData = getFromEdgeCache(typedCacheKey);
       if (cachedData !== null) {
-        console.log(`[PROXY-APOGEE] EDGE CACHE HIT: ${edgeCacheKey}`);
+        // P0: Même depuis le cache, vérifier ownership pour les apporteurs
+        if (isApporteurUser && endpoint === 'apiGetProjectByRef') {
+          const ownership = verifyApporteurOwnership(
+            cachedData as Record<string, unknown>,
+            apporteurAllowedCmdIds,
+            user.id,
+            String((filters as any)?.ref || ''),
+            targetAgency
+          );
+          if (!ownership.allowed) {
+            return withCors(req, new Response(
+              JSON.stringify({ success: false, error: 'Accès non autorisé à ce dossier' }),
+              { status: 403, headers: { 'Content-Type': 'application/json' } }
+            ));
+          }
+        }
+        console.log(`[PROXY-APOGEE] EDGE CACHE HIT: ${typedCacheKey}`);
         const response: ProxyResponse = {
           success: true,
           data: cachedData,
@@ -547,22 +586,62 @@ Deno.serve(async (req) => {
 
     const rawData = await apiResponse.json();
     const itemCount = Array.isArray(rawData) ? rawData.length : undefined;
-    
-    // 9. MASQUAGE SÉCURITÉ - Données sensibles ne quittent JAMAIS le serveur
-    const maskedData = maskSensitiveData(rawData, endpoint);
+
+    // =====================================================================
+    // P0: CONTRÔLE PÉRIMÈTRE APPORTEUR — apiGetProjectByRef
+    // Exécuté AVANT masquage et cache. Fail-closed.
+    // =====================================================================
+    if (isApporteurUser && endpoint === 'apiGetProjectByRef') {
+      // rawData pour apiGetProjectByRef est un objet unique (pas un tableau)
+      const projectObj = (rawData && typeof rawData === 'object' && !Array.isArray(rawData))
+        ? rawData as Record<string, unknown>
+        : null;
+
+      if (!projectObj) {
+        console.warn(`[PROXY-APOGEE] APPORTEUR ACCESS DENIED: invalid project structure. user=${user.id.substring(0, 8)}... ref=${(filters as any)?.ref || 'N/A'} agency=${targetAgency}`);
+        return withCors(req, new Response(
+          JSON.stringify({ success: false, error: 'Accès non autorisé à ce dossier' }),
+          { status: 403, headers: { 'Content-Type': 'application/json' } }
+        ));
+      }
+
+      const ownership = verifyApporteurOwnership(
+        projectObj,
+        apporteurAllowedCmdIds,
+        user.id,
+        String((filters as any)?.ref || ''),
+        targetAgency
+      );
+
+      if (!ownership.allowed) {
+        return withCors(req, new Response(
+          JSON.stringify({ success: false, error: 'Accès non autorisé à ce dossier' }),
+          { status: 403, headers: { 'Content-Type': 'application/json' } }
+        ));
+      }
+    }
+
+    // 9. MASQUAGE SÉCURITÉ
+    let maskedData: unknown;
+    if (isApporteurUser && endpoint === 'apiGetProjectByRef') {
+      // P1: Masquage renforcé pour apporteurs sur détail dossier
+      maskedData = maskProjectDetailForApporteur(rawData);
+    } else {
+      maskedData = maskSensitiveData(rawData, endpoint);
+    }
     
     // 9bis. Stocker en edge cache si applicable (APRÈS masquage, APRÈS vérification droits)
-    if (edgeCacheKey) {
-      setEdgeCache(edgeCacheKey, maskedData, targetAgency);
-      console.log(`[PROXY-APOGEE] EDGE CACHE SET: ${edgeCacheKey} (cache size: ${edgeCache.size})`);
+    if (typedCacheKey) {
+      setEdgeCache(typedCacheKey, maskedData, targetAgency);
+      console.log(`[PROXY-APOGEE] EDGE CACHE SET: ${typedCacheKey} (cache size: ${edgeCache.size})`);
     }
     
     // 9ter. Log d'accès détail dossier (traçabilité)
     if (STRICT_RATE_LIMIT_ENDPOINTS.includes(endpoint)) {
-      console.log(`[PROXY-APOGEE] DETAIL ACCESS: user=${user.id.substring(0, 8)}... agency=${targetAgency} endpoint=${endpoint} ref=${(filters as any)?.ref || 'N/A'} at=${new Date().toISOString()}`);
+      console.log(`[PROXY-APOGEE] DETAIL ACCESS: user=${user.id.substring(0, 8)}... agency=${targetAgency} endpoint=${endpoint} ref=${(filters as any)?.ref || 'N/A'} isApporteur=${isApporteurUser} at=${new Date().toISOString()}`);
     }
 
-    console.log(`[PROXY-APOGEE] Success: ${endpoint} returned ${itemCount ?? 'object'} items (masked)`);
+    console.log(`[PROXY-APOGEE] Success: ${endpoint} returned ${itemCount ?? 'object'} items (masked=${isApporteurUser ? 'apporteur' : 'standard'})`);
 
     // 10. Retourner la réponse masquée
     const response: ProxyResponse = {
