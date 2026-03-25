@@ -9,6 +9,28 @@ import { supabase } from '@/integrations/supabase/client';
 import { DEFAULT_THRESHOLDS } from '../engine/rules';
 import type { PerformanceConfig } from '../engine/types';
 
+/**
+ * Parse holidays from JSONB stored in agency_performance_config.
+ * Accepts: string[] of "YYYY-MM-DD" or { date: string }[]
+ */
+function parseHolidays(raw: unknown): Date[] {
+  if (!raw || !Array.isArray(raw)) return [];
+  const result: Date[] = [];
+  for (const item of raw) {
+    let dateStr: string | undefined;
+    if (typeof item === 'string') {
+      dateStr = item;
+    } else if (item && typeof item === 'object' && 'date' in item && typeof (item as any).date === 'string') {
+      dateStr = (item as any).date;
+    }
+    if (dateStr) {
+      const d = new Date(dateStr + 'T00:00:00');
+      if (!isNaN(d.getTime())) result.push(d);
+    }
+  }
+  return result;
+}
+
 export function usePerformanceConfig() {
   const { agencyId } = useProfile();
 
@@ -40,7 +62,7 @@ export function usePerformanceConfig() {
         defaultWeeklyHours: Number(dbConfig.default_weekly_hours) || DEFAULT_THRESHOLDS.defaultWeeklyHours,
         defaultTaskDurationMinutes: Number(dbConfig.default_task_duration_minutes) || DEFAULT_THRESHOLDS.defaultTaskDurationMinutes,
         deductPlanningUnavailability: Boolean(dbConfig.deduct_planning_unavailability),
-        holidays: [], // TODO: parse from JSONB
+        holidays: parseHolidays(dbConfig.holidays),
       }
     : DEFAULT_THRESHOLDS;
 
