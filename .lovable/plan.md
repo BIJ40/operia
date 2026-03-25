@@ -1,67 +1,106 @@
 
 
-# Correction de la désynchronisation `module_registry` ↔ `plan_tier_modules`
+# Audit PDF exhaustif du module "Performance Terrain"
 
-## Problème confirmé
+## Objectif
+Générer un document PDF complet documentant l'architecture, les règles métier, les calculs, les endpoints et la logique du module Performance Terrain.
 
-5 modules sont déployés (`is_deployed = true`) avec un `required_plan` défini, mais **aucune ligne** dans `plan_tier_modules` → la RPC `get_user_effective_modules` ne les accorde jamais → modules grisés.
+## Contenu du document (structure)
 
-| Module | required_plan | STARTER | PRO |
-|--------|--------------|---------|-----|
-| `organisation.plannings` | STARTER | ✗ | ✗ |
-| `organisation.zones` | STARTER | ✗ | ✗ |
-| `pilotage.performance` | STARTER | ✗ | ✗ |
-| `pilotage.rentabilite` | PRO | ✗ | ✗ |
-| `ticketing.liste` | STARTER | ✗ | ✗ |
+Le PDF couvrira les sections suivantes, basées sur l'analyse complète du code source :
 
-## Plan de correction
+### 1. Vue d'ensemble du module
+- Philosophie : "vue équilibrée, non punitive, orientée capacité et qualité"
+- 7 fichiers source, 1 hook principal (~580 lignes), 5 composants visuels
 
-### Etape 1 — Insertion des lignes manquantes (data fix)
+### 2. Architecture technique
+- Hook principal : `usePerformanceTerrain` (src/hooks/usePerformanceTerrain.ts)
+- Composants : PerformanceDashboard, TeamHeatmap, TechnicianRadarChart, SavDetailsDrawer, TechnicianQuickEditDialog, PerformanceLegend
+- Dépendances : DataService (API Apogée), Supabase (collaborators, employment_contracts, sav_validations)
 
-Insérer dans `plan_tier_modules` via l'outil d'insertion :
+### 3. Sources de données et endpoints
+- `DataService.loadAllData()` → charge interventions, projects, users, creneaux
+- Endpoints Apogée : apiGetInterventions, apiGetProjects, apiGetUsers, getInterventionsCreneaux
+- Tables Supabase : collaborators, employment_contracts, sav_validations
 
-- `organisation.plannings` → STARTER + PRO (enabled=true)
-- `organisation.zones` → STARTER + PRO (enabled=true)
-- `pilotage.performance` → STARTER + PRO (enabled=true)
-- `pilotage.rentabilite` → PRO uniquement (enabled=true)
-- `ticketing.liste` → STARTER + PRO (enabled=true)
+### 4. Règles métier et calculs détaillés
 
-Soit **9 lignes** au total.
+**4.1 Identification des techniciens**
+- Filtre : `user.type === 'technicien' || 'utilisateur'`
+- Exclusion : commerciaux, admin, assistantes, direction, comptables
 
-### Etape 2 — Auto-sync dans `useUpdateModuleNode`
+**4.2 Productivité**
+- Formule : `productivityRate = timeProductive / timeTotal`
+- Types productifs (StatIA) : depannage, repair, travaux, work
+- Types non productifs : RT, rdv, rdvtech, sav, diagnostic
+- Classification : matching par `includes()` sur type/type2 normalisés
+- Seuils : Optimal ≥65%, Attention 50-65%, Critique <50%
 
-Modifier le hook `useUpdateModuleNode` dans `src/hooks/access-rights/useModuleRegistry.ts` pour qu'après chaque mutation de `module_registry`, il synchronise automatiquement `plan_tier_modules` :
+**4.3 Charge de travail**
+- Formule : `loadRatio = timeTotal / capacityMinutes`
+- Capacité : `weeklyHours / 5 * 60 * nbJoursPériode`
+- Source heures hebdo : contrat RH (employment_contracts.weekly_hours), défaut 35h
+- Seuils : Équilibré 80-110%, Sous-charge <80%, Surcharge >110%
 
-**Logique :**
-- Si `is_deployed` passe à `false` → supprimer les lignes `plan_tier_modules` pour ce module (plus besoin)
-- Si `is_deployed` passe à `true` → insérer les lignes `plan_tier_modules` selon le `required_plan` actuel du nœud
-- Si `required_plan` change :
-  - `NONE` → supprimer toutes les lignes `plan_tier_modules` (module individuel uniquement)
-  - `STARTER` → upsert STARTER + PRO (enabled=true)
-  - `PRO` → supprimer STARTER, upsert PRO (enabled=true)
+**4.4 Détection SAV**
+- Source 1 : `intervention.type2 === 'sav'` (égalité exacte, case-insensitive)
+- Source 2 : `visite.type2 === 'sav'` dans les visites de l'intervention
+- Source 3 : `project.data.pictosInterv` contient 'sav'
+- Taux : `savRate = savCount / interventionsCount`
+- Seuils : Optimal ≤3%, Attention 3-8%, Critique >8%
 
-La même logique sera appliquée dans `usePropagateToChildren` pour la propagation aux descendants.
+**4.5 Estimation durée intervention**
+- Priorité : duration explicite → visites.dureeMinutes → calcul heureDebut/heureFin → défaut (90min productif, 45min non-productif, 60min fallback)
 
-Cela sera implémenté comme une fonction utilitaire `syncPlanTierModules(moduleKey, isDeployed, requiredPlan)` appelée dans le `onSuccess` ou directement dans le `mutationFn`.
+**4.6 Slots de temps (source des données)**
+- Source principale : visites extraites des interventions (intervention.data.visites)
+- Source secondaire (fallback) : getInterventionsCreneaux
+- Filtrage temporel par dateRange
+- Attribution : chaque technicien dans usersIds reçoit la durée COMPLÈTE (pas de division)
 
-### Etape 3 — Indicateur visuel dans l'interface admin
+**4.7 Score composite (Heatmap)**
+- 3 axes notés 0-2 : productivité, charge, SAV
+- Productivité : ≥65%=2, ≥50%=1, <50%=0
+- Charge : 80-110%=2, 60-130%=1, sinon=0
+- SAV : ≤3%=2, ≤8%=1, >8%=0
+- Zone de confort ≥5pts, Optimisation 3-4pts, Tension <3pts
 
-Dans `ModulesMasterView.tsx`, ajouter un indicateur d'alerte à côté des modules qui sont déployés mais n'ont pas de lignes `plan_tier_modules` correspondantes :
+**4.8 Radar Chart (normalisation)**
+- Productivité : directement `rate * 100`
+- Qualité : inversé `(1 - min(savRate, 0.2) / 0.2) * 100`
+- Charge : optimal à 100%, pénalisé aux extrêmes
 
-- Charger les données `plan_tier_modules` via le hook `usePlanTiers` existant
-- Pour chaque nœud déployé avec `required_plan ≠ NONE`, vérifier qu'au moins une ligne existe
-- Si manquante : afficher une icône ⚠️ avec tooltip "Module déployé mais non activé dans aucun plan — aucun utilisateur n'y a accès"
-- Cela rend immédiatement visible la désynchronisation pour l'admin
+**4.9 Détection absences**
+- Scan de tous les créneaux/interventions pour keywords : arrêt, maladie, absence, congé
+- Labels : "Arrêt maladie", "En arrêt", "En congé", "Absent"
+- Exclusion des moyennes d'équipe
 
-### Etape 4 — Vérification post-correction
+### 5. Statistiques d'équipe
+- Moyenne productivité (hors absents)
+- Moyenne charge (hors absents)
+- Total SAV et total interventions
+- Alertes : surcharge, sous-charge, SAV élevé
 
-Après insertion des lignes, vérifier via requête que les 5 modules remontent dans `get_user_effective_modules` pour test-n2.
+### 6. Fonctionnalités interactives
+- Drawer SAV : validation/invalidation (table sav_validations), détection source
+- Quick Edit : modification heures hebdo via contrat RH, type collaborateur
+- Navigation mois par mois
 
-## Fichiers modifiés
+### 7. Problèmes et limitations identifiés
+- caGenerated toujours à 0 (jamais calculé dans le hook)
+- Durée par défaut arbitraire (60-90min) quand pas de données
+- Capacité calculée sur jours calendaires (pas ouvrés)
+- Pas de prise en compte des jours fériés/congés dans la capacité
+- Source slot : si aucune visite, fallback sur créneaux mais jamais les deux combinés
+- Attribution temps : pas de division quand plusieurs techniciens sur un créneau
 
-| Fichier | Action |
-|---------|--------|
-| `plan_tier_modules` (table) | Insertion de 9 lignes de données |
-| `src/hooks/access-rights/useModuleRegistry.ts` | Ajout de `syncPlanTierModules` + intégration dans les 2 mutations |
-| `src/components/admin/views/ModulesMasterView.tsx` | Ajout indicateur ⚠️ de désynchronisation |
+## Méthode de génération
+- Script Python avec ReportLab (platypus pour mise en page multi-pages)
+- Tables formatées pour les seuils et formules
+- Diagramme ASCII de l'architecture
+- Export vers `/mnt/documents/audit_module_performance.pdf`
+- QA visuelle obligatoire (pdftoppm + inspection)
+
+## Fichier produit
+`/mnt/documents/audit_module_performance.pdf`
 
