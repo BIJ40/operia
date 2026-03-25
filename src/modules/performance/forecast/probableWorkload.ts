@@ -4,6 +4,30 @@
  *
  * Calcule la charge probable (non encore planifiée fermement) à partir des
  * données du chargeTravauxEngine. Séparé strictement de la charge engagée.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * V1 ASSUMPTIONS — documented design choices, not yet calibrated on history
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * 1. UNASSIGNED ITEMS: Projects without a target technician are distributed
+ *    equally across all known technicians. This is a deliberate V1 heuristic.
+ *    → Penalty UNCERTAIN_TECH_ASSIGNMENT (0.15) is applied.
+ *    → All unassigned items are forced to 'low' confidence tier.
+ *    Future: keep as unallocated team-level bucket or use skill-based routing.
+ *
+ * 2. HORIZON SCALING: The factors (stateFactor × horizonMultiplier) are
+ *    empirical, not calibrated on historical throughput. They provide
+ *    directional signal, not precise forecasts.
+ *    → The confidence system degrades accordingly.
+ *
+ * 3. CONFIDENCE MODEL: Per-technician penalties are boolean (any single bad
+ *    project contaminates the whole tech). This is intentionally conservative.
+ *    Future: weight penalties by proportion of affected minutes.
+ *
+ * 4. DOUBLE-COUNTING GUARD: parProjet and chargeByTechnician are mutually
+ *    exclusive paths (parProjet takes priority, chargeByTechnician is
+ *    fallback-only). No double-counting is possible.
+ * ═══════════════════════════════════════════════════════════════════════════
  */
 
 import type {
@@ -279,7 +303,9 @@ function aggregateProbableByTechnician(
     }
   }
 
-  // Distribute unassigned items equally across all known technicians
+  // V1 HEURISTIC: Distribute unassigned items equally across all known technicians.
+  // This is a deliberate simplification — all unassigned minutes are forced to 'low'
+  // confidence tier to reflect the uncertainty of the allocation.
   if (unassignedItems.length > 0 && technicians.size > 0) {
     const allTechIds = [...technicians.keys()];
 
@@ -295,11 +321,8 @@ function aggregateProbableByTechnician(
         acc.sourceBreakdown[item.source] += share;
         acc.hasUncertainAssignment = true;
 
-        switch (item.confidenceTier) {
-          case 'high': acc.highMinutes += share; break;
-          case 'medium': acc.mediumMinutes += share; break;
-          case 'low': acc.lowMinutes += share; break;
-        }
+        // Force unassigned to low regardless of original tier
+        acc.lowMinutes += share;
 
         const uniKey = item.universe || 'unknown';
         acc.universeBreakdown[uniKey] = (acc.universeBreakdown[uniKey] || 0) + share;
