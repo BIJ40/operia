@@ -120,8 +120,8 @@ export function UnifiedPeriodSelector({
       label: 'Toutes',
       getDates: () => ({
         start: new Date(2020, 0, 1),
-        end: new Date(2030, 11, 31),
-        label: 'toutes périodes'
+        end: endOfYear(new Date()),
+        label: 'Depuis le début'
       })
     },
     today: {
