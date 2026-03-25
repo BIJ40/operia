@@ -128,11 +128,16 @@ export function usePerformanceTerrain(dateRange: DateRange) {
 
       try {
         // === FETCH DATA ===
-        const loaded = await DataService.loadAllData(true, false, agencySlug);
+        const [loaded, planningCreneauxRaw] = await Promise.all([
+          DataService.loadAllData(true, false, agencySlug),
+          apogeeProxy.getPlanningCreneaux({ agencySlug }).catch(() => []),
+        ]);
         const interventions = (loaded?.interventions || []) as unknown as Record<string, unknown>[];
         const projects = (loaded?.projects || []) as unknown as Record<string, unknown>[];
         const users = (loaded?.users || []) as unknown as Record<string, unknown>[];
         const creneaux = (loaded?.creneaux || []) as unknown as Record<string, unknown>[];
+        // Planning créneaux includes congés/absences — use for absence detection
+        const planningCreneaux = (planningCreneauxRaw || []) as Record<string, unknown>[];
 
         // === LOAD WEEKLY HOURS ===
         // Hierarchy: collaborator schedule (work_start/end/days) → contract weekly_hours → config default
