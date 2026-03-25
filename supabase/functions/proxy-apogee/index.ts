@@ -384,6 +384,28 @@ Deno.serve(async (req) => {
     // Log structuré (sans données sensibles)
     console.log(`[PROXY-APOGEE] Request: ${endpoint} for agency ${targetAgency} by user ${user.id.substring(0, 8)}...`);
 
+    // 7bis. EDGE CACHE — Pour apiGetProjectByRef uniquement
+    const edgeCacheKey = getEdgeCacheKey(endpoint, targetAgency, filters as Record<string, unknown>);
+    if (edgeCacheKey) {
+      const cachedData = getFromEdgeCache(edgeCacheKey);
+      if (cachedData !== null) {
+        console.log(`[PROXY-APOGEE] EDGE CACHE HIT: ${edgeCacheKey}`);
+        const response: ProxyResponse = {
+          success: true,
+          data: cachedData,
+          meta: {
+            endpoint,
+            agencySlug: targetAgency,
+            timestamp: new Date().toISOString(),
+          },
+        };
+        return withCors(req, new Response(
+          JSON.stringify(response),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        ));
+      }
+    }
+
     // 8. Appeler l'API Apogée
     const apiResponse = await fetch(apiUrl, {
       method: 'POST',
@@ -411,6 +433,17 @@ Deno.serve(async (req) => {
     // 9. MASQUAGE SÉCURITÉ - Données sensibles ne quittent JAMAIS le serveur
     const maskedData = maskSensitiveData(rawData, endpoint);
     
+    // 9bis. Stocker en edge cache si applicable (APRÈS masquage, APRÈS vérification droits)
+    if (edgeCacheKey) {
+      setEdgeCache(edgeCacheKey, maskedData, targetAgency);
+      console.log(`[PROXY-APOGEE] EDGE CACHE SET: ${edgeCacheKey} (cache size: ${edgeCache.size})`);
+    }
+    
+    // 9ter. Log d'accès détail dossier (traçabilité)
+    if (STRICT_RATE_LIMIT_ENDPOINTS.includes(endpoint)) {
+      console.log(`[PROXY-APOGEE] DETAIL ACCESS: user=${user.id.substring(0, 8)}... agency=${targetAgency} endpoint=${endpoint} ref=${(filters as any)?.ref || 'N/A'} at=${new Date().toISOString()}`);
+    }
+
     console.log(`[PROXY-APOGEE] Success: ${endpoint} returned ${itemCount ?? 'object'} items (masked)`);
 
     // 10. Retourner la réponse masquée
