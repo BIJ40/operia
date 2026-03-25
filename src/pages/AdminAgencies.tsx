@@ -43,12 +43,14 @@ interface Agency {
   slug: string;
   label: string;
   is_active: boolean;
+  content_webhook_url: string | null;
 }
 
 interface AgencyFormData {
   slug: string;
   label: string;
   is_active: boolean;
+  content_webhook_url: string;
 }
 
 interface UserProfile {
@@ -89,6 +91,7 @@ export default function AdminAgencies() {
     slug: '',
     label: '',
     is_active: true,
+    content_webhook_url: '',
   });
 
   // Plan management hooks
@@ -191,6 +194,7 @@ export default function AdminAgencies() {
         slug: agency.slug,
         label: agency.label,
         is_active: agency.is_active,
+        content_webhook_url: agency.content_webhook_url || '',
       });
     } else {
       setEditingAgency(null);
@@ -198,6 +202,7 @@ export default function AdminAgencies() {
         slug: '',
         label: '',
         is_active: true,
+        content_webhook_url: '',
       });
     }
     setIsDialogOpen(true);
@@ -210,16 +215,20 @@ export default function AdminAgencies() {
 
   const handleSave = async () => {
     try {
+      const saveData = {
+        ...formData,
+        content_webhook_url: formData.content_webhook_url.trim() || null,
+      };
       if (editingAgency) {
         const { error } = await supabase
           .from('apogee_agencies')
-          .update(formData)
+          .update(saveData)
           .eq('id', editingAgency.id);
 
         if (error) throw error;
         toast({ title: 'Agence modifiée avec succès' });
       } else {
-        const { error } = await supabase.from('apogee_agencies').insert([formData]);
+        const { error } = await supabase.from('apogee_agencies').insert([saveData]);
 
         if (error) throw error;
         toast({ title: 'Agence créée avec succès' });
@@ -590,6 +599,19 @@ export default function AdminAgencies() {
                 }
               />
               <Label htmlFor="is_active">Agence active</Label>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="content_webhook_url">Webhook URL (outil externe)</Label>
+              <Input
+                id="content_webhook_url"
+                type="url"
+                value={formData.content_webhook_url}
+                onChange={(e) => setFormData({ ...formData, content_webhook_url: e.target.value })}
+                placeholder="https://example.com/api/receive-photos"
+              />
+              <p className="text-xs text-muted-foreground">
+                URL vers laquelle les réalisations et posts sociaux seront envoyés. Laisser vide pour utiliser le webhook global.
+              </p>
             </div>
           </div>
           <DialogFooter>
