@@ -74,6 +74,8 @@ function useAggregatedQuality(data: ReturnType<typeof usePerformanceTerrain>['da
       matchingConfidence: 0,
       classificationConfidence: 0,
       globalConfidenceScore: 0,
+      confidenceLevel: 'medium',
+      penalties: [],
     };
     for (const s of snapshots) {
       avgConfidence.durationConfidence += s.confidenceBreakdown.durationConfidence;
@@ -88,6 +90,7 @@ function useAggregatedQuality(data: ReturnType<typeof usePerformanceTerrain>['da
     avgConfidence.matchingConfidence = Math.round((avgConfidence.matchingConfidence / n) * 100) / 100;
     avgConfidence.classificationConfidence = Math.round((avgConfidence.classificationConfidence / n) * 100) / 100;
     avgConfidence.globalConfidenceScore = Math.round((avgConfidence.globalConfidenceScore / n) * 100) / 100;
+    avgConfidence.confidenceLevel = avgConfidence.globalConfidenceScore > 0.8 ? 'high' : avgConfidence.globalConfidenceScore >= 0.6 ? 'medium' : 'low';
 
     // OR-aggregate flags
     const flags: DataQualityFlags = {
@@ -95,10 +98,13 @@ function useAggregatedQuality(data: ReturnType<typeof usePerformanceTerrain>['da
       missingExplicitDurations: false,
       missingPlanningCoverage: false,
       missingAbsenceData: false,
+      absenceReliability: 'reliable',
       highFallbackUsage: false,
       duplicateResolutionApplied: false,
       partialPeriodCoverage: false,
     };
+    // For absenceReliability, use worst across techs
+    let worstAbsence: 'reliable' | 'partial' | 'none' = 'reliable';
     for (const s of snapshots) {
       for (const key of Object.keys(flags) as (keyof DataQualityFlags)[]) {
         if (s.dataQualityFlags[key]) flags[key] = true;

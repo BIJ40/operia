@@ -24,9 +24,9 @@ export const DURATION_HIERARCHY: DurationSource[] = [
 // ============================================================================
 
 export const CONFIDENCE_WEIGHTS = {
-  duration: 0.35,
+  duration: 0.30,
   capacity: 0.25,
-  matching: 0.20,
+  matching: 0.25,
   classification: 0.20,
 } as const;
 
