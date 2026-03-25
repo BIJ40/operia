@@ -242,9 +242,7 @@ export function computeTechnicianSnapshots(input: PerformanceEngineInput): Perfo
         totalAllocatedMinutes: total,
         method: 'equal_split',
       },
-      consolidationTrace: {
-        merged: 0, keptSeparate: 0, discarded: 0, // populated from matchLog
-      },
+      consolidationTrace: techConsol,
       warnings,
     };
 
@@ -301,6 +299,6 @@ export function computeTechnicianSnapshots(input: PerformanceEngineInput): Perfo
       totalInterventions,
     },
     unknownTechnicianWorkload: unknownWorkload,
-    matchLog: [], // populated by caller from consolidation
+    matchLog: matchLog.map(m => ({ a: m.aId || m.a, b: m.bId || m.b, outcome: m.outcome, score: m.score })),
   };
 }
