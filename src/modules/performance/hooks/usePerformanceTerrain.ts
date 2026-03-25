@@ -293,14 +293,12 @@ export function usePerformanceTerrain(dateRange: DateRange) {
           const ids = Array.isArray(usersRaw) ? usersRaw.map(x => String(x)) : [];
           if (userId) ids.push(userId);
 
-          // Compute duration in hours from créneau
-          // API duree field is in SECONDS (e.g. 73980 = ~20.55h)
+          // Compute duration in hours from créneau — duree is in MINUTES
           const dureeRaw = Number(rec.duree || (rec.data as Record<string, unknown>)?.duree || 0);
           let absHours = 0;
 
           if (dureeRaw > 0) {
-            // Heuristic: if value > 1440 it's seconds, otherwise minutes
-            absHours = dureeRaw > 1440 ? dureeRaw / 3600 : dureeRaw / 60;
+            absHours = dureeRaw / 60;
           }
 
           // If no duree, try start/end

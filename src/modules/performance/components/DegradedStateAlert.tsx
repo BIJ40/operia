@@ -25,15 +25,10 @@ export function DegradedStateAlert({ flags, technicianName }: Props) {
       recommendation: 'Renseigner la durée hebdo dans la fiche collaborateur',
     });
   }
-  if (flags.absenceReliability === 'none') {
+  if (flags.absenceReliability === 'partial') {
     alerts.push({
-      message: 'Aucune donnée d\'absence disponible — capacité non ajustée',
-      recommendation: 'Saisir les absences',
-    });
-  } else if (flags.absenceReliability === 'partial') {
-    alerts.push({
-      message: 'Absences partiellement fiables (détection planning uniquement)',
-      recommendation: 'Compléter avec les absences RH',
+      message: 'Absences détectées via le planning (fiabilité modérée)',
+      recommendation: 'Compléter avec les absences RH si nécessaire',
     });
   }
   if (flags.highFallbackUsage) {
