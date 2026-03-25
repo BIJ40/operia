@@ -99,7 +99,7 @@ function useAggregatedQuality(data: ReturnType<typeof usePerformanceTerrain>['da
     };
     for (const s of snapshots) {
       for (const key of Object.keys(flags) as (keyof DataQualityFlags)[]) {
-        if (s.dataQualityFlags[key]) (flags as Record<string, boolean>)[key] = true;
+        if (s.dataQualityFlags[key]) flags[key] = true;
       }
     }
 
