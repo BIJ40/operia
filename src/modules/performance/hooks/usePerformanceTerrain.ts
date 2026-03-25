@@ -49,6 +49,18 @@ function normalizePersonName(value: string | null | undefined): string {
 }
 
 function computeOverlapHours(
+
+/**
+ * Returns an ISO week key like "2026-W12" for a given date.
+ */
+function getISOWeekKey(d: Date): string {
+  const jan4 = new Date(d.getFullYear(), 0, 4);
+  const dayOfYear = Math.floor((d.getTime() - new Date(d.getFullYear(), 0, 1).getTime()) / 86400000) + 1;
+  const weekNum = Math.ceil((dayOfYear + jan4.getDay() - 1) / 7);
+  return `${d.getFullYear()}-W${String(weekNum).padStart(2, '0')}`;
+}
+
+function computeOverlapHours(
   eventStart: Date | null,
   eventEnd: Date | null,
   period: DateRange
