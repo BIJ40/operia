@@ -53,6 +53,10 @@ export function computeCapacity(
 
   const dailyMinutes = (weeklyHours / 5) * 60;
   const theoreticalMinutes = Math.round(dailyMinutes * workingDays);
+  const reportedAbsenceHours = absenceHours ?? (absenceDays * dailyMinutes) / 60;
+  const reportedAbsenceDays = absenceHours !== undefined && dailyMinutes > 0
+    ? Math.round(((absenceHours * 60) / dailyMinutes) * 10) / 10
+    : absenceDays;
 
   // Determine effective absence deduction
   let effectiveAbsenceDays = 0;
@@ -87,6 +91,8 @@ export function computeCapacity(
   return {
     workingDays,
     absenceDays: effectiveAbsenceDays,
+    reportedAbsenceDays,
+    reportedAbsenceHours,
     absenceSource,
     absenceConfidence,
     theoreticalMinutes,

@@ -13,6 +13,7 @@ interface Props {
 }
 
 export function CapacityBreakdown({ capacity, weeklyHoursSource, weeklyHours }: Props) {
+  const displayedAbsenceDays = capacity.reportedAbsenceDays ?? capacity.absenceDays;
   const effectiveDays = capacity.workingDays - capacity.absenceDays;
 
   return (
@@ -30,7 +31,7 @@ export function CapacityBreakdown({ capacity, weeklyHoursSource, weeklyHours }: 
             <div className="text-[10px] text-muted-foreground">Jours ouvrés</div>
           </div>
           <div className="bg-muted/50 rounded-lg p-2">
-            <div className="text-lg font-bold text-amber-600 dark:text-amber-400">-{capacity.absenceDays}</div>
+            <div className="text-lg font-bold text-amber-600 dark:text-amber-400">-{displayedAbsenceDays}</div>
             <div className="text-[10px] text-muted-foreground">Absences</div>
           </div>
           <div className="bg-primary/10 rounded-lg p-2">

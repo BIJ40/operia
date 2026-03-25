@@ -141,4 +141,18 @@ describe('computeTechnicianSnapshots', () => {
     // Team average should only consider t1
     expect(result.teamStats.avgProductivityRate).toBe(1);
   });
+
+  it('does not mark a technician absent for a partial absence in the period', () => {
+    const absences = new Map();
+    absences.set('t1', {
+      technicianId: 't1',
+      source: 'planning_unavailability' as const,
+      label: 'En congé',
+      days: 1,
+    });
+
+    const result = computeTechnicianSnapshots(makeInput({ absences }));
+    expect(result.snapshots[0].isAbsent).toBe(false);
+    expect(result.snapshots[0].capacity.reportedAbsenceDays).toBe(1);
+  });
 });
