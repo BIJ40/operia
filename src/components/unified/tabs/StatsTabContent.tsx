@@ -14,13 +14,17 @@ import { useStatsHub } from '@/apogee-connect/components/stats-hub/StatsHubConte
 import { TABS_CONFIG, TabId } from '@/apogee-connect/components/stats-hub/types';
 import { GeneralTab, ApporteursTab, TechniciensTab, UniversTab, SAVTab, PrevisionnelTab } from '@/apogee-connect/components/stats-hub/tabs';
 import { PeriodSelector } from '@/apogee-connect/components/filters/PeriodSelector';
-import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { PeriodDisplay } from '@/apogee-connect/components/filters/PeriodDisplay';
 import { openInNewTabPreservingPreviewToken } from '@/lib/openInNewTab';
 import { ROUTES } from '@/config/routes';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { ModuleKey } from '@/types/modules';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
+import { 
+  SimpleFolderTabsList, 
+  DraggableFolderContentContainer,
+  FolderTabConfig 
+} from '@/components/ui/draggable-folder-tabs';
 
 const TAB_COMPONENTS: Record<TabId, React.ComponentType> = {
   general: GeneralTab,
@@ -31,20 +35,28 @@ const TAB_COMPONENTS: Record<TabId, React.ComponentType> = {
   previsionnel: PrevisionnelTab,
 };
 
+const TAB_ACCENT_COLORS: Record<string, string> = {
+  blue: 'hsl(var(--warm-blue))',
+  purple: 'hsl(var(--warm-purple))',
+  green: 'hsl(var(--warm-green))',
+  orange: 'hsl(var(--warm-orange))',
+  pink: 'hsl(var(--warm-pink))',
+  teal: 'hsl(var(--warm-teal))',
+};
+
 export default function StatsTabContent() {
   const { activeTab, setActiveTab } = useStatsHub();
   const { hasModule } = usePermissions();
   const { getShortLabel } = useModuleLabels();
   const { mode: navMode } = useNavigationMode();
 
-  // A: All stats sub-tabs map to real modules (pilotage.statistiques.*) → dynamic labels
-  const statsTabs: (PillTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
-    { id: 'general', label: getShortLabel('pilotage.statistiques.general', 'Général'), icon: LayoutDashboard, requiresModule: 'pilotage.statistiques.general' },
-    { id: 'apporteurs', label: getShortLabel('pilotage.statistiques.apporteurs', 'Apporteurs'), icon: Building2, requiresModule: 'pilotage.statistiques.apporteurs' },
-    { id: 'techniciens', label: getShortLabel('pilotage.statistiques.techniciens', 'Techniciens'), icon: Users, requiresModule: 'pilotage.statistiques.techniciens' },
-    { id: 'univers', label: getShortLabel('pilotage.statistiques.univers', 'Univers'), icon: Layers, requiresModule: 'pilotage.statistiques.univers' },
-    { id: 'sav', label: getShortLabel('pilotage.statistiques.sav', 'SAV'), icon: AlertTriangle, requiresModule: 'pilotage.statistiques.sav' },
-    { id: 'previsionnel', label: getShortLabel('pilotage.statistiques.previsionnel', 'Prévisionnel'), icon: CalendarClock, requiresModule: 'pilotage.statistiques.previsionnel' },
+  const statsTabs: (FolderTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
+    { id: 'general', label: getShortLabel('pilotage.statistiques.general', 'Général'), icon: LayoutDashboard, accent: 'blue' as const, requiresModule: 'pilotage.statistiques.general' as ModuleKey },
+    { id: 'apporteurs', label: getShortLabel('pilotage.statistiques.apporteurs', 'Apporteurs'), icon: Building2, accent: 'purple' as const, requiresModule: 'pilotage.statistiques.apporteurs' as ModuleKey },
+    { id: 'techniciens', label: getShortLabel('pilotage.statistiques.techniciens', 'Techniciens'), icon: Users, accent: 'green' as const, requiresModule: 'pilotage.statistiques.techniciens' as ModuleKey },
+    { id: 'univers', label: getShortLabel('pilotage.statistiques.univers', 'Univers'), icon: Layers, accent: 'orange' as const, requiresModule: 'pilotage.statistiques.univers' as ModuleKey },
+    { id: 'sav', label: getShortLabel('pilotage.statistiques.sav', 'SAV'), icon: AlertTriangle, accent: 'pink' as const, requiresModule: 'pilotage.statistiques.sav' as ModuleKey },
+    { id: 'previsionnel', label: getShortLabel('pilotage.statistiques.previsionnel', 'Prévisionnel'), icon: CalendarClock, accent: 'teal' as const, requiresModule: 'pilotage.statistiques.previsionnel' as ModuleKey },
   ], [getShortLabel]);
 
   const { isDeployedModule } = usePermissions();
@@ -52,7 +64,6 @@ export default function StatsTabContent() {
   const visibleTabs = useMemo(() => {
     return statsTabs
       .filter(tab => {
-        // Hide non-deployed modules entirely
         if (tab.requiresModule && !isDeployedModule(tab.requiresModule)) return false;
         return true;
       })
@@ -80,12 +91,20 @@ export default function StatsTabContent() {
     openInNewTabPreservingPreviewToken(ROUTES.agency.diffusion);
   };
 
-  return (
-    <div className={cn("container mx-auto max-w-app", navMode === 'header' ? 'pt-1 px-2 sm:px-4 space-y-3' : 'py-6 px-2 sm:px-4 space-y-4')}>
-      <Tabs value={effectiveTab} onValueChange={(v) => setActiveTab(v as TabId)}>
-        <PillTabsList tabs={visibleTabs} variant={navMode === 'header' ? 'switcher' : 'pill'} />
+  // Get accent color for the active tab's content container
+  const activeTabConfig = visibleTabs.find(t => t.id === effectiveTab);
+  const activeAccentColor = activeTabConfig?.accent ? TAB_ACCENT_COLORS[activeTabConfig.accent] : undefined;
 
-        <div className="flex items-center justify-between mt-4 gap-3">
+  return (
+    <div className={cn("container mx-auto max-w-app", navMode === 'header' ? 'pt-1 px-2 sm:px-4 space-y-0' : 'py-6 px-2 sm:px-4 space-y-0')}>
+      <SimpleFolderTabsList 
+        tabs={visibleTabs} 
+        activeTab={effectiveTab} 
+        onTabChange={(v) => setActiveTab(v as TabId)} 
+      />
+
+      <DraggableFolderContentContainer accentColor={activeAccentColor}>
+        <div className="flex items-center justify-between mb-4 gap-3">
           <Button 
             variant="outline" 
             size="sm"
@@ -111,13 +130,13 @@ export default function StatsTabContent() {
             transition={{ duration: 0.2 }}
           >
             {TABS_CONFIG.map(tab => (
-              <TabsContent key={tab.id} value={tab.id} className="mt-4">
+              <TabsContent key={tab.id} value={tab.id} className="mt-0" forceMount={effectiveTab === tab.id ? undefined : undefined}>
                 {effectiveTab === tab.id && <TabComponent />}
               </TabsContent>
             ))}
           </motion.div>
         </AnimatePresence>
-      </Tabs>
+      </DraggableFolderContentContainer>
     </div>
   );
 }
