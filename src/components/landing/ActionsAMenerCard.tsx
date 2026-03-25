@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { AlertCircle, FileText, Euro, Clock } from 'lucide-react';
 import { DataService } from '@/apogee-connect/services/dataService';
 import { useAgency } from '@/apogee-connect/contexts/AgencyContext';
@@ -13,6 +13,13 @@ export function ActionsAMenerCard() {
   const { agence } = useProfile();
   const { isAgencyReady, currentAgency } = useAgency();
   const { config, isLoading: isLoadingConfig } = useActionsConfig();
+  const navigate = useNavigate();
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    sessionStorage.setItem('pilotage_sub_tab', JSON.stringify('actions'));
+    navigate('/?tab=pilotage');
+  };
 
   const { data: stats, isLoading, error } = useQuery({
     queryKey: ['landing-actions-preview', agence, config],
@@ -39,9 +46,9 @@ export function ActionsAMenerCard() {
   });
 
   return (
-    <Link
-      to="/actions-a-mener"
-      className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-orange-50/50 to-red-50/50 dark:from-orange-950/20 dark:to-red-950/20 rounded-2xl p-4 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex flex-col gap-3 min-h-[240px]"
+    <button
+      onClick={handleClick}
+      className="group relative border-2 border-primary/20 border-l-4 border-l-accent bg-gradient-to-r from-orange-50/50 to-red-50/50 dark:from-orange-950/20 dark:to-red-950/20 rounded-2xl p-4 hover:shadow-lg hover:border-primary/40 hover:scale-[1.02] transition-all duration-300 flex flex-col gap-3 min-h-[240px] text-left w-full"
     >
       {/* En-tête avec icône et titre */}
       <div className="flex items-center gap-3">
@@ -107,6 +114,6 @@ export function ActionsAMenerCard() {
           </div>
         )}
       </div>
-    </Link>
+    </button>
   );
 }
