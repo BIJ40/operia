@@ -157,6 +157,7 @@ export function computeTechnicianSnapshots(input: PerformanceEngineInput): Perfo
     const capacity = computeCapacity(weeklyHours, period, {
       holidays: config.holidays,
       absenceDays: absenceInfo?.days || 0,
+      absenceHours: absenceInfo?.hours,
       absenceSource: absenceInfo?.source || 'none',
       deductPlanningUnavailability: config.deductPlanningUnavailability,
     });
@@ -201,11 +202,16 @@ export function computeTechnicianSnapshots(input: PerformanceEngineInput): Perfo
 
     if (techAmbiguous > 0) warnings.push('AMBIGUOUS_MATCHING');
 
+    const absenceReliability = absenceInfo 
+      ? (absenceInfo.source === 'leave_table' ? 'reliable' as const : 'partial' as const)
+      : 'none' as const;
+
     const dataQualityFlags: DataQualityFlags = {
       missingContract: weeklyHoursSource === 'default',
       missingExplicitDurations: (itemCountBySource['explicit'] || 0) === 0 && agg.items.length > 0,
       missingPlanningCoverage: agg.items.length === 0,
       missingAbsenceData: !absenceInfo || absenceInfo.source === 'none',
+      absenceReliability,
       highFallbackUsage: highFallback,
       duplicateResolutionApplied: techConsol.merged > 0,
       partialPeriodCoverage: false,
@@ -220,6 +226,8 @@ export function computeTechnicianSnapshots(input: PerformanceEngineInput): Perfo
       matchTotalCount: agg.items.length,
       classificationFallbackCount: classificationFallbackForTech,
       classificationTotalCount: agg.items.length,
+      highFallbackUsage: highFallback,
+      missingContract: weeklyHoursSource === 'default',
     });
 
     // Trace

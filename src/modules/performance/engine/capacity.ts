@@ -8,6 +8,7 @@ import type { AbsenceSource, CapacityResult } from './types';
 interface CapacityOptions {
   holidays?: Date[];
   absenceDays?: number;
+  absenceHours?: number; // if provided, takes priority over absenceDays for deduction
   absenceSource?: AbsenceSource;
   deductPlanningUnavailability?: boolean;
 }
@@ -25,6 +26,7 @@ export function computeCapacity(
   const {
     holidays = [],
     absenceDays = 0,
+    absenceHours,
     absenceSource = 'none',
     deductPlanningUnavailability = false,
   } = options;
@@ -55,10 +57,16 @@ export function computeCapacity(
   // Determine effective absence deduction
   let effectiveAbsenceDays = 0;
   let absenceConfidence = 0;
+  let absenceMinutesOverride: number | undefined;
 
   if (absenceSource === 'leave_table') {
-    effectiveAbsenceDays = absenceDays;
     absenceConfidence = 1.0;
+    if (absenceHours !== undefined) {
+      // Use hours directly (supports half-days)
+      absenceMinutesOverride = absenceHours * 60;
+    } else {
+      effectiveAbsenceDays = absenceDays;
+    }
   } else if (absenceSource === 'planning_unavailability') {
     absenceConfidence = 0.3;
     // Only deduct if config allows it
@@ -66,8 +74,13 @@ export function computeCapacity(
   }
   // absenceSource === 'none' → no deduction, confidence = 0
 
-  const adjustedWorkingDays = Math.max(0, workingDays - effectiveAbsenceDays);
-  const adjustedCapacityMinutes = Math.round(dailyMinutes * adjustedWorkingDays);
+  let adjustedCapacityMinutes: number;
+  if (absenceMinutesOverride !== undefined) {
+    adjustedCapacityMinutes = Math.max(0, theoreticalMinutes - Math.round(absenceMinutesOverride));
+  } else {
+    const adjustedWorkingDays = Math.max(0, workingDays - effectiveAbsenceDays);
+    adjustedCapacityMinutes = Math.round(dailyMinutes * adjustedWorkingDays);
+  }
 
   const capacityConfidence = weeklyHours !== 35 ? 1.0 : 0.5; // contract vs default
 

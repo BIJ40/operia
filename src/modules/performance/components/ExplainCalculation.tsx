@@ -1,5 +1,5 @@
 /**
- * ExplainCalculation — Drill-down panel with calculationTrace
+ * ExplainCalculation V2 — Drill-down panel with calculationTrace + penalties + absences
  */
 
 import { useState } from 'react';
@@ -7,10 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp, Info } from 'lucide-react';
-import type { CalculationTrace, CalculationWarningCode } from '../engine/types';
+import type { CalculationTrace, CalculationWarningCode, ConfidenceBreakdown } from '../engine/types';
 
 interface Props {
   trace: CalculationTrace;
+  confidence?: ConfidenceBreakdown;
 }
 
 const WARNING_LABELS: Record<CalculationWarningCode, string> = {
@@ -25,7 +26,7 @@ const WARNING_LABELS: Record<CalculationWarningCode, string> = {
   PARTIAL_PERIOD: 'Période partielle',
 };
 
-export function ExplainCalculation({ trace }: Props) {
+export function ExplainCalculation({ trace, confidence }: Props) {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -54,6 +55,21 @@ export function ExplainCalculation({ trace }: Props) {
                   <Badge key={w} variant="outline" className="text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-400">
                     {WARNING_LABELS[w]}
                   </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Penalties */}
+          {confidence && confidence.penalties.length > 0 && (
+            <div className="space-y-1">
+              <div className="font-medium text-muted-foreground">Pénalités confiance</div>
+              <div className="space-y-0.5">
+                {confidence.penalties.map((p, i) => (
+                  <div key={i} className="flex items-center justify-between">
+                    <span className="text-muted-foreground">{p.reason}</span>
+                    <span className="text-red-500 font-mono">-{Math.round(p.value * 100)}%</span>
+                  </div>
                 ))}
               </div>
             </div>

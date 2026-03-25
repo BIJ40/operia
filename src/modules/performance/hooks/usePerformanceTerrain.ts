@@ -11,6 +11,7 @@ import { DataService } from '@/apogee-connect/services/dataService';
 import { supabase } from '@/integrations/supabase/client';
 import { logDebug, logError } from '@/lib/logger';
 import { normalizeIsOn, isExcludedUserType } from '@/apogee-connect/utils/techTools';
+import { useTechnicianAbsences, summarizeAbsences } from './useTechnicianAbsences';
 
 import type {
   PerformanceEngineInput,
@@ -61,6 +62,13 @@ export function usePerformanceTerrain(dateRange: DateRange) {
   const agencySlug = currentAgency?.slug || currentAgency?.id || agence || '';
   const effectiveAgencyId = currentAgency?.id || agencyId;
 
+  // Fetch structured absences from RH table
+  const { data: rhAbsences } = useTechnicianAbsences({
+    agencyId: effectiveAgencyId,
+    period: dateRange,
+    enabled: !!effectiveAgencyId && isAgencyReady,
+  });
+
   return useQuery<PerformanceTerrainData | null>({
     queryKey: [
       'performance-terrain',
@@ -68,6 +76,7 @@ export function usePerformanceTerrain(dateRange: DateRange) {
       effectiveAgencyId,
       dateRange.start.toISOString(),
       dateRange.end.toISOString(),
+      rhAbsences ? 'rh' : 'no-rh',
     ],
     enabled: !!agencySlug && isAgencyReady,
     staleTime: 5 * 60 * 1000,
@@ -139,8 +148,25 @@ export function usePerformanceTerrain(dateRange: DateRange) {
           });
         }
 
-        // === DETECT ABSENCES (planning_unavailability only) ===
+        // === DETECT ABSENCES ===
+        // Priority: RH table (leave_table) > planning heuristic (planning_unavailability)
         const absences = new Map<string, AbsenceInfo>();
+
+        // 1. Inject RH absences if available
+        if (rhAbsences && rhAbsences.size > 0) {
+          for (const [techId, entries] of rhAbsences) {
+            const summary = summarizeAbsences(entries);
+            absences.set(techId, {
+              technicianId: techId,
+              source: 'leave_table',
+              label: entries[0]?.type || 'Absence',
+              days: summary.days,
+              hours: summary.hours,
+            });
+          }
+        }
+
+        // 2. Fallback: planning heuristic for techs without RH data
         const allSources = [...creneaux, ...interventions];
         for (const item of allSources) {
           const type = String((item as Record<string, unknown>).type || ((item as Record<string, unknown>).data as Record<string, unknown>)?.type || '').toLowerCase();
@@ -160,6 +186,7 @@ export function usePerformanceTerrain(dateRange: DateRange) {
               : 'Absent';
 
             for (const id of ids) {
+              // Only set if no RH data for this tech
               if (!absences.has(id)) {
                 absences.set(id, {
                   technicianId: id,

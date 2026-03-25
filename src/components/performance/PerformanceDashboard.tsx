@@ -17,7 +17,7 @@ import { DegradedStateAlert } from '@/modules/performance/components/DegradedSta
 import { WorkloadBreakdown } from '@/modules/performance/components/WorkloadBreakdown';
 import { ExplainCalculation } from '@/modules/performance/components/ExplainCalculation';
 import { CapacityBreakdown } from '@/modules/performance/components/CapacityBreakdown';
-import type { ConfidenceBreakdown, DataQualityFlags } from '@/modules/performance/engine/types';
+import type { ConfidenceBreakdown, DataQualityFlags, TechnicianSnapshot } from '@/modules/performance/engine/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -74,6 +74,8 @@ function useAggregatedQuality(data: ReturnType<typeof usePerformanceTerrain>['da
       matchingConfidence: 0,
       classificationConfidence: 0,
       globalConfidenceScore: 0,
+      confidenceLevel: 'medium',
+      penalties: [],
     };
     for (const s of snapshots) {
       avgConfidence.durationConfidence += s.confidenceBreakdown.durationConfidence;
@@ -88,6 +90,7 @@ function useAggregatedQuality(data: ReturnType<typeof usePerformanceTerrain>['da
     avgConfidence.matchingConfidence = Math.round((avgConfidence.matchingConfidence / n) * 100) / 100;
     avgConfidence.classificationConfidence = Math.round((avgConfidence.classificationConfidence / n) * 100) / 100;
     avgConfidence.globalConfidenceScore = Math.round((avgConfidence.globalConfidenceScore / n) * 100) / 100;
+    avgConfidence.confidenceLevel = avgConfidence.globalConfidenceScore > 0.8 ? 'high' : avgConfidence.globalConfidenceScore >= 0.6 ? 'medium' : 'low';
 
     // OR-aggregate flags
     const flags: DataQualityFlags = {
@@ -95,15 +98,27 @@ function useAggregatedQuality(data: ReturnType<typeof usePerformanceTerrain>['da
       missingExplicitDurations: false,
       missingPlanningCoverage: false,
       missingAbsenceData: false,
+      absenceReliability: 'reliable',
       highFallbackUsage: false,
       duplicateResolutionApplied: false,
       partialPeriodCoverage: false,
     };
+    // For absenceReliability, use worst across techs
+    let worstAbsence: 'reliable' | 'partial' | 'none' = 'reliable';
     for (const s of snapshots) {
-      for (const key of Object.keys(flags) as (keyof DataQualityFlags)[]) {
-        if (s.dataQualityFlags[key]) flags[key] = true;
-      }
+      const f = s.dataQualityFlags;
+      if (f.missingContract) flags.missingContract = true;
+      if (f.missingExplicitDurations) flags.missingExplicitDurations = true;
+      if (f.missingPlanningCoverage) flags.missingPlanningCoverage = true;
+      if (f.missingAbsenceData) flags.missingAbsenceData = true;
+      if (f.highFallbackUsage) flags.highFallbackUsage = true;
+      if (f.duplicateResolutionApplied) flags.duplicateResolutionApplied = true;
+      if (f.partialPeriodCoverage) flags.partialPeriodCoverage = true;
+      // Track worst absence reliability
+      if (f.absenceReliability === 'none') worstAbsence = 'none';
+      else if (f.absenceReliability === 'partial' && worstAbsence !== 'none') worstAbsence = 'partial';
     }
+    flags.absenceReliability = worstAbsence;
 
     return { avgConfidence, flags };
   }, [data]);
@@ -119,6 +134,12 @@ export function PerformanceDashboard() {
   const [editDialogTech, setEditDialogTech] = useState<TechnicianPerformance | null>(null);
 
   const quality = useAggregatedQuality(data);
+
+  // Debug mode via query param
+  const debugMode = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).get('debugPerformance') === 'true';
+  }, []);
 
   // Get selected tech's snapshot for V2 detail views
   const selectedSnapshot = useMemo(() => {
@@ -203,7 +224,27 @@ export function PerformanceDashboard() {
             )}
             {/* V2: ExplainCalculation */}
             {selectedSnapshot && (
-              <ExplainCalculation trace={selectedSnapshot.calculationTrace} />
+              <ExplainCalculation trace={selectedSnapshot.calculationTrace} confidence={selectedSnapshot.confidenceBreakdown} />
+            )}
+            {/* Debug mode: raw data */}
+            {debugMode && selectedSnapshot && (
+              <Card className="border-dashed border-muted-foreground/30">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xs font-mono text-muted-foreground">Debug: Raw Snapshot</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <pre className="text-[10px] font-mono overflow-auto max-h-96 whitespace-pre-wrap text-muted-foreground">
+                    {JSON.stringify({
+                      calculationTrace: selectedSnapshot.calculationTrace,
+                      confidenceBreakdown: selectedSnapshot.confidenceBreakdown,
+                      dataQualityFlags: selectedSnapshot.dataQualityFlags,
+                      matchLog: data?.engineOutput?.matchLog?.filter(m => 
+                        selectedSnapshot.calculationTrace.technicianId === selectedSnapshot.technicianId
+                      ),
+                    }, null, 2)}
+                  </pre>
+                </CardContent>
+              </Card>
             )}
           </div>
           
@@ -347,7 +388,7 @@ export function PerformanceDashboard() {
           {quality && (
             <div className="flex items-center gap-2">
               <ConfidenceBadge confidence={quality.avgConfidence} />
-              <DataQualityBadge flags={quality.flags} />
+              <DataQualityBadge flags={quality.flags} snapshots={data?.engineOutput?.snapshots} />
             </div>
           )}
         </div>
