@@ -24,6 +24,7 @@ import {
   type PlanLevel,
 } from '@/hooks/access-rights/useModuleRegistry';
 import { RIGHTS_CATEGORIES, nodeMatchesCategory, nodeMatchesAnyCategory, getRightsDisplayLabel, type RightsCategory } from './rightsTaxonomy';
+import { usePlanTiers } from '@/hooks/access-rights/usePlanTiers';
 import {
   useModuleOverrides,
   useAddOverride,
@@ -525,9 +526,10 @@ interface ModuleRowProps {
   isUpdating: boolean;
   canDeploy: boolean;
   isDevSection?: boolean;
+  isMissingPlanTier?: boolean;
 }
 
-function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole, onRenameLabel, isUpdating, canDeploy, isDevSection }: ModuleRowProps) {
+function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole, onRenameLabel, isUpdating, canDeploy, isDevSection, isMissingPlanTier }: ModuleRowProps) {
   const navigate = useNavigate();
   const route = getModuleRoute(node.key);
   const isNeutralized = !node.effectiveDeployed && node.is_deployed;
@@ -637,7 +639,21 @@ function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole
       </td>
 
       <td className={TD_CLASS}>
-        <PlanBadge plan={node.required_plan} onClick={() => onTogglePlan(node)} dimmed={!node.effectiveDeployed} />
+        <div className="flex items-center gap-1">
+          <PlanBadge plan={node.required_plan} onClick={() => onTogglePlan(node)} dimmed={!node.effectiveDeployed} />
+          {isMissingPlanTier && (
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[240px] text-xs">
+                  Module déployé mais non activé dans aucun plan — aucun utilisateur n'y a accès via son abonnement.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
       </td>
 
       <td className={TD_CLASS}>
@@ -799,6 +815,7 @@ export function ModulesMasterView() {
   const { flatNodes, isLoading } = useModuleRegistry();
   const { overrides } = useModuleOverrides();
   const { hasGlobalRole } = usePermissions();
+  const { data: planTiersData } = usePlanTiers();
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [showLegacy, setShowLegacy] = useState(false);
   const updateNode = useUpdateModuleNode();
@@ -806,6 +823,24 @@ export function ModulesMasterView() {
 
   // Only N6 (superadmin) can toggle is_deployed
   const canDeploy = hasGlobalRole('superadmin');
+
+  // Build a set of module_keys that have at least one enabled plan_tier_modules entry
+  const planTierModuleKeys = useMemo(() => {
+    const keys = new Set<string>();
+    if (planTiersData) {
+      for (const tier of planTiersData) {
+        for (const mod of tier.plan_tier_modules) {
+          if (mod.enabled) keys.add(mod.module_key);
+        }
+      }
+    }
+    return keys;
+  }, [planTiersData]);
+
+  // Check if a node is deployed + has a plan requirement but no plan_tier_modules entry
+  const isMissingPlanTierForNode = useCallback((node: RegistryNode): boolean => {
+    return node.effectiveDeployed && node.required_plan !== 'NONE' && !planTierModuleKeys.has(node.key);
+  }, [planTierModuleKeys]);
 
   // Split nodes into deployed (main tree) and non-deployed (dev section)
   const { deployedNodes, devNodes } = useMemo(() => {
@@ -1029,6 +1064,7 @@ export function ModulesMasterView() {
                         onRenameLabel={handleRenameLabel}
                         isUpdating={updateNode.isPending || propagate.isPending}
                         canDeploy={canDeploy}
+                        isMissingPlanTier={isMissingPlanTierForNode(node)}
                       />
                     ))}
                   </Fragment>
@@ -1065,6 +1101,7 @@ export function ModulesMasterView() {
                       onRenameLabel={handleRenameLabel}
                       isUpdating={updateNode.isPending || propagate.isPending}
                       canDeploy={canDeploy}
+                      isMissingPlanTier={isMissingPlanTierForNode(node)}
                     />
                   ))}
                 </>
