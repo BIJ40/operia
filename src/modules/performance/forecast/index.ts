@@ -32,6 +32,10 @@ export type {
   ProbableWorkloadInput,
   ForecastProbableWorkload,
   ForecastProbableTeamStats,
+  // Lot 4
+  ForecastTensionFactor,
+  ForecastTensionSnapshot,
+  ForecastTeamTensionStats,
 } from './types';
 
 export { FORECAST_HORIZONS, horizonToDays } from './types';
@@ -53,3 +57,6 @@ export {
   mergeCapacityAndCommittedWorkload,
   mergeCommittedAndProbableIntoForecast,
 } from './projection';
+
+// Tension prédictive (Lot 4)
+export { computeForecastTension, aggregateForecastTeamTension } from './tension';

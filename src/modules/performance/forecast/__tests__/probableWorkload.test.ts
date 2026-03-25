@@ -186,8 +186,8 @@ describe('computeProbableWorkload', () => {
     }
   });
 
-  // Cas 8 — pas de tech éligible → fallback équipe
-  it('distributes to all techs when no target technician', () => {
+  // Cas 8 — pas de tech éligible → reliquat équipe (V1 prudente)
+  it('keeps unassigned items as team-level bucket', () => {
     const input = makeInput({
       probableSourceData: {
         parProjet: [makeProjet({
@@ -198,11 +198,13 @@ describe('computeProbableWorkload', () => {
     });
 
     const result = computeProbableWorkload(input, horizon);
-    // Should distribute to both t1 and t2
-    expect(result.workloads).toHaveLength(2);
-    for (const w of result.workloads) {
-      expect(w.probablePenalties.some(p => p.code === 'UNCERTAIN_TECH_ASSIGNMENT')).toBe(true);
-    }
+    // V1 prudente: unassigned items are NOT distributed to individual techs
+    expect(result.workloads).toHaveLength(0);
+    expect(result.unassignedTeamMinutes).toBeGreaterThan(0);
+    expect(result.unassignedItems).toHaveLength(1);
+    // Team stats include unassigned in total
+    expect(result.teamStats.totalProbableMinutes).toBeGreaterThan(0);
+    expect(result.teamStats.unassignedTeamMinutes).toBeGreaterThan(0);
   });
 
   // Cas 9 — dataQuality faible → confiance dégradée
