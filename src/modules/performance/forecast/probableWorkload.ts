@@ -52,6 +52,9 @@ export interface ProbableWorkloadResult {
   workloads: ForecastProbableWorkload[];
   teamStats: ForecastProbableTeamStats;
   probableItems: ForecastProbableItem[];
+  /** V1 prudente: unassigned items kept as team-level bucket, not distributed */
+  unassignedTeamMinutes: number;
+  unassignedItems: ForecastProbableItem[];
 }
 
 /**
@@ -64,13 +67,15 @@ export function computeProbableWorkload(
   // 1. Build probable items from chargeTravauxEngine data
   const probableItems = buildProbableItemsFromChargeTravaux(input, horizon);
 
-  // 2. Aggregate by technician
-  const workloads = aggregateProbableByTechnician(probableItems, input.technicians, horizon, input.probableSourceData.dataQuality);
+  // 2. Aggregate by technician (V1 prudente: unassigned items stay at team level)
+  const { workloads, unassignedItems, unassignedTeamMinutes } = aggregateProbableByTechnician(
+    probableItems, input.technicians, horizon, input.probableSourceData.dataQuality
+  );
 
-  // 3. Team stats
-  const teamStats = aggregateProbableTeamStats(workloads, horizon);
+  // 3. Team stats (includes unassigned bucket)
+  const teamStats = aggregateProbableTeamStats(workloads, horizon, unassignedTeamMinutes);
 
-  return { workloads, teamStats, probableItems };
+  return { workloads, teamStats, probableItems, unassignedTeamMinutes, unassignedItems };
 }
 
 // ============================================================================
@@ -234,7 +239,7 @@ function aggregateProbableByTechnician(
   technicians: Map<string, { id: string; name: string }>,
   horizon: ForecastHorizon,
   dataQuality?: ProbableWorkloadInput['probableSourceData']['dataQuality']
-): ForecastProbableWorkload[] {
+): { workloads: ForecastProbableWorkload[]; unassignedItems: ForecastProbableItem[]; unassignedTeamMinutes: number } {
   // Accumulator per technician
   const techAccum = new Map<string, {
     minutes: number;
@@ -268,12 +273,16 @@ function aggregateProbableByTechnician(
     hasUnknownUniverse: false,
   });
 
-  // Items with specific technicians
+  // V1 PRUDENTE: Items without technician are kept as a team-level bucket.
+  // They are NOT distributed to individual technicians — this avoids injecting
+  // artificial precision and noise into per-tech forecasts.
   const unassignedItems: ForecastProbableItem[] = [];
+  let unassignedTeamMinutes = 0;
 
   for (const item of items) {
     if (item.targetTechnicianIds.length === 0) {
       unassignedItems.push(item);
+      unassignedTeamMinutes += item.estimatedMinutes;
       continue;
     }
 
@@ -300,37 +309,6 @@ function aggregateProbableByTechnician(
       if (!item.universe) acc.hasUnknownUniverse = true;
       if (item.maturityScore != null && item.maturityScore < 0.45) acc.hasLowMaturity = true;
       if (item.riskScore != null && item.riskScore > 0.6) acc.hasHighRisk = true;
-    }
-  }
-
-  // V1 HEURISTIC: Distribute unassigned items equally across all known technicians.
-  // This is a deliberate simplification — all unassigned minutes are forced to 'low'
-  // confidence tier to reflect the uncertainty of the allocation.
-  if (unassignedItems.length > 0 && technicians.size > 0) {
-    const allTechIds = [...technicians.keys()];
-
-    for (const item of unassignedItems) {
-      const share = item.estimatedMinutes / allTechIds.length;
-
-      for (const techId of allTechIds) {
-        if (!techAccum.has(techId)) techAccum.set(techId, initAccum());
-        const acc = techAccum.get(techId)!;
-
-        acc.minutes += share;
-        acc.itemCount++;
-        acc.sourceBreakdown[item.source] += share;
-        acc.hasUncertainAssignment = true;
-
-        // Force unassigned to low regardless of original tier
-        acc.lowMinutes += share;
-
-        const uniKey = item.universe || 'unknown';
-        acc.universeBreakdown[uniKey] = (acc.universeBreakdown[uniKey] || 0) + share;
-
-        if (!item.universe) acc.hasUnknownUniverse = true;
-        if (item.maturityScore != null && item.maturityScore < 0.45) acc.hasLowMaturity = true;
-        if (item.riskScore != null && item.riskScore > 0.6) acc.hasHighRisk = true;
-      }
     }
   }
 
@@ -361,7 +339,7 @@ function aggregateProbableByTechnician(
     });
   }
 
-  return results;
+  return { workloads: results, unassignedItems, unassignedTeamMinutes };
 }
 
 // ============================================================================
@@ -370,7 +348,8 @@ function aggregateProbableByTechnician(
 
 function aggregateProbableTeamStats(
   workloads: ForecastProbableWorkload[],
-  horizon: ForecastHorizon
+  horizon: ForecastHorizon,
+  unassignedTeamMinutes: number = 0
 ): ForecastProbableTeamStats {
   let totalProbable = 0, highMin = 0, mediumMin = 0, lowMin = 0;
   const universeBreakdown: Record<string, number> = {};
@@ -388,6 +367,10 @@ function aggregateProbableTeamStats(
     }
   }
 
+  // Add unassigned minutes to total (all forced to low tier at team level)
+  totalProbable += unassignedTeamMinutes;
+  lowMin += unassignedTeamMinutes;
+
   const total = workloads.length;
   let avgConfidence: ForecastProbableConfidenceLevel = 'medium';
   if (total === 0) avgConfidence = 'low';
@@ -402,6 +385,7 @@ function aggregateProbableTeamStats(
     lowProbabilityMinutes: lowMin,
     averageProbableConfidenceLevel: avgConfidence,
     universeBreakdown: roundRecord(universeBreakdown),
+    unassignedTeamMinutes,
   };
 }
 

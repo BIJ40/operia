@@ -336,6 +336,8 @@ export interface ForecastProbableTeamStats {
   lowProbabilityMinutes: number;
   averageProbableConfidenceLevel: ForecastProbableConfidenceLevel;
   universeBreakdown: Record<string, number>;
+  /** V1 prudente: unassigned minutes kept as team-level bucket */
+  unassignedTeamMinutes: number;
 }
 
 // ============================================================================
@@ -399,6 +401,55 @@ export interface ForecastTeamStats {
 // ============================================================================
 
 export type PredictedTensionLevel = 'comfort' | 'watch' | 'tension' | 'critical';
+
+// ============================================================================
+// LOT 4 — TENSION FACTORS
+// ============================================================================
+
+export interface ForecastTensionFactor {
+  code:
+    | 'HIGH_COMMITTED_LOAD'
+    | 'HIGH_GLOBAL_LOAD'
+    | 'LOW_AVAILABLE_CAPACITY'
+    | 'LOW_CONFIDENCE'
+    | 'UNCERTAIN_ASSIGNMENT'
+    | 'HIGH_PROBABLE_SHARE'
+    | 'NO_CAPACITY';
+  label: string;
+  severity: 'info' | 'warning' | 'critical';
+}
+
+// ============================================================================
+// LOT 4 — TENSION PER TECHNICIAN
+// ============================================================================
+
+export interface ForecastTensionSnapshot {
+  technicianId: string;
+  name: string;
+  horizon: ForecastHorizon;
+  committedLoadRatio: number | null;
+  globalLoadRatio: number | null;
+  availableAfterCommitted: number;
+  availableAfterProbable: number;
+  predictedTensionLevel: PredictedTensionLevel;
+  confidenceLevel: ForecastConfidenceLevel;
+  factors: ForecastTensionFactor[];
+}
+
+// ============================================================================
+// LOT 4 — TEAM TENSION STATS
+// ============================================================================
+
+export interface ForecastTeamTensionStats {
+  horizon: ForecastHorizon;
+  predictedTensionLevel: PredictedTensionLevel;
+  techniciansInComfort: number;
+  techniciansInWatch: number;
+  techniciansInTension: number;
+  techniciansInCritical: number;
+  averageGlobalLoadRatio: number | null;
+  topFactors: ForecastTensionFactor[];
+}
 
 // ============================================================================
 // RECOMMENDATION (Lot 5 stub — types only)
