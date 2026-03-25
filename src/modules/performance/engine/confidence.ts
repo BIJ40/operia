@@ -61,7 +61,7 @@ export function computeConfidenceBreakdown(input: ConfidenceInput): ConfidenceBr
     penalties.push({ reason: 'Durées majoritairement estimées', value: 0.15 });
   }
   if (missingContract) {
-    penalties.push({ reason: 'Contrat RH absent', value: 0.20 });
+    penalties.push({ reason: 'Durée hebdo non renseignée', value: 0.20 });
   }
 
   const totalPenalty = penalties.reduce((sum, p) => sum + p.value, 0);

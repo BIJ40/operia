@@ -21,8 +21,8 @@ export function DegradedStateAlert({ flags, technicianName }: Props) {
 
   if (flags.missingContract) {
     alerts.push({
-      message: 'Contrat RH absent — capacité estimée à 35h/semaine par défaut',
-      recommendation: 'Compléter les données RH',
+      message: 'Durée hebdo non renseignée — capacité estimée à 35h/semaine par défaut',
+      recommendation: 'Renseigner la durée hebdo dans la fiche collaborateur',
     });
   }
   if (flags.absenceReliability === 'none') {

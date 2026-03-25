@@ -134,7 +134,7 @@ function computeForecastConfidence(
   if (weeklyHoursSource === 'default') {
     const p: ForecastPenalty = {
       code: 'DEFAULT_WEEKLY_HOURS',
-      reason: 'Heures hebdo par défaut (pas de contrat RH)',
+      reason: 'Durée hebdo non renseignée — valeur par défaut utilisée',
       value: 0.20,
     };
     penalties.push(p);
