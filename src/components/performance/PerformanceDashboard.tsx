@@ -125,7 +125,7 @@ function useAggregatedQuality(data: ReturnType<typeof usePerformanceTerrain>['da
   }, [data]);
 }
 
-export function PerformanceDashboard() {
+function HistoricalPerformanceDashboard() {
   const navigate = useNavigate();
   
   const { dateRange, goToPreviousMonth, goToNextMonth, goToCurrentMonth, isCurrentMonth, label: periodLabel } = usePerformancePeriod();
