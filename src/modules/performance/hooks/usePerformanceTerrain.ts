@@ -29,12 +29,43 @@ import { DEFAULT_THRESHOLDS, ABSENCE_KEYWORDS, EXCLUDED_USER_TYPES } from '../en
 import { usePerformanceConfig } from './usePerformanceConfig';
 
 // ============================================================================
-// TYPES
+// TYPES & HELPERS
 // ============================================================================
 
 interface DateRange {
   start: Date;
   end: Date;
+}
+
+/**
+ * Compute weekly hours from collaborator schedule fields.
+ * work_start/work_end = "HH:MM" strings, work_days = array of day numbers (0=Sun..6=Sat)
+ * Returns null if insufficient data.
+ */
+function computeWeeklyHoursFromSchedule(
+  workStart: string | null,
+  workEnd: string | null,
+  workDays: number[] | null
+): number | null {
+  if (!workStart || !workEnd) return null;
+
+  const [sh, sm] = workStart.split(':').map(Number);
+  const [eh, em] = workEnd.split(':').map(Number);
+
+  if (isNaN(sh) || isNaN(sm) || isNaN(eh) || isNaN(em)) return null;
+
+  const dailyMinutes = (eh * 60 + em) - (sh * 60 + sm);
+  if (dailyMinutes <= 0 || dailyMinutes > 14 * 60) return null; // sanity: max 14h/day
+
+  // work_days: count of working days per week; default to 5 if not set
+  const daysPerWeek = (workDays && workDays.length > 0)
+    ? workDays.filter(d => d >= 1 && d <= 5).length // only count weekdays
+    : 5;
+
+  if (daysPerWeek === 0) return null;
+
+  const weeklyHours = Math.round((dailyMinutes * daysPerWeek / 60) * 10) / 10;
+  return weeklyHours > 0 && weeklyHours <= 60 ? weeklyHours : null; // sanity bounds
 }
 
 export interface PerformanceTerrainData {
