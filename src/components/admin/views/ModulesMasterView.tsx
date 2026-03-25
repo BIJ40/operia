@@ -815,6 +815,7 @@ export function ModulesMasterView() {
   const { flatNodes, isLoading } = useModuleRegistry();
   const { overrides } = useModuleOverrides();
   const { hasGlobalRole } = usePermissions();
+  const { data: planTiersData } = usePlanTiers();
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [showLegacy, setShowLegacy] = useState(false);
   const updateNode = useUpdateModuleNode();
@@ -822,6 +823,24 @@ export function ModulesMasterView() {
 
   // Only N6 (superadmin) can toggle is_deployed
   const canDeploy = hasGlobalRole('superadmin');
+
+  // Build a set of module_keys that have at least one enabled plan_tier_modules entry
+  const planTierModuleKeys = useMemo(() => {
+    const keys = new Set<string>();
+    if (planTiersData) {
+      for (const tier of planTiersData) {
+        for (const mod of tier.plan_tier_modules) {
+          if (mod.enabled) keys.add(mod.module_key);
+        }
+      }
+    }
+    return keys;
+  }, [planTiersData]);
+
+  // Check if a node is deployed + has a plan requirement but no plan_tier_modules entry
+  const isMissingPlanTierForNode = useCallback((node: RegistryNode): boolean => {
+    return node.effectiveDeployed && node.required_plan !== 'NONE' && !planTierModuleKeys.has(node.key);
+  }, [planTierModuleKeys]);
 
   // Split nodes into deployed (main tree) and non-deployed (dev section)
   const { deployedNodes, devNodes } = useMemo(() => {
