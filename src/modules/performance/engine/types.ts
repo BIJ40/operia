@@ -49,6 +49,8 @@ export interface WorkItem {
 export interface CapacityResult {
   workingDays: number;
   absenceDays: number;
+  reportedAbsenceDays?: number;
+  reportedAbsenceHours?: number;
   absenceSource: AbsenceSource;
   absenceConfidence: number; // 1.0 = leave_table, 0.3 = planning_unavailability, 0 = none
   theoreticalMinutes: number;

@@ -152,7 +152,6 @@ export function computeTechnicianSnapshots(input: PerformanceEngineInput): Perfo
     const weeklyHoursSource: 'contract' | 'default' = techInput.weeklyHours ? 'contract' : 'default';
 
     const absenceInfo = absences.get(techId);
-    const isAbsent = !!absenceInfo;
 
     const capacity = computeCapacity(weeklyHours, period, {
       holidays: config.holidays,
@@ -161,6 +160,11 @@ export function computeTechnicianSnapshots(input: PerformanceEngineInput): Perfo
       absenceSource: absenceInfo?.source || 'none',
       deductPlanningUnavailability: config.deductPlanningUnavailability,
     });
+
+    const reportedAbsenceMinutes = Math.round((capacity.reportedAbsenceHours ?? 0) * 60);
+    const isAbsent = !!absenceInfo
+      && capacity.workingDays > 0
+      && reportedAbsenceMinutes >= Math.max(0, capacity.theoreticalMinutes - 1);
 
     const total = agg.productive + agg.nonProductive + agg.sav + agg.other;
     const productivityRatio = total > 0 ? agg.productive / total : 0;

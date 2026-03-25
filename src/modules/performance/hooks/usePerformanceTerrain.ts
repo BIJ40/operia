@@ -48,6 +48,23 @@ function normalizePersonName(value: string | null | undefined): string {
     .trim();
 }
 
+function computeOverlapHours(
+  eventStart: Date | null,
+  eventEnd: Date | null,
+  period: DateRange
+): number {
+  if (!eventStart || Number.isNaN(eventStart.getTime())) return 0;
+
+  const fallbackEnd = eventEnd && !Number.isNaN(eventEnd.getTime()) ? eventEnd : eventStart;
+  const start = new Date(Math.max(eventStart.getTime(), period.start.getTime()));
+  const end = new Date(Math.min(fallbackEnd.getTime(), period.end.getTime()));
+
+  if (end < start) return 0;
+
+  const diffHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+  return diffHours > 0 ? diffHours : 0;
+}
+
 /**
  * Compute weekly hours from collaborator schedule fields.
  * work_start/work_end = "HH:MM" strings, work_days = array of day numbers (0=Sun..6=Sat)
@@ -311,6 +328,22 @@ export function usePerformanceTerrain(dateRange: DateRange) {
 
           if (!isAbsenceType && !isAbsenceKeyword) continue;
 
+          const dureeRaw = Number(rec.duree || (rec.data as Record<string, unknown>)?.duree || 0);
+          const rawStart = rec.dateStart || rec.start || rec.date || (rec.data as Record<string, unknown>)?.dateStart || (rec.data as Record<string, unknown>)?.date;
+          const rawEnd = rec.dateEnd || rec.end || (rec.data as Record<string, unknown>)?.dateEnd || (rec.data as Record<string, unknown>)?.end;
+
+          const eventStart = rawStart ? new Date(String(rawStart)) : null;
+          const eventEnd = rawEnd
+            ? new Date(String(rawEnd))
+            : eventStart && dureeRaw > 0
+              ? new Date(eventStart.getTime() + dureeRaw * 60 * 1000)
+              : eventStart;
+
+          const overlapHours = computeOverlapHours(eventStart, eventEnd, dateRange);
+          const hasDateInPeriod = eventStart && overlapHours > 0;
+
+          if (!hasDateInPeriod) continue;
+
           // Extract user IDs
           const usersRaw = (rec.usersIds || (rec.data as Record<string, unknown>)?.usersIds || []) as unknown[];
           const userId = rec.userId != null ? String(rec.userId) : undefined;
@@ -318,11 +351,10 @@ export function usePerformanceTerrain(dateRange: DateRange) {
           if (userId) ids.push(userId);
 
           // Compute duration in hours from créneau — duree is in MINUTES
-          const dureeRaw = Number(rec.duree || (rec.data as Record<string, unknown>)?.duree || 0);
           let absHours = 0;
 
-          if (dureeRaw > 0) {
-            absHours = dureeRaw / 60;
+          if (overlapHours > 0) {
+            absHours = overlapHours;
           }
 
           // If no duree, try start/end

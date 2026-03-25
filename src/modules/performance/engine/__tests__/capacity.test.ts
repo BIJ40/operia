@@ -41,6 +41,7 @@ describe('computeCapacity', () => {
       deductPlanningUnavailability: false,
     });
     expect(result.absenceDays).toBe(0);
+    expect(result.reportedAbsenceDays).toBe(2);
     expect(result.adjustedCapacityMinutes).toBe(2100);
     expect(result.absenceConfidence).toBe(0.3);
   });
@@ -63,6 +64,15 @@ describe('computeCapacity', () => {
     expect(result.absenceDays).toBe(3);
     expect(result.absenceConfidence).toBe(1.0);
     expect(result.adjustedCapacityMinutes).toBe(Math.round((35 / 5) * 60 * 2));
+  });
+
+  it('converts absenceHours into reported absence days', () => {
+    const result = computeCapacity(35, period, {
+      absenceHours: 3.5,
+      absenceSource: 'leave_table',
+    });
+    expect(result.reportedAbsenceHours).toBe(3.5);
+    expect(result.reportedAbsenceDays).toBe(0.5);
   });
 
   it('handles 100% weekend period', () => {
