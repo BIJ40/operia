@@ -165,6 +165,9 @@ export function computeTechnicianSnapshots(input: PerformanceEngineInput): Perfo
     const isAbsent = !!absenceInfo
       && capacity.workingDays > 0
       && reportedAbsenceMinutes >= Math.max(0, capacity.theoreticalMinutes - 1);
+    const absenceRatio = capacity.theoreticalMinutes > 0
+      ? Math.min(1, reportedAbsenceMinutes / capacity.theoreticalMinutes)
+      : 0;
 
     const total = agg.productive + agg.nonProductive + agg.sav + agg.other;
     const productivityRatio = total > 0 ? agg.productive / total : 0;
@@ -285,7 +288,8 @@ export function computeTechnicianSnapshots(input: PerformanceEngineInput): Perfo
       loadZone: loadRatio != null ? getLoadZone(loadRatio, config) : 'underload',
       tensionLevel: getTensionLevel(productivityRatio, loadRatio, savRate, config),
       isAbsent,
-      absenceLabel: absenceInfo?.label,
+      absenceLabel: isAbsent ? 'Absent' : absenceInfo?.label,
+      absenceRatio,
       confidenceBreakdown,
       dataQualityFlags,
       calculationTrace,

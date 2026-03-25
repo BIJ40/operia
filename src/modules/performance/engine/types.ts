@@ -184,6 +184,7 @@ export interface TechnicianSnapshot {
   // Absence
   isAbsent: boolean;
   absenceLabel?: string;
+  absenceRatio: number; // 0..1 — proportion of period absent
 
   // Quality
   confidenceBreakdown: ConfidenceBreakdown;
@@ -280,6 +281,7 @@ export interface TechnicianPerformance {
   weeklyHoursSource: 'contract' | 'default';
   isAbsent: boolean;
   absenceLabel?: string;
+  absenceRatio: number;
   caGenerated: number;
   dossiersCount: number;
   // V2 extensions
@@ -311,6 +313,7 @@ export function snapshotToLegacy(s: TechnicianSnapshot): TechnicianPerformance {
     weeklyHoursSource: s.weeklyHoursSource,
     isAbsent: s.isAbsent,
     absenceLabel: s.absenceLabel,
+    absenceRatio: s.absenceRatio,
     caGenerated: s.caGenerated ?? 0,
     dossiersCount: s.dossiersCount,
     confidenceBreakdown: s.confidenceBreakdown,
