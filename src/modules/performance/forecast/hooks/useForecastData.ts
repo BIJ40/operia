@@ -109,11 +109,11 @@ export function useForecastData(
         apogeeProxy.getPlanningCreneaux({ agencySlug }).catch(() => []),
       ]);
 
-      const interventions = (loaded?.interventions || []) as Record<string, unknown>[];
-      const projects = (loaded?.projects || []) as Record<string, unknown>[];
-      const users = (loaded?.users || []) as Record<string, unknown>[];
-      const creneaux = (loaded?.creneaux || []) as Record<string, unknown>[];
-      const devis = (loaded?.devis || []) as Record<string, unknown>[];
+      const interventions = (loaded?.interventions || []) as unknown as Record<string, unknown>[];
+      const projects = (loaded?.projects || []) as unknown as Record<string, unknown>[];
+      const users = (loaded?.users || []) as unknown as Record<string, unknown>[];
+      const creneaux = (loaded?.creneaux || []) as unknown as Record<string, unknown>[];
+      const devis = (loaded?.devis || []) as unknown as Record<string, unknown>[];
       const planningData = (planningCreneaux || []) as Record<string, unknown>[];
 
       // === WEEKLY HOURS ===
