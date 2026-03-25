@@ -36,6 +36,11 @@ export type {
   ForecastTensionFactor,
   ForecastTensionSnapshot,
   ForecastTeamTensionStats,
+  // Lot 5
+  ForecastRecommendationType,
+  ForecastRecommendationPriority,
+  ForecastRecommendationScope,
+  ForecastRecommendationsResult,
 } from './types';
 
 export { FORECAST_HORIZONS, horizonToDays } from './types';
@@ -60,3 +65,6 @@ export {
 
 // Tension prédictive (Lot 4)
 export { computeForecastTension, aggregateForecastTeamTension } from './tension';
+
+// Recommandations (Lot 5)
+export { generateForecastRecommendations } from './recommendations';
