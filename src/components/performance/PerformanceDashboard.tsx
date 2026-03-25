@@ -362,7 +362,7 @@ export function PerformanceDashboard() {
           {quality && (
             <div className="flex items-center gap-2">
               <ConfidenceBadge confidence={quality.avgConfidence} />
-              <DataQualityBadge flags={quality.flags} />
+              <DataQualityBadge flags={quality.flags} snapshots={data?.engineOutput?.snapshots} />
             </div>
           )}
         </div>
