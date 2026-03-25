@@ -362,6 +362,10 @@ export interface ApogeeProxy {
   getProjectByHash: <T = unknown>(options: ApogeeProxyOptions & {
     filters: { ref: string; hash: string; zipCode: string };
   }) => Promise<T>;
+  /** Détail dossier par ref — UNIQUEMENT après action explicite utilisateur */
+  getProjectByRef: <T = unknown>(options: ApogeeProxyOptions & {
+    filters: { ref: string };
+  }) => Promise<T>;
   
   // Utility methods
   clearCache: (agencySlug?: string) => void;
@@ -395,6 +399,10 @@ export const apogeeProxy: ApogeeProxy = {
       zipcode: options.filters.zipCode, // doublon lowercase pour compatibilité API
     };
     return proxyRequest('apiGetProjectByHashZipCode', { ...options, filters, skipCache: true });
+  },
+  getProjectByRef: (options) => {
+    // INTERDIT: Ne jamais appeler en masse. Uniquement après action explicite utilisateur.
+    return proxyRequest('apiGetProjectByRef', { ...options, skipCache: true });
   },
   
   clearCache: clearApogeeCache,

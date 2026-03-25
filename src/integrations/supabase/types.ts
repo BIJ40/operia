@@ -830,6 +830,7 @@ export type Database = {
           code_postal: string | null
           contact_email: string | null
           contact_phone: string | null
+          content_webhook_url: string | null
           created_at: string
           date_cloture_bilan: string | null
           date_ouverture: string | null
@@ -845,6 +846,7 @@ export type Database = {
           code_postal?: string | null
           contact_email?: string | null
           contact_phone?: string | null
+          content_webhook_url?: string | null
           created_at?: string
           date_cloture_bilan?: string | null
           date_ouverture?: string | null
@@ -860,6 +862,7 @@ export type Database = {
           code_postal?: string | null
           contact_email?: string | null
           contact_phone?: string | null
+          content_webhook_url?: string | null
           created_at?: string
           date_cloture_bilan?: string | null
           date_ouverture?: string | null

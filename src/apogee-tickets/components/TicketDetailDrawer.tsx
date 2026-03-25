@@ -6,8 +6,6 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { FileManager } from '@/components/files/FileManager';
 import { Sheet, SheetContent, SheetHeader } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -32,10 +30,12 @@ import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { useMyTicketRole, useAllowedTransitions } from '../hooks/useTicketPermissions';
 import { TicketTimelineTab } from './TicketTimelineTab';
+import { TicketAttachmentsManager } from './TicketAttachmentsManager';
 import { errorToast } from '@/lib/toastHelpers';
 import { TagSelector } from './TagSelector';
 import { RoadmapEditor } from './RoadmapEditor';
 import { TicketSupportExchanges } from './TicketSupportExchanges';
+import { useTicketAttachments } from '../hooks/useTicketAttachments';
 import { ORIGINE_OPTIONS } from './ticket-detail/constants';
 import { TicketDrawerHeader } from './ticket-detail/TicketDrawerHeader';
 import { TicketCommentsSection } from './ticket-detail/TicketCommentsSection';
@@ -80,23 +80,8 @@ export function TicketDetailDrawer({
   const { data: allowedTransitions = [] } = useAllowedTransitions(ticket?.kanban_status || '');
   const markAsViewed = useMarkTicketAsViewed();
   const { comments, addComment, updateComment } = useApogeeTicket(ticket?.id || null);
-  
-  const storagePath = ticket?.id || '';
-  const { data: filesCount = 0 } = useQuery({
-    queryKey: ['files-count', 'apogee-ticket-attachments', storagePath],
-    queryFn: async () => {
-      if (!storagePath) return 0;
-      const { data, error } = await supabase.storage
-        .from('apogee-ticket-attachments')
-        .list(storagePath);
-      if (error) return 0;
-      const realFiles = (data || []).filter(f => 
-        f.name && !f.name.startsWith('.') && f.id
-      );
-      return realFiles.length;
-    },
-    enabled: !!ticket?.id,
-  });
+  const { attachments } = useTicketAttachments(ticket?.id || null);
+  const filesCount = attachments.length;
 
   const [newComment, setNewComment] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
@@ -614,13 +599,7 @@ export function TicketDetailDrawer({
           <TabsContent value="documents" className="flex-1 overflow-hidden m-0">
             <ScrollArea className="h-full">
               <div className="p-6">
-                <FileManager
-                  bucketName="apogee-ticket-attachments"
-                  recordId={ticket.id}
-                  basePath=""
-                  maxFileSize={10}
-                  className="border-0 shadow-none"
-                />
+                <TicketAttachmentsManager ticketId={ticket.id} />
               </div>
             </ScrollArea>
           </TabsContent>

@@ -1,0 +1,1 @@
+ALTER TABLE public.apogee_agencies ADD COLUMN content_webhook_url TEXT DEFAULT NULL;

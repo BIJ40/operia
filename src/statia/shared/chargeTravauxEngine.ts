@@ -16,8 +16,13 @@ const ETATS_ELIGIBLES = new Set(['to_planify_tvx', 'devis_to_order', 'wait_fourn
 // États d'intervention à exclure (annulés ou à reprogrammer)
 const ITV_ETATS_EXCLUS = new Set(['to_reprog', 'canceled', 'cancelled', 'annulé', 'annule']);
 
-// États de devis éligibles (on exclut draft, rejected, canceled)
-const DEVIS_ETATS_EXCLUS = new Set(['draft', 'rejected', 'canceled']);
+// États de devis à exclure (annulés, refusés, brouillons)
+const DEVIS_ETATS_EXCLUS = new Set([
+  'draft', 'brouillon',
+  'rejected', 'refused', 'refusé', 'refuse', 'refus',
+  'canceled', 'cancelled', 'annulé', 'annule', 'annulée', 'annulee',
+  'abandon', 'abandonné', 'abandonne',
+]);
 
 export interface ChargeTravauxProjet {
   projectId: number | string;
@@ -429,8 +434,10 @@ function calculateDevisHTForProject(projectDevis: any[]): number {
   for (const d of projectDevis) {
     const devisState = String(d.state || '').toLowerCase();
     
-    // Exclure les devis non "vivants"
+    // Exclure les devis annulés/refusés/brouillons (exact match ou substring)
     if (DEVIS_ETATS_EXCLUS.has(devisState)) continue;
+    const CANCEL_KEYWORDS = ['annul', 'cancel', 'refus', 'refused', 'rejected', 'abandon'];
+    if (CANCEL_KEYWORDS.some(k => devisState.includes(k))) continue;
 
     // Priorité: data.totalHT (structure API) > totalHT (racine) > amount
     const montant =

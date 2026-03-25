@@ -81,11 +81,17 @@ Deno.serve(async (req: Request) => {
       visualUrl = signedData?.signedUrl || null
     }
 
-    // ─── 4. Build payload ───
-    const webhookUrl = Deno.env.get('CONTENT_WEBHOOK_URL')
+    // ─── 4. Resolve webhook URL: agency-specific first, then global fallback ───
+    const { data: agencyRow } = await adminClient
+      .from('apogee_agencies')
+      .select('content_webhook_url')
+      .eq('id', agency_id)
+      .single()
+
+    const webhookUrl = agencyRow?.content_webhook_url || Deno.env.get('CONTENT_WEBHOOK_URL')
     const webhookSecret = Deno.env.get('WEBHOOK_SECRET')
 
-    if (!webhookUrl) return json({ error: 'CONTENT_WEBHOOK_URL not configured' }, 500)
+    if (!webhookUrl) return json({ error: 'Webhook URL not configured for this agency' }, 500)
     if (!webhookSecret) return json({ error: 'WEBHOOK_SECRET not configured' }, 500)
 
     const aiPayload = (suggestion.ai_payload as Record<string, any>) || {}

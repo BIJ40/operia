@@ -1,60 +1,51 @@
 
 
-# Refonte widget "Répartition" — Grille 2×4 avec pictos univers et barres circulaires
+# Isolation webhook par agence
 
-## Constat
+## Ce qui change pour toi
 
-Oui, les 8 pictos univers sont bien en stock dans `src/assets/` :
-- `picto-plomberie.png`
-- `picto-electricite.png`
-- `picto-serrurerie.png`
-- `picto-menuiserie.png`
-- `picto-vitrerie.png`
-- `picto-volets.png`
-- `picto-pmr.png`
-- `picto-renovation.png`
+**Une seule action de ta part** : après déploiement, tu devras renseigner l'URL webhook de ton agence (Dax) dans l'interface admin agences. Les autres agences sans URL configurée n'enverront simplement plus rien. Zero regression.
 
-Le widget actuel (`CAParUniversWidget`) affiche une liste verticale avec barres horizontales.
+**Fallback** : pendant la transition, si une agence n'a pas d'URL configurée, on utilise l'ancien `CONTENT_WEBHOOK_URL` global. Tu pourras le retirer plus tard quand toutes les agences seront migrées. Aucune casse immédiate.
 
-## Ce qui change
+---
 
-Remplacer le contenu du widget par une **grille 2 colonnes × 4 lignes** (8 univers max). Chaque cellule affiche :
-- Le **picto** de l'univers (image ~32px) au centre
-- Une **barre de progression circulaire** (SVG ring) autour du picto, remplie selon le % du CA
-- Le **nom** de l'univers en dessous (texte xs)
-- La **valeur** (CA ou %) en petit
+## Plan technique
 
-## Fichiers impactés
+### 1. Migration SQL
+- Ajouter `content_webhook_url TEXT DEFAULT NULL` sur `apogee_agencies`
 
-| Fichier | Action |
+### 2. Modifier les 3 edge functions
+
+Pour chacune (`dispatch-realisation-webhook`, `dispatch-social-webhook`, `dispatch-scheduled-social`) :
+- Lire `content_webhook_url` depuis `apogee_agencies` via `agency_id`
+- Si trouvé → utiliser cette URL
+- Sinon → fallback sur `CONTENT_WEBHOOK_URL` env var (transition douce)
+- `WEBHOOK_SECRET` reste global, inchangé
+
+### 3. Rendre `agency_id` obligatoire sur `content-api`
+- `GET /realisations` sans `agency_id` → erreur 400
+
+### 4. Champ admin dans la page agences
+- Ajouter un input "Webhook URL" dans `src/pages/AdminAgencies.tsx` (formulaire existant)
+- Sauvegarde dans `apogee_agencies.content_webhook_url`
+
+---
+
+## Fichiers modifiés
+
+| Fichier | Changement |
 |---|---|
-| `src/components/dashboard/widgets/CAParUniversWidget.tsx` | Refonte complète du rendu : grille 2×4, pictos, progress ring SVG |
+| Migration SQL | `ALTER TABLE apogee_agencies ADD COLUMN content_webhook_url` |
+| `supabase/functions/dispatch-realisation-webhook/index.ts` | Lire URL depuis agence, fallback env var |
+| `supabase/functions/dispatch-social-webhook/index.ts` | Idem |
+| `supabase/functions/dispatch-scheduled-social/index.ts` | Idem |
+| `supabase/functions/content-api/index.ts` | `agency_id` obligatoire |
+| `src/pages/AdminAgencies.tsx` | Champ webhook URL |
 
-## Approche technique
+## Impact
 
-1. **Mapping univers → picto** : Réutiliser le dictionnaire `UNIVERSE_PICTOS` de `templateAssets.ts` (ou importer directement les assets). Clé de matching basée sur le nom de l'univers (normalisation lowercase).
-
-2. **Progress ring SVG** : Un cercle SVG avec `stroke-dasharray` / `stroke-dashoffset` pour animer le pourcentage. Rayon ~24px, le picto est positionné au centre en `absolute`.
-
-3. **Layout** : `grid grid-cols-2 gap-3` pour la grille 2×4. Chaque cellule est un flex column centré.
-
-4. **Données** : Même query StatIA qu'actuellement, on garde les 8 premiers univers triés par CA décroissant et on calcule le % par rapport au total.
-
-```text
-┌──────────┬──────────┐
-│  ╭───╮   │  ╭───╮   │
-│  │ 🔧│   │  │ ⚡│   │
-│  ╰───╯   │  ╰───╯   │
-│ Plomberie│ Électri. │
-│  45%     │  22%     │
-├──────────┼──────────┤
-│  ╭───╮   │  ╭───╮   │
-│  │ 🔑│   │  │ 🪟│   │
-│  ╰───╯   │  ╰───╯   │
-│ Serrure. │ Vitrerie │
-│  12%     │  8%      │
-├──────────┼──────────┤
-│  ...     │  ...     │
-└──────────┴──────────┘
-```
+- **Aucune regression** : le fallback sur l'env var globale garantit que tout fonctionne comme avant tant que tu n'as pas configuré les URLs par agence
+- Une fois l'URL de Dax renseignée, seules ses réalisations et posts sociaux iront vers ton outil
+- Les agences sans URL configurée continuent d'utiliser le webhook global (ou tu peux le retirer pour bloquer l'envoi)
 

@@ -5,6 +5,8 @@
  * - Trouve le RDV le plus éloigné du dépôt (agence) à vol d'oiseau
  * - Classifie la distance max en zone BTP (1A/1B/2/3/4/5)
  * - Agrège les compteurs mensuels
+ * 
+ * Optimisation : géocodage par batch CSV (api-adresse.data.gouv.fr/search/csv/)
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
@@ -33,8 +35,130 @@ function classifyZone(km: number): ZoneLabel | null {
   return null; // > 50 km = grand déplacement, hors scope
 }
 
+/**
+ * Batch geocode via the French government CSV API.
+ * Sends a CSV with columns: id, adresse, postcode, city
+ * Returns a map of id → { lat, lng }
+ */
+async function batchGeocode(
+  addresses: Array<{ id: string; address: string; postalCode: string; city: string }>
+): Promise<Map<string, { lat: number; lng: number }>> {
+  const results = new Map<string, { lat: number; lng: number }>();
+  if (addresses.length === 0) return results;
+
+  // Build CSV
+  const csvLines = ['id,adresse,postcode,city'];
+  for (const a of addresses) {
+    // Escape CSV fields (replace quotes, commas)
+    const esc = (s: string) => `"${(s || '').replace(/"/g, '""')}"`;
+    csvLines.push(`${esc(a.id)},${esc(a.address)},${esc(a.postalCode)},${esc(a.city)}`);
+  }
+  const csvBody = csvLines.join('\n');
+
+  // The CSV API accepts up to ~10k rows. Split into chunks of 5000 to be safe.
+  const CHUNK_SIZE = 5000;
+  const allLines = csvLines.slice(1); // without header
+  const header = csvLines[0];
+
+  const chunks: string[][] = [];
+  for (let i = 0; i < allLines.length; i += CHUNK_SIZE) {
+    chunks.push(allLines.slice(i, i + CHUNK_SIZE));
+  }
+
+  for (const chunk of chunks) {
+    const csv = [header, ...chunk].join('\n');
+    try {
+      const formData = new FormData();
+      formData.append('data', new Blob([csv], { type: 'text/csv' }), 'addresses.csv');
+      formData.append('columns', 'adresse');
+      formData.append('postcode', 'postcode');
+      formData.append('city', 'city');
+
+      const resp = await fetch('https://api-adresse.data.gouv.fr/search/csv/', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!resp.ok) {
+        console.warn(`[ZONES] Batch geocode failed: ${resp.status}`);
+        continue;
+      }
+
+      const text = await resp.text();
+      const lines = text.split('\n');
+      if (lines.length < 2) continue;
+
+      // Parse header to find column indices
+      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      const idIdx = headers.indexOf('id');
+      const latIdx = headers.indexOf('latitude');
+      const lngIdx = headers.indexOf('longitude');
+      const scoreIdx = headers.indexOf('result_score');
+
+      if (idIdx < 0 || latIdx < 0 || lngIdx < 0) {
+        console.warn('[ZONES] Batch geocode: missing expected columns', headers);
+        continue;
+      }
+
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        // Simple CSV parse (fields may be quoted)
+        const fields = parseCSVLine(line);
+        if (!fields || fields.length <= Math.max(idIdx, latIdx, lngIdx)) continue;
+
+        const id = fields[idIdx]?.replace(/"/g, '');
+        const lat = parseFloat(fields[latIdx]);
+        const lng = parseFloat(fields[lngIdx]);
+        const score = scoreIdx >= 0 ? parseFloat(fields[scoreIdx]) : 1;
+
+        if (id && Number.isFinite(lat) && Number.isFinite(lng) && score >= 0.3) {
+          results.set(id, { lat, lng });
+        }
+      }
+    } catch (err) {
+      console.warn('[ZONES] Batch geocode error:', err);
+    }
+  }
+
+  return results;
+}
+
+/** Simple CSV line parser that handles quoted fields */
+function parseCSVLine(line: string): string[] {
+  const fields: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (i + 1 < line.length && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        current += ch;
+      }
+    } else {
+      if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ',') {
+        fields.push(current);
+        current = '';
+      } else {
+        current += ch;
+      }
+    }
+  }
+  fields.push(current);
+  return fields;
+}
+
+/** Single address geocode fallback for the depot */
 async function geocodeAddress(address: string, postalCode: string, city: string): Promise<{ lat: number; lng: number } | null> {
-  // Try multiple strategies in order of precision
   const queries = [
     `${address} ${city}`.trim(),
     `${address} ${postalCode} ${city}`.trim(),
@@ -46,19 +170,15 @@ async function geocodeAddress(address: string, postalCode: string, city: string)
     try {
       const params = [`q=${encodeURIComponent(textQuery)}`, 'limit=1'];
       if (postalCode?.length >= 2) params.push(`postcode=${encodeURIComponent(postalCode)}`);
-      
       const url = `https://api-adresse.data.gouv.fr/search/?${params.join('&')}`;
       const response = await fetch(url);
       if (!response.ok) continue;
-      
       const data = await response.json();
       if (data.features?.length > 0) {
         const [lng, lat] = data.features[0].geometry.coordinates;
         return { lat, lng };
       }
-    } catch {
-      continue;
-    }
+    } catch { continue; }
   }
   return null;
 }
@@ -170,7 +290,6 @@ Deno.serve(async (req) => {
     let cp = agency.code_postal || '';
     let ville = agency.ville || '';
     if (cp && !/^\d{4,5}$/.test(cp.trim()) && /^\d{4,5}$/.test(ville.trim())) {
-      // Fields are swapped
       [cp, ville] = [ville, cp];
     }
 
@@ -301,32 +420,25 @@ Deno.serve(async (req) => {
 
     console.log(`[ZONES] ${interventions.length} interventions for ${month}, ${usersById.size} techs`);
 
-    // 7. Geocode cache for client addresses
-    const geoCache = new Map<string, { lat: number; lng: number } | null>();
-
-    async function getClientCoords(clientId: number): Promise<{ lat: number; lng: number } | null> {
-      const client = clientsById.get(clientId);
-      if (!client?.address) return null;
-      
-      const cacheKey = `${client.address}|${client.postalCode}|${client.city}`;
-      if (geoCache.has(cacheKey)) return geoCache.get(cacheKey) ?? null;
-      
-      const result = await geocodeAddress(client.address, client.postalCode, client.city);
-      geoCache.set(cacheKey, result);
-      return result;
+    // 7. First pass: collect all unique client IDs needed for geocoding
+    const neededClientIds = new Set<number>();
+    // Also build the intervention→visit structure for the second pass
+    interface VisitInfo {
+      date: string;
+      techIds: number[];
+      clientId: number;
+      startMinutes: number;
+      endMinutes: number;
+      duration: number;
     }
-
-    // 8. Process: for each day, for each tech → find max distance + track time spans for panier logic
-    // Map: techId → Map<date, maxDistKm>
-    const techDayMax = new Map<number, Map<string, number>>();
-    // Map: techId → Map<date, { startMin: number, endMax: number, totalMinutes: number }>
-    const techDayTime = new Map<number, Map<string, { startMin: number; endMax: number; totalMinutes: number }>>();
+    const relevantVisits: VisitInfo[] = [];
 
     for (const intervention of interventions) {
       const data = intervention?.data || {};
       const visites = Array.isArray(data.visites) ? data.visites : [];
       const projectId = intervention?.projectId ?? intervention?.project_id;
       const clientId = projectId ? projectClientMap.get(projectId) : null;
+      if (!clientId) continue;
 
       for (const visite of visites) {
         const vDate = typeof visite?.date === 'string' ? visite.date.substring(0, 10) : null;
@@ -341,16 +453,14 @@ Deno.serve(async (req) => {
         let endMinutes = -1;
         const duree = typeof visite?.duree === 'number' ? visite.duree : (parseInt(visite?.duree) || 0);
 
-        // Try date ISO string for start time (e.g. "2026-03-15T08:00:00")
         if (typeof visite?.date === 'string' && visite.date.length >= 16) {
-          const timePart = visite.date.substring(11, 16); // "HH:mm"
+          const timePart = visite.date.substring(11, 16);
           const [hh, mm] = timePart.split(':').map(Number);
           if (Number.isFinite(hh) && Number.isFinite(mm)) {
             startMinutes = hh * 60 + mm;
             if (duree > 0) endMinutes = startMinutes + duree;
           }
         }
-        // Fallback: heureDebut / heureFin
         if (startMinutes < 0 && typeof visite?.heureDebut === 'string') {
           const [hh, mm] = visite.heureDebut.split(':').map(Number);
           if (Number.isFinite(hh)) startMinutes = hh * 60 + (mm || 0);
@@ -363,46 +473,75 @@ Deno.serve(async (req) => {
           endMinutes = startMinutes + duree;
         }
 
-        // Get coordinates for this intervention's client
-        let coords: { lat: number; lng: number } | null = null;
-        if (clientId) {
-          coords = await getClientCoords(clientId);
-        }
-        if (!coords) continue;
+        neededClientIds.add(clientId);
+        relevantVisits.push({
+          date: vDate,
+          techIds: relevantTechs,
+          clientId,
+          startMinutes,
+          endMinutes,
+          duration: duree,
+        });
+      }
+    }
 
-        const distKm = haversineKm(depot.lat, depot.lng, coords.lat, coords.lng);
+    // 8. Batch geocode all needed client addresses at once
+    const addressBatch: Array<{ id: string; address: string; postalCode: string; city: string }> = [];
+    for (const cId of neededClientIds) {
+      const client = clientsById.get(cId);
+      if (!client?.address) continue;
+      addressBatch.push({
+        id: String(cId),
+        address: client.address,
+        postalCode: client.postalCode,
+        city: client.city,
+      });
+    }
 
-        for (const techId of relevantTechs) {
-          // Track max distance
-          if (!techDayMax.has(techId)) techDayMax.set(techId, new Map());
-          const dayMap = techDayMax.get(techId)!;
-          const current = dayMap.get(vDate) ?? 0;
-          if (distKm > current) dayMap.set(vDate, distKm);
+    console.log(`[ZONES] Batch geocoding ${addressBatch.length} unique addresses...`);
+    const geocoded = await batchGeocode(addressBatch);
+    console.log(`[ZONES] Geocoded ${geocoded.size}/${addressBatch.length} addresses`);
 
-          // Track time spans
-          if (startMinutes >= 0 || endMinutes >= 0) {
-            if (!techDayTime.has(techId)) techDayTime.set(techId, new Map());
-            const timeMap = techDayTime.get(techId)!;
-            const existing = timeMap.get(vDate);
-            const visitDuration = duree > 0 ? duree : (endMinutes > startMinutes ? endMinutes - startMinutes : 60);
-            if (!existing) {
-              timeMap.set(vDate, {
-                startMin: startMinutes >= 0 ? startMinutes : 1440,
-                endMax: endMinutes >= 0 ? endMinutes : 0,
-                totalMinutes: visitDuration,
-              });
-            } else {
-              if (startMinutes >= 0 && startMinutes < existing.startMin) existing.startMin = startMinutes;
-              if (endMinutes >= 0 && endMinutes > existing.endMax) existing.endMax = endMinutes;
-              existing.totalMinutes += visitDuration;
-            }
+    // 9. Second pass: compute distances using geocoded coordinates
+    const techDayMax = new Map<number, Map<string, number>>();
+    const techDayTime = new Map<number, Map<string, { startMin: number; endMax: number; totalMinutes: number }>>();
+
+    for (const visit of relevantVisits) {
+      const coords = geocoded.get(String(visit.clientId));
+      if (!coords) continue;
+
+      const distKm = haversineKm(depot.lat, depot.lng, coords.lat, coords.lng);
+
+      for (const techId of visit.techIds) {
+        // Track max distance
+        if (!techDayMax.has(techId)) techDayMax.set(techId, new Map());
+        const dayMap = techDayMax.get(techId)!;
+        const current = dayMap.get(visit.date) ?? 0;
+        if (distKm > current) dayMap.set(visit.date, distKm);
+
+        // Track time spans
+        if (visit.startMinutes >= 0 || visit.endMinutes >= 0) {
+          if (!techDayTime.has(techId)) techDayTime.set(techId, new Map());
+          const timeMap = techDayTime.get(techId)!;
+          const existing = timeMap.get(visit.date);
+          const visitDuration = visit.duration > 0 ? visit.duration :
+            (visit.endMinutes > visit.startMinutes ? visit.endMinutes - visit.startMinutes : 60);
+          if (!existing) {
+            timeMap.set(visit.date, {
+              startMin: visit.startMinutes >= 0 ? visit.startMinutes : 1440,
+              endMax: visit.endMinutes >= 0 ? visit.endMinutes : 0,
+              totalMinutes: visitDuration,
+            });
+          } else {
+            if (visit.startMinutes >= 0 && visit.startMinutes < existing.startMin) existing.startMin = visit.startMinutes;
+            if (visit.endMinutes >= 0 && visit.endMinutes > existing.endMax) existing.endMax = visit.endMinutes;
+            existing.totalMinutes += visitDuration;
           }
         }
       }
     }
 
-
-    // 9. Aggregate into zone counts per tech + panier calculation
+    // 10. Aggregate into zone counts per tech + panier calculation
     const ZONE_LABELS: ZoneLabel[] = ['1A', '1B', '2', '3', '4', '5'];
     const results: Array<{
       techId: number;
@@ -429,8 +568,8 @@ Deno.serve(async (req) => {
           if (timeMap) {
             const timeInfo = timeMap.get(day);
             if (timeInfo && timeInfo.endMax > 0) {
-              const morningOnly = timeInfo.endMax <= 13 * 60; // ends by 13:00
-              const lessThan5h = timeInfo.totalMinutes < 300; // < 5 hours
+              const morningOnly = timeInfo.endMax <= 13 * 60;
+              const lessThan5h = timeInfo.totalMinutes < 300;
               if (morningOnly && lessThan5h) {
                 paniersExclus++;
               }
@@ -452,7 +591,7 @@ Deno.serve(async (req) => {
     // Sort by name
     results.sort((a, b) => a.techName.localeCompare(b.techName));
 
-    console.log(`[ZONES] Result: ${results.length} techs, ${geoCache.size} geocoded addresses`);
+    console.log(`[ZONES] Result: ${results.length} techs, ${geocoded.size} geocoded addresses`);
 
     return withCors(req, new Response(
       JSON.stringify({ success: true, data: results }),

@@ -125,19 +125,22 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    // GET /realisations — list all (with optional filters)
+    // GET /realisations — list all (agency_id REQUIRED)
     if (req.method === 'GET' && resource === 'realisations') {
       const agencyId = url.searchParams.get('agency_id')
+      if (!agencyId) {
+        return json({ error: 'agency_id query parameter is required' }, 400)
+      }
       const status = url.searchParams.get('sync_status')
       const limit = parseInt(url.searchParams.get('limit') || '50')
 
       let query = supabase
         .from('realisations')
         .select('id, agency_id, title, intervention_date, external_sync_status, created_at')
+        .eq('agency_id', agencyId)
         .order('created_at', { ascending: false })
         .limit(limit)
 
-      if (agencyId) query = query.eq('agency_id', agencyId)
       if (status) query = query.eq('external_sync_status', status)
 
       const { data, error } = await query

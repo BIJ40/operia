@@ -45,11 +45,11 @@ Deno.serve(async (req: Request) => {
 
     console.log(`[dispatch-scheduled-social] Found ${pending.length} pending posts`)
 
-    const webhookUrl = Deno.env.get('CONTENT_WEBHOOK_URL')
     const webhookSecret = Deno.env.get('WEBHOOK_SECRET')
+    const globalWebhookUrl = Deno.env.get('CONTENT_WEBHOOK_URL')
 
-    if (!webhookUrl || !webhookSecret) {
-      return json({ error: 'CONTENT_WEBHOOK_URL or WEBHOOK_SECRET not configured' }, 500)
+    if (!webhookSecret) {
+      return json({ error: 'WEBHOOK_SECRET not configured' }, 500)
     }
 
     let dispatched = 0
@@ -57,6 +57,18 @@ Deno.serve(async (req: Request) => {
 
     for (const suggestion of pending) {
       try {
+        // Resolve webhook URL per agency
+        const { data: agencyRow } = await adminClient
+          .from('apogee_agencies')
+          .select('content_webhook_url')
+          .eq('id', suggestion.agency_id)
+          .single()
+
+        const webhookUrl = agencyRow?.content_webhook_url || globalWebhookUrl
+        if (!webhookUrl) {
+          console.log(`[dispatch-scheduled-social] No webhook URL for agency ${suggestion.agency_id}, skipping`)
+          continue
+        }
         // Fetch full suggestion
         const { data: fullSuggestion } = await adminClient
           .from('social_content_suggestions')
