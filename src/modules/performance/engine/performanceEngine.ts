@@ -157,6 +157,7 @@ export function computeTechnicianSnapshots(input: PerformanceEngineInput): Perfo
     const capacity = computeCapacity(weeklyHours, period, {
       holidays: config.holidays,
       absenceDays: absenceInfo?.days || 0,
+      absenceHours: absenceInfo?.hours,
       absenceSource: absenceInfo?.source || 'none',
       deductPlanningUnavailability: config.deductPlanningUnavailability,
     });
