@@ -255,6 +255,16 @@ Deno.serve(async (req) => {
       ));
     }
 
+    // 5bis. Rate limiting STRICT pour endpoints de détail (10 req/min)
+    if (STRICT_RATE_LIMIT_ENDPOINTS.includes(endpoint)) {
+      const strictKey = `proxy-apogee-detail:${user.id}`;
+      const strictCheck = await checkRateLimit(strictKey, { limit: 10, windowMs: 60 * 1000 });
+      if (!strictCheck.allowed) {
+        console.log(`[PROXY-APOGEE] STRICT rate limit exceeded for ${endpoint} by user ${user.id.substring(0, 8)}...`);
+        return rateLimitResponse(strictCheck.retryAfter!, corsHeaders);
+      }
+    }
+
     // 6. Déterminer l'agence cible avec contrôle d'accès
     let targetAgency = profile?.agence || null;
     
