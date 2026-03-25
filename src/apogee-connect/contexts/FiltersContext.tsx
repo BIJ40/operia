@@ -12,6 +12,7 @@ export type PeriodType =
   | 'year'
   | 'year-1'
   | 'custom'
+  | 'all'
   // Périodes futures / Prévisionnel
   | 'tomorrow'
   | 'week+1'
