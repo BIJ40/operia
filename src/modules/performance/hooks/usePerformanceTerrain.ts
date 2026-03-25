@@ -159,30 +159,48 @@ export function usePerformanceTerrain(dateRange: DateRange) {
         };
 
         if (effectiveAgencyId) {
+          const { data: weeklyHoursRows, error: weeklyHoursError } = await supabase.rpc(
+            'get_agency_performance_weekly_hours',
+            { target_agency_id: effectiveAgencyId }
+          );
+
+          if (weeklyHoursError) {
+            logError('PERF_TERRAIN_V2', 'Impossible de charger les durées hebdo via RPC', weeklyHoursError);
+          }
+
+          if (Array.isArray(weeklyHoursRows)) {
+            for (const row of weeklyHoursRows as Array<{ apogee_user_id: number | string | null; weekly_hours: number | null }>) {
+              const apogeeUserId = row.apogee_user_id != null ? String(row.apogee_user_id) : null;
+              const weeklyHours = Number(row.weekly_hours);
+              if (!apogeeUserId || !Number.isFinite(weeklyHours) || weeklyHours <= 0) continue;
+              weeklyHoursByApogeeId.set(apogeeUserId, weeklyHours);
+            }
+          }
+
+          // Fallback legacy: direct RH reads when available, mainly to preserve name-based matching
           const { data: collaborators } = await supabase
             .from('collaborators')
             .select('id, apogee_user_id, first_name, last_name, work_start, work_end, work_days')
             .eq('agency_id', effectiveAgencyId);
 
           if (collaborators && collaborators.length > 0) {
-            // 1. Compute from schedule fields first
             for (const collab of collaborators) {
+              const fullName = `${collab.first_name || ''} ${collab.last_name || ''}`.trim();
+
               const scheduleHours = computeWeeklyHoursFromSchedule(
                 collab.work_start,
                 collab.work_end,
                 collab.work_days
               );
-              if (scheduleHours === null) continue;
 
-              if (collab.apogee_user_id != null) {
-                weeklyHoursByApogeeId.set(String(collab.apogee_user_id), scheduleHours);
+              if (scheduleHours !== null) {
+                if (collab.apogee_user_id != null && !weeklyHoursByApogeeId.has(String(collab.apogee_user_id))) {
+                  weeklyHoursByApogeeId.set(String(collab.apogee_user_id), scheduleHours);
+                }
+                registerNameFallback(fullName, scheduleHours);
               }
-
-              const fullName = `${collab.first_name || ''} ${collab.last_name || ''}`.trim();
-              registerNameFallback(fullName, scheduleHours);
             }
 
-            // 2. Fallback: contract weekly_hours for those not yet resolved
             const unresolvedCollabIds = collaborators
               .filter(c => c.id && (c.apogee_user_id == null || !weeklyHoursByApogeeId.has(String(c.apogee_user_id))))
               .map(c => c.id);

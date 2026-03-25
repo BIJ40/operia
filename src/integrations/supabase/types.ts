@@ -10958,6 +10958,13 @@ export type Database = {
           options: Json
         }[]
       }
+      get_agency_performance_weekly_hours: {
+        Args: { target_agency_id: string }
+        Returns: {
+          apogee_user_id: number
+          weekly_hours: number
+        }[]
+      }
       get_agency_rh_managers: {
         Args: { p_agency_id: string }
         Returns: {
