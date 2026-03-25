@@ -45,6 +45,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
+import DossierDocumentsPanel from '../components/DossierDocumentsPanel';
 
 type SortField = 'ref' | 'clientName' | 'status' | 'dateCreation' | 'factureHT' | 'restedu';
 type SortDirection = 'asc' | 'desc';
@@ -404,7 +405,6 @@ export default function ApporteurDossiers() {
                 <span className="text-muted-foreground">Reste dû:</span>
                 <span className="font-semibold text-foreground">
                   {formatCurrency(filteredTotals.resteDu)}
-                  {formatCurrency(filteredTotals.resteDu)}
                 </span>
               </div>
             </div>
@@ -494,9 +494,15 @@ export default function ApporteurDossiers() {
                     <p className="font-semibold text-foreground">
                       {formatCurrency(selectedDossier.restedu)}
                     </p>
-                  </div>
                 </div>
               </div>
+
+              {/* Documents générés — chargement à la demande (action explicite: clic dossier) */}
+              <DossierDocumentsPanel
+                dossierRef={selectedDossier.ref || null}
+                agencySlug={null}
+              />
+            </div>
             </div>
           )}
         </DialogContent>

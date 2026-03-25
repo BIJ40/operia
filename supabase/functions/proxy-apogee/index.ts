@@ -108,7 +108,51 @@ const ALLOWED_ENDPOINTS = [
   'getFactures',
   'getDevis',
   'apiGetProjectByHashZipCode',
+  'apiGetProjectByRef',
 ];
+
+// Endpoints soumis à un rate limiting strict (détail dossier)
+const STRICT_RATE_LIMIT_ENDPOINTS = ['apiGetProjectByRef'];
+
+// =============================================================================
+// CACHE SERVEUR EDGE — apiGetProjectByRef uniquement
+// Clé = ref + agencySlug. TTL 5 min. Ne contourne JAMAIS les droits.
+// =============================================================================
+interface EdgeCacheEntry {
+  data: unknown;
+  expiresAt: number;
+  agencySlug: string;
+}
+const edgeCache = new Map<string, EdgeCacheEntry>();
+const EDGE_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const EDGE_CACHE_MAX = 200;
+
+function getEdgeCacheKey(endpoint: string, agencySlug: string, filters?: Record<string, unknown>): string {
+  if (endpoint === 'apiGetProjectByRef' && filters?.ref) {
+    return `${endpoint}:${agencySlug}:${filters.ref}`;
+  }
+  return '';
+}
+
+function getFromEdgeCache(key: string): unknown | null {
+  if (!key) return null;
+  const entry = edgeCache.get(key);
+  if (!entry || Date.now() > entry.expiresAt) {
+    if (entry) edgeCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function setEdgeCache(key: string, data: unknown, agencySlug: string): void {
+  if (!key) return;
+  // LRU-style eviction
+  if (edgeCache.size >= EDGE_CACHE_MAX) {
+    const firstKey = edgeCache.keys().next().value;
+    if (firstKey) edgeCache.delete(firstKey);
+  }
+  edgeCache.set(key, { data, expiresAt: Date.now() + EDGE_CACHE_TTL_MS, agencySlug });
+}
 
 interface ProxyRequest {
   endpoint: string;
@@ -209,6 +253,16 @@ Deno.serve(async (req) => {
         JSON.stringify({ success: false, error: `Endpoint non autorisé: ${endpoint}` }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       ));
+    }
+
+    // 5bis. Rate limiting STRICT pour endpoints de détail (10 req/min)
+    if (STRICT_RATE_LIMIT_ENDPOINTS.includes(endpoint)) {
+      const strictKey = `proxy-apogee-detail:${user.id}`;
+      const strictCheck = await checkRateLimit(strictKey, { limit: 10, windowMs: 60 * 1000 });
+      if (!strictCheck.allowed) {
+        console.log(`[PROXY-APOGEE] STRICT rate limit exceeded for ${endpoint} by user ${user.id.substring(0, 8)}...`);
+        return rateLimitResponse(strictCheck.retryAfter!, corsHeaders);
+      }
     }
 
     // 6. Déterminer l'agence cible avec contrôle d'accès
@@ -330,6 +384,28 @@ Deno.serve(async (req) => {
     // Log structuré (sans données sensibles)
     console.log(`[PROXY-APOGEE] Request: ${endpoint} for agency ${targetAgency} by user ${user.id.substring(0, 8)}...`);
 
+    // 7bis. EDGE CACHE — Pour apiGetProjectByRef uniquement
+    const edgeCacheKey = getEdgeCacheKey(endpoint, targetAgency, filters as Record<string, unknown>);
+    if (edgeCacheKey) {
+      const cachedData = getFromEdgeCache(edgeCacheKey);
+      if (cachedData !== null) {
+        console.log(`[PROXY-APOGEE] EDGE CACHE HIT: ${edgeCacheKey}`);
+        const response: ProxyResponse = {
+          success: true,
+          data: cachedData,
+          meta: {
+            endpoint,
+            agencySlug: targetAgency,
+            timestamp: new Date().toISOString(),
+          },
+        };
+        return withCors(req, new Response(
+          JSON.stringify(response),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        ));
+      }
+    }
+
     // 8. Appeler l'API Apogée
     const apiResponse = await fetch(apiUrl, {
       method: 'POST',
@@ -357,6 +433,17 @@ Deno.serve(async (req) => {
     // 9. MASQUAGE SÉCURITÉ - Données sensibles ne quittent JAMAIS le serveur
     const maskedData = maskSensitiveData(rawData, endpoint);
     
+    // 9bis. Stocker en edge cache si applicable (APRÈS masquage, APRÈS vérification droits)
+    if (edgeCacheKey) {
+      setEdgeCache(edgeCacheKey, maskedData, targetAgency);
+      console.log(`[PROXY-APOGEE] EDGE CACHE SET: ${edgeCacheKey} (cache size: ${edgeCache.size})`);
+    }
+    
+    // 9ter. Log d'accès détail dossier (traçabilité)
+    if (STRICT_RATE_LIMIT_ENDPOINTS.includes(endpoint)) {
+      console.log(`[PROXY-APOGEE] DETAIL ACCESS: user=${user.id.substring(0, 8)}... agency=${targetAgency} endpoint=${endpoint} ref=${(filters as any)?.ref || 'N/A'} at=${new Date().toISOString()}`);
+    }
+
     console.log(`[PROXY-APOGEE] Success: ${endpoint} returned ${itemCount ?? 'object'} items (masked)`);
 
     // 10. Retourner la réponse masquée
