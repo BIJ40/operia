@@ -218,7 +218,7 @@ export function PerformanceDashboard() {
             )}
             {/* V2: ExplainCalculation */}
             {selectedSnapshot && (
-              <ExplainCalculation trace={selectedSnapshot.calculationTrace} />
+              <ExplainCalculation trace={selectedSnapshot.calculationTrace} confidence={selectedSnapshot.confidenceBreakdown} />
             )}
           </div>
           
