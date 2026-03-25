@@ -196,14 +196,19 @@ export function computeTechnicianSnapshots(input: PerformanceEngineInput): Perfo
     if (highFallback) warnings.push('HIGH_FALLBACK_USAGE');
 
     // Data quality flags
+    const techConsol = techConsolidation.get(techId) || { merged: 0, keptSeparate: 0, discarded: 0 };
+    const techAmbiguous = techAmbiguousCount.get(techId) || 0;
+
+    if (techAmbiguous > 0) warnings.push('AMBIGUOUS_MATCHING');
+
     const dataQualityFlags: DataQualityFlags = {
       missingContract: weeklyHoursSource === 'default',
       missingExplicitDurations: (itemCountBySource['explicit'] || 0) === 0 && agg.items.length > 0,
       missingPlanningCoverage: agg.items.length === 0,
       missingAbsenceData: !absenceInfo || absenceInfo.source === 'none',
       highFallbackUsage: highFallback,
-      duplicateResolutionApplied: false, // set by consolidation
-      partialPeriodCoverage: false, // could be enhanced
+      duplicateResolutionApplied: techConsol.merged > 0,
+      partialPeriodCoverage: false,
     };
 
     // Confidence
@@ -211,7 +216,7 @@ export function computeTechnicianSnapshots(input: PerformanceEngineInput): Perfo
     const confidenceBreakdown = computeConfidenceBreakdown({
       workItems: agg.items,
       capacityConfidence: capacity.capacityConfidence,
-      matchAmbiguousCount: 0, // populated from matchLog at higher level
+      matchAmbiguousCount: techAmbiguous,
       matchTotalCount: agg.items.length,
       classificationFallbackCount: classificationFallbackForTech,
       classificationTotalCount: agg.items.length,
