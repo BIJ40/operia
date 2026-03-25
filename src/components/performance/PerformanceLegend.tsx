@@ -95,7 +95,7 @@ export function PerformanceLegend() {
           <ThresholdSection {...THRESHOLDS.composite} />
           
           <div className="text-[10px] text-muted-foreground pt-2 border-t">
-            La capacité est calculée depuis la durée hebdo du contrat RH (défaut: 35h/semaine).
+            La capacité est calculée depuis la durée hebdo de la fiche collaborateur (défaut: 35h/semaine).
           </div>
         </div>
       </PopoverContent>
