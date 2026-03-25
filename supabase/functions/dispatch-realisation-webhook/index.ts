@@ -117,12 +117,18 @@ Deno.serve(async (req: Request) => {
       return json({ error: 'Could not generate signed URLs for any media' }, 500)
     }
 
-    // Build payload in the format expected by receive-photos
-    const webhookUrl = Deno.env.get('CONTENT_WEBHOOK_URL')
+    // Resolve webhook URL: agency-specific first, then global fallback
+    const { data: agencyRow } = await adminClient
+      .from('apogee_agencies')
+      .select('content_webhook_url')
+      .eq('id', realisation.agency_id)
+      .single()
+
+    const webhookUrl = agencyRow?.content_webhook_url || Deno.env.get('CONTENT_WEBHOOK_URL')
     const webhookSecret = Deno.env.get('WEBHOOK_SECRET')
 
     if (!webhookUrl) {
-      return json({ error: 'CONTENT_WEBHOOK_URL not configured' }, 500)
+      return json({ error: 'Webhook URL not configured for this agency' }, 500)
     }
     if (!webhookSecret) {
       return json({ error: 'WEBHOOK_SECRET not configured' }, 500)
