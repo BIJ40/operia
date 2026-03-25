@@ -44,16 +44,18 @@ export function useVersionCheck() {
       return;
     }
 
-    const checkVersion = async () => {
+    const checkVersion = async (reason: 'startup' | 'interval' = 'startup') => {
       try {
-        const lastCheck = localStorage.getItem(VERSION_CHECK_KEY);
-        const now = Date.now();
+        if (reason === 'interval') {
+          const lastCheck = localStorage.getItem(VERSION_CHECK_KEY);
+          const now = Date.now();
 
-        if (lastCheck && now - parseInt(lastCheck, 10) < CHECK_INTERVAL_MS) {
-          return;
+          if (lastCheck && now - parseInt(lastCheck, 10) < CHECK_INTERVAL_MS) {
+            return;
+          }
+
+          localStorage.setItem(VERSION_CHECK_KEY, now.toString());
         }
-
-        localStorage.setItem(VERSION_CHECK_KEY, now.toString());
 
         const response = await fetch(`/version.json?t=${Date.now()}`, {
           cache: 'no-store',
@@ -93,9 +95,11 @@ export function useVersionCheck() {
       }
     };
 
-    checkVersion();
+    checkVersion('startup');
 
-    const interval = setInterval(checkVersion, CHECK_INTERVAL_MS);
+    const interval = setInterval(() => {
+      void checkVersion('interval');
+    }, CHECK_INTERVAL_MS);
     return () => clearInterval(interval);
   }, []);
 }
