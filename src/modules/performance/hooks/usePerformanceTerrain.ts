@@ -217,36 +217,79 @@ export function usePerformanceTerrain(dateRange: DateRange) {
           }
         }
 
-        // 2. Fallback: planning heuristic for techs without RH data
-        const allSources = [...creneaux, ...interventions];
-        for (const item of allSources) {
-          const type = String((item as Record<string, unknown>).type || ((item as Record<string, unknown>).data as Record<string, unknown>)?.type || '').toLowerCase();
-          const type2 = String((item as Record<string, unknown>).type2 || ((item as Record<string, unknown>).data as Record<string, unknown>)?.type2 || '').toLowerCase();
-          const label = String((item as Record<string, unknown>).label || ((item as Record<string, unknown>).data as Record<string, unknown>)?.label || '').toLowerCase();
-          const combined = `${type} ${type2} ${label}`;
+        // 2. Fallback: planning creneaux for techs without RH data
+        // Detect type "conge", "absence" or keyword matches, with real duration
+        const PLANNING_ABSENCE_TYPES = ['conge', 'congé', 'absence'];
+        const absenceAccum = new Map<string, { hours: number; label: string }>();
 
-          if (ABSENCE_KEYWORDS.some(kw => combined.includes(kw))) {
-            const usersRaw = ((item as Record<string, unknown>).usersIds || (item as Record<string, unknown>).data && ((item as Record<string, unknown>).data as Record<string, unknown>)?.usersIds || []) as unknown[];
-            const userId = (item as Record<string, unknown>).userId != null ? String((item as Record<string, unknown>).userId) : undefined;
-            const ids = Array.isArray(usersRaw) ? usersRaw.map(x => String(x)) : [];
-            if (userId) ids.push(userId);
+        for (const item of creneaux) {
+          const rec = item as Record<string, unknown>;
+          const refType = String(rec.refType || '').toLowerCase();
+          const type = String(rec.type || (rec.data as Record<string, unknown>)?.type || '').toLowerCase();
+          const type2 = String(rec.type2 || (rec.data as Record<string, unknown>)?.type2 || '').toLowerCase();
+          const label = String(rec.label || (rec.data as Record<string, unknown>)?.label || '').toLowerCase();
+          const combined = `${refType} ${type} ${type2} ${label}`;
 
-            const absLabel = combined.includes('maladie') ? 'Arrêt maladie'
-              : combined.includes('arret') || combined.includes('arrêt') ? 'En arrêt'
-              : combined.includes('conge') || combined.includes('congé') ? 'En congé'
-              : 'Absent';
+          const isAbsenceType = PLANNING_ABSENCE_TYPES.some(t => refType === t || type === t);
+          const isAbsenceKeyword = !isAbsenceType && ABSENCE_KEYWORDS.some(kw => combined.includes(kw));
 
-            for (const id of ids) {
-              // Only set if no RH data for this tech
-              if (!absences.has(id)) {
-                absences.set(id, {
-                  technicianId: id,
-                  source: 'planning_unavailability',
-                  label: absLabel,
-                  days: 1, // approximation — no real absence table
-                });
-              }
+          if (!isAbsenceType && !isAbsenceKeyword) continue;
+
+          // Extract user IDs
+          const usersRaw = (rec.usersIds || (rec.data as Record<string, unknown>)?.usersIds || []) as unknown[];
+          const userId = rec.userId != null ? String(rec.userId) : undefined;
+          const ids = Array.isArray(usersRaw) ? usersRaw.map(x => String(x)) : [];
+          if (userId) ids.push(userId);
+
+          // Compute duration in hours from créneau
+          const dureeMinutes = Number(rec.duree || (rec.data as Record<string, unknown>)?.duree || 0);
+          let absHours = dureeMinutes > 0 ? dureeMinutes / 60 : 0;
+
+          // If no duree, try start/end
+          if (absHours === 0) {
+            const dateStart = rec.dateStart || rec.start || (rec.data as Record<string, unknown>)?.dateStart;
+            const dateEnd = rec.dateEnd || rec.end || (rec.data as Record<string, unknown>)?.dateEnd;
+            if (dateStart && dateEnd) {
+              const ms = new Date(String(dateEnd)).getTime() - new Date(String(dateStart)).getTime();
+              if (ms > 0) absHours = ms / (1000 * 60 * 60);
             }
+          }
+
+          // Fallback: 7h if still 0
+          if (absHours <= 0) absHours = 7;
+          // Cap at 10h per créneau (sanity)
+          if (absHours > 10) absHours = 10;
+
+          const absLabel = combined.includes('maladie') ? 'Arrêt maladie'
+            : combined.includes('arret') || combined.includes('arrêt') ? 'En arrêt'
+            : combined.includes('conge') || combined.includes('congé') || refType === 'conge' ? 'En congé'
+            : combined.includes('formation') ? 'Formation'
+            : 'Absent';
+
+          for (const id of ids) {
+            // Only accumulate if no RH data for this tech
+            if (absences.has(id)) continue;
+
+            const prev = absenceAccum.get(id);
+            if (prev) {
+              prev.hours += absHours;
+            } else {
+              absenceAccum.set(id, { hours: absHours, label: absLabel });
+            }
+          }
+        }
+
+        // Convert accumulated planning absences into AbsenceInfo
+        for (const [id, { hours, label }] of absenceAccum) {
+          if (!absences.has(id)) {
+            const days = Math.round((hours / 7) * 10) / 10; // approximate days (7h/day)
+            absences.set(id, {
+              technicianId: id,
+              source: 'planning_unavailability',
+              label,
+              days,
+              hours,
+            });
           }
         }
 
