@@ -42,6 +42,41 @@ import type {
   ForecastProbableTeamStats,
 } from '../types';
 
+function normalizePersonName(value: string | null | undefined): string {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function computeWeeklyHoursFromSchedule(
+  workStart: string | null,
+  workEnd: string | null,
+  workDays: number[] | null
+): number | null {
+  if (!workStart || !workEnd) return null;
+
+  const [sh, sm] = workStart.split(':').map(Number);
+  const [eh, em] = workEnd.split(':').map(Number);
+
+  if (Number.isNaN(sh) || Number.isNaN(sm) || Number.isNaN(eh) || Number.isNaN(em)) return null;
+
+  const dailyMinutes = (eh * 60 + em) - (sh * 60 + sm);
+  if (dailyMinutes <= 0 || dailyMinutes > 14 * 60) return null;
+
+  const daysPerWeek = (workDays && workDays.length > 0)
+    ? workDays.filter((d) => d >= 1 && d <= 5).length
+    : 5;
+
+  if (daysPerWeek === 0) return null;
+
+  const weeklyHours = Math.round((dailyMinutes * daysPerWeek / 60) * 10) / 10;
+  return weeklyHours > 0 && weeklyHours <= 60 ? weeklyHours : null;
+}
+
 // ============================================================================
 // PUBLIC INTERFACE
 // ============================================================================
@@ -118,16 +153,94 @@ export function useForecastData(
 
       // === WEEKLY HOURS ===
       const weeklyHoursByApogeeId = new Map<string, number>();
+      const weeklyHoursByName = new Map<string, number>();
+      const ambiguousNames = new Set<string>();
+
+      const registerNameFallback = (fullName: string, hours: number) => {
+        const normalized = normalizePersonName(fullName);
+        if (!normalized || hours <= 0) return;
+        if (weeklyHoursByName.has(normalized)) {
+          ambiguousNames.add(normalized);
+          weeklyHoursByName.delete(normalized);
+          return;
+        }
+        if (!ambiguousNames.has(normalized)) {
+          weeklyHoursByName.set(normalized, hours);
+        }
+      };
+
       if (effectiveAgencyId) {
-        const { data: rows } = await supabase.rpc(
+        const { data: rows, error: weeklyHoursError } = await supabase.rpc(
           'get_agency_performance_weekly_hours',
           { target_agency_id: effectiveAgencyId }
         );
+
+        if (weeklyHoursError) {
+          logError('FORECAST_UI', 'Impossible de charger les durées hebdo via RPC', weeklyHoursError);
+        }
+
         if (Array.isArray(rows)) {
           for (const row of rows as Array<{ apogee_user_id: number | string | null; weekly_hours: number | null }>) {
             const id = row.apogee_user_id != null ? String(row.apogee_user_id) : null;
             const wh = Number(row.weekly_hours);
             if (id && Number.isFinite(wh) && wh > 0) weeklyHoursByApogeeId.set(id, wh);
+          }
+        }
+
+        const { data: collaborators } = await supabase
+          .from('collaborators')
+          .select('id, apogee_user_id, first_name, last_name, work_start, work_end, work_days')
+          .eq('agency_id', effectiveAgencyId);
+
+        if (collaborators && collaborators.length > 0) {
+          for (const collab of collaborators) {
+            const fullName = `${collab.first_name || ''} ${collab.last_name || ''}`.trim();
+            const scheduleHours = computeWeeklyHoursFromSchedule(
+              collab.work_start,
+              collab.work_end,
+              collab.work_days as number[] | null,
+            );
+
+            if (scheduleHours !== null) {
+              if (collab.apogee_user_id != null && !weeklyHoursByApogeeId.has(String(collab.apogee_user_id))) {
+                weeklyHoursByApogeeId.set(String(collab.apogee_user_id), scheduleHours);
+              }
+              registerNameFallback(fullName, scheduleHours);
+            }
+          }
+
+          const unresolvedCollabIds = collaborators
+            .filter((c) => c.id && (c.apogee_user_id == null || !weeklyHoursByApogeeId.has(String(c.apogee_user_id))))
+            .map((c) => c.id);
+
+          if (unresolvedCollabIds.length > 0) {
+            const { data: contracts } = await supabase
+              .from('employment_contracts')
+              .select('collaborator_id, weekly_hours')
+              .in('collaborator_id', unresolvedCollabIds)
+              .not('weekly_hours', 'is', null)
+              .order('start_date', { ascending: false });
+
+            if (contracts) {
+              const weeklyByCollabId = new Map<string, number>();
+              for (const contract of contracts) {
+                if (contract.weekly_hours != null && !weeklyByCollabId.has(contract.collaborator_id)) {
+                  weeklyByCollabId.set(contract.collaborator_id, contract.weekly_hours);
+                }
+              }
+
+              for (const collab of collaborators) {
+                const weeklyHours = weeklyByCollabId.get(collab.id);
+                if (weeklyHours == null) continue;
+
+                if (collab.apogee_user_id != null && !weeklyHoursByApogeeId.has(String(collab.apogee_user_id))) {
+                  weeklyHoursByApogeeId.set(String(collab.apogee_user_id), weeklyHours);
+                }
+
+                const fullName = `${collab.first_name || ''} ${collab.last_name || ''}`.trim();
+                registerNameFallback(fullName, weeklyHours);
+              }
+            }
           }
         }
       }
@@ -142,7 +255,7 @@ export function useForecastData(
 
         const id = String(u.id);
         const name = `${u.firstname || ''} ${u.name || ''}`.trim() || `Tech ${id}`;
-        const weeklyHours = weeklyHoursByApogeeId.get(id);
+        const weeklyHours = weeklyHoursByApogeeId.get(id) ?? weeklyHoursByName.get(normalizePersonName(name));
 
         techMap.set(id, { id, name, weeklyHours, isKnown: true });
       }
