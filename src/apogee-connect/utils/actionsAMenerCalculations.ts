@@ -204,7 +204,7 @@ export function buildActionsAMener(
     }
     
     const statusTime = lastStatusChange.dateModif ? parseDateModif(lastStatusChange.dateModif) : 0;
-    const statutLabel = isAttTech ? 'ATT TECH (manuel)' : 'RT en cours';
+    const statutLabel = isAttTech ? 'En attente technicien' : 'Retour technicien en cours';
     
     // 3) Essayer d'abord le userStr/userId du changement de statut lui-même
     let technicienName = lastStatusChange.userStr || 'Technicien inconnu';

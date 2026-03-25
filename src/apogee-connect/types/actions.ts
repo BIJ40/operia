@@ -39,9 +39,18 @@ export const DEFAULT_CONFIG: ActionsConfig = {
 };
 
 export const ACTION_LABELS: Record<ActionType, string> = {
-  devis_a_faire: 'Rédiger le devis',
-  a_facturer: 'Émettre la facture',
-  relance_technicien: 'Relancer le technicien',
-  a_planifier_tvx: 'Planifier les travaux',
-  a_commander: 'Passer la commande',
+  devis_a_faire: 'Devis à rédiger',
+  a_facturer: 'Facture à émettre',
+  relance_technicien: 'Technicien à relancer',
+  a_planifier_tvx: 'Travaux à planifier',
+  a_commander: 'Commande à passer',
+};
+
+/** Labels d'étape affichés dans la colonne "Statut" */
+export const STATUT_LABELS: Record<ActionType, string> = {
+  devis_a_faire: 'Devis à faire',
+  a_facturer: 'À facturer',
+  relance_technicien: 'En attente technicien',
+  a_planifier_tvx: 'Planifié travaux',
+  a_commander: 'À commander',
 };
