@@ -280,7 +280,7 @@ export function usePerformanceTerrain(dateRange: DateRange) {
         const PLANNING_ABSENCE_TYPES = ['conge', 'congé', 'absence'];
         const absenceAccum = new Map<string, { hours: number; label: string }>();
 
-        for (const item of creneaux) {
+        for (const item of planningCreneaux) {
           const rec = item as Record<string, unknown>;
           const refType = String(rec.refType || '').toLowerCase();
           const type = String(rec.type || (rec.data as Record<string, unknown>)?.type || '').toLowerCase();
