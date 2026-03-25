@@ -135,6 +135,12 @@ export function PerformanceDashboard() {
 
   const quality = useAggregatedQuality(data);
 
+  // Debug mode via query param
+  const debugMode = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).get('debugPerformance') === 'true';
+  }, []);
+
   // Get selected tech's snapshot for V2 detail views
   const selectedSnapshot = useMemo(() => {
     if (!selectedTech || !data?.engineOutput?.snapshots) return null;
