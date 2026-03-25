@@ -1064,6 +1064,7 @@ export function ModulesMasterView() {
                         onRenameLabel={handleRenameLabel}
                         isUpdating={updateNode.isPending || propagate.isPending}
                         canDeploy={canDeploy}
+                        isMissingPlanTier={isMissingPlanTierForNode(node)}
                       />
                     ))}
                   </Fragment>
@@ -1100,6 +1101,7 @@ export function ModulesMasterView() {
                       onRenameLabel={handleRenameLabel}
                       isUpdating={updateNode.isPending || propagate.isPending}
                       canDeploy={canDeploy}
+                      isMissingPlanTier={isMissingPlanTierForNode(node)}
                     />
                   ))}
                 </>
