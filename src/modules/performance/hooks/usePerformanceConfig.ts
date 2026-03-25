@@ -40,7 +40,7 @@ export function usePerformanceConfig() {
         defaultWeeklyHours: Number(dbConfig.default_weekly_hours) || DEFAULT_THRESHOLDS.defaultWeeklyHours,
         defaultTaskDurationMinutes: Number(dbConfig.default_task_duration_minutes) || DEFAULT_THRESHOLDS.defaultTaskDurationMinutes,
         deductPlanningUnavailability: Boolean(dbConfig.deduct_planning_unavailability),
-        holidays: [], // TODO: parse from JSONB
+        holidays: parseHolidays(dbConfig.holidays),
       }
     : DEFAULT_THRESHOLDS;
 
