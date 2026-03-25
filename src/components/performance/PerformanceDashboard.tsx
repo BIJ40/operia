@@ -1,9 +1,10 @@
 /**
  * PerformanceDashboard - Dashboard principal Performance Terrain
  * Vue équilibée, non punitive, orientée capacité & qualité
+ * Avec switch Historique / Prévision (Lot 6)
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePerformanceTerrain, TechnicianPerformance } from '@/hooks/usePerformanceTerrain';
 import { TeamHeatmap } from './TeamHeatmap';
