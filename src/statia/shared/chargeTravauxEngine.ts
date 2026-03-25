@@ -5,7 +5,7 @@
 
 // Mapping des états API vers labels affichés
 const STATE_MAPPING: Record<string, string> = {
-  'to_planify_tvx': 'À planifier TVX',
+  'to_planify_tvx': 'À planifier',
   'devis_to_order': 'À commander',
   'wait_fourn': 'En attente fournitures'
 };

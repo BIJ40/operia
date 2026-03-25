@@ -2,7 +2,7 @@
  * Hook pour calculer la charge de travaux à venir par univers
  * 
  * Règle métier:
- * - Les KPIs "À planifier TVX", "À commander", "En attente fournitures" sont GLOBAUX (pas de filtre période)
+ * - Les KPIs "À planifier", "À commander", "En attente fournitures" sont GLOBAUX (pas de filtre période)
  * - Seul le "CA Planifié" (devis acceptés avec intervention planifiée) est filtré par période
  */
 
