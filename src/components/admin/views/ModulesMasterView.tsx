@@ -24,6 +24,7 @@ import {
   type PlanLevel,
 } from '@/hooks/access-rights/useModuleRegistry';
 import { RIGHTS_CATEGORIES, nodeMatchesCategory, nodeMatchesAnyCategory, getRightsDisplayLabel, type RightsCategory } from './rightsTaxonomy';
+import { usePlanTiers } from '@/hooks/access-rights/usePlanTiers';
 import {
   useModuleOverrides,
   useAddOverride,
@@ -525,9 +526,10 @@ interface ModuleRowProps {
   isUpdating: boolean;
   canDeploy: boolean;
   isDevSection?: boolean;
+  isMissingPlanTier?: boolean;
 }
 
-function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole, onRenameLabel, isUpdating, canDeploy, isDevSection }: ModuleRowProps) {
+function ModuleRow({ node, overrides, onToggleDeploy, onTogglePlan, onChangeRole, onRenameLabel, isUpdating, canDeploy, isDevSection, isMissingPlanTier }: ModuleRowProps) {
   const navigate = useNavigate();
   const route = getModuleRoute(node.key);
   const isNeutralized = !node.effectiveDeployed && node.is_deployed;
