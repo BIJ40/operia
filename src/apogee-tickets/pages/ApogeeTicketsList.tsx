@@ -174,7 +174,12 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
     }).length;
   }, [tickets, statuses]);
 
-  // Tickets "nouveaux" (modifiés depuis la dernière visite)
+  // Set of ticket IDs with unread replies (Réponses takes priority over Nouveaux)
+  const repliesTicketIds = useMemo(() => {
+    return new Set(repliesData.map(r => r.ticketId));
+  }, [repliesData]);
+
+  // Tickets "nouveaux" (modifiés depuis la dernière visite, EXCLUDING those already in Réponses)
   const newTickets = useMemo(() => {
     if (!user?.id) return [];
 
@@ -184,7 +189,13 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
           return false;
         }
 
+        // Exclude if author of the modification
         if (ticket.last_modified_by_user_id === user.id) {
+          return false;
+        }
+
+        // Réponses takes priority: if ticket has unread replies, don't show in Nouveaux
+        if (repliesTicketIds.has(ticket.id)) {
           return false;
         }
 
@@ -194,7 +205,7 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
         return new Date(ticket.last_modified_at).getTime() > new Date(myView.viewed_at).getTime();
       })
       .sort((a, b) => new Date(b.last_modified_at!).getTime() - new Date(a.last_modified_at!).getTime());
-  }, [tickets, myViews, user?.id]);
+  }, [tickets, myViews, user?.id, repliesTicketIds]);
 
   const newTicketsCount = newTickets.length;
 
