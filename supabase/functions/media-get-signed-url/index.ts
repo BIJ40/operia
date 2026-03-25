@@ -197,10 +197,15 @@ serve(async (req) => {
       .createSignedUrl(asset.storage_path, expiresIn);
 
     if (urlError || !signedUrlData) {
+      const isNotFound = urlError?.message?.includes('not found') || urlError?.statusCode === '404' || urlError?.status === 400;
+      const status = isNotFound ? 404 : 500;
+      const message = isNotFound
+        ? 'Fichier introuvable dans le stockage (supprimé ou chemin invalide)'
+        : 'Erreur génération URL';
       console.error('Signed URL generation error:', urlError);
       return new Response(
-        JSON.stringify({ error: 'Erreur génération URL' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: message, storage_path: asset.storage_path, bucket: asset.storage_bucket }),
+        { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
