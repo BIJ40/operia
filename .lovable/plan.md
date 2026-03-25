@@ -1,106 +1,136 @@
+# Refonte module Performance Terrain — Plan d'implementation
+
+## Autopsie confirmee
+
+Le hook monolithique `usePerformanceTerrain.ts` (579 lignes) concentre fetch + calcul + agregation. Problemes critiques : capacite sur jours calendaires (inclut week-ends), pas de division multi-tech, CA a 0, absences par keyword sans confiance, aucun score de qualite donnees.
+
+RLS du projet utilise `get_user_agency_id(auth.uid())` et `has_min_global_role(auth.uid(), N)` comme patterns standards.
+
+---
+
+## Phase 1 — Engine core (11 fichiers purs, zero dependance reseau)
+
+### `src/modules/performance/engine/types.ts`
+
+Tous les types canoniques : `WorkItem`, `DurationSource`, `AbsenceSource` (`leave_table | planning_unavailability | none`), `CalculationWarningCode` (9 codes), `CalculationTrace` (avec `itemCountBySource`, `minutesBySource`), `DataQualityFlags` (7 booleans), `ConfidenceBreakdown` (4 sous-scores + global), `CapacityResult`, `TechnicianSnapshot`, `UnknownTechnicianPolicy`, `PerformanceConfig`.
+
+### `src/modules/performance/engine/rules.ts`
+
+Fichier unique centralisant : `DURATION_HIERARCHY`, `CONFIDENCE_WEIGHTS` ({duration: 0.35, capacity: 0.25, matching: 0.2, classification: 0.2}), `DEFAULT_THRESHOLDS`, `PRODUCTIVE_TYPES`/`NON_PRODUCTIVE_TYPES` (depuis STATIA_RULES), `MATCHING_THRESHOLDS` (merge: 0.7, overlap: 0.5), `MAX_DURATION_MINUTES` (720), `DEFAULT_WEEKLY_HOURS` (35), `DEFAULT_TASK_DURATION` (60), `UNKNOWN_TECHNICIAN_POLICY: 'team_only'`.
+
+### `src/modules/performance/engine/capacity.ts`
+
+`computeCapacity(weeklyHours, period, options?)` — itere jour par jour, exclut samedi/dimanche, param optionnel `holidays: Date[]`. Absences : si `source === 'planning_unavailability'` et `deductPlanningUnavailability === false` → pas de deduction, flag `missingAbsenceData`. Si `source === 'none'` → capacite brute. Retourne `CapacityResult` complet avec `absenceConfidence`.
+
+### `src/modules/performance/engine/duration.ts`
+
+`resolveDuration(workItem)` — hierarchie stricte : explicite > computed (start/end) > planning > business_default > unknown. Duree aberrante (>720min ou negative) → warning + fallback. Retourne `{minutes, source}`.
+
+### `src/modules/performance/engine/allocation.ts`
+
+`allocateDuration(minutes, technicianIds)` — division equitable stricte `minutes / N`. Retourne Map + method `'equal_split'`.
+
+### `src/modules/performance/engine/classification.ts`
+
+`classifyWorkItem(type, type2)` et `isSavIntervention(intervention, project)` — logique existante extraite, utilise listes de `rules.ts`.
+
+### `src/modules/performance/engine/matching.ts`
+
+`scoreWorkItemSimilarity(a, b)` — criteres : meme interventionId (0.4), chevauchement horaire (0.3), techniciens communs (0.2), meme projectId (0.1). Normalisation UTC avant scoring. Items sans `end` → `end = start + duration`. `shouldMergeWorkItems(a, b)` (score > seuil). `mergeWorkItems(a, b)` (priorite visite > creneau). Chaque decision tracee comme `MatchOutcome`.
+
+### `src/modules/performance/engine/consolidation.ts`
+
+`buildUnifiedWorkItems(interventions, creneaux, projects)` → `{items: WorkItem[], matchLog: MatchOutcome[]}`. Pipeline : extraire visites → extraire creneaux → matcher par score → fusionner ou garder separe → tracer.
+
+### `src/modules/performance/engine/confidence.ts`
+
+`computeConfidenceBreakdown(snapshot)` → `ConfidenceBreakdown`. 4 sous-scores independants, global = somme ponderee depuis `rules.ts`.
+
+### `src/modules/performance/engine/zones.ts`
+
+`getProductivityZone`, `getSavZone`, `getLoadZone`, `getCompositeScore` — parametrables via config.
+
+### `src/modules/performance/engine/performanceEngine.ts`
+
+`computeTechnicianSnapshots(workItems, technicianMap, capacities, config)` — orchestrateur. Politique `team_only` pour techniciens inconnus : comptabilises dans agregate equipe, pas dans lignes individuelles, warning emis. `caGenerated: null` toujours. Retourne `TechnicianSnapshot[]`.
+
+---
+
+## Phase 2 — Hooks refondus
+
+### `src/modules/performance/hooks/usePerformanceTerrain.ts`
+
+Thin wrapper : fetch DataService + Supabase (collaborators, contracts) → passe au engine → retourne snapshots. Memes query keys (`performance-terrain`). Type `TechnicianPerformance` etendu (anciens champs conserves + nouveaux).
+
+### `src/modules/performance/hooks/usePerformanceConfig.ts`
+
+Charge `agency_performance_config` avec fallback sur `DEFAULT_THRESHOLDS`.
+
+### `src/hooks/usePerformanceTerrain.ts` (modifie)
+
+Re-export vers le nouveau module pour compatibilite.
+
+---
+
+## Phase 3 — Migration SQL
+
+Table `agency_performance_config` avec `deduct_planning_unavailability BOOLEAN DEFAULT false`, RLS alignee sur patterns existants :
+
+- Lecture : `get_user_agency_id(auth.uid()) = agency_id OR has_min_global_role(auth.uid(), 5)`
+- Ecriture : meme agence + N3+ OU N5+ global
+
+---
+
+## Phase 4 — Composants UX (6 nouveaux)
+
+- `ConfidenceBadge.tsx` — badge 0-100% avec sous-scores au hover
+- `DataQualityBadge.tsx` — icone + tooltip montrant les flags actifs
+- `WorkloadBreakdown.tsx` — decomposition productif/non-productif/SAV avec sources
+- `CapacityBreakdown.tsx` — jours ouvres - absences = capacite effective
+- `ExplainCalculation.tsx` — panneau drill-down avec `calculationTrace`
+- `DegradedStateAlert.tsx` — alerte explicite (contrat absent, absences inconnues, trop de fallback, couverture partielle)
+
+Dashboard enrichi : ajout KPIs confiance + tension dans header, tooltip heatmap enrichi.
+
+---
+
+## Phase 5 — Tests (7 fichiers)
+
+Tests standards + vicieux : chevauchements partiels, visite sans fin, intervention sans tech, contrat absent, periode 100% week-end, doublon imparfait ±15min, technicien inactif, duree aberrante, aucune donnee.
+
+---
+
+## Fichiers (30+)
 
 
-# Audit PDF exhaustif du module "Performance Terrain"
+| Action   | Fichier                                               |
+| -------- | ----------------------------------------------------- |
+| Creer    | 11 fichiers `src/modules/performance/engine/`         |
+| Creer    | 7 fichiers `__tests__/`                               |
+| Creer    | 2 hooks `src/modules/performance/hooks/`              |
+| Creer    | 6 composants `src/modules/performance/components/`    |
+| Creer    | Migration SQL                                         |
+| Modifier | `src/hooks/usePerformanceTerrain.ts` → re-export      |
+| Modifier | `src/components/performance/PerformanceDashboard.tsx` |
+| Modifier | `src/components/performance/TeamHeatmap.tsx`          |
 
-## Objectif
-Générer un document PDF complet documentant l'architecture, les règles métier, les calculs, les endpoints et la logique du module Performance Terrain.
 
-## Contenu du document (structure)
+## Technical details
 
-Le PDF couvrira les sections suivantes, basées sur l'analyse complète du code source :
+- RLS pattern: `get_user_agency_id(auth.uid())` + `has_min_global_role` (confirmed from 50+ existing migrations)
+- STATIA_RULES already exports `productiveTypes` and `nonProductiveTypes` at `src/statia/domain/rules.ts`
+- DataService.loadAllData returns `{users, clients, projects, interventions, factures, devis, creneaux}`
+- Employment contracts loaded via Supabase `collaborators` + `employment_contracts` tables (existing pattern)
+- Existing components (SavDetailsDrawer, QuickEditDialog, Legend, RadarChart) conserved — import path updated via re-export
 
-### 1. Vue d'ensemble du module
-- Philosophie : "vue équilibrée, non punitive, orientée capacité et qualité"
-- 7 fichiers source, 1 hook principal (~580 lignes), 5 composants visuels
+&nbsp;
 
-### 2. Architecture technique
-- Hook principal : `usePerformanceTerrain` (src/hooks/usePerformanceTerrain.ts)
-- Composants : PerformanceDashboard, TeamHeatmap, TechnicianRadarChart, SavDetailsDrawer, TechnicianQuickEditDialog, PerformanceLegend
-- Dépendances : DataService (API Apogée), Supabase (collaborators, employment_contracts, sav_validations)
+&nbsp;
 
-### 3. Sources de données et endpoints
-- `DataService.loadAllData()` → charge interventions, projects, users, creneaux
-- Endpoints Apogée : apiGetInterventions, apiGetProjects, apiGetUsers, getInterventionsCreneaux
-- Tables Supabase : collaborators, employment_contracts, sav_validations
+### Contraintes finales d’implémentation
 
-### 4. Règles métier et calculs détaillés
-
-**4.1 Identification des techniciens**
-- Filtre : `user.type === 'technicien' || 'utilisateur'`
-- Exclusion : commerciaux, admin, assistantes, direction, comptables
-
-**4.2 Productivité**
-- Formule : `productivityRate = timeProductive / timeTotal`
-- Types productifs (StatIA) : depannage, repair, travaux, work
-- Types non productifs : RT, rdv, rdvtech, sav, diagnostic
-- Classification : matching par `includes()` sur type/type2 normalisés
-- Seuils : Optimal ≥65%, Attention 50-65%, Critique <50%
-
-**4.3 Charge de travail**
-- Formule : `loadRatio = timeTotal / capacityMinutes`
-- Capacité : `weeklyHours / 5 * 60 * nbJoursPériode`
-- Source heures hebdo : contrat RH (employment_contracts.weekly_hours), défaut 35h
-- Seuils : Équilibré 80-110%, Sous-charge <80%, Surcharge >110%
-
-**4.4 Détection SAV**
-- Source 1 : `intervention.type2 === 'sav'` (égalité exacte, case-insensitive)
-- Source 2 : `visite.type2 === 'sav'` dans les visites de l'intervention
-- Source 3 : `project.data.pictosInterv` contient 'sav'
-- Taux : `savRate = savCount / interventionsCount`
-- Seuils : Optimal ≤3%, Attention 3-8%, Critique >8%
-
-**4.5 Estimation durée intervention**
-- Priorité : duration explicite → visites.dureeMinutes → calcul heureDebut/heureFin → défaut (90min productif, 45min non-productif, 60min fallback)
-
-**4.6 Slots de temps (source des données)**
-- Source principale : visites extraites des interventions (intervention.data.visites)
-- Source secondaire (fallback) : getInterventionsCreneaux
-- Filtrage temporel par dateRange
-- Attribution : chaque technicien dans usersIds reçoit la durée COMPLÈTE (pas de division)
-
-**4.7 Score composite (Heatmap)**
-- 3 axes notés 0-2 : productivité, charge, SAV
-- Productivité : ≥65%=2, ≥50%=1, <50%=0
-- Charge : 80-110%=2, 60-130%=1, sinon=0
-- SAV : ≤3%=2, ≤8%=1, >8%=0
-- Zone de confort ≥5pts, Optimisation 3-4pts, Tension <3pts
-
-**4.8 Radar Chart (normalisation)**
-- Productivité : directement `rate * 100`
-- Qualité : inversé `(1 - min(savRate, 0.2) / 0.2) * 100`
-- Charge : optimal à 100%, pénalisé aux extrêmes
-
-**4.9 Détection absences**
-- Scan de tous les créneaux/interventions pour keywords : arrêt, maladie, absence, congé
-- Labels : "Arrêt maladie", "En arrêt", "En congé", "Absent"
-- Exclusion des moyennes d'équipe
-
-### 5. Statistiques d'équipe
-- Moyenne productivité (hors absents)
-- Moyenne charge (hors absents)
-- Total SAV et total interventions
-- Alertes : surcharge, sous-charge, SAV élevé
-
-### 6. Fonctionnalités interactives
-- Drawer SAV : validation/invalidation (table sav_validations), détection source
-- Quick Edit : modification heures hebdo via contrat RH, type collaborateur
-- Navigation mois par mois
-
-### 7. Problèmes et limitations identifiés
-- caGenerated toujours à 0 (jamais calculé dans le hook)
-- Durée par défaut arbitraire (60-90min) quand pas de données
-- Capacité calculée sur jours calendaires (pas ouvrés)
-- Pas de prise en compte des jours fériés/congés dans la capacité
-- Source slot : si aucune visite, fallback sur créneaux mais jamais les deux combinés
-- Attribution temps : pas de division quand plusieurs techniciens sur un créneau
-
-## Méthode de génération
-- Script Python avec ReportLab (platypus pour mise en page multi-pages)
-- Tables formatées pour les seuils et formules
-- Diagramme ASCII de l'architecture
-- Export vers `/mnt/documents/audit_module_performance.pdf`
-- QA visuelle obligatoire (pdftoppm + inspection)
-
-## Fichier produit
-`/mnt/documents/audit_module_performance.pdf`
-
+1. `agency_performance_config` doit rester en **mode simple V1** : une seule config active par agence (`UNIQUE (agency_id)`), sans historique fonctionnel.
+2. Si `adjustedCapacityMinutes = 0`, alors `loadRatio = null`, warning `ZERO_WORKING_DAYS`, et UI explicite “capacité non calculable”.
+3. Une durée `unknown` ne doit jamais être injectée silencieusement comme temps réel. Elle doit soit rester exclue, soit être convertie via `business_default` avec traçabilité explicite et baisse de confiance.
+4. Le moteur analytique doit être livré avant l’adaptation UI.
+5. Aucun composant UI ne doit recalculer de logique métier déjà produite par l’engine.
