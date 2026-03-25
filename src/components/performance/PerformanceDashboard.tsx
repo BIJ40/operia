@@ -226,6 +226,26 @@ export function PerformanceDashboard() {
             {selectedSnapshot && (
               <ExplainCalculation trace={selectedSnapshot.calculationTrace} confidence={selectedSnapshot.confidenceBreakdown} />
             )}
+            {/* Debug mode: raw data */}
+            {debugMode && selectedSnapshot && (
+              <Card className="border-dashed border-muted-foreground/30">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xs font-mono text-muted-foreground">Debug: Raw Snapshot</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <pre className="text-[10px] font-mono overflow-auto max-h-96 whitespace-pre-wrap text-muted-foreground">
+                    {JSON.stringify({
+                      calculationTrace: selectedSnapshot.calculationTrace,
+                      confidenceBreakdown: selectedSnapshot.confidenceBreakdown,
+                      dataQualityFlags: selectedSnapshot.dataQualityFlags,
+                      matchLog: data?.engineOutput?.matchLog?.filter(m => 
+                        selectedSnapshot.calculationTrace.technicianId === selectedSnapshot.technicianId
+                      ),
+                    }, null, 2)}
+                  </pre>
+                </CardContent>
+              </Card>
+            )}
           </div>
           
           <div className="space-y-4">
