@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useAgency } from '@/apogee-connect/contexts/AgencyContext';
 import { DataService } from '@/apogee-connect/services/dataService';
+import { apogeeProxy } from '@/services/apogeeProxy';
 import { supabase } from '@/integrations/supabase/client';
 import { logDebug, logError } from '@/lib/logger';
 import { normalizeIsOn, isExcludedUserType } from '@/apogee-connect/utils/techTools';
