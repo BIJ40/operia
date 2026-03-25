@@ -116,7 +116,7 @@ export function useTicketsWithNewReplies() {
 
     // Invalidate to refresh counts
     queryClient.invalidateQueries({ queryKey: ['tickets-with-new-replies'] });
-    queryClient.invalidateQueries({ queryKey: ['my-ticket-views'] });
+    queryClient.invalidateQueries({ queryKey: ['apogee-ticket-views'] });
   }, [user, queryClient]);
 
   return { ...query, markAsRead };
