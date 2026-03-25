@@ -1,6 +1,6 @@
 /**
  * EtatDetailDialog - Dialog détaillé pour les tuiles d'état pipeline
- * (À planifier TVX, À commander, En attente fournitures)
+ * (À planifier, À commander, En attente fournitures)
  * Drill-down complet avec sous-détails cliquables
  */
 
