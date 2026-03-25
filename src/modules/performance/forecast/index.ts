@@ -24,6 +24,14 @@ export type {
   ForecastConsolidationTrace,
   ForecastCommittedWorkload,
   ForecastCommittedTeamStats,
+  // Lot 3
+  ForecastProbableSource,
+  ForecastProbabilityTier,
+  ForecastProbableConfidenceLevel,
+  ForecastProbableItem,
+  ProbableWorkloadInput,
+  ForecastProbableWorkload,
+  ForecastProbableTeamStats,
 } from './types';
 
 export { FORECAST_HORIZONS, horizonToDays } from './types';
@@ -35,5 +43,13 @@ export { computeFutureCapacity, computeFutureCapacityAllHorizons } from './capac
 export { computeCommittedWorkload } from './committedWorkload';
 export type { CommittedWorkloadResult } from './committedWorkload';
 
+// Probable workload (Lot 3)
+export { computeProbableWorkload } from './probableWorkload';
+export type { ProbableWorkloadResult } from './probableWorkload';
+
 // Projection (team aggregation + merge)
-export { aggregateForecastTeamStats, mergeCapacityAndCommittedWorkload } from './projection';
+export {
+  aggregateForecastTeamStats,
+  mergeCapacityAndCommittedWorkload,
+  mergeCommittedAndProbableIntoForecast,
+} from './projection';
