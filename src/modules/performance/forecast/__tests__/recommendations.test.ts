@@ -71,10 +71,6 @@ function makeProbable(minutes: number, overrides?: Record<string, unknown>) {
     probableConfidenceLevel: 'high' as const, probablePenalties: [] as { code: string; reason: string; value: number }[],
   };
   return { ...base, ...overrides };
-    universeBreakdown: overrides?.universeBreakdown ?? {},
-    probableConfidenceLevel: 'high' as const, probablePenalties: overrides?.probablePenalties ?? [],
-    ...overrides,
-  };
 }
 
 function makeTeamStats(overrides?: Partial<ForecastTeamStats>): ForecastTeamStats {
