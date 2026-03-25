@@ -440,6 +440,68 @@ export type Database = {
           },
         ]
       }
+      agency_performance_config: {
+        Row: {
+          agency_id: string
+          created_at: string
+          deduct_planning_unavailability: boolean
+          default_task_duration_minutes: number
+          default_weekly_hours: number
+          holidays: Json
+          id: string
+          load_max: number
+          load_min: number
+          productivity_optimal: number
+          productivity_warning: number
+          sav_optimal: number
+          sav_warning: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          deduct_planning_unavailability?: boolean
+          default_task_duration_minutes?: number
+          default_weekly_hours?: number
+          holidays?: Json
+          id?: string
+          load_max?: number
+          load_min?: number
+          productivity_optimal?: number
+          productivity_warning?: number
+          sav_optimal?: number
+          sav_warning?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          deduct_planning_unavailability?: boolean
+          default_task_duration_minutes?: number
+          default_weekly_hours?: number
+          holidays?: Json
+          id?: string
+          load_max?: number
+          load_min?: number
+          productivity_optimal?: number
+          productivity_warning?: number
+          sav_optimal?: number
+          sav_warning?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_performance_config_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: true
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agency_rh_roles: {
         Row: {
           agency_id: string
