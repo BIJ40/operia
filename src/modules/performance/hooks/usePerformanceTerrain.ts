@@ -48,8 +48,6 @@ function normalizePersonName(value: string | null | undefined): string {
     .trim();
 }
 
-function computeOverlapHours(
-
 /**
  * Returns an ISO week key like "2026-W12" for a given date.
  */
