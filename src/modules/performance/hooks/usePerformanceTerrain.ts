@@ -29,12 +29,43 @@ import { DEFAULT_THRESHOLDS, ABSENCE_KEYWORDS, EXCLUDED_USER_TYPES } from '../en
 import { usePerformanceConfig } from './usePerformanceConfig';
 
 // ============================================================================
-// TYPES
+// TYPES & HELPERS
 // ============================================================================
 
 interface DateRange {
   start: Date;
   end: Date;
+}
+
+/**
+ * Compute weekly hours from collaborator schedule fields.
+ * work_start/work_end = "HH:MM" strings, work_days = array of day numbers (0=Sun..6=Sat)
+ * Returns null if insufficient data.
+ */
+function computeWeeklyHoursFromSchedule(
+  workStart: string | null,
+  workEnd: string | null,
+  workDays: number[] | null
+): number | null {
+  if (!workStart || !workEnd) return null;
+
+  const [sh, sm] = workStart.split(':').map(Number);
+  const [eh, em] = workEnd.split(':').map(Number);
+
+  if (isNaN(sh) || isNaN(sm) || isNaN(eh) || isNaN(em)) return null;
+
+  const dailyMinutes = (eh * 60 + em) - (sh * 60 + sm);
+  if (dailyMinutes <= 0 || dailyMinutes > 14 * 60) return null; // sanity: max 14h/day
+
+  // work_days: count of working days per week; default to 5 if not set
+  const daysPerWeek = (workDays && workDays.length > 0)
+    ? workDays.filter(d => d >= 1 && d <= 5).length // only count weekdays
+    : 5;
+
+  if (daysPerWeek === 0) return null;
+
+  const weeklyHours = Math.round((dailyMinutes * daysPerWeek / 60) * 10) / 10;
+  return weeklyHours > 0 && weeklyHours <= 60 ? weeklyHours : null; // sanity bounds
 }
 
 export interface PerformanceTerrainData {
@@ -92,32 +123,52 @@ export function usePerformanceTerrain(dateRange: DateRange) {
         const users = (loaded?.users || []) as unknown as Record<string, unknown>[];
         const creneaux = (loaded?.creneaux || []) as unknown as Record<string, unknown>[];
 
-        // === LOAD WEEKLY HOURS FROM RH CONTRACTS ===
+        // === LOAD WEEKLY HOURS ===
+        // Hierarchy: collaborator schedule (work_start/end/days) → contract weekly_hours → config default
         const weeklyHoursByApogeeId = new Map<string, number>();
 
         if (effectiveAgencyId) {
           const { data: collaborators } = await supabase
             .from('collaborators')
-            .select('id, apogee_user_id')
+            .select('id, apogee_user_id, work_start, work_end, work_days')
             .eq('agency_id', effectiveAgencyId)
             .not('apogee_user_id', 'is', null);
 
           if (collaborators && collaborators.length > 0) {
-            const collabIds = collaborators.map(c => c.id);
-            const { data: contracts } = await supabase
-              .from('employment_contracts')
-              .select('collaborator_id, weekly_hours')
-              .in('collaborator_id', collabIds)
-              .eq('is_current', true);
-
-            if (contracts) {
-              const weeklyByCollabId = new Map<string, number>();
-              for (const c of contracts) {
-                if (c.weekly_hours) weeklyByCollabId.set(c.collaborator_id, c.weekly_hours);
+            // 1. Compute from schedule fields first
+            for (const collab of collaborators) {
+              if (!collab.apogee_user_id) continue;
+              const scheduleHours = computeWeeklyHoursFromSchedule(
+                collab.work_start,
+                collab.work_end,
+                collab.work_days
+              );
+              if (scheduleHours !== null) {
+                weeklyHoursByApogeeId.set(String(collab.apogee_user_id), scheduleHours);
               }
-              for (const collab of collaborators) {
-                if (collab.apogee_user_id && weeklyByCollabId.has(collab.id)) {
-                  weeklyHoursByApogeeId.set(String(collab.apogee_user_id), weeklyByCollabId.get(collab.id)!);
+            }
+
+            // 2. Fallback: contract weekly_hours for those not yet resolved
+            const unresolvedCollabIds = collaborators
+              .filter(c => c.apogee_user_id && !weeklyHoursByApogeeId.has(String(c.apogee_user_id)))
+              .map(c => c.id);
+
+            if (unresolvedCollabIds.length > 0) {
+              const { data: contracts } = await supabase
+                .from('employment_contracts')
+                .select('collaborator_id, weekly_hours')
+                .in('collaborator_id', unresolvedCollabIds)
+                .eq('is_current', true);
+
+              if (contracts) {
+                const weeklyByCollabId = new Map<string, number>();
+                for (const c of contracts) {
+                  if (c.weekly_hours) weeklyByCollabId.set(c.collaborator_id, c.weekly_hours);
+                }
+                for (const collab of collaborators) {
+                  if (collab.apogee_user_id && !weeklyHoursByApogeeId.has(String(collab.apogee_user_id)) && weeklyByCollabId.has(collab.id)) {
+                    weeklyHoursByApogeeId.set(String(collab.apogee_user_id), weeklyByCollabId.get(collab.id)!);
+                  }
                 }
               }
             }
@@ -166,36 +217,79 @@ export function usePerformanceTerrain(dateRange: DateRange) {
           }
         }
 
-        // 2. Fallback: planning heuristic for techs without RH data
-        const allSources = [...creneaux, ...interventions];
-        for (const item of allSources) {
-          const type = String((item as Record<string, unknown>).type || ((item as Record<string, unknown>).data as Record<string, unknown>)?.type || '').toLowerCase();
-          const type2 = String((item as Record<string, unknown>).type2 || ((item as Record<string, unknown>).data as Record<string, unknown>)?.type2 || '').toLowerCase();
-          const label = String((item as Record<string, unknown>).label || ((item as Record<string, unknown>).data as Record<string, unknown>)?.label || '').toLowerCase();
-          const combined = `${type} ${type2} ${label}`;
+        // 2. Fallback: planning creneaux for techs without RH data
+        // Detect type "conge", "absence" or keyword matches, with real duration
+        const PLANNING_ABSENCE_TYPES = ['conge', 'congé', 'absence'];
+        const absenceAccum = new Map<string, { hours: number; label: string }>();
 
-          if (ABSENCE_KEYWORDS.some(kw => combined.includes(kw))) {
-            const usersRaw = ((item as Record<string, unknown>).usersIds || (item as Record<string, unknown>).data && ((item as Record<string, unknown>).data as Record<string, unknown>)?.usersIds || []) as unknown[];
-            const userId = (item as Record<string, unknown>).userId != null ? String((item as Record<string, unknown>).userId) : undefined;
-            const ids = Array.isArray(usersRaw) ? usersRaw.map(x => String(x)) : [];
-            if (userId) ids.push(userId);
+        for (const item of creneaux) {
+          const rec = item as Record<string, unknown>;
+          const refType = String(rec.refType || '').toLowerCase();
+          const type = String(rec.type || (rec.data as Record<string, unknown>)?.type || '').toLowerCase();
+          const type2 = String(rec.type2 || (rec.data as Record<string, unknown>)?.type2 || '').toLowerCase();
+          const label = String(rec.label || (rec.data as Record<string, unknown>)?.label || '').toLowerCase();
+          const combined = `${refType} ${type} ${type2} ${label}`;
 
-            const absLabel = combined.includes('maladie') ? 'Arrêt maladie'
-              : combined.includes('arret') || combined.includes('arrêt') ? 'En arrêt'
-              : combined.includes('conge') || combined.includes('congé') ? 'En congé'
-              : 'Absent';
+          const isAbsenceType = PLANNING_ABSENCE_TYPES.some(t => refType === t || type === t);
+          const isAbsenceKeyword = !isAbsenceType && ABSENCE_KEYWORDS.some(kw => combined.includes(kw));
 
-            for (const id of ids) {
-              // Only set if no RH data for this tech
-              if (!absences.has(id)) {
-                absences.set(id, {
-                  technicianId: id,
-                  source: 'planning_unavailability',
-                  label: absLabel,
-                  days: 1, // approximation — no real absence table
-                });
-              }
+          if (!isAbsenceType && !isAbsenceKeyword) continue;
+
+          // Extract user IDs
+          const usersRaw = (rec.usersIds || (rec.data as Record<string, unknown>)?.usersIds || []) as unknown[];
+          const userId = rec.userId != null ? String(rec.userId) : undefined;
+          const ids = Array.isArray(usersRaw) ? usersRaw.map(x => String(x)) : [];
+          if (userId) ids.push(userId);
+
+          // Compute duration in hours from créneau
+          const dureeMinutes = Number(rec.duree || (rec.data as Record<string, unknown>)?.duree || 0);
+          let absHours = dureeMinutes > 0 ? dureeMinutes / 60 : 0;
+
+          // If no duree, try start/end
+          if (absHours === 0) {
+            const dateStart = rec.dateStart || rec.start || (rec.data as Record<string, unknown>)?.dateStart;
+            const dateEnd = rec.dateEnd || rec.end || (rec.data as Record<string, unknown>)?.dateEnd;
+            if (dateStart && dateEnd) {
+              const ms = new Date(String(dateEnd)).getTime() - new Date(String(dateStart)).getTime();
+              if (ms > 0) absHours = ms / (1000 * 60 * 60);
             }
+          }
+
+          // Fallback: 7h if still 0
+          if (absHours <= 0) absHours = 7;
+          // Cap at 10h per créneau (sanity)
+          if (absHours > 10) absHours = 10;
+
+          const absLabel = combined.includes('maladie') ? 'Arrêt maladie'
+            : combined.includes('arret') || combined.includes('arrêt') ? 'En arrêt'
+            : combined.includes('conge') || combined.includes('congé') || refType === 'conge' ? 'En congé'
+            : combined.includes('formation') ? 'Formation'
+            : 'Absent';
+
+          for (const id of ids) {
+            // Only accumulate if no RH data for this tech
+            if (absences.has(id)) continue;
+
+            const prev = absenceAccum.get(id);
+            if (prev) {
+              prev.hours += absHours;
+            } else {
+              absenceAccum.set(id, { hours: absHours, label: absLabel });
+            }
+          }
+        }
+
+        // Convert accumulated planning absences into AbsenceInfo
+        for (const [id, { hours, label }] of absenceAccum) {
+          if (!absences.has(id)) {
+            const days = Math.round((hours / 7) * 10) / 10; // approximate days (7h/day)
+            absences.set(id, {
+              technicianId: id,
+              source: 'planning_unavailability',
+              label,
+              days,
+              hours,
+            });
           }
         }
 
