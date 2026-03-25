@@ -113,8 +113,8 @@ export function useForecastData(
   const { isAgencyReady, currentAgency } = useAgency();
   const { config } = usePerformanceConfig();
 
-  const agencySlug = currentAgency?.slug || currentAgency?.id || agence || '';
-  const effectiveAgencyId = currentAgency?.id || agencyId;
+  const agencySlug = currentAgency?.slug || agence || '';
+  const effectiveAgencyId = agencyId || null;
 
   const { data: rhAbsences } = useTechnicianAbsences({
     agencyId: effectiveAgencyId,
