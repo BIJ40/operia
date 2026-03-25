@@ -272,7 +272,7 @@ function HistoricalPerformanceDashboard() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* V2: DegradedStateAlert per tech */}
-                {selectedSnapshot && (
+                {selectedSnapshot && (selectedSnapshot.dataQualityFlags.highFallbackUsage || selectedSnapshot.dataQualityFlags.missingPlanningCoverage) && (
                   <DegradedStateAlert 
                     flags={selectedSnapshot.dataQualityFlags} 
                     technicianName={selectedTech.name}
@@ -417,11 +417,7 @@ function HistoricalPerformanceDashboard() {
       </div>
 
       {/* V2: Degraded state alert if confidence is low OR critical flags active */}
-      {quality && (
-        quality.avgConfidence.globalConfidenceScore < 0.6 
-        || quality.flags.missingPlanningCoverage 
-        || quality.flags.highFallbackUsage
-      ) && (
+      {quality && (quality.flags.missingPlanningCoverage || quality.flags.highFallbackUsage) && (
         <DegradedStateAlert flags={quality.flags} />
       )}
 
