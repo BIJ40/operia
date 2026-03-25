@@ -299,6 +299,6 @@ export function computeTechnicianSnapshots(input: PerformanceEngineInput): Perfo
       totalInterventions,
     },
     unknownTechnicianWorkload: unknownWorkload,
-    matchLog: matchLog.map(m => ({ a: m.aId || m.a, b: m.bId || m.b, outcome: m.outcome, score: m.score })),
+    matchLog: matchLog.map(m => ({ a: m.aId, b: m.bId, outcome: m.outcome, score: m.score })),
   };
 }
