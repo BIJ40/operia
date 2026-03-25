@@ -1,6 +1,7 @@
 /**
  * Performance Terrain — Hook refondu V2
  * Thin wrapper: fetch DataService + Supabase → engine → TechnicianSnapshot[]
+ * Techniciens identifiés via apiGetUsers (DataService) avec règles buildTechMap
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -9,6 +10,7 @@ import { useAgency } from '@/apogee-connect/contexts/AgencyContext';
 import { DataService } from '@/apogee-connect/services/dataService';
 import { supabase } from '@/integrations/supabase/client';
 import { logDebug, logError } from '@/lib/logger';
+import { normalizeIsOn, isExcludedUserType } from '@/apogee-connect/utils/techTools';
 
 import type {
   PerformanceEngineInput,
@@ -113,16 +115,32 @@ export function usePerformanceTerrain(dateRange: DateRange) {
           }
         }
 
-        // === BUILD TECHNICIAN MAP ===
+        // === BUILD TECHNICIAN MAP (aligned with buildTechMap from techTools) ===
+        // Source: apiGetUsers via DataService — seuls les techniciens actifs
         const technicianMap = new Map<string, TechnicianInput>();
         for (const u of users) {
+          // RÈGLE 1: is_on doit être true (normalisé)
+          if (!normalizeIsOn(u.is_on)) continue;
+
+          // RÈGLE 2: Exclure les types non-techniciens
           const userType = String(u.type || '').toLowerCase();
-          if (EXCLUDED_USER_TYPES.some(ex => userType.includes(ex))) continue;
-          if (userType !== 'technicien' && userType !== 'utilisateur') continue;
+          if (isExcludedUserType(userType)) continue;
+
+          // RÈGLE 3: Critères d'identification technicien
+          const uData = (u.data || {}) as Record<string, unknown>;
+          const hasUniverses = Array.isArray(uData.universes) && (uData.universes as unknown[]).length > 0;
+          const isTechnicien =
+            u.isTechnicien === true ||
+            u.isTechnicien === 1 ||
+            userType === 'technicien' ||
+            (userType === 'utilisateur' && hasUniverses);
+
+          if (!isTechnicien) continue;
 
           const id = String(u.id);
-          const name = `${u.firstname || ''} ${u.lastname || u.name || ''}`.trim() || `Tech ${id}`;
-          const color = (u.color as string) || ((u.data as Record<string, unknown>)?.bgcolor as Record<string, unknown>)?.hex as string || undefined;
+          const name = `${u.firstname || ''} ${u.name || ''}`.trim() || `Tech ${id}`;
+          const bgColor = (uData.bgcolor as Record<string, unknown>)?.hex as string | undefined;
+          const color = bgColor || (uData.color as Record<string, unknown>)?.hex as string | undefined;
 
           technicianMap.set(id, {
             id,
