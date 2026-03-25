@@ -12,7 +12,9 @@ import type {
   DataQualityFlags,
   WorkItem,
   DurationSource,
+  MatchLogEntry,
 } from './types';
+import { MATCHING_THRESHOLDS } from './rules';
 import { computeCapacity } from './capacity';
 import { allocateDuration } from './allocation';
 import { computeConfidenceBreakdown } from './confidence';
