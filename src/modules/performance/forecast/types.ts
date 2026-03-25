@@ -452,14 +452,45 @@ export interface ForecastTeamTensionStats {
 }
 
 // ============================================================================
-// RECOMMENDATION (Lot 5 stub — types only)
+// LOT 5 — RECOMMENDATION TYPES
 // ============================================================================
 
+export type ForecastRecommendationType =
+  | 'rebalance_load'
+  | 'protect_technician'
+  | 'use_available_capacity'
+  | 'review_probable_pipeline'
+  | 'secure_assignment'
+  | 'increase_visibility'
+  | 'watch_universe'
+  | 'no_action';
+
+export type ForecastRecommendationPriority = 'low' | 'medium' | 'high' | 'critical';
+
+export type ForecastRecommendationScope = 'team' | 'technician' | 'universe';
+
 export interface ForecastRecommendation {
-  level: 'info' | 'warning' | 'critical';
+  id: string;
+  type: ForecastRecommendationType;
+  scope: ForecastRecommendationScope;
+  priority: ForecastRecommendationPriority;
+  title: string;
   message: string;
+  rationale: string;
   technicianId?: string;
-  horizon?: ForecastHorizon;
+  technicianName?: string;
+  universe?: string;
+  horizon: ForecastHorizon;
+  confidenceLevel: ForecastConfidenceLevel | ForecastProbableConfidenceLevel;
+  relatedFactorCodes: string[];
+}
+
+export interface ForecastRecommendationsResult {
+  horizon: ForecastHorizon;
+  teamRecommendations: ForecastRecommendation[];
+  technicianRecommendations: ForecastRecommendation[];
+  universeRecommendations: ForecastRecommendation[];
+  all: ForecastRecommendation[];
 }
 
 // ============================================================================
