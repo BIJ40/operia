@@ -11,12 +11,6 @@ import type {
   ForecastPenalty,
   ForecastPenaltyCode,
 } from '../types';
-import type {
-  ForecastSnapshot,
-  ForecastHorizon,
-  ForecastTeamStats,
-  ForecastRecommendation,
-} from '../types';
 
 // ============================================================================
 // HELPERS
