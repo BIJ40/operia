@@ -3,9 +3,10 @@ import { APP_VERSION } from '@/config/version';
 import { logInfo, logWarn } from '@/lib/logger';
 
 export const VERSION_CHECK_KEY = 'hc_last_version_check';
-const CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes minimum between checks
+const CHECK_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes between checks
 export const FORCE_UPDATE_SESSION_KEY = 'hc_force_update_in_progress';
 const FORCE_UPDATE_QUERY_PARAM = 'hc_refresh';
+const MAX_FORCE_UPDATE_AGE_MS = 30_000; // allow retry after 30s
 
 interface VersionInfo {
   version: string;
@@ -73,8 +74,12 @@ export function useVersionCheck() {
           try {
             const inProgress = sessionStorage.getItem(FORCE_UPDATE_SESSION_KEY);
             if (inProgress) {
-              logWarn(`[VERSION] Update already attempted in this tab session (since ${inProgress}). Skipping forceUpdate to avoid reload loop.`);
-              return;
+              const elapsed = Date.now() - parseInt(inProgress, 10);
+              if (elapsed < MAX_FORCE_UPDATE_AGE_MS) {
+                logWarn(`[VERSION] Update attempted ${elapsed}ms ago. Skipping to avoid loop.`);
+                return;
+              }
+              logInfo(`[VERSION] Previous attempt was ${elapsed}ms ago, retrying...`);
             }
           } catch {
             // ignore
