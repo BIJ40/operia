@@ -1,6 +1,6 @@
 /**
  * Forecast — Recommandations (Lot 5 stub)
- * Types are defined in types.ts. Logic will be added in Lot 5.
+ * Types définis dans types.ts. Logique ajoutée au Lot 5.
  */
 
-export type { Recommendation } from './types';
+export type { ForecastRecommendation } from './types';
