@@ -19,18 +19,6 @@ interface AlertItem {
 export function DegradedStateAlert({ flags, technicianName }: Props) {
   const alerts: AlertItem[] = [];
 
-  if (flags.missingContract) {
-    alerts.push({
-      message: 'Durée hebdo non renseignée — capacité estimée à 35h/semaine par défaut',
-      recommendation: 'Renseigner la durée hebdo dans la fiche collaborateur',
-    });
-  }
-  if (flags.absenceReliability === 'partial') {
-    alerts.push({
-      message: 'Absences détectées via le planning (fiabilité modérée)',
-      recommendation: 'Compléter avec les absences RH si nécessaire',
-    });
-  }
   if (flags.highFallbackUsage) {
     alerts.push({
       message: 'Plus de 50% des durées sont estimées (pas de durée réelle disponible)',
