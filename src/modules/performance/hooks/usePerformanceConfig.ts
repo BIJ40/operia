@@ -16,8 +16,8 @@ export function usePerformanceConfig() {
     queryKey: ['performance-config', agencyId],
     queryFn: async () => {
       if (!agencyId) return null;
-      const { data, error } = await supabase
-        .from('agency_performance_config' as any)
+      const { data, error } = await (supabase as any)
+        .from('agency_performance_config')
         .select('*')
         .eq('agency_id', agencyId)
         .maybeSingle();

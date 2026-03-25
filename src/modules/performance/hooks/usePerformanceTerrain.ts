@@ -76,10 +76,10 @@ export function usePerformanceTerrain(dateRange: DateRange) {
       try {
         // === FETCH DATA ===
         const loaded = await DataService.loadAllData(true, false, agencySlug);
-        const interventions = (loaded?.interventions || []) as Record<string, unknown>[];
-        const projects = (loaded?.projects || []) as Record<string, unknown>[];
-        const users = (loaded?.users || []) as Record<string, unknown>[];
-        const creneaux = (loaded?.creneaux || []) as Record<string, unknown>[];
+        const interventions = (loaded?.interventions || []) as unknown as Record<string, unknown>[];
+        const projects = (loaded?.projects || []) as unknown as Record<string, unknown>[];
+        const users = (loaded?.users || []) as unknown as Record<string, unknown>[];
+        const creneaux = (loaded?.creneaux || []) as unknown as Record<string, unknown>[];
 
         // === LOAD WEEKLY HOURS FROM RH CONTRACTS ===
         const weeklyHoursByApogeeId = new Map<string, number>();
