@@ -1,9 +1,9 @@
 /**
  * Forecast — Projection équipe
- * Phase 6 Lot 1 + Lot 2
+ * Phase 6 Lot 1 + Lot 2 + Lot 3
  *
  * Agrège les snapshots individuels en stats équipe par horizon.
- * Fusionne capacité et charge engagée.
+ * Fusionne capacité, charge engagée et charge probable.
  */
 
 import type {
@@ -12,10 +12,11 @@ import type {
   ForecastTeamStats,
   ForecastConfidenceLevel,
   ForecastCommittedWorkload,
+  ForecastProbableWorkload,
 } from './types';
 
 // ============================================================================
-// TEAM STATS AGGREGATION (Lot 1 + Lot 2 enrichment)
+// TEAM STATS AGGREGATION (Lot 1 + Lot 2 + Lot 3 enrichment)
 // ============================================================================
 
 /**
@@ -39,7 +40,9 @@ export function aggregateForecastTeamStats(
   };
 
   let totalCommittedMinutes = 0;
+  let totalProbableMinutes = 0;
   let hasCommittedData = false;
+  let hasProbableData = false;
 
   for (const snap of filtered) {
     totalTheoreticalMinutes += snap.projectedCapacity.theoreticalMinutes;
@@ -51,6 +54,11 @@ export function aggregateForecastTeamStats(
     if (snap.committedWorkload) {
       totalCommittedMinutes += snap.committedWorkload.committedMinutes;
       hasCommittedData = true;
+    }
+
+    if (snap.probableWorkload) {
+      totalProbableMinutes += snap.probableWorkload.probableMinutes;
+      hasProbableData = true;
     }
   }
 
@@ -73,6 +81,17 @@ export function aggregateForecastTeamStats(
     result.totalAvailableAfterCommittedMinutes = totalAdjustedMinutes - totalCommittedMinutes;
     result.averageCommittedLoadRatio = totalAdjustedMinutes > 0
       ? Math.round((totalCommittedMinutes / totalAdjustedMinutes) * 1000) / 1000
+      : null;
+  }
+
+  // Lot 3 enrichment
+  if (hasProbableData) {
+    result.totalProbableMinutes = totalProbableMinutes;
+    const totalEngagedPlusProbable = totalCommittedMinutes + totalProbableMinutes;
+    result.totalEngagedPlusProbableMinutes = totalEngagedPlusProbable;
+    result.totalAvailableAfterProbableMinutes = totalAdjustedMinutes - totalEngagedPlusProbable;
+    result.averageGlobalLoadRatio = totalAdjustedMinutes > 0
+      ? Math.round((totalEngagedPlusProbable / totalAdjustedMinutes) * 1000) / 1000
       : null;
   }
 
@@ -115,6 +134,49 @@ export function mergeCapacityAndCommittedWorkload(
       projectedAvailableMinutesAfterCommitted: adjustedCapacity - committedMinutes,
       projectedCommittedLoadRatio: adjustedCapacity > 0
         ? Math.round((committedMinutes / adjustedCapacity) * 1000) / 1000
+        : null,
+    };
+  });
+}
+
+// ============================================================================
+// MERGE COMMITTED + PROBABLE INTO FORECAST (Lot 3)
+// ============================================================================
+
+/**
+ * Attach probable workload data to snapshots that already have committed workload.
+ * Computes projectedAvailableMinutesAfterProbable and projectedGlobalLoadRatio.
+ */
+export function mergeCommittedAndProbableIntoForecast(
+  baseSnapshots: ForecastSnapshot[],
+  probableWorkloads: ForecastProbableWorkload[],
+  horizon: ForecastHorizon
+): ForecastSnapshot[] {
+  const filtered = baseSnapshots.filter(s => s.horizon === horizon);
+  const probableByTech = new Map<string, ForecastProbableWorkload>();
+
+  for (const w of probableWorkloads) {
+    if (w.horizon === horizon) {
+      probableByTech.set(w.technicianId, w);
+    }
+  }
+
+  return filtered.map(snap => {
+    const probable = probableByTech.get(snap.technicianId);
+
+    if (!probable) return snap;
+
+    const adjustedCapacity = snap.projectedCapacity.adjustedCapacityMinutes;
+    const committedMinutes = snap.committedWorkload?.committedMinutes ?? 0;
+    const probableMinutes = probable.probableMinutes;
+    const totalLoad = committedMinutes + probableMinutes;
+
+    return {
+      ...snap,
+      probableWorkload: probable,
+      projectedAvailableMinutesAfterProbable: adjustedCapacity - totalLoad,
+      projectedGlobalLoadRatio: adjustedCapacity > 0
+        ? Math.round((totalLoad / adjustedCapacity) * 1000) / 1000
         : null,
     };
   });
