@@ -238,19 +238,10 @@ export function PerformanceDashboard() {
                       calculationTrace: selectedSnapshot.calculationTrace,
                       confidenceBreakdown: selectedSnapshot.confidenceBreakdown,
                       dataQualityFlags: selectedSnapshot.dataQualityFlags,
-                      matchLog: data?.engineOutput?.matchLog?.filter(m => {
-                        // Filter matchLog entries where this tech is involved
-                        const techId = selectedSnapshot.technicianId;
-                        const itemIds = new Set(
-                          data?.engineOutput?.snapshots
-                            ?.find(s => s.technicianId === techId)
-                            ?.calculationTrace?.durationTrace?.itemCountBySource
-                            ? Object.keys(selectedSnapshot.calculationTrace.durationTrace.itemCountBySource)
-                            : []
-                        );
-                        // Match entries where either a or b item belongs to this tech's workload
-                        return m.a === techId || m.b === techId;
-                      }),
+                      consolidationTrace: selectedSnapshot.calculationTrace.consolidationTrace,
+                      absenceSource: selectedSnapshot.calculationTrace.capacityTrace.absenceSource,
+                      absenceDays: selectedSnapshot.calculationTrace.capacityTrace.absenceDays,
+                      penalties: selectedSnapshot.confidenceBreakdown.penalties,
                     }, null, 2)}
                   </pre>
                 </CardContent>
