@@ -434,8 +434,10 @@ function calculateDevisHTForProject(projectDevis: any[]): number {
   for (const d of projectDevis) {
     const devisState = String(d.state || '').toLowerCase();
     
-    // Exclure les devis non "vivants"
+    // Exclure les devis annulés/refusés/brouillons (exact match ou substring)
     if (DEVIS_ETATS_EXCLUS.has(devisState)) continue;
+    const CANCEL_KEYWORDS = ['annul', 'cancel', 'refus', 'refused', 'rejected', 'abandon'];
+    if (CANCEL_KEYWORDS.some(k => devisState.includes(k))) continue;
 
     // Priorité: data.totalHT (structure API) > totalHT (racine) > amount
     const montant =
