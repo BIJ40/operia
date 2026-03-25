@@ -1,11 +1,11 @@
 /**
  * Forecast — Tests projection équipe
- * Phase 6 Lot 1
+ * Phase 6 Lot 1 + Lot 2
  */
 
 import { describe, it, expect } from 'vitest';
-import { aggregateForecastTeamStats } from '../projection';
-import type { ForecastSnapshot, ProjectedCapacity } from '../types';
+import { aggregateForecastTeamStats, mergeCapacityAndCommittedWorkload } from '../projection';
+import type { ForecastSnapshot, ProjectedCapacity, ForecastCommittedWorkload, ForecastConsolidationTrace } from '../types';
 
 function makeSnapshot(
   id: string,
@@ -45,6 +45,37 @@ function makeSnapshot(
     forecastPenalties: [],
   };
 }
+
+const defaultTrace: ForecastConsolidationTrace = { merged: 0, keptSeparate: 0, discarded: 0, ambiguous: 0 };
+
+function makeCommittedWorkload(
+  id: string,
+  horizon: '7d' | '14d' | '30d',
+  committedMinutes: number
+): ForecastCommittedWorkload {
+  return {
+    technicianId: id,
+    name: `Tech ${id}`,
+    horizon,
+    committedMinutes,
+    committedProductiveMinutes: committedMinutes,
+    committedNonProductiveMinutes: 0,
+    committedSavMinutes: 0,
+    committedOtherMinutes: 0,
+    interventionsCount: 1,
+    dossiersCount: 1,
+    sharedSlots: 0,
+    loadConfidenceLevel: 'high',
+    loadPenalties: [],
+    sourceBreakdown: { planning: committedMinutes, visite: 0, intervention: 0 },
+    durationSourceBreakdown: { explicit: 0, computed: 0, planning: committedMinutes, business_default: 0, unknown: 0 },
+    consolidationTrace: defaultTrace,
+  };
+}
+
+// ============================================================================
+// Lot 1 tests
+// ============================================================================
 
 describe('aggregateForecastTeamStats', () => {
   it('aggregates total capacity for one horizon', () => {
@@ -122,5 +153,67 @@ describe('aggregateForecastTeamStats', () => {
     expect(stats.technicianCount).toBe(0);
     expect(stats.totalTheoreticalMinutes).toBe(0);
     expect(stats.averageConfidenceLevel).toBe('low');
+  });
+
+  // Lot 2 — committed data in team stats
+  it('includes committed minutes in team stats when present', () => {
+    const snap = makeSnapshot('a', '7d', { adjustedMinutes: 2100 });
+    snap.committedWorkload = makeCommittedWorkload('a', '7d', 600);
+
+    const stats = aggregateForecastTeamStats([snap], '7d');
+    expect(stats.totalCommittedMinutes).toBe(600);
+    expect(stats.totalAvailableAfterCommittedMinutes).toBe(2100 - 600);
+    expect(stats.averageCommittedLoadRatio).toBeCloseTo(600 / 2100, 2);
+  });
+});
+
+// ============================================================================
+// Lot 2 — merge tests
+// ============================================================================
+
+describe('mergeCapacityAndCommittedWorkload', () => {
+  it('attaches committed workload and computes available remaining', () => {
+    const caps = [makeSnapshot('a', '7d', { adjustedMinutes: 2100 })];
+    const committed = [makeCommittedWorkload('a', '7d', 840)];
+
+    const merged = mergeCapacityAndCommittedWorkload(caps, committed, '7d');
+    expect(merged).toHaveLength(1);
+    expect(merged[0].committedWorkload?.committedMinutes).toBe(840);
+    expect(merged[0].projectedAvailableMinutesAfterCommitted).toBe(2100 - 840);
+    expect(merged[0].projectedCommittedLoadRatio).toBeCloseTo(840 / 2100, 2);
+  });
+
+  it('returns null ratio when capacity is zero', () => {
+    const caps = [makeSnapshot('a', '7d', { adjustedMinutes: 0 })];
+    const committed = [makeCommittedWorkload('a', '7d', 100)];
+
+    const merged = mergeCapacityAndCommittedWorkload(caps, committed, '7d');
+    expect(merged[0].projectedCommittedLoadRatio).toBeNull();
+  });
+
+  it('leaves snapshot unchanged when no committed workload found', () => {
+    const caps = [makeSnapshot('a', '7d')];
+    const committed: ForecastCommittedWorkload[] = [];
+
+    const merged = mergeCapacityAndCommittedWorkload(caps, committed, '7d');
+    expect(merged[0].committedWorkload).toBeUndefined();
+    expect(merged[0].projectedAvailableMinutesAfterCommitted).toBeUndefined();
+  });
+
+  it('aggregates enriched team stats with committed data', () => {
+    const caps = [
+      makeSnapshot('a', '7d', { adjustedMinutes: 2100 }),
+      makeSnapshot('b', '7d', { adjustedMinutes: 1800 }),
+    ];
+    const committed = [
+      makeCommittedWorkload('a', '7d', 600),
+      makeCommittedWorkload('b', '7d', 400),
+    ];
+
+    const merged = mergeCapacityAndCommittedWorkload(caps, committed, '7d');
+    const stats = aggregateForecastTeamStats(merged, '7d');
+
+    expect(stats.totalCommittedMinutes).toBe(1000);
+    expect(stats.totalAvailableAfterCommittedMinutes).toBe((2100 + 1800) - 1000);
   });
 });
