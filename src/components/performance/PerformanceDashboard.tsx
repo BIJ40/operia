@@ -238,9 +238,10 @@ export function PerformanceDashboard() {
                       calculationTrace: selectedSnapshot.calculationTrace,
                       confidenceBreakdown: selectedSnapshot.confidenceBreakdown,
                       dataQualityFlags: selectedSnapshot.dataQualityFlags,
-                      matchLog: data?.engineOutput?.matchLog?.filter(m => 
-                        selectedSnapshot.calculationTrace.technicianId === selectedSnapshot.technicianId
-                      ),
+                      consolidationTrace: selectedSnapshot.calculationTrace.consolidationTrace,
+                      absenceSource: selectedSnapshot.calculationTrace.capacityTrace.absenceSource,
+                      absenceDays: selectedSnapshot.calculationTrace.capacityTrace.absenceDays,
+                      penalties: selectedSnapshot.confidenceBreakdown.penalties,
                     }, null, 2)}
                   </pre>
                 </CardContent>
