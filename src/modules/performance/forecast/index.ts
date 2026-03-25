@@ -15,6 +15,15 @@ export type {
   CapacityFutureInput,
   PredictedTensionLevel,
   ForecastRecommendation,
+  // Lot 2
+  ForecastWorkSource,
+  ForecastWorkCategory,
+  ForecastLoadConfidenceLevel,
+  ForecastWorkItem,
+  CommittedWorkloadInput,
+  ForecastConsolidationTrace,
+  ForecastCommittedWorkload,
+  ForecastCommittedTeamStats,
 } from './types';
 
 export { FORECAST_HORIZONS, horizonToDays } from './types';
@@ -22,5 +31,9 @@ export { FORECAST_HORIZONS, horizonToDays } from './types';
 // Capacity forecast
 export { computeFutureCapacity, computeFutureCapacityAllHorizons } from './capacityFuture';
 
-// Projection (team aggregation)
-export { aggregateForecastTeamStats } from './projection';
+// Committed workload (Lot 2)
+export { computeCommittedWorkload } from './committedWorkload';
+export type { CommittedWorkloadResult } from './committedWorkload';
+
+// Projection (team aggregation + merge)
+export { aggregateForecastTeamStats, mergeCapacityAndCommittedWorkload } from './projection';
