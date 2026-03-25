@@ -129,11 +129,7 @@ export default function StatsTabContent() {
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.2 }}
           >
-            {TABS_CONFIG.map(tab => (
-              <TabsContent key={tab.id} value={tab.id} className="mt-0" forceMount={effectiveTab === tab.id ? undefined : undefined}>
-                {effectiveTab === tab.id && <TabComponent />}
-              </TabsContent>
-            ))}
+            <TabComponent />
           </motion.div>
         </AnimatePresence>
       </DraggableFolderContentContainer>
