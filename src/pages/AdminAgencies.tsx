@@ -43,12 +43,14 @@ interface Agency {
   slug: string;
   label: string;
   is_active: boolean;
+  content_webhook_url: string | null;
 }
 
 interface AgencyFormData {
   slug: string;
   label: string;
   is_active: boolean;
+  content_webhook_url: string;
 }
 
 interface UserProfile {
@@ -89,6 +91,7 @@ export default function AdminAgencies() {
     slug: '',
     label: '',
     is_active: true,
+    content_webhook_url: '',
   });
 
   // Plan management hooks
@@ -191,6 +194,7 @@ export default function AdminAgencies() {
         slug: agency.slug,
         label: agency.label,
         is_active: agency.is_active,
+        content_webhook_url: agency.content_webhook_url || '',
       });
     } else {
       setEditingAgency(null);
@@ -198,6 +202,7 @@ export default function AdminAgencies() {
         slug: '',
         label: '',
         is_active: true,
+        content_webhook_url: '',
       });
     }
     setIsDialogOpen(true);
