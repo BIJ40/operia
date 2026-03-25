@@ -15,6 +15,8 @@ import { ConfidenceBadge } from '@/modules/performance/components/ConfidenceBadg
 import { DataQualityBadge } from '@/modules/performance/components/DataQualityBadge';
 import { DegradedStateAlert } from '@/modules/performance/components/DegradedStateAlert';
 import { WorkloadBreakdown } from '@/modules/performance/components/WorkloadBreakdown';
+import { ExplainCalculation } from '@/modules/performance/components/ExplainCalculation';
+import { CapacityBreakdown } from '@/modules/performance/components/CapacityBreakdown';
 import type { ConfidenceBreakdown, DataQualityFlags } from '@/modules/performance/engine/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -199,6 +201,10 @@ export function PerformanceDashboard() {
             {selectedSnapshot && (
               <WorkloadBreakdown workload={selectedSnapshot.workload} />
             )}
+            {/* V2: ExplainCalculation */}
+            {selectedSnapshot && (
+              <ExplainCalculation trace={selectedSnapshot.calculationTrace} />
+            )}
           </div>
           
           <div className="space-y-4">
@@ -359,8 +365,12 @@ export function PerformanceDashboard() {
         </div>
       </div>
 
-      {/* V2: Degraded state alert if confidence is low */}
-      {quality && quality.avgConfidence.globalConfidenceScore < 0.6 && (
+      {/* V2: Degraded state alert if confidence is low OR critical flags active */}
+      {quality && (
+        quality.avgConfidence.globalConfidenceScore < 0.6 
+        || quality.flags.missingPlanningCoverage 
+        || quality.flags.highFallbackUsage
+      ) && (
         <DegradedStateAlert flags={quality.flags} />
       )}
 
