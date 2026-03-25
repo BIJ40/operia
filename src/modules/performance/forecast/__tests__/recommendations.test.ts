@@ -8,6 +8,13 @@ import type {
   ForecastSnapshot,
   ForecastHorizon,
   ForecastTeamStats,
+  ForecastPenalty,
+  ForecastPenaltyCode,
+} from '../types';
+import type {
+  ForecastSnapshot,
+  ForecastHorizon,
+  ForecastTeamStats,
   ForecastRecommendation,
 } from '../types';
 
@@ -68,7 +75,7 @@ function makeProbable(minutes: number, overrides?: Record<string, unknown>) {
     probableMinutes: minutes, highProbabilityMinutes: minutes, mediumProbabilityMinutes: 0, lowProbabilityMinutes: 0,
     probableItemsCount: 1, sourceBreakdown: { pipeline_mature: minutes, travaux_a_planifier: 0, dossier_en_attente: 0, charge_travaux_engine: 0, unassigned_project: 0 },
     universeBreakdown: {} as Record<string, number>,
-    probableConfidenceLevel: 'high' as const, probablePenalties: [] as { code: string; reason: string; value: number }[],
+    probableConfidenceLevel: 'high' as const, probablePenalties: [] as ForecastPenalty[],
   };
   return { ...base, ...overrides };
 }
