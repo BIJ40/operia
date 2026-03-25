@@ -405,7 +405,6 @@ export default function ApporteurDossiers() {
                 <span className="text-muted-foreground">Reste dû:</span>
                 <span className="font-semibold text-foreground">
                   {formatCurrency(filteredTotals.resteDu)}
-                  {formatCurrency(filteredTotals.resteDu)}
                 </span>
               </div>
             </div>
