@@ -9491,6 +9491,56 @@ export type Database = {
           },
         ]
       }
+      technician_absences: {
+        Row: {
+          absence_type: string
+          agency_id: string
+          created_at: string
+          end_date: string
+          hours: number | null
+          id: string
+          is_full_day: boolean
+          source: string
+          start_date: string
+          technician_apogee_id: string
+          updated_at: string
+        }
+        Insert: {
+          absence_type?: string
+          agency_id: string
+          created_at?: string
+          end_date: string
+          hours?: number | null
+          id?: string
+          is_full_day?: boolean
+          source?: string
+          start_date: string
+          technician_apogee_id: string
+          updated_at?: string
+        }
+        Update: {
+          absence_type?: string
+          agency_id?: string
+          created_at?: string
+          end_date?: string
+          hours?: number | null
+          id?: string
+          is_full_day?: boolean
+          source?: string
+          start_date?: string
+          technician_apogee_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technician_absences_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       technician_capacity_config: {
         Row: {
           agency_id: string
