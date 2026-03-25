@@ -161,6 +161,19 @@ export function useUpdateModuleNode() {
         .eq('key', params.key);
 
       if (error) throw error;
+
+      // When setting a module to "Individuel" (NONE), clean up stale plan_tier_modules rows
+      // to prevent legacy_plan_modules CTE from leaking access
+      if (params.updates.required_plan === 'NONE') {
+        const { error: cleanupError } = await supabase
+          .from('plan_tier_modules' as any)
+          .delete()
+          .eq('module_key', params.key);
+
+        if (cleanupError) {
+          console.warn(`[useModuleRegistry] Failed to cleanup plan_tier_modules for ${params.key}:`, cleanupError);
+        }
+      }
     },
     onSuccess: (_, params) => {
       qc.invalidateQueries({ queryKey: QUERY_KEY });
