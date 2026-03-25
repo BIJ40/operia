@@ -1,9 +1,10 @@
 /**
  * PerformanceDashboard - Dashboard principal Performance Terrain
  * Vue équilibée, non punitive, orientée capacité & qualité
+ * Avec switch Historique / Prévision (Lot 6)
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePerformanceTerrain, TechnicianPerformance } from '@/hooks/usePerformanceTerrain';
 import { TeamHeatmap } from './TeamHeatmap';
@@ -124,7 +125,7 @@ function useAggregatedQuality(data: ReturnType<typeof usePerformanceTerrain>['da
   }, [data]);
 }
 
-export function PerformanceDashboard() {
+function HistoricalPerformanceDashboard() {
   const navigate = useNavigate();
   
   const { dateRange, goToPreviousMonth, goToNextMonth, goToCurrentMonth, isCurrentMonth, label: periodLabel } = usePerformancePeriod();
@@ -542,6 +543,50 @@ export function PerformanceDashboard() {
         open={!!editDialogTech}
         onOpenChange={(open) => !open && setEditDialogTech(null)}
       />
+    </div>
+  );
+}
+
+// ============================================================================
+// WRAPPER — Switch Historique / Prévision
+// ============================================================================
+
+const LazyForecast = lazy(() =>
+  import('./forecast/PerformanceForecastDashboard').then(m => ({ default: m.PerformanceForecastDashboard }))
+);
+
+type PerformanceMode = 'historique' | 'prevision';
+
+export function PerformanceDashboard() {
+  const [mode, setMode] = useState<PerformanceMode>('historique');
+
+  return (
+    <div className="space-y-4">
+      {/* Mode selector */}
+      <div className="flex items-center gap-1 bg-muted rounded-lg p-1 w-fit">
+        <Button
+          variant={mode === 'historique' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => setMode('historique')}
+        >
+          Historique
+        </Button>
+        <Button
+          variant={mode === 'prevision' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => setMode('prevision')}
+        >
+          Prévision
+        </Button>
+      </div>
+
+      {mode === 'historique' ? (
+        <HistoricalPerformanceDashboard />
+      ) : (
+        <Suspense fallback={<div className="space-y-4"><Skeleton className="h-8 w-64" /><Skeleton className="h-48" /></div>}>
+          <LazyForecast />
+        </Suspense>
+      )}
     </div>
   );
 }
