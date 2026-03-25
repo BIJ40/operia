@@ -108,7 +108,51 @@ const ALLOWED_ENDPOINTS = [
   'getFactures',
   'getDevis',
   'apiGetProjectByHashZipCode',
+  'apiGetProjectByRef',
 ];
+
+// Endpoints soumis à un rate limiting strict (détail dossier)
+const STRICT_RATE_LIMIT_ENDPOINTS = ['apiGetProjectByRef'];
+
+// =============================================================================
+// CACHE SERVEUR EDGE — apiGetProjectByRef uniquement
+// Clé = ref + agencySlug. TTL 5 min. Ne contourne JAMAIS les droits.
+// =============================================================================
+interface EdgeCacheEntry {
+  data: unknown;
+  expiresAt: number;
+  agencySlug: string;
+}
+const edgeCache = new Map<string, EdgeCacheEntry>();
+const EDGE_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const EDGE_CACHE_MAX = 200;
+
+function getEdgeCacheKey(endpoint: string, agencySlug: string, filters?: Record<string, unknown>): string {
+  if (endpoint === 'apiGetProjectByRef' && filters?.ref) {
+    return `${endpoint}:${agencySlug}:${filters.ref}`;
+  }
+  return '';
+}
+
+function getFromEdgeCache(key: string): unknown | null {
+  if (!key) return null;
+  const entry = edgeCache.get(key);
+  if (!entry || Date.now() > entry.expiresAt) {
+    if (entry) edgeCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function setEdgeCache(key: string, data: unknown, agencySlug: string): void {
+  if (!key) return;
+  // LRU-style eviction
+  if (edgeCache.size >= EDGE_CACHE_MAX) {
+    const firstKey = edgeCache.keys().next().value;
+    if (firstKey) edgeCache.delete(firstKey);
+  }
+  edgeCache.set(key, { data, expiresAt: Date.now() + EDGE_CACHE_TTL_MS, agencySlug });
+}
 
 interface ProxyRequest {
   endpoint: string;
