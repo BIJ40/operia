@@ -11,6 +11,11 @@ import { TechnicianRadarChart } from './TechnicianRadarChart';
 import { SavDetailsDrawer } from './SavDetailsDrawer';
 import { PerformanceLegend } from './PerformanceLegend';
 import { TechnicianQuickEditDialog } from './TechnicianQuickEditDialog';
+import { ConfidenceBadge } from '@/modules/performance/components/ConfidenceBadge';
+import { DataQualityBadge } from '@/modules/performance/components/DataQualityBadge';
+import { DegradedStateAlert } from '@/modules/performance/components/DegradedStateAlert';
+import { WorkloadBreakdown } from '@/modules/performance/components/WorkloadBreakdown';
+import type { ConfidenceBreakdown, DataQualityFlags } from '@/modules/performance/engine/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -36,7 +41,6 @@ function usePerformancePeriod() {
   
   const dateRange = useMemo(() => {
     const start = startOfMonth(currentMonth);
-    // For current month: include future (end of month) for planning visibility
     const end = endOfMonth(currentMonth);
     return { start, end };
   }, [currentMonth]);
@@ -51,15 +55,74 @@ function usePerformancePeriod() {
   return { dateRange, currentMonth, goToPreviousMonth, goToNextMonth, goToCurrentMonth, isCurrentMonth, label };
 }
 
+/**
+ * Aggregate confidence and data quality flags from all snapshots.
+ * Returns null if no engineOutput available (legacy safety).
+ */
+function useAggregatedQuality(data: ReturnType<typeof usePerformanceTerrain>['data']) {
+  return useMemo(() => {
+    if (!data?.engineOutput?.snapshots?.length) return null;
+
+    const snapshots = data.engineOutput.snapshots;
+    
+    // Average confidence across active techs
+    const avgConfidence: ConfidenceBreakdown = {
+      durationConfidence: 0,
+      capacityConfidence: 0,
+      matchingConfidence: 0,
+      classificationConfidence: 0,
+      globalConfidenceScore: 0,
+    };
+    for (const s of snapshots) {
+      avgConfidence.durationConfidence += s.confidenceBreakdown.durationConfidence;
+      avgConfidence.capacityConfidence += s.confidenceBreakdown.capacityConfidence;
+      avgConfidence.matchingConfidence += s.confidenceBreakdown.matchingConfidence;
+      avgConfidence.classificationConfidence += s.confidenceBreakdown.classificationConfidence;
+      avgConfidence.globalConfidenceScore += s.confidenceBreakdown.globalConfidenceScore;
+    }
+    const n = snapshots.length;
+    avgConfidence.durationConfidence = Math.round((avgConfidence.durationConfidence / n) * 100) / 100;
+    avgConfidence.capacityConfidence = Math.round((avgConfidence.capacityConfidence / n) * 100) / 100;
+    avgConfidence.matchingConfidence = Math.round((avgConfidence.matchingConfidence / n) * 100) / 100;
+    avgConfidence.classificationConfidence = Math.round((avgConfidence.classificationConfidence / n) * 100) / 100;
+    avgConfidence.globalConfidenceScore = Math.round((avgConfidence.globalConfidenceScore / n) * 100) / 100;
+
+    // OR-aggregate flags
+    const flags: DataQualityFlags = {
+      missingContract: false,
+      missingExplicitDurations: false,
+      missingPlanningCoverage: false,
+      missingAbsenceData: false,
+      highFallbackUsage: false,
+      duplicateResolutionApplied: false,
+      partialPeriodCoverage: false,
+    };
+    for (const s of snapshots) {
+      for (const key of Object.keys(flags) as (keyof DataQualityFlags)[]) {
+        if (s.dataQualityFlags[key]) flags[key] = true;
+      }
+    }
+
+    return { avgConfidence, flags };
+  }, [data]);
+}
+
 export function PerformanceDashboard() {
   const navigate = useNavigate();
   
-  // Sélecteur de période dédié (mois en cours par défaut + navigation)
   const { dateRange, goToPreviousMonth, goToNextMonth, goToCurrentMonth, isCurrentMonth, label: periodLabel } = usePerformancePeriod();
   const { data, isLoading, error } = usePerformanceTerrain(dateRange);
   const [selectedTech, setSelectedTech] = useState<TechnicianPerformance | null>(null);
   const [savDrawerTech, setSavDrawerTech] = useState<TechnicianPerformance | null>(null);
   const [editDialogTech, setEditDialogTech] = useState<TechnicianPerformance | null>(null);
+
+  const quality = useAggregatedQuality(data);
+
+  // Get selected tech's snapshot for V2 detail views
+  const selectedSnapshot = useMemo(() => {
+    if (!selectedTech || !data?.engineOutput?.snapshots) return null;
+    return data.engineOutput.snapshots.find(s => s.technicianId === selectedTech.id) || null;
+  }, [selectedTech, data]);
 
   // Stats d'équipe
   const teamInsights = useMemo(() => {
@@ -98,7 +161,6 @@ export function PerformanceDashboard() {
     );
   }
 
-  // État vide - aucun technicien trouvé
   if (data.technicians.length === 0) {
     return (
       <Card className="border-muted">
@@ -131,87 +193,124 @@ export function PerformanceDashboard() {
         </Button>
         
         <div className="grid md:grid-cols-2 gap-4">
-          <TechnicianRadarChart technician={selectedTech} />
+          <div className="space-y-4">
+            <TechnicianRadarChart technician={selectedTech} />
+            {/* V2: WorkloadBreakdown */}
+            {selectedSnapshot && (
+              <WorkloadBreakdown workload={selectedSnapshot.workload} />
+            )}
+          </div>
           
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-base">Détail activité</CardTitle>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setEditDialogTech(selectedTech)}
-              >
-                Modifier paramètres
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Temps */}
-              <div>
-                <div className="text-sm text-muted-foreground mb-2">Répartition temps</div>
-                <div className="flex h-4 rounded-full overflow-hidden bg-muted">
-                  <div 
-                    className="bg-primary"
-                    style={{ width: `${(selectedTech.timeProductive / Math.max(selectedTech.timeTotal, 1)) * 100}%` }}
-                  />
-                  <div 
-                    className="bg-accent"
-                    style={{ width: `${(selectedTech.timeNonProductive / Math.max(selectedTech.timeTotal, 1)) * 100}%` }}
-                  />
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>Productif: {Math.round(selectedTech.timeProductive / 60)}h</span>
-                  <span>Autre: {Math.round(selectedTech.timeNonProductive / 60)}h</span>
-                </div>
-              </div>
-              
-              {/* Métriques détaillées */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-muted/50 rounded-lg p-3">
-                  <div className="text-xs text-muted-foreground">Interventions</div>
-                  <div className="text-xl font-bold">{selectedTech.interventionsCount}</div>
-                </div>
-                <div className="bg-muted/50 rounded-lg p-3">
-                  <div className="text-xs text-muted-foreground">Dossiers traités</div>
-                  <div className="text-xl font-bold">{selectedTech.dossiersCount}</div>
-                </div>
-                <div className="bg-muted/50 rounded-lg p-3 text-left">
-                  <div className="text-xs text-muted-foreground">Taux SAV</div>
-                  <div className="text-xl font-bold">{formatPercent(selectedTech.savRate * 100)}</div>
-                  {selectedTech.savCount > 0 && (
-                    <div className="flex flex-col gap-1 mt-2">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setSavDrawerTech(selectedTech);
-                        }}
-                        className="text-xs text-primary hover:underline text-left cursor-pointer"
-                      >
-                        Valider/Invalider SAV →
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          navigate(`/?tab=pilotage&subtab=sav&technicien=${encodeURIComponent(selectedTech.id)}`);
-                        }}
-                        className="text-xs text-muted-foreground hover:text-primary hover:underline text-left cursor-pointer"
-                      >
-                        Voir dans Stats SAV →
-                      </button>
-                    </div>
+          <div className="space-y-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-base">Détail activité</CardTitle>
+                <div className="flex items-center gap-2">
+                  {selectedSnapshot && (
+                    <>
+                      <ConfidenceBadge confidence={selectedSnapshot.confidenceBreakdown} />
+                      <DataQualityBadge flags={selectedSnapshot.dataQualityFlags} />
+                    </>
                   )}
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setEditDialogTech(selectedTech)}
+                  >
+                    Modifier paramètres
+                  </Button>
                 </div>
-                <div className="bg-muted/50 rounded-lg p-3">
-                  <div className="text-xs text-muted-foreground">Charge/Capacité</div>
-                  <div className="text-xl font-bold">{formatPercent(selectedTech.loadRatio * 100)}</div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* V2: DegradedStateAlert per tech */}
+                {selectedSnapshot && (
+                  <DegradedStateAlert 
+                    flags={selectedSnapshot.dataQualityFlags} 
+                    technicianName={selectedTech.name}
+                  />
+                )}
+
+                {/* Temps */}
+                <div>
+                  <div className="text-sm text-muted-foreground mb-2">Répartition temps</div>
+                  <div className="flex h-4 rounded-full overflow-hidden bg-muted">
+                    <div 
+                      className="bg-primary"
+                      style={{ width: `${(selectedTech.timeProductive / Math.max(selectedTech.timeTotal, 1)) * 100}%` }}
+                    />
+                    <div 
+                      className="bg-accent"
+                      style={{ width: `${(selectedTech.timeNonProductive / Math.max(selectedTech.timeTotal, 1)) * 100}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                    <span>Productif: {Math.round(selectedTech.timeProductive / 60)}h</span>
+                    <span>Autre: {Math.round(selectedTech.timeNonProductive / 60)}h</span>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+                
+                {/* Métriques détaillées */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="text-xs text-muted-foreground">Interventions</div>
+                    <div className="text-xl font-bold">{selectedTech.interventionsCount}</div>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="text-xs text-muted-foreground">Dossiers traités</div>
+                    <div className="text-xl font-bold">{selectedTech.dossiersCount}</div>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3 text-left">
+                    <div className="text-xs text-muted-foreground">Taux SAV</div>
+                    <div className="text-xl font-bold">{formatPercent(selectedTech.savRate * 100)}</div>
+                    {selectedTech.savCount > 0 && (
+                      <div className="flex flex-col gap-1 mt-2">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setSavDrawerTech(selectedTech);
+                          }}
+                          className="text-xs text-primary hover:underline text-left cursor-pointer"
+                        >
+                          Valider/Invalider SAV →
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            navigate(`/?tab=pilotage&subtab=sav&technicien=${encodeURIComponent(selectedTech.id)}`);
+                          }}
+                          className="text-xs text-muted-foreground hover:text-primary hover:underline text-left cursor-pointer"
+                        >
+                          Voir dans Stats SAV →
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="text-xs text-muted-foreground">Charge/Capacité</div>
+                    <div className="text-xl font-bold">{formatPercent(selectedTech.loadRatio * 100)}</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
+
+        {/* Drawer SAV (detail view) */}
+        <SavDetailsDrawer
+          technician={savDrawerTech}
+          dateRange={dateRange}
+          open={!!savDrawerTech}
+          onOpenChange={(open) => !open && setSavDrawerTech(null)}
+        />
+        <TechnicianQuickEditDialog
+          technician={editDialogTech}
+          open={!!editDialogTech}
+          onOpenChange={(open) => !open && setEditDialogTech(null)}
+        />
       </div>
     );
   }
@@ -220,14 +319,23 @@ export function PerformanceDashboard() {
     <div className="space-y-6">
       {/* Header with month selector */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Activity className="w-5 h-5 text-primary" />
-            Performance Terrain
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Pilotage équilibré, orienté capacité & qualité
-          </p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Activity className="w-5 h-5 text-primary" />
+              Performance Terrain
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Pilotage équilibré, orienté capacité & qualité
+            </p>
+          </div>
+          {/* V2: Confidence & quality badges */}
+          {quality && (
+            <div className="flex items-center gap-2">
+              <ConfidenceBadge confidence={quality.avgConfidence} />
+              <DataQualityBadge flags={quality.flags} />
+            </div>
+          )}
         </div>
         
         {/* Sélecteur de mois */}
@@ -250,6 +358,11 @@ export function PerformanceDashboard() {
           <PerformanceLegend />
         </div>
       </div>
+
+      {/* V2: Degraded state alert if confidence is low */}
+      {quality && quality.avgConfidence.globalConfidenceScore < 0.6 && (
+        <DegradedStateAlert flags={quality.flags} />
+      )}
 
       {/* KPIs équipe */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

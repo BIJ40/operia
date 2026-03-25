@@ -194,15 +194,15 @@ export function usePerformanceTerrain(dateRange: DateRange) {
           absences,
           config,
           period: dateRange,
+          matchLog: matchLog.map(m => ({
+            aId: m.aId,
+            bId: m.bId,
+            outcome: m.outcome,
+            score: m.score,
+          })),
         };
 
         const engineOutput = computeTechnicianSnapshots(engineInput);
-        engineOutput.matchLog = matchLog.map(m => ({
-          a: m.aId,
-          b: m.bId,
-          outcome: m.outcome,
-          score: m.score,
-        }));
 
         // === CONVERT TO LEGACY FORMAT ===
         const technicians = engineOutput.snapshots.map(convertToLegacy);

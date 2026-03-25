@@ -213,12 +213,20 @@ export interface AbsenceInfo {
   days: number;
 }
 
+export interface MatchLogEntry {
+  aId: string;
+  bId: string;
+  outcome: MatchOutcome;
+  score: number;
+}
+
 export interface PerformanceEngineInput {
   workItems: WorkItem[];
   technicians: Map<string, TechnicianInput>;
   absences: Map<string, AbsenceInfo>;
   config: PerformanceConfig;
   period: { start: Date; end: Date };
+  matchLog?: MatchLogEntry[];
 }
 
 export interface PerformanceEngineOutput {
