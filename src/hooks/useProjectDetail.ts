@@ -14,17 +14,17 @@ import { getProjectDetail, type ProjectDetailResult } from '@/services/projectDe
 interface UseProjectDetailOptions {
   /** Ref du dossier — le hook ne s'active que si fourni */
   ref: string | null | undefined;
-  /** Slug de l'agence */
-  agencySlug: string | null | undefined;
+  /** Slug de l'agence (optionnel pour apporteurs — résolu côté serveur) */
+  agencySlug?: string | null | undefined;
   /** Désactiver manuellement (défaut: false) */
   disabled?: boolean;
 }
 
 export function useProjectDetail({ ref, agencySlug, disabled = false }: UseProjectDetailOptions) {
   return useQuery<ProjectDetailResult>({
-    queryKey: ['project-detail', agencySlug, ref],
-    queryFn: () => getProjectDetail(ref!, agencySlug!),
-    enabled: !!ref && !!agencySlug && !disabled,
+    queryKey: ['project-detail', agencySlug || '_auto', ref],
+    queryFn: () => getProjectDetail(ref!, agencySlug),
+    enabled: !!ref && !disabled,
     staleTime: 10 * 60 * 1000, // 10 minutes
     retry: 1, // Un seul retry — ne jamais boucler
     refetchOnWindowFocus: false,
