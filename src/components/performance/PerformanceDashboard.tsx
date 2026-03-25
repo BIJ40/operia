@@ -302,6 +302,14 @@ export function PerformanceDashboard() {
                 </div>
               </CardContent>
             </Card>
+            {/* V2: CapacityBreakdown */}
+            {selectedSnapshot && (
+              <CapacityBreakdown 
+                capacity={selectedSnapshot.capacity}
+                weeklyHoursSource={selectedSnapshot.weeklyHoursSource}
+                weeklyHours={selectedSnapshot.weeklyHours}
+              />
+            )}
           </div>
         </div>
 
