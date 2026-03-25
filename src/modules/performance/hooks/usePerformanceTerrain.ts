@@ -127,8 +127,8 @@ export function usePerformanceTerrain(dateRange: DateRange) {
   const { isAgencyReady, currentAgency } = useAgency();
   const { config } = usePerformanceConfig();
 
-  const agencySlug = currentAgency?.slug || currentAgency?.id || agence || '';
-  const effectiveAgencyId = currentAgency?.id || agencyId;
+  const agencySlug = currentAgency?.slug || agence || '';
+  const effectiveAgencyId = agencyId || null;
 
   // Fetch structured absences from RH table
   const { data: rhAbsences } = useTechnicianAbsences({
