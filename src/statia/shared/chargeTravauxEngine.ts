@@ -16,8 +16,13 @@ const ETATS_ELIGIBLES = new Set(['to_planify_tvx', 'devis_to_order', 'wait_fourn
 // États d'intervention à exclure (annulés ou à reprogrammer)
 const ITV_ETATS_EXCLUS = new Set(['to_reprog', 'canceled', 'cancelled', 'annulé', 'annule']);
 
-// États de devis éligibles (on exclut draft, rejected, canceled)
-const DEVIS_ETATS_EXCLUS = new Set(['draft', 'rejected', 'canceled']);
+// États de devis à exclure (annulés, refusés, brouillons)
+const DEVIS_ETATS_EXCLUS = new Set([
+  'draft', 'brouillon',
+  'rejected', 'refused', 'refusé', 'refuse', 'refus',
+  'canceled', 'cancelled', 'annulé', 'annule', 'annulée', 'annulee',
+  'abandon', 'abandonné', 'abandonne',
+]);
 
 export interface ChargeTravauxProjet {
   projectId: number | string;
