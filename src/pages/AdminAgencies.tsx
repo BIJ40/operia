@@ -215,16 +215,20 @@ export default function AdminAgencies() {
 
   const handleSave = async () => {
     try {
+      const saveData = {
+        ...formData,
+        content_webhook_url: formData.content_webhook_url.trim() || null,
+      };
       if (editingAgency) {
         const { error } = await supabase
           .from('apogee_agencies')
-          .update(formData)
+          .update(saveData)
           .eq('id', editingAgency.id);
 
         if (error) throw error;
         toast({ title: 'Agence modifiée avec succès' });
       } else {
-        const { error } = await supabase.from('apogee_agencies').insert([formData]);
+        const { error } = await supabase.from('apogee_agencies').insert([saveData]);
 
         if (error) throw error;
         toast({ title: 'Agence créée avec succès' });
