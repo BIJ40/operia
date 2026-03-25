@@ -15,7 +15,7 @@ interface Props {
 }
 
 const WARNING_LABELS: Record<CalculationWarningCode, string> = {
-  MISSING_CONTRACT: 'Contrat RH absent',
+  MISSING_CONTRACT: 'Durée hebdo non renseignée',
   MISSING_ABSENCE_DATA: 'Données absences manquantes',
   HIGH_FALLBACK_USAGE: 'Durées majoritairement estimées',
   AMBIGUOUS_MATCHING: 'Rapprochement ambigu',

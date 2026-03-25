@@ -13,7 +13,7 @@ interface Props {
 }
 
 const FLAG_LABELS: Record<string, string> = {
-  missingContract: 'Contrat RH absent — capacité estimée (35h par défaut)',
+  missingContract: 'Durée hebdo non renseignée — capacité estimée (35h par défaut)',
   missingExplicitDurations: 'Aucune durée explicite — durées estimées',
   missingPlanningCoverage: 'Aucune activité planning trouvée',
   missingAbsenceData: 'Aucune donnée d\'absence disponible',

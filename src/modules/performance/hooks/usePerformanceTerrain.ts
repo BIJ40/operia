@@ -154,11 +154,13 @@ export function usePerformanceTerrain(dateRange: DateRange) {
               .map(c => c.id);
 
             if (unresolvedCollabIds.length > 0) {
+              // Query ALL contracts (not just is_current) ordered by most recent first
               const { data: contracts } = await supabase
                 .from('employment_contracts')
                 .select('collaborator_id, weekly_hours')
                 .in('collaborator_id', unresolvedCollabIds)
-                .eq('is_current', true);
+                .not('weekly_hours', 'is', null)
+                .order('start_date', { ascending: false });
 
               if (contracts) {
                 const weeklyByCollabId = new Map<string, number>();
