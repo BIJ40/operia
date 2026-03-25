@@ -1,136 +1,213 @@
-# Refonte module Performance Terrain — Plan d'implementation
 
-## Autopsie confirmee
 
-Le hook monolithique `usePerformanceTerrain.ts` (579 lignes) concentre fetch + calcul + agregation. Problemes critiques : capacite sur jours calendaires (inclut week-ends), pas de division multi-tech, CA a 0, absences par keyword sans confiance, aucun score de qualite donnees.
+# Phase 5 — Data Quality & Confiance avancee
 
-RLS du projet utilise `get_user_agency_id(auth.uid())` et `has_min_global_role(auth.uid(), N)` comme patterns standards.
+## Etat actuel
 
----
-
-## Phase 1 — Engine core (11 fichiers purs, zero dependance reseau)
-
-### `src/modules/performance/engine/types.ts`
-
-Tous les types canoniques : `WorkItem`, `DurationSource`, `AbsenceSource` (`leave_table | planning_unavailability | none`), `CalculationWarningCode` (9 codes), `CalculationTrace` (avec `itemCountBySource`, `minutesBySource`), `DataQualityFlags` (7 booleans), `ConfidenceBreakdown` (4 sous-scores + global), `CapacityResult`, `TechnicianSnapshot`, `UnknownTechnicianPolicy`, `PerformanceConfig`.
-
-### `src/modules/performance/engine/rules.ts`
-
-Fichier unique centralisant : `DURATION_HIERARCHY`, `CONFIDENCE_WEIGHTS` ({duration: 0.35, capacity: 0.25, matching: 0.2, classification: 0.2}), `DEFAULT_THRESHOLDS`, `PRODUCTIVE_TYPES`/`NON_PRODUCTIVE_TYPES` (depuis STATIA_RULES), `MATCHING_THRESHOLDS` (merge: 0.7, overlap: 0.5), `MAX_DURATION_MINUTES` (720), `DEFAULT_WEEKLY_HOURS` (35), `DEFAULT_TASK_DURATION` (60), `UNKNOWN_TECHNICIAN_POLICY: 'team_only'`.
-
-### `src/modules/performance/engine/capacity.ts`
-
-`computeCapacity(weeklyHours, period, options?)` — itere jour par jour, exclut samedi/dimanche, param optionnel `holidays: Date[]`. Absences : si `source === 'planning_unavailability'` et `deductPlanningUnavailability === false` → pas de deduction, flag `missingAbsenceData`. Si `source === 'none'` → capacite brute. Retourne `CapacityResult` complet avec `absenceConfidence`.
-
-### `src/modules/performance/engine/duration.ts`
-
-`resolveDuration(workItem)` — hierarchie stricte : explicite > computed (start/end) > planning > business_default > unknown. Duree aberrante (>720min ou negative) → warning + fallback. Retourne `{minutes, source}`.
-
-### `src/modules/performance/engine/allocation.ts`
-
-`allocateDuration(minutes, technicianIds)` — division equitable stricte `minutes / N`. Retourne Map + method `'equal_split'`.
-
-### `src/modules/performance/engine/classification.ts`
-
-`classifyWorkItem(type, type2)` et `isSavIntervention(intervention, project)` — logique existante extraite, utilise listes de `rules.ts`.
-
-### `src/modules/performance/engine/matching.ts`
-
-`scoreWorkItemSimilarity(a, b)` — criteres : meme interventionId (0.4), chevauchement horaire (0.3), techniciens communs (0.2), meme projectId (0.1). Normalisation UTC avant scoring. Items sans `end` → `end = start + duration`. `shouldMergeWorkItems(a, b)` (score > seuil). `mergeWorkItems(a, b)` (priorite visite > creneau). Chaque decision tracee comme `MatchOutcome`.
-
-### `src/modules/performance/engine/consolidation.ts`
-
-`buildUnifiedWorkItems(interventions, creneaux, projects)` → `{items: WorkItem[], matchLog: MatchOutcome[]}`. Pipeline : extraire visites → extraire creneaux → matcher par score → fusionner ou garder separe → tracer.
-
-### `src/modules/performance/engine/confidence.ts`
-
-`computeConfidenceBreakdown(snapshot)` → `ConfidenceBreakdown`. 4 sous-scores independants, global = somme ponderee depuis `rules.ts`.
-
-### `src/modules/performance/engine/zones.ts`
-
-`getProductivityZone`, `getSavZone`, `getLoadZone`, `getCompositeScore` — parametrables via config.
-
-### `src/modules/performance/engine/performanceEngine.ts`
-
-`computeTechnicianSnapshots(workItems, technicianMap, capacities, config)` — orchestrateur. Politique `team_only` pour techniciens inconnus : comptabilises dans agregate equipe, pas dans lignes individuelles, warning emis. `caGenerated: null` toujours. Retourne `TechnicianSnapshot[]`.
+- **Absences** : detection heuristique par mots-cles dans planning, `days: 1` en dur, source = `planning_unavailability`. Aucune table d'absences n'existe en base.
+- **Confiance** : scoring lineaire sans malus, 4 poids fixes (0.35/0.25/0.20/0.20). Pas de tiers (high/medium/low).
+- **UX** : badges et alertes OR-agreges, pas de comptage par tech impacte, pas de recommandations.
+- **Debug** : ExplainCalculation existe mais sans detail penalites ni matchs ambigus.
 
 ---
 
-## Phase 2 — Hooks refondus
+## Micro-lot 1 — Table d'absences + integration moteur
 
-### `src/modules/performance/hooks/usePerformanceTerrain.ts`
+### 1.1 Migration : creer `technician_absences`
 
-Thin wrapper : fetch DataService + Supabase (collaborators, contracts) → passe au engine → retourne snapshots. Memes query keys (`performance-terrain`). Type `TechnicianPerformance` etendu (anciens champs conserves + nouveaux).
+```sql
+CREATE TABLE technician_absences (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agency_id UUID NOT NULL REFERENCES agencies(id),
+  technician_apogee_id TEXT NOT NULL,
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  absence_type TEXT NOT NULL DEFAULT 'autre',
+  is_full_day BOOLEAN NOT NULL DEFAULT true,
+  hours NUMERIC(4,1),
+  source TEXT NOT NULL DEFAULT 'manual',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE technician_absences ENABLE ROW LEVEL SECURITY;
+-- RLS: lecture/ecriture par agence
+```
 
-### `src/modules/performance/hooks/usePerformanceConfig.ts`
+Cle de liaison : `technician_apogee_id` (= l'id Apogee du user, coherent avec `technicianMap`).
 
-Charge `agency_performance_config` avec fallback sur `DEFAULT_THRESHOLDS`.
+### 1.2 Hook `useTechnicianAbsences`
 
-### `src/hooks/usePerformanceTerrain.ts` (modifie)
+Nouveau fichier `src/modules/performance/hooks/useTechnicianAbsences.ts`.
 
-Re-export vers le nouveau module pour compatibilite.
+- Query Supabase `technician_absences` filtre par `agency_id` et periode
+- Retourne `Map<string, AbsenceEntry[]>` avec calcul reel des jours/heures par tech
+- Gere demi-journees et chevauchements weekend
+
+### 1.3 Modifier `usePerformanceTerrain`
+
+- Appeler `useTechnicianAbsences` en parallele du fetch existant
+- Si absences RH trouvees : source = `'leave_table'`, days = calcul reel, confidence = 1.0
+- Sinon : fallback sur detection heuristique actuelle (inchange)
+- Mise a jour du type `AbsenceInfo` pour supporter `hours` en plus de `days`
+
+### 1.4 Modifier `capacity.ts`
+
+- Accepter `absenceHours` en option (en plus de `absenceDays`)
+- Si `absenceHours` fourni : deduire en minutes directement au lieu de jours entiers
+- Support demi-journees
+
+### 1.5 DataQualityFlags
+
+Remplacer le booleen `missingAbsenceData` par :
+
+```typescript
+absenceReliability: 'none' | 'partial' | 'reliable'
+```
+
+- `reliable` = toutes les absences viennent de `leave_table`
+- `partial` = mix RH + planning
+- `none` = aucune source
+
+Impact : `DegradedStateAlert`, `DataQualityBadge`, `ExplainCalculation` doivent lire le nouveau champ.
+
+### Fichiers modifies
+
+| Fichier | Action |
+|---|---|
+| Migration SQL | Creer table + RLS |
+| `engine/types.ts` | `absenceReliability` dans `DataQualityFlags`, `absenceHours` dans `AbsenceInfo` |
+| `engine/capacity.ts` | Support `absenceHours` |
+| `hooks/useTechnicianAbsences.ts` | Nouveau hook |
+| `hooks/usePerformanceTerrain.ts` | Integration absences RH |
+| `engine/performanceEngine.ts` | Peupler `absenceReliability` |
+| `components/DataQualityBadge.tsx` | Lire `absenceReliability` |
+| `components/DegradedStateAlert.tsx` | Lire `absenceReliability` |
+| `PerformanceDashboard.tsx` | Adapter aggregation flags |
 
 ---
 
-## Phase 3 — Migration SQL
+## Micro-lot 2 — Confiance V2
 
-Table `agency_performance_config` avec `deduct_planning_unavailability BOOLEAN DEFAULT false`, RLS alignee sur patterns existants :
+### 2.1 Malus dynamiques dans `confidence.ts`
 
-- Lecture : `get_user_agency_id(auth.uid()) = agency_id OR has_min_global_role(auth.uid(), 5)`
-- Ecriture : meme agence + N3+ OU N5+ global
+Apres le calcul lineaire existant, appliquer des penalites :
+
+```typescript
+let penalty = 0;
+if (matchAmbiguousCount > 0) penalty += 0.10;
+if (highFallbackUsage) penalty += 0.15;
+if (missingContract) penalty += 0.20;
+globalConfidenceScore = Math.max(0, globalConfidenceScore - penalty);
+```
+
+Modifier la signature pour accepter `highFallbackUsage` et `missingContract` en input.
+
+### 2.2 Nouveaux poids
+
+```typescript
+duration: 0.30, capacity: 0.25, matching: 0.25, classification: 0.20
+```
+
+### 2.3 Confidence tiers
+
+Ajouter dans `types.ts` :
+
+```typescript
+export type ConfidenceLevel = 'high' | 'medium' | 'low';
+```
+
+Ajouter `confidenceLevel` dans `ConfidenceBreakdown`. Calculer dans `confidence.ts` :
+- `> 0.8` = high
+- `0.6-0.8` = medium  
+- `< 0.6` = low
+
+### 2.4 Propagation
+
+`ConfidenceBadge` affiche le tier avec couleur (vert/orange/rouge).
+
+### Fichiers modifies
+
+| Fichier | Action |
+|---|---|
+| `engine/types.ts` | `ConfidenceLevel`, `confidenceLevel` dans `ConfidenceBreakdown` |
+| `engine/confidence.ts` | Malus + nouveaux poids + tier |
+| `engine/rules.ts` | Mettre a jour `CONFIDENCE_WEIGHTS` |
+| `engine/performanceEngine.ts` | Passer `highFallbackUsage` et `missingContract` au calcul |
+| `components/ConfidenceBadge.tsx` | Afficher tier |
 
 ---
 
-## Phase 4 — Composants UX (6 nouveaux)
+## Micro-lot 3 — UX decisionnelle
 
-- `ConfidenceBadge.tsx` — badge 0-100% avec sous-scores au hover
-- `DataQualityBadge.tsx` — icone + tooltip montrant les flags actifs
-- `WorkloadBreakdown.tsx` — decomposition productif/non-productif/SAV avec sources
-- `CapacityBreakdown.tsx` — jours ouvres - absences = capacite effective
-- `ExplainCalculation.tsx` — panneau drill-down avec `calculationTrace`
-- `DegradedStateAlert.tsx` — alerte explicite (contrat absent, absences inconnues, trop de fallback, couverture partielle)
+### 3.1 DataQualityBadge V2
 
-Dashboard enrichi : ajout KPIs confiance + tension dans header, tooltip heatmap enrichi.
+Remplacer le simple compteur par un affichage du nombre de techniciens impactes :
+
+```
+⚠️ 3 techniciens — fallback eleve
+```
+
+Recevoir `snapshots` en prop, compter par type de flag.
+
+### 3.2 DegradedStateAlert V2
+
+Ajouter des recommandations par flag :
+
+| Flag | Recommandation |
+|---|---|
+| missingPlanningCoverage | Verifier le planning |
+| highFallbackUsage | Ameliorer la saisie des durees |
+| ambiguousMatching | Verifier les doublons |
+| missingContract | Completer les donnees RH |
+| absenceReliability = none | Saisir les absences |
+
+### 3.3 Dashboard : adapter aggregation
+
+Passer les snapshots complets aux composants V2 au lieu des flags OR-agreges.
+
+### Fichiers modifies
+
+| Fichier | Action |
+|---|---|
+| `components/DataQualityBadge.tsx` | Accepter snapshots, compter techs impactes |
+| `components/DegradedStateAlert.tsx` | Ajouter recommandations |
+| `PerformanceDashboard.tsx` | Passer snapshots aux composants |
 
 ---
 
-## Phase 5 — Tests (7 fichiers)
+## Micro-lot 4 — Debug avancee
 
-Tests standards + vicieux : chevauchements partiels, visite sans fin, intervention sans tech, contrat absent, periode 100% week-end, doublon imparfait ±15min, technicien inactif, duree aberrante, aucune donnee.
+### 4.1 ExplainCalculation enrichi
+
+Ajouter sections :
+- Penalites appliquees (liste des malus avec valeur)
+- Matchs ambigus (count + scores)
+- Source des absences (RH vs planning vs none)
+
+### 4.2 Mode debug via query param
+
+Si `?debugPerformance=true` : afficher matchLog brut et consolidationTrace complet dans un panneau collapsible supplementaire.
+
+### Fichiers modifies
+
+| Fichier | Action |
+|---|---|
+| `components/ExplainCalculation.tsx` | Sections penalites + ambigus + absences |
+| `PerformanceDashboard.tsx` | Lire query param, passer mode debug |
 
 ---
 
-## Fichiers (30+)
+## Ordre d'execution
 
+1. **Micro-lot 1** — migration + hook absences + integration moteur
+2. **Micro-lot 2** — confiance V2 (malus + tiers)
+3. **Micro-lot 3** — UX decisionnelle
+4. **Micro-lot 4** — debug/explain
 
-| Action   | Fichier                                               |
-| -------- | ----------------------------------------------------- |
-| Creer    | 11 fichiers `src/modules/performance/engine/`         |
-| Creer    | 7 fichiers `__tests__/`                               |
-| Creer    | 2 hooks `src/modules/performance/hooks/`              |
-| Creer    | 6 composants `src/modules/performance/components/`    |
-| Creer    | Migration SQL                                         |
-| Modifier | `src/hooks/usePerformanceTerrain.ts` → re-export      |
-| Modifier | `src/components/performance/PerformanceDashboard.tsx` |
-| Modifier | `src/components/performance/TeamHeatmap.tsx`          |
+## Regles strictes
 
+- Aucune modification des outputs legacy (`snapshotToLegacy` reste stable)
+- Le fallback heuristique absences reste actif si pas de donnees RH
+- Tests existants doivent rester verts
+- Pas de breaking change sur les composants deja branches
 
-## Technical details
-
-- RLS pattern: `get_user_agency_id(auth.uid())` + `has_min_global_role` (confirmed from 50+ existing migrations)
-- STATIA_RULES already exports `productiveTypes` and `nonProductiveTypes` at `src/statia/domain/rules.ts`
-- DataService.loadAllData returns `{users, clients, projects, interventions, factures, devis, creneaux}`
-- Employment contracts loaded via Supabase `collaborators` + `employment_contracts` tables (existing pattern)
-- Existing components (SavDetailsDrawer, QuickEditDialog, Legend, RadarChart) conserved — import path updated via re-export
-
-&nbsp;
-
-&nbsp;
-
-### Contraintes finales d’implémentation
-
-1. `agency_performance_config` doit rester en **mode simple V1** : une seule config active par agence (`UNIQUE (agency_id)`), sans historique fonctionnel.
-2. Si `adjustedCapacityMinutes = 0`, alors `loadRatio = null`, warning `ZERO_WORKING_DAYS`, et UI explicite “capacité non calculable”.
-3. Une durée `unknown` ne doit jamais être injectée silencieusement comme temps réel. Elle doit soit rester exclue, soit être convertie via `business_default` avec traçabilité explicite et baisse de confiance.
-4. Le moteur analytique doit être livré avant l’adaptation UI.
-5. Aucun composant UI ne doit recalculer de logique métier déjà produite par l’engine.
