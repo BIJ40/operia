@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useAgency } from '@/apogee-connect/contexts/AgencyContext';
 import { DataService } from '@/apogee-connect/services/dataService';
+import { apogeeProxy } from '@/services/apogeeProxy';
 import { supabase } from '@/integrations/supabase/client';
 import { logDebug, logError } from '@/lib/logger';
 import { normalizeIsOn, isExcludedUserType } from '@/apogee-connect/utils/techTools';
@@ -127,11 +128,16 @@ export function usePerformanceTerrain(dateRange: DateRange) {
 
       try {
         // === FETCH DATA ===
-        const loaded = await DataService.loadAllData(true, false, agencySlug);
+        const [loaded, planningCreneauxRaw] = await Promise.all([
+          DataService.loadAllData(true, false, agencySlug),
+          apogeeProxy.getPlanningCreneaux({ agencySlug }).catch(() => []),
+        ]);
         const interventions = (loaded?.interventions || []) as unknown as Record<string, unknown>[];
         const projects = (loaded?.projects || []) as unknown as Record<string, unknown>[];
         const users = (loaded?.users || []) as unknown as Record<string, unknown>[];
         const creneaux = (loaded?.creneaux || []) as unknown as Record<string, unknown>[];
+        // Planning créneaux includes congés/absences — use for absence detection
+        const planningCreneaux = (planningCreneauxRaw || []) as Record<string, unknown>[];
 
         // === LOAD WEEKLY HOURS ===
         // Hierarchy: collaborator schedule (work_start/end/days) → contract weekly_hours → config default
@@ -274,7 +280,7 @@ export function usePerformanceTerrain(dateRange: DateRange) {
         const PLANNING_ABSENCE_TYPES = ['conge', 'congé', 'absence'];
         const absenceAccum = new Map<string, { hours: number; label: string }>();
 
-        for (const item of creneaux) {
+        for (const item of planningCreneaux) {
           const rec = item as Record<string, unknown>;
           const refType = String(rec.refType || '').toLowerCase();
           const type = String(rec.type || (rec.data as Record<string, unknown>)?.type || '').toLowerCase();
