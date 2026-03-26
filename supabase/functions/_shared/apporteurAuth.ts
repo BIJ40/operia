@@ -13,6 +13,7 @@ export interface ApporteurAuthResult {
   apogeeClientId: number;
   agencySlug: string;
   apporteurName: string;
+  email: string | null;
 }
 
 async function sha256(message: string): Promise<string> {
@@ -89,7 +90,7 @@ export async function authenticateApporteur(req: Request): Promise<ApporteurAuth
         .select(`
           id, manager_id, expires_at, revoked_at,
           apporteur_managers:manager_id (
-            id, apporteur_id, agency_id, is_active,
+            id, apporteur_id, agency_id, is_active, email,
             apporteurs:apporteur_id (id, name, apogee_client_id, is_active, portal_enabled)
           )
         `)
@@ -137,6 +138,7 @@ export async function authenticateApporteur(req: Request): Promise<ApporteurAuth
             apogeeClientId: apporteur.apogee_client_id,
             agencySlug: agency.slug,
             apporteurName: apporteur.name,
+            email: manager.email ?? null,
           };
         } else {
           console.warn('[apporteurAuth] Manager or apporteur inactive');
@@ -160,7 +162,7 @@ export async function authenticateApporteur(req: Request): Promise<ApporteurAuth
 
     const { data: apporteurUser } = await supabaseAdmin
       .from('apporteur_users')
-      .select('id, apporteur_id, agency_id')
+      .select('id, apporteur_id, agency_id, email')
       .eq('user_id', user.id)
       .eq('is_active', true)
       .single();
@@ -189,6 +191,7 @@ export async function authenticateApporteur(req: Request): Promise<ApporteurAuth
       apogeeClientId: apporteur.apogee_client_id,
       agencySlug: agency.slug,
       apporteurName: apporteur.name,
+      email: apporteurUser.email ?? user.email ?? null,
     };
   } catch (e) {
     console.warn('[apporteurAuth] JWT check failed:', e);

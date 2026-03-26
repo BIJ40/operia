@@ -45,7 +45,7 @@ function escapeHtml(value: string): string {
     .replaceAll("'", '&#39;');
 }
 
-type EmailSource = 'manager_id' | 'apporteur_id_fallback' | 'previous_exchange_fallback' | 'not_found';
+type EmailSource = 'manager_id' | 'apporteur_user_fallback' | 'apporteur_manager_fallback' | 'apporteur_name_fallback' | 'previous_exchange_fallback' | 'not_found';
 
 Deno.serve(async (req) => {
   const corsResult = handleCorsPreflightOrReject(req);
@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
         if (appUsers?.length && appUsers[0].email) {
           apporteurEmail = appUsers[0].email;
           apporteurName = [appUsers[0].first_name, appUsers[0].last_name].filter(Boolean).join(' ') || null;
-          emailSource = 'apporteur_id_fallback';
+          emailSource = 'apporteur_user_fallback';
         }
       }
 
@@ -203,11 +203,49 @@ Deno.serve(async (req) => {
         if (managers?.length && managers[0].email) {
           apporteurEmail = managers[0].email;
           apporteurName = [managers[0].first_name, managers[0].last_name].filter(Boolean).join(' ') || null;
-          emailSource = 'apporteur_id_fallback';
+          emailSource = 'apporteur_manager_fallback';
         }
       }
 
-      // Fallback 2 : sender_email dans les échanges précédents
+      // Fallback 3 : retrouver l'apporteur par son nom dans le thread, puis lire un manager actif
+      if (!apporteurEmail) {
+        const { data: prevApporteurMessage } = await supabaseAdmin
+          .from('dossier_exchanges')
+          .select('sender_name')
+          .eq('agency_id', profile.agency_id)
+          .eq('dossier_ref', dossierRef)
+          .eq('sender_type', 'apporteur')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (prevApporteurMessage?.sender_name) {
+          const { data: apporteur } = await supabaseAdmin
+            .from('apporteurs')
+            .select('id')
+            .eq('agency_id', profile.agency_id)
+            .eq('name', prevApporteurMessage.sender_name)
+            .maybeSingle();
+
+          if (apporteur?.id) {
+            const { data: managers } = await supabaseAdmin
+              .from('apporteur_managers')
+              .select('email, first_name, last_name')
+              .eq('apporteur_id', apporteur.id)
+              .eq('is_active', true)
+              .order('created_at', { ascending: true })
+              .limit(1);
+
+            if (managers?.length && managers[0].email) {
+              apporteurEmail = managers[0].email;
+              apporteurName = [managers[0].first_name, managers[0].last_name].filter(Boolean).join(' ') || prevApporteurMessage.sender_name;
+              emailSource = 'apporteur_name_fallback';
+            }
+          }
+        }
+      }
+
+      // Fallback 4 : sender_email dans les échanges précédents
       if (!apporteurEmail) {
         const { data: prevExchange } = await supabaseAdmin
           .from('dossier_exchanges')
