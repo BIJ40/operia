@@ -3,9 +3,37 @@ import { useEffect, useState } from 'react';
 
 type OpenImageModalEvent = CustomEvent<{ url?: string }>;
 
-function resolveImageUrl(target: HTMLElement): string | null {
-  const imageTrigger = target.closest('[data-image-modal], [data-image-button], [data-src]') as HTMLElement | null;
+function getTargetElement(target: EventTarget | null): HTMLElement | null {
+  if (target instanceof HTMLElement) return target;
+  if (target instanceof SVGElement) return target as unknown as HTMLElement;
+  if (target instanceof Node) return target.parentElement;
+  return null;
+}
+
+function isImageHref(url: string | null): url is string {
+  return !!url && (
+    url.startsWith('data:image/') ||
+    /\.(png|jpe?g|gif|webp|svg)(\?|#|$)/i.test(url)
+  );
+}
+
+function resolveImageUrl(target: EventTarget | null): string | null {
+  const targetElement = getTargetElement(target);
+  if (!targetElement) return null;
+
+  const imageTrigger = targetElement.closest('[data-image-modal], [data-image-button], [data-src], a[href], img') as HTMLElement | null;
   if (!imageTrigger) return null;
+
+  if (imageTrigger instanceof HTMLAnchorElement) {
+    const href = imageTrigger.getAttribute('href');
+    if (isImageHref(href)) return href;
+  }
+
+  if (imageTrigger instanceof HTMLImageElement) {
+    if (imageTrigger.hasAttribute('data-no-modal')) return null;
+    if (imageTrigger.closest('.resizable-image-wrapper')) return null;
+    return imageTrigger.currentSrc || imageTrigger.src || null;
+  }
 
   return imageTrigger.getAttribute('data-image-modal')
     || imageTrigger.getAttribute('data-src')
@@ -19,26 +47,13 @@ export function ImageModal() {
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      const triggerUrl = resolveImageUrl(target);
+      const triggerUrl = resolveImageUrl(e.target);
 
-      if (triggerUrl) {
-        e.preventDefault();
-        e.stopPropagation();
-        setImageUrl(triggerUrl);
-        return;
-      }
+      if (!triggerUrl) return;
 
-      if (target.tagName === 'IMG') {
-        const img = target as HTMLImageElement;
-        if (img.hasAttribute('data-no-modal')) return;
-        if (img.closest('.resizable-image-wrapper')) return;
-
-        if (img.naturalWidth > 100 && img.naturalHeight > 100) {
-          e.preventDefault();
-          setImageUrl(img.src);
-        }
-      }
+      e.preventDefault();
+      e.stopPropagation();
+      setImageUrl(triggerUrl);
     };
 
     const handleOpenImageModal = (event: Event) => {
@@ -62,9 +77,9 @@ export function ImageModal() {
     <Dialog open={!!imageUrl} onOpenChange={(open) => !open && setImageUrl(null)}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
         {imageUrl && (
-          <img 
-            src={imageUrl} 
-            alt="Aperçu" 
+          <img
+            src={imageUrl}
+            alt="Aperçu"
             className="w-full h-auto rounded-lg"
           />
         )}

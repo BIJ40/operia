@@ -321,15 +321,29 @@ export function InternalGuideCategoryPanel({ slug }: InternalGuideCategoryPanelP
   }, [editingSection, updateBlock, toast]);
 
   const handleRichContentClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
-    const target = event.target as HTMLElement;
-    const imageTrigger = target.closest('[data-image-modal], [data-image-button], [data-src]') as HTMLElement | null;
+    const target = event.target;
+    const targetElement = target instanceof HTMLElement
+      ? target
+      : target instanceof SVGElement
+        ? target as unknown as HTMLElement
+        : target instanceof Node
+          ? target.parentElement
+          : null;
 
+    if (!targetElement) return;
+
+    const imageTrigger = targetElement.closest('[data-image-modal], [data-image-button], [data-src], a[href], img') as HTMLElement | null;
     if (!imageTrigger) return;
 
-    const url = imageTrigger.getAttribute('data-image-modal')
-      || imageTrigger.getAttribute('data-src')
-      || imageTrigger.closest('[data-image-button]')?.getAttribute('data-src')
-      || imageTrigger.querySelector('[data-image-modal]')?.getAttribute('data-image-modal');
+    const href = imageTrigger instanceof HTMLAnchorElement ? imageTrigger.getAttribute('href') : null;
+    const url = (href && (href.startsWith('data:image/') || /\.(png|jpe?g|gif|webp|svg)(\?|#|$)/i.test(href)))
+      ? href
+      : imageTrigger instanceof HTMLImageElement
+        ? imageTrigger.currentSrc || imageTrigger.src
+        : imageTrigger.getAttribute('data-image-modal')
+          || imageTrigger.getAttribute('data-src')
+          || imageTrigger.closest('[data-image-button]')?.getAttribute('data-src')
+          || imageTrigger.querySelector('[data-image-modal]')?.getAttribute('data-image-modal');
 
     if (!url) return;
 
