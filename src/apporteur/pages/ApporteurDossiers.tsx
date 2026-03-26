@@ -315,6 +315,7 @@ export default function ApporteurDossiers() {
                       Reste dû <SortIcon field="restedu" />
                     </div>
                   </TableHead>
+                  <TableHead className="w-12 text-center">PDF</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -370,6 +371,20 @@ export default function ApporteurDossiers() {
                         </TableCell>
                         <TableCell className="text-right font-medium text-foreground">
                           {d.restedu > 0 ? formatCurrency(d.restedu) : d.factureHT > 0 ? '✓' : '-'}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {(d.devisHT > 0 || d.factureHT > 0) ? (
+                            <div className="flex items-center justify-center gap-1">
+                              {d.devisHT > 0 && (
+                                <DocDownloadButton dossierRef={d.ref} docType="devis" />
+                              )}
+                              {d.factureHT > 0 && (
+                                <DocDownloadButton dossierRef={d.ref} docType="factures" />
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
                         </TableCell>
                       </TableRow>
                     );
