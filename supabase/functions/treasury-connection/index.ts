@@ -250,13 +250,10 @@ async function ensureBridgeUser(
   }
 
   // Create Bridge user via v3 aggregation endpoint
-  const externalUserId = `operia_${ctx.agencyId}_${ctx.userId}`;
+  const externalUserId = `operia-${ctx.agencyId}-${ctx.userId}`.replace(/[^a-zA-Z0-9\-_]/g, '_').slice(0, 128);
   const resp = await bridgeRequest("/v3/aggregation/users", {
     method: "POST",
-    body: {
-      external_user_id: externalUserId,
-      email: ctx.email ?? `${externalUserId}@operia.app`,
-    },
+    body: { external_user_id: externalUserId },
     clientId: creds.clientId,
     clientSecret: creds.clientSecret,
   });
