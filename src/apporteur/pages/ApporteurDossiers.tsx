@@ -46,6 +46,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import DossierDocumentsPanel from '../components/DossierDocumentsPanel';
+import { DocDownloadButton } from '../components/DocDownloadButton';
 
 type SortField = 'ref' | 'clientName' | 'status' | 'dateCreation' | 'factureHT' | 'restedu';
 type SortDirection = 'asc' | 'desc';
