@@ -164,46 +164,55 @@ export default function MapsTabContent() {
     fetchToken();
   }, []);
 
-  // Init map
+  // Init map — delayed to ensure container has dimensions
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken || map.current) return;
     if (!mapboxgl.supported()) { setMapInitError('WebGL non supporté.'); return; }
     setMapInitError(null);
     setMapReady(false);
 
-    try {
-      mapboxgl.accessToken = mapboxToken;
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: MAPBOX_STYLE,
-        center: DEFAULT_CENTER,
-        zoom: DEFAULT_ZOOM,
-      });
+    const container = mapContainer.current;
+    let ro: ResizeObserver | null = null;
 
-      const safeResize = () => { try { map.current?.resize(); } catch {} };
-      map.current.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-right');
+    const initTimer = setTimeout(() => {
+      try {
+        mapboxgl.accessToken = mapboxToken;
+        map.current = new mapboxgl.Map({
+          container,
+          style: MAPBOX_STYLE,
+          center: DEFAULT_CENTER,
+          zoom: DEFAULT_ZOOM,
+          attributionControl: true,
+        });
 
-      let ro: ResizeObserver | null = null;
-      if (typeof ResizeObserver !== 'undefined') {
-        ro = new ResizeObserver(() => safeResize());
-        ro.observe(mapContainer.current);
+        map.current.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-right');
+
+        map.current.on('load', () => {
+          setMapReady(true);
+          map.current?.resize();
+        });
+
+        enableStyleFallback(map.current);
+
+        ro = new ResizeObserver(() => {
+          if (map.current && !(map.current as any)._removed) {
+            map.current.resize();
+          }
+        });
+        ro.observe(container);
+      } catch (err) {
+        setMapInitError(err instanceof Error ? err.message : 'Erreur init carte');
+        map.current = null;
       }
+    }, 150);
 
-      requestAnimationFrame(safeResize);
-      setTimeout(safeResize, 50);
-      setTimeout(safeResize, 250);
-
-      map.current.on('load', () => { setMapReady(true); requestAnimationFrame(safeResize); });
-      map.current.on('error', (e) => {
-        const msg = (e as any)?.error?.message || 'Erreur Mapbox';
-        setMapInitError(String(msg));
-      });
-
-      return () => { ro?.disconnect(); setMapReady(false); map.current?.remove(); map.current = null; };
-    } catch (err) {
-      setMapInitError(err instanceof Error ? err.message : 'Erreur init carte');
+    return () => {
+      clearTimeout(initTimer);
+      ro?.disconnect();
+      setMapReady(false);
+      map.current?.remove();
       map.current = null;
-    }
+    };
   }, [mapboxToken]);
 
   const hasFittedBoundsRef = useRef(false);
