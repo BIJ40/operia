@@ -679,7 +679,6 @@ Deno.serve(async (req) => {
       // ── APPORTEURS MODE ──
       // Aggregate by postal code with apporteur/origin breakdown
       if (isApporteurs) {
-        // Classify apporteur type from client data
         const ORIGIN_KEYWORDS: Record<string, string[]> = {
           'Assurance': ['assur', 'axa', 'maif', 'macif', 'groupama', 'allianz', 'generali', 'matmut', 'maaf', 'gan', 'mma', 'swisslife', 'zurich'],
           'Agence Immobilière': ['immo', 'agence', 'laforet', 'century', 'orpi', 'foncia', 'guy hoquet', 'stephane plaza', 'nexity', 'l\'adresse', 'era ', 'square habitat'],
@@ -687,7 +686,6 @@ Deno.serve(async (req) => {
           'Bailleur': ['bailleur', 'hlm', 'habitat', 'opac', 'oph', 'logement social', 'sa hlm'],
           'Franchise / Réseau': ['franchise', 'réseau', 'partenaire'],
         };
-
         function classifyOrigin(clientName: string): string {
           const lower = (clientName || '').toLowerCase();
           for (const [type, keywords] of Object.entries(ORIGIN_KEYWORDS)) {
@@ -696,30 +694,22 @@ Deno.serve(async (req) => {
           return 'Autre';
         }
 
-        // Determine if a project has an apporteur (commanditaire ≠ client final)
-        // In Apogée, the commanditaire is stored as a separate client reference
         const projectApporteurType = new Map<number, string>();
         const projectApporteurName = new Map<number, string>();
-        const projectApporteurId = new Map<number, number>();
-
         for (const p of projects) {
           const data = p.data || {};
-          // commanditaireId is the apporteur; clientId is the end client
           const commanditaireId = data.commanditaireId || data.commanditaire_id;
           if (typeof commanditaireId === 'number' && commanditaireId !== p.clientId) {
             const cmdClient = clientsById.get(commanditaireId);
             if (cmdClient) {
               projectApporteurType.set(p.id, classifyOrigin(cmdClient.name));
               projectApporteurName.set(p.id, cmdClient.name);
-              projectApporteurId.set(p.id, commanditaireId);
             }
           } else {
-            // No commanditaire or same as client → "Client direct"
             projectApporteurType.set(p.id, 'Client direct');
           }
         }
 
-        // Build CA per project
         const caByProject = new Map<number, number>();
         for (const f of factures) {
           const pid = f.projectId;
@@ -729,167 +719,52 @@ Deno.serve(async (req) => {
           caByProject.set(pid, (caByProject.get(pid) || 0) + (isAvoir ? -Math.abs(montant) : montant));
         }
 
-        // Build devis per project
-        const devisByProject = new Map<number, { total: number; signed: number }>();
-        for (const d of devis) {
-          const pid = d.projectId;
-          if (typeof pid !== 'number') continue;
-          const entry = devisByProject.get(pid) || { total: 0, signed: 0 };
-          entry.total++;
-          if (['accepted', 'validated', 'order', 'signed'].includes((d.state || '').toLowerCase())) entry.signed++;
-          devisByProject.set(pid, entry);
-        }
-
-        // Count interventions per project
-        const interventionsByProject = new Map<number, number>();
-        const interventionArray = Array.isArray(interventions) ? interventions : [];
-        for (const it of interventionArray) {
-          const pid = it.projectId;
-          if (typeof pid === 'number') interventionsByProject.set(pid, (interventionsByProject.get(pid) || 0) + 1);
-        }
-
-        // Aggregate per postal code with origin breakdown
-        interface ApporteurZone {
-          originBreakdown: Record<string, { count: number; ca: number; apporteurNames: Set<string> }>;
-          totalProjects: number;
-          totalCA: number;
-          devisTotal: number;
-          devisSigned: number;
-          interventionCount: number;
-          topApporteurs: Map<string, { name: string; count: number; ca: number }>;
-        }
-
-        const apporteurZones = new Map<string, ApporteurZone>();
-
-        for (const [pc, pids] of projectsByPostalCode.entries()) {
-          const zone: ApporteurZone = {
-            originBreakdown: {},
-            totalProjects: 0,
-            totalCA: 0,
-            devisTotal: 0,
-            devisSigned: 0,
-            interventionCount: 0,
-            topApporteurs: new Map(),
-          };
-
-          for (const pid of pids) {
-            zone.totalProjects++;
-            const ca = caByProject.get(pid) || 0;
-            zone.totalCA += ca;
-            zone.interventionCount += interventionsByProject.get(pid) || 0;
-            const dv = devisByProject.get(pid);
-            if (dv) { zone.devisTotal += dv.total; zone.devisSigned += dv.signed; }
-
-            const originType = projectApporteurType.get(pid) || 'Autre';
-            if (!zone.originBreakdown[originType]) {
-              zone.originBreakdown[originType] = { count: 0, ca: 0, apporteurNames: new Set() };
-            }
-            zone.originBreakdown[originType].count++;
-            zone.originBreakdown[originType].ca += ca;
-
-            const apName = projectApporteurName.get(pid);
-            if (apName) {
-              zone.originBreakdown[originType].apporteurNames.add(apName);
-              const apId = String(projectApporteurId.get(pid) || apName);
-              const existing = zone.topApporteurs.get(apId) || { name: apName, count: 0, ca: 0 };
-              existing.count++;
-              existing.ca += ca;
-              zone.topApporteurs.set(apId, existing);
-            }
-          }
-
-          apporteurZones.set(pc, zone);
-        }
-
-        // Build results
         const ORIGIN_COLORS: Record<string, string> = {
-          'Assurance': '#3b82f6',
-          'Agence Immobilière': '#8b5cf6',
-          'Syndic': '#f97316',
-          'Bailleur': '#06b6d4',
-          'Franchise / Réseau': '#10b981',
-          'Client direct': '#6b7280',
-          'Autre': '#9ca3af',
+          'Assurance': '#3b82f6', 'Agence Immobilière': '#8b5cf6', 'Syndic': '#f97316',
+          'Bailleur': '#06b6d4', 'Franchise / Réseau': '#10b981', 'Client direct': '#6b7280', 'Autre': '#9ca3af',
         };
 
-        const apporteurResults: any[] = [];
-
-        for (const [pc, zone] of apporteurZones.entries()) {
-          const coords = coordsByPostalCode.get(pc);
-          if (!coords) continue;
-
-          // Find dominant origin
-          let dominantOrigin = 'Autre';
-          let dominantCount = 0;
-          for (const [origin, data] of Object.entries(zone.originBreakdown)) {
-            if (data.count > dominantCount) { dominantOrigin = origin; dominantCount = data.count; }
+        // Aggregate by code_insee
+        const metricsByInsee = new Map<string, Record<string, any>>();
+        for (const [insee, pids] of projectsByInsee.entries()) {
+          const originCounts: Record<string, number> = {};
+          let totalProjects = 0, totalCA = 0;
+          for (const pid of pids) {
+            totalProjects++;
+            totalCA += caByProject.get(pid) || 0;
+            const origin = projectApporteurType.get(pid) || 'Autre';
+            originCounts[origin] = (originCounts[origin] || 0) + 1;
           }
 
-          // Dependency index: share of top 1 apporteur
-          const topApsList = Array.from(zone.topApporteurs.values()).sort((a, b) => b.count - a.count);
-          const top1Share = zone.totalProjects > 0 && topApsList.length > 0 ? Math.round((topApsList[0].count / zone.totalProjects) * 100) : 0;
-          const top3Share = zone.totalProjects > 0 ? Math.round((topApsList.slice(0, 3).reduce((s, a) => s + a.count, 0) / zone.totalProjects) * 100) : 0;
-
-          // Diversification index (0-100): more diverse = higher
-          const originTypes = Object.keys(zone.originBreakdown).length;
-          const maxOriginTypes = Object.keys(ORIGIN_COLORS).length;
-          const diversificationIndex = Math.round((originTypes / maxOriginTypes) * 100);
-
-          // Transformation rate
-          const transformRate = zone.devisTotal > 0 ? Math.round((zone.devisSigned / zone.devisTotal) * 100) : 0;
-
-          // Serialize origin breakdown
-          const breakdown = Object.entries(zone.originBreakdown).map(([type, d]) => ({
-            type,
-            count: d.count,
-            ca: Math.round(d.ca),
-            color: ORIGIN_COLORS[type] || '#9ca3af',
-            share: zone.totalProjects > 0 ? Math.round((d.count / zone.totalProjects) * 100) : 0,
-            nbApporteurs: d.apporteurNames.size,
-          })).sort((a, b) => b.count - a.count);
-
-          // Insights
-          const insights: string[] = [];
-          if (top1Share >= 70) insights.push(`Dépendance critique : ${topApsList[0]?.name || 'top apporteur'} = ${top1Share}% des dossiers`);
-          else if (top1Share >= 50) insights.push(`Forte concentration : top 1 = ${top1Share}%`);
-          if (originTypes <= 2 && zone.totalProjects >= 5) insights.push('Faible diversification commerciale');
-          const clientDirectShare = zone.originBreakdown['Client direct']?.count || 0;
-          if (clientDirectShare > 0 && zone.totalProjects > 0) {
-            const directPct = Math.round((clientDirectShare / zone.totalProjects) * 100);
-            if (directPct >= 60) insights.push(`${directPct}% clients directs — potentiel apporteurs`);
+          let dominantOrigin = 'Autre', dominantCount = 0;
+          for (const [origin, count] of Object.entries(originCounts)) {
+            if (count > dominantCount) { dominantOrigin = origin; dominantCount = count; }
           }
+          const top1Share = totalProjects > 0 ? Math.round((dominantCount / totalProjects) * 100) : 0;
+          const diversificationIndex = Math.round((Object.keys(originCounts).length / Object.keys(ORIGIN_COLORS).length) * 100);
 
-          apporteurResults.push({
-            postalCode: pc,
-            city: postalCodeCities.get(pc) || '',
-            lat: coords.lat,
-            lng: coords.lng,
-            totalProjects: zone.totalProjects,
-            totalCA: Math.round(zone.totalCA),
-            panierMoyen: zone.totalProjects > 0 ? Math.round(zone.totalCA / zone.totalProjects) : 0,
-            devisTotal: zone.devisTotal,
-            devisSigned: zone.devisSigned,
-            transformRate,
-            interventionCount: zone.interventionCount,
-            dominantOrigin,
-            dominantColor: ORIGIN_COLORS[dominantOrigin] || '#9ca3af',
-            breakdown,
-            top1Share,
-            top3Share,
-            diversificationIndex,
-            topApporteurs: topApsList.slice(0, 5).map(a => ({ name: a.name, count: a.count, ca: Math.round(a.ca) })),
-            insights,
+          metricsByInsee.set(insee, {
+            city: inseeCities.get(insee) || '',
+            totalProjects, totalCA: Math.round(totalCA),
+            panierMoyen: totalProjects > 0 ? Math.round(totalCA / totalProjects) : 0,
+            dominantOrigin, dominantColor: ORIGIN_COLORS[dominantOrigin] || '#9ca3af',
+            top1Share, diversificationIndex,
+            breakdown: JSON.stringify(Object.entries(originCounts).map(([type, count]) => ({
+              type, count, share: totalProjects > 0 ? Math.round((count / totalProjects) * 100) : 0,
+              color: ORIGIN_COLORS[type] || '#9ca3af',
+            })).sort((a, b) => b.count - a.count)),
           });
         }
 
-        apporteurResults.sort((a, b) => b.totalCA - a.totalCA);
+        const choropleth = buildChoroplethGeoJSON(communePolygons, metricsByInsee);
 
-        console.log(`[GET-RDV-MAP] Apporteurs: ${apporteurResults.length} zones in ${Date.now() - t0}ms total`);
+        console.log(`[GET-RDV-MAP] Apporteurs choropleth: ${choropleth.features.length} communes in ${Date.now() - t0}ms total`);
         return withCors(req, new Response(JSON.stringify({
           success: true,
-          data: apporteurResults,
-          meta: { mode: 'apporteurs', agencySlug: targetAgency, totalZones: apporteurResults.length, originColors: ORIGIN_COLORS, durationMs: Date.now() - t0 },
+          data: choropleth,
+          meta: { mode: 'apporteurs', format: 'choropleth', agencySlug: targetAgency, totalZones: choropleth.features.length, originColors: ORIGIN_COLORS, durationMs: Date.now() - t0 },
         }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      }
       // ── SAISONNALITE MODE ──
       if (isSaisonnalite) {
         // Build CA per project
