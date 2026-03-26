@@ -22,6 +22,7 @@ import { BankAccountsPanel } from '../tresorerie/BankAccountsPanel';
 import { BankTransactionsTable } from '../tresorerie/BankTransactionsTable';
 import { TreasuryEmptyState } from '../tresorerie/TreasuryEmptyState';
 import { BankConnectionSheet } from '../tresorerie/BankConnectionSheet';
+import { TreasuryBridgeReturnHandler } from '../tresorerie/TreasuryBridgeReturnHandler';
 
 export function TresorerieTab() {
   const { data: overview, isLoading: loadingOverview } = useTreasuryOverview();
@@ -117,6 +118,9 @@ export function TresorerieTab() {
           />
         </section>
       )}
+
+      {/* Bridge callback handler */}
+      <TreasuryBridgeReturnHandler />
 
       {/* Connection sheet */}
       <BankConnectionSheet open={showConnectSheet} onOpenChange={setShowConnectSheet} />
