@@ -308,17 +308,29 @@ Deno.serve(async (req) => {
           emailWarning = 'RESEND_API_KEY non configurée';
           console.warn('[agency-dossier-reply]', emailWarning);
         } else {
-          // Get agency label (maybeSingle pour ne pas casser le flux)
+          // Get agency label + client name
           const { data: agency } = await supabaseAdmin
             .from('apogee_agencies')
             .select('label')
             .eq('id', profile.agency_id)
             .maybeSingle();
 
+          // Get client name from intervention request
+          const { data: irData } = await supabaseAdmin
+            .from('apporteur_intervention_requests')
+            .select('tenant_name')
+            .eq('agency_id', profile.agency_id)
+            .eq('reference', dossierRef)
+            .maybeSingle();
+          const clientName = irData?.tenant_name || null;
+
           const agencyLabel = agency?.label ?? 'HelpConfort';
           const displaySender = senderName;
           const greeting = apporteurName ? `Bonjour ${escapeHtml(apporteurName)},` : 'Bonjour,';
           const escapedMessage = escapeHtml(message.trim()).replace(/\n/g, '<br/>');
+          const dossierLabel = clientName
+            ? `dossier <strong>"${escapeHtml(clientName)}"</strong> (réf. #${escapeHtml(dossierRef)})`
+            : `dossier <strong>#${escapeHtml(dossierRef)}</strong>`;
 
           const emailBody = `<!DOCTYPE html>
 <html lang="fr">
@@ -333,7 +345,7 @@ Deno.serve(async (req) => {
   <tr><td style="padding:32px;">
     <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 16px;">${greeting}</p>
     <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 16px;">
-      <strong>${escapeHtml(displaySender)}</strong> vous a envoyé un message concernant le dossier <strong>#${escapeHtml(dossierRef)}</strong> :
+      <strong>${escapeHtml(displaySender)}</strong> vous a envoyé un message concernant le ${dossierLabel} :
     </p>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
     <tr><td style="background:#f3f4f6;border-left:4px solid #2563eb;padding:16px;border-radius:4px;">
