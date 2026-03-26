@@ -622,18 +622,29 @@ export function computeChargeTravauxAvenirParUnivers(
     if (normalizedUniverses.length === 1 && normalizedUniverses[0] === 'Non classé') dataQualityFlags.push('missing_univers');
     if (ageDays === null) dataQualityFlags.push('missing_created_at');
 
-    // Check for planned date
+    // Check for planned date + future planned date
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
     let hasPlannedDate = false;
+    let hasFuturePlannedDate = false;
     for (const itv of intervs) {
       const d = itv?.dateReelle ?? itv?.date;
-      if (d) { hasPlannedDate = true; break; }
+      if (d) {
+        hasPlannedDate = true;
+        if (String(d).slice(0, 10) >= todayStr) hasFuturePlannedDate = true;
+      }
       const visites = Array.isArray(itv?.visites) ? itv.visites : (Array.isArray(itv?.data?.visites) ? itv.data.visites : []);
       for (const v of visites) {
-        if (v?.dateReelle ?? v?.date) { hasPlannedDate = true; break; }
+        const vd = v?.dateReelle ?? v?.date;
+        if (vd) {
+          hasPlannedDate = true;
+          if (String(vd).slice(0, 10) >= todayStr) hasFuturePlannedDate = true;
+        }
       }
-      if (hasPlannedDate) break;
+      if (hasFuturePlannedDate) break;
     }
     if (!hasPlannedDate) dataQualityFlags.push('missing_planned_date');
+    if (hasPlannedDate && !hasFuturePlannedDate) dataQualityFlags.push('planned_date_past');
 
     // technicianIds — comprehensive extraction (aligned with caParTechnicienCore)
     const techIdSet = new Set<string>();
@@ -807,8 +818,8 @@ export function computeChargeTravauxAvenirParUnivers(
   // pipelineMaturity (priority: planifie > bloque > pret_planification > a_commander > commercial)
   const pipelineMaturity: PipelineMaturityInfo = { commercial: 0, a_commander: 0, pret_planification: 0, planifie: 0, bloque: 0 };
   for (const p of parProjet) {
-    const hasFuturePlannedDate = !p.dataQualityFlags.includes('missing_planned_date');
-    if (hasFuturePlannedDate) {
+    const hasDateFuture = !p.dataQualityFlags.includes('missing_planned_date') && !p.dataQualityFlags.includes('planned_date_past');
+    if (hasDateFuture) {
       pipelineMaturity.planifie++;
     } else if (p.etatWorkflow === 'wait_fourn') {
       pipelineMaturity.bloque++;
