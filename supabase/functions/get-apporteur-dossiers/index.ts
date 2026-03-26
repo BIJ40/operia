@@ -106,12 +106,28 @@ function getStatusFromProject(project: AnyRecord, facture: AnyRecord | null, dev
     }
   }
 
-  // PRIORITÉ 5: Stand-by / en attente
+  // PRIORITÉ 5: Dossiers à chiffrer / devis à produire
+  // Certains dossiers gardent un état Apogée contenant "planifié/programmé"
+  // alors qu'ils sont revenus administrativement en phase devis.
+  // On force donc la lecture métier du workflow avant le mapping générique "planifié".
+  if ([
+    'devis_a_faire',
+    'devis a faire',
+    'devis à faire',
+    'quote_to_do',
+    'quote to do',
+    'to_quote',
+    'to quote',
+  ].some((s) => state.includes(s))) {
+    return { status: 'devis_en_cours', label: 'Devis à faire' };
+  }
+
+  // PRIORITÉ 6: Stand-by / en attente
   if (['stand_by', 'standby', 'stand by', 'en attente', 'attente', 'suspendu'].some((s) => state.includes(s))) {
     return { status: 'stand_by', label: 'Stand-by' };
   }
 
-  // PRIORITÉ 6: États intermédiaires
+  // PRIORITÉ 7: États intermédiaires
   if (['rdv_tvx', 'rdv travaux', 'travaux planifié'].some((s) => state.includes(s))) {
     return { status: 'rdv_travaux', label: 'RDV Travaux' };
   }
