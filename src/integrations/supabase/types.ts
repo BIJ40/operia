@@ -3487,6 +3487,54 @@ export type Database = {
           },
         ]
       }
+      data_source_flags: {
+        Row: {
+          agency_id: string | null
+          freshness_threshold_minutes: number
+          id: string
+          is_enabled: boolean
+          module_key: string
+          source_mode: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          agency_id?: string | null
+          freshness_threshold_minutes?: number
+          id?: string
+          is_enabled?: boolean
+          module_key: string
+          source_mode?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          agency_id?: string | null
+          freshness_threshold_minutes?: number
+          id?: string
+          is_enabled?: boolean
+          module_key?: string
+          source_mode?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_source_flags_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "data_source_flags_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+        ]
+      }
       deadline_alert_acknowledgements: {
         Row: {
           acknowledged_on: string

@@ -1,20 +1,125 @@
 /**
- * StatIA Phase 2 - DataService Adapter
+ * StatIA Phase 2 - DataService Adapter (with Mirror Support)
  * Bridge entre DataService existant et ApogeeDataServices de StatIA
  * 
- * IMPORTANT: Les données sont chargées via le proxy Apogée qui utilise
- * l'agence du profil utilisateur connecté. Le paramètre agencySlug
- * sert à invalider le cache si l'agence change.
+ * LOT 3: Added transparent mirror read interception.
+ * When a module's data_source_flag is 'mirror' or 'fallback',
+ * data is read from mirror tables instead of live API.
+ * 
+ * IMPORTANT: The live path is UNCHANGED. Mirror logic is purely additive.
+ * All modules default to 'live' mode via data_source_flags table.
  */
 
 import { DataService, CachedData } from '@/apogee-connect/services/dataService';
 import { ApogeeDataServices } from '../engine/loaders';
 import { DateRange } from '../definitions/types';
 import { logApogee } from '@/lib/logger';
+import {
+  resolveEffectiveSource,
+  logSourceResolution,
+  type ModuleKey,
+  type ResolvedSource,
+} from '@/services/mirrorDataSource';
+import { readMirrorData } from '@/services/mirrorReadAdapter';
+
+// ============================================================
+// AGENCY ID RESOLUTION HELPER
+// ============================================================
+
+/**
+ * Try to resolve agency UUID from slug.
+ * Uses profiles table as source of truth.
+ * Returns null if not resolvable (live path will be used).
+ */
+let agencyIdCache: Record<string, string> = {};
+
+async function resolveAgencyId(agencySlug: string): Promise<string | null> {
+  if (agencyIdCache[agencySlug]) return agencyIdCache[agencySlug];
+  
+  try {
+    const { supabase } = await import('@/integrations/supabase/client');
+    const { data } = await supabase
+      .from('apogee_agencies')
+      .select('id')
+      .eq('slug', agencySlug)
+      .eq('is_active', true)
+      .maybeSingle();
+    
+    if (data?.id) {
+      agencyIdCache[agencySlug] = data.id;
+      return data.id;
+    }
+  } catch {
+    // Silent fail — live path will be used
+  }
+  return null;
+}
+
+// ============================================================
+// MIRROR-AWARE DATA LOADER
+// ============================================================
+
+/**
+ * Wraps a live data loader with mirror resolution.
+ * If mirror is active and fresh, returns mirror data.
+ * Otherwise, falls back to the original live loader.
+ */
+async function withMirrorResolution(
+  moduleKey: ModuleKey,
+  agencySlug: string,
+  liveFn: () => Promise<unknown[]>,
+): Promise<unknown[]> {
+  // Resolve agency UUID
+  const agencyId = await resolveAgencyId(agencySlug);
+  
+  // Resolve source mode
+  let resolved: ResolvedSource;
+  try {
+    resolved = await resolveEffectiveSource(moduleKey, agencyId);
+  } catch {
+    // If resolution fails, default to live
+    return liveFn();
+  }
+
+  // Fast path: live mode (most common case, zero overhead)
+  if (resolved.effectiveSource === 'live') {
+    if (resolved.fallbackReason) {
+      logSourceResolution(moduleKey, agencyId, resolved);
+    }
+    return liveFn();
+  }
+
+  // Mirror path
+  try {
+    if (!agencyId) {
+      return liveFn();
+    }
+
+    const mirrorData = await readMirrorData(moduleKey, agencyId);
+    
+    if (mirrorData.length === 0 && resolved.mode === 'fallback') {
+      // Fallback to live if mirror is empty
+      const fallbackResolved = { ...resolved, effectiveSource: 'live' as const, fallbackReason: 'mirror_empty' };
+      logSourceResolution(moduleKey, agencyId, fallbackResolved);
+      return liveFn();
+    }
+
+    logSourceResolution(moduleKey, agencyId, resolved, mirrorData.length);
+    return mirrorData;
+  } catch (err) {
+    // If mirror read fails, fallback to live
+    logApogee.warn(`[MirrorAdapter] ${moduleKey} mirror read failed, falling back to live:`, err);
+    return liveFn();
+  }
+}
+
+// ============================================================
+// ADAPTER (ORIGINAL LOGIC PRESERVED + MIRROR INTERCEPTION)
+// ============================================================
 
 /**
  * Crée une instance ApogeeDataServices compatible avec StatIA
- * à partir du DataService existant
+ * à partir du DataService existant, with optional mirror interception.
  */
 export function createApogeeDataServicesAdapter(): ApogeeDataServices {
   // Cache local pour éviter les appels multiples
@@ -77,36 +182,49 @@ export function createApogeeDataServicesAdapter(): ApogeeDataServices {
 
   return {
     getFactures: async (agencySlug: string, _dateRange: DateRange) => {
-      const data = await loadDataIfNeeded(agencySlug);
-      return data.factures || [];
+      return withMirrorResolution('factures', agencySlug, async () => {
+        const data = await loadDataIfNeeded(agencySlug);
+        return data.factures || [];
+      });
     },
     
     getDevis: async (agencySlug: string, _dateRange: DateRange) => {
-      const data = await loadDataIfNeeded(agencySlug);
-      return data.devis || [];
+      return withMirrorResolution('devis', agencySlug, async () => {
+        const data = await loadDataIfNeeded(agencySlug);
+        return data.devis || [];
+      });
     },
     
     getInterventions: async (agencySlug: string, _dateRange: DateRange) => {
-      const data = await loadDataIfNeeded(agencySlug);
-      return data.interventions || [];
+      return withMirrorResolution('interventions', agencySlug, async () => {
+        const data = await loadDataIfNeeded(agencySlug);
+        return data.interventions || [];
+      });
     },
     
     getProjects: async (agencySlug: string, _dateRange: DateRange) => {
-      const data = await loadDataIfNeeded(agencySlug);
-      return data.projects || [];
+      return withMirrorResolution('projects', agencySlug, async () => {
+        const data = await loadDataIfNeeded(agencySlug);
+        return data.projects || [];
+      });
     },
     
     getUsers: async (agencySlug: string) => {
-      const data = await loadDataIfNeeded(agencySlug);
-      return data.users || [];
+      return withMirrorResolution('users', agencySlug, async () => {
+        const data = await loadDataIfNeeded(agencySlug);
+        return data.users || [];
+      });
     },
     
     getClients: async (agencySlug: string) => {
-      const data = await loadDataIfNeeded(agencySlug);
-      return data.clients || [];
+      return withMirrorResolution('clients', agencySlug, async () => {
+        const data = await loadDataIfNeeded(agencySlug);
+        return data.clients || [];
+      });
     },
 
     getCreneaux: async (agencySlug: string) => {
+      // Creneaux are NOT in mirror tables — always live
       const data = await loadDataIfNeeded(agencySlug);
       return data.creneaux || [];
     },
@@ -130,4 +248,5 @@ export function getGlobalApogeeDataServices(): ApogeeDataServices {
  */
 export function resetApogeeDataServicesAdapter(): void {
   globalAdapter = null;
+  agencyIdCache = {};
 }
