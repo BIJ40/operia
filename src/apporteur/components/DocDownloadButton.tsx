@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { FileDown, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+// Button not needed — using native button for minimal footprint
 import { getProjectDetail } from '@/services/projectDetailLoader';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -57,20 +57,23 @@ export function DocDownloadButton({ dossierRef, docType, label, className }: Doc
   };
 
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      className={cn('h-7 px-2 gap-1', className)}
+    <button
+      className={cn(
+        'inline-flex items-center justify-center rounded p-1 gap-1 transition-colors',
+        'text-primary hover:text-primary/70 hover:bg-primary/10',
+        'disabled:opacity-50 disabled:pointer-events-none',
+        className
+      )}
       onClick={handleClick}
       disabled={loading}
       title={`Télécharger le ${docType === 'devis' ? 'devis' : 'facture'} PDF`}
     >
       {loading ? (
-        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+        <Loader2 className="w-4 h-4 animate-spin" />
       ) : (
-        <FileDown className="w-3.5 h-3.5" />
+        <FileDown className="w-4 h-4" />
       )}
       {label && <span className="text-xs">{label}</span>}
-    </Button>
+    </button>
   );
 }
