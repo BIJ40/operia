@@ -1324,7 +1324,7 @@ export default function MapsTabContent() {
               <PieChart className="h-4 w-4 text-primary" />
               <span>Rentabilité par zone — historique complet (CA – coûts estimés à 35 €/h)</span>
               <span className="ml-auto">
-                {profitLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${profitPoints?.length || 0} dossiers`}
+                {profitLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${profitGeoJson?.features?.length || 0} communes`}
               </span>
             </div>
             <div className="flex items-center gap-4 text-xs">
@@ -1351,7 +1351,7 @@ export default function MapsTabContent() {
               <Crosshair className="h-4 w-4" />
               <span>Zones blanches commerciales — analyse par code postal</span>
               <span className="ml-auto">
-                {zonesLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${zonesData?.length || 0} zones`}
+                {zonesLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${zonesGeoJson?.features?.length || 0} communes`}
               </span>
             </div>
             <div className="flex items-center gap-4 text-xs flex-wrap">
@@ -1361,12 +1361,14 @@ export default function MapsTabContent() {
               <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#1e40af' }} /><span className="text-muted-foreground">Forte</span></div>
               <div className="flex items-center gap-1.5 ml-2 pl-2 border-l"><span className="w-3 h-3 rounded-full border-2" style={{ borderColor: '#dc2626', backgroundColor: 'transparent' }} /><span className="text-muted-foreground">Bordure = opportunité</span></div>
             </div>
-            {zonesData && zonesData.length > 0 && (
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                <span>🏆 Top : <b>{zonesData[0].postalCode} {zonesData[0].city}</b> (score {zonesData[0].opportunityScore}/100)</span>
-                {zonesData[0].insights[0] && <span className="text-amber-600">💡 {zonesData[0].insights[0]}</span>}
-              </div>
-            )}
+            {zonesGeoJson && zonesGeoJson.features.length > 0 && (() => {
+              const top = zonesGeoJson.features[0].properties;
+              return top ? (
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <span>🏆 Top : <b>{top.code_insee} {top.nom}</b> (score {top.opportunityScore ?? top.activityIndex}/100)</span>
+                </div>
+              ) : null;
+            })()}
           </div>
         )}
 
@@ -1377,7 +1379,7 @@ export default function MapsTabContent() {
               <Network className="h-4 w-4" />
               <span>Origine des clients & apporteurs — analyse par code postal</span>
               <span className="ml-auto">
-                {apporteursLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${apporteursData?.length || 0} zones`}
+                {apporteursLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${apporteursGeoJson?.features?.length || 0} communes`}
               </span>
             </div>
             <div className="flex items-center gap-4 text-xs flex-wrap">
@@ -1524,7 +1526,7 @@ export default function MapsTabContent() {
                 ))}
               </div>
               <span className="ml-auto">
-                {scoreLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${scoreData?.length || 0} zones`}
+                {scoreLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${scoreGeoJson?.features?.length || 0} communes`}
               </span>
             </div>
             <div className="flex items-center gap-4 text-xs flex-wrap">
@@ -1645,7 +1647,7 @@ export default function MapsTabContent() {
           )}
 
           {/* Panneau latéral Score Global — Top insights */}
-          {mapMode === 'score_global' && scoreData && scoreData.length > 0 && scoreMeta && (
+          {mapMode === 'score_global' && scoreGeoJson && scoreGeoJson.features.length > 0 && scoreMeta && (
             <div className="w-80 border-l border-border bg-background flex flex-col">
               <div className="p-3 border-b border-border">
                 <h3 className="text-sm font-semibold flex items-center gap-2">
@@ -1660,17 +1662,21 @@ export default function MapsTabContent() {
                     <h4 className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
                       <Star className="h-3 w-3" /> Top zones performantes
                     </h4>
-                    {scoreData.slice(0, 5).map(z => (
-                      <button
-                        key={z.postalCode}
-                        onClick={() => { if (map.current) map.current.flyTo({ center: [z.lng, z.lat], zoom: 12, duration: 800 }); }}
-                        className="w-full text-left p-2 rounded-lg hover:bg-muted text-xs flex items-center gap-2"
-                      >
-                        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: z.scoreGlobal >= 85 ? '#3b82f6' : z.scoreGlobal >= 70 ? '#22c55e' : '#fbbf24' }} />
-                        <span className="font-medium">{z.postalCode} {z.city}</span>
-                        <span className="ml-auto font-semibold">{z.scoreGlobal}/100</span>
-                      </button>
-                    ))}
+                    {scoreGeoJson.features.slice(0, 5).map(f => {
+                      const p = f.properties as any;
+                      const coords = f.geometry?.type === 'Polygon' ? f.geometry.coordinates[0][0] : f.geometry?.type === 'MultiPolygon' ? f.geometry.coordinates[0][0][0] : [0, 0];
+                      return (
+                        <button
+                          key={p.code_insee}
+                          onClick={() => { if (map.current) map.current.flyTo({ center: [coords[0], coords[1]], zoom: 12, duration: 800 }); }}
+                          className="w-full text-left p-2 rounded-lg hover:bg-muted text-xs flex items-center gap-2"
+                        >
+                          <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: (p.scoreGlobal ?? 0) >= 85 ? '#3b82f6' : (p.scoreGlobal ?? 0) >= 70 ? '#22c55e' : '#fbbf24' }} />
+                          <span className="font-medium">{p.code_insee} {p.nom}</span>
+                          <span className="ml-auto font-semibold">{p.scoreGlobal ?? 0}/100</span>
+                        </button>
+                      );
+                    })}
                   </div>
 
                   {/* Zones à risque */}
@@ -1683,8 +1689,9 @@ export default function MapsTabContent() {
                         <button
                           key={z.pc}
                           onClick={() => {
-                            const zone = scoreData.find(s => s.postalCode === z.pc);
-                            if (zone && map.current) map.current.flyTo({ center: [zone.lng, zone.lat], zoom: 12, duration: 800 });
+                            const zone = scoreGeoJson.features.find(f => (f.properties as any)?.code_insee === z.pc);
+                            const coords = zone?.geometry?.type === 'Polygon' ? zone.geometry.coordinates[0][0] : zone?.geometry?.type === 'MultiPolygon' ? zone.geometry.coordinates[0][0][0] : null;
+                            if (coords && map.current) map.current.flyTo({ center: [coords[0], coords[1]], zoom: 12, duration: 800 });
                           }}
                           className="w-full text-left p-2 rounded-lg hover:bg-muted text-xs flex items-center gap-2"
                         >
@@ -1706,8 +1713,9 @@ export default function MapsTabContent() {
                         <button
                           key={z.pc}
                           onClick={() => {
-                            const zone = scoreData.find(s => s.postalCode === z.pc);
-                            if (zone && map.current) map.current.flyTo({ center: [zone.lng, zone.lat], zoom: 12, duration: 800 });
+                            const zone = scoreGeoJson.features.find(f => (f.properties as any)?.code_insee === z.pc);
+                            const coords = zone?.geometry?.type === 'Polygon' ? zone.geometry.coordinates[0][0] : zone?.geometry?.type === 'MultiPolygon' ? zone.geometry.coordinates[0][0][0] : null;
+                            if (coords && map.current) map.current.flyTo({ center: [coords[0], coords[1]], zoom: 12, duration: 800 });
                           }}
                           className="w-full text-left p-2 rounded-lg hover:bg-muted text-xs flex items-center gap-2"
                         >
@@ -1729,8 +1737,9 @@ export default function MapsTabContent() {
                         <button
                           key={z.pc}
                           onClick={() => {
-                            const zone = scoreData.find(s => s.postalCode === z.pc);
-                            if (zone && map.current) map.current.flyTo({ center: [zone.lng, zone.lat], zoom: 12, duration: 800 });
+                            const zone = scoreGeoJson.features.find(f => (f.properties as any)?.code_insee === z.pc);
+                            const coords = zone?.geometry?.type === 'Polygon' ? zone.geometry.coordinates[0][0] : zone?.geometry?.type === 'MultiPolygon' ? zone.geometry.coordinates[0][0][0] : null;
+                            if (coords && map.current) map.current.flyTo({ center: [coords[0], coords[1]], zoom: 12, duration: 800 });
                           }}
                           className="w-full text-left p-2 rounded-lg hover:bg-muted text-xs flex items-center gap-2"
                         >
