@@ -1329,6 +1329,155 @@ export default function MapsTabContent() {
     return () => { m.off('click', SEASON_CIRCLES, handleClick); };
   }, [seasonData, currentSeasonMonth, seasonViewMode, mapReady, mapMode]);
 
+  // Score Global layer — circles colored by composite score
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !mapReady) return;
+
+    if (m.getLayer(SCORE_CIRCLES)) m.removeLayer(SCORE_CIRCLES);
+    if (m.getSource(SCORE_SOURCE)) m.removeSource(SCORE_SOURCE);
+
+    if (mapMode !== 'score_global' || !scoreData?.length) return;
+
+    const scoreKey = scoreSubView === 'global' ? 'scoreGlobal' : scoreSubView === 'commercial' ? 'scoreCommercial' : scoreSubView === 'economique' ? 'scoreEconomique' : scoreSubView === 'operationnel' ? 'scoreOperationnel' : scoreSubView === 'qualite' ? 'scoreQualite' : 'scoreResilience';
+
+    const geojson: GeoJSON.FeatureCollection = {
+      type: 'FeatureCollection',
+      features: scoreData.map(z => ({
+        type: 'Feature' as const,
+        properties: {
+          postalCode: z.postalCode, city: z.city,
+          score: (z as any)[scoreKey] as number,
+          scoreGlobal: z.scoreGlobal, scoreCommercial: z.scoreCommercial,
+          scoreEconomique: z.scoreEconomique, scoreOperationnel: z.scoreOperationnel,
+          scoreQualite: z.scoreQualite, scoreResilience: z.scoreResilience,
+          scoreLabel: z.scoreLabel, nbProjects: z.nbProjects, nbClients: z.nbClients,
+          ca: z.ca, margin: z.margin, panierMoyen: z.panierMoyen,
+          transfoRate: z.transfoRate, savRate: z.savRate,
+          mainStrength: z.mainStrength, mainStrengthScore: z.mainStrengthScore,
+          mainWeakness: z.mainWeakness, mainWeaknessScore: z.mainWeaknessScore,
+          recommendation: z.recommendation,
+        },
+        geometry: { type: 'Point' as const, coordinates: [z.lng, z.lat] },
+      })),
+    };
+
+    m.addSource(SCORE_SOURCE, { type: 'geojson', data: geojson });
+
+    m.addLayer({
+      id: SCORE_CIRCLES,
+      type: 'circle',
+      source: SCORE_SOURCE,
+      paint: {
+        'circle-radius': [
+          'interpolate', ['linear'], ['zoom'],
+          4, ['interpolate', ['linear'], ['get', 'nbProjects'], 1, 8, 10, 14, 30, 20, 80, 28],
+          10, ['interpolate', ['linear'], ['get', 'nbProjects'], 1, 14, 10, 22, 30, 32, 80, 44],
+          14, ['interpolate', ['linear'], ['get', 'nbProjects'], 1, 20, 10, 30, 30, 42, 80, 56],
+        ],
+        'circle-color': [
+          'interpolate', ['linear'], ['get', 'score'],
+          0, '#dc2626',    // rouge — critique
+          40, '#f97316',   // orange — fragile
+          55, '#fbbf24',   // jaune — moyen
+          70, '#22c55e',   // vert — sain
+          85, '#3b82f6',   // bleu — premium
+        ],
+        'circle-opacity': 0.8,
+        'circle-stroke-color': [
+          'interpolate', ['linear'], ['get', 'score'],
+          0, '#991b1b', 40, '#c2410c', 55, '#a16207', 70, '#166534', 85, '#1e40af',
+        ],
+        'circle-stroke-width': 2,
+        'circle-stroke-opacity': 0.9,
+      },
+    });
+
+    // Fit bounds
+    if (!hasFittedBoundsRef.current && scoreData.length > 0) {
+      let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+      scoreData.forEach(p => { minLng = Math.min(minLng, p.lng); maxLng = Math.max(maxLng, p.lng); minLat = Math.min(minLat, p.lat); maxLat = Math.max(maxLat, p.lat); });
+      const pad = 0.1;
+      const container = m.getContainer();
+      const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
+      const padY = Math.max(56, Math.round((container.clientHeight || 600) * 0.12));
+      m.fitBounds([[minLng - pad, minLat - pad], [maxLng + pad, maxLat + pad]], {
+        padding: { top: padY, bottom: padY + 60, left: padX, right: padX }, maxZoom: 12, duration: 1000,
+      });
+      hasFittedBoundsRef.current = true;
+    }
+
+    // Popup on click
+    const handleClick = (e: mapboxgl.MapMouseEvent) => {
+      const features = m.queryRenderedFeatures(e.point, { layers: [SCORE_CIRCLES] });
+      if (!features?.length) return;
+      const p = features[0].properties;
+      if (!p) return;
+      const coords = (features[0].geometry as any).coordinates as [number, number];
+
+      const scoreBg = p.scoreGlobal >= 85 ? '#3b82f6' : p.scoreGlobal >= 70 ? '#22c55e' : p.scoreGlobal >= 55 ? '#fbbf24' : p.scoreGlobal >= 40 ? '#f97316' : '#dc2626';
+
+      const scoreBar = (label: string, value: number, icon: string) => {
+        const bg = value >= 70 ? '#22c55e' : value >= 50 ? '#fbbf24' : '#dc2626';
+        return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+          <span style="width:14px;text-align:center;">${icon}</span>
+          <span style="flex:1;font-size:11px;">${label}</span>
+          <div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden;">
+            <div style="height:100%;width:${value}%;background:${bg};border-radius:3px;"></div>
+          </div>
+          <span style="font-size:11px;font-weight:600;width:24px;text-align:right;">${value}</span>
+        </div>`;
+      };
+
+      new mapboxgl.Popup({ closeButton: true, maxWidth: '380px' })
+        .setLngLat(coords)
+        .setHTML(`
+          <div style="font-family: system-ui; font-size: 12px; line-height: 1.6;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <span style="font-weight:700;font-size:14px;">${p.postalCode} ${p.city}</span>
+              <span style="background:${scoreBg};color:white;border-radius:10px;padding:2px 10px;font-size:12px;font-weight:700;">${p.scoreGlobal}/100</span>
+              <span style="font-size:11px;color:#6b7280;">${p.scoreLabel}</span>
+            </div>
+
+            <div style="margin-bottom:8px;">
+              ${scoreBar('Commercial', p.scoreCommercial, '📊')}
+              ${scoreBar('Économique', p.scoreEconomique, '💰')}
+              ${scoreBar('Opérationnel', p.scoreOperationnel, '⚙️')}
+              ${scoreBar('Qualité', p.scoreQualite, '✅')}
+              ${scoreBar('Résilience', p.scoreResilience, '🛡️')}
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px 12px;padding:6px 0;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;margin-bottom:6px;">
+              <div>📁 <b>${p.nbProjects}</b> dossiers</div>
+              <div>👤 <b>${p.nbClients}</b> clients</div>
+              <div>💰 CA: <b>${Number(p.ca).toLocaleString('fr-FR')} €</b></div>
+              <div>📈 Marge: <b style="color:${p.margin >= 0 ? '#15803d' : '#dc2626'}">${Number(p.margin).toLocaleString('fr-FR')} €</b></div>
+              <div>📝 Transfo: <b>${p.transfoRate}%</b></div>
+              <div>🔧 SAV: <b>${p.savRate}%</b></div>
+            </div>
+
+            <div style="font-size:11px;margin-bottom:4px;">
+              <span style="color:#22c55e;">▲</span> Force : <b>${p.mainStrength}</b> (${p.mainStrengthScore}/100)
+            </div>
+            <div style="font-size:11px;margin-bottom:6px;">
+              <span style="color:#dc2626;">▼</span> Faiblesse : <b>${p.mainWeakness}</b> (${p.mainWeaknessScore}/100)
+            </div>
+
+            <div style="background:#f0f9ff;border-radius:6px;padding:6px 8px;">
+              <div style="color:#1e40af;font-size:11px;font-weight:600;">💡 ${p.recommendation}</div>
+            </div>
+          </div>
+        `)
+        .addTo(m);
+    };
+
+    m.on('click', SCORE_CIRCLES, handleClick);
+    m.on('mouseenter', SCORE_CIRCLES, () => { m.getCanvas().style.cursor = 'pointer'; });
+    m.on('mouseleave', SCORE_CIRCLES, () => { m.getCanvas().style.cursor = ''; });
+
+    return () => { m.off('click', SCORE_CIRCLES, handleClick); };
+  }, [scoreData, scoreSubView, mapReady, mapMode]);
+
   useEffect(() => {
     const m = map.current;
     if (!m || !mapReady) return;
