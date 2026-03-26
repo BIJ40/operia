@@ -1147,7 +1147,37 @@ export default function MapsTabContent() {
           </div>
         )}
 
-        <div className="flex-1 min-h-0" style={{ minHeight: '400px' }}>
+        {/* Barre info apporteurs */}
+        {mapMode === 'apporteurs' && (
+          <div className="flex-none p-4 space-y-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Network className="h-4 w-4" />
+              <span>Origine des clients & apporteurs — analyse par code postal</span>
+              <span className="ml-auto">
+                {apporteursLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${apporteursData?.length || 0} zones`}
+              </span>
+            </div>
+            <div className="flex items-center gap-4 text-xs flex-wrap">
+              {[
+                { label: 'Assurance', color: '#3b82f6' },
+                { label: 'Agence Immo', color: '#8b5cf6' },
+                { label: 'Syndic', color: '#f97316' },
+                { label: 'Bailleur', color: '#06b6d4' },
+                { label: 'Client direct', color: '#6b7280' },
+              ].map(({ label, color }) => (
+                <div key={label} className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
+                  <span className="text-muted-foreground">{label}</span>
+                </div>
+              ))}
+              <div className="flex items-center gap-1.5 ml-2 pl-2 border-l">
+                <span className="w-3 h-3 rounded-full border-2" style={{ borderColor: '#dc2626', backgroundColor: 'transparent' }} />
+                <span className="text-muted-foreground">Bordure = dépendance</span>
+              </div>
+            </div>
+          </div>
+        )}
+
           <div className="relative h-full w-full overflow-hidden bg-background">
             {!mapboxToken ? (
               <div className="absolute inset-0 flex items-center justify-center bg-muted">
