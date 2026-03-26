@@ -9,7 +9,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { format, addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Loader2, MapPin, AlertCircle, CalendarDays, Flame, PieChart } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Loader2, MapPin, AlertCircle, CalendarDays, Flame, PieChart, Crosshair } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -40,6 +40,8 @@ const PROFIT_SOURCE = 'profit-source-pilotage';
 const PROFIT_LAYER_POS = 'profit-layer-pos-pilotage';
 const PROFIT_LAYER_NEG = 'profit-layer-neg-pilotage';
 const PROFIT_CIRCLES = 'profit-circles-pilotage';
+const ZONES_SOURCE = 'zones-source-pilotage';
+const ZONES_CIRCLES = 'zones-circles-pilotage';
 
 function enableStyleFallback(m: mapboxgl.Map) {
   let fallbackApplied = false;
@@ -66,20 +68,22 @@ function enableStyleFallback(m: mapboxgl.Map) {
 }
 
 type ViewMode = 'day' | 'week';
-type MapMode = 'pins' | 'heatmap' | 'profitability';
+type MapMode = 'pins' | 'heatmap' | 'profitability' | 'zones';
 
-type MapsSubTab = 'rdv' | 'densite' | 'rentabilite';
+type MapsSubTab = 'rdv' | 'densite' | 'rentabilite' | 'zones';
 
 const MAP_SUB_TABS: FolderTabConfig[] = [
   { id: 'rdv', label: 'Rendez-vous', icon: MapPin, accent: 'blue' },
   { id: 'densite', label: 'Densité', icon: Flame, accent: 'pink' },
   { id: 'rentabilite', label: 'Rentabilité', icon: PieChart, accent: 'green' },
+  { id: 'zones', label: 'Zones blanches', icon: Crosshair, accent: 'orange' },
 ];
 
 const TAB_ACCENT_COLORS: Record<string, string> = {
   blue: 'hsl(var(--warm-blue))',
   pink: 'hsl(var(--warm-pink))',
   green: 'hsl(var(--warm-green))',
+  orange: 'hsl(var(--warm-orange))',
 };
 
 export default function MapsTabContent() {
@@ -91,7 +95,7 @@ export default function MapsTabContent() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [activeSubTab, setActiveSubTab] = useSessionState<MapsSubTab>('maps_sub_tab', 'rdv');
-  const mapMode: MapMode = activeSubTab === 'densite' ? 'heatmap' : activeSubTab === 'rentabilite' ? 'profitability' : 'pins';
+  const mapMode: MapMode = activeSubTab === 'densite' ? 'heatmap' : activeSubTab === 'rentabilite' ? 'profitability' : activeSubTab === 'zones' ? 'zones' : 'pins';
   const [selectedTechIds, setSelectedTechIds] = useState<number[]>([]);
   const [techFilterOpen, setTechFilterOpen] = useState(false);
   const [selectedRdv, setSelectedRdv] = useState<MapRdv | null>(null);
@@ -192,7 +196,45 @@ export default function MapsTabContent() {
     refetchOnWindowFocus: false,
   });
 
-  // Unified data based on view mode
+  // Zones blanches: aggregated KPIs per postal code
+  interface ZonePoint {
+    postalCode: string;
+    city: string;
+    lat: number;
+    lng: number;
+    nbProjects: number;
+    nbClients: number;
+    nbApporteurs: number;
+    nbUnivers: number;
+    univers: string[];
+    ca: number;
+    panierMoyen: number;
+    devisTotal: number;
+    devisSigned: number;
+    interventionCount: number;
+    activityLevel: 'none' | 'low' | 'medium' | 'high';
+    opportunityScore: number;
+    insights: string[];
+  }
+  const { data: zonesData, isLoading: zonesLoading } = useQuery({
+    queryKey: ['rdv-zones', agence],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Non authentifié');
+      const response = await supabase.functions.invoke('get-rdv-map', {
+        body: { mode: 'zones', agencySlug: agence },
+      });
+      if (response.error) throw new Error(response.error.message);
+      const result = response.data;
+      if (!result.success) throw new Error(result.error || 'Erreur');
+      return result.data as ZonePoint[];
+    },
+    enabled: mapMode === 'zones' && !!agence,
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
   const rdvs = viewMode === 'day' ? dayRdvs : weekRdvs;
   const isLoading = viewMode === 'day' ? dayLoading : weekLoading;
   const error = viewMode === 'day' ? dayError : (weekError instanceof Error ? weekError.message : null);
@@ -289,7 +331,7 @@ export default function MapsTabContent() {
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
 
-    if (mapMode === 'heatmap' || mapMode === 'profitability') return; // No pins in heatmap/profitability mode
+    if (mapMode === 'heatmap' || mapMode === 'profitability' || mapMode === 'zones') return;
 
     sortedRdvs.forEach((rdv, index) => {
       const isSelected = selectedRdv?.rdvId === rdv.rdvId;
@@ -507,6 +549,164 @@ export default function MapsTabContent() {
     };
   }, [profitPoints, mapReady, mapMode]);
 
+  // Zones blanches layer — colored circles by activity level + opportunity score
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !mapReady) return;
+
+    // Clean previous zones layers
+    if (m.getLayer(ZONES_CIRCLES)) m.removeLayer(ZONES_CIRCLES);
+    if (m.getSource(ZONES_SOURCE)) m.removeSource(ZONES_SOURCE);
+
+    if (mapMode !== 'zones' || !zonesData?.length) return;
+
+    const geojson: GeoJSON.FeatureCollection = {
+      type: 'FeatureCollection',
+      features: zonesData.map(z => ({
+        type: 'Feature' as const,
+        properties: {
+          postalCode: z.postalCode,
+          city: z.city,
+          nbProjects: z.nbProjects,
+          nbClients: z.nbClients,
+          nbApporteurs: z.nbApporteurs,
+          nbUnivers: z.nbUnivers,
+          univers: JSON.stringify(z.univers),
+          ca: z.ca,
+          panierMoyen: z.panierMoyen,
+          devisTotal: z.devisTotal,
+          devisSigned: z.devisSigned,
+          interventionCount: z.interventionCount,
+          activityLevel: z.activityLevel,
+          opportunityScore: z.opportunityScore,
+          insights: JSON.stringify(z.insights),
+          // For color interpolation: 0=none, 1=low, 2=medium, 3=high
+          activityIndex: z.activityLevel === 'none' ? 0 : z.activityLevel === 'low' ? 1 : z.activityLevel === 'medium' ? 2 : 3,
+        },
+        geometry: { type: 'Point' as const, coordinates: [z.lng, z.lat] },
+      })),
+    };
+
+    m.addSource(ZONES_SOURCE, { type: 'geojson', data: geojson });
+
+    m.addLayer({
+      id: ZONES_CIRCLES,
+      type: 'circle',
+      source: ZONES_SOURCE,
+      paint: {
+        'circle-radius': [
+          'interpolate', ['linear'], ['zoom'],
+          4, ['interpolate', ['linear'], ['get', 'nbProjects'], 0, 8, 5, 12, 20, 18, 50, 24],
+          10, ['interpolate', ['linear'], ['get', 'nbProjects'], 0, 14, 5, 20, 20, 30, 50, 40],
+          14, ['interpolate', ['linear'], ['get', 'nbProjects'], 0, 20, 5, 28, 20, 38, 50, 50],
+        ],
+        // gris → jaune → vert → bleu foncé
+        'circle-color': [
+          'interpolate', ['linear'], ['get', 'activityIndex'],
+          0, '#d1d5db', // gris clair — zone blanche
+          1, '#fbbf24', // jaune — présence faible
+          2, '#22c55e', // vert — présence correcte
+          3, '#1e40af', // bleu foncé — zone forte
+        ],
+        'circle-opacity': [
+          'interpolate', ['linear'], ['get', 'activityIndex'],
+          0, 0.5,
+          1, 0.65,
+          2, 0.75,
+          3, 0.85,
+        ],
+        'circle-stroke-color': [
+          'interpolate', ['linear'], ['get', 'opportunityScore'],
+          0, '#9ca3af',
+          50, '#f59e0b',
+          80, '#ef4444',
+          100, '#dc2626',
+        ],
+        'circle-stroke-width': [
+          'interpolate', ['linear'], ['get', 'opportunityScore'],
+          0, 1,
+          50, 2,
+          80, 3,
+          100, 4,
+        ],
+        'circle-stroke-opacity': 0.9,
+      },
+    });
+
+    // Fit bounds
+    if (!hasFittedBoundsRef.current && zonesData.length > 0) {
+      let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+      zonesData.forEach(p => { minLng = Math.min(minLng, p.lng); maxLng = Math.max(maxLng, p.lng); minLat = Math.min(minLat, p.lat); maxLat = Math.max(maxLat, p.lat); });
+      const pad = 0.1;
+      const bounds: [[number, number], [number, number]] = [[minLng - pad, minLat - pad], [maxLng + pad, maxLat + pad]];
+      const container = m.getContainer();
+      const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
+      const padY = Math.max(56, Math.round((container.clientHeight || 600) * 0.12));
+      m.fitBounds(bounds, {
+        padding: { top: padY, bottom: padY + 60, left: padX, right: padX },
+        maxZoom: 12,
+        duration: 1000,
+      });
+      hasFittedBoundsRef.current = true;
+    }
+
+    // Popup on click with rich KPIs
+    const handleClick = (e: mapboxgl.MapMouseEvent) => {
+      const features = m.queryRenderedFeatures(e.point, { layers: [ZONES_CIRCLES] });
+      if (!features?.length) return;
+      const p = features[0].properties;
+      if (!p) return;
+      const coords = (features[0].geometry as any).coordinates as [number, number];
+      
+      const insights: string[] = (() => { try { return JSON.parse(p.insights); } catch { return []; } })();
+      const univers: string[] = (() => { try { return JSON.parse(p.univers); } catch { return []; } })();
+      
+      const scoreBg = p.opportunityScore >= 80 ? '#dc2626' : p.opportunityScore >= 60 ? '#f59e0b' : p.opportunityScore >= 30 ? '#6b7280' : '#9ca3af';
+      const scoreLabel = p.opportunityScore >= 80 ? 'Zone à attaquer' : p.opportunityScore >= 60 ? 'Potentiel intéressant' : p.opportunityScore >= 30 ? 'À surveiller' : 'Pas prioritaire';
+      
+      new mapboxgl.Popup({ closeButton: true, maxWidth: '340px' })
+        .setLngLat(coords)
+        .setHTML(`
+          <div style="font-family: system-ui; font-size: 12px; line-height: 1.6;">
+            <div style="font-weight: 700; font-size: 14px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+              ${p.postalCode} ${p.city}
+              <span style="background: ${scoreBg}; color: white; border-radius: 10px; padding: 1px 8px; font-size: 11px; font-weight: 600;">${p.opportunityScore}/100</span>
+            </div>
+            <div style="color: #6b7280; font-size: 11px; margin-bottom: 8px;">${scoreLabel}</div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; margin-bottom: 8px;">
+              <div>📁 <b>${p.nbProjects}</b> dossiers</div>
+              <div>👤 <b>${p.nbClients}</b> clients</div>
+              <div>📝 <b>${p.devisTotal}</b> devis (${p.devisSigned} signés)</div>
+              <div>🔧 <b>${p.interventionCount}</b> interventions</div>
+              <div>💰 CA: <b>${Number(p.ca).toLocaleString('fr-FR')} €</b></div>
+              <div>🧺 Panier: <b>${Number(p.panierMoyen).toLocaleString('fr-FR')} €</b></div>
+              <div>🤝 <b>${p.nbApporteurs}</b> apporteurs</div>
+              <div>🏗️ <b>${p.nbUnivers}</b> métiers</div>
+            </div>
+            
+            ${univers.length > 0 ? `<div style="margin-bottom: 6px; color: #4b5563;"><b>Métiers :</b> ${univers.join(', ')}</div>` : ''}
+            
+            ${insights.length > 0 ? `
+              <div style="background: #fef3c7; border-radius: 6px; padding: 6px 8px; margin-top: 4px;">
+                ${insights.map(i => `<div style="color: #92400e; font-size: 11px;">💡 ${i}</div>`).join('')}
+              </div>
+            ` : ''}
+          </div>
+        `)
+        .addTo(m);
+    };
+
+    m.on('click', ZONES_CIRCLES, handleClick);
+    m.on('mouseenter', ZONES_CIRCLES, () => { m.getCanvas().style.cursor = 'pointer'; });
+    m.on('mouseleave', ZONES_CIRCLES, () => { m.getCanvas().style.cursor = ''; });
+
+    return () => {
+      m.off('click', ZONES_CIRCLES, handleClick);
+    };
+  }, [zonesData, mapReady, mapMode]);
+
+  // Draw/remove route layer
   useEffect(() => {
     const m = map.current;
     if (!m || !mapReady) return;
@@ -713,6 +913,32 @@ export default function MapsTabContent() {
           </div>
         )}
 
+        {/* Barre info zones blanches */}
+        {mapMode === 'zones' && (
+          <div className="flex-none p-4 space-y-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Crosshair className="h-4 w-4" />
+              <span>Zones blanches commerciales — analyse par code postal</span>
+              <span className="ml-auto">
+                {zonesLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${zonesData?.length || 0} zones`}
+              </span>
+            </div>
+            <div className="flex items-center gap-4 text-xs flex-wrap">
+              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#d1d5db' }} /><span className="text-muted-foreground">Zone blanche</span></div>
+              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#fbbf24' }} /><span className="text-muted-foreground">Faible</span></div>
+              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#22c55e' }} /><span className="text-muted-foreground">Correcte</span></div>
+              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#1e40af' }} /><span className="text-muted-foreground">Forte</span></div>
+              <div className="flex items-center gap-1.5 ml-2 pl-2 border-l"><span className="w-3 h-3 rounded-full border-2" style={{ borderColor: '#dc2626', backgroundColor: 'transparent' }} /><span className="text-muted-foreground">Bordure = opportunité</span></div>
+            </div>
+            {zonesData && zonesData.length > 0 && (
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span>🏆 Top : <b>{zonesData[0].postalCode} {zonesData[0].city}</b> (score {zonesData[0].opportunityScore}/100)</span>
+                {zonesData[0].insights[0] && <span className="text-amber-600">💡 {zonesData[0].insights[0]}</span>}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex-1 min-h-0" style={{ minHeight: '400px' }}>
           <div className="relative h-full w-full overflow-hidden bg-background">
             {!mapboxToken ? (
@@ -732,10 +958,10 @@ export default function MapsTabContent() {
               </div>
             )}
 
-            {((isLoading && mapMode === 'pins') || (heatmapLoading && mapMode === 'heatmap') || (profitLoading && mapMode === 'profitability')) && mapboxToken && !mapInitError && (
+            {((isLoading && mapMode === 'pins') || (heatmapLoading && mapMode === 'heatmap') || (profitLoading && mapMode === 'profitability') || (zonesLoading && mapMode === 'zones')) && mapboxToken && !mapInitError && (
               <div className="absolute top-4 left-4 bg-background/80 backdrop-blur rounded-lg px-4 py-2 flex items-center gap-2 shadow-lg">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm">{mapMode === 'heatmap' ? 'Chargement de l\'historique...' : mapMode === 'profitability' ? 'Analyse de rentabilité...' : 'Chargement des RDV...'}</span>
+                <span className="text-sm">{mapMode === 'heatmap' ? 'Chargement de l\'historique...' : mapMode === 'profitability' ? 'Analyse de rentabilité...' : mapMode === 'zones' ? 'Analyse des zones...' : 'Chargement des RDV...'}</span>
               </div>
             )}
 
