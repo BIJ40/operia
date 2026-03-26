@@ -64,6 +64,18 @@ function enableStyleFallback(m: mapboxgl.Map) {
 type ViewMode = 'day' | 'week';
 type MapMode = 'pins' | 'heatmap';
 
+type MapsSubTab = 'rdv' | 'densite';
+
+const MAP_SUB_TABS: FolderTabConfig[] = [
+  { id: 'rdv', label: 'Rendez-vous', icon: MapPin, accent: 'blue' },
+  { id: 'densite', label: 'Densité', icon: Flame, accent: 'pink' },
+];
+
+const TAB_ACCENT_COLORS: Record<string, string> = {
+  blue: 'hsl(var(--warm-blue))',
+  pink: 'hsl(var(--warm-pink))',
+};
+
 export default function MapsTabContent() {
   const { agence } = useProfile();
   const mapContainer = useRef<HTMLDivElement>(null);
