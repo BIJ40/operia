@@ -58,6 +58,8 @@ import { ValiderDevisDialog } from '../dialogs/ValiderDevisDialog';
 import { FactureRegleeDialog } from '../dialogs/FactureRegleeDialog';
 import { DossierInactifDialog } from '../dialogs/DossierInactifDialog';
 import { DocDownloadButton } from '../DocDownloadButton';
+import { useApporteurDossierActions } from '../../hooks/useApporteurDossierActions';
+import { Textarea } from '@/components/ui/textarea';
 
 type SortField = 'ref' | 'clientName' | 'status' | 'dateCreation' | 'factureHT' | 'restedu';
 type SortDirection = 'asc' | 'desc';
