@@ -9,7 +9,7 @@
  * - Ne JAMAIS relancer automatiquement en boucle
  */
 
-import { FileText, FileCheck, Wrench, FolderOpen, Loader2, AlertCircle, ExternalLink, FileX } from 'lucide-react';
+import { FileText, FileCheck, Wrench, FolderOpen, Loader2, AlertCircle, Download, FileX } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -124,20 +124,24 @@ function DocItem({ doc }: { doc: NormalizedDoc }) {
 
   if (doc.status === 'available' && doc.url) {
     return (
-      <a
-        href={doc.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-muted/50 group text-sm"
-      >
+      <div className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-muted/50 group text-sm">
         <div className="flex items-center gap-2 min-w-0">
           <span className="truncate">{doc.docLabel}</span>
           {formattedDate && (
             <span className="text-xs text-muted-foreground shrink-0">{formattedDate}</span>
           )}
         </div>
-        <ExternalLink className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 shrink-0" />
-      </a>
+        <a
+          href={doc.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="p-1 rounded hover:bg-muted transition-colors shrink-0"
+          title="Télécharger le PDF"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Download className="w-4 h-4 text-primary" />
+        </a>
+      </div>
     );
   }
 
