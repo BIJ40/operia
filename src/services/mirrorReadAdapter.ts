@@ -89,7 +89,7 @@ export async function getMirrorRecordCount(
     .from(tableName as any)
     .select('id', { count: 'exact', head: true })
     .eq('agency_id', agencyId)
-    .eq('mirror_status', 'synced');
+    .eq('mirror_status', 'synced') as { count: number | null; error: any };
 
   if (error) return 0;
   return count ?? 0;
