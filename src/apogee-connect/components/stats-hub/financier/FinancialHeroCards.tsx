@@ -146,28 +146,24 @@ export function FinancialHeroCards({ kpis, fiabilite, isLoading, onTileClick }: 
         label="Montant encaissé"
         value={formatEuros(kpis.totalEncaisse)}
         accentClass="text-emerald-600 dark:text-emerald-400"
-        onClick={() => onTileClick?.('encaisse')}
       />
       <HeroCard
         icon={<Percent className="h-5 w-5" />}
         label="Taux de recouvrement"
         value={`${kpis.tauxRecouvrement}%`}
         accentClass={riskColor}
-        onClick={() => onTileClick?.('tauxRecouvrement')}
       />
       <HeroCard
         icon={<FileWarning className="h-5 w-5" />}
         label="Factures avec solde"
         value={String(kpis.nbFacturesAvecSolde)}
         subtitle="factures non soldées"
-        onClick={() => onTileClick?.('facturesAvecSolde')}
       />
       <HeroCard
         icon={<Clock className="h-5 w-5" />}
         label="Âge moyen encours"
         value={kpis.ageMoyenEncours !== null ? `${kpis.ageMoyenEncours} j` : 'N/A'}
         subtitle="des factures non soldées"
-        onClick={() => onTileClick?.('ageMoyen')}
       />
       <HeroCard
         icon={<AlertTriangle className="h-5 w-5" />}
