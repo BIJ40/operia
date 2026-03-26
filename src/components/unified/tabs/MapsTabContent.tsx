@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { useRdvMap, calculateBounds, MapRdv } from '@/hooks/useRdvMap';
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { createPinMarkerElement } from '@/components/map/PinMarker';
 import { RdvMiniPreview } from '@/components/map/RdvMiniPreview';
 import { TourSummaryBar } from '@/components/map/TourSummaryBar';
@@ -126,6 +126,29 @@ export default function MapsTabContent() {
 
   const weekLoading = viewMode === 'week' && weekQueries.some(q => q.isLoading);
   const weekError = viewMode === 'week' ? weekQueries.find(q => q.error)?.error : null;
+
+  // Heatmap: fetch ALL historical coordinates (independent of date)
+  const { data: heatmapPoints, isLoading: heatmapLoading } = useQuery({
+    queryKey: ['rdv-heatmap', agence],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Non authentifié');
+      const response = await supabase.functions.invoke('get-rdv-map', {
+        body: {
+          mode: 'heatmap',
+          agencySlug: agence,
+        },
+      });
+      if (response.error) throw new Error(response.error.message);
+      const result = response.data;
+      if (!result.success) throw new Error(result.error || 'Erreur');
+      return result.data as { lat: number; lng: number }[];
+    },
+    enabled: mapMode === 'heatmap' && !!agence,
+    staleTime: 30 * 60 * 1000, // 30 min cache
+    gcTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
 
   // Unified data based on view mode
   const rdvs = viewMode === 'day' ? dayRdvs : weekRdvs;
