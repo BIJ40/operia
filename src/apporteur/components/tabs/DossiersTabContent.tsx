@@ -66,6 +66,7 @@ type SortDirection = 'asc' | 'desc';
 
 export default function DossiersTabContent() {
   const queryClient = useQueryClient();
+  const dossierAction = useApporteurDossierActions();
   const [searchParams, setSearchParams] = useSearchParams();
   const { data, isLoading, error, isFetching } = useApporteurDossiers();
   
