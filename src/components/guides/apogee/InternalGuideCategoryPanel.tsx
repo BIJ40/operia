@@ -98,6 +98,7 @@ export function InternalGuideCategoryPanel({ slug }: InternalGuideCategoryPanelP
   const [openAccordions, setOpenAccordions] = useState<string[]>([]);
   const [showTips, setShowTips] = useState(true);
   const [showSections, setShowSections] = useState(true);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   
   // États pour les dialogues d'édition
   const [editingSection, setEditingSection] = useState<Block | null>(null);
@@ -320,6 +321,10 @@ export function InternalGuideCategoryPanel({ slug }: InternalGuideCategoryPanelP
     setEditingSection(null);
   }, [editingSection, updateBlock, toast]);
 
+  const openImagePreview = useCallback((url: string) => {
+    window.setTimeout(() => setPreviewImageUrl(url), 0);
+  }, []);
+
   const handleRichContentClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
     const target = event.target;
     const targetElement = target instanceof HTMLElement
@@ -349,8 +354,9 @@ export function InternalGuideCategoryPanel({ slug }: InternalGuideCategoryPanelP
 
     event.preventDefault();
     event.stopPropagation();
-    window.dispatchEvent(new CustomEvent('open-image-modal', { detail: { url } }));
-  }, []);
+    event.nativeEvent.stopImmediatePropagation?.();
+    openImagePreview(url);
+  }, [openImagePreview]);
 
   if (loading) {
     return (
@@ -738,6 +744,21 @@ export function InternalGuideCategoryPanel({ slug }: InternalGuideCategoryPanelP
           </SortableContext>
         </DndContext>
       )}
+
+      <Dialog open={!!previewImageUrl} onOpenChange={(open) => !open && setPreviewImageUrl(null)}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>Aperçu de l'image</DialogTitle>
+          </DialogHeader>
+          {previewImageUrl && (
+            <img
+              src={previewImageUrl}
+              alt="Aperçu de l'image"
+              className="w-full h-auto rounded-lg"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog d'édition */}
       <Dialog open={!!editingSection} onOpenChange={(open) => !open && setEditingSection(null)}>
