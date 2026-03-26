@@ -11,7 +11,7 @@ import {
   DraggableFolderContentContainer,
   FolderTabConfig 
 } from '@/components/ui/draggable-folder-tabs';
-import { Activity, Map, GitBranch, Bell, Loader2 } from 'lucide-react';
+import { Activity, Map, GitBranch, Bell, Database, Loader2 } from 'lucide-react';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { MaintenanceModeCard } from '@/components/admin/MaintenanceModeCard';
 import { useSessionState } from '@/hooks/useSessionState';
@@ -21,15 +21,17 @@ const AdminSystemHealth = lazy(() => import('@/pages/AdminSystemHealth'));
 const AdminSitemap = lazy(() => import('@/pages/admin/AdminSitemap'));
 const AdminFlow = lazy(() => import('@/pages/admin/AdminFlow'));
 const TicketNotificationSettings = lazy(() => import('@/components/admin/TicketNotificationSettings'));
+const AdminMirrorMonitor = lazy(() => import('@/components/admin/AdminMirrorMonitor'));
 
 const SUB_TABS: FolderTabConfig[] = [
   { id: 'health', label: 'Santé', icon: Activity, accent: 'green' },
+  { id: 'mirror', label: 'Miroir', icon: Database, accent: 'blue' },
   { id: 'sitemap', label: 'Sitemap', icon: Map, accent: 'purple' },
   { id: 'flow', label: 'Flow', icon: GitBranch, accent: 'orange' },
   { id: 'notifications', label: 'Notifs', icon: Bell, accent: 'orange' },
 ];
 
-const DEFAULT_TAB_ORDER = ['health', 'sitemap', 'flow', 'notifications'];
+const DEFAULT_TAB_ORDER = ['health', 'mirror', 'sitemap', 'flow', 'notifications'];
 const PLATFORM_TAB_IDS = SUB_TABS.map(tab => tab.id);
 
 function LoadingFallback() {
@@ -109,6 +111,11 @@ export function PlateformeView() {
             </Suspense>
           </TabsContent>
 
+          <TabsContent value="mirror" className="mt-0 focus-visible:outline-none">
+            <Suspense fallback={<LoadingFallback />}>
+              <AdminMirrorMonitor />
+            </Suspense>
+          </TabsContent>
 
           <TabsContent value="sitemap" className="mt-0 focus-visible:outline-none">
             <Suspense fallback={<LoadingFallback />}>
