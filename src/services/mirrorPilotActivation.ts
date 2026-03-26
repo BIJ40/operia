@@ -1,15 +1,13 @@
 /**
- * Mirror Pilot Activation — Pre-activation validation & decision journal
- * 
- * Provides canActivateMirrorPilot() to validate readiness before activation,
- * and logMirrorDecision() to persist source decisions for observability.
+ * Mirror Pilot Activation — Pre-activation validation, decision journal,
+ * persisted metrics snapshots, and projects readiness checkpoint.
  */
 
 import { supabase } from '@/integrations/supabase/client';
 import { logApogee } from '@/lib/logger';
 import { isMirrorFreshEnough, type ModuleKey, type ResolvedSource } from './mirrorDataSource';
 import { getMirrorRecordCount } from './mirrorReadAdapter';
-import { getLastComparisonResults, type MirrorQualityResult } from './mirrorValidation';
+import { getLastComparisonResults, type ComparisonResult, type MirrorQualityResult } from './mirrorValidation';
 
 // ============================================================
 // 1. PRE-ACTIVATION VALIDATION
@@ -28,10 +26,6 @@ export interface ActivationCheckResult {
   details: Record<string, unknown>;
 }
 
-/**
- * Full pre-activation checklist for a pilot module on a specific agency.
- * Returns whether it's safe to switch the module to fallback/mirror.
- */
 export async function canActivateMirrorPilot(
   moduleKey: ModuleKey,
   agencyId: string,
@@ -39,19 +33,16 @@ export async function canActivateMirrorPilot(
 ): Promise<ActivationCheckResult> {
   const details: Record<string, unknown> = { moduleKey, agencyId, thresholdMinutes };
 
-  // 1. Freshness + last sync status
   const freshness = await isMirrorFreshEnough(moduleKey, agencyId, thresholdMinutes);
   details.freshness = freshness;
 
   const lastSyncSucceeded = freshness.reason !== 'last_sync_failed' && freshness.reason !== 'sync_status_unavailable';
   const freshnessOk = freshness.fresh;
 
-  // 2. Volume check
   const count = await getMirrorRecordCount(moduleKey, agencyId);
   details.mirrorCount = count;
   const volumeNonZero = count > 0;
 
-  // 3. Recent comparisons — check for blocking anomalies
   const comparisons = getLastComparisonResults()
     .filter(c => c.module === moduleKey && c.agencyId === agencyId);
   const recentFailed = comparisons.filter(c => !c.passed);
@@ -59,8 +50,7 @@ export async function canActivateMirrorPilot(
   details.recentFailed = recentFailed.length;
   const noBlockingAnomaly = recentFailed.length === 0;
 
-  // 4. Invalid ratio — if we have comparisons, check field integrity
-  const invalidRatioOk = comparisons.length === 0 || 
+  const invalidRatioOk = comparisons.length === 0 ||
     comparisons.every(c => c.missingRequiredFields === 0);
 
   const canActivate = lastSyncSucceeded && freshnessOk && volumeNonZero && noBlockingAnomaly && invalidRatioOk;
@@ -84,10 +74,9 @@ export async function canActivateMirrorPilot(
 // 2. DECISION JOURNAL — persistent logging
 // ============================================================
 
-// Batch decisions to avoid spamming inserts
 let decisionBuffer: Array<Record<string, unknown>> = [];
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
-const FLUSH_INTERVAL = 10_000; // 10 seconds
+const FLUSH_INTERVAL = 10_000;
 const MAX_BUFFER = 50;
 
 function scheduleFlush() {
@@ -104,14 +93,9 @@ async function flushDecisions() {
     await supabase.from('mirror_decision_log' as any).insert(batch);
   } catch (err) {
     logApogee.warn('[MirrorDecision] Failed to flush decision log:', err);
-    // Don't re-add — log and move on to avoid growing buffer
   }
 }
 
-/**
- * Log a mirror source decision to the persistent journal.
- * Batched and non-blocking — never impacts response time.
- */
 export function logMirrorDecision(
   moduleKey: ModuleKey,
   agencyId: string | null,
@@ -119,7 +103,6 @@ export function logMirrorDecision(
   itemCount?: number,
   qualityResult?: MirrorQualityResult,
 ): void {
-  // Only log non-live decisions or fallback events to avoid spam
   if (resolved.effectiveSource === 'live' && resolved.mode === 'live') return;
 
   decisionBuffer.push({
@@ -137,7 +120,7 @@ export function logMirrorDecision(
 }
 
 // ============================================================
-// 3. PILOT METRICS — in-memory counters for admin
+// 3. PILOT METRICS — in-memory counters + periodic persistence
 // ============================================================
 
 export interface PilotMetrics {
@@ -147,6 +130,9 @@ export interface PilotMetrics {
   fallbackReasons: Record<string, number>;
   totalItems: number;
   lastActivity: string | null;
+  comparisonsTotal: number;
+  comparisonsPassed: number;
+  comparisonsFailed: number;
 }
 
 const metricsStore: Record<string, PilotMetrics> = {};
@@ -160,14 +146,14 @@ function getOrCreateMetrics(moduleKey: string): PilotMetrics {
       fallbackReasons: {},
       totalItems: 0,
       lastActivity: null,
+      comparisonsTotal: 0,
+      comparisonsPassed: 0,
+      comparisonsFailed: 0,
     };
   }
   return metricsStore[moduleKey];
 }
 
-/**
- * Record a source resolution for metrics.
- */
 export function recordMetric(
   moduleKey: ModuleKey,
   resolved: ResolvedSource,
@@ -180,7 +166,6 @@ export function recordMetric(
   if (resolved.effectiveSource === 'mirror') {
     m.mirrorReads++;
   } else if (resolved.mode !== 'live' && resolved.effectiveSource === 'live') {
-    // Was supposed to be mirror/fallback but ended up live
     m.fallbackToLive++;
     if (resolved.fallbackReason) {
       m.fallbackReasons[resolved.fallbackReason] = (m.fallbackReasons[resolved.fallbackReason] || 0) + 1;
@@ -190,29 +175,157 @@ export function recordMetric(
   }
 }
 
-/**
- * Get current pilot metrics for admin dashboard.
- */
+/** Record a comparison result in metrics */
+export function recordComparisonMetric(moduleKey: ModuleKey, passed: boolean): void {
+  const m = getOrCreateMetrics(moduleKey);
+  m.comparisonsTotal++;
+  if (passed) m.comparisonsPassed++;
+  else m.comparisonsFailed++;
+}
+
 export function getPilotMetrics(): Record<string, PilotMetrics> {
   return { ...metricsStore };
 }
 
-/**
- * Reset metrics (for testing).
- */
 export function resetPilotMetrics(): void {
   Object.keys(metricsStore).forEach(k => delete metricsStore[k]);
 }
 
 // ============================================================
-// 4. SUCCESS CRITERIA
+// 3b. SNAPSHOT PERSISTENCE — survives restarts
+// ============================================================
+
+let lastSnapshotTime = 0;
+const SNAPSHOT_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Persist current in-memory metrics to mirror_pilot_snapshots.
+ * Called periodically from the adapter, non-blocking.
+ */
+export async function maybePersistSnapshot(
+  moduleKey: ModuleKey,
+  agencyId: string,
+): Promise<void> {
+  const now = Date.now();
+  if (now - lastSnapshotTime < SNAPSHOT_INTERVAL) return;
+  lastSnapshotTime = now;
+
+  const m = metricsStore[moduleKey];
+  if (!m) return;
+
+  const comparisons = getLastComparisonResults().filter(
+    c => c.module === moduleKey && c.agencyId === agencyId
+  );
+  const { verdict, reasons } = computePilotVerdictFromMetrics(m, comparisons, moduleKey);
+
+  // Freshness
+  let lastFreshness: number | null = null;
+  try {
+    const fr = await isMirrorFreshEnough(moduleKey, agencyId, 480);
+    lastFreshness = fr.freshnessMinutes;
+  } catch { /* silent */ }
+
+  let lastMirrorCount: number | null = null;
+  try {
+    lastMirrorCount = await getMirrorRecordCount(moduleKey, agencyId);
+  } catch { /* silent */ }
+
+  try {
+    await supabase.from('mirror_pilot_snapshots' as any).insert({
+      module_key: moduleKey,
+      agency_id: agencyId,
+      mirror_reads: m.mirrorReads,
+      live_reads: m.liveReads,
+      fallback_to_live: m.fallbackToLive,
+      fallback_reasons: m.fallbackReasons,
+      total_items: m.totalItems,
+      comparisons_total: m.comparisonsTotal,
+      comparisons_passed: m.comparisonsPassed,
+      comparisons_failed: m.comparisonsFailed,
+      last_freshness_minutes: lastFreshness,
+      last_mirror_count: lastMirrorCount,
+      verdict,
+      verdict_reasons: reasons,
+    });
+  } catch (err) {
+    logApogee.warn('[MirrorSnapshot] Failed to persist snapshot:', err);
+  }
+}
+
+/**
+ * Load the most recent persisted snapshots for the admin panel.
+ */
+export async function loadPersistedSnapshots(
+  moduleKey: string,
+  agencyId: string,
+  limit = 50,
+): Promise<unknown[]> {
+  const { data } = await supabase
+    .from('mirror_pilot_snapshots' as any)
+    .select('*')
+    .eq('module_key', moduleKey)
+    .eq('agency_id', agencyId)
+    .order('created_at', { ascending: false })
+    .limit(limit) as any;
+  return data || [];
+}
+
+// ============================================================
+// 4. VERDICT — can work from memory OR persisted data
+// ============================================================
+
+export type PilotVerdict = 'stable' | 'à surveiller' | 'rollback conseillé' | 'inactif';
+
+export function computePilotVerdictFromMetrics(
+  m: PilotMetrics | undefined,
+  comparisons: ComparisonResult[],
+  moduleKey: string,
+): { verdict: PilotVerdict; reasons: string[] } {
+  if (!m || (m.mirrorReads === 0 && m.fallbackToLive === 0)) {
+    return { verdict: 'inactif', reasons: ['Aucune lecture miroir/fallback enregistrée'] };
+  }
+
+  const totalNonPureLive = m.mirrorReads + m.fallbackToLive;
+  if (totalNonPureLive === 0) return { verdict: 'inactif', reasons: ['Aucune lecture miroir/fallback'] };
+
+  const fallbackRatio = m.fallbackToLive / totalNonPureLive;
+  const reasons: string[] = [];
+  let verdict: PilotVerdict = 'stable';
+
+  if (fallbackRatio > 0.5) {
+    verdict = 'rollback conseillé';
+    reasons.push(`Fallback ratio ${Math.round(fallbackRatio * 100)}% > 50%`);
+  } else if (fallbackRatio > 0.2) {
+    verdict = 'à surveiller';
+    reasons.push(`Fallback ratio ${Math.round(fallbackRatio * 100)}% > 20%`);
+  }
+
+  const moduleCmps = comparisons.filter(c => c.module === moduleKey);
+  const recentFailed = moduleCmps.filter(c => !c.passed);
+  if (recentFailed.length >= 2) {
+    verdict = 'rollback conseillé';
+    reasons.push(`${recentFailed.length} comparaisons échouées`);
+  }
+
+  const lastCmp = moduleCmps[0];
+  if (lastCmp && Math.abs(lastCmp.countDeltaPct) > 15) {
+    if (verdict !== 'rollback conseillé') verdict = 'à surveiller';
+    reasons.push(`Delta volume ${lastCmp.countDeltaPct}% > 15%`);
+  }
+
+  if (reasons.length === 0) reasons.push('Tous les indicateurs sont normaux');
+  return { verdict, reasons };
+}
+
+// ============================================================
+// 5. SUCCESS CRITERIA + PROJECTS READINESS
 // ============================================================
 
 export const PILOT_SUCCESS_CRITERIA = {
   users: {
     minDuration: '48h–7 jours sans anomalie',
-    maxFallbackRatio: 0.1, // <10% fallback
-    maxDeltaPct: 5, // <5% écart volume live vs miroir
+    maxFallbackRatio: 0.1,
+    maxDeltaPct: 5,
     noRepeatedFailedComparisons: true,
     noUserComplaints: true,
   },
@@ -225,16 +338,13 @@ export const PILOT_SUCCESS_CRITERIA = {
   },
   factures: {
     minDuration: '7 jours après succès projects',
-    maxFallbackRatio: 0.05, // stricter for financial data
+    maxFallbackRatio: 0.05,
     maxDeltaPct: 2,
     noRepeatedFailedComparisons: true,
     noUserComplaints: true,
   },
 } as const;
 
-/**
- * Evaluate if the current pilot metrics meet success criteria.
- */
 export function evaluatePilotSuccess(moduleKey: 'users' | 'projects' | 'factures'): {
   passed: boolean;
   details: Record<string, unknown>;
@@ -264,6 +374,117 @@ export function evaluatePilotSuccess(moduleKey: 'users' | 'projects' | 'factures
       topFallbackReasons: Object.entries(m.fallbackReasons)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5),
+    },
+  };
+}
+
+// ============================================================
+// 6. PROJECTS READINESS CHECKPOINT
+// ============================================================
+
+export type ReadinessSignal = 'green' | 'orange' | 'red';
+
+export interface ProjectsReadiness {
+  signal: ReadinessSignal;
+  reasons: string[];
+  checks: {
+    usersPilotStable: boolean;
+    usersPilotDuration: string;
+    usersFallbackRatioOk: boolean;
+    usersNoFailedComparisons: boolean;
+    projectsMirrorHasData: boolean;
+    projectsMirrorFresh: boolean;
+    projectsMapperReady: boolean;
+  };
+}
+
+/**
+ * Evaluates if we're ready to activate `projects` in fallback.
+ * Based on users pilot success + projects mirror readiness.
+ */
+export async function checkProjectsReadiness(
+  daxAgencyId: string,
+): Promise<ProjectsReadiness> {
+  const reasons: string[] = [];
+
+  // --- Users pilot status ---
+  const usersM = metricsStore['users'];
+  const usersComparisons = getLastComparisonResults().filter(c => c.module === 'users');
+  const { verdict: usersVerdict } = computePilotVerdictFromMetrics(usersM, usersComparisons, 'users');
+
+  const usersPilotStable = usersVerdict === 'stable';
+  if (!usersPilotStable) reasons.push(`Pilote users: ${usersVerdict}`);
+
+  // Check duration from persisted snapshots
+  let usersPilotDuration = 'inconnu';
+  try {
+    const { data: oldest } = await supabase
+      .from('mirror_pilot_snapshots' as any)
+      .select('created_at')
+      .eq('module_key', 'users')
+      .eq('agency_id', daxAgencyId)
+      .order('created_at', { ascending: true })
+      .limit(1) as any;
+    if (oldest?.[0]?.created_at) {
+      const hours = Math.round((Date.now() - new Date(oldest[0].created_at).getTime()) / 3600000);
+      usersPilotDuration = `${hours}h`;
+      if (hours < 48) reasons.push(`Durée pilote users: ${hours}h < 48h minimum`);
+    } else {
+      reasons.push('Aucun snapshot persisté pour users');
+    }
+  } catch { reasons.push('Impossible de vérifier durée pilote users'); }
+
+  // Fallback ratio
+  const totalNonPureLive = (usersM?.mirrorReads ?? 0) + (usersM?.fallbackToLive ?? 0);
+  const usersFallbackRatio = totalNonPureLive > 0 ? (usersM?.fallbackToLive ?? 0) / totalNonPureLive : 0;
+  const usersFallbackRatioOk = usersFallbackRatio <= 0.1;
+  if (!usersFallbackRatioOk) reasons.push(`Users fallback ratio: ${Math.round(usersFallbackRatio * 100)}% > 10%`);
+
+  // Failed comparisons
+  const usersFailedCmps = usersComparisons.filter(c => !c.passed);
+  const usersNoFailedComparisons = usersFailedCmps.length === 0;
+  if (!usersNoFailedComparisons) reasons.push(`${usersFailedCmps.length} comparaisons users échouées`);
+
+  // --- Projects mirror readiness ---
+  let projectsMirrorHasData = false;
+  let projectsMirrorFresh = false;
+  try {
+    const count = await getMirrorRecordCount('projects' as ModuleKey, daxAgencyId);
+    projectsMirrorHasData = count > 0;
+    if (!projectsMirrorHasData) reasons.push('projects_mirror vide pour DAX');
+  } catch { reasons.push('Impossible de vérifier projects_mirror'); }
+
+  try {
+    const fr = await isMirrorFreshEnough('projects' as ModuleKey, daxAgencyId, 480);
+    projectsMirrorFresh = fr.fresh;
+    if (!projectsMirrorFresh) reasons.push(`projects_mirror non frais: ${fr.reason}`);
+  } catch { reasons.push('Impossible de vérifier fraîcheur projects'); }
+
+  const projectsMapperReady = true; // mapMirrorProjectToAppShape exists
+
+  // --- Signal ---
+  const allOk = usersPilotStable && usersFallbackRatioOk && usersNoFailedComparisons
+    && projectsMirrorHasData && projectsMirrorFresh && projectsMapperReady;
+  const critical = !usersPilotStable || !projectsMirrorHasData;
+
+  let signal: ReadinessSignal;
+  if (allOk) signal = 'green';
+  else if (critical) signal = 'red';
+  else signal = 'orange';
+
+  if (allOk) reasons.push('Tous les prérequis sont remplis');
+
+  return {
+    signal,
+    reasons,
+    checks: {
+      usersPilotStable,
+      usersPilotDuration,
+      usersFallbackRatioOk,
+      usersNoFailedComparisons,
+      projectsMirrorHasData,
+      projectsMirrorFresh,
+      projectsMapperReady,
     },
   };
 }
