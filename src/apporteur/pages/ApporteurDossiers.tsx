@@ -349,25 +349,11 @@ export default function ApporteurDossiers() {
                         <TableCell className="hidden lg:table-cell text-sm">
                           {formatDate(d.datePremierRdv)}
                         </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          {d.devisHT > 0 ? (
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-sm">{formatCurrency(d.devisHT)}</span>
-                              <DocDownloadButton dossierRef={d.ref} docType="devis" className="text-primary hover:text-primary/80" />
-                            </div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">-</span>
-                          )}
+                        <TableCell className="hidden lg:table-cell text-sm">
+                          {d.devisHT > 0 ? formatCurrency(d.devisHT) : '-'}
                         </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {d.factureHT > 0 ? (
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-sm">{formatCurrency(d.factureHT)}</span>
-                              <DocDownloadButton dossierRef={d.ref} docType="factures" className="text-primary hover:text-primary/80" />
-                            </div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">-</span>
-                          )}
+                        <TableCell className="hidden md:table-cell text-sm">
+                          {d.factureHT > 0 ? formatCurrency(d.factureHT) : '-'}
                         </TableCell>
                         <TableCell className="text-right font-medium text-foreground">
                           {d.restedu > 0 ? formatCurrency(d.restedu) : d.factureHT > 0 ? '✓' : '-'}
