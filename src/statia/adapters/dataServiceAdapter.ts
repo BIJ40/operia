@@ -2,9 +2,8 @@
  * StatIA Phase 2 - DataService Adapter (with Mirror Support)
  * Bridge entre DataService existant et ApogeeDataServices de StatIA
  * 
- * LOT 3: Added transparent mirror read interception.
- * When a module's data_source_flag is 'mirror' or 'fallback',
- * data is read from mirror tables instead of live API.
+ * LOT 3: Transparent mirror read interception.
+ * LOT 3.1: Typed mappers, quality guards, silent comparison.
  * 
  * IMPORTANT: The live path is UNCHANGED. Mirror logic is purely additive.
  * All modules default to 'live' mode via data_source_flags table.
@@ -21,6 +20,7 @@ import {
   type ResolvedSource,
 } from '@/services/mirrorDataSource';
 import { readMirrorData } from '@/services/mirrorReadAdapter';
+import { mapMirrorRecords, runSilentComparison, isMirrorUsableForModule } from '@/services/mirrorValidation';
 
 // ============================================================
 // AGENCY ID RESOLUTION HELPER
@@ -95,17 +95,30 @@ async function withMirrorResolution(
       return liveFn();
     }
 
-    const mirrorData = await readMirrorData(moduleKey, agencyId);
+    // Quality guard: check if mirror is actually usable
+    const quality = await isMirrorUsableForModule(moduleKey, agencyId, resolved.thresholdMinutes);
+    if (!quality.usable && resolved.mode === 'fallback') {
+      const fallbackResolved = { ...resolved, effectiveSource: 'live' as const, fallbackReason: quality.reason || 'quality_check_failed' };
+      logSourceResolution(moduleKey, agencyId, fallbackResolved);
+      return liveFn();
+    }
+
+    const rawMirrorData = await readMirrorData(moduleKey, agencyId);
     
-    if (mirrorData.length === 0 && resolved.mode === 'fallback') {
-      // Fallback to live if mirror is empty
+    if (rawMirrorData.length === 0 && resolved.mode === 'fallback') {
       const fallbackResolved = { ...resolved, effectiveSource: 'live' as const, fallbackReason: 'mirror_empty' };
       logSourceResolution(moduleKey, agencyId, fallbackResolved);
       return liveFn();
     }
 
-    logSourceResolution(moduleKey, agencyId, resolved, mirrorData.length);
-    return mirrorData;
+    // Apply typed mappers — filters out invalid records
+    const mappedData = mapMirrorRecords(moduleKey, rawMirrorData);
+
+    // Silent comparison (sampled, async, non-blocking)
+    runSilentComparison(moduleKey, agencyId, mappedData, liveFn);
+
+    logSourceResolution(moduleKey, agencyId, resolved, mappedData.length);
+    return mappedData;
   } catch (err) {
     // If mirror read fails, fallback to live
     logApogee.warn(`[MirrorAdapter] ${moduleKey} mirror read failed, falling back to live:`, err);
