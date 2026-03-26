@@ -122,6 +122,16 @@ export default function AdminMirrorMonitor() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'evidence' | 'decisions' | 'criteria'>('overview');
+  const [testResult, setTestResult] = useState<{
+    status: 'idle' | 'loading' | 'success' | 'error';
+    source?: string;
+    itemCount?: number;
+    freshness?: number;
+    fallbackReason?: string;
+    mode?: string;
+    timestamp?: string;
+    error?: string;
+  }>({ status: 'idle' });
 
   const loadData = useCallback(async () => {
     setRefreshing(true);
