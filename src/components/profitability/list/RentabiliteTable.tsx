@@ -25,7 +25,7 @@ interface RentabiliteTableProps {
   onCalculate: (projectId: string) => void;
 }
 
-type SortKey = 'projectLabel' | 'clientName' | 'ca' | 'margin' | 'marginPct' | 'reliability';
+type SortKey = 'projectRef' | 'clientName' | 'apporteur' | 'libelle' | 'ca' | 'margin' | 'marginPct' | 'reliability';
 type SortDir = 'asc' | 'desc';
 type DatePreset = 'all' | 'current-month' | '2026' | '2025' | 'custom';
 
@@ -66,8 +66,8 @@ function getDateRange(preset: DatePreset): { start: Date; end: Date } | null {
 export function RentabiliteTable({ items, isLoading, onSelectProject, onCalculate }: RentabiliteTableProps) {
   const [search, setSearch] = useState('');
   const [segment, setSegment] = useState<RentabiliteSegment>('all');
-  const [sortKey, setSortKey] = useState<SortKey>('projectLabel');
-  const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [sortKey, setSortKey] = useState<SortKey>('projectRef');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [page, setPage] = useState(0);
 
   // Filters
@@ -106,7 +106,8 @@ export function RentabiliteTable({ items, isLoading, onSelectProject, onCalculat
         i.clientName.toLowerCase().includes(q) ||
         i.projectId.includes(q) ||
         i.projectRef.toLowerCase().includes(q) ||
-        i.apporteurName.toLowerCase().includes(q)
+        i.apporteurName.toLowerCase().includes(q) ||
+        i.libelle.toLowerCase().includes(q)
       );
     }
 
@@ -141,8 +142,10 @@ export function RentabiliteTable({ items, isLoading, onSelectProject, onCalculat
     return [...result].sort((a, b) => {
       let cmp = 0;
       switch (sortKey) {
-        case 'projectLabel': cmp = a.projectLabel.localeCompare(b.projectLabel); break;
+        case 'projectRef': cmp = a.projectRef.localeCompare(b.projectRef); break;
         case 'clientName': cmp = a.clientName.localeCompare(b.clientName); break;
+        case 'apporteur': cmp = a.apporteurName.localeCompare(b.apporteurName); break;
+        case 'libelle': cmp = a.libelle.localeCompare(b.libelle); break;
         case 'ca': cmp = (a.snapshot?.ca_invoiced_ht ?? 0) - (b.snapshot?.ca_invoiced_ht ?? 0); break;
         case 'margin': cmp = (a.snapshot?.net_margin ?? 0) - (b.snapshot?.net_margin ?? 0); break;
         case 'marginPct': cmp = (a.snapshot?.margin_pct ?? -999) - (b.snapshot?.margin_pct ?? -999); break;
