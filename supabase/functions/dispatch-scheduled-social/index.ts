@@ -16,6 +16,14 @@ Deno.serve(async (req: Request) => {
     return new Response(null, { headers: corsHeaders })
   }
 
+  // SECURITY: Validate CRON_SECRET for scheduled invocations (fail-closed)
+  const cronSecret = Deno.env.get('CRON_SECRET')
+  const providedSecret = req.headers.get('X-CRON-SECRET') || req.headers.get('Authorization')?.replace('Bearer ', '')
+  if (!cronSecret || !providedSecret || providedSecret !== cronSecret) {
+    console.error('[dispatch-scheduled-social] Unauthorized: missing or invalid CRON_SECRET')
+    return json({ error: 'Unauthorized' }, 401)
+  }
+
   try {
     const adminClient = createClient(
       Deno.env.get('SUPABASE_URL')!,

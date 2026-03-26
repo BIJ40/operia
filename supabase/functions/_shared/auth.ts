@@ -151,40 +151,86 @@ export function assertAgencyAccessBySlug(
 }
 
 /**
- * Vérifie si un module est activé pour l'utilisateur
- * DEPRECATED côté Edge: préférer has_module_v2() SQL pour les vérifications DB
- * Gardé pour compatibilité des Edge Functions qui n'ont pas accès à la DB directement
+ * Vérifie si un module est activé pour l'utilisateur.
+ * Utilise la RPC has_module_v2() SQL pour un contrôle fiable sur toute la hiérarchie N0-N6.
+ * 
+ * IMPORTANT: Cette fonction est async (breaking change mineur).
+ * Les Edge Functions qui l'utilisent doivent `await` le résultat.
  */
-export function hasModule(
+export async function hasModule(
   context: UserContext, 
-  _moduleKey: string
-): boolean {
-  // N5+ a accès à tout
+  moduleKey: string,
+  supabaseClient?: SupabaseClient
+): Promise<boolean> {
+  // N5+ a accès à tout (fast path)
   if (context.globalRoleLevel >= GLOBAL_ROLES.platform_admin) {
     return true;
   }
   
-  // Edge functions should use SQL has_module_v2() for accurate checks
-  // This function is kept as a role-level-only fallback
-  return false;
+  // Si pas de client Supabase fourni, créer un service client pour la requête
+  const client = supabaseClient ?? createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+  );
+
+  try {
+    const { data, error } = await client.rpc('has_module_v2', {
+      _user_id: context.userId,
+      _module_key: moduleKey,
+    });
+
+    if (error) {
+      console.error(`[auth:hasModule] RPC error for user=${context.userId} module=${moduleKey}:`, error.message);
+      // Fail-closed: en cas d'erreur, refuser l'accès
+      return false;
+    }
+
+    return data === true;
+  } catch (err) {
+    console.error(`[auth:hasModule] Exception for user=${context.userId} module=${moduleKey}:`, err);
+    return false;
+  }
 }
 
 /**
- * Vérifie si une option de module est activée
- * DEPRECATED côté Edge: préférer has_module_option_v2() SQL
+ * Vérifie si une option de module est activée pour l'utilisateur.
+ * Utilise la RPC has_module_option_v2() SQL pour un contrôle fiable.
+ * 
+ * IMPORTANT: Cette fonction est async (breaking change mineur).
  */
-export function hasModuleOption(
+export async function hasModuleOption(
   context: UserContext, 
-  _moduleKey: string, 
-  _optionKey: string
-): boolean {
-  // N5+ a accès à tout
+  moduleKey: string, 
+  optionKey: string,
+  supabaseClient?: SupabaseClient
+): Promise<boolean> {
+  // N5+ a accès à tout (fast path)
   if (context.globalRoleLevel >= GLOBAL_ROLES.platform_admin) {
     return true;
   }
   
-  // Edge functions should use SQL has_module_option_v2() for accurate checks
-  return false;
+  const client = supabaseClient ?? createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+  );
+
+  try {
+    const { data, error } = await client.rpc('has_module_option_v2', {
+      _user_id: context.userId,
+      _module_key: moduleKey,
+      _option_key: optionKey,
+    });
+
+    if (error) {
+      console.error(`[auth:hasModuleOption] RPC error for user=${context.userId} module=${moduleKey} option=${optionKey}:`, error.message);
+      return false;
+    }
+
+    return data === true;
+  } catch (err) {
+    console.error(`[auth:hasModuleOption] Exception for user=${context.userId}:`, err);
+    return false;
+  }
 }
 
 /**
