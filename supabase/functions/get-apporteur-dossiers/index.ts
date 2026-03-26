@@ -27,7 +27,9 @@ interface DossierRow {
   lastModified: string | null;
   devisHT: number;
   factureHT: number;
+  factureTTC: number;
   restedu: number;
+  resteduTTC: number;
   devisId: number | null;
   factureId: number | null;
 }
@@ -495,7 +497,9 @@ Deno.serve(async (req) => {
         lastModified: formatDateISO(lastModified),
         devisHT: Math.round(devisHT * 100) / 100,
         factureHT: Math.round(factureHT * 100) / 100,
+        factureTTC: Math.round(totalTTC * 100) / 100,
         restedu: Math.round(Math.max(0, resteDuHT) * 100) / 100,
+        resteduTTC: Math.round(Math.max(0, resteDuTTC) * 100) / 100,
         devisId: devis && !devisIsCancelled ? Number(devis.id) : null,
         factureId: facture ? Number(facture.id) : null,
         v2,

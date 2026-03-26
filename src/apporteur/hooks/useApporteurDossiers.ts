@@ -26,7 +26,9 @@ export interface DossierRow {
   lastModified: string | null;
   devisHT: number;
   factureHT: number;
+  factureTTC: number;
   restedu: number;
+  resteduTTC: number;
   devisId: number | null;
   factureId: number | null;
 }
