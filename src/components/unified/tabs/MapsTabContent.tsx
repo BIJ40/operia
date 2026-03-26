@@ -494,7 +494,11 @@ export default function MapsTabContent() {
             </Button>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <MapPin className="h-4 w-4" />
-              <span>{isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${rdvs.length} RDV`}</span>
+              <span>
+                {mapMode === 'heatmap'
+                  ? (heatmapLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${heatmapPoints?.length || 0} interventions`)
+                  : (isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${rdvs.length} RDV`)}
+              </span>
             </div>
           </div>
         </div>
