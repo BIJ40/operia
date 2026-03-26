@@ -184,11 +184,13 @@ export default function MapsTabContent() {
   const hasFittedBoundsRef = useRef(false);
   const lastRdvsLengthRef = useRef(0);
 
-  // Update markers
+  // Update markers (only in pins mode)
   useEffect(() => {
     if (!map.current || !mapReady) return;
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
+
+    if (mapMode === 'heatmap') return; // No pins in heatmap mode
 
     sortedRdvs.forEach((rdv, index) => {
       const isSelected = selectedRdv?.rdvId === rdv.rdvId;
@@ -221,7 +223,71 @@ export default function MapsTabContent() {
         hasFittedBoundsRef.current = true;
       }
     }
-  }, [sortedRdvs, selectedRdv, mapReady, isTourMode]);
+  }, [sortedRdvs, selectedRdv, mapReady, isTourMode, mapMode]);
+
+  // Heatmap layer
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !mapReady) return;
+
+    // Clean previous heatmap
+    if (m.getLayer(HEATMAP_LAYER)) m.removeLayer(HEATMAP_LAYER);
+    if (m.getSource(HEATMAP_SOURCE)) m.removeSource(HEATMAP_SOURCE);
+
+    if (mapMode !== 'heatmap' || sortedRdvs.length === 0) return;
+
+    const geojson: GeoJSON.FeatureCollection = {
+      type: 'FeatureCollection',
+      features: sortedRdvs.map(rdv => ({
+        type: 'Feature' as const,
+        properties: { weight: 1 },
+        geometry: { type: 'Point' as const, coordinates: [rdv.lng, rdv.lat] },
+      })),
+    };
+
+    m.addSource(HEATMAP_SOURCE, { type: 'geojson', data: geojson });
+
+    m.addLayer({
+      id: HEATMAP_LAYER,
+      type: 'heatmap',
+      source: HEATMAP_SOURCE,
+      paint: {
+        // Increase weight at higher zoom
+        'heatmap-weight': ['interpolate', ['linear'], ['get', 'weight'], 0, 0, 1, 1],
+        // Increase intensity at higher zoom
+        'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 0.5, 12, 2, 16, 4],
+        // Color ramp: transparent → white → light red → red → dark red → near black
+        'heatmap-color': [
+          'interpolate', ['linear'], ['heatmap-density'],
+          0, 'rgba(255,255,255,0)',
+          0.1, 'rgba(255,235,235,0.6)',
+          0.25, 'rgba(255,180,180,0.7)',
+          0.4, 'rgba(240,100,100,0.8)',
+          0.6, 'rgba(200,40,40,0.85)',
+          0.8, 'rgba(150,10,10,0.9)',
+          1, 'rgba(60,0,0,0.95)',
+        ],
+        // Radius by zoom
+        'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 8, 8, 20, 12, 35, 16, 50],
+        // Full opacity
+        'heatmap-opacity': 0.85,
+      },
+    });
+
+    // Fit bounds for heatmap too
+    const bounds = calculateBounds(sortedRdvs);
+    if (bounds && !hasFittedBoundsRef.current) {
+      const container = m.getContainer();
+      const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
+      const padY = Math.max(56, Math.round((container.clientHeight || 600) * 0.12));
+      m.fitBounds(bounds, {
+        padding: { top: padY, bottom: padY + 60, left: padX, right: padX },
+        maxZoom: 14,
+        duration: 1000,
+      });
+      hasFittedBoundsRef.current = true;
+    }
+  }, [sortedRdvs, mapReady, mapMode]);
 
   // Draw/remove route layer
   useEffect(() => {
