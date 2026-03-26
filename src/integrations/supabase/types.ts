@@ -6884,6 +6884,63 @@ export type Database = {
         }
         Relationships: []
       }
+      mirror_decision_log: {
+        Row: {
+          agency_id: string | null
+          comparison_result: Json | null
+          created_at: string
+          fallback_reason: string | null
+          freshness_minutes: number | null
+          id: string
+          item_count: number | null
+          mode_requested: string
+          module_key: string
+          quality_check: Json | null
+          source_used: string
+        }
+        Insert: {
+          agency_id?: string | null
+          comparison_result?: Json | null
+          created_at?: string
+          fallback_reason?: string | null
+          freshness_minutes?: number | null
+          id?: string
+          item_count?: number | null
+          mode_requested: string
+          module_key: string
+          quality_check?: Json | null
+          source_used: string
+        }
+        Update: {
+          agency_id?: string | null
+          comparison_result?: Json | null
+          created_at?: string
+          fallback_reason?: string | null
+          freshness_minutes?: number | null
+          id?: string
+          item_count?: number | null
+          mode_requested?: string
+          module_key?: string
+          quality_check?: Json | null
+          source_used?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mirror_decision_log_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mirror_decision_log_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+        ]
+      }
       module_registry: {
         Row: {
           is_deployed: boolean
@@ -12435,6 +12492,7 @@ export type Database = {
         Args: { p_retention_months?: number }
         Returns: number
       }
+      purge_old_mirror_decisions: { Args: never; Returns: undefined }
       purge_old_ticket_history: {
         Args: { p_retention_months?: number }
         Returns: number
