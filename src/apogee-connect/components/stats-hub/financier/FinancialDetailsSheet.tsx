@@ -80,12 +80,25 @@ export function FinancialDetailsSheet({ entity, open, onClose, allEntities, onNa
     }));
   };
 
+  const handlePrev = () => {
+    if (canGoPrev && allEntities && onNavigate) {
+      onNavigate(allEntities[currentIndex - 1]);
+    }
+  };
+  const handleNext = () => {
+    if (canGoNext && allEntities && onNavigate) {
+      onNavigate(allEntities[currentIndex + 1]);
+    }
+  };
+
   const InvSortHeader = ({ field, children }: { field: InvoiceSortField; children: React.ReactNode }) => (
     <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => toggleInvoiceSort(field)}>
       {children}
       <ArrowUpDown className={cn('h-2.5 w-2.5', invoiceSort.field === field ? 'text-foreground' : 'text-muted-foreground/40')} />
     </button>
   );
+
+  if (!entity) return null;
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
