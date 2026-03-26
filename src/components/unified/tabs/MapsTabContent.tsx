@@ -517,7 +517,7 @@ export default function MapsTabContent() {
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
 
-    if (mapMode === 'heatmap' || mapMode === 'profitability' || mapMode === 'zones' || mapMode === 'apporteurs' || mapMode === 'disponibilite') return;
+    if (mapMode === 'heatmap' || mapMode === 'profitability' || mapMode === 'zones' || mapMode === 'apporteurs' || mapMode === 'disponibilite' || mapMode === 'saisonnalite') return;
 
     sortedRdvs.forEach((rdv, index) => {
       const isSelected = selectedRdv?.rdvId === rdv.rdvId;
@@ -1473,7 +1473,7 @@ export default function MapsTabContent() {
               </div>
             )}
 
-            {((isLoading && mapMode === 'pins') || (heatmapLoading && mapMode === 'heatmap') || (profitLoading && mapMode === 'profitability') || (zonesLoading && mapMode === 'zones') || (apporteursLoading && mapMode === 'apporteurs') || (dispoLoading && mapMode === 'disponibilite')) && mapboxToken && !mapInitError && (
+            {((isLoading && mapMode === 'pins') || (heatmapLoading && mapMode === 'heatmap') || (profitLoading && mapMode === 'profitability') || (zonesLoading && mapMode === 'zones') || (apporteursLoading && mapMode === 'apporteurs') || (dispoLoading && mapMode === 'disponibilite') || (seasonLoading && mapMode === 'saisonnalite')) && mapboxToken && !mapInitError && (
               <MapLoadingOverlay mode={mapMode} />
             )}
 
