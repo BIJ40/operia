@@ -508,9 +508,19 @@ Deno.serve(async (req) => {
     }
 
     // Devis non validés > 15j
+    // Règle : un devis dont le projet a déjà une facture OU dont le projet
+    // est dans un état terminal (facturé, clos, annulé) n'est PAS en retard.
+    const TERMINAL_PROJECT_STATES = ['done', 'closed', 'canceled', 'cancelled', 'billed', 'clos', 'facture', 'annul'];
     const overdueDevis: { ref: string; label: string }[] = [];
+    const seenProjectsForDevisAlerte = new Set<number>();
     for (const d of allDevis) {
       if (!projectIds.has(d.projectId)) continue;
+      // Skip si le projet a déjà une facture (= devis implicitement validé)
+      if (projectsWithFacture.has(d.projectId)) continue;
+      // Skip si le projet est dans un état terminal
+      const proj = projects.find((p: R) => Number(p.id) === Number(d.projectId));
+      const projState = String(proj?.state || '').toLowerCase();
+      if (TERMINAL_PROJECT_STATES.some(s => projState.includes(s))) continue;
       const state = String(d.state || '').toLowerCase();
       if (isCancelledLike(state)) continue;
       if (ACCEPTED_DEVIS.some(s => state.includes(s))) continue;
@@ -518,7 +528,9 @@ Deno.serve(async (req) => {
       const dd = parseDate(d.dateReelle || d.date);
       if (!dd) continue;
       if (daysDiff(dd, now) > 15) {
-        const proj = projects.find((p: R) => Number(p.id) === Number(d.projectId));
+        // Éviter doublons par projet (plusieurs devis sur un même dossier)
+        if (seenProjectsForDevisAlerte.has(d.projectId)) continue;
+        seenProjectsForDevisAlerte.add(d.projectId);
         const ref = String(proj?.ref || d.projectId);
         overdueDevis.push({ ref, label: resolveClientName(proj) || ref });
       }
