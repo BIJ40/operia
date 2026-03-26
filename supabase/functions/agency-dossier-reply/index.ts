@@ -2,7 +2,8 @@
  * Edge Function: agency-dossier-reply
  * Permet à un utilisateur OPERIA (agence) de répondre dans le fil d'échanges d'un dossier apporteur.
  * 
- * Vérification serveur : seuls les N2 (franchisee_admin) et les N1 assistantes/secrétaires peuvent répondre.
+ * Ordre : auth JWT → contrôle droit de réponse → insertion dossier_exchanges → lookup email → envoi Resend
+ * L'envoi email est non-bloquant : si l'insertion réussit, on retourne succès même si l'email échoue.
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
@@ -33,7 +34,7 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 
-    // Authenticate via JWT
+    // 1. Auth JWT
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return withCors(req, new Response(
@@ -53,7 +54,7 @@ Deno.serve(async (req) => {
       ));
     }
 
-    // Get profile
+    // 2. Get profile & check authorization
     const supabaseAdmin = createClient(supabaseUrl, serviceKey);
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
@@ -69,7 +70,6 @@ Deno.serve(async (req) => {
       ));
     }
 
-    // Server-side authorization check
     if (!canReplyToApporteur(profile.global_role, profile.role_agence)) {
       return withCors(req, new Response(
         JSON.stringify({ success: false, error: 'Non autorisé à répondre aux apporteurs' }),
@@ -93,13 +93,13 @@ Deno.serve(async (req) => {
       ));
     }
 
-    // Build sender name with role label
+    // Build sender identity
     const firstName = profile.first_name ?? '';
     const lastName = profile.last_name ?? '';
     const senderName = `${firstName} ${lastName}`.trim() || 'Agence';
     const roleLabel = profile.role_agence ?? '';
 
-    // Insert exchange
+    // 3. Insert exchange (source de vérité)
     const { error: insertError } = await supabaseAdmin
       .from('dossier_exchanges')
       .insert({
@@ -120,98 +120,108 @@ Deno.serve(async (req) => {
       ));
     }
 
-    // Send email notification to apporteur
+    // 4. Lookup apporteur email (non-bloquant à partir d'ici)
+    let emailWarning: string | null = null;
+
     try {
-      // Find apporteur email via dossier_ref → apporteur link
-      const { data: exchangeData } = await supabaseAdmin
-        .from('dossier_exchanges')
-        .select('metadata')
-        .eq('agency_id', profile.agency_id)
-        .eq('dossier_ref', dossierRef)
-        .eq('sender_type', 'apporteur')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      // Try to find apporteur email from apporteur_managers → apporteurs
-      const { data: apporteurData } = await supabaseAdmin
-        .from('apporteurs')
-        .select('email, name')
-        .eq('agency_id', profile.agency_id)
-        .limit(100);
-
-      // Get agency label for email
-      const { data: agency } = await supabaseAdmin
-        .from('apogee_agencies')
-        .select('label, contact_email')
-        .eq('id', profile.agency_id)
-        .single();
-
-      const agencyLabel = agency?.label ?? 'l\'agence';
-
-      // Find apporteur linked to this dossier via apporteur_managers
-      const { data: managers } = await supabaseAdmin
-        .from('apporteur_managers')
-        .select('apporteur_id, apporteurs:apporteur_id(email, name)')
-        .eq('agency_id', profile.agency_id)
-        .eq('is_active', true);
-
-      // Look for apporteur who has exchanges on this dossier
       let apporteurEmail: string | null = null;
       let apporteurName: string | null = null;
 
-      if (exchangeData?.metadata && typeof exchangeData.metadata === 'object') {
-        const meta = exchangeData.metadata as Record<string, unknown>;
-        if (meta.apporteur_email && typeof meta.apporteur_email === 'string') {
-          apporteurEmail = meta.apporteur_email;
+      // Chemin principal : dossier_ref → apporteur_intervention_requests → apporteur_manager_id → email
+      const { data: request } = await supabaseAdmin
+        .from('apporteur_intervention_requests')
+        .select('apporteur_manager_id, apporteur_id, tenant_name')
+        .eq('agency_id', profile.agency_id)
+        .eq('reference', dossierRef)
+        .maybeSingle();
+
+      if (request?.apporteur_manager_id) {
+        // Lookup direct via manager_id
+        const { data: manager } = await supabaseAdmin
+          .from('apporteur_managers')
+          .select('email, first_name, last_name')
+          .eq('id', request.apporteur_manager_id)
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (manager?.email) {
+          apporteurEmail = manager.email;
+          apporteurName = [manager.first_name, manager.last_name].filter(Boolean).join(' ') || null;
         }
       }
 
-      // Fallback: search in dossier_exchanges for the apporteur sender
+      // Fallback : si pas de manager_id, chercher un manager actif lié à l'apporteur_id
+      if (!apporteurEmail && request?.apporteur_id) {
+        const { data: managers } = await supabaseAdmin
+          .from('apporteur_managers')
+          .select('email, first_name, last_name')
+          .eq('apporteur_id', request.apporteur_id)
+          .eq('is_active', true)
+          .order('created_at', { ascending: true })
+          .limit(1);
+
+        if (managers?.length && managers[0].email) {
+          apporteurEmail = managers[0].email;
+          apporteurName = [managers[0].first_name, managers[0].last_name].filter(Boolean).join(' ') || null;
+        }
+      }
+
+      // Fallback ultime : chercher le sender_email dans les échanges précédents de l'apporteur
       if (!apporteurEmail) {
-        const { data: apporteurExchange } = await supabaseAdmin
+        const { data: prevExchange } = await supabaseAdmin
           .from('dossier_exchanges')
-          .select('sender_name, metadata')
+          .select('sender_email, sender_name')
           .eq('agency_id', profile.agency_id)
           .eq('dossier_ref', dossierRef)
           .eq('sender_type', 'apporteur')
-          .order('created_at', { ascending: true })
+          .not('sender_email', 'is', null)
+          .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle();
 
-        if (apporteurExchange) {
-          apporteurName = apporteurExchange.sender_name;
-          // Try to find matching apporteur by name
-          if (managers?.length) {
-            for (const m of managers) {
-              const ap = m.apporteurs as unknown as { email: string | null; name: string } | null;
-              if (ap?.name === apporteurName && ap?.email) {
-                apporteurEmail = ap.email;
-                break;
-              }
-            }
-          }
+        if (prevExchange?.sender_email) {
+          apporteurEmail = prevExchange.sender_email;
+          apporteurName = prevExchange.sender_name;
         }
       }
 
-      if (apporteurEmail) {
+      // 5. Envoi email via Resend
+      if (!apporteurEmail) {
+        emailWarning = 'Email apporteur introuvable pour ce dossier';
+        console.warn(`[agency-dossier-reply] ${emailWarning}:`, dossierRef);
+      } else {
         const resendApiKey = Deno.env.get('RESEND_API_KEY');
-        if (resendApiKey) {
-          const displaySender = roleLabel
-            ? `${senderName} (${roleLabel})`
-            : senderName;
+        if (!resendApiKey) {
+          emailWarning = 'RESEND_API_KEY non configurée';
+          console.warn('[agency-dossier-reply]', emailWarning);
+        } else {
+          // Get agency label
+          const { data: agency } = await supabaseAdmin
+            .from('apogee_agencies')
+            .select('label')
+            .eq('id', profile.agency_id)
+            .single();
+
+          const agencyLabel = agency?.label ?? 'HelpConfort';
+          const displaySender = roleLabel ? `${senderName} (${roleLabel})` : senderName;
+          const greeting = apporteurName ? `Bonjour ${apporteurName},` : 'Bonjour,';
 
           const emailBody = `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
   <h2 style="color: #333; margin-bottom: 16px;">Nouveau message de ${agencyLabel}</h2>
+  <p style="color: #555;">${greeting}</p>
   <p style="color: #555; margin-bottom: 8px;">
     <strong>${displaySender}</strong> vous a envoyé un message concernant le dossier <strong>#${dossierRef}</strong> :
   </p>
   <div style="background: #f5f5f5; border-left: 4px solid #2563eb; padding: 16px; margin: 16px 0; border-radius: 4px;">
     <p style="color: #333; margin: 0; white-space: pre-wrap;">${message.trim()}</p>
   </div>
-  <p style="color: #888; font-size: 13px; margin-top: 24px;">
-    Connectez-vous à votre espace apporteur pour répondre.
+  <p style="color: #555; margin-top: 24px;">
+    Connectez-vous à votre espace apporteur pour consulter et répondre à ce message.
+  </p>
+  <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
+  <p style="color: #999; font-size: 12px;">
+    Ce message a été envoyé automatiquement par ${agencyLabel}. Merci de ne pas répondre directement à cet email.
   </p>
 </div>`;
 
@@ -231,31 +241,32 @@ Deno.serve(async (req) => {
 
           if (!resendResponse.ok) {
             const resendError = await resendResponse.text();
+            emailWarning = `Erreur envoi email: ${resendError}`;
             console.warn('[agency-dossier-reply] Resend error (non-blocking):', resendError);
           } else {
-            console.log('[agency-dossier-reply] Email sent to apporteur:', apporteurEmail);
+            console.log('[agency-dossier-reply] Email envoyé à:', apporteurEmail);
           }
-        } else {
-          console.warn('[agency-dossier-reply] RESEND_API_KEY not configured, skipping email');
         }
-      } else {
-        console.warn('[agency-dossier-reply] Could not find apporteur email for dossier:', dossierRef);
       }
     } catch (emailError) {
-      // Non-blocking: log but don't fail the response
+      emailWarning = emailError instanceof Error ? emailError.message : 'Erreur inconnue email';
       console.warn('[agency-dossier-reply] Email notification error (non-blocking):', emailError);
     }
 
+    // Retour : succès (message inséré), avec warning éventuel sur l'email
     return withCors(req, new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({
+        success: true,
+        ...(emailWarning ? { warning: emailWarning } : {}),
+      }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     ));
 
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[agency-dossier-reply] Error:', message);
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[agency-dossier-reply] Error:', msg);
     return withCors(req, new Response(
-      JSON.stringify({ success: false, error: message }),
+      JSON.stringify({ success: false, error: msg }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     ));
   }
