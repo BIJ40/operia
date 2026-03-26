@@ -1,6 +1,6 @@
 /**
  * useRentabiliteList — Merges Supabase snapshots with Apogée projects.
- * v2: Includes projectRef for enrichment via apiGetProjectByRef.
+ * v3: Includes univers, apporteur, dateCreation for filtering.
  */
 import { useQuery } from '@tanstack/react-query';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
@@ -14,6 +14,9 @@ export interface RentabiliteListItem {
   projectLabel: string;
   projectRef: string;
   clientName: string;
+  univers: string;
+  apporteurName: string;
+  dateCreation: string | null;
   hasSnapshot: boolean;
   snapshot: ProfitabilitySnapshot | null;
 }
@@ -45,10 +48,10 @@ export function useRentabiliteList() {
         }
       }
 
-      const clientMap = new Map<number, string>();
+      const clientMap = new Map<number, Record<string, unknown>>();
       for (const c of (rawClients || []) as Record<string, unknown>[]) {
         if (c.id != null) {
-          clientMap.set(Number(c.id), String(c.name ?? ''));
+          clientMap.set(Number(c.id), c);
         }
       }
 
@@ -61,9 +64,24 @@ export function useRentabiliteList() {
         seenProjectIds.add(projectId);
 
         const clientId = Number(proj.clientId ?? proj.client_id ?? 0);
-        const clientName = clientMap.get(clientId) || '';
+        const client = clientMap.get(clientId);
+        const clientName = String(client?.name ?? client?.nom ?? '');
         const snapshot = snapshotMap.get(projectId) || null;
         const projectRef = String(proj.reference ?? proj.ref ?? proj.projectRef ?? projectId);
+
+        // Extract univers
+        const univers = String(proj.univers ?? proj.universe ?? proj.typeUnivers ?? '');
+
+        // Extract apporteur from project or client (commanditaire)
+        const commanditaire = (proj.commanditaire ?? proj.apporteur ?? {}) as Record<string, unknown>;
+        const apporteurName = String(
+          commanditaire?.name ?? commanditaire?.nom ?? commanditaire?.raisonSociale ??
+          proj.apporteurName ?? proj.commanditaireName ?? ''
+        );
+
+        // Date creation
+        const dateCreation = (proj.dateCreation ?? proj.createdAt ?? proj.created_at ?? null) as string | null;
+
         const projectLabel = clientName
           ? `${clientName} — ${projectRef}`
           : projectRef !== projectId
@@ -75,6 +93,9 @@ export function useRentabiliteList() {
           projectLabel,
           projectRef,
           clientName,
+          univers,
+          apporteurName,
+          dateCreation,
           hasSnapshot: !!snapshot,
           snapshot,
         });
@@ -87,6 +108,9 @@ export function useRentabiliteList() {
             projectLabel: `Dossier ${projectId}`,
             projectRef: projectId,
             clientName: '',
+            univers: '',
+            apporteurName: '',
+            dateCreation: null,
             hasSnapshot: true,
             snapshot,
           });
