@@ -464,7 +464,7 @@ export default function MapsTabContent() {
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
 
-    if (mapMode === 'heatmap' || mapMode === 'profitability' || mapMode === 'zones' || mapMode === 'apporteurs') return;
+    if (mapMode === 'heatmap' || mapMode === 'profitability' || mapMode === 'zones' || mapMode === 'apporteurs' || mapMode === 'disponibilite') return;
 
     sortedRdvs.forEach((rdv, index) => {
       const isSelected = selectedRdv?.rdvId === rdv.rdvId;
@@ -975,6 +975,131 @@ export default function MapsTabContent() {
     return () => { m.off('click', APPORTEURS_CIRCLES, handleClick); };
   }, [apporteursData, mapReady, mapMode]);
 
+  // Disponibilité layer — tech positions with status colors
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !mapReady) return;
+
+    if (m.getLayer(DISPO_CIRCLES)) m.removeLayer(DISPO_CIRCLES);
+    if (m.getSource(DISPO_SOURCE)) m.removeSource(DISPO_SOURCE);
+
+    if (mapMode !== 'disponibilite' || !dispoData?.length) return;
+
+    const geojson: GeoJSON.FeatureCollection = {
+      type: 'FeatureCollection',
+      features: dispoData.filter(t => t.lat && t.lng).map(t => ({
+        type: 'Feature' as const,
+        properties: {
+          techId: t.techId,
+          name: t.name,
+          techColor: t.color,
+          status: t.status,
+          statusLabel: t.statusLabel,
+          currentTask: t.currentTask || '',
+          nextTask: t.nextTask || '',
+          nextTaskTime: t.nextTaskTime || '',
+          freeMinutes: t.freeMinutes,
+          remainingCapacityMin: t.remainingCapacityMin,
+          totalDayMin: t.totalDayMin,
+          occupiedMin: t.occupiedMin,
+          travelEstimateMin: t.travelEstimateMin,
+          skills: JSON.stringify(t.skills),
+          rdvCount: t.rdvCount,
+          rdvDone: t.rdvDone,
+          rdvRemaining: t.rdvRemaining,
+          statusIndex: t.status === 'available' ? 0 : t.status === 'soon' ? 1 : t.status === 'busy' ? 2 : t.status === 'saturated' ? 3 : 4,
+        },
+        geometry: { type: 'Point' as const, coordinates: [t.lng, t.lat] },
+      })),
+    };
+
+    m.addSource(DISPO_SOURCE, { type: 'geojson', data: geojson });
+
+    m.addLayer({
+      id: DISPO_CIRCLES,
+      type: 'circle',
+      source: DISPO_SOURCE,
+      paint: {
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 12, 10, 20, 14, 28],
+        'circle-color': [
+          'match', ['get', 'status'],
+          'available', '#22c55e',
+          'soon', '#eab308',
+          'busy', '#f97316',
+          'saturated', '#dc2626',
+          'unavailable', '#9ca3af',
+          '#9ca3af',
+        ],
+        'circle-opacity': 0.85,
+        'circle-stroke-color': ['get', 'techColor'],
+        'circle-stroke-width': 3,
+        'circle-stroke-opacity': 0.9,
+      },
+    });
+
+    // Fit bounds
+    if (!hasFittedBoundsRef.current) {
+      const pts = dispoData.filter(t => t.lat && t.lng);
+      if (pts.length > 0) {
+        let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+        pts.forEach(p => { minLng = Math.min(minLng, p.lng); maxLng = Math.max(maxLng, p.lng); minLat = Math.min(minLat, p.lat); maxLat = Math.max(maxLat, p.lat); });
+        const pad = 0.1;
+        const container = m.getContainer();
+        const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
+        const padY = Math.max(56, Math.round((container.clientHeight || 600) * 0.12));
+        m.fitBounds([[minLng - pad, minLat - pad], [maxLng + pad, maxLat + pad]], {
+          padding: { top: padY, bottom: padY + 60, left: padX, right: padX }, maxZoom: 12, duration: 1000,
+        });
+        hasFittedBoundsRef.current = true;
+      }
+    }
+
+    // Popup on click
+    const handleClick = (e: mapboxgl.MapMouseEvent) => {
+      const features = m.queryRenderedFeatures(e.point, { layers: [DISPO_CIRCLES] });
+      if (!features?.length) return;
+      const p = features[0].properties;
+      if (!p) return;
+      const coords = (features[0].geometry as any).coordinates as [number, number];
+
+      const skills: string[] = (() => { try { return JSON.parse(p.skills); } catch { return []; } })();
+      const statusBg = DISPO_STATUS_COLORS[p.status] || '#9ca3af';
+      const capacityPct = p.totalDayMin > 0 ? Math.round((p.occupiedMin / p.totalDayMin) * 100) : 0;
+
+      // Also update side panel selection
+      const tech = dispoData?.find(t => t.techId === p.techId);
+      if (tech) setSelectedDispoTech(tech);
+
+      new mapboxgl.Popup({ closeButton: true, maxWidth: '340px' })
+        .setLngLat(coords)
+        .setHTML(`
+          <div style="font-family: system-ui; font-size: 12px; line-height: 1.6;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <span style="width:12px;height:12px;border-radius:50%;background:${p.techColor};border:2px solid ${statusBg};flex-shrink:0;"></span>
+              <span style="font-weight:700;font-size:14px;">${p.name}</span>
+              <span style="background:${statusBg};color:white;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:600;">${p.statusLabel}</span>
+            </div>
+            ${p.currentTask ? `<div>🔧 En cours : <b>${p.currentTask}</b></div>` : ''}
+            ${p.nextTask ? `<div>⏭️ Prochain : <b>${p.nextTask}</b> ${p.nextTaskTime ? `à ${p.nextTaskTime}` : ''}</div>` : ''}
+            <div style="margin:6px 0;padding:6px 0;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;">
+              <div>⏱️ Libre : <b>${p.freeMinutes} min</b></div>
+              <div>📊 Charge : <b>${capacityPct}%</b></div>
+              <div>📋 RDV : <b>${p.rdvDone}/${p.rdvCount}</b></div>
+              <div>🚗 Trajet : <b>${p.travelEstimateMin} min</b></div>
+              <div>✅ Restant : <b>${p.rdvRemaining} RDV</b></div>
+              <div>⏰ Capacité : <b>${p.remainingCapacityMin} min</b></div>
+            </div>
+            ${skills.length > 0 ? `<div style="color:#4b5563;"><b>Compétences :</b> ${skills.join(', ')}</div>` : ''}
+          </div>
+        `)
+        .addTo(m);
+    };
+
+    m.on('click', DISPO_CIRCLES, handleClick);
+    m.on('mouseenter', DISPO_CIRCLES, () => { m.getCanvas().style.cursor = 'pointer'; });
+    m.on('mouseleave', DISPO_CIRCLES, () => { m.getCanvas().style.cursor = ''; });
+  }, [apporteursData, mapReady, mapMode]);
+
   useEffect(() => {
     const m = map.current;
     if (!m || !mapReady) return;
@@ -1238,7 +1363,43 @@ export default function MapsTabContent() {
           </div>
         )}
 
-        <div className="flex-1 min-h-0" style={{ minHeight: '400px' }}>
+        {/* Barre info + panneau latéral disponibilité */}
+        {mapMode === 'disponibilite' && (
+          <div className="flex-none p-4 space-y-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Radio className="h-4 w-4" />
+              <span>Disponibilité techniciens — {format(selectedDate, 'd MMMM yyyy', { locale: fr })}</span>
+              <div className="flex items-center gap-1 ml-2">
+                <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => setSelectedDate(d => subDays(d, 1))}>
+                  <ChevronLeft className="h-3 w-3" />
+                </Button>
+                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setSelectedDate(new Date())}>Aujourd'hui</Button>
+                <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => setSelectedDate(d => addDays(d, 1))}>
+                  <ChevronRight className="h-3 w-3" />
+                </Button>
+              </div>
+              <span className="ml-auto">
+                {dispoLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${dispoData?.length || 0} techniciens`}
+              </span>
+            </div>
+            <div className="flex items-center gap-4 text-xs flex-wrap">
+              {[
+                { label: 'Disponible', color: '#22c55e' },
+                { label: 'Bientôt', color: '#eab308' },
+                { label: 'Occupé', color: '#f97316' },
+                { label: 'Saturé', color: '#dc2626' },
+                { label: 'Indisponible', color: '#9ca3af' },
+              ].map(({ label, color }) => (
+                <div key={label} className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
+                  <span className="text-muted-foreground">{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="flex-1 min-h-0 flex" style={{ minHeight: '400px' }}>
           <div className="relative h-full w-full overflow-hidden bg-background">
             {!mapboxToken ? (
               <div className="absolute inset-0 flex items-center justify-center bg-muted">
