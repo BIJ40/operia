@@ -9,7 +9,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { format, addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Loader2, MapPin, AlertCircle, CalendarDays, Flame } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Loader2, MapPin, AlertCircle, CalendarDays, Flame, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -36,6 +36,10 @@ const TOUR_ROUTE_SOURCE = 'tour-route-source-pilotage';
 const TOUR_ROUTE_LAYER = 'tour-route-layer-pilotage';
 const HEATMAP_SOURCE = 'heatmap-source-pilotage';
 const HEATMAP_LAYER = 'heatmap-layer-pilotage';
+const PROFIT_SOURCE = 'profit-source-pilotage';
+const PROFIT_LAYER_POS = 'profit-layer-pos-pilotage';
+const PROFIT_LAYER_NEG = 'profit-layer-neg-pilotage';
+const PROFIT_CIRCLES = 'profit-circles-pilotage';
 
 function enableStyleFallback(m: mapboxgl.Map) {
   let fallbackApplied = false;
@@ -62,18 +66,20 @@ function enableStyleFallback(m: mapboxgl.Map) {
 }
 
 type ViewMode = 'day' | 'week';
-type MapMode = 'pins' | 'heatmap';
+type MapMode = 'pins' | 'heatmap' | 'profitability';
 
-type MapsSubTab = 'rdv' | 'densite';
+type MapsSubTab = 'rdv' | 'densite' | 'rentabilite';
 
 const MAP_SUB_TABS: FolderTabConfig[] = [
   { id: 'rdv', label: 'Rendez-vous', icon: MapPin, accent: 'blue' },
   { id: 'densite', label: 'Densité', icon: Flame, accent: 'pink' },
+  { id: 'rentabilite', label: 'Rentabilité', icon: PieChart, accent: 'green' },
 ];
 
 const TAB_ACCENT_COLORS: Record<string, string> = {
   blue: 'hsl(var(--warm-blue))',
   pink: 'hsl(var(--warm-pink))',
+  green: 'hsl(var(--warm-green))',
 };
 
 export default function MapsTabContent() {
@@ -85,7 +91,7 @@ export default function MapsTabContent() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [activeSubTab, setActiveSubTab] = useSessionState<MapsSubTab>('maps_sub_tab', 'rdv');
-  const mapMode: MapMode = activeSubTab === 'densite' ? 'heatmap' : 'pins';
+  const mapMode: MapMode = activeSubTab === 'densite' ? 'heatmap' : activeSubTab === 'rentabilite' ? 'profitability' : 'pins';
   const [selectedTechIds, setSelectedTechIds] = useState<number[]>([]);
   const [techFilterOpen, setTechFilterOpen] = useState(false);
   const [selectedRdv, setSelectedRdv] = useState<MapRdv | null>(null);
@@ -161,6 +167,27 @@ export default function MapsTabContent() {
     },
     enabled: mapMode === 'heatmap' && !!agence,
     staleTime: 30 * 60 * 1000, // 30 min cache
+    gcTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  // Profitability: fetch per-project margin data
+  interface ProfitPoint { lat: number; lng: number; ca: number; hours: number; margin: number; projectId: number }
+  const { data: profitPoints, isLoading: profitLoading } = useQuery({
+    queryKey: ['rdv-profitability', agence],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Non authentifié');
+      const response = await supabase.functions.invoke('get-rdv-map', {
+        body: { mode: 'profitability', agencySlug: agence },
+      });
+      if (response.error) throw new Error(response.error.message);
+      const result = response.data;
+      if (!result.success) throw new Error(result.error || 'Erreur');
+      return result.data as ProfitPoint[];
+    },
+    enabled: mapMode === 'profitability' && !!agence,
+    staleTime: 30 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
@@ -262,7 +289,7 @@ export default function MapsTabContent() {
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
 
-    if (mapMode === 'heatmap') return; // No pins in heatmap mode
+    if (mapMode === 'heatmap' || mapMode === 'profitability') return; // No pins in heatmap/profitability mode
 
     sortedRdvs.forEach((rdv, index) => {
       const isSelected = selectedRdv?.rdvId === rdv.rdvId;
@@ -364,7 +391,122 @@ export default function MapsTabContent() {
     }
   }, [heatmapPoints, mapReady, mapMode]);
 
-  // Draw/remove route layer
+  // Profitability layer — colored circles: green (profitable) → red (unprofitable)
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !mapReady) return;
+
+    // Clean previous profitability layers
+    [PROFIT_CIRCLES, PROFIT_LAYER_POS, PROFIT_LAYER_NEG].forEach(l => { if (m.getLayer(l)) m.removeLayer(l); });
+    if (m.getSource(PROFIT_SOURCE)) m.removeSource(PROFIT_SOURCE);
+
+    if (mapMode !== 'profitability' || !profitPoints?.length) return;
+
+    // Compute max absolute margin for normalization
+    const maxAbsMargin = Math.max(...profitPoints.map(p => Math.abs(p.margin)), 1);
+
+    const geojson: GeoJSON.FeatureCollection = {
+      type: 'FeatureCollection',
+      features: profitPoints.map(pt => ({
+        type: 'Feature' as const,
+        properties: {
+          margin: pt.margin,
+          ca: pt.ca,
+          hours: pt.hours,
+          // Normalized margin [-1, 1]
+          marginNorm: Math.max(-1, Math.min(1, pt.margin / maxAbsMargin)),
+        },
+        geometry: { type: 'Point' as const, coordinates: [pt.lng, pt.lat] },
+      })),
+    };
+
+    m.addSource(PROFIT_SOURCE, { type: 'geojson', data: geojson });
+
+    // Circle layer: color interpolated from red (negative margin) to green (positive margin)
+    m.addLayer({
+      id: PROFIT_CIRCLES,
+      type: 'circle',
+      source: PROFIT_SOURCE,
+      paint: {
+        'circle-radius': [
+          'interpolate', ['linear'], ['zoom'],
+          4, 6,
+          10, 12,
+          14, 18,
+          18, 24,
+        ],
+        'circle-color': [
+          'interpolate', ['linear'], ['get', 'marginNorm'],
+          -1, '#dc2626',   // Deep red — very unprofitable
+          -0.3, '#ef4444', // Red
+          0, '#fbbf24',    // Yellow — breakeven
+          0.3, '#22c55e',  // Green
+          1, '#15803d',    // Deep green — very profitable
+        ],
+        'circle-opacity': 0.75,
+        'circle-stroke-color': [
+          'interpolate', ['linear'], ['get', 'marginNorm'],
+          -1, '#991b1b',
+          0, '#a16207',
+          1, '#166534',
+        ],
+        'circle-stroke-width': 1.5,
+        'circle-stroke-opacity': 0.9,
+      },
+    });
+
+    // Fit bounds
+    if (!hasFittedBoundsRef.current && profitPoints.length > 0) {
+      let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+      profitPoints.forEach(p => { minLng = Math.min(minLng, p.lng); maxLng = Math.max(maxLng, p.lng); minLat = Math.min(minLat, p.lat); maxLat = Math.max(maxLat, p.lat); });
+      const pad = 0.1;
+      const bounds: [[number, number], [number, number]] = [[minLng - pad, minLat - pad], [maxLng + pad, maxLat + pad]];
+      const container = m.getContainer();
+      const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
+      const padY = Math.max(56, Math.round((container.clientHeight || 600) * 0.12));
+      m.fitBounds(bounds, {
+        padding: { top: padY, bottom: padY + 60, left: padX, right: padX },
+        maxZoom: 12,
+        duration: 1000,
+      });
+      hasFittedBoundsRef.current = true;
+    }
+
+    // Popup on click
+    const handleClick = (e: mapboxgl.MapMouseEvent) => {
+      const features = m.queryRenderedFeatures(e.point, { layers: [PROFIT_CIRCLES] });
+      if (!features?.length) return;
+      const props = features[0].properties;
+      if (!props) return;
+      const margin = props.margin as number;
+      const ca = props.ca as number;
+      const hours = props.hours as number;
+      const coords = (features[0].geometry as any).coordinates as [number, number];
+      
+      new mapboxgl.Popup({ closeButton: true, maxWidth: '260px' })
+        .setLngLat(coords)
+        .setHTML(`
+          <div style="font-family: system-ui; font-size: 13px; line-height: 1.5;">
+            <div style="font-weight: 600; margin-bottom: 4px; color: ${margin >= 0 ? '#15803d' : '#dc2626'}">
+              Marge: ${margin >= 0 ? '+' : ''}${Math.round(margin).toLocaleString('fr-FR')} €
+            </div>
+            <div>CA facturé: ${Math.round(ca).toLocaleString('fr-FR')} €</div>
+            <div>Heures estimées: ${hours.toFixed(1)} h</div>
+            <div>Coût estimé: ${Math.round(hours * 35).toLocaleString('fr-FR')} €</div>
+          </div>
+        `)
+        .addTo(m);
+    };
+
+    m.on('click', PROFIT_CIRCLES, handleClick);
+    m.on('mouseenter', PROFIT_CIRCLES, () => { m.getCanvas().style.cursor = 'pointer'; });
+    m.on('mouseleave', PROFIT_CIRCLES, () => { m.getCanvas().style.cursor = ''; });
+
+    return () => {
+      m.off('click', PROFIT_CIRCLES, handleClick);
+    };
+  }, [profitPoints, mapReady, mapMode]);
+
   useEffect(() => {
     const m = map.current;
     if (!m || !mapReady) return;
@@ -544,7 +686,33 @@ export default function MapsTabContent() {
           </div>
         )}
 
-        {/* Carte */}
+        {/* Barre info rentabilité */}
+        {mapMode === 'profitability' && (
+          <div className="flex-none p-4 space-y-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <PieChart className="h-4 w-4 text-primary" />
+              <span>Rentabilité par zone — historique complet (CA – coûts estimés à 35 €/h)</span>
+              <span className="ml-auto">
+                {profitLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${profitPoints?.length || 0} dossiers`}
+              </span>
+            </div>
+            <div className="flex items-center gap-4 text-xs">
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#dc2626' }} />
+                <span className="text-muted-foreground">Zone déficitaire</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#fbbf24' }} />
+                <span className="text-muted-foreground">Équilibre</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#15803d' }} />
+                <span className="text-muted-foreground">Zone rentable</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex-1 min-h-0" style={{ minHeight: '400px' }}>
           <div className="relative h-full w-full overflow-hidden bg-background">
             {!mapboxToken ? (
@@ -564,10 +732,10 @@ export default function MapsTabContent() {
               </div>
             )}
 
-            {((isLoading && mapMode === 'pins') || (heatmapLoading && mapMode === 'heatmap')) && mapboxToken && !mapInitError && (
+            {((isLoading && mapMode === 'pins') || (heatmapLoading && mapMode === 'heatmap') || (profitLoading && mapMode === 'profitability')) && mapboxToken && !mapInitError && (
               <div className="absolute top-4 left-4 bg-background/80 backdrop-blur rounded-lg px-4 py-2 flex items-center gap-2 shadow-lg">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm">{mapMode === 'heatmap' ? 'Chargement de l\'historique...' : 'Chargement des RDV...'}</span>
+                <span className="text-sm">{mapMode === 'heatmap' ? 'Chargement de l\'historique...' : mapMode === 'profitability' ? 'Analyse de rentabilité...' : 'Chargement des RDV...'}</span>
               </div>
             )}
 
