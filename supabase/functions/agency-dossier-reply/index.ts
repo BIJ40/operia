@@ -316,7 +316,7 @@ Deno.serve(async (req) => {
             .maybeSingle();
 
           const agencyLabel = agency?.label ?? 'HelpConfort';
-          const displaySender = roleLabel ? `${senderName} (${roleLabel})` : senderName;
+          const displaySender = senderName;
           const greeting = apporteurName ? `Bonjour ${escapeHtml(apporteurName)},` : 'Bonjour,';
           const escapedMessage = escapeHtml(message.trim()).replace(/\n/g, '<br/>');
 
