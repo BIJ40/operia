@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { AlertTriangle, Clock, FileX, CalendarX, ChevronRight, Info, FileDown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { AlertTriangle, Clock, FileX, CalendarX, ChevronRight, Info, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/formatters';
 import {
@@ -65,6 +66,7 @@ interface AlertesBannerProps {
 }
 
 export function AlertesBanner({ alertes }: AlertesBannerProps) {
+  const navigate = useNavigate();
   const [openAlerte, setOpenAlerte] = useState<AlerteEntry | null>(null);
 
   const important = alertes.filter(a => a.severity === 'high' || a.severity === 'medium');
