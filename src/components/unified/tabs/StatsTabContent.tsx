@@ -57,7 +57,7 @@ export default function StatsTabContent() {
     { id: 'univers', label: getShortLabel('pilotage.statistiques.univers', 'Univers'), icon: Layers, accent: 'orange' as const, requiresModule: 'pilotage.statistiques.univers' as ModuleKey },
     { id: 'sav', label: getShortLabel('pilotage.statistiques.sav', 'SAV'), icon: AlertTriangle, accent: 'pink' as const, requiresModule: 'pilotage.statistiques.sav' as ModuleKey },
     { id: 'previsionnel', label: getShortLabel('pilotage.statistiques.previsionnel', 'Prévisionnel'), icon: CalendarClock, accent: 'teal' as const, requiresModule: 'pilotage.statistiques.previsionnel' as ModuleKey },
-    { id: 'financier', label: 'Financier', icon: Wallet, accent: 'green' as const, requiresModule: 'pilotage.statistiques.financier' as ModuleKey },
+    { id: 'financier', label: 'Recouvrement', icon: Wallet, accent: 'green' as const, requiresModule: 'pilotage.statistiques.financier' as ModuleKey },
   ], [getShortLabel]);
 
   const { isDeployedModule } = usePermissions();
