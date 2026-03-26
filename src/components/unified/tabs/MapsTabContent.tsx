@@ -423,9 +423,20 @@ export default function MapsTabContent() {
             </PopoverContent>
           </Popover>
 
-          <div className="flex items-center gap-2 text-sm text-muted-foreground ml-auto">
-            <MapPin className="h-4 w-4" />
-            <span>{isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${rdvs.length} RDV`}</span>
+          <div className="flex items-center gap-3 ml-auto">
+            <Button
+              variant={mapMode === 'heatmap' ? 'default' : 'outline'}
+              size="sm"
+              onClick={toggleMapMode}
+              className={cn('gap-1.5', mapMode === 'heatmap' && 'bg-red-600 hover:bg-red-700 text-white border-red-600')}
+            >
+              <Flame className="h-3.5 w-3.5" />
+              {mapMode === 'heatmap' ? 'Chaud / Froid' : 'Chaud / Froid'}
+            </Button>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <MapPin className="h-4 w-4" />
+              <span>{isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${rdvs.length} RDV`}</span>
+            </div>
           </div>
         </div>
 
