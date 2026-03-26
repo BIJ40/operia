@@ -2,8 +2,8 @@ import { useEffect, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StatsHubProvider, useStatsHub } from '../components/stats-hub/StatsHubContext';
 import { TABS_CONFIG, TabId } from '../components/stats-hub/types';
-import { GeneralTab, ApporteursTab, TechniciensTab, UniversTab, SAVTab, PrevisionnelTab } from '../components/stats-hub/tabs';
-import { LayoutDashboard, Building2, Users, Layers, AlertTriangle, CalendarClock, Tv } from 'lucide-react';
+import { GeneralTab, ApporteursTab, TechniciensTab, UniversTab, SAVTab, PrevisionnelTab, FinancierTab } from '../components/stats-hub/tabs';
+import { LayoutDashboard, Building2, Users, Layers, AlertTriangle, CalendarClock, Tv, Wallet } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiltersProvider } from '../contexts/FiltersContext';
 import { ApiToggleProvider } from '../contexts/ApiToggleContext';
@@ -24,6 +24,7 @@ const TAB_ICONS: Record<TabId, React.ReactNode> = {
   univers: <Layers className="h-4 w-4" />,
   sav: <AlertTriangle className="h-4 w-4" />,
   previsionnel: <CalendarClock className="h-4 w-4" />,
+  financier: <Wallet className="h-4 w-4" />,
 };
 
 const TAB_COMPONENTS: Record<TabId, React.ComponentType> = {
@@ -33,6 +34,7 @@ const TAB_COMPONENTS: Record<TabId, React.ComponentType> = {
   univers: UniversTab,
   sav: SAVTab,
   previsionnel: PrevisionnelTab,
+  financier: FinancierTab,
 };
 
 const TAB_MODULE_KEYS: Record<TabId, ModuleKey> = {
@@ -42,6 +44,7 @@ const TAB_MODULE_KEYS: Record<TabId, ModuleKey> = {
   univers: 'pilotage.statistiques.univers',
   sav: 'pilotage.statistiques.sav',
   previsionnel: 'pilotage.statistiques.previsionnel',
+  financier: 'pilotage.statistiques.general',
 };
 
 function StatsHubContent() {
