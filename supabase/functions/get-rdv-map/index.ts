@@ -177,6 +177,52 @@ function formatAddress(address: string, postalCode: string, city: string): strin
   return parts.join(' - ') || 'Adresse non renseignée';
 }
 
+/**
+ * Build a mapping from postal code → code_insee using the geocoded data
+ */
+function buildPostalToInseeMap(
+  coordsByPostalCode: Map<string, { lat: number; lng: number; code_insee?: string }>
+): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const [pc, data] of coordsByPostalCode.entries()) {
+    if (data.code_insee) {
+      map.set(pc, data.code_insee);
+    }
+  }
+  return map;
+}
+
+/**
+ * Merge commune polygons with aggregated metrics by code_insee
+ * Returns a GeoJSON FeatureCollection with polygon geometries and metric properties
+ */
+function buildChoroplethGeoJSON(
+  communePolygons: any,
+  metricsByInsee: Map<string, Record<string, any>>
+): any {
+  const features: any[] = [];
+  
+  for (const feature of communePolygons.features || []) {
+    const code = feature.properties?.code;
+    if (!code) continue;
+    
+    const metrics = metricsByInsee.get(code);
+    if (!metrics) continue; // Only include communes with data
+    
+    features.push({
+      type: 'Feature',
+      properties: {
+        code_insee: code,
+        nom: feature.properties?.nom || '',
+        ...metrics,
+      },
+      geometry: feature.geometry,
+    });
+  }
+  
+  return { type: 'FeatureCollection', features };
+}
+
 Deno.serve(async (req) => {
   const corsResult = handleCorsPreflightOrReject(req);
   if (corsResult) return corsResult;
