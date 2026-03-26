@@ -1,41 +1,39 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useEffect, useState } from 'react';
 
+type OpenImageModalEvent = CustomEvent<{ url?: string }>;
+
+function resolveImageUrl(target: HTMLElement): string | null {
+  const imageTrigger = target.closest('[data-image-modal], [data-image-button], [data-src]') as HTMLElement | null;
+  if (!imageTrigger) return null;
+
+  return imageTrigger.getAttribute('data-image-modal')
+    || imageTrigger.getAttribute('data-src')
+    || imageTrigger.closest('[data-image-button]')?.getAttribute('data-src')
+    || imageTrigger.querySelector('[data-image-modal]')?.getAttribute('data-image-modal')
+    || null;
+}
+
 export function ImageModal() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      
-      // Gestion des boutons/containers de preview image dans le contenu enrichi
-      const imageTrigger = target.closest('[data-image-modal], [data-image-button], [data-src]') as HTMLElement | null;
-      if (imageTrigger) {
-        const url = imageTrigger.getAttribute('data-image-modal')
-          || imageTrigger.getAttribute('data-src')
-          || imageTrigger.closest('[data-image-button]')?.getAttribute('data-src')
-          || imageTrigger.querySelector('[data-image-modal]')?.getAttribute('data-image-modal');
+      const triggerUrl = resolveImageUrl(target);
 
-        if (url) {
-          e.preventDefault();
-          e.stopPropagation();
-          setImageUrl(url);
-          return;
-        }
+      if (triggerUrl) {
+        e.preventDefault();
+        e.stopPropagation();
+        setImageUrl(triggerUrl);
+        return;
       }
-      
-      // Gestion des images directes (inline)
+
       if (target.tagName === 'IMG') {
         const img = target as HTMLImageElement;
-        // Ignorer les images avec data-no-modal
-        if (img.hasAttribute('data-no-modal')) {
-          return;
-        }
-        // Ignorer les images dans un conteneur de redimensionnement (mode édition)
-        if (img.closest('.resizable-image-wrapper')) {
-          return;
-        }
-        // Ne pas ouvrir les petites icônes (favicon, etc.)
+        if (img.hasAttribute('data-no-modal')) return;
+        if (img.closest('.resizable-image-wrapper')) return;
+
         if (img.naturalWidth > 100 && img.naturalHeight > 100) {
           e.preventDefault();
           setImageUrl(img.src);
@@ -43,9 +41,21 @@ export function ImageModal() {
       }
     };
 
-    // Utiliser la capture phase pour intercepter avant tout autre handler
+    const handleOpenImageModal = (event: Event) => {
+      const customEvent = event as OpenImageModalEvent;
+      const url = customEvent.detail?.url;
+      if (url) {
+        setImageUrl(url);
+      }
+    };
+
     document.addEventListener('click', handleClick, true);
-    return () => document.removeEventListener('click', handleClick, true);
+    window.addEventListener('open-image-modal', handleOpenImageModal as EventListener);
+
+    return () => {
+      document.removeEventListener('click', handleClick, true);
+      window.removeEventListener('open-image-modal', handleOpenImageModal as EventListener);
+    };
   }, []);
 
   return (
