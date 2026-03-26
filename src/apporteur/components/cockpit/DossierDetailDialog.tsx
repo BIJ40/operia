@@ -113,6 +113,7 @@ function ExchangeThread({ exchanges, isLoading }: { exchanges: DossierExchange[]
 
 export function DossierDetailDialog({ dossier, onClose }: DossierDetailDialogProps) {
   const [message, setMessage] = useState('');
+  const [chatMessage, setChatMessage] = useState('');
   const [activeAction, setActiveAction] = useState<QuickAction | null>(null);
   const dossierAction = useApporteurDossierActions();
   const { data: exchanges = [], isLoading: exchangesLoading, invalidate } = useApporteurExchanges(dossier?.ref || null);
