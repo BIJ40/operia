@@ -110,8 +110,8 @@ async function fetchCommunePolygons(): Promise<any> {
 async function batchGeocodePostalCodes(
   postalCodes: Map<string, string>, // postalCode → city
   supabaseAdmin: any
-): Promise<Map<string, { lat: number; lng: number }>> {
-  const result = new Map<string, { lat: number; lng: number }>();
+): Promise<Map<string, { lat: number; lng: number; code_insee?: string }>> {
+  const result = new Map<string, { lat: number; lng: number; code_insee?: string }>();
   const keys = Array.from(postalCodes.keys());
   if (keys.length === 0) return result;
 
@@ -119,13 +119,13 @@ async function batchGeocodePostalCodes(
   const cacheKeys = keys.map(pc => `${pc}|${(postalCodes.get(pc) || '').toLowerCase()}`);
   const { data: cached } = await supabaseAdmin
     .from('geocode_cache')
-    .select('cache_key, postal_code, lat, lng')
+    .select('cache_key, postal_code, lat, lng, code_insee')
     .in('cache_key', cacheKeys);
 
   const cachedSet = new Set<string>();
   if (cached) {
     for (const row of cached) {
-      result.set(row.postal_code, { lat: row.lat, lng: row.lng });
+      result.set(row.postal_code, { lat: row.lat, lng: row.lng, code_insee: row.code_insee || undefined });
       cachedSet.add(row.postal_code);
     }
   }
@@ -151,6 +151,7 @@ async function batchGeocodePostalCodes(
           city,
           lat: coords.lat,
           lng: coords.lng,
+          code_insee: coords.code_insee || null,
           source: 'ban',
         });
       }
