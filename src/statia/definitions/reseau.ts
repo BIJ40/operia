@@ -525,50 +525,31 @@ export const coutSavReseau: StatDefinition = {
 
 /**
  * Nombre de techniciens actifs
- * Techniciens ayant au moins 1 intervention réalisée dans la période
+ * = tous les users actifs avec des compétences (skills), sans filtre sur interventions
  */
 export const nbTechniciensActifs: StatDefinition = {
   id: 'nb_techniciens_actifs',
   label: 'Techniciens actifs',
-  description: 'Nombre de techniciens avec au moins 1 intervention sur la période',
+  description: 'Nombre de techniciens actifs avec compétences renseignées',
   category: 'reseau',
-  source: ['interventions', 'users'],
+  source: ['users'],
   aggregation: 'count',
-  compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { interventions, users } = data;
+  compute: (data: LoadedData, _params: StatParams): StatResult => {
+    const { users } = data;
     
-    const usersById = indexUsersById(users);
-    const techniciensActifs = new Set<string | number>();
-    
-    for (const intervention of interventions) {
-      if (!isValidInterventionState(intervention.state)) continue;
-      
-      const dateStr = intervention.dateReelle || intervention.date || intervention.created_at;
-      if (dateStr) {
-        try {
-          const date = parseISO(dateStr);
-          if (!isWithinInterval(date, { start: params.dateRange.start, end: params.dateRange.end })) {
-            continue;
-          }
-        } catch {
-          continue;
-        }
-      }
-      
-      for (const techId of collectAssignedTechnicianIds(intervention)) {
-        const user = usersById.get(techId);
-        if (user && isFieldTechnician(user)) {
-          techniciensActifs.add(techId);
-        }
+    let count = 0;
+    for (const user of users) {
+      if (isFieldTechnician(user)) {
+        count++;
       }
     }
     
     return {
-      value: techniciensActifs.size,
+      value: count,
       metadata: {
         computedAt: new Date(),
-        source: 'interventions',
-        recordCount: techniciensActifs.size,
+        source: 'users',
+        recordCount: count,
       }
     };
   }
