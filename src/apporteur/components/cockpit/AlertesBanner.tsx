@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { AlertTriangle, Clock, FileX, CalendarX, ChevronRight, Info, FileDown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { AlertTriangle, Clock, FileX, CalendarX, ChevronRight, Info, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/formatters';
 import {
@@ -65,6 +66,7 @@ interface AlertesBannerProps {
 }
 
 export function AlertesBanner({ alertes }: AlertesBannerProps) {
+  const navigate = useNavigate();
   const [openAlerte, setOpenAlerte] = useState<AlerteEntry | null>(null);
 
   const important = alertes.filter(a => a.severity === 'high' || a.severity === 'medium');
@@ -169,10 +171,14 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
                         {openAlerte.sample_details!.map((detail, idx) => (
                           <tr
                             key={`${detail.ref}-${idx}`}
-                            className="border-b last:border-0 hover:bg-muted/30 transition-colors"
+                            className="border-b last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
+                            onClick={() => {
+                              setOpenAlerte(null);
+                              navigate(`/apporteur/dashboard?tab=dossiers&search=${detail.ref}`);
+                            }}
                           >
                             <td className="py-2.5 pr-3 font-medium text-foreground max-w-[180px] truncate">
-                              {detail.label || `Dossier ${detail.ref}`}
+                              <span className="hover:underline">{detail.label || `Dossier ${detail.ref}`}</span>
                             </td>
                             <td className="py-2.5 pr-3 text-muted-foreground font-mono text-xs">
                               {detail.ref}
@@ -186,7 +192,7 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
                             )}
                             {(isFactureAlert || isDevisAlert) && (
                               <td className="py-2.5 pr-3 text-right tabular-nums">
-                                {detail.amount ? formatCurrency(detail.amount) : '—'}
+                                {detail.amount ? formatCurrency(Math.round(detail.amount)) : '—'}
                               </td>
                             )}
                             {isFactureAlert && (
@@ -195,7 +201,7 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
                                   'font-medium',
                                   (detail.days || 0) > 60 ? 'text-destructive' : 'text-[hsl(var(--ap-warning))]'
                                 )}>
-                                  {detail.days}j
+                                  {Math.round(detail.days || 0)}j
                                 </span>
                               </td>
                             )}
