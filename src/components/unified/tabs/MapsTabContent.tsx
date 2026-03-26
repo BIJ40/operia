@@ -308,6 +308,7 @@ export default function MapsTabContent() {
     refetchOnWindowFocus: false,
   });
 
+  const rdvs = viewMode === 'day' ? dayRdvs : weekRdvs;
   const isLoading = viewMode === 'day' ? dayLoading : weekLoading;
   const error = viewMode === 'day' ? dayError : (weekError instanceof Error ? weekError.message : null);
 
