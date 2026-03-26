@@ -2633,7 +2633,9 @@ export type Database = {
           external_account_id: string | null
           iban_masked: string | null
           id: string
+          instant_balance: number | null
           metadata: Json | null
+          provider_account_type: string | null
           sync_status: string
           updated_at: string
         }
@@ -2650,7 +2652,9 @@ export type Database = {
           external_account_id?: string | null
           iban_masked?: string | null
           id?: string
+          instant_balance?: number | null
           metadata?: Json | null
+          provider_account_type?: string | null
           sync_status?: string
           updated_at?: string
         }
@@ -2667,7 +2671,9 @@ export type Database = {
           external_account_id?: string | null
           iban_masked?: string | null
           id?: string
+          instant_balance?: number | null
           metadata?: Json | null
+          provider_account_type?: string | null
           sync_status?: string
           updated_at?: string
         }
@@ -2690,12 +2696,17 @@ export type Database = {
           error_code: string | null
           error_message: string | null
           external_connection_id: string | null
+          external_item_id: string | null
+          external_user_id: string | null
           id: string
           last_error_at: string | null
           last_success_sync_at: string | null
           last_sync_at: string | null
           metadata: Json | null
           provider: string
+          provider_last_payload: Json | null
+          provider_status: string | null
+          redirect_session_id: string | null
           status: string
           updated_at: string
           user_id: string
@@ -2708,12 +2719,17 @@ export type Database = {
           error_code?: string | null
           error_message?: string | null
           external_connection_id?: string | null
+          external_item_id?: string | null
+          external_user_id?: string | null
           id?: string
           last_error_at?: string | null
           last_success_sync_at?: string | null
           last_sync_at?: string | null
           metadata?: Json | null
           provider?: string
+          provider_last_payload?: Json | null
+          provider_status?: string | null
+          redirect_session_id?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -2726,12 +2742,17 @@ export type Database = {
           error_code?: string | null
           error_message?: string | null
           external_connection_id?: string | null
+          external_item_id?: string | null
+          external_user_id?: string | null
           id?: string
           last_error_at?: string | null
           last_success_sync_at?: string | null
           last_sync_at?: string | null
           metadata?: Json | null
           provider?: string
+          provider_last_payload?: Json | null
+          provider_status?: string | null
+          redirect_session_id?: string | null
           status?: string
           updated_at?: string
           user_id?: string
@@ -2881,6 +2902,7 @@ export type Database = {
           pointed_at: string | null
           provider_category: string | null
           raw_label: string | null
+          raw_payload: Json | null
           reconciliation_confidence: number | null
           reconciliation_status: string
           transaction_type: string
@@ -2904,6 +2926,7 @@ export type Database = {
           pointed_at?: string | null
           provider_category?: string | null
           raw_label?: string | null
+          raw_payload?: Json | null
           reconciliation_confidence?: number | null
           reconciliation_status?: string
           transaction_type?: string
@@ -2927,6 +2950,7 @@ export type Database = {
           pointed_at?: string | null
           provider_category?: string | null
           raw_label?: string | null
+          raw_payload?: Json | null
           reconciliation_confidence?: number | null
           reconciliation_status?: string
           transaction_type?: string
@@ -3331,6 +3355,51 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "blocks"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      bridge_user_mappings: {
+        Row: {
+          agency_id: string
+          bridge_user_email: string | null
+          bridge_user_uuid: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agency_id: string
+          bridge_user_email?: string | null
+          bridge_user_uuid: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agency_id?: string
+          bridge_user_email?: string | null
+          bridge_user_uuid?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bridge_user_mappings_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bridge_user_mappings_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
         ]
       }
