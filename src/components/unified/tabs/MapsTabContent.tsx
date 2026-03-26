@@ -6,10 +6,11 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { format, addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
+import { format, addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval, parse } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Loader2, MapPin, AlertCircle, CalendarDays, Flame, PieChart, Crosshair, Network, Radio, Clock, Wrench, Navigation } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Loader2, MapPin, AlertCircle, CalendarDays, Flame, PieChart, Crosshair, Network, Radio, Clock, Wrench, Navigation, CalendarRange, Play, Pause, SkipBack, SkipForward, TrendingUp, TrendingDown } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
