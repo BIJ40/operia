@@ -105,6 +105,22 @@ export default function DossiersTabContent() {
     }
   }, [searchParams, setSearchParams]);
 
+  // Auto-open dossier detail from URL param (e.g. from AlertesBanner)
+  useEffect(() => {
+    const dossierRef = searchParams.get('dossierRef');
+    if (dossierRef && dossiers.length > 0 && !selectedDossier) {
+      const found = dossiers.find(d => d.ref === dossierRef);
+      if (found) {
+        setSelectedDossier(found);
+      }
+      setSearchParams(prev => {
+        const newParams = new URLSearchParams(prev);
+        newParams.delete('dossierRef');
+        return newParams;
+      }, { replace: true });
+    }
+  }, [searchParams, dossiers, selectedDossier, setSearchParams]);
+
   const dossiers = data?.data?.dossiers || [];
   const totals = data?.data?.totals || { count: 0, resteDu: 0 };
 
