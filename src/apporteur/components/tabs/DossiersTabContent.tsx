@@ -57,6 +57,7 @@ import { RefuserDevisDialog } from '../dialogs/RefuserDevisDialog';
 import { ValiderDevisDialog } from '../dialogs/ValiderDevisDialog';
 import { FactureRegleeDialog } from '../dialogs/FactureRegleeDialog';
 import { DossierInactifDialog } from '../dialogs/DossierInactifDialog';
+import { DocDownloadButton } from '../DocDownloadButton';
 
 type SortField = 'ref' | 'clientName' | 'status' | 'dateCreation' | 'factureHT' | 'restedu';
 type SortDirection = 'asc' | 'desc';
@@ -499,12 +500,13 @@ export default function DossiersTabContent() {
                       Reste dû <SortIcon field="restedu" />
                     </div>
                   </TableHead>
+                  <TableHead className="w-16 text-center">PDF</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredDossiers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                       Aucun dossier trouvé
                     </TableCell>
                   </TableRow>
@@ -552,6 +554,15 @@ export default function DossiersTabContent() {
                         </TableCell>
                         <TableCell className="text-right font-medium text-foreground" onClick={() => setSelectedDossier(d)}>
                           {d.restedu > 0 ? formatCurrency(d.restedu) : d.factureHT > 0 ? '✓' : '-'}
+                        </TableCell>
+                        <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                          {d.devisHT > 0 ? (
+                            <DocDownloadButton dossierRef={d.ref} docType="devis" />
+                          ) : d.factureHT > 0 ? (
+                            <DocDownloadButton dossierRef={d.ref} docType="factures" />
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
                         </TableCell>
                       </TableRow>
                     );
