@@ -171,6 +171,27 @@ export default function MapsTabContent() {
     refetchOnWindowFocus: false,
   });
 
+  // Profitability: fetch per-project margin data
+  interface ProfitPoint { lat: number; lng: number; ca: number; hours: number; margin: number; projectId: number }
+  const { data: profitPoints, isLoading: profitLoading } = useQuery({
+    queryKey: ['rdv-profitability', agence],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Non authentifié');
+      const response = await supabase.functions.invoke('get-rdv-map', {
+        body: { mode: 'profitability', agencySlug: agence },
+      });
+      if (response.error) throw new Error(response.error.message);
+      const result = response.data;
+      if (!result.success) throw new Error(result.error || 'Erreur');
+      return result.data as ProfitPoint[];
+    },
+    enabled: mapMode === 'profitability' && !!agence,
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
   // Unified data based on view mode
   const rdvs = viewMode === 'day' ? dayRdvs : weekRdvs;
   const isLoading = viewMode === 'day' ? dayLoading : weekLoading;
