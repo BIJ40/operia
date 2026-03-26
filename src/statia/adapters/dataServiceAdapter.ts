@@ -84,7 +84,8 @@ async function withMirrorResolution(
 
   // Fast path: live mode (most common case, zero overhead)
   if (resolved.effectiveSource === 'live') {
-    if (resolved.fallbackReason) {
+    // Log when mode is not 'live' (i.e. fallback resolved to live)
+    if (resolved.mode !== 'live') {
       logSourceResolution(moduleKey, agencyId, resolved);
       recordMetric(moduleKey, resolved, 0);
       logMirrorDecision(moduleKey, agencyId, resolved);
