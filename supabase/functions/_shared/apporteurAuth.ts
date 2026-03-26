@@ -14,6 +14,7 @@ export interface ApporteurAuthResult {
   agencySlug: string;
   apporteurName: string;
   email: string | null;
+  managerId: string | null;
 }
 
 async function sha256(message: string): Promise<string> {
@@ -139,6 +140,7 @@ export async function authenticateApporteur(req: Request): Promise<ApporteurAuth
             agencySlug: agency.slug,
             apporteurName: apporteur.name,
             email: manager.email ?? null,
+            managerId: manager.id ?? null,
           };
         } else {
           console.warn('[apporteurAuth] Manager or apporteur inactive');
@@ -192,6 +194,7 @@ export async function authenticateApporteur(req: Request): Promise<ApporteurAuth
       agencySlug: agency.slug,
       apporteurName: apporteur.name,
       email: apporteurUser.email ?? user.email ?? null,
+      managerId: null,
     };
   } catch (e) {
     console.warn('[apporteurAuth] JWT check failed:', e);

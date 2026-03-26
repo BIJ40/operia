@@ -229,7 +229,7 @@ Deno.serve(async (req) => {
           sender_email: auth.email || null,
           action_type: exchangeActionType,
           message: message || `${ACTION_LABELS[action]}${inactifAction ? ' — ' + INACTIF_LABELS[inactifAction] : ''}`,
-          metadata: { action, inactifAction, dateReglement, typeReglement },
+          metadata: { action, inactifAction, dateReglement, typeReglement, manager_id: auth.managerId },
         });
       }
     } catch (exchangeErr) {
