@@ -52,6 +52,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { DossierStepper } from '../cockpit/DossierStepper';
+import { DossierDetailDialog } from '../cockpit/DossierDetailDialog';
 import type { DossierRowV2 } from '../../types/apporteur-dossier-v2';
 import { RefuserDevisDialog } from '../dialogs/RefuserDevisDialog';
 import { ValiderDevisDialog } from '../dialogs/ValiderDevisDialog';
