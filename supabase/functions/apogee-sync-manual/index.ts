@@ -216,6 +216,8 @@ Deno.serve(async (req) => {
     ));
   }
 
+  const triggeredBy = ctx?.userId || 'system-cron';
+
   // Create sync run
   const { data: run } = await supabase
     .from('apogee_sync_runs')
@@ -223,7 +225,7 @@ Deno.serve(async (req) => {
       status: 'running',
       sync_type: 'manual',
       agencies_count: 1,
-      triggered_by: ctx.userId,
+      triggered_by: triggeredBy,
     })
     .select('id')
     .single();
