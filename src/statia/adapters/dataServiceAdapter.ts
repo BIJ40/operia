@@ -104,6 +104,8 @@ async function withMirrorResolution(
     if (!quality.usable && resolved.mode === 'fallback') {
       const fallbackResolved = { ...resolved, effectiveSource: 'live' as const, fallbackReason: quality.reason || 'quality_check_failed' };
       logSourceResolution(moduleKey, agencyId, fallbackResolved);
+      recordMetric(moduleKey, fallbackResolved, 0);
+      logMirrorDecision(moduleKey, agencyId, fallbackResolved, 0, quality);
       return liveFn();
     }
 
@@ -112,6 +114,8 @@ async function withMirrorResolution(
     if (rawMirrorData.length === 0 && resolved.mode === 'fallback') {
       const fallbackResolved = { ...resolved, effectiveSource: 'live' as const, fallbackReason: 'mirror_empty' };
       logSourceResolution(moduleKey, agencyId, fallbackResolved);
+      recordMetric(moduleKey, fallbackResolved, 0);
+      logMirrorDecision(moduleKey, agencyId, fallbackResolved);
       return liveFn();
     }
 
