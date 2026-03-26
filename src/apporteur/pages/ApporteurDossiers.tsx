@@ -350,20 +350,24 @@ export default function ApporteurDossiers() {
                           {formatDate(d.datePremierRdv)}
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
-                          {d.devisId ? (
-                            <div className="flex items-center gap-1">
-                              <span className="text-sm">{formatDate(d.dateDevisValide || d.dateDevisEnvoye)}</span>
-                              <DocDownloadButton dossierRef={d.ref} docType="devis" />
+                          {d.devisHT > 0 ? (
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-sm">{formatCurrency(d.devisHT)}</span>
+                              <DocDownloadButton dossierRef={d.ref} docType="devis" className="text-primary hover:text-primary/80" />
                             </div>
-                          ) : '-'}
+                          ) : (
+                            <span className="text-sm text-muted-foreground">-</span>
+                          )}
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
-                          {d.factureId ? (
-                            <div className="flex items-center gap-1">
-                              <span className="text-sm">{formatDate(d.dateFacture)}</span>
-                              <DocDownloadButton dossierRef={d.ref} docType="factures" />
+                          {d.factureHT > 0 ? (
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-sm">{formatCurrency(d.factureHT)}</span>
+                              <DocDownloadButton dossierRef={d.ref} docType="factures" className="text-primary hover:text-primary/80" />
                             </div>
-                          ) : '-'}
+                          ) : (
+                            <span className="text-sm text-muted-foreground">-</span>
+                          )}
                         </TableCell>
                         <TableCell className="text-right font-medium">
                           {d.factureHT > 0 ? formatCurrency(d.factureHT) : '-'}
