@@ -25,6 +25,7 @@ import {
   type PilotVerdict,
   type ProjectsReadiness,
 } from '@/services/mirrorPilotActivation';
+import { flushDecisions, maybePersistSnapshot } from '@/services/mirrorPilotActivation';
 import { getGlobalApogeeDataServices } from '@/statia/adapters/dataServiceAdapter';
 // ============================================================
 // TYPES
@@ -138,15 +139,16 @@ export default function AdminMirrorMonitor() {
     setTestResult({ status: 'loading' });
     try {
       const services = getGlobalApogeeDataServices();
-      const startTime = Date.now();
       const users = await services.getUsers('dax');
-      const elapsed = Date.now() - startTime;
       
-      // Read latest metrics to determine what source was used
-      const latestMetrics = getPilotMetrics()['users'];
-      const latestDecisions = getLastComparisonResults().filter(c => c.module === 'users');
+      // Force flush decision log and snapshot so we can read them immediately
+      await flushDecisions();
+      await maybePersistSnapshot('users' as any, DAX_AGENCY_ID, true);
       
-      // Check the most recent decision log entry
+      // Small delay to let DB settle
+      await new Promise(r => setTimeout(r, 500));
+      
+      // Read the most recent decision log entry
       const { data: recentDecision } = await supabase
         .from('mirror_decision_log' as any)
         .select('source_used, mode_requested, fallback_reason, freshness_minutes, item_count')
@@ -156,10 +158,11 @@ export default function AdminMirrorMonitor() {
         .limit(1) as any;
       
       const decision = recentDecision?.[0];
+      const metrics = getPilotMetrics()['users'];
       
       setTestResult({
         status: 'success',
-        source: decision?.source_used || (latestMetrics?.mirrorReads ? 'mirror' : 'live'),
+        source: decision?.source_used || (metrics?.mirrorReads ? 'mirror' : 'live'),
         itemCount: users?.length ?? 0,
         freshness: decision?.freshness_minutes ? Math.round(decision.freshness_minutes) : undefined,
         fallbackReason: decision?.fallback_reason || undefined,
@@ -168,7 +171,7 @@ export default function AdminMirrorMonitor() {
       });
       
       // Refresh all data to show updated metrics/decisions
-      setTimeout(() => { invalidateFlagsCache(); loadData(); }, 1000);
+      setTimeout(() => { invalidateFlagsCache(); loadData(); }, 500);
     } catch (err: any) {
       setTestResult({ status: 'error', error: err?.message || 'Erreur inconnue' });
     }
@@ -399,6 +402,18 @@ export default function AdminMirrorMonitor() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Scope Freeze Banner */}
+          <div className="border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 text-xs space-y-1">
+            <p className="font-semibold text-amber-800 dark:text-amber-200 flex items-center gap-1.5">
+              <AlertTriangle className="h-3.5 w-3.5" /> Périmètre gelé — Observation en cours
+            </p>
+            <ul className="list-disc pl-5 text-amber-700 dark:text-amber-300 space-y-0.5">
+              <li><code>projects</code> — NON activé. Décision après 48h–7j d'observation users stable.</li>
+              <li><code>factures</code> — NON activé. Dépend du succès de projects.</li>
+              <li>Aucune extension d'agence en cours. Périmètre = DAX uniquement.</li>
+            </ul>
+          </div>
 
           {/* Pilot Module Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
