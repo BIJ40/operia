@@ -69,16 +69,17 @@ Deno.serve(async (req) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceKey);
 
-  // Log event
-  await supabase.from("bank_webhook_events").insert({
+  // Log event — capture inserted ID for precise update later
+  let webhookEventId: string | null = null;
+  const { data: insertedRow, error: insertErr } = await supabase.from("bank_webhook_events").insert({
     event_type: eventType,
     external_item_id: itemId ? String(itemId) : null,
     payload,
     received_at: new Date().toISOString(),
     processed: false,
-  }).then(({ error }) => {
-    if (error) console.warn("[WEBHOOK_LOG_WARN]", error.message);
-  });
+  }).select("id").maybeSingle();
+  if (insertErr) console.warn("[WEBHOOK_LOG_WARN]", insertErr.message);
+  else if (insertedRow) webhookEventId = insertedRow.id;
 
   // Find connection
   let connectionId: string | null = null;
