@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react';
-import { Download, Loader2 } from 'lucide-react';
+import { FileDown, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getProjectDetail } from '@/services/projectDetailLoader';
 import { toast } from 'sonner';
@@ -68,7 +68,7 @@ export function DocDownloadButton({ dossierRef, docType, label, className }: Doc
       {loading ? (
         <Loader2 className="w-3.5 h-3.5 animate-spin" />
       ) : (
-        <Download className="w-3.5 h-3.5" />
+        <FileDown className="w-3.5 h-3.5" />
       )}
       {label && <span className="text-xs">{label}</span>}
     </Button>
