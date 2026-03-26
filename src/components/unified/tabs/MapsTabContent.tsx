@@ -1155,6 +1155,140 @@ export default function MapsTabContent() {
     return () => { m.off('click', DISPO_CIRCLES, handleClick); };
   }, [dispoData, mapReady, mapMode]);
 
+  // Saisonnalité layer — circles sized by volume, colored by variation
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !mapReady) return;
+
+    if (m.getLayer(SEASON_CIRCLES)) m.removeLayer(SEASON_CIRCLES);
+    if (m.getSource(SEASON_SOURCE)) m.removeSource(SEASON_SOURCE);
+
+    if (mapMode !== 'saisonnalite' || !seasonData?.length || !currentSeasonMonth) return;
+
+    const geojson: GeoJSON.FeatureCollection = {
+      type: 'FeatureCollection',
+      features: seasonData.map(z => {
+        const monthData = z.series[currentSeasonMonth];
+        const nb = monthData?.nb || 0;
+        const ca = monthData?.ca || 0;
+        const variation = z.variations[currentSeasonMonth] ?? 0;
+        return {
+          type: 'Feature' as const,
+          properties: {
+            postalCode: z.postalCode, city: z.city, nb, ca, variation,
+            seasonalityIndex: z.seasonalityIndex, predictabilityIndex: z.predictabilityIndex,
+            peakMonth: z.peakMonth, topUnivers: monthData?.topUnivers || '',
+            urgences: monthData?.urgences || 0, insights: JSON.stringify(z.insights), totalNb: z.totalNb,
+          },
+          geometry: { type: 'Point' as const, coordinates: [z.lng, z.lat] },
+        };
+      }).filter(f => f.properties.nb > 0 || seasonViewMode === 'variation'),
+    };
+
+    m.addSource(SEASON_SOURCE, { type: 'geojson', data: geojson });
+
+    m.addLayer({
+      id: SEASON_CIRCLES,
+      type: 'circle',
+      source: SEASON_SOURCE,
+      paint: {
+        'circle-radius': [
+          'interpolate', ['linear'], ['zoom'],
+          4, ['interpolate', ['linear'], ['get', 'nb'], 0, 4, 5, 10, 20, 18, 50, 26],
+          10, ['interpolate', ['linear'], ['get', 'nb'], 0, 8, 5, 16, 20, 28, 50, 40],
+          14, ['interpolate', ['linear'], ['get', 'nb'], 0, 12, 5, 22, 20, 36, 50, 52],
+        ],
+        'circle-color': seasonViewMode === 'variation' ? [
+          'interpolate', ['linear'], ['get', 'variation'],
+          -80, '#3b82f6', -30, '#93c5fd', 0, '#fbbf24', 30, '#f97316', 80, '#dc2626',
+        ] : [
+          'interpolate', ['linear'], ['get', 'nb'],
+          0, '#fef3c7', 3, '#fbbf24', 10, '#f97316', 25, '#dc2626', 50, '#7f1d1d',
+        ],
+        'circle-opacity': 0.8,
+        'circle-stroke-color': [
+          'interpolate', ['linear'], ['get', 'seasonalityIndex'],
+          0, '#9ca3af', 50, '#f59e0b', 100, '#dc2626',
+        ],
+        'circle-stroke-width': ['interpolate', ['linear'], ['get', 'seasonalityIndex'], 0, 1, 50, 2, 100, 3.5],
+        'circle-stroke-opacity': 0.9,
+      },
+    });
+
+    // Fit bounds on first load
+    if (!hasFittedBoundsRef.current && seasonData.length > 0) {
+      let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+      seasonData.forEach(p => { minLng = Math.min(minLng, p.lng); maxLng = Math.max(maxLng, p.lng); minLat = Math.min(minLat, p.lat); maxLat = Math.max(maxLat, p.lat); });
+      const pad = 0.1;
+      const container = m.getContainer();
+      const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
+      const padY = Math.max(56, Math.round((container.clientHeight || 600) * 0.12));
+      m.fitBounds([[minLng - pad, minLat - pad], [maxLng + pad, maxLat + pad]], {
+        padding: { top: padY, bottom: padY + 60, left: padX, right: padX }, maxZoom: 12, duration: 1000,
+      });
+      hasFittedBoundsRef.current = true;
+    }
+
+    // Popup on click
+    const handleClick = (e: mapboxgl.MapMouseEvent) => {
+      const features = m.queryRenderedFeatures(e.point, { layers: [SEASON_CIRCLES] });
+      if (!features?.length) return;
+      const p = features[0].properties;
+      if (!p) return;
+      const coords = (features[0].geometry as any).coordinates as [number, number];
+      const insights: string[] = (() => { try { return JSON.parse(p.insights); } catch { return []; } })();
+      const zone = seasonData?.find(z => z.postalCode === p.postalCode);
+      
+      const MONTH_SHORT = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+      let sparkHtml = '';
+      if (zone) {
+        const months = Object.keys(zone.series).sort();
+        const last12 = months.slice(-12);
+        const maxNb = Math.max(...last12.map(m2 => zone.series[m2]?.nb || 0), 1);
+        sparkHtml = `<div style="display:flex;align-items:flex-end;gap:2px;height:40px;margin:8px 0;">` +
+          last12.map(m2 => {
+            const nb = zone.series[m2]?.nb || 0;
+            const h = Math.max(2, Math.round((nb / maxNb) * 36));
+            const isCurrentM = m2 === currentSeasonMonth;
+            return `<div style="display:flex;flex-direction:column;align-items:center;gap:1px;"><div style="width:${isCurrentM ? 10 : 7}px;height:${h}px;background:${isCurrentM ? '#f97316' : '#fbbf24'};border-radius:2px;"></div><span style="font-size:8px;color:#9ca3af;">${MONTH_SHORT[parseInt(m2.slice(5, 7)) - 1]}</span></div>`;
+          }).join('') + `</div>`;
+      }
+
+      const varColor = p.variation > 20 ? '#dc2626' : p.variation < -20 ? '#3b82f6' : '#6b7280';
+      const varLabel = p.variation > 0 ? `+${p.variation}%` : `${p.variation}%`;
+
+      new mapboxgl.Popup({ closeButton: true, maxWidth: '360px' })
+        .setLngLat(coords)
+        .setHTML(`
+          <div style="font-family: system-ui; font-size: 12px; line-height: 1.6;">
+            <div style="font-weight: 700; font-size: 14px; margin-bottom: 2px;">${p.postalCode} ${p.city}</div>
+            <div style="color:#6b7280;font-size:11px;margin-bottom:6px;">Mois : ${currentSeasonMonth}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-bottom:6px;">
+              <div>📁 <b>${p.nb}</b> dossiers</div>
+              <div>💰 CA: <b>${Number(p.ca).toLocaleString('fr-FR')} €</b></div>
+              <div style="color:${varColor}">📈 Variation: <b>${varLabel}</b></div>
+              <div>🔧 ${p.topUnivers || 'N/A'}</div>
+            </div>
+            ${sparkHtml}
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;border-top:1px solid #e5e7eb;padding-top:6px;margin-top:4px;">
+              <div>🌡️ Saisonnalité: <b>${p.seasonalityIndex}/100</b></div>
+              <div>🎯 Prévisibilité: <b>${p.predictabilityIndex}/100</b></div>
+              <div>📍 Pic: <b>${p.peakMonth}</b></div>
+              <div>🚨 Urgences: <b>${p.urgences}</b></div>
+            </div>
+            ${insights.length > 0 ? `<div style="background:#fef3c7;border-radius:6px;padding:6px 8px;margin-top:6px;">${insights.map(i => `<div style="color:#92400e;font-size:11px;">💡 ${i}</div>`).join('')}</div>` : ''}
+          </div>
+        `)
+        .addTo(m);
+    };
+
+    m.on('click', SEASON_CIRCLES, handleClick);
+    m.on('mouseenter', SEASON_CIRCLES, () => { m.getCanvas().style.cursor = 'pointer'; });
+    m.on('mouseleave', SEASON_CIRCLES, () => { m.getCanvas().style.cursor = ''; });
+
+    return () => { m.off('click', SEASON_CIRCLES, handleClick); };
+  }, [seasonData, currentSeasonMonth, seasonViewMode, mapReady, mapMode]);
+
   useEffect(() => {
     const m = map.current;
     if (!m || !mapReady) return;
