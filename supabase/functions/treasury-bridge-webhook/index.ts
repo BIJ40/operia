@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
     }
   } else if (LOG_ONLY_EVENTS.has(eventType)) {
     if (eventType === "item.needs_user_action") {
-      await supabase.from("bank_connections").update({ status: "action_required", provider_status: "needs_user_action", updated_at: new Date().toISOString() }).eq("id", connectionId);
+      await supabase.from("bank_connections").update({ status: "requires_reauth", provider_status: "needs_user_action", updated_at: new Date().toISOString() }).eq("id", connectionId);
     }
     if (eventType === "item.deleted") {
       await supabase.from("bank_connections").update({ status: "disconnected", provider_status: "item_deleted_by_provider", updated_at: new Date().toISOString() }).eq("id", connectionId);
