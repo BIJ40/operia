@@ -180,7 +180,7 @@ export function useCreateBankConnection() {
             action: 'create',
             displayName: params.displayName,
             provider: params.provider ?? 'bridge',
-            redirectUrl: `${window.location.origin}/?tab=pilotage.tresorerie&bridge_callback=1`,
+            callbackUrl: `${window.location.origin}/?tab=pilotage.tresorerie&bridge_callback=1`,
           },
         }),
         'TREASURY_CREATE_CONNECTION'
@@ -203,7 +203,15 @@ export function useCreateBankConnection() {
 export function useProcessBridgeCallback() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (params: { connectionId: string; bridgeStatus: string }) => {
+    mutationFn: async (params: {
+      connectionId: string;
+      success?: boolean;
+      item_id?: string;
+      step?: string;
+      source?: string;
+      context?: string;
+      user_uuid?: string;
+    }) => {
       const result = await safeInvoke(
         supabase.functions.invoke('treasury-bridge-callback', {
           body: params,
