@@ -1,20 +1,21 @@
 /**
  * TreasuryBridgeReturnHandler — Handles Bridge Connect callback on return
  * 
- * Bridge callback_url returns with query params: user_uuid, item_id, success, step, source, context.
- * This component detects the callback and processes the return via edge function.
+ * Uses bridge_connection_id from the callback URL for reliable correlation
+ * instead of heuristic "most recent connecting" lookup.
  */
 
 import { useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useProcessBridgeCallback, useSyncBankConnection, useBankConnections } from '@/apogee-connect/hooks/useTreasury';
+import { useProcessBridgeCallback, useSyncBankConnection } from '@/apogee-connect/hooks/useTreasury';
 import { toast } from 'sonner';
+
+const BRIDGE_PARAMS = ['bridge_callback', 'bridge_connection_id', 'success', 'item_id', 'step', 'source', 'context', 'user_uuid'] as const;
 
 export function TreasuryBridgeReturnHandler() {
   const [searchParams, setSearchParams] = useSearchParams();
   const processCallback = useProcessBridgeCallback();
   const syncConnection = useSyncBankConnection();
-  const { data: connections } = useBankConnections();
   const processed = useRef(false);
 
   useEffect(() => {
@@ -23,16 +24,23 @@ export function TreasuryBridgeReturnHandler() {
     const isBridgeCallback = searchParams.get('bridge_callback') === '1';
     if (!isBridgeCallback) return;
 
-    // Find the most recent "connecting" or "pending" connection
-    const connectingConn = connections?.find(c => c.status === 'connecting' || c.status === 'pending');
-    if (!connectingConn) return;
+    // Reliable correlation: use the connectionId injected into callback URL
+    const connectionId = searchParams.get('bridge_connection_id');
+    if (!connectionId) {
+      console.error('[BRIDGE_CALLBACK] Missing bridge_connection_id — cannot correlate');
+      toast.error('Retour Bridge incomplet : identifiant de connexion manquant.');
+      cleanUrlParams();
+      return;
+    }
 
     processed.current = true;
 
-    // Extract real Bridge callback params from URL
+    // Extract real Bridge callback params
+    const successParam = searchParams.get('success');
     const bridgeParams = {
-      connectionId: connectingConn.id,
-      success: searchParams.get('success') === 'true' || searchParams.get('success') === null, // default true if not present
+      connectionId,
+      // Explicit: only true if success=true, never assume success
+      success: successParam === 'true' ? true : successParam === 'false' ? false : undefined,
       item_id: searchParams.get('item_id') ?? undefined,
       step: searchParams.get('step') ?? undefined,
       source: searchParams.get('source') ?? undefined,
@@ -44,21 +52,21 @@ export function TreasuryBridgeReturnHandler() {
       try {
         toast.info('Finalisation de la connexion bancaire...');
 
-        // 1. Process callback with real Bridge params
         const callbackResult = await processCallback.mutateAsync(bridgeParams);
-
         const resultData = callbackResult as unknown as { data?: { needsSync?: boolean; status?: string } };
-        const needsSync = resultData?.data?.needsSync ?? bridgeParams.success;
+        const needsSync = resultData?.data?.needsSync === true;
 
         if (needsSync) {
-          // 2. Trigger initial sync
           toast.info('Synchronisation des comptes en cours...');
-          await syncConnection.mutateAsync(connectingConn.id);
+          await syncConnection.mutateAsync(connectionId);
           toast.success('Connexion bancaire établie et comptes synchronisés !');
         } else {
           const status = resultData?.data?.status;
           if (status === 'error') {
             toast.error('La connexion bancaire a échoué. Veuillez réessayer.');
+          } else if (bridgeParams.success === undefined) {
+            // Ambiguous — no explicit success from Bridge
+            toast.warning('Retour Bridge ambigu. Vérifiez l\'état de votre connexion.');
           } else {
             toast.success('Retour de Bridge traité.');
           }
@@ -68,18 +76,15 @@ export function TreasuryBridgeReturnHandler() {
         toast.error('Erreur lors du traitement du retour Bridge.');
       }
 
-      // Clean URL params
-      const newParams = new URLSearchParams(searchParams);
-      newParams.delete('bridge_callback');
-      newParams.delete('success');
-      newParams.delete('item_id');
-      newParams.delete('step');
-      newParams.delete('source');
-      newParams.delete('context');
-      newParams.delete('user_uuid');
-      setSearchParams(newParams, { replace: true });
+      cleanUrlParams();
     })();
-  }, [connections, searchParams]);
+
+    function cleanUrlParams() {
+      const newParams = new URLSearchParams(searchParams);
+      BRIDGE_PARAMS.forEach(p => newParams.delete(p));
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [searchParams]);
 
   return null;
 }

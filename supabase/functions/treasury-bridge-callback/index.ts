@@ -104,12 +104,14 @@ Deno.serve(async (req) => {
     }
 
     // Determine internal status from Bridge callback params
-    const isSuccess = bridgeSuccess === true || bridgeSuccess === "true";
+    // IMPORTANT: never assume success — only explicit success=true counts
+    const isExplicitSuccess = bridgeSuccess === true || bridgeSuccess === "true";
+    const isExplicitFailure = bridgeSuccess === false || bridgeSuccess === "false";
     let newInternalStatus: string;
     let errorCode: string | null = null;
     let errorMessage: string | null = null;
 
-    if (isSuccess) {
+    if (isExplicitSuccess) {
       newInternalStatus = "active";
     } else if (bridgeStep === "consent_declined" || bridgeContext === "consent_declined") {
       newInternalStatus = "error";
@@ -119,13 +121,15 @@ Deno.serve(async (req) => {
       newInternalStatus = "error";
       errorCode = "SCA_FAILED";
       errorMessage = "Authentification forte (SCA) échouée";
-    } else if (bridgeSuccess === false || bridgeSuccess === "false") {
+    } else if (isExplicitFailure) {
       newInternalStatus = "error";
       errorCode = "BRIDGE_CONNECT_FAILED";
       errorMessage = `Échec Connect Bridge (step=${bridgeStep ?? "unknown"})`;
     } else {
-      // Unknown state — keep pending
-      newInternalStatus = conn.status === "connecting" ? "pending" : conn.status as string;
+      // Ambiguous: success param absent — do NOT assume success, keep pending for verification
+      newInternalStatus = "pending";
+      errorCode = "CALLBACK_AMBIGUOUS";
+      errorMessage = "Retour Bridge sans confirmation explicite de succès";
     }
 
     const updatePayload: Record<string, unknown> = {
