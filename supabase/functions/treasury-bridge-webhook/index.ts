@@ -125,18 +125,16 @@ Deno.serve(async (req) => {
   const rawBody = await req.text();
 
   // ── 1. Signature verification ──
-  const publicKey = Deno.env.get("BRIDGE_WEBHOOK_PUBLIC_KEY");
-  const signatureHeader = req.headers.get("X-Webhook-Signature") ?? req.headers.get("x-webhook-signature");
+  const webhookSecret = Deno.env.get("BRIDGE_WEBHOOK_SECRET");
 
-  if (publicKey) {
-    const sigResult = await verifyBridgeSignature(rawBody, signatureHeader, publicKey);
+  if (webhookSecret) {
+    const sigResult = await verifyWebhookSecret(rawBody, req, webhookSecret);
     if (!sigResult.valid) {
       console.error("[WEBHOOK_SIG_REJECTED]", sigResult.reason);
       return fail(`Signature verification failed: ${sigResult.reason}`, 401);
     }
   } else {
-    // Sandbox tolerance — log but allow
-    console.warn("[WEBHOOK_SIG_SKIP] BRIDGE_WEBHOOK_PUBLIC_KEY not set — accepting without verification (sandbox only)");
+    console.warn("[WEBHOOK_SIG_SKIP] BRIDGE_WEBHOOK_SECRET not set");
   }
 
   // ── 2. Parse payload ──
