@@ -391,7 +391,122 @@ export default function MapsTabContent() {
     }
   }, [heatmapPoints, mapReady, mapMode]);
 
-  // Draw/remove route layer
+  // Profitability layer — colored circles: green (profitable) → red (unprofitable)
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !mapReady) return;
+
+    // Clean previous profitability layers
+    [PROFIT_CIRCLES, PROFIT_LAYER_POS, PROFIT_LAYER_NEG].forEach(l => { if (m.getLayer(l)) m.removeLayer(l); });
+    if (m.getSource(PROFIT_SOURCE)) m.removeSource(PROFIT_SOURCE);
+
+    if (mapMode !== 'profitability' || !profitPoints?.length) return;
+
+    // Compute max absolute margin for normalization
+    const maxAbsMargin = Math.max(...profitPoints.map(p => Math.abs(p.margin)), 1);
+
+    const geojson: GeoJSON.FeatureCollection = {
+      type: 'FeatureCollection',
+      features: profitPoints.map(pt => ({
+        type: 'Feature' as const,
+        properties: {
+          margin: pt.margin,
+          ca: pt.ca,
+          hours: pt.hours,
+          // Normalized margin [-1, 1]
+          marginNorm: Math.max(-1, Math.min(1, pt.margin / maxAbsMargin)),
+        },
+        geometry: { type: 'Point' as const, coordinates: [pt.lng, pt.lat] },
+      })),
+    };
+
+    m.addSource(PROFIT_SOURCE, { type: 'geojson', data: geojson });
+
+    // Circle layer: color interpolated from red (negative margin) to green (positive margin)
+    m.addLayer({
+      id: PROFIT_CIRCLES,
+      type: 'circle',
+      source: PROFIT_SOURCE,
+      paint: {
+        'circle-radius': [
+          'interpolate', ['linear'], ['zoom'],
+          4, 6,
+          10, 12,
+          14, 18,
+          18, 24,
+        ],
+        'circle-color': [
+          'interpolate', ['linear'], ['get', 'marginNorm'],
+          -1, '#dc2626',   // Deep red — very unprofitable
+          -0.3, '#ef4444', // Red
+          0, '#fbbf24',    // Yellow — breakeven
+          0.3, '#22c55e',  // Green
+          1, '#15803d',    // Deep green — very profitable
+        ],
+        'circle-opacity': 0.75,
+        'circle-stroke-color': [
+          'interpolate', ['linear'], ['get', 'marginNorm'],
+          -1, '#991b1b',
+          0, '#a16207',
+          1, '#166534',
+        ],
+        'circle-stroke-width': 1.5,
+        'circle-stroke-opacity': 0.9,
+      },
+    });
+
+    // Fit bounds
+    if (!hasFittedBoundsRef.current && profitPoints.length > 0) {
+      let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+      profitPoints.forEach(p => { minLng = Math.min(minLng, p.lng); maxLng = Math.max(maxLng, p.lng); minLat = Math.min(minLat, p.lat); maxLat = Math.max(maxLat, p.lat); });
+      const pad = 0.1;
+      const bounds: [[number, number], [number, number]] = [[minLng - pad, minLat - pad], [maxLng + pad, maxLat + pad]];
+      const container = m.getContainer();
+      const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
+      const padY = Math.max(56, Math.round((container.clientHeight || 600) * 0.12));
+      m.fitBounds(bounds, {
+        padding: { top: padY, bottom: padY + 60, left: padX, right: padX },
+        maxZoom: 12,
+        duration: 1000,
+      });
+      hasFittedBoundsRef.current = true;
+    }
+
+    // Popup on click
+    const handleClick = (e: mapboxgl.MapMouseEvent) => {
+      const features = m.queryRenderedFeatures(e.point, { layers: [PROFIT_CIRCLES] });
+      if (!features?.length) return;
+      const props = features[0].properties;
+      if (!props) return;
+      const margin = props.margin as number;
+      const ca = props.ca as number;
+      const hours = props.hours as number;
+      const coords = (features[0].geometry as any).coordinates as [number, number];
+      
+      new mapboxgl.Popup({ closeButton: true, maxWidth: '260px' })
+        .setLngLat(coords)
+        .setHTML(`
+          <div style="font-family: system-ui; font-size: 13px; line-height: 1.5;">
+            <div style="font-weight: 600; margin-bottom: 4px; color: ${margin >= 0 ? '#15803d' : '#dc2626'}">
+              Marge: ${margin >= 0 ? '+' : ''}${Math.round(margin).toLocaleString('fr-FR')} €
+            </div>
+            <div>CA facturé: ${Math.round(ca).toLocaleString('fr-FR')} €</div>
+            <div>Heures estimées: ${hours.toFixed(1)} h</div>
+            <div>Coût estimé: ${Math.round(hours * 35).toLocaleString('fr-FR')} €</div>
+          </div>
+        `)
+        .addTo(m);
+    };
+
+    m.on('click', PROFIT_CIRCLES, handleClick);
+    m.on('mouseenter', PROFIT_CIRCLES, () => { m.getCanvas().style.cursor = 'pointer'; });
+    m.on('mouseleave', PROFIT_CIRCLES, () => { m.getCanvas().style.cursor = ''; });
+
+    return () => {
+      m.off('click', PROFIT_CIRCLES, handleClick);
+    };
+  }, [profitPoints, mapReady, mapMode]);
+
   useEffect(() => {
     const m = map.current;
     if (!m || !mapReady) return;
