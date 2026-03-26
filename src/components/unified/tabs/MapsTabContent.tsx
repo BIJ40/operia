@@ -301,14 +301,14 @@ export default function MapsTabContent() {
       </div>
 
       {/* Carte */}
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0" style={{ minHeight: '400px' }}>
         <div className="relative h-full w-full overflow-hidden rounded-b-xl border border-t-0 bg-background shadow-sm">
           {!mapboxToken ? (
             <div className="absolute inset-0 flex items-center justify-center bg-muted">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <div ref={mapContainer} className="h-full w-full" />
+            <div ref={mapContainer} style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }} />
           )}
 
           {mapInitError && (
