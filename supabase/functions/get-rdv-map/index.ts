@@ -276,8 +276,8 @@ Deno.serve(async (req) => {
       const interventions = intResp.ok ? await intResp.json() : [];
       const projects = projResp.ok ? await projResp.json() : [];
       const clients = clientResp.ok ? await clientResp.json() : [];
-      const factures = (isProfitability || isZones) && responses[3]?.ok ? await responses[3].json() : [];
-      const devis = isZones && responses[4]?.ok ? await responses[4].json() : [];
+      const factures = (isProfitability || isZones || isApporteurs) && responses[3]?.ok ? await responses[3].json() : [];
+      const devis = (isZones || isApporteurs) && responses[4]?.ok ? await responses[4].json() : [];
 
       console.log(`[GET-RDV-MAP] Fetched ${Array.isArray(interventions) ? interventions.length : 0} interventions, ${projects.length} projects, ${clients.length} clients in ${Date.now() - t0}ms`);
 
