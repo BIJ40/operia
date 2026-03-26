@@ -318,7 +318,7 @@ export default function MapsTabContent() {
     });
   }, [routeGeometry, isTourMode, mapReady, tourTech?.color]);
 
-  useEffect(() => { hasFittedBoundsRef.current = false; }, [selectedDate, selectedTechIds, viewMode]);
+  useEffect(() => { hasFittedBoundsRef.current = false; }, [selectedDate, selectedTechIds, viewMode, mapMode]);
 
   const goToPreviousDay = () => {
     setSelectedDate(d => viewMode === 'week' ? subDays(d, 7) : subDays(d, 1));
@@ -328,6 +328,7 @@ export default function MapsTabContent() {
   };
   const goToToday = () => setSelectedDate(new Date());
   const goToTomorrow = () => { setViewMode('day'); setSelectedDate(addDays(new Date(), 1)); };
+  const toggleMapMode = () => { setMapMode(prev => prev === 'pins' ? 'heatmap' : 'pins'); setSelectedRdv(null); };
   const toggleWeekMode = () => setViewMode(prev => prev === 'week' ? 'day' : 'week');
 
   const toggleTechnician = (techId: number) => {
