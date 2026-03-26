@@ -209,8 +209,8 @@ Deno.serve(async (req) => {
     const isProfitability = mode === 'profitability';
 
     // Date validation
-    const effectiveFrom = isHeatmap ? (fromDate || '2020-01-01') : date;
-    const effectiveTo = isHeatmap ? (toDate || new Date().toISOString().slice(0, 10)) : date;
+    const effectiveFrom = (isHeatmap || isProfitability) ? (fromDate || '2020-01-01') : date;
+    const effectiveTo = (isHeatmap || isProfitability) ? (toDate || new Date().toISOString().slice(0, 10)) : date;
 
     if (!isHeatmap && (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date))) {
       return withCors(req, new Response(
