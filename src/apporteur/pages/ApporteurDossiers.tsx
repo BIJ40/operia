@@ -368,9 +368,6 @@ export default function ApporteurDossiers() {
                             <span className="text-sm text-muted-foreground">-</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {d.factureHT > 0 ? formatCurrency(d.factureHT) : '-'}
-                        </TableCell>
                         <TableCell className="text-right font-medium text-foreground">
                           {d.restedu > 0 ? formatCurrency(d.restedu) : d.factureHT > 0 ? '✓' : '-'}
                         </TableCell>
