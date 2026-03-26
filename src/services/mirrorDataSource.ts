@@ -121,13 +121,13 @@ export async function isMirrorFreshEnough(
     .from('apogee_sync_status' as any)
     .select('freshness_minutes, freshness_status, last_status')
     .eq('agency_id', agencyId)
-    .maybeSingle();
+    .maybeSingle() as { data: { freshness_minutes: number | null; freshness_status: string; last_status: string } | null; error: any };
 
   if (error || !data) {
     return { fresh: false, freshnessMinutes: null, reason: 'sync_status_unavailable' };
   }
 
-  const freshnessMinutes = data.freshness_minutes as number | null;
+  const freshnessMinutes = data.freshness_minutes;
 
   if (freshnessMinutes === null) {
     return { fresh: false, freshnessMinutes: null, reason: 'never_synced' };

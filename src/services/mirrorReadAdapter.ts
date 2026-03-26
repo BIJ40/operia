@@ -55,7 +55,7 @@ export async function readMirrorData(
     .from(tableName as any)
     .select('apogee_id, raw_data, synced_at, mirror_status, source_updated_at')
     .eq('agency_id', agencyId)
-    .eq('mirror_status', 'synced');
+    .eq('mirror_status', 'synced') as { data: MirrorRow[] | null; error: any };
 
   if (error) {
     logApogee.error(`[MirrorRead] Error reading ${tableName}:`, error.message);
@@ -67,7 +67,7 @@ export async function readMirrorData(
   }
 
   // Extract raw_data and ensure the 'id' field is preserved
-  return (data as MirrorRow[]).map(row => {
+  return data.map(row => {
     const raw = row.raw_data as Record<string, unknown>;
     // Ensure apogee_id is mapped back as 'id' if missing
     if (raw.id === undefined) {
