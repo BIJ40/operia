@@ -23,12 +23,17 @@ interface RequestBody {
 }
 
 // In-memory cache for geocoding within a single request
-const geoCache = new Map<string, { lat: number; lng: number } | null>();
+const geoCache = new Map<string, { lat: number; lng: number; code_insee?: string } | null>();
+
+// In-memory cache for commune polygons (persists across requests in same worker)
+let communeGeoJsonCache: any = null;
+let communeCacheTimestamp = 0;
+const COMMUNE_CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
 /**
- * Geocode via BAN API with postal code filter
+ * Geocode via BAN API with postal code filter — also extracts code_insee (citycode)
  */
-async function geocodeAddress(address: string, postalCode: string, city: string): Promise<{ lat: number; lng: number } | null> {
+async function geocodeAddress(address: string, postalCode: string, city: string): Promise<{ lat: number; lng: number; code_insee?: string } | null> {
   const cacheKey = `${address}|${postalCode}|${city}`.toLowerCase();
   if (geoCache.has(cacheKey)) return geoCache.get(cacheKey) ?? null;
   
@@ -47,7 +52,8 @@ async function geocodeAddress(address: string, postalCode: string, city: string)
     const data = await response.json();
     if (data.features?.length > 0) {
       const [lng, lat] = data.features[0].geometry.coordinates;
-      const result = { lat, lng };
+      const code_insee = data.features[0].properties?.citycode || undefined;
+      const result = { lat, lng, code_insee };
       geoCache.set(cacheKey, result);
       return result;
     }
@@ -57,6 +63,43 @@ async function geocodeAddress(address: string, postalCode: string, city: string)
     console.error('[GET-RDV-MAP] Geocoding error:', error);
     geoCache.set(cacheKey, null);
     return null;
+  }
+}
+
+/**
+ * Fetch commune GeoJSON polygons from geo.api.gouv.fr
+ * Departments 40 (Landes) and 64 (Pyrénées-Atlantiques) — can be extended
+ */
+async function fetchCommunePolygons(): Promise<any> {
+  if (communeGeoJsonCache && Date.now() - communeCacheTimestamp < COMMUNE_CACHE_TTL) {
+    return communeGeoJsonCache;
+  }
+  
+  try {
+    const depts = ['40', '64'];
+    const allFeatures: any[] = [];
+    
+    for (const dept of depts) {
+      const url = `https://geo.api.gouv.fr/departements/${dept}/communes?fields=code,nom,contour&format=geojson`;
+      const resp = await fetch(url, { signal: AbortSignal.timeout(30000) });
+      if (!resp.ok) {
+        console.warn(`[GET-RDV-MAP] geo.api.gouv.fr error for dept ${dept}: ${resp.status}`);
+        continue;
+      }
+      const geojson = await resp.json();
+      if (geojson?.features) {
+        allFeatures.push(...geojson.features);
+      }
+    }
+    
+    const result = { type: 'FeatureCollection', features: allFeatures };
+    communeGeoJsonCache = result;
+    communeCacheTimestamp = Date.now();
+    console.log(`[GET-RDV-MAP] Fetched ${allFeatures.length} commune polygons`);
+    return result;
+  } catch (error) {
+    console.error('[GET-RDV-MAP] Failed to fetch commune polygons:', error);
+    return { type: 'FeatureCollection', features: [] };
   }
 }
 
