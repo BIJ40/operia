@@ -435,6 +435,36 @@ Deno.serve(async (req) => {
       const coordsByPostalCode = await batchGeocodePostalCodes(postalCodeCities, supabaseAdmin);
       console.log(`[GET-RDV-MAP] Geocoded ${coordsByPostalCode.size}/${postalCodeCities.size} postal codes in ${Date.now() - t0}ms`);
 
+      // ── BUILD POSTAL → INSEE MAP ──
+      const postalToInsee = buildPostalToInseeMap(coordsByPostalCode);
+      
+      // Also build projectToInsee for direct project → commune mapping
+      const projectToInsee = new Map<number, string>();
+      for (const [pid, pc] of projectToPostalCode.entries()) {
+        const insee = postalToInsee.get(pc);
+        if (insee) projectToInsee.set(pid, insee);
+      }
+
+      // Build projectsByInsee (like projectsByPostalCode but by INSEE code)
+      const projectsByInsee = new Map<string, Set<number>>();
+      const inseeCities = new Map<string, string>(); // code_insee → city name
+      for (const [pc, pids] of projectsByPostalCode.entries()) {
+        const insee = postalToInsee.get(pc);
+        if (!insee) continue;
+        if (!projectsByInsee.has(insee)) projectsByInsee.set(insee, new Set());
+        for (const pid of pids) projectsByInsee.get(insee)!.add(pid);
+        if (!inseeCities.has(insee) && postalCodeCities.has(pc)) {
+          inseeCities.set(insee, postalCodeCities.get(pc)!);
+        }
+      }
+
+      // ── FETCH COMMUNE POLYGONS (for choropleth modes) ──
+      let communePolygons: any = null;
+      if (!isHeatmap) {
+        communePolygons = await fetchCommunePolygons();
+        console.log(`[GET-RDV-MAP] Commune polygons: ${communePolygons?.features?.length || 0} communes loaded`);
+      }
+
       // ── HEATMAP MODE ──
       if (isHeatmap) {
         const heatPoints: { lat: number; lng: number }[] = [];
