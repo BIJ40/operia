@@ -228,3 +228,6 @@ verify_jwt = false
 
 [functions.treasury-connection]
 verify_jwt = false
+
+[functions.treasury-bridge-callback]
+verify_jwt = false
