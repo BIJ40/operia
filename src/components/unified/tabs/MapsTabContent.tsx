@@ -958,10 +958,10 @@ export default function MapsTabContent() {
               </div>
             )}
 
-            {((isLoading && mapMode === 'pins') || (heatmapLoading && mapMode === 'heatmap') || (profitLoading && mapMode === 'profitability')) && mapboxToken && !mapInitError && (
+            {((isLoading && mapMode === 'pins') || (heatmapLoading && mapMode === 'heatmap') || (profitLoading && mapMode === 'profitability') || (zonesLoading && mapMode === 'zones')) && mapboxToken && !mapInitError && (
               <div className="absolute top-4 left-4 bg-background/80 backdrop-blur rounded-lg px-4 py-2 flex items-center gap-2 shadow-lg">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm">{mapMode === 'heatmap' ? 'Chargement de l\'historique...' : mapMode === 'profitability' ? 'Analyse de rentabilité...' : 'Chargement des RDV...'}</span>
+                <span className="text-sm">{mapMode === 'heatmap' ? 'Chargement de l\'historique...' : mapMode === 'profitability' ? 'Analyse de rentabilité...' : mapMode === 'zones' ? 'Analyse des zones...' : 'Chargement des RDV...'}</span>
               </div>
             )}
 
