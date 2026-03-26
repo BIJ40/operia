@@ -913,6 +913,32 @@ export default function MapsTabContent() {
           </div>
         )}
 
+        {/* Barre info zones blanches */}
+        {mapMode === 'zones' && (
+          <div className="flex-none p-4 space-y-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Crosshair className="h-4 w-4" />
+              <span>Zones blanches commerciales — analyse par code postal</span>
+              <span className="ml-auto">
+                {zonesLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${zonesData?.length || 0} zones`}
+              </span>
+            </div>
+            <div className="flex items-center gap-4 text-xs flex-wrap">
+              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#d1d5db' }} /><span className="text-muted-foreground">Zone blanche</span></div>
+              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#fbbf24' }} /><span className="text-muted-foreground">Faible</span></div>
+              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#22c55e' }} /><span className="text-muted-foreground">Correcte</span></div>
+              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#1e40af' }} /><span className="text-muted-foreground">Forte</span></div>
+              <div className="flex items-center gap-1.5 ml-2 pl-2 border-l"><span className="w-3 h-3 rounded-full border-2" style={{ borderColor: '#dc2626', backgroundColor: 'transparent' }} /><span className="text-muted-foreground">Bordure = opportunité</span></div>
+            </div>
+            {zonesData && zonesData.length > 0 && (
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span>🏆 Top : <b>{zonesData[0].postalCode} {zonesData[0].city}</b> (score {zonesData[0].opportunityScore}/100)</span>
+                {zonesData[0].insights[0] && <span className="text-amber-600">💡 {zonesData[0].insights[0]}</span>}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex-1 min-h-0" style={{ minHeight: '400px' }}>
           <div className="relative h-full w-full overflow-hidden bg-background">
             {!mapboxToken ? (
