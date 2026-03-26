@@ -189,7 +189,8 @@ Deno.serve(async (req) => {
     const isHeatmap = mode === 'heatmap';
     const isProfitability = mode === 'profitability';
     const isZones = mode === 'zones';
-    const isAnalyticsMode = isHeatmap || isProfitability || isZones;
+    const isApporteurs = mode === 'apporteurs';
+    const isAnalyticsMode = isHeatmap || isProfitability || isZones || isApporteurs;
 
     const effectiveFrom = isAnalyticsMode ? (fromDate || '2020-01-01') : date;
     const effectiveTo = isAnalyticsMode ? (toDate || new Date().toISOString().slice(0, 10)) : date;
