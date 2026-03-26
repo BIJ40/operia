@@ -46,6 +46,10 @@ export function ImageModal() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
+    const openImage = (url: string) => {
+      window.setTimeout(() => setImageUrl(url), 0);
+    };
+
     const handleClick = (e: MouseEvent) => {
       const triggerUrl = resolveImageUrl(e.target);
 
@@ -53,14 +57,14 @@ export function ImageModal() {
 
       e.preventDefault();
       e.stopPropagation();
-      setImageUrl(triggerUrl);
+      openImage(triggerUrl);
     };
 
     const handleOpenImageModal = (event: Event) => {
       const customEvent = event as OpenImageModalEvent;
       const url = customEvent.detail?.url;
       if (url) {
-        setImageUrl(url);
+        openImage(url);
       }
     };
 
