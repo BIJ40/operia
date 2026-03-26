@@ -78,9 +78,9 @@ function enableStyleFallback(m: mapboxgl.Map) {
 }
 
 type ViewMode = 'day' | 'week';
-type MapMode = 'pins' | 'heatmap' | 'profitability' | 'zones' | 'apporteurs' | 'disponibilite' | 'saisonnalite';
+type MapMode = 'pins' | 'heatmap' | 'profitability' | 'zones' | 'apporteurs' | 'disponibilite' | 'saisonnalite' | 'score_global';
 
-type MapsSubTab = 'rdv' | 'densite' | 'rentabilite' | 'zones' | 'apporteurs' | 'disponibilite' | 'saisonnalite';
+type MapsSubTab = 'rdv' | 'densite' | 'rentabilite' | 'zones' | 'apporteurs' | 'disponibilite' | 'saisonnalite' | 'score_global';
 
 const MAP_SUB_TABS: FolderTabConfig[] = [
   { id: 'rdv', label: 'Rendez-vous', icon: MapPin, accent: 'blue' },
@@ -90,6 +90,7 @@ const MAP_SUB_TABS: FolderTabConfig[] = [
   { id: 'apporteurs', label: 'Apporteurs', icon: Network, accent: 'purple' },
   { id: 'disponibilite', label: 'Disponibilité', icon: Radio, accent: 'teal' },
   { id: 'saisonnalite', label: 'Saisonnalité', icon: CalendarRange, accent: 'orange' },
+  { id: 'score_global', label: 'Score Global', icon: Trophy, accent: 'amber' },
 ];
 
 const TAB_ACCENT_COLORS: Record<string, string> = {
