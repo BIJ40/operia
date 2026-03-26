@@ -175,7 +175,7 @@ Deno.serve(async (req) => {
         module: "tresorerie",
         entity_type: "bank_connection",
         entity_id: connectionId,
-        action: `bank_connection.bridge_callback.${isSuccess ? "success" : "failed"}`,
+        action: `bank_connection.bridge_callback.${isExplicitSuccess ? "success" : isExplicitFailure ? "failed" : "ambiguous"}`,
         metadata: {
           success: bridgeSuccess,
           item_id: bridgeItemId,
@@ -191,7 +191,7 @@ Deno.serve(async (req) => {
       connectionId,
       status: newInternalStatus,
       itemId: bridgeItemId ?? null,
-      needsSync: isSuccess,
+      needsSync: isExplicitSuccess,
     });
 
   } catch (err) {
