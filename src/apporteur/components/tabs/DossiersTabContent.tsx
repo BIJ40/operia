@@ -601,7 +601,7 @@ export default function DossiersTabContent() {
       </Card>
 
       {/* Dossier Detail Dialog */}
-      <Dialog open={!!selectedDossier} onOpenChange={() => setSelectedDossier(null)}>
+      <Dialog open={!!selectedDossier} onOpenChange={() => { setSelectedDossier(null); setInlineComment(''); }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
