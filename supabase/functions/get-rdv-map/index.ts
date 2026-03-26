@@ -1,14 +1,8 @@
 /**
  * GET-RDV-MAP - Endpoint sécurisé pour la carte des RDV
  * 
- * Retourne les interventions d'une journée avec leurs coordonnées GPS
- * pour affichage sur Mapbox. Aucune donnée sensible exposée.
- * 
- * Sécurité:
- * - JWT obligatoire
- * - Isolation par agence (N2 = son agence, N3+ = multi-agences)
- * - Coordonnées GPS uniquement (pas d'adresses complètes)
- * - Rate limiting
+ * v3: Optimized with geocode_cache + postal code aggregation for heatmap/profitability/zones
+ * Geocoding reduced from ~5000 individual calls to ~100 cached postal code lookups
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
@@ -16,70 +10,34 @@ import { handleCorsPreflightOrReject, withCors, getCorsHeaders, isOriginAllowed 
 import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 import { captureEdgeException } from '../_shared/sentry.ts';
 
-// Types pour la réponse
-interface MapRdvUser {
-  id: number;
-  name: string;
-  color: string;
-}
-
+interface MapRdvUser { id: number; name: string; color: string; }
 interface MapRdv {
-  rdvId: number;
-  projectId: number;
-  projectRef: string; // Référence dossier Apogée (2025xxxxx)
-  clientName: string; // Nom du client
-  lat: number;
-  lng: number;
-  startAt: string;
-  endAt: string; // Fin du créneau (startAt + durationMin)
-  durationMin: number;
-  univers: string;
-  address: string; // Adresse complète pour affichage
-  users: MapRdvUser[];
+  rdvId: number; projectId: number; projectRef: string; clientName: string;
+  lat: number; lng: number; startAt: string; endAt: string; durationMin: number;
+  univers: string; address: string; users: MapRdvUser[];
 }
-
 interface RequestBody {
-  date?: string; // YYYY-MM-DD (required for normal mode)
-  from?: string; // YYYY-MM-DD (heatmap mode range start)
-  to?: string;   // YYYY-MM-DD (heatmap mode range end)
-  mode?: 'normal' | 'heatmap' | 'profitability' | 'zones'; // zones = white zones analysis
-  techIds?: number[];
-  agencySlug?: string; // Pour franchiseur multi-agences
+  date?: string; from?: string; to?: string;
+  mode?: 'normal' | 'heatmap' | 'profitability' | 'zones';
+  techIds?: number[]; agencySlug?: string;
 }
 
-// Cache simple pour géocodage (évite appels répétés BAN)
+// In-memory cache for geocoding within a single request
 const geoCache = new Map<string, { lat: number; lng: number } | null>();
 
 /**
- * Géocode une adresse via api-adresse.data.gouv.fr (BAN)
- * Utilise le paramètre postcode pour éviter les homonymes (St Vincent de Paul 40 vs 35)
+ * Geocode via BAN API with postal code filter
  */
 async function geocodeAddress(address: string, postalCode: string, city: string): Promise<{ lat: number; lng: number } | null> {
   const cacheKey = `${address}|${postalCode}|${city}`.toLowerCase();
-  
-  // Check cache
-  if (geoCache.has(cacheKey)) {
-    return geoCache.get(cacheKey) ?? null;
-  }
+  if (geoCache.has(cacheKey)) return geoCache.get(cacheKey) ?? null;
   
   try {
-    // Construire la requête avec le code postal comme filtre obligatoire si disponible
-    const queryParts: string[] = [];
-    
-    // Requête texte: adresse + ville (sans code postal dans le texte, il sera filtré)
     const textQuery = `${address} ${city}`.trim();
-    queryParts.push(`q=${encodeURIComponent(textQuery)}`);
+    const params = [`q=${encodeURIComponent(textQuery)}`, 'limit=1'];
+    if (postalCode?.length >= 2) params.push(`postcode=${encodeURIComponent(postalCode)}`);
     
-    // Filtre par code postal (critique pour éviter les homonymes)
-    if (postalCode && postalCode.length >= 2) {
-      queryParts.push(`postcode=${encodeURIComponent(postalCode)}`);
-    }
-    
-    queryParts.push('limit=1');
-    
-    const url = `https://api-adresse.data.gouv.fr/search/?${queryParts.join('&')}`;
-    const response = await fetch(url);
-    
+    const response = await fetch(`https://api-adresse.data.gouv.fr/search/?${params.join('&')}`);
     if (!response.ok) {
       console.warn(`[GET-RDV-MAP] BAN API error: ${response.status} for ${textQuery}`);
       geoCache.set(cacheKey, null);
@@ -87,39 +45,12 @@ async function geocodeAddress(address: string, postalCode: string, city: string)
     }
     
     const data = await response.json();
-    
-    if (data.features && data.features.length > 0) {
-      const feature = data.features[0];
-      const [lng, lat] = feature.geometry.coordinates;
-      
-      // Vérification: le résultat doit être dans le bon département (2 premiers chiffres du CP)
-      const resultPostcode = feature.properties?.postcode || '';
-      const expectedDept = postalCode?.substring(0, 2);
-      const resultDept = resultPostcode.substring(0, 2);
-      
-      if (expectedDept && resultDept && expectedDept !== resultDept) {
-        console.warn(`[GET-RDV-MAP] Geocode mismatch: expected dept ${expectedDept}, got ${resultDept} for "${textQuery}" ${postalCode}`);
-        // Fallback: essayer avec le code postal complet dans la requête texte
-        const fallbackUrl = `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(`${address} ${postalCode} ${city}`)}&limit=1`;
-        const fallbackResponse = await fetch(fallbackUrl);
-        if (fallbackResponse.ok) {
-          const fallbackData = await fallbackResponse.json();
-          if (fallbackData.features?.length > 0) {
-            const [fbLng, fbLat] = fallbackData.features[0].geometry.coordinates;
-            const result = { lat: fbLat, lng: fbLng };
-            geoCache.set(cacheKey, result);
-            return result;
-          }
-        }
-        geoCache.set(cacheKey, null);
-        return null;
-      }
-      
+    if (data.features?.length > 0) {
+      const [lng, lat] = data.features[0].geometry.coordinates;
       const result = { lat, lng };
       geoCache.set(cacheKey, result);
       return result;
     }
-    
     geoCache.set(cacheKey, null);
     return null;
   } catch (error) {
@@ -130,8 +61,71 @@ async function geocodeAddress(address: string, postalCode: string, city: string)
 }
 
 /**
- * Formate une adresse complète pour affichage
+ * Batch geocode postal codes using DB cache + BAN API for misses
+ * Returns Map<postalCode, {lat, lng}>
  */
+async function batchGeocodePostalCodes(
+  postalCodes: Map<string, string>, // postalCode → city
+  supabaseAdmin: any
+): Promise<Map<string, { lat: number; lng: number }>> {
+  const result = new Map<string, { lat: number; lng: number }>();
+  const keys = Array.from(postalCodes.keys());
+  if (keys.length === 0) return result;
+
+  // 1. Check DB cache
+  const cacheKeys = keys.map(pc => `${pc}|${(postalCodes.get(pc) || '').toLowerCase()}`);
+  const { data: cached } = await supabaseAdmin
+    .from('geocode_cache')
+    .select('cache_key, postal_code, lat, lng')
+    .in('cache_key', cacheKeys);
+
+  const cachedSet = new Set<string>();
+  if (cached) {
+    for (const row of cached) {
+      result.set(row.postal_code, { lat: row.lat, lng: row.lng });
+      cachedSet.add(row.postal_code);
+    }
+  }
+  
+  console.log(`[GET-RDV-MAP] Geocode cache: ${cachedSet.size}/${keys.length} hits`);
+
+  // 2. Geocode misses via BAN (only uncached ones)
+  const misses = keys.filter(pc => !cachedSet.has(pc));
+  const toInsert: any[] = [];
+
+  // Process in parallel batches of 10
+  const BATCH_SIZE = 10;
+  for (let i = 0; i < misses.length; i += BATCH_SIZE) {
+    const batch = misses.slice(i, i + BATCH_SIZE);
+    const promises = batch.map(async (pc) => {
+      const city = postalCodes.get(pc) || '';
+      const coords = await geocodeAddress('', pc, city);
+      if (coords) {
+        result.set(pc, coords);
+        toInsert.push({
+          cache_key: `${pc}|${city.toLowerCase()}`,
+          postal_code: pc,
+          city,
+          lat: coords.lat,
+          lng: coords.lng,
+          source: 'ban',
+        });
+      }
+    });
+    await Promise.all(promises);
+  }
+
+  // 3. Store new results in DB cache
+  if (toInsert.length > 0) {
+    await supabaseAdmin
+      .from('geocode_cache')
+      .upsert(toInsert, { onConflict: 'cache_key', ignoreDuplicates: true })
+      .then(() => console.log(`[GET-RDV-MAP] Cached ${toInsert.length} new geocode results`));
+  }
+
+  return result;
+}
+
 function formatAddress(address: string, postalCode: string, city: string): string {
   const parts: string[] = [];
   if (address) parts.push(address);
@@ -140,7 +134,6 @@ function formatAddress(address: string, postalCode: string, city: string): strin
 }
 
 Deno.serve(async (req) => {
-  // CORS preflight
   const corsResult = handleCorsPreflightOrReject(req);
   if (corsResult) return corsResult;
 
@@ -148,7 +141,7 @@ Deno.serve(async (req) => {
   const corsHeaders = isOriginAllowed(origin) ? getCorsHeaders(origin) : {};
 
   try {
-    // 1. Authentification JWT
+    // 1. Auth
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return withCors(req, new Response(
@@ -163,6 +156,12 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
+    // Service role client for geocode cache writes
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
     const { data: { user }, error: authErr } = await supabase.auth.getUser();
     if (authErr || !user) {
       return withCors(req, new Response(
@@ -171,790 +170,486 @@ Deno.serve(async (req) => {
       ));
     }
 
-    // 2. Récupérer le profil utilisateur
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('agence, global_role')
-      .eq('id', user.id)
-      .single();
+    // 2. Profile + access control
+    const { data: profile } = await supabase.from('profiles').select('agence, global_role').eq('id', user.id).single();
+    const { data: apporteurUser } = await supabase.from('apporteur_users').select('agency_id, apporteur_id, is_active').eq('user_id', user.id).eq('is_active', true).maybeSingle();
 
-    // 2bis. Vérifier si l'utilisateur est un apporteur (système séparé)
-    const { data: apporteurUser } = await supabase
-      .from('apporteur_users')
-      .select('agency_id, apporteur_id, is_active')
-      .eq('user_id', user.id)
-      .eq('is_active', true)
-      .maybeSingle();
-
-    const apporteurAgencyId = apporteurUser?.agency_id ?? null;
-    const isApporteurUser = !!apporteurUser && apporteurUser.is_active;
-
-    if ((profileError || !profile) && !isApporteurUser) {
-      return withCors(req, new Response(
-        JSON.stringify({ success: false, error: 'Profile not found' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      ));
+    const isApporteurUser = !!apporteurUser?.is_active;
+    if (!profile && !isApporteurUser) {
+      return withCors(req, new Response(JSON.stringify({ success: false, error: 'Profile not found' }), { status: 400, headers: { 'Content-Type': 'application/json' } }));
     }
 
-    // 3. Rate limiting (50 req/min - carte = requêtes fréquentes)
+    // Rate limiting
     const rateCheck = await checkRateLimit(`rdv-map:${user.id}`, { limit: 50, windowMs: 60 * 1000 });
-    if (!rateCheck.allowed) {
-      return rateLimitResponse(rateCheck.retryAfter!, corsHeaders);
-    }
+    if (!rateCheck.allowed) return rateLimitResponse(rateCheck.retryAfter!, corsHeaders);
 
-    // 4. Parser la requête
+    // 3. Parse request
     const body: RequestBody = await req.json();
     const { date, from: fromDate, to: toDate, techIds, agencySlug: requestedAgency, mode = 'normal' } = body;
     const isHeatmap = mode === 'heatmap';
     const isProfitability = mode === 'profitability';
     const isZones = mode === 'zones';
+    const isAnalyticsMode = isHeatmap || isProfitability || isZones;
 
-    // Date validation
-    const effectiveFrom = (isHeatmap || isProfitability || isZones) ? (fromDate || '2020-01-01') : date;
-    const effectiveTo = (isHeatmap || isProfitability || isZones) ? (toDate || new Date().toISOString().slice(0, 10)) : date;
+    const effectiveFrom = isAnalyticsMode ? (fromDate || '2020-01-01') : date;
+    const effectiveTo = isAnalyticsMode ? (toDate || new Date().toISOString().slice(0, 10)) : date;
 
-    if (!isHeatmap && !isProfitability && !isZones && (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date))) {
-      return withCors(req, new Response(
-        JSON.stringify({ success: false, error: 'Invalid date format (expected YYYY-MM-DD)' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      ));
+    if (!isAnalyticsMode && (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date))) {
+      return withCors(req, new Response(JSON.stringify({ success: false, error: 'Invalid date format' }), { status: 400, headers: { 'Content-Type': 'application/json' } }));
     }
 
-    // 5. Déterminer l'agence cible avec contrôle d'accès
+    // 4. Determine target agency
     const globalRole = profile?.global_role || '';
     const isFranchiseurRole = ['franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(globalRole);
     let targetAgency = profile?.agence || null;
 
-    // APPORTEUR: Les utilisateurs apporteurs accèdent à leur agence associée
-    if (isApporteurUser && apporteurAgencyId) {
-      const { data: apporteurAgency } = await supabase
-        .from('apogee_agencies')
-        .select('slug')
-        .eq('id', apporteurAgencyId)
-        .eq('is_active', true)
-        .maybeSingle();
-      
-      if (apporteurAgency?.slug) {
-        console.log(`[GET-RDV-MAP] Mode apporteur: user ${user.id.substring(0, 8)}... accède à l'agence ${apporteurAgency.slug}`);
-        targetAgency = apporteurAgency.slug;
-      }
+    if (isApporteurUser && apporteurUser?.agency_id) {
+      const { data: apAgency } = await supabase.from('apogee_agencies').select('slug').eq('id', apporteurUser.agency_id).eq('is_active', true).maybeSingle();
+      if (apAgency?.slug) targetAgency = apAgency.slug;
     }
 
-    // MODE DÉMO: Les utilisateurs N0 (base_user sans agence) peuvent accéder à DAX en lecture seule
     const isN0DemoUser = !profile?.agence && profile?.global_role === 'base_user';
     const DEMO_AGENCY_SLUG = 'dax';
 
     if (requestedAgency && requestedAgency !== targetAgency) {
-      // Cas spécial: Apporteur ne peut accéder qu'à son agence
       if (isApporteurUser) {
         if (targetAgency && requestedAgency !== targetAgency) {
-          console.warn(`[GET-RDV-MAP] Apporteur ${user.id} tente d'accéder à une autre agence: ${requestedAgency}`);
-          return withCors(req, new Response(
-            JSON.stringify({ success: false, error: 'Access denied to this agency' }),
-            { status: 403, headers: { 'Content-Type': 'application/json' } }
-          ));
+          return withCors(req, new Response(JSON.stringify({ success: false, error: 'Access denied' }), { status: 403, headers: { 'Content-Type': 'application/json' } }));
         }
-      }
-      // Cas spécial: Mode démo N0 pour l'agence DAX uniquement
-      else if (isN0DemoUser && requestedAgency === DEMO_AGENCY_SLUG) {
-        console.log(`[GET-RDV-MAP] Mode démo activé pour user ${user.id.substring(0, 8)}... sur agence ${DEMO_AGENCY_SLUG}`);
+      } else if (isN0DemoUser && requestedAgency === DEMO_AGENCY_SLUG) {
         targetAgency = DEMO_AGENCY_SLUG;
-      }
-      // Sinon vérifier que l'utilisateur a le droit d'accéder à cette agence (rôle franchiseur)
-      else if (!isFranchiseurRole) {
-        return withCors(req, new Response(
-          JSON.stringify({ success: false, error: 'Access denied to this agency' }),
-          { status: 403, headers: { 'Content-Type': 'application/json' } }
-        ));
-      }
-      else {
-        // Vérifier que l'agence existe
-        const { data: agency } = await supabase
-          .from('apogee_agencies')
-          .select('slug')
-          .eq('slug', requestedAgency)
-          .eq('is_active', true)
-          .maybeSingle();
-        
-        if (!agency) {
-          return withCors(req, new Response(
-            JSON.stringify({ success: false, error: 'Agency not found' }),
-            { status: 404, headers: { 'Content-Type': 'application/json' } }
-          ));
-        }
-        
+      } else if (!isFranchiseurRole) {
+        return withCors(req, new Response(JSON.stringify({ success: false, error: 'Access denied' }), { status: 403, headers: { 'Content-Type': 'application/json' } }));
+      } else {
+        const { data: agency } = await supabase.from('apogee_agencies').select('slug').eq('slug', requestedAgency).eq('is_active', true).maybeSingle();
+        if (!agency) return withCors(req, new Response(JSON.stringify({ success: false, error: 'Agency not found' }), { status: 404, headers: { 'Content-Type': 'application/json' } }));
         targetAgency = requestedAgency;
       }
     }
 
-    // Pour les utilisateurs N0 en mode démo, définir l'agence DAX par défaut
-    if (!targetAgency && isN0DemoUser) {
-      targetAgency = DEMO_AGENCY_SLUG;
-    }
-
+    if (!targetAgency && isN0DemoUser) targetAgency = DEMO_AGENCY_SLUG;
     if (!targetAgency) {
-      return withCors(req, new Response(
-        JSON.stringify({ success: false, error: 'No agency configured' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      ));
+      return withCors(req, new Response(JSON.stringify({ success: false, error: 'No agency configured' }), { status: 400, headers: { 'Content-Type': 'application/json' } }));
     }
 
-    // 6. Appeler l'API Apogée pour les interventions
+    // 5. API key
     const apiKey = Deno.env.get('APOGEE_API_KEY');
     if (!apiKey) {
-      return withCors(req, new Response(
-        JSON.stringify({ success: false, error: 'Server configuration error' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      ));
+      return withCors(req, new Response(JSON.stringify({ success: false, error: 'Server configuration error' }), { status: 500, headers: { 'Content-Type': 'application/json' } }));
     }
 
-    // Fetch interventions
-    const interventionsUrl = `https://${targetAgency}.hc-apogee.fr/api/apiGetInterventions`;
-    const interventionsResponse = await fetch(interventionsUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        API_KEY: apiKey,
-        from: effectiveFrom,
-        to: effectiveTo,
-      }),
-    });
-
-    if (!interventionsResponse.ok) {
-      console.error(`[GET-RDV-MAP] Apogee API error: ${interventionsResponse.status}`);
-      return withCors(req, new Response(
-        JSON.stringify({ success: false, error: 'Apogee API error' }),
-        { status: 502, headers: { 'Content-Type': 'application/json' } }
-      ));
-    }
-
-    const interventionsAll = await interventionsResponse.json();
-
-    // In heatmap mode, no date filtering needed (we want all data)
-    const interventions = Array.isArray(interventionsAll)
-      ? ((isHeatmap || isProfitability || isZones)
-        ? interventionsAll
-        : interventionsAll.filter((it: any) => {
-            const rawDate = typeof it?.date === 'string' ? it.date : '';
-            if (rawDate.startsWith(date!)) return true;
-            const visites = it?.data?.visites;
-            if (Array.isArray(visites)) {
-              return visites.some((v: any) => typeof v?.date === 'string' && v.date.startsWith(date!));
-            }
-            return false;
-          })
-      )
-      : [];
-
-    console.log(
-      `[GET-RDV-MAP] Got ${interventions.length}/${Array.isArray(interventionsAll) ? interventionsAll.length : 0} interventions for ${targetAgency} ${isHeatmap ? `(heatmap ${effectiveFrom}→${effectiveTo})` : `on ${date}`}`
-    );
-
-    // 7. Fetch users pour les couleurs (skip in heatmap mode)
-    const usersById = new Map<number, { name: string; color: string }>();
-    if (!isHeatmap && !isProfitability && !isZones) {
-      const usersUrl = `https://${targetAgency}.hc-apogee.fr/api/apiGetUsers`;
-      const usersResponse = await fetch(usersUrl, {
+    const baseUrl = `https://${targetAgency}.hc-apogee.fr/api`;
+    const apiFetch = (endpoint: string, body: any = { API_KEY: apiKey }) =>
+      fetch(`${baseUrl}/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ API_KEY: apiKey }),
+        body: JSON.stringify(body),
       });
 
-      const users = usersResponse.ok ? await usersResponse.json() : [];
+    // 6. Fetch data from Apogée
+    const t0 = Date.now();
+
+    if (isAnalyticsMode) {
+      // ── ANALYTICS MODES (heatmap, profitability, zones) ──
+      // Strategy: aggregate by postal code, batch geocode ~100 postal codes instead of ~5000 addresses
       
-      if (users.length > 0) {
-        const sample = users[0];
-        console.log(`[GET-RDV-MAP] Sample user keys: ${Object.keys(sample).join(', ')}`);
-        console.log(`[GET-RDV-MAP] Sample user color fields: bgcolor=${sample.bgcolor}, color=${sample.color}, bgColor=${sample.bgColor}`);
+      // Fetch interventions + projects + clients in parallel
+      const fetchPromises: Promise<any>[] = [
+        apiFetch('apiGetInterventions', { API_KEY: apiKey, from: effectiveFrom, to: effectiveTo }),
+        apiFetch('apiGetProjects'),
+        apiFetch('apiGetClients'),
+      ];
+      
+      // For profitability/zones, also fetch factures
+      if (isProfitability || isZones) {
+        fetchPromises.push(apiFetch('apiGetFactures'));
       }
+      // For zones, also fetch devis
+      if (isZones) {
+        fetchPromises.push(apiFetch('apiGetDevis'));
+      }
+
+      const responses = await Promise.all(fetchPromises);
+      const [intResp, projResp, clientResp] = responses;
       
-      for (const u of users) {
-        const dataObj = u.data || {};
-        const color = dataObj.bgcolor?.hex || dataObj.bgColor?.hex || dataObj.color?.hex 
-          || u.bgcolor?.hex || u.bgColor?.hex || u.color?.hex
-          || (typeof u.bgcolor === 'string' ? u.bgcolor : null)
-          || (typeof u.color === 'string' ? u.color : null)
-          || '#6366f1';
-        
-        usersById.set(u.id, {
-          name: `${u.firstname || ''} ${u.lastname || u.name || ''}`.trim() || `User ${u.id}`,
-          color,
+      const interventions = intResp.ok ? await intResp.json() : [];
+      const projects = projResp.ok ? await projResp.json() : [];
+      const clients = clientResp.ok ? await clientResp.json() : [];
+      const factures = (isProfitability || isZones) && responses[3]?.ok ? await responses[3].json() : [];
+      const devis = isZones && responses[4]?.ok ? await responses[4].json() : [];
+
+      console.log(`[GET-RDV-MAP] Fetched ${Array.isArray(interventions) ? interventions.length : 0} interventions, ${projects.length} projects, ${clients.length} clients in ${Date.now() - t0}ms`);
+
+      // Build lookup maps
+      const clientsById = new Map<number, { name: string; address: string; postalCode: string; city: string }>();
+      for (const c of clients) {
+        const data = c.data || {};
+        clientsById.set(c.id, {
+          name: c.name || c.nom || data.nom || `Client #${c.id}`,
+          address: data.adresse || c.adresse || c.address || '',
+          postalCode: data.codePostal || c.codePostal || c.postalCode || '',
+          city: data.ville || c.ville || c.city || '',
         });
       }
-    }
 
-    // 8. Fetch projects pour les adresses et univers
-    const projectsUrl = `https://${targetAgency}.hc-apogee.fr/api/apiGetProjects`;
-    const projectsResponse = await fetch(projectsUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ API_KEY: apiKey }),
-    });
-
-    const projects = projectsResponse.ok ? await projectsResponse.json() : [];
-    console.log(`[GET-RDV-MAP] Got ${projects.length} projects from Apogée`);
-
-    const projectsById = new Map<number, { univers: string; clientId?: number | null; ref: string }>();
-
-    for (const p of projects) {
-      const data = p.data || {};
-      projectsById.set(p.id, {
-        univers: Array.isArray(data.universes) ? data.universes[0] : (data.univers || 'Non classé'),
-        clientId: typeof p.clientId === 'number' ? p.clientId : null,
-        ref: p.ref || `#${p.id}`, // Référence Apogée (2025xxxxx)
-      });
-    }
-
-    // 8bis. Fetch clients (pour l'adresse / localisation)
-    const clientsUrl = `https://${targetAgency}.hc-apogee.fr/api/apiGetClients`;
-    const clientsResponse = await fetch(clientsUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ API_KEY: apiKey }),
-    });
-
-    const clients = clientsResponse.ok ? await clientsResponse.json() : [];
-    console.log(`[GET-RDV-MAP] Got ${clients.length} clients from Apogée`);
-
-    const clientsById = new Map<number, { name: string; address: string; postalCode: string; city: string }>();
-
-    for (const c of clients) {
-      const data = c.data || {};
-      // Résolution robuste du nom client : nom direct, data.nom, composition prénom+nom, etc.
-      const rawName = c.name || c.nom || data.nom || data.name;
-      const composedName = [c.prenom || c.firstname || data.prenom, c.nom_famille || c.lastname || data.nom_famille]
-        .filter(Boolean).join(' ').trim();
-      const name = rawName || composedName || `Client #${c.id}`;
-      const address = data.adresse || c.adresse || c.address || '';
-      const postalCode = data.codePostal || c.codePostal || c.postalCode || '';
-      const city = data.ville || c.ville || c.city || '';
-      clientsById.set(c.id, { name, address, postalCode, city });
-    }
-
-    // ── HEATMAP FAST PATH ──
-    // In heatmap mode, skip user/project enrichment; just return {lat, lng} for each intervention
-    if (isHeatmap) {
-      const heatPoints: { lat: number; lng: number }[] = [];
-      let heatSkipped = 0;
-
-      for (const intervention of interventions as any[]) {
-        const project = projectsById.get(intervention.projectId);
-        if (!project) { heatSkipped++; continue; }
-
-        const rawClientId = intervention.client_id ?? project.clientId;
-        const clientId = typeof rawClientId === 'number' ? rawClientId : null;
-        const client = clientId ? clientsById.get(clientId) : undefined;
-        if (!client?.address) { heatSkipped++; continue; }
-
-        const coords = await geocodeAddress(client.address, client.postalCode, client.city);
-        if (!coords) { heatSkipped++; continue; }
-
-        heatPoints.push(coords);
+      const projectsById = new Map<number, { univers: string; clientId?: number | null; ref: string }>();
+      for (const p of projects) {
+        const data = p.data || {};
+        projectsById.set(p.id, {
+          univers: Array.isArray(data.universes) ? data.universes[0] : (data.univers || 'Non classé'),
+          clientId: typeof p.clientId === 'number' ? p.clientId : null,
+          ref: p.ref || `#${p.id}`,
+        });
       }
 
-      console.log(`[GET-RDV-MAP] Heatmap for ${targetAgency}: ${heatPoints.length} points, ${heatSkipped} skipped`);
-
-      return withCors(req, new Response(
-        JSON.stringify({
-          success: true,
-          data: heatPoints,
-          meta: {
-            mode: 'heatmap',
-            from: effectiveFrom,
-            to: effectiveTo,
-            agencySlug: targetAgency,
-            totalPoints: heatPoints.length,
-            timestamp: new Date().toISOString(),
-          },
-        }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      ));
-    }
-
-    // ── PROFITABILITY FAST PATH ──
-    // Returns per-project aggregated: {lat, lng, ca, hours, margin}
-    if (isProfitability) {
-      // Fetch factures for CA data
-      const facturesUrl = `https://${targetAgency}.hc-apogee.fr/api/apiGetFactures`;
-      const facturesResponse = await fetch(facturesUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ API_KEY: apiKey }),
-      });
-      const factures = facturesResponse.ok ? await facturesResponse.json() : [];
-
-      // Build CA per project from factures
-      const caByProject = new Map<number, number>();
-      for (const f of factures) {
-        const pid = f.projectId;
-        if (typeof pid !== 'number') continue;
-        const isAvoir = (f.typeFacture || f.type || '').toLowerCase() === 'avoir';
-        const montant = parseFloat(f.data?.totalHT ?? f.totalHT ?? f.montantHT ?? 0) || 0;
-        const net = isAvoir ? -Math.abs(montant) : montant;
-        caByProject.set(pid, (caByProject.get(pid) || 0) + net);
-      }
-
-      // Build total hours per project from interventions
-      const hoursByProject = new Map<number, number>();
-      for (const intervention of interventions as any[]) {
-        const pid = intervention.projectId;
-        if (typeof pid !== 'number') continue;
-        const data = intervention?.data || {};
-        const visites = Array.isArray(data.visites) ? data.visites : [];
-        let totalMin = 0;
-        for (const v of visites) {
-          totalMin += typeof v?.duree === 'number' ? v.duree : 60;
-        }
-        if (totalMin === 0) totalMin = typeof intervention?.duree === 'number' ? intervention.duree : 60;
-        hoursByProject.set(pid, (hoursByProject.get(pid) || 0) + totalMin / 60);
-      }
-
-      // Estimated hourly cost (average for the sector ~35€/h all-in)
-      const ESTIMATED_HOURLY_COST = 35;
-
-      // Aggregate per project with coordinates
-      const projectPoints: { lat: number; lng: number; ca: number; hours: number; margin: number; projectId: number }[] = [];
-      const processedProjects = new Set<number>();
-      let profSkipped = 0;
-
-      for (const intervention of interventions as any[]) {
-        const pid = intervention.projectId;
-        if (processedProjects.has(pid)) continue;
-        processedProjects.add(pid);
-
-        const project = projectsById.get(pid);
-        if (!project) { profSkipped++; continue; }
-
-        const rawClientId = intervention.client_id ?? project.clientId;
-        const clientId = typeof rawClientId === 'number' ? rawClientId : null;
-        const client = clientId ? clientsById.get(clientId) : undefined;
-        if (!client?.address) { profSkipped++; continue; }
-
-        const coords = await geocodeAddress(client.address, client.postalCode, client.city);
-        if (!coords) { profSkipped++; continue; }
-
-        const ca = caByProject.get(pid) || 0;
-        const hours = hoursByProject.get(pid) || 0;
-        const estimatedCost = hours * ESTIMATED_HOURLY_COST;
-        const margin = ca - estimatedCost;
-
-        if (ca === 0 && hours === 0) { profSkipped++; continue; }
-
-        projectPoints.push({ ...coords, ca, hours, margin, projectId: pid });
-      }
-
-      console.log(`[GET-RDV-MAP] Profitability for ${targetAgency}: ${projectPoints.length} projects, ${profSkipped} skipped`);
-
-      return withCors(req, new Response(
-        JSON.stringify({
-          success: true,
-          data: projectPoints,
-          meta: {
-            mode: 'profitability',
-            from: effectiveFrom,
-            to: effectiveTo,
-            agencySlug: targetAgency,
-            totalPoints: projectPoints.length,
-            estimatedHourlyCost: ESTIMATED_HOURLY_COST,
-            timestamp: new Date().toISOString(),
-          },
-        }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      ));
-    }
-
-    // ── ZONES BLANCHES FAST PATH ──
-    // Aggregate KPIs per postal code for commercial white zones analysis
-    if (isZones) {
-      // Fetch factures + devis in parallel
-      const [facturesResponse, devisResponse] = await Promise.all([
-        fetch(`https://${targetAgency}.hc-apogee.fr/api/apiGetFactures`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ API_KEY: apiKey }),
-        }),
-        fetch(`https://${targetAgency}.hc-apogee.fr/api/apiGetDevis`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ API_KEY: apiKey }),
-        }),
-      ]);
-      const factures = facturesResponse.ok ? await facturesResponse.json() : [];
-      const devis = devisResponse.ok ? await devisResponse.json() : [];
-
-      // Get agency coordinates for proximity score
-      const { data: agencyData } = await supabase
-        .from('apogee_agencies')
-        .select('adresse, code_postal, ville')
-        .eq('slug', targetAgency)
-        .maybeSingle();
-      
-      let agencyCoords: { lat: number; lng: number } | null = null;
-      if (agencyData?.adresse && agencyData?.code_postal) {
-        agencyCoords = await geocodeAddress(agencyData.adresse, agencyData.code_postal, agencyData.ville || '');
-      }
-
-      // Build project → postal code mapping
-      const projectPostalCode = new Map<number, string>();
-      const projectClientId = new Map<number, number>();
-      const projectUnivers = new Map<number, string>();
-      const projectApporteurId = new Map<number, number | null>();
+      // Build postalCode → projects mapping
+      const projectsByPostalCode = new Map<string, Set<number>>();
+      const projectToPostalCode = new Map<number, string>();
+      const postalCodeCities = new Map<string, string>(); // postalCode → best city name
 
       for (const [pid, proj] of projectsById.entries()) {
-        projectUnivers.set(pid, proj.univers);
         const cid = proj.clientId;
-        if (typeof cid === 'number') {
-          projectClientId.set(pid, cid);
-          const client = clientsById.get(cid);
-          if (client?.postalCode) {
-            projectPostalCode.set(pid, client.postalCode);
-          }
+        if (typeof cid !== 'number') continue;
+        const client = clientsById.get(cid);
+        if (!client?.postalCode || client.postalCode.length < 2) continue;
+        
+        const pc = client.postalCode;
+        projectToPostalCode.set(pid, pc);
+        
+        if (!projectsByPostalCode.has(pc)) projectsByPostalCode.set(pc, new Set());
+        projectsByPostalCode.get(pc)!.add(pid);
+        
+        if (!postalCodeCities.has(pc) && client.city) {
+          postalCodeCities.set(pc, client.city);
         }
       }
 
-      // Extract apporteur (commanditaire) from projects raw data
-      for (const p of projects) {
-        const commanditaireId = p.clientId || p.client_id || p.data?.clientId;
-        if (typeof commanditaireId === 'number') {
-          projectApporteurId.set(p.id, commanditaireId);
-        }
-      }
+      // ── BATCH GEOCODE all postal codes at once ──
+      const coordsByPostalCode = await batchGeocodePostalCodes(postalCodeCities, supabaseAdmin);
+      console.log(`[GET-RDV-MAP] Geocoded ${coordsByPostalCode.size}/${postalCodeCities.size} postal codes in ${Date.now() - t0}ms`);
 
-      // Build facture CA per project
-      const caByProject = new Map<number, number>();
-      for (const f of factures) {
-        const pid = f.projectId;
-        if (typeof pid !== 'number') continue;
-        const isAvoir = (f.typeFacture || f.type || '').toLowerCase() === 'avoir';
-        const montant = parseFloat(f.data?.totalHT ?? f.totalHT ?? f.montantHT ?? 0) || 0;
-        caByProject.set(pid, (caByProject.get(pid) || 0) + (isAvoir ? -Math.abs(montant) : montant));
-      }
-
-      // Build devis per project (count + signed count)
-      const devisByProject = new Map<number, { total: number; signed: number }>();
-      for (const d of devis) {
-        const pid = d.projectId;
-        if (typeof pid !== 'number') continue;
-        const entry = devisByProject.get(pid) || { total: 0, signed: 0 };
-        entry.total++;
-        const state = (d.state || '').toLowerCase();
-        if (['accepted', 'validated', 'order', 'signed'].includes(state)) entry.signed++;
-        devisByProject.set(pid, entry);
-      }
-
-      // Aggregate per postal code
-      interface ZoneData {
-        postalCode: string;
-        city: string;
-        projects: Set<number>;
-        clients: Set<number>;
-        apporteurs: Set<number>;
-        univers: Set<string>;
-        ca: number;
-        devisTotal: number;
-        devisSigned: number;
-        interventionCount: number;
-      }
-
-      const zones = new Map<string, ZoneData>();
-
-      // From projects
-      for (const [pid, pc] of projectPostalCode.entries()) {
-        if (!pc || pc.length < 2) continue;
-        if (!zones.has(pc)) {
-          const cid = projectClientId.get(pid);
-          const client = cid ? clientsById.get(cid) : undefined;
-          zones.set(pc, {
-            postalCode: pc,
-            city: client?.city || '',
-            projects: new Set(),
-            clients: new Set(),
-            apporteurs: new Set(),
-            univers: new Set(),
-            ca: 0,
-            devisTotal: 0,
-            devisSigned: 0,
-            interventionCount: 0,
+      // ── HEATMAP MODE ──
+      if (isHeatmap) {
+        const heatPoints: { lat: number; lng: number }[] = [];
+        const interventionArray = Array.isArray(interventions) ? interventions : [];
+        
+        for (const intervention of interventionArray) {
+          const project = projectsById.get(intervention.projectId);
+          if (!project) continue;
+          const pc = projectToPostalCode.get(intervention.projectId);
+          if (!pc) continue;
+          const coords = coordsByPostalCode.get(pc);
+          if (!coords) continue;
+          
+          // Add slight random jitter so points don't stack on exact same spot
+          heatPoints.push({
+            lat: coords.lat + (Math.random() - 0.5) * 0.008,
+            lng: coords.lng + (Math.random() - 0.5) * 0.008,
           });
         }
-        const zone = zones.get(pc)!;
-        zone.projects.add(pid);
-        
-        const cid = projectClientId.get(pid);
-        if (cid) zone.clients.add(cid);
-        
-        const apId = projectApporteurId.get(pid);
-        if (apId) zone.apporteurs.add(apId);
-        
-        const univ = projectUnivers.get(pid);
-        if (univ && univ !== 'Non classé') zone.univers.add(univ);
-        
-        zone.ca += caByProject.get(pid) || 0;
-        
-        const dv = devisByProject.get(pid);
-        if (dv) {
-          zone.devisTotal += dv.total;
-          zone.devisSigned += dv.signed;
-        }
+
+        console.log(`[GET-RDV-MAP] Heatmap: ${heatPoints.length} points in ${Date.now() - t0}ms total`);
+        return withCors(req, new Response(JSON.stringify({
+          success: true,
+          data: heatPoints,
+          meta: { mode: 'heatmap', from: effectiveFrom, to: effectiveTo, agencySlug: targetAgency, totalPoints: heatPoints.length, durationMs: Date.now() - t0 },
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
       }
 
-      // Count interventions per postal code
-      for (const intervention of interventions as any[]) {
-        const pid = intervention.projectId;
-        const pc = projectPostalCode.get(pid);
-        if (!pc || !zones.has(pc)) continue;
-        zones.get(pc)!.interventionCount++;
+      // ── PROFITABILITY MODE ──
+      if (isProfitability) {
+        const caByProject = new Map<number, number>();
+        for (const f of factures) {
+          const pid = f.projectId;
+          if (typeof pid !== 'number') continue;
+          const isAvoir = (f.typeFacture || f.type || '').toLowerCase() === 'avoir';
+          const montant = parseFloat(f.data?.totalHT ?? f.totalHT ?? f.montantHT ?? 0) || 0;
+          caByProject.set(pid, (caByProject.get(pid) || 0) + (isAvoir ? -Math.abs(montant) : montant));
+        }
+
+        const hoursByProject = new Map<number, number>();
+        const interventionArray = Array.isArray(interventions) ? interventions : [];
+        for (const intervention of interventionArray) {
+          const pid = intervention.projectId;
+          if (typeof pid !== 'number') continue;
+          const visites = Array.isArray(intervention?.data?.visites) ? intervention.data.visites : [];
+          let totalMin = 0;
+          for (const v of visites) totalMin += typeof v?.duree === 'number' ? v.duree : 60;
+          if (totalMin === 0) totalMin = typeof intervention?.duree === 'number' ? intervention.duree : 60;
+          hoursByProject.set(pid, (hoursByProject.get(pid) || 0) + totalMin / 60);
+        }
+
+        const HOURLY_COST = 35;
+        const projectPoints: any[] = [];
+        const processedProjects = new Set<number>();
+
+        for (const intervention of interventionArray) {
+          const pid = intervention.projectId;
+          if (processedProjects.has(pid)) continue;
+          processedProjects.add(pid);
+
+          const pc = projectToPostalCode.get(pid);
+          if (!pc) continue;
+          const coords = coordsByPostalCode.get(pc);
+          if (!coords) continue;
+
+          const ca = caByProject.get(pid) || 0;
+          const hours = hoursByProject.get(pid) || 0;
+          if (ca === 0 && hours === 0) continue;
+
+          projectPoints.push({
+            lat: coords.lat + (Math.random() - 0.5) * 0.005,
+            lng: coords.lng + (Math.random() - 0.5) * 0.005,
+            ca, hours, margin: ca - hours * HOURLY_COST, projectId: pid,
+          });
+        }
+
+        console.log(`[GET-RDV-MAP] Profitability: ${projectPoints.length} projects in ${Date.now() - t0}ms total`);
+        return withCors(req, new Response(JSON.stringify({
+          success: true,
+          data: projectPoints,
+          meta: { mode: 'profitability', agencySlug: targetAgency, totalPoints: projectPoints.length, estimatedHourlyCost: HOURLY_COST, durationMs: Date.now() - t0 },
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
       }
 
-      // Geocode postal code centroids (batch: use city center)
-      const zoneResults: any[] = [];
-      const maxProjects = Math.max(...Array.from(zones.values()).map(z => z.projects.size), 1);
-      const allUnivers = new Set<string>();
-      for (const z of zones.values()) z.univers.forEach(u => allUnivers.add(u));
-      const totalUniversCount = allUnivers.size || 1;
-
-      for (const [pc, zone] of zones.entries()) {
-        // Geocode using postal code + city
-        const coords = await geocodeAddress('', pc, zone.city);
-        if (!coords) continue;
-
-        const nbProjects = zone.projects.size;
-        const nbClients = zone.clients.size;
-        const nbApporteurs = zone.apporteurs.size;
-        const nbUnivers = zone.univers.size;
-        const panierMoyen = nbProjects > 0 ? zone.ca / nbProjects : 0;
-
-        // ── Opportunity Score (0-100) ──
-        // Higher = more opportunity (underserved area worth targeting)
-        
-        // 1. Proximity score (30%): closer to agency = higher opportunity
-        let proximityScore = 50; // default if no agency coords
-        if (agencyCoords) {
-          const R = 6371;
-          const dLat = (coords.lat - agencyCoords.lat) * Math.PI / 180;
-          const dLon = (coords.lng - agencyCoords.lng) * Math.PI / 180;
-          const a = Math.sin(dLat/2)**2 + Math.cos(agencyCoords.lat * Math.PI / 180) * Math.cos(coords.lat * Math.PI / 180) * Math.sin(dLon/2)**2;
-          const distKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-          // 0-10km → 100, 10-30km → 80-40, 30-60km → 40-10, >60km → 0
-          proximityScore = distKm <= 10 ? 100 : distKm <= 30 ? Math.round(100 - (distKm - 10) * 3) : distKm <= 60 ? Math.round(40 - (distKm - 30)) : 0;
-          proximityScore = Math.max(0, Math.min(100, proximityScore));
+      // ── ZONES BLANCHES MODE ──
+      if (isZones) {
+        // Agency coords for proximity
+        const { data: agencyData } = await supabase.from('apogee_agencies').select('adresse, code_postal, ville').eq('slug', targetAgency).maybeSingle();
+        let agencyCoords: { lat: number; lng: number } | null = null;
+        if (agencyData?.code_postal) {
+          agencyCoords = coordsByPostalCode.get(agencyData.code_postal) || await geocodeAddress(agencyData.adresse || '', agencyData.code_postal, agencyData.ville || '');
         }
 
-        // 2. Low activity score (20%): fewer projects = higher opportunity
-        const activityRatio = nbProjects / maxProjects;
-        const lowActivityScore = Math.round((1 - activityRatio) * 100);
-
-        // 3. Historical presence (20%): some old presence = reactivation potential
-        const historicalScore = nbProjects > 0 ? Math.min(100, nbProjects * 15) : 0;
-
-        // 4. Missing métiers (15%): fewer univers = untapped potential
-        const universGap = Math.round(((totalUniversCount - nbUnivers) / totalUniversCount) * 100);
-
-        // 5. Apporteur dependency (15%): fewer apporteurs = fragile
-        const apporteurScore = nbApporteurs === 0 ? 100 : nbApporteurs === 1 ? 80 : nbApporteurs <= 3 ? 40 : 0;
-
-        const opportunityScore = Math.round(
-          0.30 * proximityScore +
-          0.20 * lowActivityScore +
-          0.20 * historicalScore +
-          0.15 * universGap +
-          0.15 * apporteurScore
-        );
-
-        // Activity level for coloring
-        let activityLevel: 'none' | 'low' | 'medium' | 'high';
-        if (nbProjects === 0) activityLevel = 'none';
-        else if (nbProjects <= 3) activityLevel = 'low';
-        else if (nbProjects <= 10) activityLevel = 'medium';
-        else activityLevel = 'high';
-
-        // Generate insights
-        const insights: string[] = [];
-        if (proximityScore >= 70 && nbProjects <= 2) {
-          const distStr = agencyCoords ? `${Math.round(
-            6371 * 2 * Math.atan2(
-              Math.sqrt(Math.sin(((coords.lat - agencyCoords.lat) * Math.PI / 180)/2)**2 + Math.cos(agencyCoords.lat * Math.PI / 180) * Math.cos(coords.lat * Math.PI / 180) * Math.sin(((coords.lng - agencyCoords.lng) * Math.PI / 180)/2)**2),
-              Math.sqrt(1 - (Math.sin(((coords.lat - agencyCoords.lat) * Math.PI / 180)/2)**2 + Math.cos(agencyCoords.lat * Math.PI / 180) * Math.cos(coords.lat * Math.PI / 180) * Math.sin(((coords.lng - agencyCoords.lng) * Math.PI / 180)/2)**2))
-            )
-          )} km` : '';
-          insights.push(`Zone sous-exploitée${distStr ? ` à ${distStr} de l'agence` : ''}`);
+        // Build CA per project
+        const caByProject = new Map<number, number>();
+        for (const f of factures) {
+          const pid = f.projectId;
+          if (typeof pid !== 'number') continue;
+          const isAvoir = (f.typeFacture || f.type || '').toLowerCase() === 'avoir';
+          const montant = parseFloat(f.data?.totalHT ?? f.totalHT ?? f.montantHT ?? 0) || 0;
+          caByProject.set(pid, (caByProject.get(pid) || 0) + (isAvoir ? -Math.abs(montant) : montant));
         }
-        if (nbApporteurs === 1) insights.push('Dépendance à 1 seul apporteur');
-        if (nbApporteurs === 0 && nbProjects > 0) insights.push('Aucun apporteur actif identifié');
-        if (nbUnivers <= 1 && nbProjects >= 3) {
-          const missing = Array.from(allUnivers).filter(u => !zone.univers.has(u));
-          if (missing.length > 0) insights.push(`Métiers absents : ${missing.slice(0, 3).join(', ')}`);
+
+        // Build devis per project
+        const devisByProject = new Map<number, { total: number; signed: number }>();
+        for (const d of devis) {
+          const pid = d.projectId;
+          if (typeof pid !== 'number') continue;
+          const entry = devisByProject.get(pid) || { total: 0, signed: 0 };
+          entry.total++;
+          if (['accepted', 'validated', 'order', 'signed'].includes((d.state || '').toLowerCase())) entry.signed++;
+          devisByProject.set(pid, entry);
         }
-        if (nbProjects > 0 && nbProjects <= 3) insights.push('Présence faible — potentiel d\'ancrage');
 
-        zoneResults.push({
-          postalCode: pc,
-          city: zone.city,
-          lat: coords.lat,
-          lng: coords.lng,
-          nbProjects,
-          nbClients,
-          nbApporteurs,
-          nbUnivers,
-          univers: Array.from(zone.univers),
-          ca: Math.round(zone.ca),
-          panierMoyen: Math.round(panierMoyen),
-          devisTotal: zone.devisTotal,
-          devisSigned: zone.devisSigned,
-          interventionCount: zone.interventionCount,
-          activityLevel,
-          opportunityScore: Math.min(100, Math.max(0, opportunityScore)),
-          insights,
-        });
-      }
+        // Count interventions per postal code
+        const interventionsByPC = new Map<string, number>();
+        const interventionArray = Array.isArray(interventions) ? interventions : [];
+        for (const it of interventionArray) {
+          const pc = projectToPostalCode.get(it.projectId);
+          if (pc) interventionsByPC.set(pc, (interventionsByPC.get(pc) || 0) + 1);
+        }
 
-      // Sort by opportunity score descending
-      zoneResults.sort((a, b) => b.opportunityScore - a.opportunityScore);
+        // Aggregate per postal code
+        const allUnivers = new Set<string>();
+        const zoneAggregates = new Map<string, {
+          projects: Set<number>; clients: Set<number>; apporteurs: Set<number>;
+          univers: Set<string>; ca: number; devisTotal: number; devisSigned: number;
+        }>();
 
-      console.log(`[GET-RDV-MAP] Zones for ${targetAgency}: ${zoneResults.length} postal codes analyzed`);
+        for (const [pc, pids] of projectsByPostalCode.entries()) {
+          const zone = { projects: new Set<number>(), clients: new Set<number>(), apporteurs: new Set<number>(), univers: new Set<string>(), ca: 0, devisTotal: 0, devisSigned: 0 };
+          
+          for (const pid of pids) {
+            zone.projects.add(pid);
+            const proj = projectsById.get(pid);
+            if (proj?.clientId) zone.clients.add(proj.clientId);
+            if (proj?.univers && proj.univers !== 'Non classé') { zone.univers.add(proj.univers); allUnivers.add(proj.univers); }
+            zone.ca += caByProject.get(pid) || 0;
+            const dv = devisByProject.get(pid);
+            if (dv) { zone.devisTotal += dv.total; zone.devisSigned += dv.signed; }
+          }
+          zoneAggregates.set(pc, zone);
+        }
 
-      return withCors(req, new Response(
-        JSON.stringify({
+        const maxProjects = Math.max(...Array.from(zoneAggregates.values()).map(z => z.projects.size), 1);
+        const totalUniversCount = allUnivers.size || 1;
+
+        const zoneResults: any[] = [];
+        for (const [pc, zone] of zoneAggregates.entries()) {
+          const coords = coordsByPostalCode.get(pc);
+          if (!coords) continue;
+
+          const nbProjects = zone.projects.size;
+          const nbClients = zone.clients.size;
+          const nbApporteurs = zone.apporteurs.size;
+          const nbUnivers = zone.univers.size;
+          const panierMoyen = nbProjects > 0 ? zone.ca / nbProjects : 0;
+          const interventionCount = interventionsByPC.get(pc) || 0;
+
+          // Opportunity Score
+          let proximityScore = 50;
+          if (agencyCoords) {
+            const R = 6371;
+            const dLat = (coords.lat - agencyCoords.lat) * Math.PI / 180;
+            const dLon = (coords.lng - agencyCoords.lng) * Math.PI / 180;
+            const a = Math.sin(dLat/2)**2 + Math.cos(agencyCoords.lat*Math.PI/180)*Math.cos(coords.lat*Math.PI/180)*Math.sin(dLon/2)**2;
+            const distKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            proximityScore = distKm <= 10 ? 100 : distKm <= 30 ? Math.round(100-(distKm-10)*3) : distKm <= 60 ? Math.round(40-(distKm-30)) : 0;
+            proximityScore = Math.max(0, Math.min(100, proximityScore));
+          }
+
+          const lowActivityScore = Math.round((1 - nbProjects / maxProjects) * 100);
+          const historicalScore = nbProjects > 0 ? Math.min(100, nbProjects * 15) : 0;
+          const universGap = Math.round(((totalUniversCount - nbUnivers) / totalUniversCount) * 100);
+          const apporteurScore = nbApporteurs === 0 ? 100 : nbApporteurs === 1 ? 80 : nbApporteurs <= 3 ? 40 : 0;
+
+          const opportunityScore = Math.min(100, Math.max(0, Math.round(
+            0.30*proximityScore + 0.20*lowActivityScore + 0.20*historicalScore + 0.15*universGap + 0.15*apporteurScore
+          )));
+
+          const activityLevel = nbProjects === 0 ? 'none' : nbProjects <= 3 ? 'low' : nbProjects <= 10 ? 'medium' : 'high';
+
+          const insights: string[] = [];
+          if (proximityScore >= 70 && nbProjects <= 2) insights.push('Zone sous-exploitée proche de l\'agence');
+          if (nbApporteurs === 1) insights.push('Dépendance à 1 seul apporteur');
+          if (nbApporteurs === 0 && nbProjects > 0) insights.push('Aucun apporteur actif identifié');
+          if (nbUnivers <= 1 && nbProjects >= 3) {
+            const missing = Array.from(allUnivers).filter(u => !zone.univers.has(u));
+            if (missing.length > 0) insights.push(`Métiers absents : ${missing.slice(0, 3).join(', ')}`);
+          }
+          if (nbProjects > 0 && nbProjects <= 3) insights.push('Présence faible — potentiel d\'ancrage');
+
+          zoneResults.push({
+            postalCode: pc, city: postalCodeCities.get(pc) || '', lat: coords.lat, lng: coords.lng,
+            nbProjects, nbClients, nbApporteurs, nbUnivers, univers: Array.from(zone.univers),
+            ca: Math.round(zone.ca), panierMoyen: Math.round(panierMoyen),
+            devisTotal: zone.devisTotal, devisSigned: zone.devisSigned, interventionCount,
+            activityLevel, opportunityScore, insights,
+          });
+        }
+
+        zoneResults.sort((a, b) => b.opportunityScore - a.opportunityScore);
+
+        console.log(`[GET-RDV-MAP] Zones: ${zoneResults.length} postal codes in ${Date.now() - t0}ms total`);
+        return withCors(req, new Response(JSON.stringify({
           success: true,
           data: zoneResults,
-          meta: {
-            mode: 'zones',
-            agencySlug: targetAgency,
-            totalZones: zoneResults.length,
-            agencyCoords,
-            timestamp: new Date().toISOString(),
-          },
-        }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      ));
+          meta: { mode: 'zones', agencySlug: targetAgency, totalZones: zoneResults.length, agencyCoords, durationMs: Date.now() - t0 },
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      }
+    }
+
+    // ── NORMAL MODE (RDV pins for a specific date) ──
+    const interventionsResponse = await apiFetch('apiGetInterventions', { API_KEY: apiKey, from: effectiveFrom, to: effectiveTo });
+    if (!interventionsResponse.ok) {
+      return withCors(req, new Response(JSON.stringify({ success: false, error: 'Apogee API error' }), { status: 502, headers: { 'Content-Type': 'application/json' } }));
+    }
+    const interventionsAll = await interventionsResponse.json();
+    const interventions = Array.isArray(interventionsAll) ? interventionsAll.filter((it: any) => {
+      const rawDate = typeof it?.date === 'string' ? it.date : '';
+      if (rawDate.startsWith(date!)) return true;
+      const visites = it?.data?.visites;
+      if (Array.isArray(visites)) return visites.some((v: any) => typeof v?.date === 'string' && v.date.startsWith(date!));
+      return false;
+    }) : [];
+
+    // Fetch users + projects + clients in parallel
+    const [usersResp, projResp, clientResp] = await Promise.all([
+      apiFetch('apiGetUsers'),
+      apiFetch('apiGetProjects'),
+      apiFetch('apiGetClients'),
+    ]);
+
+    const users = usersResp.ok ? await usersResp.json() : [];
+    const projects = projResp.ok ? await projResp.json() : [];
+    const clients = clientResp.ok ? await clientResp.json() : [];
+
+    const usersById = new Map<number, { name: string; color: string }>();
+    for (const u of users) {
+      const dataObj = u.data || {};
+      const color = dataObj.bgcolor?.hex || dataObj.bgColor?.hex || dataObj.color?.hex || u.bgcolor?.hex || u.bgColor?.hex || u.color?.hex || (typeof u.bgcolor === 'string' ? u.bgcolor : null) || (typeof u.color === 'string' ? u.color : null) || '#6366f1';
+      usersById.set(u.id, { name: `${u.firstname || ''} ${u.lastname || u.name || ''}`.trim() || `User ${u.id}`, color });
+    }
+
+    const projectsById = new Map<number, { univers: string; clientId?: number | null; ref: string }>();
+    for (const p of projects) {
+      const data = p.data || {};
+      projectsById.set(p.id, { univers: Array.isArray(data.universes) ? data.universes[0] : (data.univers || 'Non classé'), clientId: typeof p.clientId === 'number' ? p.clientId : null, ref: p.ref || `#${p.id}` });
+    }
+
+    const clientsById = new Map<number, { name: string; address: string; postalCode: string; city: string }>();
+    for (const c of clients) {
+      const data = c.data || {};
+      const rawName = c.name || c.nom || data.nom || data.name;
+      const composedName = [c.prenom || c.firstname || data.prenom, c.nom_famille || c.lastname || data.nom_famille].filter(Boolean).join(' ').trim();
+      clientsById.set(c.id, {
+        name: rawName || composedName || `Client #${c.id}`,
+        address: data.adresse || c.adresse || c.address || '',
+        postalCode: data.codePostal || c.codePostal || c.postalCode || '',
+        city: data.ville || c.ville || c.city || '',
+      });
     }
 
     const mapRdvs: MapRdv[] = [];
-    let skippedNoProject = 0;
-    let skippedNoClientAddress = 0;
-    let skippedNoGeocode = 0;
-    let skippedNoTech = 0;
+    let skippedNoProject = 0, skippedNoClientAddress = 0, skippedNoGeocode = 0, skippedNoTech = 0;
 
     for (const intervention of interventions as any[]) {
       const data = intervention?.data || {};
       const visites = Array.isArray(data.visites) ? data.visites : [];
+      const visitesDuJour = visites.filter((v: any) => typeof v?.date === 'string' && v.date.startsWith(date!));
+      if (visitesDuJour.length === 0) continue;
 
-      // IMPORTANT: Filtrer les visites du jour AVANT d'extraire les techniciens
-      const visitesDuJour = visites.filter(
-        (v: any) => typeof v?.date === 'string' && v.date.startsWith(date!)
-      );
-
-      // Si aucune visite ce jour-là, on skip cette intervention
-      if (visitesDuJour.length === 0) {
-        continue;
-      }
-
-      // Techniciens: UNIQUEMENT ceux des visites du jour sélectionné
       const technicianIds: number[] = [];
       for (const v of visitesDuJour) {
-        if (Array.isArray(v?.usersIds)) {
-          technicianIds.push(...v.usersIds);
-        }
+        if (Array.isArray(v?.usersIds)) technicianIds.push(...v.usersIds);
       }
-
       const uniqueTechIds = [...new Set(technicianIds)].filter((x): x is number => typeof x === 'number');
-      if (uniqueTechIds.length === 0) {
-        skippedNoTech++;
-        continue;
-      }
+      if (uniqueTechIds.length === 0) { skippedNoTech++; continue; }
 
-      // Appliquer le filtre technicien
-      if (techIds && techIds.length > 0) {
-        const hasMatchingTech = uniqueTechIds.some((id) => techIds.includes(id));
-        if (!hasMatchingTech) continue;
-      }
+      if (techIds?.length && !uniqueTechIds.some(id => techIds.includes(id))) continue;
 
-      // Infos projet (univers)
       const project = projectsById.get(intervention.projectId);
-      if (!project) {
-        skippedNoProject++;
-        continue;
-      }
+      if (!project) { skippedNoProject++; continue; }
 
-      // Localisation: on part du client/site (client_id intervention, sinon clientId projet)
       const rawClientId = intervention.client_id ?? project.clientId;
       const clientId = typeof rawClientId === 'number' ? rawClientId : null;
       const client = clientId ? clientsById.get(clientId) : undefined;
-
-      if (!client?.address) {
-        skippedNoClientAddress++;
-        continue;
-      }
+      if (!client?.address) { skippedNoClientAddress++; continue; }
 
       const coords = await geocodeAddress(client.address, client.postalCode, client.city);
-      if (!coords) {
-        skippedNoGeocode++;
-        continue;
-      }
+      if (!coords) { skippedNoGeocode++; continue; }
 
-      // StartAt + Durée: on prend la première visite du jour
       const visiteRef = visitesDuJour[0];
-
       const startAt = typeof visiteRef?.date === 'string' ? visiteRef.date : date;
+      const durationMin = typeof visiteRef?.duree === 'number' ? visiteRef.duree : (typeof intervention?.duree === 'number' ? intervention.duree : 60);
 
-      const durationMin = typeof visiteRef?.duree === 'number'
-        ? visiteRef.duree
-        : (typeof intervention?.duree === 'number' ? intervention.duree : 60);
-
-      // Techniciens du jour (nom + couleur)
-      const rdvUsers: MapRdvUser[] = uniqueTechIds.slice(0, 10).map((id) => {
+      const rdvUsers: MapRdvUser[] = uniqueTechIds.slice(0, 10).map(id => {
         const userData = usersById.get(id);
-        return {
-          id,
-          name: userData?.name || `Tech ${id}`,
-          color: userData?.color || '#6366f1',
-        };
+        return { id, name: userData?.name || `Tech ${id}`, color: userData?.color || '#6366f1' };
       });
 
-      // Calculer endAt
       const startDate = new Date(startAt);
-      const endAtDate = new Date(startDate.getTime() + durationMin * 60 * 1000);
-      const endAt = endAtDate.toISOString();
+      const endAt = new Date(startDate.getTime() + durationMin * 60 * 1000).toISOString();
 
       mapRdvs.push({
-        rdvId: intervention.id,
-        projectId: intervention.projectId,
-        projectRef: project.ref,
-        clientName: client.name,
-        lat: coords.lat,
-        lng: coords.lng,
-        startAt,
-        endAt,
-        durationMin,
-        univers: project.univers,
-        address: formatAddress(client.address, client.postalCode, client.city),
-        users: rdvUsers,
+        rdvId: intervention.id, projectId: intervention.projectId, projectRef: project.ref,
+        clientName: client.name, lat: coords.lat, lng: coords.lng, startAt, endAt, durationMin,
+        univers: project.univers, address: formatAddress(client.address, client.postalCode, client.city), users: rdvUsers,
       });
     }
 
-    console.log(`[GET-RDV-MAP] Summary for ${targetAgency} on ${date}: ${mapRdvs.length} RDVs returned, skipped: ${skippedNoProject} no project, ${skippedNoClientAddress} no client address, ${skippedNoTech} no tech, ${skippedNoGeocode} geocode failed`);
+    console.log(`[GET-RDV-MAP] Normal mode: ${mapRdvs.length} RDVs in ${Date.now() - t0}ms`);
 
-    return withCors(req, new Response(
-      JSON.stringify({
-        success: true,
-        data: mapRdvs,
-        meta: {
-          date,
-          agencySlug: targetAgency,
-          totalRdvs: mapRdvs.length,
-          timestamp: new Date().toISOString(),
-        },
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    ));
+    return withCors(req, new Response(JSON.stringify({
+      success: true,
+      data: mapRdvs,
+      meta: { date, agencySlug: targetAgency, totalRdvs: mapRdvs.length, durationMs: Date.now() - t0 },
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
 
   } catch (error) {
     console.error('[GET-RDV-MAP] Exception:', error);
     captureEdgeException(error, { function: 'get-rdv-map' });
-    
-    return withCors(req, new Response(
-      JSON.stringify({ success: false, error: 'Internal server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    ));
+    return withCors(req, new Response(JSON.stringify({ success: false, error: 'Internal server error' }), { status: 500, headers: { 'Content-Type': 'application/json' } }));
   }
 });

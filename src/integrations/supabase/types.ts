@@ -6218,6 +6218,42 @@ export type Database = {
         }
         Relationships: []
       }
+      geocode_cache: {
+        Row: {
+          cache_key: string
+          city: string
+          created_at: string | null
+          id: string
+          lat: number
+          lng: number
+          postal_code: string
+          source: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          cache_key: string
+          city: string
+          created_at?: string | null
+          id?: string
+          lat: number
+          lng: number
+          postal_code: string
+          source?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          cache_key?: string
+          city?: string
+          created_at?: string | null
+          id?: string
+          lat?: number
+          lng?: number
+          postal_code?: string
+          source?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       guide_chunks: {
         Row: {
           block_id: string
