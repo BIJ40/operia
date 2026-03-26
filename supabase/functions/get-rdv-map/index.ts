@@ -213,7 +213,7 @@ Deno.serve(async (req) => {
     const effectiveFrom = (isHeatmap || isProfitability || isZones) ? (fromDate || '2020-01-01') : date;
     const effectiveTo = (isHeatmap || isProfitability || isZones) ? (toDate || new Date().toISOString().slice(0, 10)) : date;
 
-    if (!isHeatmap && !isProfitability && (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date))) {
+    if (!isHeatmap && !isProfitability && !isZones && (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date))) {
       return withCors(req, new Response(
         JSON.stringify({ success: false, error: 'Invalid date format (expected YYYY-MM-DD)' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
