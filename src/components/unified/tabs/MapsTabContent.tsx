@@ -9,7 +9,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { format, addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Loader2, MapPin, AlertCircle, CalendarDays } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Loader2, MapPin, AlertCircle, CalendarDays, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -31,8 +31,11 @@ const DEFAULT_CENTER: [number, number] = [1.4442, 43.6047];
 const DEFAULT_ZOOM = 6;
 const TOUR_ROUTE_SOURCE = 'tour-route-source-pilotage';
 const TOUR_ROUTE_LAYER = 'tour-route-layer-pilotage';
+const HEATMAP_SOURCE = 'heatmap-source-pilotage';
+const HEATMAP_LAYER = 'heatmap-layer-pilotage';
 
 type ViewMode = 'day' | 'week';
+type MapMode = 'pins' | 'heatmap';
 
 export default function MapsTabContent() {
   const { agence } = useProfile();
@@ -42,6 +45,7 @@ export default function MapsTabContent() {
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('day');
+  const [mapMode, setMapMode] = useState<MapMode>('pins');
   const [selectedTechIds, setSelectedTechIds] = useState<number[]>([]);
   const [techFilterOpen, setTechFilterOpen] = useState(false);
   const [selectedRdv, setSelectedRdv] = useState<MapRdv | null>(null);
@@ -180,11 +184,13 @@ export default function MapsTabContent() {
   const hasFittedBoundsRef = useRef(false);
   const lastRdvsLengthRef = useRef(0);
 
-  // Update markers
+  // Update markers (only in pins mode)
   useEffect(() => {
     if (!map.current || !mapReady) return;
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
+
+    if (mapMode === 'heatmap') return; // No pins in heatmap mode
 
     sortedRdvs.forEach((rdv, index) => {
       const isSelected = selectedRdv?.rdvId === rdv.rdvId;
@@ -217,7 +223,71 @@ export default function MapsTabContent() {
         hasFittedBoundsRef.current = true;
       }
     }
-  }, [sortedRdvs, selectedRdv, mapReady, isTourMode]);
+  }, [sortedRdvs, selectedRdv, mapReady, isTourMode, mapMode]);
+
+  // Heatmap layer
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !mapReady) return;
+
+    // Clean previous heatmap
+    if (m.getLayer(HEATMAP_LAYER)) m.removeLayer(HEATMAP_LAYER);
+    if (m.getSource(HEATMAP_SOURCE)) m.removeSource(HEATMAP_SOURCE);
+
+    if (mapMode !== 'heatmap' || sortedRdvs.length === 0) return;
+
+    const geojson: GeoJSON.FeatureCollection = {
+      type: 'FeatureCollection',
+      features: sortedRdvs.map(rdv => ({
+        type: 'Feature' as const,
+        properties: { weight: 1 },
+        geometry: { type: 'Point' as const, coordinates: [rdv.lng, rdv.lat] },
+      })),
+    };
+
+    m.addSource(HEATMAP_SOURCE, { type: 'geojson', data: geojson });
+
+    m.addLayer({
+      id: HEATMAP_LAYER,
+      type: 'heatmap',
+      source: HEATMAP_SOURCE,
+      paint: {
+        // Increase weight at higher zoom
+        'heatmap-weight': ['interpolate', ['linear'], ['get', 'weight'], 0, 0, 1, 1],
+        // Increase intensity at higher zoom
+        'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 0.5, 12, 2, 16, 4],
+        // Color ramp: transparent → white → light red → red → dark red → near black
+        'heatmap-color': [
+          'interpolate', ['linear'], ['heatmap-density'],
+          0, 'rgba(255,255,255,0)',
+          0.1, 'rgba(255,235,235,0.6)',
+          0.25, 'rgba(255,180,180,0.7)',
+          0.4, 'rgba(240,100,100,0.8)',
+          0.6, 'rgba(200,40,40,0.85)',
+          0.8, 'rgba(150,10,10,0.9)',
+          1, 'rgba(60,0,0,0.95)',
+        ],
+        // Radius by zoom
+        'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 8, 8, 20, 12, 35, 16, 50],
+        // Full opacity
+        'heatmap-opacity': 0.85,
+      },
+    });
+
+    // Fit bounds for heatmap too
+    const bounds = calculateBounds(sortedRdvs);
+    if (bounds && !hasFittedBoundsRef.current) {
+      const container = m.getContainer();
+      const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
+      const padY = Math.max(56, Math.round((container.clientHeight || 600) * 0.12));
+      m.fitBounds(bounds, {
+        padding: { top: padY, bottom: padY + 60, left: padX, right: padX },
+        maxZoom: 14,
+        duration: 1000,
+      });
+      hasFittedBoundsRef.current = true;
+    }
+  }, [sortedRdvs, mapReady, mapMode]);
 
   // Draw/remove route layer
   useEffect(() => {
@@ -248,7 +318,7 @@ export default function MapsTabContent() {
     });
   }, [routeGeometry, isTourMode, mapReady, tourTech?.color]);
 
-  useEffect(() => { hasFittedBoundsRef.current = false; }, [selectedDate, selectedTechIds, viewMode]);
+  useEffect(() => { hasFittedBoundsRef.current = false; }, [selectedDate, selectedTechIds, viewMode, mapMode]);
 
   const goToPreviousDay = () => {
     setSelectedDate(d => viewMode === 'week' ? subDays(d, 7) : subDays(d, 1));
@@ -258,6 +328,7 @@ export default function MapsTabContent() {
   };
   const goToToday = () => setSelectedDate(new Date());
   const goToTomorrow = () => { setViewMode('day'); setSelectedDate(addDays(new Date(), 1)); };
+  const toggleMapMode = () => { setMapMode(prev => prev === 'pins' ? 'heatmap' : 'pins'); setSelectedRdv(null); };
   const toggleWeekMode = () => setViewMode(prev => prev === 'week' ? 'day' : 'week');
 
   const toggleTechnician = (techId: number) => {
@@ -352,9 +423,20 @@ export default function MapsTabContent() {
             </PopoverContent>
           </Popover>
 
-          <div className="flex items-center gap-2 text-sm text-muted-foreground ml-auto">
-            <MapPin className="h-4 w-4" />
-            <span>{isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${rdvs.length} RDV`}</span>
+          <div className="flex items-center gap-3 ml-auto">
+            <Button
+              variant={mapMode === 'heatmap' ? 'default' : 'outline'}
+              size="sm"
+              onClick={toggleMapMode}
+              className={cn('gap-1.5', mapMode === 'heatmap' && 'bg-red-600 hover:bg-red-700 text-white border-red-600')}
+            >
+              <Flame className="h-3.5 w-3.5" />
+              {mapMode === 'heatmap' ? 'Chaud / Froid' : 'Chaud / Froid'}
+            </Button>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <MapPin className="h-4 w-4" />
+              <span>{isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${rdvs.length} RDV`}</span>
+            </div>
           </div>
         </div>
 
