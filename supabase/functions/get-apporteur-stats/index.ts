@@ -469,7 +469,16 @@ Deno.serve(async (req) => {
     }> = [];
     const now = new Date();
 
-    // Factures > 30j
+    // Projets ayant au moins une facture (devis implicitement validé)
+    const projectsWithFacture = new Set<number>();
+    for (const f of allFactures) {
+      if (!projectIds.has(f.projectId)) continue;
+      const invoiceType = String(f.invoiceType || '').toLowerCase();
+      if (!invoiceType.includes('avoir') && invoiceType !== 'credit_note') {
+        projectsWithFacture.add(Number(f.projectId));
+      }
+    }
+
     const overdueInvoices: { ref: string; label: string; days: number; amount: number }[] = [];
     for (const f of allFactures) {
       if (!projectIds.has(f.projectId)) continue;
