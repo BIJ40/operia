@@ -46,6 +46,8 @@ export class LocalErrorBoundary extends Component<Props, State> {
     });
 
     logError(`[${this.props.componentName}] Error:`, error);
+    console.error(`[LocalErrorBoundary][${this.props.componentName}] Stack:`, error?.stack);
+    console.error(`[LocalErrorBoundary][${this.props.componentName}] Component stack:`, errorInfo.componentStack);
   }
 
   handleReset = () => {
