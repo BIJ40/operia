@@ -23,12 +23,17 @@ interface RequestBody {
 }
 
 // In-memory cache for geocoding within a single request
-const geoCache = new Map<string, { lat: number; lng: number } | null>();
+const geoCache = new Map<string, { lat: number; lng: number; code_insee?: string } | null>();
+
+// In-memory cache for commune polygons (persists across requests in same worker)
+let communeGeoJsonCache: any = null;
+let communeCacheTimestamp = 0;
+const COMMUNE_CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
 /**
- * Geocode via BAN API with postal code filter
+ * Geocode via BAN API with postal code filter — also extracts code_insee (citycode)
  */
-async function geocodeAddress(address: string, postalCode: string, city: string): Promise<{ lat: number; lng: number } | null> {
+async function geocodeAddress(address: string, postalCode: string, city: string): Promise<{ lat: number; lng: number; code_insee?: string } | null> {
   const cacheKey = `${address}|${postalCode}|${city}`.toLowerCase();
   if (geoCache.has(cacheKey)) return geoCache.get(cacheKey) ?? null;
   
@@ -47,7 +52,8 @@ async function geocodeAddress(address: string, postalCode: string, city: string)
     const data = await response.json();
     if (data.features?.length > 0) {
       const [lng, lat] = data.features[0].geometry.coordinates;
-      const result = { lat, lng };
+      const code_insee = data.features[0].properties?.citycode || undefined;
+      const result = { lat, lng, code_insee };
       geoCache.set(cacheKey, result);
       return result;
     }
@@ -61,14 +67,51 @@ async function geocodeAddress(address: string, postalCode: string, city: string)
 }
 
 /**
+ * Fetch commune GeoJSON polygons from geo.api.gouv.fr
+ * Departments 40 (Landes) and 64 (Pyrénées-Atlantiques) — can be extended
+ */
+async function fetchCommunePolygons(): Promise<any> {
+  if (communeGeoJsonCache && Date.now() - communeCacheTimestamp < COMMUNE_CACHE_TTL) {
+    return communeGeoJsonCache;
+  }
+  
+  try {
+    const depts = ['40', '64'];
+    const allFeatures: any[] = [];
+    
+    for (const dept of depts) {
+      const url = `https://geo.api.gouv.fr/departements/${dept}/communes?fields=code,nom,contour&format=geojson`;
+      const resp = await fetch(url, { signal: AbortSignal.timeout(30000) });
+      if (!resp.ok) {
+        console.warn(`[GET-RDV-MAP] geo.api.gouv.fr error for dept ${dept}: ${resp.status}`);
+        continue;
+      }
+      const geojson = await resp.json();
+      if (geojson?.features) {
+        allFeatures.push(...geojson.features);
+      }
+    }
+    
+    const result = { type: 'FeatureCollection', features: allFeatures };
+    communeGeoJsonCache = result;
+    communeCacheTimestamp = Date.now();
+    console.log(`[GET-RDV-MAP] Fetched ${allFeatures.length} commune polygons`);
+    return result;
+  } catch (error) {
+    console.error('[GET-RDV-MAP] Failed to fetch commune polygons:', error);
+    return { type: 'FeatureCollection', features: [] };
+  }
+}
+
+/**
  * Batch geocode postal codes using DB cache + BAN API for misses
  * Returns Map<postalCode, {lat, lng}>
  */
 async function batchGeocodePostalCodes(
   postalCodes: Map<string, string>, // postalCode → city
   supabaseAdmin: any
-): Promise<Map<string, { lat: number; lng: number }>> {
-  const result = new Map<string, { lat: number; lng: number }>();
+): Promise<Map<string, { lat: number; lng: number; code_insee?: string }>> {
+  const result = new Map<string, { lat: number; lng: number; code_insee?: string }>();
   const keys = Array.from(postalCodes.keys());
   if (keys.length === 0) return result;
 
@@ -76,13 +119,13 @@ async function batchGeocodePostalCodes(
   const cacheKeys = keys.map(pc => `${pc}|${(postalCodes.get(pc) || '').toLowerCase()}`);
   const { data: cached } = await supabaseAdmin
     .from('geocode_cache')
-    .select('cache_key, postal_code, lat, lng')
+    .select('cache_key, postal_code, lat, lng, code_insee')
     .in('cache_key', cacheKeys);
 
   const cachedSet = new Set<string>();
   if (cached) {
     for (const row of cached) {
-      result.set(row.postal_code, { lat: row.lat, lng: row.lng });
+      result.set(row.postal_code, { lat: row.lat, lng: row.lng, code_insee: row.code_insee || undefined });
       cachedSet.add(row.postal_code);
     }
   }
@@ -108,6 +151,7 @@ async function batchGeocodePostalCodes(
           city,
           lat: coords.lat,
           lng: coords.lng,
+          code_insee: coords.code_insee || null,
           source: 'ban',
         });
       }
@@ -131,6 +175,52 @@ function formatAddress(address: string, postalCode: string, city: string): strin
   if (address) parts.push(address);
   if (postalCode || city) parts.push(`${postalCode} ${city}`.trim());
   return parts.join(' - ') || 'Adresse non renseignée';
+}
+
+/**
+ * Build a mapping from postal code → code_insee using the geocoded data
+ */
+function buildPostalToInseeMap(
+  coordsByPostalCode: Map<string, { lat: number; lng: number; code_insee?: string }>
+): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const [pc, data] of coordsByPostalCode.entries()) {
+    if (data.code_insee) {
+      map.set(pc, data.code_insee);
+    }
+  }
+  return map;
+}
+
+/**
+ * Merge commune polygons with aggregated metrics by code_insee
+ * Returns a GeoJSON FeatureCollection with polygon geometries and metric properties
+ */
+function buildChoroplethGeoJSON(
+  communePolygons: any,
+  metricsByInsee: Map<string, Record<string, any>>
+): any {
+  const features: any[] = [];
+  
+  for (const feature of communePolygons.features || []) {
+    const code = feature.properties?.code;
+    if (!code) continue;
+    
+    const metrics = metricsByInsee.get(code);
+    if (!metrics) continue; // Only include communes with data
+    
+    features.push({
+      type: 'Feature',
+      properties: {
+        code_insee: code,
+        nom: feature.properties?.nom || '',
+        ...metrics,
+      },
+      geometry: feature.geometry,
+    });
+  }
+  
+  return { type: 'FeatureCollection', features };
 }
 
 Deno.serve(async (req) => {
@@ -345,6 +435,36 @@ Deno.serve(async (req) => {
       const coordsByPostalCode = await batchGeocodePostalCodes(postalCodeCities, supabaseAdmin);
       console.log(`[GET-RDV-MAP] Geocoded ${coordsByPostalCode.size}/${postalCodeCities.size} postal codes in ${Date.now() - t0}ms`);
 
+      // ── BUILD POSTAL → INSEE MAP ──
+      const postalToInsee = buildPostalToInseeMap(coordsByPostalCode);
+      
+      // Also build projectToInsee for direct project → commune mapping
+      const projectToInsee = new Map<number, string>();
+      for (const [pid, pc] of projectToPostalCode.entries()) {
+        const insee = postalToInsee.get(pc);
+        if (insee) projectToInsee.set(pid, insee);
+      }
+
+      // Build projectsByInsee (like projectsByPostalCode but by INSEE code)
+      const projectsByInsee = new Map<string, Set<number>>();
+      const inseeCities = new Map<string, string>(); // code_insee → city name
+      for (const [pc, pids] of projectsByPostalCode.entries()) {
+        const insee = postalToInsee.get(pc);
+        if (!insee) continue;
+        if (!projectsByInsee.has(insee)) projectsByInsee.set(insee, new Set());
+        for (const pid of pids) projectsByInsee.get(insee)!.add(pid);
+        if (!inseeCities.has(insee) && postalCodeCities.has(pc)) {
+          inseeCities.set(insee, postalCodeCities.get(pc)!);
+        }
+      }
+
+      // ── FETCH COMMUNE POLYGONS (for choropleth modes) ──
+      let communePolygons: any = null;
+      if (!isHeatmap) {
+        communePolygons = await fetchCommunePolygons();
+        console.log(`[GET-RDV-MAP] Commune polygons: ${communePolygons?.features?.length || 0} communes loaded`);
+      }
+
       // ── HEATMAP MODE ──
       if (isHeatmap) {
         const heatPoints: { lat: number; lng: number }[] = [];
@@ -373,7 +493,7 @@ Deno.serve(async (req) => {
         }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
       }
 
-      // ── PROFITABILITY MODE ──
+      // ── PROFITABILITY MODE — Choropleth by commune ──
       if (isProfitability) {
         const caByProject = new Map<number, number>();
         for (const f of factures) {
@@ -397,48 +517,60 @@ Deno.serve(async (req) => {
         }
 
         const HOURLY_COST = 35;
-        const projectPoints: any[] = [];
-        const processedProjects = new Set<number>();
-
-        for (const intervention of interventionArray) {
-          const pid = intervention.projectId;
-          if (processedProjects.has(pid)) continue;
-          processedProjects.add(pid);
-
-          const pc = projectToPostalCode.get(pid);
-          if (!pc) continue;
-          const coords = coordsByPostalCode.get(pc);
-          if (!coords) continue;
-
-          const ca = caByProject.get(pid) || 0;
-          const hours = hoursByProject.get(pid) || 0;
-          if (ca <= 0) continue; // Pas de CA facturé = pas de rentabilité à calculer
-
-          projectPoints.push({
-            lat: coords.lat + (Math.random() - 0.5) * 0.005,
-            lng: coords.lng + (Math.random() - 0.5) * 0.005,
-            ca, hours, margin: ca - hours * HOURLY_COST, projectId: pid,
+        
+        // Aggregate by code_insee
+        const metricsByInsee = new Map<string, Record<string, any>>();
+        for (const [insee, pids] of projectsByInsee.entries()) {
+          let totalCA = 0, totalHours = 0, nbProjects = 0;
+          for (const pid of pids) {
+            const ca = caByProject.get(pid) || 0;
+            if (ca <= 0) continue;
+            totalCA += ca;
+            totalHours += hoursByProject.get(pid) || 0;
+            nbProjects++;
+          }
+          if (nbProjects === 0) continue;
+          
+          const margin = totalCA - totalHours * HOURLY_COST;
+          const marginRate = totalCA > 0 ? margin / totalCA : 0;
+          
+          metricsByInsee.set(insee, {
+            ca: Math.round(totalCA),
+            hours: Math.round(totalHours * 10) / 10,
+            margin: Math.round(margin),
+            marginRate: Math.round(marginRate * 100),
+            nbProjects,
+            city: inseeCities.get(insee) || '',
           });
         }
 
-        console.log(`[GET-RDV-MAP] Profitability: ${projectPoints.length} projects in ${Date.now() - t0}ms total`);
+        // Normalize marginRate for color interpolation
+        const allMarginRates = Array.from(metricsByInsee.values()).map(m => m.marginRate);
+        const maxMarginRate = Math.max(...allMarginRates, 1);
+        const minMarginRate = Math.min(...allMarginRates, -1);
+        for (const metrics of metricsByInsee.values()) {
+          metrics.marginNorm = minMarginRate === maxMarginRate ? 0 :
+            ((metrics.marginRate - minMarginRate) / (maxMarginRate - minMarginRate)) * 2 - 1; // -1 to 1
+        }
+
+        const choropleth = buildChoroplethGeoJSON(communePolygons, metricsByInsee);
+        
+        console.log(`[GET-RDV-MAP] Profitability choropleth: ${choropleth.features.length} communes in ${Date.now() - t0}ms total`);
         return withCors(req, new Response(JSON.stringify({
           success: true,
-          data: projectPoints,
-          meta: { mode: 'profitability', agencySlug: targetAgency, totalPoints: projectPoints.length, estimatedHourlyCost: HOURLY_COST, durationMs: Date.now() - t0 },
+          data: choropleth,
+          meta: { mode: 'profitability', format: 'choropleth', agencySlug: targetAgency, totalCommunes: choropleth.features.length, estimatedHourlyCost: HOURLY_COST, durationMs: Date.now() - t0 },
         }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
       }
 
-      // ── ZONES BLANCHES MODE ──
+      // ── ZONES BLANCHES MODE — Choropleth by commune ──
       if (isZones) {
-        // Agency coords for proximity
         const { data: agencyData } = await supabase.from('apogee_agencies').select('adresse, code_postal, ville').eq('slug', targetAgency).maybeSingle();
         let agencyCoords: { lat: number; lng: number } | null = null;
         if (agencyData?.code_postal) {
           agencyCoords = coordsByPostalCode.get(agencyData.code_postal) || await geocodeAddress(agencyData.adresse || '', agencyData.code_postal, agencyData.ville || '');
         }
 
-        // Build CA per project
         const caByProject = new Map<number, number>();
         for (const f of factures) {
           const pid = f.projectId;
@@ -448,7 +580,6 @@ Deno.serve(async (req) => {
           caByProject.set(pid, (caByProject.get(pid) || 0) + (isAvoir ? -Math.abs(montant) : montant));
         }
 
-        // Build devis per project
         const devisByProject = new Map<number, { total: number; signed: number }>();
         for (const d of devis) {
           const pid = d.projectId;
@@ -459,17 +590,14 @@ Deno.serve(async (req) => {
           devisByProject.set(pid, entry);
         }
 
-        // Count interventions per postal code
-        const interventionsByPC = new Map<string, number>();
+        const interventionsByInsee = new Map<string, number>();
         const interventionArray = Array.isArray(interventions) ? interventions : [];
         for (const it of interventionArray) {
-          const pc = projectToPostalCode.get(it.projectId);
-          if (pc) interventionsByPC.set(pc, (interventionsByPC.get(pc) || 0) + 1);
+          const insee = projectToInsee.get(it.projectId);
+          if (insee) interventionsByInsee.set(insee, (interventionsByInsee.get(insee) || 0) + 1);
         }
 
-        // Aggregate per postal code
-        // Build apporteur (commanditaire) mapping for zones
-        const zoneApporteurIds = new Map<number, number>(); // projectId → commanditaireId
+        const zoneApporteurIds = new Map<number, number>();
         for (const p of projects) {
           const data = p.data || {};
           const commanditaireId = data.commanditaireId || data.commanditaire_id;
@@ -479,14 +607,14 @@ Deno.serve(async (req) => {
         }
 
         const allUnivers = new Set<string>();
+        // Aggregate by code_insee
         const zoneAggregates = new Map<string, {
           projects: Set<number>; clients: Set<number>; apporteurs: Set<number>;
           univers: Set<string>; ca: number; devisTotal: number; devisSigned: number;
         }>();
 
-        for (const [pc, pids] of projectsByPostalCode.entries()) {
+        for (const [insee, pids] of projectsByInsee.entries()) {
           const zone = { projects: new Set<number>(), clients: new Set<number>(), apporteurs: new Set<number>(), univers: new Set<string>(), ca: 0, devisTotal: 0, devisSigned: 0 };
-          
           for (const pid of pids) {
             zone.projects.add(pid);
             const proj = projectsById.get(pid);
@@ -495,84 +623,62 @@ Deno.serve(async (req) => {
             zone.ca += caByProject.get(pid) || 0;
             const dv = devisByProject.get(pid);
             if (dv) { zone.devisTotal += dv.total; zone.devisSigned += dv.signed; }
-            // Populate apporteur set
             const apporteurId = zoneApporteurIds.get(pid);
             if (apporteurId) zone.apporteurs.add(apporteurId);
           }
-          zoneAggregates.set(pc, zone);
+          zoneAggregates.set(insee, zone);
         }
 
         const maxProjects = Math.max(...Array.from(zoneAggregates.values()).map(z => z.projects.size), 1);
         const totalUniversCount = allUnivers.size || 1;
 
-        const zoneResults: any[] = [];
-        for (const [pc, zone] of zoneAggregates.entries()) {
-          const coords = coordsByPostalCode.get(pc);
-          if (!coords) continue;
-
+        const metricsByInsee = new Map<string, Record<string, any>>();
+        for (const [insee, zone] of zoneAggregates.entries()) {
           const nbProjects = zone.projects.size;
           const nbClients = zone.clients.size;
           const nbApporteurs = zone.apporteurs.size;
           const nbUnivers = zone.univers.size;
           const panierMoyen = nbProjects > 0 ? zone.ca / nbProjects : 0;
-          const interventionCount = interventionsByPC.get(pc) || 0;
+          const interventionCount = interventionsByInsee.get(insee) || 0;
+          const activityIndex = nbProjects === 0 ? 0 : nbProjects <= 3 ? 1 : nbProjects <= 10 ? 2 : 3;
 
-          // Opportunity Score
-          let proximityScore = 50;
-          if (agencyCoords) {
-            const R = 6371;
-            const dLat = (coords.lat - agencyCoords.lat) * Math.PI / 180;
-            const dLon = (coords.lng - agencyCoords.lng) * Math.PI / 180;
-            const a = Math.sin(dLat/2)**2 + Math.cos(agencyCoords.lat*Math.PI/180)*Math.cos(coords.lat*Math.PI/180)*Math.sin(dLon/2)**2;
-            const distKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            proximityScore = distKm <= 10 ? 100 : distKm <= 30 ? Math.round(100-(distKm-10)*3) : distKm <= 60 ? Math.round(40-(distKm-30)) : 0;
-            proximityScore = Math.max(0, Math.min(100, proximityScore));
-          }
-
+          let opportunityScore = 50;
+          // Simplified opportunity score (no proximity without coords per commune)
           const lowActivityScore = Math.round((1 - nbProjects / maxProjects) * 100);
           const historicalScore = nbProjects > 0 ? Math.min(100, nbProjects * 15) : 0;
           const universGap = Math.round(((totalUniversCount - nbUnivers) / totalUniversCount) * 100);
           const apporteurScore = nbApporteurs === 0 ? 100 : nbApporteurs === 1 ? 80 : nbApporteurs <= 3 ? 40 : 0;
-
-          const opportunityScore = Math.min(100, Math.max(0, Math.round(
-            0.30*proximityScore + 0.20*lowActivityScore + 0.20*historicalScore + 0.15*universGap + 0.15*apporteurScore
-          )));
-
-          const activityLevel = nbProjects === 0 ? 'none' : nbProjects <= 3 ? 'low' : nbProjects <= 10 ? 'medium' : 'high';
+          opportunityScore = Math.min(100, Math.max(0, Math.round(0.25*lowActivityScore + 0.25*historicalScore + 0.25*universGap + 0.25*apporteurScore)));
 
           const insights: string[] = [];
-          if (proximityScore >= 70 && nbProjects <= 2) insights.push('Zone sous-exploitée proche de l\'agence');
           if (nbApporteurs === 1) insights.push('Dépendance à 1 seul apporteur');
           if (nbApporteurs === 0 && nbProjects > 0) insights.push('Aucun apporteur actif identifié');
-          if (nbUnivers <= 1 && nbProjects >= 3) {
-            const missing = Array.from(allUnivers).filter(u => !zone.univers.has(u));
-            if (missing.length > 0) insights.push(`Métiers absents : ${missing.slice(0, 3).join(', ')}`);
-          }
           if (nbProjects > 0 && nbProjects <= 3) insights.push('Présence faible — potentiel d\'ancrage');
 
-          zoneResults.push({
-            postalCode: pc, city: postalCodeCities.get(pc) || '', lat: coords.lat, lng: coords.lng,
-            nbProjects, nbClients, nbApporteurs, nbUnivers, univers: Array.from(zone.univers),
+          metricsByInsee.set(insee, {
+            city: inseeCities.get(insee) || '',
+            nbProjects, nbClients, nbApporteurs, nbUnivers,
+            univers: JSON.stringify(Array.from(zone.univers)),
             ca: Math.round(zone.ca), panierMoyen: Math.round(panierMoyen),
             devisTotal: zone.devisTotal, devisSigned: zone.devisSigned, interventionCount,
-            activityLevel, opportunityScore, insights,
+            activityIndex, opportunityScore,
+            insights: JSON.stringify(insights),
           });
         }
 
-        zoneResults.sort((a, b) => b.opportunityScore - a.opportunityScore);
+        const choropleth = buildChoroplethGeoJSON(communePolygons, metricsByInsee);
 
-        console.log(`[GET-RDV-MAP] Zones: ${zoneResults.length} postal codes in ${Date.now() - t0}ms total`);
+        console.log(`[GET-RDV-MAP] Zones choropleth: ${choropleth.features.length} communes in ${Date.now() - t0}ms total`);
         return withCors(req, new Response(JSON.stringify({
           success: true,
-          data: zoneResults,
-          meta: { mode: 'zones', agencySlug: targetAgency, totalZones: zoneResults.length, agencyCoords, durationMs: Date.now() - t0 },
+          data: choropleth,
+          meta: { mode: 'zones', format: 'choropleth', agencySlug: targetAgency, totalZones: choropleth.features.length, agencyCoords, durationMs: Date.now() - t0 },
         }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
       }
 
       // ── APPORTEURS MODE ──
       // Aggregate by postal code with apporteur/origin breakdown
       if (isApporteurs) {
-        // Classify apporteur type from client data
         const ORIGIN_KEYWORDS: Record<string, string[]> = {
           'Assurance': ['assur', 'axa', 'maif', 'macif', 'groupama', 'allianz', 'generali', 'matmut', 'maaf', 'gan', 'mma', 'swisslife', 'zurich'],
           'Agence Immobilière': ['immo', 'agence', 'laforet', 'century', 'orpi', 'foncia', 'guy hoquet', 'stephane plaza', 'nexity', 'l\'adresse', 'era ', 'square habitat'],
@@ -580,7 +686,6 @@ Deno.serve(async (req) => {
           'Bailleur': ['bailleur', 'hlm', 'habitat', 'opac', 'oph', 'logement social', 'sa hlm'],
           'Franchise / Réseau': ['franchise', 'réseau', 'partenaire'],
         };
-
         function classifyOrigin(clientName: string): string {
           const lower = (clientName || '').toLowerCase();
           for (const [type, keywords] of Object.entries(ORIGIN_KEYWORDS)) {
@@ -589,30 +694,22 @@ Deno.serve(async (req) => {
           return 'Autre';
         }
 
-        // Determine if a project has an apporteur (commanditaire ≠ client final)
-        // In Apogée, the commanditaire is stored as a separate client reference
         const projectApporteurType = new Map<number, string>();
         const projectApporteurName = new Map<number, string>();
-        const projectApporteurId = new Map<number, number>();
-
         for (const p of projects) {
           const data = p.data || {};
-          // commanditaireId is the apporteur; clientId is the end client
           const commanditaireId = data.commanditaireId || data.commanditaire_id;
           if (typeof commanditaireId === 'number' && commanditaireId !== p.clientId) {
             const cmdClient = clientsById.get(commanditaireId);
             if (cmdClient) {
               projectApporteurType.set(p.id, classifyOrigin(cmdClient.name));
               projectApporteurName.set(p.id, cmdClient.name);
-              projectApporteurId.set(p.id, commanditaireId);
             }
           } else {
-            // No commanditaire or same as client → "Client direct"
             projectApporteurType.set(p.id, 'Client direct');
           }
         }
 
-        // Build CA per project
         const caByProject = new Map<number, number>();
         for (const f of factures) {
           const pid = f.projectId;
@@ -622,167 +719,52 @@ Deno.serve(async (req) => {
           caByProject.set(pid, (caByProject.get(pid) || 0) + (isAvoir ? -Math.abs(montant) : montant));
         }
 
-        // Build devis per project
-        const devisByProject = new Map<number, { total: number; signed: number }>();
-        for (const d of devis) {
-          const pid = d.projectId;
-          if (typeof pid !== 'number') continue;
-          const entry = devisByProject.get(pid) || { total: 0, signed: 0 };
-          entry.total++;
-          if (['accepted', 'validated', 'order', 'signed'].includes((d.state || '').toLowerCase())) entry.signed++;
-          devisByProject.set(pid, entry);
-        }
-
-        // Count interventions per project
-        const interventionsByProject = new Map<number, number>();
-        const interventionArray = Array.isArray(interventions) ? interventions : [];
-        for (const it of interventionArray) {
-          const pid = it.projectId;
-          if (typeof pid === 'number') interventionsByProject.set(pid, (interventionsByProject.get(pid) || 0) + 1);
-        }
-
-        // Aggregate per postal code with origin breakdown
-        interface ApporteurZone {
-          originBreakdown: Record<string, { count: number; ca: number; apporteurNames: Set<string> }>;
-          totalProjects: number;
-          totalCA: number;
-          devisTotal: number;
-          devisSigned: number;
-          interventionCount: number;
-          topApporteurs: Map<string, { name: string; count: number; ca: number }>;
-        }
-
-        const apporteurZones = new Map<string, ApporteurZone>();
-
-        for (const [pc, pids] of projectsByPostalCode.entries()) {
-          const zone: ApporteurZone = {
-            originBreakdown: {},
-            totalProjects: 0,
-            totalCA: 0,
-            devisTotal: 0,
-            devisSigned: 0,
-            interventionCount: 0,
-            topApporteurs: new Map(),
-          };
-
-          for (const pid of pids) {
-            zone.totalProjects++;
-            const ca = caByProject.get(pid) || 0;
-            zone.totalCA += ca;
-            zone.interventionCount += interventionsByProject.get(pid) || 0;
-            const dv = devisByProject.get(pid);
-            if (dv) { zone.devisTotal += dv.total; zone.devisSigned += dv.signed; }
-
-            const originType = projectApporteurType.get(pid) || 'Autre';
-            if (!zone.originBreakdown[originType]) {
-              zone.originBreakdown[originType] = { count: 0, ca: 0, apporteurNames: new Set() };
-            }
-            zone.originBreakdown[originType].count++;
-            zone.originBreakdown[originType].ca += ca;
-
-            const apName = projectApporteurName.get(pid);
-            if (apName) {
-              zone.originBreakdown[originType].apporteurNames.add(apName);
-              const apId = String(projectApporteurId.get(pid) || apName);
-              const existing = zone.topApporteurs.get(apId) || { name: apName, count: 0, ca: 0 };
-              existing.count++;
-              existing.ca += ca;
-              zone.topApporteurs.set(apId, existing);
-            }
-          }
-
-          apporteurZones.set(pc, zone);
-        }
-
-        // Build results
         const ORIGIN_COLORS: Record<string, string> = {
-          'Assurance': '#3b82f6',
-          'Agence Immobilière': '#8b5cf6',
-          'Syndic': '#f97316',
-          'Bailleur': '#06b6d4',
-          'Franchise / Réseau': '#10b981',
-          'Client direct': '#6b7280',
-          'Autre': '#9ca3af',
+          'Assurance': '#3b82f6', 'Agence Immobilière': '#8b5cf6', 'Syndic': '#f97316',
+          'Bailleur': '#06b6d4', 'Franchise / Réseau': '#10b981', 'Client direct': '#6b7280', 'Autre': '#9ca3af',
         };
 
-        const apporteurResults: any[] = [];
-
-        for (const [pc, zone] of apporteurZones.entries()) {
-          const coords = coordsByPostalCode.get(pc);
-          if (!coords) continue;
-
-          // Find dominant origin
-          let dominantOrigin = 'Autre';
-          let dominantCount = 0;
-          for (const [origin, data] of Object.entries(zone.originBreakdown)) {
-            if (data.count > dominantCount) { dominantOrigin = origin; dominantCount = data.count; }
+        // Aggregate by code_insee
+        const metricsByInsee = new Map<string, Record<string, any>>();
+        for (const [insee, pids] of projectsByInsee.entries()) {
+          const originCounts: Record<string, number> = {};
+          let totalProjects = 0, totalCA = 0;
+          for (const pid of pids) {
+            totalProjects++;
+            totalCA += caByProject.get(pid) || 0;
+            const origin = projectApporteurType.get(pid) || 'Autre';
+            originCounts[origin] = (originCounts[origin] || 0) + 1;
           }
 
-          // Dependency index: share of top 1 apporteur
-          const topApsList = Array.from(zone.topApporteurs.values()).sort((a, b) => b.count - a.count);
-          const top1Share = zone.totalProjects > 0 && topApsList.length > 0 ? Math.round((topApsList[0].count / zone.totalProjects) * 100) : 0;
-          const top3Share = zone.totalProjects > 0 ? Math.round((topApsList.slice(0, 3).reduce((s, a) => s + a.count, 0) / zone.totalProjects) * 100) : 0;
-
-          // Diversification index (0-100): more diverse = higher
-          const originTypes = Object.keys(zone.originBreakdown).length;
-          const maxOriginTypes = Object.keys(ORIGIN_COLORS).length;
-          const diversificationIndex = Math.round((originTypes / maxOriginTypes) * 100);
-
-          // Transformation rate
-          const transformRate = zone.devisTotal > 0 ? Math.round((zone.devisSigned / zone.devisTotal) * 100) : 0;
-
-          // Serialize origin breakdown
-          const breakdown = Object.entries(zone.originBreakdown).map(([type, d]) => ({
-            type,
-            count: d.count,
-            ca: Math.round(d.ca),
-            color: ORIGIN_COLORS[type] || '#9ca3af',
-            share: zone.totalProjects > 0 ? Math.round((d.count / zone.totalProjects) * 100) : 0,
-            nbApporteurs: d.apporteurNames.size,
-          })).sort((a, b) => b.count - a.count);
-
-          // Insights
-          const insights: string[] = [];
-          if (top1Share >= 70) insights.push(`Dépendance critique : ${topApsList[0]?.name || 'top apporteur'} = ${top1Share}% des dossiers`);
-          else if (top1Share >= 50) insights.push(`Forte concentration : top 1 = ${top1Share}%`);
-          if (originTypes <= 2 && zone.totalProjects >= 5) insights.push('Faible diversification commerciale');
-          const clientDirectShare = zone.originBreakdown['Client direct']?.count || 0;
-          if (clientDirectShare > 0 && zone.totalProjects > 0) {
-            const directPct = Math.round((clientDirectShare / zone.totalProjects) * 100);
-            if (directPct >= 60) insights.push(`${directPct}% clients directs — potentiel apporteurs`);
+          let dominantOrigin = 'Autre', dominantCount = 0;
+          for (const [origin, count] of Object.entries(originCounts)) {
+            if (count > dominantCount) { dominantOrigin = origin; dominantCount = count; }
           }
+          const top1Share = totalProjects > 0 ? Math.round((dominantCount / totalProjects) * 100) : 0;
+          const diversificationIndex = Math.round((Object.keys(originCounts).length / Object.keys(ORIGIN_COLORS).length) * 100);
 
-          apporteurResults.push({
-            postalCode: pc,
-            city: postalCodeCities.get(pc) || '',
-            lat: coords.lat,
-            lng: coords.lng,
-            totalProjects: zone.totalProjects,
-            totalCA: Math.round(zone.totalCA),
-            panierMoyen: zone.totalProjects > 0 ? Math.round(zone.totalCA / zone.totalProjects) : 0,
-            devisTotal: zone.devisTotal,
-            devisSigned: zone.devisSigned,
-            transformRate,
-            interventionCount: zone.interventionCount,
-            dominantOrigin,
-            dominantColor: ORIGIN_COLORS[dominantOrigin] || '#9ca3af',
-            breakdown,
-            top1Share,
-            top3Share,
-            diversificationIndex,
-            topApporteurs: topApsList.slice(0, 5).map(a => ({ name: a.name, count: a.count, ca: Math.round(a.ca) })),
-            insights,
+          metricsByInsee.set(insee, {
+            city: inseeCities.get(insee) || '',
+            totalProjects, totalCA: Math.round(totalCA),
+            panierMoyen: totalProjects > 0 ? Math.round(totalCA / totalProjects) : 0,
+            dominantOrigin, dominantColor: ORIGIN_COLORS[dominantOrigin] || '#9ca3af',
+            top1Share, diversificationIndex,
+            breakdown: JSON.stringify(Object.entries(originCounts).map(([type, count]) => ({
+              type, count, share: totalProjects > 0 ? Math.round((count / totalProjects) * 100) : 0,
+              color: ORIGIN_COLORS[type] || '#9ca3af',
+            })).sort((a, b) => b.count - a.count)),
           });
         }
 
-        apporteurResults.sort((a, b) => b.totalCA - a.totalCA);
+        const choropleth = buildChoroplethGeoJSON(communePolygons, metricsByInsee);
 
-        console.log(`[GET-RDV-MAP] Apporteurs: ${apporteurResults.length} zones in ${Date.now() - t0}ms total`);
+        console.log(`[GET-RDV-MAP] Apporteurs choropleth: ${choropleth.features.length} communes in ${Date.now() - t0}ms total`);
         return withCors(req, new Response(JSON.stringify({
           success: true,
-          data: apporteurResults,
-          meta: { mode: 'apporteurs', agencySlug: targetAgency, totalZones: apporteurResults.length, originColors: ORIGIN_COLORS, durationMs: Date.now() - t0 },
+          data: choropleth,
+          meta: { mode: 'apporteurs', format: 'choropleth', agencySlug: targetAgency, totalZones: choropleth.features.length, originColors: ORIGIN_COLORS, durationMs: Date.now() - t0 },
         }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      }
       // ── SAISONNALITE MODE ──
       if (isSaisonnalite) {
         // Build CA per project
@@ -1235,7 +1217,6 @@ Deno.serve(async (req) => {
           },
         }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
       }
-    }
     }
 
     // ── DISPONIBILITE MODE — Real-time tech availability ──
