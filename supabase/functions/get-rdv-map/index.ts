@@ -563,16 +563,14 @@ Deno.serve(async (req) => {
         }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
       }
 
-      // ── ZONES BLANCHES MODE ──
+      // ── ZONES BLANCHES MODE — Choropleth by commune ──
       if (isZones) {
-        // Agency coords for proximity
         const { data: agencyData } = await supabase.from('apogee_agencies').select('adresse, code_postal, ville').eq('slug', targetAgency).maybeSingle();
         let agencyCoords: { lat: number; lng: number } | null = null;
         if (agencyData?.code_postal) {
           agencyCoords = coordsByPostalCode.get(agencyData.code_postal) || await geocodeAddress(agencyData.adresse || '', agencyData.code_postal, agencyData.ville || '');
         }
 
-        // Build CA per project
         const caByProject = new Map<number, number>();
         for (const f of factures) {
           const pid = f.projectId;
@@ -582,7 +580,6 @@ Deno.serve(async (req) => {
           caByProject.set(pid, (caByProject.get(pid) || 0) + (isAvoir ? -Math.abs(montant) : montant));
         }
 
-        // Build devis per project
         const devisByProject = new Map<number, { total: number; signed: number }>();
         for (const d of devis) {
           const pid = d.projectId;
@@ -593,17 +590,14 @@ Deno.serve(async (req) => {
           devisByProject.set(pid, entry);
         }
 
-        // Count interventions per postal code
-        const interventionsByPC = new Map<string, number>();
+        const interventionsByInsee = new Map<string, number>();
         const interventionArray = Array.isArray(interventions) ? interventions : [];
         for (const it of interventionArray) {
-          const pc = projectToPostalCode.get(it.projectId);
-          if (pc) interventionsByPC.set(pc, (interventionsByPC.get(pc) || 0) + 1);
+          const insee = projectToInsee.get(it.projectId);
+          if (insee) interventionsByInsee.set(insee, (interventionsByInsee.get(insee) || 0) + 1);
         }
 
-        // Aggregate per postal code
-        // Build apporteur (commanditaire) mapping for zones
-        const zoneApporteurIds = new Map<number, number>(); // projectId → commanditaireId
+        const zoneApporteurIds = new Map<number, number>();
         for (const p of projects) {
           const data = p.data || {};
           const commanditaireId = data.commanditaireId || data.commanditaire_id;
@@ -613,14 +607,14 @@ Deno.serve(async (req) => {
         }
 
         const allUnivers = new Set<string>();
+        // Aggregate by code_insee
         const zoneAggregates = new Map<string, {
           projects: Set<number>; clients: Set<number>; apporteurs: Set<number>;
           univers: Set<string>; ca: number; devisTotal: number; devisSigned: number;
         }>();
 
-        for (const [pc, pids] of projectsByPostalCode.entries()) {
+        for (const [insee, pids] of projectsByInsee.entries()) {
           const zone = { projects: new Set<number>(), clients: new Set<number>(), apporteurs: new Set<number>(), univers: new Set<string>(), ca: 0, devisTotal: 0, devisSigned: 0 };
-          
           for (const pid of pids) {
             zone.projects.add(pid);
             const proj = projectsById.get(pid);
@@ -629,77 +623,56 @@ Deno.serve(async (req) => {
             zone.ca += caByProject.get(pid) || 0;
             const dv = devisByProject.get(pid);
             if (dv) { zone.devisTotal += dv.total; zone.devisSigned += dv.signed; }
-            // Populate apporteur set
             const apporteurId = zoneApporteurIds.get(pid);
             if (apporteurId) zone.apporteurs.add(apporteurId);
           }
-          zoneAggregates.set(pc, zone);
+          zoneAggregates.set(insee, zone);
         }
 
         const maxProjects = Math.max(...Array.from(zoneAggregates.values()).map(z => z.projects.size), 1);
         const totalUniversCount = allUnivers.size || 1;
 
-        const zoneResults: any[] = [];
-        for (const [pc, zone] of zoneAggregates.entries()) {
-          const coords = coordsByPostalCode.get(pc);
-          if (!coords) continue;
-
+        const metricsByInsee = new Map<string, Record<string, any>>();
+        for (const [insee, zone] of zoneAggregates.entries()) {
           const nbProjects = zone.projects.size;
           const nbClients = zone.clients.size;
           const nbApporteurs = zone.apporteurs.size;
           const nbUnivers = zone.univers.size;
           const panierMoyen = nbProjects > 0 ? zone.ca / nbProjects : 0;
-          const interventionCount = interventionsByPC.get(pc) || 0;
+          const interventionCount = interventionsByInsee.get(insee) || 0;
+          const activityIndex = nbProjects === 0 ? 0 : nbProjects <= 3 ? 1 : nbProjects <= 10 ? 2 : 3;
 
-          // Opportunity Score
-          let proximityScore = 50;
-          if (agencyCoords) {
-            const R = 6371;
-            const dLat = (coords.lat - agencyCoords.lat) * Math.PI / 180;
-            const dLon = (coords.lng - agencyCoords.lng) * Math.PI / 180;
-            const a = Math.sin(dLat/2)**2 + Math.cos(agencyCoords.lat*Math.PI/180)*Math.cos(coords.lat*Math.PI/180)*Math.sin(dLon/2)**2;
-            const distKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            proximityScore = distKm <= 10 ? 100 : distKm <= 30 ? Math.round(100-(distKm-10)*3) : distKm <= 60 ? Math.round(40-(distKm-30)) : 0;
-            proximityScore = Math.max(0, Math.min(100, proximityScore));
-          }
-
+          let opportunityScore = 50;
+          // Simplified opportunity score (no proximity without coords per commune)
           const lowActivityScore = Math.round((1 - nbProjects / maxProjects) * 100);
           const historicalScore = nbProjects > 0 ? Math.min(100, nbProjects * 15) : 0;
           const universGap = Math.round(((totalUniversCount - nbUnivers) / totalUniversCount) * 100);
           const apporteurScore = nbApporteurs === 0 ? 100 : nbApporteurs === 1 ? 80 : nbApporteurs <= 3 ? 40 : 0;
-
-          const opportunityScore = Math.min(100, Math.max(0, Math.round(
-            0.30*proximityScore + 0.20*lowActivityScore + 0.20*historicalScore + 0.15*universGap + 0.15*apporteurScore
-          )));
-
-          const activityLevel = nbProjects === 0 ? 'none' : nbProjects <= 3 ? 'low' : nbProjects <= 10 ? 'medium' : 'high';
+          opportunityScore = Math.min(100, Math.max(0, Math.round(0.25*lowActivityScore + 0.25*historicalScore + 0.25*universGap + 0.25*apporteurScore)));
 
           const insights: string[] = [];
-          if (proximityScore >= 70 && nbProjects <= 2) insights.push('Zone sous-exploitée proche de l\'agence');
           if (nbApporteurs === 1) insights.push('Dépendance à 1 seul apporteur');
           if (nbApporteurs === 0 && nbProjects > 0) insights.push('Aucun apporteur actif identifié');
-          if (nbUnivers <= 1 && nbProjects >= 3) {
-            const missing = Array.from(allUnivers).filter(u => !zone.univers.has(u));
-            if (missing.length > 0) insights.push(`Métiers absents : ${missing.slice(0, 3).join(', ')}`);
-          }
           if (nbProjects > 0 && nbProjects <= 3) insights.push('Présence faible — potentiel d\'ancrage');
 
-          zoneResults.push({
-            postalCode: pc, city: postalCodeCities.get(pc) || '', lat: coords.lat, lng: coords.lng,
-            nbProjects, nbClients, nbApporteurs, nbUnivers, univers: Array.from(zone.univers),
+          metricsByInsee.set(insee, {
+            city: inseeCities.get(insee) || '',
+            nbProjects, nbClients, nbApporteurs, nbUnivers,
+            univers: JSON.stringify(Array.from(zone.univers)),
             ca: Math.round(zone.ca), panierMoyen: Math.round(panierMoyen),
             devisTotal: zone.devisTotal, devisSigned: zone.devisSigned, interventionCount,
-            activityLevel, opportunityScore, insights,
+            activityIndex, opportunityScore,
+            insights: JSON.stringify(insights),
           });
         }
 
-        zoneResults.sort((a, b) => b.opportunityScore - a.opportunityScore);
+        const choropleth = buildChoroplethGeoJSON(communePolygons, metricsByInsee);
 
-        console.log(`[GET-RDV-MAP] Zones: ${zoneResults.length} postal codes in ${Date.now() - t0}ms total`);
+        console.log(`[GET-RDV-MAP] Zones choropleth: ${choropleth.features.length} communes in ${Date.now() - t0}ms total`);
         return withCors(req, new Response(JSON.stringify({
           success: true,
-          data: zoneResults,
-          meta: { mode: 'zones', agencySlug: targetAgency, totalZones: zoneResults.length, agencyCoords, durationMs: Date.now() - t0 },
+          data: choropleth,
+          meta: { mode: 'zones', format: 'choropleth', agencySlug: targetAgency, totalZones: choropleth.features.length, agencyCoords, durationMs: Date.now() - t0 },
         }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
       }
 
