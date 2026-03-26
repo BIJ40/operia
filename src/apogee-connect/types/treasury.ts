@@ -49,6 +49,11 @@ export interface BankConnection {
   user_id: string;
   provider: string;
   external_connection_id: string | null;
+  external_user_id: string | null;
+  external_item_id: string | null;
+  redirect_session_id: string | null;
+  provider_status: string | null;
+  provider_last_payload: Record<string, unknown> | null;
   display_name: string;
   status: BankConnectionStatus;
   consent_expires_at: string | null;
@@ -73,8 +78,10 @@ export interface BankAccount {
   account_type: AccountType;
   balance: number;
   available_balance: number | null;
+  instant_balance: number | null;
   balance_updated_at: string | null;
   sync_status: AccountSyncStatus;
+  provider_account_type: string | null;
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
@@ -99,6 +106,7 @@ export interface BankTransaction {
   matched_facture_id: string | null;
   matched_project_id: string | null;
   pointed_at: string | null;
+  raw_payload: Record<string, unknown> | null;
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
