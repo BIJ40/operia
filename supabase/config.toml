@@ -231,3 +231,6 @@ verify_jwt = false
 
 [functions.treasury-bridge-callback]
 verify_jwt = false
+
+[functions.treasury-bridge-webhook]
+verify_jwt = false

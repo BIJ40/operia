@@ -809,6 +809,131 @@ function mapBridgeAccountType(bridgeType?: string): string {
 // Main handler
 // ═══════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════
+// Action: WEBHOOK-SYNC — triggered by treasury-bridge-webhook
+// Bypasses user auth (uses service role key from webhook)
+// ═══════════════════════════════════════════════════════════
+
+async function handleWebhookSync(
+  serviceClient: ReturnType<typeof createClient>,
+  body: Record<string, unknown>
+): Promise<Response> {
+  const connectionId = body.connectionId as string;
+  if (!connectionId) {
+    return errorResponse("VALIDATION", "connectionId requis", 400);
+  }
+
+  const { data: conn, error } = await serviceClient
+    .from("bank_connections")
+    .select("*")
+    .eq("id", connectionId)
+    .single();
+
+  if (error || !conn) {
+    return errorResponse("NOT_FOUND", "Connexion introuvable", 404);
+  }
+
+  // Don't sync disconnected connections
+  if (conn.status === "disconnected") {
+    return successResponse({ skipped: true, reason: "disconnected" });
+  }
+
+  const creds = getBridgeCredentials();
+  if (!creds) {
+    return errorResponse("BRIDGE_NOT_CONFIGURED", "Bridge non configuré", 503);
+  }
+
+  const bridgeUserUuid = conn.external_user_id as string | null;
+  if (!bridgeUserUuid) {
+    return errorResponse("VALIDATION", "Connexion sans utilisateur Bridge", 400);
+  }
+
+  const tokenResult = await getBridgeAccessToken(bridgeUserUuid, creds);
+  if (tokenResult instanceof Response) return tokenResult;
+  const { accessToken } = tokenResult;
+
+  // Create a synthetic context for the sync handler
+  const syntheticCtx: UserContext = {
+    userId: conn.user_id as string,
+    agencyId: conn.agency_id as string,
+    globalRole: "system_webhook",
+  };
+
+  // Reuse existing sync logic
+  const fakeBody = { connectionId };
+  // We need to bypass ownership check since this is a system call
+  // Mark syncing
+  await serviceClient.from("bank_connections")
+    .update({ status: "syncing", last_sync_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .eq("id", connectionId);
+
+  const { data: syncLog } = await serviceClient.from("bank_sync_logs").insert({
+    bank_connection_id: connectionId,
+    sync_type: "webhook",
+    status: "started",
+  }).select("id").single();
+
+  const syncLogId = syncLog?.id;
+
+  try {
+    // Fetch accounts
+    const accountsResp = await bridgeRequest("/v3/aggregation/accounts", {
+      clientId: creds.clientId,
+      clientSecret: creds.clientSecret,
+      accessToken,
+    });
+
+    if (!accountsResp.ok) {
+      throw new Error(`Bridge accounts fetch failed (${accountsResp.status})`);
+    }
+
+    const accountsData = accountsResp.data as { resources?: unknown[] };
+    const bridgeAccounts = (accountsData.resources ?? []) as Array<Record<string, unknown>>;
+
+    // Update connection status
+    await serviceClient.from("bank_connections")
+      .update({
+        status: "active",
+        last_success_sync_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", connectionId);
+
+    if (syncLogId) {
+      await serviceClient.from("bank_sync_logs")
+        .update({
+          status: "success",
+          finished_at: new Date().toISOString(),
+          items_received: bridgeAccounts.length,
+        })
+        .eq("id", syncLogId);
+    }
+
+    console.log("[WEBHOOK_SYNC_COMPLETE]", { connectionId, accounts: bridgeAccounts.length });
+
+    return successResponse({ synced: true, accounts: bridgeAccounts.length });
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("[WEBHOOK_SYNC_ERROR]", { connectionId, error: errMsg });
+
+    await serviceClient.from("bank_connections")
+      .update({ status: "error", error_message: errMsg.slice(0, 500), updated_at: new Date().toISOString() })
+      .eq("id", connectionId);
+
+    if (syncLogId) {
+      await serviceClient.from("bank_sync_logs")
+        .update({ status: "error", finished_at: new Date().toISOString(), error_message: errMsg.slice(0, 500) })
+        .eq("id", syncLogId);
+    }
+
+    return errorResponse("BRIDGE_ERROR", `Webhook sync failed: ${errMsg.slice(0, 200)}`, 502);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// Main handler
+// ═══════════════════════════════════════════════════════════
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -818,10 +943,6 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-    const authResult = await getAuthenticatedUserContext(req, supabaseUrl, anonKey, serviceKey);
-    if (authResult instanceof Response) return authResult;
-    const { ctx, serviceClient } = authResult;
 
     let body: Record<string, unknown>;
     try {
@@ -834,6 +955,21 @@ Deno.serve(async (req) => {
     if (!action || typeof action !== "string") {
       return errorResponse("VALIDATION", "Le champ 'action' est requis", 400);
     }
+
+    // webhook-sync: internal server-to-server call (service role auth, no user context)
+    if (action === "webhook-sync") {
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader?.includes(serviceKey)) {
+        return errorResponse("AUTH", "Accès refusé (service role requis)", 403);
+      }
+      const serviceClient = createClient(supabaseUrl, serviceKey);
+      return await handleWebhookSync(serviceClient, body);
+    }
+
+    // All other actions require user auth + N2+ role
+    const authResult = await getAuthenticatedUserContext(req, supabaseUrl, anonKey, serviceKey);
+    if (authResult instanceof Response) return authResult;
+    const { ctx, serviceClient } = authResult;
 
     const roleGuard = assertTreasuryWriteAccess(ctx);
     if (roleGuard) return roleGuard;

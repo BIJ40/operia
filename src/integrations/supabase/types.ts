@@ -2967,6 +2967,39 @@ export type Database = {
           },
         ]
       }
+      bank_webhook_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          external_item_id: string | null
+          id: string
+          payload: Json | null
+          processed: boolean
+          processed_at: string | null
+          received_at: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          external_item_id?: string | null
+          id?: string
+          payload?: Json | null
+          processed?: boolean
+          processed_at?: string | null
+          received_at?: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          external_item_id?: string | null
+          id?: string
+          payload?: Json | null
+          processed?: boolean
+          processed_at?: string | null
+          received_at?: string
+        }
+        Relationships: []
+      }
       bd_story_batches: {
         Row: {
           agency_id: string
