@@ -68,14 +68,14 @@ export default function AdminMirrorMonitor() {
   const loadData = useCallback(async () => {
     setRefreshing(true);
     try {
-      const [flagsRes, syncRes] = await Promise.all([
-        supabase
-          .from('data_source_flags')
-          .select('id, module_key, source_mode, agency_id, is_enabled, freshness_threshold_minutes, updated_at')
-          .order('module_key'),
+      const flagsRes = await supabase
+        .from('data_source_flags')
+        .select('id, module_key, source_mode, agency_id, is_enabled, freshness_threshold_minutes, updated_at')
+        .order('module_key');
+
       const syncRes = await supabase
-          .from('apogee_sync_status' as any)
-          .select('agency_id, agency_label, agency_slug, freshness_minutes, freshness_status, last_status, projects_count, factures_count, users_count') as { data: SyncStatusRow[] | null; error: any };
+        .from('apogee_sync_status' as any)
+        .select('agency_id, agency_label, agency_slug, freshness_minutes, freshness_status, last_status, projects_count, factures_count, users_count') as { data: SyncStatusRow[] | null; error: any };
 
       if (flagsRes.data) setFlags(flagsRes.data as FlagRow[]);
       if (syncRes.data) setSyncStatus(syncRes.data);
