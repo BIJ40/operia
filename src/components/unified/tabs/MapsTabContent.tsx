@@ -424,170 +424,179 @@ export default function MapsTabContent() {
     );
   }
 
+  const activeTabConfig = MAP_SUB_TABS.find(t => t.id === activeSubTab);
+  const activeAccentColor = activeTabConfig?.accent ? TAB_ACCENT_COLORS[activeTabConfig.accent] : undefined;
+
   return (
-    <div className="flex flex-col" style={{ height: 'calc(100vh - 14rem)' }}>
-      {/* Barre de filtres */}
-      <div className="flex-none p-4 border rounded-t-xl bg-card space-y-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1">
-            <Button variant="outline" size="icon" onClick={goToPreviousDay}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="min-w-[200px] justify-start">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {viewMode === 'week'
-                    ? `Sem. du ${format(startOfWeek(selectedDate, { weekStartsOn: 1 }), 'd MMM', { locale: fr })} au ${format(endOfWeek(selectedDate, { weekStartsOn: 1 }), 'd MMM yyyy', { locale: fr })}`
-                    : format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}
+    <div className="flex flex-col" style={{ height: 'calc(100vh - 12rem)' }}>
+      <SimpleFolderTabsList
+        tabs={MAP_SUB_TABS}
+        activeTab={activeSubTab}
+        onTabChange={(v) => { setActiveSubTab(v as MapsSubTab); setSelectedRdv(null); }}
+      />
+
+      <DraggableFolderContentContainer accentColor={activeAccentColor} className="flex-1 flex flex-col min-h-0 !p-0">
+        {/* Barre de filtres — visible uniquement en mode RDV */}
+        {mapMode === 'pins' && (
+          <div className="flex-none p-4 space-y-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-1">
+                <Button variant="outline" size="icon" onClick={goToPreviousDay}>
+                  <ChevronLeft className="h-4 w-4" />
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={selectedDate} onSelect={(date) => date && setSelectedDate(date)} initialFocus locale={fr} />
-              </PopoverContent>
-            </Popover>
-            <Button variant="outline" size="icon" onClick={goToNextDay}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="min-w-[200px] justify-start">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {viewMode === 'week'
+                        ? `Sem. du ${format(startOfWeek(selectedDate, { weekStartsOn: 1 }), 'd MMM', { locale: fr })} au ${format(endOfWeek(selectedDate, { weekStartsOn: 1 }), 'd MMM yyyy', { locale: fr })}`
+                        : format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={selectedDate} onSelect={(date) => date && setSelectedDate(date)} initialFocus locale={fr} />
+                  </PopoverContent>
+                </Popover>
+                <Button variant="outline" size="icon" onClick={goToNextDay}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
 
-          <div className="flex items-center gap-1">
-            <Button variant={viewMode === 'day' && format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') ? 'default' : 'ghost'} size="sm" onClick={goToToday}>
-              Aujourd'hui
-            </Button>
-            <Button variant={viewMode === 'day' && format(selectedDate, 'yyyy-MM-dd') === format(addDays(new Date(), 1), 'yyyy-MM-dd') ? 'default' : 'ghost'} size="sm" onClick={goToTomorrow}>
-              Demain
-            </Button>
-            <Button variant={viewMode === 'week' ? 'default' : 'ghost'} size="sm" onClick={toggleWeekMode} className="gap-1">
-              <CalendarDays className="h-3.5 w-3.5" />
-              Semaine
-            </Button>
-          </div>
+              <div className="flex items-center gap-1">
+                <Button variant={viewMode === 'day' && format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') ? 'default' : 'ghost'} size="sm" onClick={goToToday}>
+                  Aujourd'hui
+                </Button>
+                <Button variant={viewMode === 'day' && format(selectedDate, 'yyyy-MM-dd') === format(addDays(new Date(), 1), 'yyyy-MM-dd') ? 'default' : 'ghost'} size="sm" onClick={goToTomorrow}>
+                  Demain
+                </Button>
+                <Button variant={viewMode === 'week' ? 'default' : 'ghost'} size="sm" onClick={toggleWeekMode} className="gap-1">
+                  <CalendarDays className="h-3.5 w-3.5" />
+                  Semaine
+                </Button>
+              </div>
 
-          <Popover open={techFilterOpen} onOpenChange={setTechFilterOpen}>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <Users className="h-4 w-4" />
-                Techniciens
-                {selectedTechIds.length > 0 && <Badge variant="secondary" className="ml-1">{selectedTechIds.length}</Badge>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[300px] p-0" align="start">
-              <Command>
-                <CommandInput placeholder="Rechercher un technicien..." />
-                <CommandList>
-                  <CommandEmpty>Aucun technicien trouvé</CommandEmpty>
-                  <CommandGroup>
-                    {technicians.map((tech) => (
-                      <CommandItem key={tech.id} onSelect={() => toggleTechnician(tech.id)} className="cursor-pointer">
-                        <div className={cn('mr-2 h-4 w-4 rounded border flex items-center justify-center', selectedTechIds.includes(tech.id) ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground')}>
-                          {selectedTechIds.includes(tech.id) && <span className="text-xs">✓</span>}
-                        </div>
-                        <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: tech.color }} />
-                        {tech.name}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-              {selectedTechIds.length > 0 && (
-                <div className="p-2 border-t">
-                  <Button variant="ghost" size="sm" className="w-full" onClick={clearTechFilter}>Effacer les filtres</Button>
-                </div>
-              )}
-            </PopoverContent>
-          </Popover>
+              <Popover open={techFilterOpen} onOpenChange={setTechFilterOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <Users className="h-4 w-4" />
+                    Techniciens
+                    {selectedTechIds.length > 0 && <Badge variant="secondary" className="ml-1">{selectedTechIds.length}</Badge>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[300px] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Rechercher un technicien..." />
+                    <CommandList>
+                      <CommandEmpty>Aucun technicien trouvé</CommandEmpty>
+                      <CommandGroup>
+                        {technicians.map((tech) => (
+                          <CommandItem key={tech.id} onSelect={() => toggleTechnician(tech.id)} className="cursor-pointer">
+                            <div className={cn('mr-2 h-4 w-4 rounded border flex items-center justify-center', selectedTechIds.includes(tech.id) ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground')}>
+                              {selectedTechIds.includes(tech.id) && <span className="text-xs">✓</span>}
+                            </div>
+                            <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: tech.color }} />
+                            {tech.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                  {selectedTechIds.length > 0 && (
+                    <div className="p-2 border-t">
+                      <Button variant="ghost" size="sm" className="w-full" onClick={clearTechFilter}>Effacer les filtres</Button>
+                    </div>
+                  )}
+                </PopoverContent>
+              </Popover>
 
-          <div className="flex items-center gap-3 ml-auto">
-            <Button
-              variant={mapMode === 'heatmap' ? 'default' : 'outline'}
-              size="sm"
-              onClick={toggleMapMode}
-              className={cn('gap-1.5', mapMode === 'heatmap' && 'bg-red-600 hover:bg-red-700 text-white border-red-600')}
-            >
-              <Flame className="h-3.5 w-3.5" />
-              {mapMode === 'heatmap' ? 'Chaud / Froid' : 'Chaud / Froid'}
-            </Button>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <MapPin className="h-4 w-4" />
-              <span>
-                {mapMode === 'heatmap'
-                  ? (heatmapLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${heatmapPoints?.length || 0} interventions`)
-                  : (isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${rdvs.length} RDV`)}
-              </span>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground ml-auto">
+                <MapPin className="h-4 w-4" />
+                <span>{isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${rdvs.length} RDV`}</span>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {selectedTechIds.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {selectedTechIds.map((id) => {
-              const tech = technicians.find(t => t.id === id);
-              if (!tech) return null;
-              return (
-                <Badge key={id} variant="secondary" className="cursor-pointer" onClick={() => toggleTechnician(id)}>
-                  <span className="w-2 h-2 rounded-full mr-1" style={{ backgroundColor: tech.color }} />
-                  {tech.name}
-                  <span className="ml-1 text-muted-foreground">×</span>
-                </Badge>
-              );
-            })}
+            {selectedTechIds.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {selectedTechIds.map((id) => {
+                  const tech = technicians.find(t => t.id === id);
+                  if (!tech) return null;
+                  return (
+                    <Badge key={id} variant="secondary" className="cursor-pointer" onClick={() => toggleTechnician(id)}>
+                      <span className="w-2 h-2 rounded-full mr-1" style={{ backgroundColor: tech.color }} />
+                      {tech.name}
+                      <span className="ml-1 text-muted-foreground">×</span>
+                    </Badge>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
-      </div>
 
-      {/* Carte */}
-      <div className="flex-1 min-h-0" style={{ minHeight: '400px' }}>
-        <div className="relative h-full w-full overflow-hidden rounded-b-xl border border-t-0 bg-background shadow-sm">
-          {!mapboxToken ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-muted">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <div ref={mapContainer} style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }} />
-          )}
+        {/* Barre info densité */}
+        {mapMode === 'heatmap' && (
+          <div className="flex-none p-4 flex items-center gap-2 text-sm text-muted-foreground">
+            <Flame className="h-4 w-4 text-destructive" />
+            <span>Densité sur l'historique complet</span>
+            <span className="ml-auto">
+              {heatmapLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${heatmapPoints?.length || 0} interventions`}
+            </span>
+          </div>
+        )}
 
-          {mapInitError && (
-            <div className="absolute inset-0 flex items-center justify-center p-4">
-              <Alert variant="destructive" className="max-w-xl">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{mapInitError}</AlertDescription>
-              </Alert>
-            </div>
-          )}
+        {/* Carte */}
+        <div className="flex-1 min-h-0" style={{ minHeight: '400px' }}>
+          <div className="relative h-full w-full overflow-hidden bg-background">
+            {!mapboxToken ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <div ref={mapContainer} style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }} />
+            )}
 
-          {((isLoading && mapMode === 'pins') || (heatmapLoading && mapMode === 'heatmap')) && mapboxToken && !mapInitError && (
-            <div className="absolute top-4 left-4 bg-background/80 backdrop-blur rounded-lg px-4 py-2 flex items-center gap-2 shadow-lg">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="text-sm">{mapMode === 'heatmap' ? 'Chargement de l\'historique...' : 'Chargement des RDV...'}</span>
-            </div>
-          )}
+            {mapInitError && (
+              <div className="absolute inset-0 flex items-center justify-center p-4">
+                <Alert variant="destructive" className="max-w-xl">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{mapInitError}</AlertDescription>
+                </Alert>
+              </div>
+            )}
 
-          {selectedRdv && !isLoading && (
-            <RdvMiniPreview rdv={selectedRdv} onClose={() => setSelectedRdv(null)} />
-          )}
+            {((isLoading && mapMode === 'pins') || (heatmapLoading && mapMode === 'heatmap')) && mapboxToken && !mapInitError && (
+              <div className="absolute top-4 left-4 bg-background/80 backdrop-blur rounded-lg px-4 py-2 flex items-center gap-2 shadow-lg">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm">{mapMode === 'heatmap' ? 'Chargement de l\'historique...' : 'Chargement des RDV...'}</span>
+              </div>
+            )}
 
-          {error && !mapInitError && (
-            <div className="absolute top-4 left-4 right-4 max-w-md">
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            </div>
-          )}
+            {selectedRdv && !isLoading && (
+              <RdvMiniPreview rdv={selectedRdv} onClose={() => setSelectedRdv(null)} />
+            )}
 
-          {isTourMode && tourTech && sortedRdvs.length >= 2 && (
-            <TourSummaryBar
-              techName={tourTech.name}
-              techColor={tourTech.color}
-              rdvCount={sortedRdvs.length}
-              distanceKm={distanceKm}
-              durationMin={durationMin}
-              isLoading={routeLoading}
-            />
-          )}
+            {error && !mapInitError && (
+              <div className="absolute top-4 left-4 right-4 max-w-md">
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              </div>
+            )}
+
+            {isTourMode && tourTech && sortedRdvs.length >= 2 && (
+              <TourSummaryBar
+                techName={tourTech.name}
+                techColor={tourTech.color}
+                rdvCount={sortedRdvs.length}
+                distanceKm={distanceKm}
+                durationMin={durationMin}
+                isLoading={routeLoading}
+              />
+            )}
+          </div>
         </div>
-      </div>
+      </DraggableFolderContentContainer>
     </div>
   );
 }
