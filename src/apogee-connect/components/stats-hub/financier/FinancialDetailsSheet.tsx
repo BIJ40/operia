@@ -60,20 +60,8 @@ export function FinancialDetailsSheet({ entity, open, onClose, allEntities, onNa
   const canGoPrev = currentIndex > 0;
   const canGoNext = allEntities ? currentIndex < allEntities.length - 1 : false;
 
-  const handlePrev = () => {
-    if (canGoPrev && allEntities && onNavigate) {
-      onNavigate(allEntities[currentIndex - 1]);
-    }
-  };
-  const handleNext = () => {
-    if (canGoNext && allEntities && onNavigate) {
-      onNavigate(allEntities[currentIndex + 1]);
-    }
-  };
-
-  if (!entity) return null;
-
   const invoices = useMemo(() => {
+    if (!entity) return [];
     return [...entity.invoices].sort((a, b) => {
       const aVal = invoiceSort.field === 'dateEmission'
         ? (a.dateEmission?.getTime() ?? 0)
@@ -83,7 +71,7 @@ export function FinancialDetailsSheet({ entity, open, onClose, allEntities, onNa
         : b[invoiceSort.field];
       return invoiceSort.dir === 'asc' ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
     });
-  }, [entity.invoices, invoiceSort]);
+  }, [entity, invoiceSort]);
 
   const toggleInvoiceSort = (field: InvoiceSortField) => {
     setInvoiceSort(prev => ({
