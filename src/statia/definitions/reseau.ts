@@ -13,7 +13,63 @@ import {
   normalizeInterventionType
 } from '../engine/normalizers';
 import { indexProjectsById, indexUsersById } from '../engine/loaders';
-import { isActiveTechnician } from '@/shared/utils/technicienUniversEngine';
+import { isExcludedUserType, normalizeIsOn } from '@/apogee-connect/utils/techTools';
+
+function isFieldTechnician(user: any): boolean {
+  if (!user) return false;
+
+  const userType = String(user?.type || '').trim();
+  if (isExcludedUserType(userType)) return false;
+
+  const skills = user?.data?.skills ?? user?.skills;
+  const hasSkills = Array.isArray(skills) && skills.length > 0;
+  const isActive = normalizeIsOn(user?.is_on) || normalizeIsOn(user?.isActive);
+
+  return isActive && hasSkills;
+}
+
+function collectAssignedTechnicianIds(intervention: any): Array<string | number> {
+  const ids = new Set<string | number>();
+
+  const addOne = (value: unknown) => {
+    if (value === null || value === undefined) return;
+    const normalized = typeof value === 'number' ? value : String(value).trim();
+    if (normalized === '') return;
+    ids.add(normalized);
+  };
+
+  const addMany = (values: unknown) => {
+    if (!Array.isArray(values)) return;
+    values.forEach(addOne);
+  };
+
+  addOne(intervention?.userId ?? intervention?.user_id);
+  addMany(intervention?.usersIds ?? intervention?.userIds ?? intervention?.users_ids ?? intervention?.data?.usersIds ?? intervention?.data?.userIds ?? intervention?.data?.users_ids);
+
+  const visites = Array.isArray(intervention?.data?.visites)
+    ? intervention.data.visites
+    : Array.isArray(intervention?.visites)
+      ? intervention.visites
+      : [];
+
+  for (const visite of visites) {
+    addOne(visite?.userId ?? visite?.user_id);
+    addMany(visite?.usersIds ?? visite?.userIds ?? visite?.users_ids ?? visite?.data?.usersIds ?? visite?.data?.userIds ?? visite?.data?.users_ids);
+
+    const creneaux = Array.isArray(visite?.creneaux) ? visite.creneaux : [];
+    for (const creneau of creneaux) {
+      addOne(creneau?.userId ?? creneau?.user_id);
+      addMany(creneau?.usersIds ?? creneau?.userIds ?? creneau?.users_ids ?? creneau?.data?.usersIds ?? creneau?.data?.userIds ?? creneau?.data?.users_ids);
+    }
+  }
+
+  const biV3Items = Array.isArray(intervention?.data?.biV3?.items) ? intervention.data.biV3.items : [];
+  for (const item of biV3Items) {
+    addMany(item?.usersIds ?? item?.userIds ?? item?.users_ids);
+  }
+
+  return Array.from(ids);
+}
 
 /**
  * CA par Agence sur période
@@ -499,25 +555,10 @@ export const nbTechniciensActifs: StatDefinition = {
         }
       }
       
-      // Récupérer les techniciens des visites validées
-      const visites = intervention.data?.visites || intervention.visites || [];
-      for (const visite of visites) {
-        if (visite.state !== 'validated' && visite.state !== 'done') continue;
-        
-        const usersIds = visite.usersIds || [];
-        for (const userId of usersIds) {
-          const user = usersById.get(userId);
-          if (user && isActiveTechnician(user)) {
-            techniciensActifs.add(userId);
-          }
-        }
-      }
-      
-      // Fallback: userId principal
-      if (intervention.userId) {
-        const user = usersById.get(intervention.userId);
-        if (user && isActiveTechnician(user)) {
-          techniciensActifs.add(intervention.userId);
+      for (const techId of collectAssignedTechnicianIds(intervention)) {
+        const user = usersById.get(techId);
+        if (user && isFieldTechnician(user)) {
+          techniciensActifs.add(techId);
         }
       }
     }
@@ -587,7 +628,7 @@ export const caMoyenParTechnicienActif: StatDefinition = {
           if (!techId) continue;
           
           const user = usersById.get(techId);
-          if (!user || !isActiveTechnician(user)) continue;
+          if (!user || !isFieldTechnician(user)) continue;
           
           techniciensActifs.add(techId);
           
