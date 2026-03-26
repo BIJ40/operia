@@ -25,6 +25,8 @@ import { TourSummaryBar } from '@/components/map/TourSummaryBar';
 import { useRouteDirections } from '@/hooks/useRouteDirections';
 import { useProfile } from '@/contexts/ProfileContext';
 import { supabase } from '@/integrations/supabase/client';
+import { SimpleFolderTabsList, DraggableFolderContentContainer, FolderTabConfig } from '@/components/ui/draggable-folder-tabs';
+import { useSessionState } from '@/hooks/useSessionState';
 
 const MAPBOX_STYLE = 'mapbox://styles/bij40/cmjbi8grj000t01s3ajxo3amm';
 const FALLBACK_MAPBOX_STYLE = 'mapbox://styles/mapbox/streets-v12';
