@@ -32,6 +32,8 @@ const DEFAULT_ZOOM = 6;
 const TOUR_ROUTE_SOURCE = 'tour-route-source-pilotage';
 const TOUR_ROUTE_LAYER = 'tour-route-layer-pilotage';
 
+type ViewMode = 'day' | 'week';
+
 export default function MapsTabContent() {
   const { agence } = useProfile();
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -39,6 +41,7 @@ export default function MapsTabContent() {
   const markersRef = useRef<mapboxgl.Marker[]>([]);
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [selectedTechIds, setSelectedTechIds] = useState<number[]>([]);
   const [techFilterOpen, setTechFilterOpen] = useState(false);
   const [selectedRdv, setSelectedRdv] = useState<MapRdv | null>(null);
@@ -47,11 +50,58 @@ export default function MapsTabContent() {
   const [mapInitError, setMapInitError] = useState<string | null>(null);
   const [mapReady, setMapReady] = useState(false);
 
-  const { rdvs, isLoading, error, technicians } = useRdvMap({
+  // Day mode: single date query
+  const { rdvs: dayRdvs, isLoading: dayLoading, error: dayError, technicians } = useRdvMap({
     date: selectedDate,
     techIds: selectedTechIds.length > 0 ? selectedTechIds : undefined,
     agencySlug: agence || undefined,
   });
+
+  // Week mode: fetch each day of the week
+  const weekDays = useMemo(() => {
+    if (viewMode !== 'week') return [];
+    const start = startOfWeek(selectedDate, { weekStartsOn: 1 });
+    const end = endOfWeek(selectedDate, { weekStartsOn: 1 });
+    return eachDayOfInterval({ start, end });
+  }, [selectedDate, viewMode]);
+
+  const weekQueries = useQueries({
+    queries: weekDays.map(day => ({
+      queryKey: ['rdv-map', format(day, 'yyyy-MM-dd'), selectedTechIds.join(',') || 'all', agence],
+      queryFn: async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) throw new Error('Non authentifié');
+        const response = await supabase.functions.invoke('get-rdv-map', {
+          body: {
+            date: format(day, 'yyyy-MM-dd'),
+            techIds: selectedTechIds.length ? selectedTechIds : undefined,
+            agencySlug: agence,
+          },
+        });
+        if (response.error) throw new Error(response.error.message);
+        const result = response.data;
+        if (!result.success) throw new Error(result.error || 'Erreur');
+        return result.data as MapRdv[];
+      },
+      enabled: viewMode === 'week' && !!agence,
+      staleTime: 10 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+      refetchOnWindowFocus: false,
+    })),
+  });
+
+  const weekRdvs = useMemo(() => {
+    if (viewMode !== 'week') return [];
+    return weekQueries.flatMap(q => q.data || []);
+  }, [weekQueries, viewMode]);
+
+  const weekLoading = viewMode === 'week' && weekQueries.some(q => q.isLoading);
+  const weekError = viewMode === 'week' ? weekQueries.find(q => q.error)?.error : null;
+
+  // Unified data based on view mode
+  const rdvs = viewMode === 'day' ? dayRdvs : weekRdvs;
+  const isLoading = viewMode === 'day' ? dayLoading : weekLoading;
+  const error = viewMode === 'day' ? dayError : (weekError instanceof Error ? weekError.message : null);
 
   // Tour mode
   const isTourMode = selectedTechIds.length === 1;
