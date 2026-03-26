@@ -403,7 +403,7 @@ export default function MapsTabContent() {
   };
   const goToToday = () => setSelectedDate(new Date());
   const goToTomorrow = () => { setViewMode('day'); setSelectedDate(addDays(new Date(), 1)); };
-  const toggleMapMode = () => { setMapMode(prev => prev === 'pins' ? 'heatmap' : 'pins'); setSelectedRdv(null); };
+  const toggleMapMode = () => { setActiveSubTab(prev => prev === 'rdv' ? 'densite' : 'rdv'); setSelectedRdv(null); };
   const toggleWeekMode = () => setViewMode(prev => prev === 'week' ? 'day' : 'week');
 
   const toggleTechnician = (techId: number) => {
