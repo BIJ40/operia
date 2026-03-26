@@ -204,9 +204,14 @@ Deno.serve(async (req) => {
 
     // 4. Parser la requête
     const body: RequestBody = await req.json();
-    const { date, techIds, agencySlug: requestedAgency } = body;
+    const { date, from: fromDate, to: toDate, techIds, agencySlug: requestedAgency, mode = 'normal' } = body;
+    const isHeatmap = mode === 'heatmap';
 
-    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    // Date validation
+    const effectiveFrom = isHeatmap ? (fromDate || '2020-01-01') : date;
+    const effectiveTo = isHeatmap ? (toDate || new Date().toISOString().slice(0, 10)) : date;
+
+    if (!isHeatmap && (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date))) {
       return withCors(req, new Response(
         JSON.stringify({ success: false, error: 'Invalid date format (expected YYYY-MM-DD)' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
