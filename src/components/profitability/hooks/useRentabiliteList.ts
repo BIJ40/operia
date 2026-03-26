@@ -14,6 +14,7 @@ export interface RentabiliteListItem {
   projectLabel: string;
   projectRef: string;
   clientName: string;
+  libelle: string;
   univers: string;
   apporteurName: string;
   dateCreation: string | null;
@@ -69,6 +70,9 @@ export function useRentabiliteList() {
         const snapshot = snapshotMap.get(projectId) || null;
         const projectRef = String(proj.reference ?? proj.ref ?? proj.projectRef ?? projectId);
 
+        // Libellé du dossier
+        const libelle = String(proj.libelle ?? proj.label ?? proj.name ?? proj.titre ?? '');
+
         // Extract univers
         const univers = String(proj.univers ?? proj.universe ?? proj.typeUnivers ?? '');
 
@@ -93,6 +97,7 @@ export function useRentabiliteList() {
           projectLabel,
           projectRef,
           clientName,
+          libelle,
           univers,
           apporteurName,
           dateCreation,
@@ -108,6 +113,7 @@ export function useRentabiliteList() {
             projectLabel: `Dossier ${projectId}`,
             projectRef: projectId,
             clientName: '',
+            libelle: '',
             univers: '',
             apporteurName: '',
             dateCreation: null,
