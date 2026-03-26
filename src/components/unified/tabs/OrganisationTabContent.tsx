@@ -4,6 +4,7 @@
  */
 
 import { lazy, Suspense, useMemo } from 'react';
+import { useAgencyHasApporteurs } from '@/hooks/useAgencyHasApporteurs';
 import { cn } from '@/lib/utils';
 import { Users, Handshake, CalendarDays, Users2, Car, FileText, Shield, MapPin, MessagesSquare, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -40,6 +41,7 @@ export default function OrganisationTabContent() {
   const { hasModule, isDeployedModule, globalRole, isAdmin } = usePermissions();
   const { getShortLabel } = useModuleLabels();
   const { mode: navMode } = useNavigationMode();
+  const agencyHasApporteurs = useAgencyHasApporteurs();
 
   const allTabs: (PillTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
     { id: 'collaborateurs', label: getShortLabel('organisation.salaries', 'Salariés'), icon: Users, accent: 'blue', requiresModule: 'organisation.salaries' },
@@ -59,13 +61,15 @@ export default function OrganisationTabContent() {
     return allTabs
       .filter(tab => {
         if (tab.requiresModule && !isDeployedModule(tab.requiresModule)) return false;
+        // Hide apporteur tabs if agency has no apporteurs
+        if ((tab.id === 'apporteurs' || tab.id === 'echanges-apporteurs') && !agencyHasApporteurs) return false;
         return true;
       })
       .map(tab => {
         if (!tab.requiresModule) return tab;
         return { ...tab, disabled: !isAdmin && !hasModule(tab.requiresModule) };
       });
-  }, [allTabs, hasModule, isAdmin, isDeployedModule]);
+  }, [allTabs, hasModule, isAdmin, isDeployedModule, agencyHasApporteurs]);
 
   const defaultTab = (visibleTabs.find(t => !t.disabled)?.id as OrganisationSubTab) ?? 'collaborateurs';
   const [activeTab, setActiveTab] = useSessionState<OrganisationSubTab>('organisation_sub_tab', defaultTab);
