@@ -18,7 +18,7 @@ interface MapRdv {
 }
 interface RequestBody {
   date?: string; from?: string; to?: string;
-  mode?: 'normal' | 'heatmap' | 'profitability' | 'zones';
+  mode?: 'normal' | 'heatmap' | 'profitability' | 'zones' | 'apporteurs';
   techIds?: number[]; agencySlug?: string;
 }
 
