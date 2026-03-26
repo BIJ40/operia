@@ -470,7 +470,98 @@ Deno.serve(async (req) => {
       ));
     }
 
-    // 9. Transformer les interventions en MapRdv (normal mode)
+    // ── PROFITABILITY FAST PATH ──
+    // Returns per-project aggregated: {lat, lng, ca, hours, margin}
+    if (isProfitability) {
+      // Fetch factures for CA data
+      const facturesUrl = `https://${targetAgency}.hc-apogee.fr/api/apiGetFactures`;
+      const facturesResponse = await fetch(facturesUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ API_KEY: apiKey }),
+      });
+      const factures = facturesResponse.ok ? await facturesResponse.json() : [];
+
+      // Build CA per project from factures
+      const caByProject = new Map<number, number>();
+      for (const f of factures) {
+        const pid = f.projectId;
+        if (typeof pid !== 'number') continue;
+        const isAvoir = (f.typeFacture || f.type || '').toLowerCase() === 'avoir';
+        const montant = parseFloat(f.data?.totalHT ?? f.totalHT ?? f.montantHT ?? 0) || 0;
+        const net = isAvoir ? -Math.abs(montant) : montant;
+        caByProject.set(pid, (caByProject.get(pid) || 0) + net);
+      }
+
+      // Build total hours per project from interventions
+      const hoursByProject = new Map<number, number>();
+      for (const intervention of interventions as any[]) {
+        const pid = intervention.projectId;
+        if (typeof pid !== 'number') continue;
+        const data = intervention?.data || {};
+        const visites = Array.isArray(data.visites) ? data.visites : [];
+        let totalMin = 0;
+        for (const v of visites) {
+          totalMin += typeof v?.duree === 'number' ? v.duree : 60;
+        }
+        if (totalMin === 0) totalMin = typeof intervention?.duree === 'number' ? intervention.duree : 60;
+        hoursByProject.set(pid, (hoursByProject.get(pid) || 0) + totalMin / 60);
+      }
+
+      // Estimated hourly cost (average for the sector ~35€/h all-in)
+      const ESTIMATED_HOURLY_COST = 35;
+
+      // Aggregate per project with coordinates
+      const projectPoints: { lat: number; lng: number; ca: number; hours: number; margin: number; projectId: number }[] = [];
+      const processedProjects = new Set<number>();
+      let profSkipped = 0;
+
+      for (const intervention of interventions as any[]) {
+        const pid = intervention.projectId;
+        if (processedProjects.has(pid)) continue;
+        processedProjects.add(pid);
+
+        const project = projectsById.get(pid);
+        if (!project) { profSkipped++; continue; }
+
+        const rawClientId = intervention.client_id ?? project.clientId;
+        const clientId = typeof rawClientId === 'number' ? rawClientId : null;
+        const client = clientId ? clientsById.get(clientId) : undefined;
+        if (!client?.address) { profSkipped++; continue; }
+
+        const coords = await geocodeAddress(client.address, client.postalCode, client.city);
+        if (!coords) { profSkipped++; continue; }
+
+        const ca = caByProject.get(pid) || 0;
+        const hours = hoursByProject.get(pid) || 0;
+        const estimatedCost = hours * ESTIMATED_HOURLY_COST;
+        const margin = ca - estimatedCost;
+
+        if (ca === 0 && hours === 0) { profSkipped++; continue; }
+
+        projectPoints.push({ ...coords, ca, hours, margin, projectId: pid });
+      }
+
+      console.log(`[GET-RDV-MAP] Profitability for ${targetAgency}: ${projectPoints.length} projects, ${profSkipped} skipped`);
+
+      return withCors(req, new Response(
+        JSON.stringify({
+          success: true,
+          data: projectPoints,
+          meta: {
+            mode: 'profitability',
+            from: effectiveFrom,
+            to: effectiveTo,
+            agencySlug: targetAgency,
+            totalPoints: projectPoints.length,
+            estimatedHourlyCost: ESTIMATED_HOURLY_COST,
+            timestamp: new Date().toISOString(),
+          },
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      ));
+    }
+
     const mapRdvs: MapRdv[] = [];
     let skippedNoProject = 0;
     let skippedNoClientAddress = 0;
