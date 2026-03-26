@@ -1,42 +1,109 @@
 
 
-# Plan : Audit de sécurité PDF officiel pour Operia
+# Plan: Popup dossier partagee apporteur/agence + regle metier de reponse
 
-## Objectif
-Générer un document PDF professionnel, présenté comme un rapport d'audit de sécurité indépendant, destiné à rassurer un client sur la protection des données. Le rapport sera basé sur les données réelles du codebase et des audits internes existants.
+## Contexte
 
-## Contenu du rapport
+La popup `DossierDetailDialog` existe cote apporteur. Il faut la rendre utilisable cote OPERIA (agence), avec une regle metier simple pour le droit de reponse: N2 toujours, N1 assistante uniquement, tous les autres en lecture seule. Les boutons d'action legacy (Annuler, Relancer, Donner une info) sont supprimes au profit du fil d'echanges unique.
 
-**En-tête** : Logo fictif d'agence d'audit (ex: "SecureOps Consulting"), date, référence, mentions de confidentialité.
+---
 
-### Sections prévues
+## Changements
 
-1. **Page de garde** — Titre, client (HC Services / Operia), date, classification "Confidentiel", numéro de rapport
-2. **Sommaire exécutif** — Verdict global, score, périmètre audité
-3. **Périmètre et méthodologie** — Architecture auditée (SPA React + Supabase + Edge Functions), approche (revue de code, analyse des politiques d'accès, tests de configuration)
-4. **Authentification et gestion des sessions** — JWT GoTrue, refresh auto, protection comptes désactivés, infrastructure MFA (TOTP) pour administrateurs N4+
-5. **Contrôle d'accès et permissions** — 7 niveaux hiérarchiques, moteur de permissions centralisé, RLS sur 70+ tables, triggers de protection anti-escalade, SECURITY DEFINER
-6. **Chiffrement des données sensibles** — AES-256-GCM via Edge Function, données RGPD chiffrées au repos, gouvernance de la clé documentée
-7. **Sécurité réseau et transport** — HTTPS/TLS obligatoire, CSP, CORS strict, signed URLs pour le stockage
-8. **Protection contre les fuites de données** — Audit des secrets exposés, aucune clé privée dans le frontend, RLS comme barrière serveur, export données RGPD (droit à la portabilité)
-9. **Conformité RGPD** — Chiffrement données sensibles, export personnel (`export-my-data`), purge automatique (rétention configurée), audit trail (`activity_log`)
-10. **Observabilité et détection d'incidents** — Sentry (frontend + Edge), logger structuré, health-check endpoint, monitoring
-11. **Sauvegarde et reprise** — Backups Supabase, procédure de restauration, runbook clé de chiffrement
-12. **Recommandations** — Points d'amélioration classés par priorité (déjà largement adressés)
-13. **Conclusion et attestation** — Verdict formel, signature
+### 1. Refonte DossierDetailDialog — popup partagee
 
-## Approche technique
+**Fichier**: `src/apporteur/components/cockpit/DossierDetailDialog.tsx`
 
-- Script Python avec **ReportLab** pour générer le PDF
-- Palette professionnelle sobre (bleu marine / gris)
-- Tableaux de scores, matrices de conformité, diagrammes textuels
-- QA visuelle obligatoire (conversion en images + inspection)
-- Fichier livré dans `/mnt/documents/audit-securite-operia-2026.pdf`
+- Ajouter prop `viewerType: 'apporteur' | 'agence'` (defaut: `'apporteur'`)
+- Ajouter prop optionnelle `viewerName?: string` et `viewerCanReply?: boolean`
+- **Supprimer** tout le bloc "Actions" (Annuler, Relancer, Donner une info + textarea associee, lignes 303-385)
+- Conserver Valider/Refuser devis uniquement si `viewerType === 'apporteur'`
+- Chat input: 
+  - Si `viewerCanReply === true` : actif, placeholder adapte selon viewerType
+  - Si `viewerCanReply === false` : desactive + message "Seuls le dirigeant et les assistantes peuvent repondre aux apporteurs."
+- Afficher le nom de l'expediteur dans chaque message du fil (deja fait)
+- Ajouter le poste a cote du nom dans les messages agence: "Marie (Assistante)"
 
-## Ton et présentation
+### 2. Fonction utilitaire — droit de reponse
 
-- Langage formel, impartial, tiers indépendant
-- Scores chiffrés par domaine (sur 10)
-- Mentions positives et points d'attention équilibrés
-- Pas de jargon interne Lovable — langage client-facing
+**Fichier**: `src/lib/canReplyToApporteur.ts` (nouveau)
+
+```typescript
+export function canReplyToApporteur(
+  globalRole: string | null, 
+  roleAgence: string | null
+): boolean {
+  if (globalRole === 'franchisee_admin') return true;
+  if (globalRole === 'franchisee_user') {
+    const poste = roleAgence?.toLowerCase();
+    return poste?.includes('assistante') || poste?.includes('secretaire') || false;
+  }
+  return false;
+}
+```
+
+### 3. Edge Function reponse agence
+
+**Fichier**: `supabase/functions/agency-dossier-reply/index.ts` (nouveau)
+
+- Authentification via JWT Supabase (utilisateur OPERIA connecte)
+- Recuperer le profil (global_role, role_agence) depuis `profiles`
+- Verification serveur: `canReplyToApporteur(global_role, role_agence)` — sinon 403
+- Inserer dans `dossier_exchanges` avec `sender_type = 'agence'`, `sender_name = "Prenom Nom (Poste)"`
+- Envoyer un email de notification a l'apporteur (via Resend)
+- Retourner succes
+
+### 4. Migration SQL
+
+- Etendre le CHECK constraint `action_type` de `dossier_exchanges` pour ajouter `'valider_devis'`, `'refuser_devis'`, `'systeme'`, `'message'`
+- Pas de colonne `receive_apporteur_notifications` pour l'instant (simplifie — V1 sans systeme de preferences)
+
+### 5. Section "Echanges apporteurs" cote OPERIA
+
+**Fichier**: `src/components/agency/AgencyApporteurExchanges.tsx` (nouveau)
+
+- Liste les dossiers ayant des echanges recents pour l'agence de l'utilisateur
+- Requete sur `dossier_exchanges` filtree par `agency_id`
+- Indicateur visuel: badge "Reponse requise" si dernier message = apporteur
+- Clic sur un dossier → ouvre `DossierDetailDialog` avec `viewerType='agence'`
+- Le `viewerCanReply` est calcule via `canReplyToApporteur(globalRole, roleAgence)`
+
+**Integration**: Ajouter un onglet/lien dans la navigation OPERIA (section Organisation ou Commercial)
+
+### 6. Hook echanges cote agence
+
+**Fichier**: `src/hooks/useAgencyExchanges.ts` (nouveau)
+
+- Requete directe Supabase (pas edge function) sur `dossier_exchanges` filtree par `agency_id`
+- Groupement par `dossier_ref` avec dernier message et compteur non-lu (basique: dernier sender_type)
+
+### 7. Hook reponse agence
+
+**Fichier**: `src/hooks/useAgencyDossierReply.ts` (nouveau)
+
+- Appel `supabase.functions.invoke('agency-dossier-reply', { body: { dossierRef, message } })`
+- Invalidation du cache echanges apres envoi
+
+---
+
+## Details techniques importants
+
+| Point | Decision |
+|---|---|
+| Poste "assistante" | Normalise en lowercase, match avec `includes('assistante')` ou `includes('secretaire')` |
+| Double reponse | Pas de verrou en V1 — auteur + timestamp visible suffisent |
+| Boutons actions | Supprimes de la popup — tout passe par le chat |
+| Valider/Refuser devis | Reste sur la popup apporteur uniquement, event ajoute au fil |
+| Inbound email | Phase ulterieure, pas dans ce scope |
+
+---
+
+## Ordre d'implementation
+
+1. Creer `canReplyToApporteur.ts`
+2. Migration SQL (etendre action_type)
+3. Refondre `DossierDetailDialog` (supprimer actions, ajouter props viewerType/viewerCanReply)
+4. Creer edge function `agency-dossier-reply`
+5. Creer hooks agence (exchanges + reply)
+6. Creer `AgencyApporteurExchanges.tsx` + integration navigation OPERIA
 
