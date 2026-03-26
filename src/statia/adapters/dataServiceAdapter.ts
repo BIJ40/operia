@@ -21,6 +21,7 @@ import {
 } from '@/services/mirrorDataSource';
 import { readMirrorData } from '@/services/mirrorReadAdapter';
 import { mapMirrorRecords, runSilentComparison, isMirrorUsableForModule } from '@/services/mirrorValidation';
+import { logMirrorDecision, recordMetric } from '@/services/mirrorPilotActivation';
 
 // ============================================================
 // AGENCY ID RESOLUTION HELPER
@@ -85,6 +86,8 @@ async function withMirrorResolution(
   if (resolved.effectiveSource === 'live') {
     if (resolved.fallbackReason) {
       logSourceResolution(moduleKey, agencyId, resolved);
+      recordMetric(moduleKey, resolved, 0);
+      logMirrorDecision(moduleKey, agencyId, resolved);
     }
     return liveFn();
   }
@@ -118,6 +121,8 @@ async function withMirrorResolution(
     runSilentComparison(moduleKey, agencyId, mappedData, liveFn);
 
     logSourceResolution(moduleKey, agencyId, resolved, mappedData.length);
+    recordMetric(moduleKey, resolved, mappedData.length);
+    logMirrorDecision(moduleKey, agencyId, resolved, mappedData.length, quality);
     return mappedData;
   } catch (err) {
     // If mirror read fails, fallback to live
