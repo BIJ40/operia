@@ -98,15 +98,25 @@ export function normalizeGeneratedDocs(raw: unknown): NormalizedDoc[] {
     }
   }
 
+  // Dédupliquer par id (l'API Apogée peut renvoyer des doublons dans les groupes)
+  const seen = new Set<string>();
+  const uniqueDocs = docs.filter(d => {
+    // Pour les IDs générés (fallback), on garde tout
+    if (d.id.includes('-')) return true;
+    if (seen.has(d.id)) return false;
+    seen.add(d.id);
+    return true;
+  });
+
   // Tri par date décroissante (plus récent en premier)
-  docs.sort((a, b) => {
+  uniqueDocs.sort((a, b) => {
     if (!a.date && !b.date) return 0;
     if (!a.date) return 1;
     if (!b.date) return -1;
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 
-  return docs;
+  return uniqueDocs;
 }
 
 /**

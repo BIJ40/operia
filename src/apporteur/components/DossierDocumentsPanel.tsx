@@ -30,7 +30,8 @@ const CATEGORY_ICONS: Record<string, typeof FileText> = {
   projects: FolderOpen,
 };
 
-const CATEGORY_ORDER = ['factures', 'devis', 'interventions', 'projects'];
+// Apporteurs ne voient que devis et factures
+const CATEGORY_ORDER = ['factures', 'devis'];
 
 export default function DossierDocumentsPanel({ dossierRef, agencySlug }: Props) {
   const { data, isLoading, isError } = useProjectDetail({
