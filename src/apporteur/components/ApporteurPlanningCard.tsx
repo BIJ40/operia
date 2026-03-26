@@ -99,49 +99,7 @@ function getTypeBorderColor(type: string): string {
   return TYPE_COLORS.default;
 }
 
-// ─── Stepper (detail sheet) ──────────────────────────────────────────────────
-
-function DossierStepper({ dossier }: { dossier: DossierRow }) {
-  const completedSteps: StepperStep[] = [];
-  if (dossier.dateCreation) completedSteps.push('created');
-  if (dossier.datePremierRdv) completedSteps.push('rdv_planned');
-  if (dossier.dateDevisEnvoye) completedSteps.push('devis_sent');
-  if (dossier.dateDevisValide) completedSteps.push('devis_validated');
-  if (dossier.dateFacture) completedSteps.push('invoice_sent');
-  if (dossier.dateReglement) completedSteps.push('invoice_paid');
-
-  const stepDates: Record<StepperStep, string | null> = {
-    created: dossier.dateCreation,
-    rdv_planned: dossier.datePremierRdv,
-    devis_sent: dossier.dateDevisEnvoye,
-    devis_validated: dossier.dateDevisValide,
-    invoice_sent: dossier.dateFacture,
-    invoice_paid: dossier.dateReglement,
-  };
-
-  return (
-    <div className="space-y-1.5">
-      {STEPPER_STEPS_ORDERED.map((step) => {
-        const done = completedSteps.includes(step);
-        return (
-          <div key={step} className="flex items-center gap-2">
-            {done ? (
-              <CheckCircle2 className="w-4 h-4 text-[hsl(var(--ap-success))] shrink-0" />
-            ) : (
-              <Circle className="w-4 h-4 text-muted-foreground/40 shrink-0" />
-            )}
-            <span className={cn("text-sm flex-1", done ? "text-foreground" : "text-muted-foreground")}>
-              {STEPPER_LABELS[step]}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {stepDates[step] ? formatDate(stepDates[step]) : '—'}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
+// DossierStepper removed — using unified DossierDetailDialog
 
 // ─── Event Card ──────────────────────────────────────────────────────────────
 
