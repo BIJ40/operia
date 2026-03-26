@@ -1178,6 +1178,7 @@ export default function MapsTabContent() {
           </div>
         )}
 
+        <div className="flex-1 min-h-0" style={{ minHeight: '400px' }}>
           <div className="relative h-full w-full overflow-hidden bg-background">
             {!mapboxToken ? (
               <div className="absolute inset-0 flex items-center justify-center bg-muted">
