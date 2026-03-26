@@ -86,6 +86,43 @@ const TAB_ACCENT_COLORS: Record<string, string> = {
   orange: 'hsl(var(--warm-orange))',
 };
 
+/** Animated progress overlay for analytics map modes */
+function MapLoadingOverlay({ mode }: { mode: MapMode }) {
+  const [progress, setProgress] = useState(0);
+  
+  useEffect(() => {
+    setProgress(0);
+    // Simulate progress: fast start, slow finish (asymptotic to 95%)
+    const interval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 95) return 95;
+        // Fast at start, slowing down
+        const increment = prev < 30 ? 8 : prev < 60 ? 4 : prev < 80 ? 2 : 0.5;
+        return Math.min(95, prev + increment);
+      });
+    }, 300);
+    return () => clearInterval(interval);
+  }, [mode]);
+
+  const labels: Record<MapMode, string> = {
+    pins: 'Chargement des RDV…',
+    heatmap: 'Analyse de densité historique…',
+    profitability: 'Calcul de rentabilité par zone…',
+    zones: 'Analyse des zones commerciales…',
+  };
+
+  return (
+    <div className="absolute top-4 left-4 right-4 max-w-md bg-background/90 backdrop-blur rounded-lg px-4 py-3 shadow-lg border border-border space-y-2 z-10">
+      <div className="flex items-center gap-2">
+        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+        <span className="text-sm font-medium">{labels[mode]}</span>
+        <span className="text-xs text-muted-foreground ml-auto">{Math.round(progress)}%</span>
+      </div>
+      <Progress value={progress} className="h-1.5" indicatorClassName="bg-primary transition-all duration-300" />
+    </div>
+  );
+}
+
 export default function MapsTabContent() {
   const { agence } = useProfile();
   const mapContainer = useRef<HTMLDivElement>(null);
