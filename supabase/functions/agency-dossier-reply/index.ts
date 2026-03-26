@@ -173,7 +173,24 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Fallback 1 : manager actif lié à l'apporteur_id
+      // Fallback 1 : apporteur_users (comptes de connexion OPERIA apporteur)
+      if (!apporteurEmail && request?.apporteur_id) {
+        const { data: appUsers } = await supabaseAdmin
+          .from('apporteur_users')
+          .select('email, first_name, last_name')
+          .eq('apporteur_id', request.apporteur_id)
+          .eq('is_active', true)
+          .order('created_at', { ascending: true })
+          .limit(1);
+
+        if (appUsers?.length && appUsers[0].email) {
+          apporteurEmail = appUsers[0].email;
+          apporteurName = [appUsers[0].first_name, appUsers[0].last_name].filter(Boolean).join(' ') || null;
+          emailSource = 'apporteur_id_fallback';
+        }
+      }
+
+      // Fallback 2 : manager actif lié à l'apporteur_id
       if (!apporteurEmail && request?.apporteur_id) {
         const { data: managers } = await supabaseAdmin
           .from('apporteur_managers')
