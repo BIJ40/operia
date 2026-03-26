@@ -1,118 +1,92 @@
 
-# Plan: Popup dossier partagee apporteur/agence + regle metier de reponse
 
-## Etat actuel
+# Plan : Carte choroplèthe par communes (polygones)
 
-- `DossierDetailDialog.tsx` (461 lignes) : popup apporteur avec stepper, infos, bloc "Actions" legacy (Annuler/Relancer/Info lines 303-385), fil d'echanges + chat input
-- `dossier_exchanges` table : `action_type CHECK ('annuler', 'relancer', 'info', 'reponse')` — a etendre
-- Source de verite poste : `profiles.role_agence` expose via `AuthContext.roleAgence`
-- Navigation OPERIA : section Organisation contient deja "Apporteurs" (subTab `apporteurs`)
+## Objectif
+Remplacer les cercles par de vrais polygones communaux colorés selon la métrique active — comme les images de référence montrant chaque ville surlignée.
 
----
+## Architecture technique
 
-## 1. Creer `src/lib/canReplyToApporteur.ts`
+### Phase 1 — API geo.api.gouv.fr (rapide, sans stockage)
 
-Helper unique, source de verite front pour le droit de reponse :
+**Edge Function `get-rdv-map`** : nouveau mode + enrichissement des modes existants
 
-```typescript
-export function canReplyToApporteur(
-  globalRole: string | null,
-  roleAgence: string | null
-): boolean {
-  if (globalRole === 'franchisee_admin') return true;
-  const isAgencyUser = globalRole === 'franchisee_user' || globalRole === 'user' || globalRole === 'agency_user';
-  if (isAgencyUser) {
-    const poste = roleAgence?.toLowerCase() ?? '';
-    return poste.includes('assistante') || poste.includes('secretaire');
-  }
-  return false;
-}
+1. **Récupérer les codes INSEE via BAN** : L'API BAN retourne déjà un champ `citycode` (code INSEE) dans ses résultats de géocodage. On l'extrait et le stocke dans `geocode_cache` (nouvelle colonne `code_insee`).
+
+2. **Récupérer les polygones communaux** : Appeler `https://geo.api.gouv.fr/communes?codeDepartement=40,64&fields=code,nom,contour&format=geojson` pour obtenir les contours des communes Landes + Pyrénées-Atlantiques. Résultat mis en cache mémoire dans l'edge function.
+
+3. **Joindre métriques ↔ polygones** : Agréger les données métier par `code_insee` (au lieu de code postal), puis injecter les métriques dans les `properties` de chaque Feature du GeoJSON communal.
+
+4. **Retourner un GeoJSON complet** avec `geometry: Polygon/MultiPolygon` + propriétés métier.
+
+**Frontend `MapsTabContent.tsx`** :
+
+5. **Remplacer les circle-layers par fill-layer + line-layer** pour les onglets concernés (Densité, Rentabilité, Zones blanches, Score global, Saisonnalité, Apporteurs).
+
+6. **Ajouter un switch "Vue points / Vue communes"** pour garder la possibilité de voir les points individuels quand c'est pertinent (RDV, Disponibilité restent en mode points).
+
+7. **Popups au clic sur polygone** : mêmes infos qu'aujourd'hui, mais déclenchés sur le fill-layer.
+
+## Détails d'implémentation
+
+### Edge Function
+
+```text
+geo.api.gouv.fr/communes?codeDepartement=40,64
+  → ~700 communes avec contours simplifiés (~500 KB)
+  → caché en mémoire (durée de vie du worker)
+
+BAN geocoding enrichi :
+  response.features[0].properties.citycode → code_insee
+  stocké dans geocode_cache.code_insee
+
+Agrégation par code_insee :
+  nb_dossiers, ca_total, marge, taux_transfo, score, etc.
+
+Retour : GeoJSON FeatureCollection avec Polygon geometries
 ```
 
-## 2. Migration SQL — etendre action_type
+### Frontend Mapbox
 
-```sql
-ALTER TABLE public.dossier_exchanges
-  DROP CONSTRAINT dossier_exchanges_action_type_check;
-ALTER TABLE public.dossier_exchanges
-  ADD CONSTRAINT dossier_exchanges_action_type_check
-  CHECK (action_type IN ('annuler', 'relancer', 'info', 'reponse', 'message', 'valider_devis', 'refuser_devis', 'systeme'));
+```text
+fill-layer :
+  fill-color → interpolation sur la métrique
+  fill-opacity → 0.6-0.75
+  fill-outline-color → blanc
+
+line-layer :
+  line-color → blanc
+  line-width → 1px
+
+symbol-layer (labels) :
+  text-field → nom commune
+  text-size → adapté au zoom
 ```
 
-## 3. Refonte `DossierDetailDialog.tsx`
+### Onglets concernés
 
-**Props ajoutees** :
-- `viewerType?: 'apporteur' | 'agence'` (defaut `'apporteur'`)
-- `viewerName?: string`
-- `viewerCanReply?: boolean` (defaut `true` pour apporteur)
+| Onglet | Métrique fill-color | Garde aussi les points ? |
+|--------|-------------------|------------------------|
+| Densité | nb_dossiers | Non (heatmap remplacée) |
+| Rentabilité | marge/CA ratio | Optionnel |
+| Zones blanches | activityIndex | Non |
+| Apporteurs | nb_apporteurs | Non |
+| Saisonnalité | variation mensuelle | Non |
+| Score global | score composite | Non |
+| RDV | — | Oui (reste en pins) |
+| Disponibilité | — | Oui (reste en pins) |
 
-**Suppressions** (lignes 42-48, 117, 127-144, 303-385) :
-- `ACTION_CONFIG`, `QuickAction`, `activeAction` state, `message` state
-- `handleSendAction` handler
-- Tout le bloc "Actions directes" (Quick actions + textarea conditionnelle)
+### Migration DB
 
-**Conserve** :
-- Valider/Refuser devis uniquement si `viewerType === 'apporteur'`
-- Chat input : placeholder adapte (`Ecrire a l'agence...` vs `Ecrire a l'apporteur...`)
-- Si `viewerCanReply === false` : textarea disabled + message explicatif
+Ajouter colonne `code_insee TEXT` à la table `geocode_cache` pour stocker le code INSEE retourné par BAN.
 
-**Ajouts** :
-- Dans le fil, pour les messages agence, afficher le poste a cote du nom si dispo dans `metadata`
-- Labels action_type enrichis : `message` → bulle classique, `valider_devis`/`refuser_devis` → badge metier, `systeme` → ligne timeline centree
+## Fichiers modifiés
+- `supabase/functions/get-rdv-map/index.ts` — logique polygones + code INSEE
+- `src/components/unified/tabs/MapsTabContent.tsx` — fill/line layers
+- Migration SQL — colonne `code_insee` sur `geocode_cache`
 
-## 4. Edge Function `agency-dossier-reply`
+## Ce qui ne change pas
+- Onglet "RDV" reste en mode pins/markers
+- Onglet "Disponibilité" reste en mode pins temps réel
+- Tour Mode inchangé
 
-Nouveau fichier : `supabase/functions/agency-dossier-reply/index.ts`
-
-- Auth via JWT Supabase (`getClaims`)
-- Recupere profil : `global_role`, `role_agence`, `first_name`, `last_name`, `agency_id`
-- Applique `canReplyToApporteur(global_role, role_agence)` — sinon 403
-- Insere dans `dossier_exchanges` : `sender_type='agence'`, `sender_name`, `action_type='message'`, `metadata: { role_label: poste }`
-- Envoie email notification a l'apporteur via Resend (sujet : `[Dossier REF] Nouveau message de l'agence`)
-- Utilise CORS partage
-
-## 5. Hook `src/hooks/useAgencyDossierReply.ts`
-
-- `supabase.functions.invoke('agency-dossier-reply', { body: { dossierRef, message } })`
-- Invalidation `['apporteur-exchanges', dossierRef]` + `['agency-exchanges']`
-
-## 6. Hook `src/hooks/useAgencyExchanges.ts`
-
-- Query Supabase directe sur `dossier_exchanges` filtree par `agency_id` du user connecte
-- Retourne une liste agregee par `dossier_ref` : `last_message_at`, `last_sender_type`, `last_message_preview`, `sender_name`
-- Badge : "Reponse requise" si `last_sender_type === 'apporteur'`
-
-## 7. Composant `src/components/agency/AgencyApporteurExchanges.tsx`
-
-- Liste des dossiers avec echanges pour l'agence
-- Recherche par ref/nom
-- Apercu dernier message + date + badge "Reponse requise"
-- Clic ligne → ouvre `DossierDetailDialog` avec `viewerType='agence'`, `viewerCanReply` calcule via `canReplyToApporteur`
-- Necessite `useAuth()` pour `globalRole`, `roleAgence`, `agencyId`, `firstName`, `lastName`
-
-## 8. Integration navigation OPERIA
-
-Dans `headerNavigation.ts`, sous le groupe Organisation, ajouter :
-```
-{ label: 'Echanges apporteurs', icon: MessagesSquare, tab: 'organisation',
-  description: 'Fil de discussion avec les apporteurs',
-  scope: 'organisation.apporteurs',
-  subTabKey: 'organisation_sub_tab', subTabValue: 'echanges-apporteurs' }
-```
-
-Ajouter le rendu du composant `AgencyApporteurExchanges` dans le routage de l'onglet Organisation pour le subTab `echanges-apporteurs`.
-
----
-
-## Ordre d'implementation
-
-1. `canReplyToApporteur.ts`
-2. Migration SQL
-3. Refonte `DossierDetailDialog`
-4. Edge function `agency-dossier-reply` + deploy
-5. `useAgencyDossierReply` + `useAgencyExchanges`
-6. `AgencyApporteurExchanges` + integration navigation
-
-## Hors scope V1
-
-Inbound email, preferences notifications, non-lu, verrou anti-double, notes internes, statuts conversation.
