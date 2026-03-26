@@ -192,7 +192,7 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
                             )}
                             {(isFactureAlert || isDevisAlert) && (
                               <td className="py-2.5 pr-3 text-right tabular-nums">
-                                {detail.amount ? formatCurrency(detail.amount) : '—'}
+                                {detail.amount ? formatCurrency(Math.round(detail.amount)) : '—'}
                               </td>
                             )}
                             {isFactureAlert && (
