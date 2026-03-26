@@ -75,7 +75,7 @@ export const COLUMNS: ColumnDef[] = [
   { key: 'element_concerne', label: 'Titre', sortable: true, minWidth: 150, defaultWidth: 280, id: 'title' },
   { key: 'actions', label: 'Tags', sortable: false, minWidth: 80, defaultWidth: 120, id: 'tags' },
   { key: 'module', label: 'Module', sortable: true, minWidth: 80, defaultWidth: 110, id: 'module' },
-  { key: 'kanban_status', label: 'Statut', sortable: true, minWidth: 100, defaultWidth: 120, id: 'status' },
+  { key: 'kanban_status', label: 'Statut', sortable: true, minWidth: 120, defaultWidth: 150, id: 'status' },
   { key: 'actions', label: 'PEC', sortable: false, minWidth: 60, defaultWidth: 90, id: 'pec' },
   { key: 'actions', label: 'Origine', sortable: false, minWidth: 80, defaultWidth: 100, id: 'origine' },
   { key: 'actions', label: 'Est.', sortable: false, minWidth: 50, defaultWidth: 60, id: 'estimation' },
