@@ -1,5 +1,9 @@
 /**
- * BankConnectionSheet — Flow de connexion bancaire
+ * BankConnectionSheet — Flow de préparation de connexion bancaire
+ * 
+ * IMPORTANT: Ce flow crée un enregistrement de connexion interne (État A).
+ * La liaison réelle avec le provider bancaire (État B → E) sera activée 
+ * quand le provider sera branché côté backend.
  */
 
 import { useState } from 'react';
@@ -7,7 +11,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Landmark, Shield, ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
+import { Landmark, Shield, ArrowRight, Clock, Loader2, Info } from 'lucide-react';
 import { useCreateBankConnection } from '@/apogee-connect/hooks/useTreasury';
 import { toast } from 'sonner';
 
@@ -29,7 +33,7 @@ export function BankConnectionSheet({ open, onOpenChange }: Props) {
     try {
       await createConnection.mutateAsync({ displayName: displayName.trim() });
       setStep('done');
-      toast.success('Connexion bancaire créée');
+      toast.success('Connexion préparée');
     } catch {
       toast.error('Erreur lors de la création');
       setStep('name');
@@ -50,10 +54,10 @@ export function BankConnectionSheet({ open, onOpenChange }: Props) {
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <Landmark className="h-5 w-5 text-primary" />
-            Connecter une banque
+            Préparer une connexion bancaire
           </SheetTitle>
           <SheetDescription>
-            Ajoutez une connexion bancaire pour suivre votre trésorerie en temps réel.
+            Préparez l'intégration de votre compte bancaire pour le suivi de trésorerie.
           </SheetDescription>
         </SheetHeader>
 
@@ -65,22 +69,29 @@ export function BankConnectionSheet({ open, onOpenChange }: Props) {
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   <li className="flex items-start gap-2">
                     <span className="font-semibold text-foreground shrink-0">1.</span>
-                    Vous nommez votre connexion
+                    Vous nommez votre connexion bancaire
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="font-semibold text-foreground shrink-0">2.</span>
-                    Vous êtes redirigé vers votre banque pour autoriser l'accès
+                    L'intégration est préparée dans Operia
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="font-semibold text-foreground shrink-0">3.</span>
-                    Vos comptes et transactions sont synchronisés automatiquement
+                    La liaison avec votre banque sera activée prochainement
                   </li>
                 </ul>
               </div>
 
+              <div className="rounded-lg border border-yellow-200 dark:border-yellow-900/50 bg-yellow-50/50 dark:bg-yellow-900/10 p-3">
+                <div className="flex items-start gap-2 text-xs text-yellow-800 dark:text-yellow-400">
+                  <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                  <span>L'intégration bancaire est en cours de déploiement. Vous pouvez dès maintenant préparer vos connexions.</span>
+                </div>
+              </div>
+
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Shield className="h-3.5 w-3.5" />
-                <span>Connexion sécurisée · Vos données restent privées · Accès en lecture seule</span>
+                <span>Connexion sécurisée · Données chiffrées · Accès en lecture seule</span>
               </div>
 
               <Button className="w-full gap-2" onClick={() => setStep('name')}>
@@ -106,8 +117,8 @@ export function BankConnectionSheet({ open, onOpenChange }: Props) {
                 </p>
               </div>
 
-              <Button className="w-full gap-2" onClick={handleCreate} disabled={!displayName.trim()}>
-                Créer la connexion
+              <Button className="w-full gap-2" onClick={handleCreate} disabled={!displayName.trim() || displayName.trim().length < 2}>
+                Préparer la connexion
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
@@ -116,16 +127,16 @@ export function BankConnectionSheet({ open, onOpenChange }: Props) {
           {step === 'connecting' && (
             <div className="flex flex-col items-center py-10 gap-3 text-muted-foreground">
               <Loader2 className="h-8 w-8 animate-spin" />
-              <p className="text-sm font-medium">Création en cours...</p>
+              <p className="text-sm font-medium">Préparation en cours...</p>
             </div>
           )}
 
           {step === 'done' && (
             <div className="flex flex-col items-center py-10 gap-3">
-              <CheckCircle2 className="h-10 w-10 text-emerald-500" />
-              <p className="text-sm font-medium">Connexion créée avec succès</p>
-              <p className="text-xs text-muted-foreground text-center">
-                La connexion est en attente. L'intégration avec le provider bancaire sera activée prochainement.
+              <Clock className="h-10 w-10 text-yellow-500" />
+              <p className="text-sm font-medium">Connexion préparée</p>
+              <p className="text-xs text-muted-foreground text-center max-w-xs">
+                Votre connexion est enregistrée en attente. La liaison avec le provider bancaire sera activée lors du déploiement de l'intégration Open Banking.
               </p>
               <Button variant="outline" onClick={handleClose} className="mt-2">
                 Fermer

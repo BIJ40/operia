@@ -1,12 +1,13 @@
 /**
  * Hooks Trésorerie — TanStack Query hooks for treasury module
  * 
- * Note: The bank_* tables are new and not yet in the generated Supabase types.
- * We use type assertions to work with the Supabase client until types are regenerated.
+ * Uses type assertions for bank_* tables not yet in generated Supabase types.
+ * All mutations go through the treasury-connection edge function (no direct DB writes from frontend).
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { safeInvoke } from '@/lib/safeQuery';
 import type {
   BankProviderConfig,
   BankConnection,
@@ -16,7 +17,8 @@ import type {
   TreasuryOverview,
 } from '../types/treasury';
 
-// Typed helper to query tables not yet in generated types
+// Typed helper — tables not yet in generated types
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const fromTable = (table: string) => (supabase as any).from(table);
 
 // ── Query keys ──
@@ -117,17 +119,19 @@ export function useTreasuryOverview() {
   const { data: connections, isLoading: loadingConn } = useBankConnections();
   const { data: accounts, isLoading: loadingAcct } = useBankAccounts();
 
-  const overview: TreasuryOverview | null = (!loadingConn && !loadingAcct && connections && accounts) ? {
+  const hasRealData = !loadingConn && !loadingAcct && connections && accounts && connections.length > 0;
+
+  const overview: TreasuryOverview | null = hasRealData ? {
     consolidatedBalance: accounts.reduce((sum, a) => sum + Number(a.balance || 0), 0),
     connectedAccountsCount: accounts.length,
     connectedBanksCount: new Set(accounts.map(a => a.bank_name).filter(Boolean)).size,
     lastSyncAt: connections
-      .map(c => c.last_sync_at)
+      .map(c => c.last_success_sync_at)
       .filter(Boolean)
       .sort()
       .reverse()[0] ?? null,
-    recentCredits: 0,
-    recentDebits: 0,
+    recentCredits: 0, // Real value once provider is connected
+    recentDebits: 0,  // Real value once provider is connected
     unmatchedTransactionsCount: 0,
     errorAccountsCount: accounts.filter(a => a.sync_status === 'error').length,
   } : null;
@@ -156,32 +160,22 @@ export function useBankSyncLogs(connectionId?: string) {
   });
 }
 
-// ── Mutations ──
+// ═══════════════════════════════════════════════════════════
+// Mutations — all via edge function (no direct DB writes)
+// ═══════════════════════════════════════════════════════════
+
 export function useCreateBankConnection() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (params: { displayName: string; provider?: string }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Non authentifié');
-
-      const { data: profile } = await (supabase as any).from('profiles')
-        .select('agency_id')
-        .eq('id', user.id)
-        .single();
-      if (!profile?.agency_id) throw new Error('Agence non trouvée');
-
-      const { data, error } = await fromTable('bank_connections')
-        .insert({
-          agency_id: profile.agency_id,
-          user_id: user.id,
-          display_name: params.displayName,
-          provider: params.provider ?? 'bridge',
-          status: 'pending',
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
+      const result = await safeInvoke<{ id: string }>(
+        supabase.functions.invoke('treasury-connection', {
+          body: { action: 'create', displayName: params.displayName, provider: params.provider ?? 'bridge' },
+        }),
+        'TREASURY_CREATE_CONNECTION'
+      );
+      if (!result.success) throw new Error(result.error?.message ?? 'Erreur');
+      return result.data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: TREASURY_KEYS.connections });
@@ -194,10 +188,13 @@ export function useDisconnectBankConnection() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (connectionId: string) => {
-      const { error } = await fromTable('bank_connections')
-        .update({ status: 'disconnected' })
-        .eq('id', connectionId);
-      if (error) throw error;
+      const result = await safeInvoke(
+        supabase.functions.invoke('treasury-connection', {
+          body: { action: 'disconnect', connectionId },
+        }),
+        'TREASURY_DISCONNECT'
+      );
+      if (!result.success) throw new Error(result.error?.message ?? 'Erreur');
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: TREASURY_KEYS.all });
@@ -209,10 +206,13 @@ export function useSyncBankConnection() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (connectionId: string) => {
-      const { error } = await fromTable('bank_connections')
-        .update({ status: 'syncing', last_sync_at: new Date().toISOString() })
-        .eq('id', connectionId);
-      if (error) throw error;
+      const result = await safeInvoke(
+        supabase.functions.invoke('treasury-connection', {
+          body: { action: 'sync', connectionId },
+        }),
+        'TREASURY_SYNC'
+      );
+      if (!result.success) throw new Error(result.error?.message ?? 'Erreur');
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: TREASURY_KEYS.connections });
