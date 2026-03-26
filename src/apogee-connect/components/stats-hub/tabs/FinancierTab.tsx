@@ -5,11 +5,11 @@
 
 import { useState } from 'react';
 import { useFinancialStats } from '@/apogee-connect/hooks/useFinancialStats';
-import { FinancialHeroCards } from './financier/FinancialHeroCards';
-import { FinancialChartsSection } from './financier/FinancialChartsSection';
-import { FinancialEntityTable } from './financier/FinancialEntityTable';
-import { FinancialDetailsSheet } from './financier/FinancialDetailsSheet';
-import { FinancialAlertsPanel } from './financier/FinancialAlertsPanel';
+import { FinancialHeroCards } from '../financier/FinancialHeroCards';
+import { FinancialChartsSection } from '../financier/FinancialChartsSection';
+import { FinancialEntityTable } from '../financier/FinancialEntityTable';
+import { FinancialDetailsSheet } from '../financier/FinancialDetailsSheet';
+import { FinancialAlertsPanel } from '../financier/FinancialAlertsPanel';
 import type { FinancialEntityStats } from '@/apogee-connect/types/financial';
 import { motion } from 'framer-motion';
 import { AlertTriangle } from 'lucide-react';

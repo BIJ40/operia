@@ -4,3 +4,4 @@ export { TechniciensTab } from './TechniciensTab';
 export { UniversTab } from './UniversTab';
 export { SAVTab } from './SAVTab';
 export { PrevisionnelTab } from './PrevisionnelTab';
+export { FinancierTab } from './FinancierTab';
