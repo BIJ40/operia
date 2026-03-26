@@ -248,11 +248,17 @@ export default function MapsTabContent() {
     });
   }, [routeGeometry, isTourMode, mapReady, tourTech?.color]);
 
-  useEffect(() => { hasFittedBoundsRef.current = false; }, [selectedDate, selectedTechIds]);
+  useEffect(() => { hasFittedBoundsRef.current = false; }, [selectedDate, selectedTechIds, viewMode]);
 
-  const goToPreviousDay = () => setSelectedDate(d => subDays(d, 1));
-  const goToNextDay = () => setSelectedDate(d => addDays(d, 1));
+  const goToPreviousDay = () => {
+    setSelectedDate(d => viewMode === 'week' ? subDays(d, 7) : subDays(d, 1));
+  };
+  const goToNextDay = () => {
+    setSelectedDate(d => viewMode === 'week' ? addDays(d, 7) : addDays(d, 1));
+  };
   const goToToday = () => setSelectedDate(new Date());
+  const goToTomorrow = () => { setViewMode('day'); setSelectedDate(addDays(new Date(), 1)); };
+  const toggleWeekMode = () => setViewMode(prev => prev === 'week' ? 'day' : 'week');
 
   const toggleTechnician = (techId: number) => {
     setSelectedTechIds(prev =>
