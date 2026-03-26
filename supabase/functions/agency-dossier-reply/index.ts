@@ -25,6 +25,17 @@ function canReplyToApporteur(
   return false;
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+type EmailSource = 'manager_id' | 'apporteur_id_fallback' | 'previous_exchange_fallback' | 'not_found';
+
 Deno.serve(async (req) => {
   const corsResult = handleCorsPreflightOrReject(req);
   if (corsResult) return corsResult;
@@ -126,6 +137,7 @@ Deno.serve(async (req) => {
     try {
       let apporteurEmail: string | null = null;
       let apporteurName: string | null = null;
+      let emailSource: EmailSource = 'not_found';
 
       // Chemin principal : dossier_ref → apporteur_intervention_requests → apporteur_manager_id → email
       const { data: request } = await supabaseAdmin
@@ -136,7 +148,6 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (request?.apporteur_manager_id) {
-        // Lookup direct via manager_id
         const { data: manager } = await supabaseAdmin
           .from('apporteur_managers')
           .select('email, first_name, last_name')
@@ -147,10 +158,11 @@ Deno.serve(async (req) => {
         if (manager?.email) {
           apporteurEmail = manager.email;
           apporteurName = [manager.first_name, manager.last_name].filter(Boolean).join(' ') || null;
+          emailSource = 'manager_id';
         }
       }
 
-      // Fallback : si pas de manager_id, chercher un manager actif lié à l'apporteur_id
+      // Fallback 1 : manager actif lié à l'apporteur_id
       if (!apporteurEmail && request?.apporteur_id) {
         const { data: managers } = await supabaseAdmin
           .from('apporteur_managers')
@@ -163,10 +175,11 @@ Deno.serve(async (req) => {
         if (managers?.length && managers[0].email) {
           apporteurEmail = managers[0].email;
           apporteurName = [managers[0].first_name, managers[0].last_name].filter(Boolean).join(' ') || null;
+          emailSource = 'apporteur_id_fallback';
         }
       }
 
-      // Fallback ultime : chercher le sender_email dans les échanges précédents de l'apporteur
+      // Fallback 2 : sender_email dans les échanges précédents
       if (!apporteurEmail) {
         const { data: prevExchange } = await supabaseAdmin
           .from('dossier_exchanges')
@@ -182,48 +195,71 @@ Deno.serve(async (req) => {
         if (prevExchange?.sender_email) {
           apporteurEmail = prevExchange.sender_email;
           apporteurName = prevExchange.sender_name;
+          emailSource = 'previous_exchange_fallback';
         }
       }
 
       // 5. Envoi email via Resend
       if (!apporteurEmail) {
         emailWarning = 'Email apporteur introuvable pour ce dossier';
-        console.warn(`[agency-dossier-reply] ${emailWarning}:`, dossierRef);
+        console.warn('[agency-dossier-reply] Email not found', {
+          dossierRef,
+          agencyId: profile.agency_id,
+          source: emailSource,
+        });
       } else {
         const resendApiKey = Deno.env.get('RESEND_API_KEY');
         if (!resendApiKey) {
           emailWarning = 'RESEND_API_KEY non configurée';
           console.warn('[agency-dossier-reply]', emailWarning);
         } else {
-          // Get agency label
+          // Get agency label (maybeSingle pour ne pas casser le flux)
           const { data: agency } = await supabaseAdmin
             .from('apogee_agencies')
             .select('label')
             .eq('id', profile.agency_id)
-            .single();
+            .maybeSingle();
 
           const agencyLabel = agency?.label ?? 'HelpConfort';
           const displaySender = roleLabel ? `${senderName} (${roleLabel})` : senderName;
-          const greeting = apporteurName ? `Bonjour ${apporteurName},` : 'Bonjour,';
+          const greeting = apporteurName ? `Bonjour ${escapeHtml(apporteurName)},` : 'Bonjour,';
+          const escapedMessage = escapeHtml(message.trim()).replace(/\n/g, '<br/>');
 
-          const emailBody = `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h2 style="color: #333; margin-bottom: 16px;">Nouveau message de ${agencyLabel}</h2>
-  <p style="color: #555;">${greeting}</p>
-  <p style="color: #555; margin-bottom: 8px;">
-    <strong>${displaySender}</strong> vous a envoyé un message concernant le dossier <strong>#${dossierRef}</strong> :
-  </p>
-  <div style="background: #f5f5f5; border-left: 4px solid #2563eb; padding: 16px; margin: 16px 0; border-radius: 4px;">
-    <p style="color: #333; margin: 0; white-space: pre-wrap;">${message.trim()}</p>
-  </div>
-  <p style="color: #555; margin-top: 24px;">
-    Connectez-vous à votre espace apporteur pour consulter et répondre à ce message.
-  </p>
-  <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
-  <p style="color: #999; font-size: 12px;">
-    Ce message a été envoyé automatiquement par ${agencyLabel}. Merci de ne pas répondre directement à cet email.
-  </p>
-</div>`;
+          const emailBody = `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
+<body style="margin:0;padding:0;background:#f9fafb;font-family:Arial,Helvetica,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;">
+<tr><td align="center" style="padding:32px 16px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;max-width:600px;width:100%;">
+  <tr><td style="background:#2563eb;padding:24px 32px;">
+    <h1 style="color:#ffffff;font-size:18px;margin:0;">Nouveau message de ${escapeHtml(agencyLabel)}</h1>
+  </td></tr>
+  <tr><td style="padding:32px;">
+    <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 16px;">${greeting}</p>
+    <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 16px;">
+      <strong>${escapeHtml(displaySender)}</strong> vous a envoyé un message concernant le dossier <strong>#${escapeHtml(dossierRef)}</strong> :
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
+    <tr><td style="background:#f3f4f6;border-left:4px solid #2563eb;padding:16px;border-radius:4px;">
+      <p style="color:#1f2937;font-size:14px;line-height:1.6;margin:0;">${escapedMessage}</p>
+    </td></tr>
+    </table>
+    <p style="color:#374151;font-size:15px;line-height:1.6;margin:24px 0 0;">
+      Connectez-vous à votre espace apporteur pour consulter et répondre à ce message.
+    </p>
+  </td></tr>
+  <tr><td style="padding:0 32px 24px;">
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 16px;"/>
+    <p style="color:#9ca3af;font-size:12px;line-height:1.5;margin:0;">
+      Ce message a été envoyé automatiquement par ${escapeHtml(agencyLabel)}. Merci de ne pas répondre directement à cet email.
+    </p>
+  </td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
 
           const resendResponse = await fetch('https://api.resend.com/emails', {
             method: 'POST',
@@ -244,7 +280,12 @@ Deno.serve(async (req) => {
             emailWarning = `Erreur envoi email: ${resendError}`;
             console.warn('[agency-dossier-reply] Resend error (non-blocking):', resendError);
           } else {
-            console.log('[agency-dossier-reply] Email envoyé à:', apporteurEmail);
+            console.log('[agency-dossier-reply] Email sent', {
+              dossierRef,
+              agencyId: profile.agency_id,
+              recipient: apporteurEmail,
+              source: emailSource,
+            });
           }
         }
       }
@@ -253,7 +294,6 @@ Deno.serve(async (req) => {
       console.warn('[agency-dossier-reply] Email notification error (non-blocking):', emailError);
     }
 
-    // Retour : succès (message inséré), avec warning éventuel sur l'email
     return withCors(req, new Response(
       JSON.stringify({
         success: true,
