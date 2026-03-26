@@ -2,6 +2,7 @@
  * Admin Mirror Monitor — Enhanced pilot monitoring panel
  * Shows pilot module status, metrics, pre-activation checks, decision journal,
  * persisted snapshots, projects readiness checkpoint.
+ * Includes controlled validation read for pilot testing.
  */
 
 import { useEffect, useState, useCallback } from 'react';
@@ -10,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { RefreshCw, Database, Wifi, AlertTriangle, CheckCircle2, Clock, Activity, ShieldCheck, ArrowDownUp, List, BarChart3, Rocket } from 'lucide-react';
+import { RefreshCw, Database, Wifi, AlertTriangle, CheckCircle2, Clock, Activity, ShieldCheck, ArrowDownUp, List, BarChart3, Rocket, Zap } from 'lucide-react';
 import { getLastComparisonResults, type ComparisonResult } from '@/services/mirrorValidation';
 import { invalidateFlagsCache } from '@/services/mirrorDataSource';
 import {
@@ -24,7 +25,7 @@ import {
   type PilotVerdict,
   type ProjectsReadiness,
 } from '@/services/mirrorPilotActivation';
-
+import { getGlobalApogeeDataServices } from '@/statia/adapters/dataServiceAdapter';
 // ============================================================
 // TYPES
 // ============================================================
@@ -121,6 +122,57 @@ export default function AdminMirrorMonitor() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'evidence' | 'decisions' | 'criteria'>('overview');
+  const [testResult, setTestResult] = useState<{
+    status: 'idle' | 'loading' | 'success' | 'error';
+    source?: string;
+    itemCount?: number;
+    freshness?: number;
+    fallbackReason?: string;
+    mode?: string;
+    timestamp?: string;
+    error?: string;
+  }>({ status: 'idle' });
+
+  // Controlled validation read — triggers mirror-aware path for users/DAX
+  const handleTestRead = useCallback(async () => {
+    setTestResult({ status: 'loading' });
+    try {
+      const services = getGlobalApogeeDataServices();
+      const startTime = Date.now();
+      const users = await services.getUsers('dax');
+      const elapsed = Date.now() - startTime;
+      
+      // Read latest metrics to determine what source was used
+      const latestMetrics = getPilotMetrics()['users'];
+      const latestDecisions = getLastComparisonResults().filter(c => c.module === 'users');
+      
+      // Check the most recent decision log entry
+      const { data: recentDecision } = await supabase
+        .from('mirror_decision_log' as any)
+        .select('source_used, mode_requested, fallback_reason, freshness_minutes, item_count')
+        .eq('module_key', 'users')
+        .eq('agency_id', DAX_AGENCY_ID)
+        .order('created_at', { ascending: false })
+        .limit(1) as any;
+      
+      const decision = recentDecision?.[0];
+      
+      setTestResult({
+        status: 'success',
+        source: decision?.source_used || (latestMetrics?.mirrorReads ? 'mirror' : 'live'),
+        itemCount: users?.length ?? 0,
+        freshness: decision?.freshness_minutes ? Math.round(decision.freshness_minutes) : undefined,
+        fallbackReason: decision?.fallback_reason || undefined,
+        mode: decision?.mode_requested || 'unknown',
+        timestamp: new Date().toISOString(),
+      });
+      
+      // Refresh all data to show updated metrics/decisions
+      setTimeout(() => { invalidateFlagsCache(); loadData(); }, 1000);
+    } catch (err: any) {
+      setTestResult({ status: 'error', error: err?.message || 'Erreur inconnue' });
+    }
+  }, []);
 
   const loadData = useCallback(async () => {
     setRefreshing(true);
@@ -256,6 +308,97 @@ export default function AdminMirrorMonitor() {
               </div>
             </div>
           )}
+
+          {/* Validation Read Card */}
+          <Card className="border-dashed">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Zap className="h-4 w-4" /> Test de lecture miroir — users / DAX
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Déclenche une lecture <code>getUsers('dax')</code> via le chemin miroir-aware.
+                Lecture seule, aucun effet de bord, résultat tracé dans le journal et les métriques.
+              </p>
+              <div className="flex items-center gap-3">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleTestRead}
+                  disabled={testResult.status === 'loading'}
+                >
+                  {testResult.status === 'loading' ? (
+                    <><RefreshCw className="h-3.5 w-3.5 mr-2 animate-spin" /> Lecture en cours…</>
+                  ) : (
+                    <><Zap className="h-3.5 w-3.5 mr-2" /> Lancer lecture de validation</>
+                  )}
+                </Button>
+                {testResult.status === 'success' && (
+                  <span className="text-xs text-muted-foreground">
+                    Dernier test : {testResult.timestamp ? new Date(testResult.timestamp).toLocaleTimeString('fr-FR') : '—'}
+                  </span>
+                )}
+              </div>
+              {testResult.status === 'success' && (
+                <div className="border rounded-lg p-3 space-y-2 bg-muted/30">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                    <div>
+                      <span className="text-muted-foreground block">Source utilisée</span>
+                      <Badge className={`${MODE_COLORS[testResult.source || 'live'] || ''} text-xs mt-0.5`}>
+                        {testResult.source}
+                      </Badge>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block">Mode demandé</span>
+                      <span className="font-medium">{testResult.mode}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block">Items retournés</span>
+                      <span className="font-medium">{testResult.itemCount}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block">Fraîcheur miroir</span>
+                      <span className="font-medium">{testResult.freshness != null ? `${testResult.freshness} min` : '—'}</span>
+                    </div>
+                  </div>
+                  {testResult.fallbackReason && (
+                    <p className="text-xs text-amber-600">
+                      Raison fallback : {testResult.fallbackReason}
+                    </p>
+                  )}
+                  <p className="text-[10px] text-muted-foreground">
+                    Cette lecture a été enregistrée dans le journal de décisions et les métriques du pilote.
+                  </p>
+                </div>
+              )}
+              {testResult.status === 'error' && (
+                <div className="border border-destructive/50 rounded-lg p-2 text-xs text-destructive">
+                  Erreur : {testResult.error}
+                </div>
+              )}
+
+              {/* Exit criteria for inactif */}
+              <div className="bg-muted/30 rounded-lg p-2.5 text-[11px] text-muted-foreground space-y-1">
+                <p className="font-medium text-foreground">Critère de sortie de l'état « inactif »</p>
+                <ul className="list-disc pl-4 space-y-0.5">
+                  <li>≥ 1 lecture miroir confirmée (source = mirror)</li>
+                  <li>≥ 3 lectures miroir/fallback observées au total</li>
+                  <li>Journal de décisions non vide</li>
+                  <li>≥ 1 snapshot persisté post-activation</li>
+                </ul>
+                <p className="mt-1">
+                  Statut actuel : {' '}
+                  {(totalMirrorReads >= 1 && (totalMirrorReads + totalFallbacks) >= 3 && decisions.length > 0 && snapshots.length > 0)
+                    ? <span className="text-green-600 font-semibold">Critères atteints ✓</span>
+                    : <span className="text-amber-600 font-semibold">
+                        En attente — miroir:{totalMirrorReads}/1, total:{totalMirrorReads + totalFallbacks}/3, journal:{decisions.length > 0 ? '✓' : '✗'}, snapshots:{snapshots.length > 0 ? '✓' : '✗'}
+                      </span>
+                  }
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Pilot Module Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

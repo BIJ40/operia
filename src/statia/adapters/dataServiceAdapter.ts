@@ -84,7 +84,8 @@ async function withMirrorResolution(
 
   // Fast path: live mode (most common case, zero overhead)
   if (resolved.effectiveSource === 'live') {
-    if (resolved.fallbackReason) {
+    // Log when mode is not 'live' (i.e. fallback resolved to live)
+    if (resolved.mode !== 'live') {
       logSourceResolution(moduleKey, agencyId, resolved);
       recordMetric(moduleKey, resolved, 0);
       logMirrorDecision(moduleKey, agencyId, resolved);
@@ -103,6 +104,8 @@ async function withMirrorResolution(
     if (!quality.usable && resolved.mode === 'fallback') {
       const fallbackResolved = { ...resolved, effectiveSource: 'live' as const, fallbackReason: quality.reason || 'quality_check_failed' };
       logSourceResolution(moduleKey, agencyId, fallbackResolved);
+      recordMetric(moduleKey, fallbackResolved, 0);
+      logMirrorDecision(moduleKey, agencyId, fallbackResolved, 0, quality);
       return liveFn();
     }
 
@@ -111,6 +114,8 @@ async function withMirrorResolution(
     if (rawMirrorData.length === 0 && resolved.mode === 'fallback') {
       const fallbackResolved = { ...resolved, effectiveSource: 'live' as const, fallbackReason: 'mirror_empty' };
       logSourceResolution(moduleKey, agencyId, fallbackResolved);
+      recordMetric(moduleKey, fallbackResolved, 0);
+      logMirrorDecision(moduleKey, agencyId, fallbackResolved);
       return liveFn();
     }
 
