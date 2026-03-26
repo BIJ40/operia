@@ -58,12 +58,15 @@ import { ValiderDevisDialog } from '../dialogs/ValiderDevisDialog';
 import { FactureRegleeDialog } from '../dialogs/FactureRegleeDialog';
 import { DossierInactifDialog } from '../dialogs/DossierInactifDialog';
 import { DocDownloadButton } from '../DocDownloadButton';
+import { useApporteurDossierActions } from '../../hooks/useApporteurDossierActions';
+import { Textarea } from '@/components/ui/textarea';
 
 type SortField = 'ref' | 'clientName' | 'status' | 'dateCreation' | 'factureHT' | 'restedu';
 type SortDirection = 'asc' | 'desc';
 
 export default function DossiersTabContent() {
   const queryClient = useQueryClient();
+  const dossierAction = useApporteurDossierActions();
   const [searchParams, setSearchParams] = useSearchParams();
   const { data, isLoading, error, isFetching } = useApporteurDossiers();
   
@@ -72,6 +75,7 @@ export default function DossiersTabContent() {
   const [sortField, setSortField] = useState<SortField>('dateCreation');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [selectedDossier, setSelectedDossier] = useState<DossierRow | null>(null);
+  const [inlineComment, setInlineComment] = useState('');
   const [alerteRefs, setAlerteRefs] = useState<string[] | null>(null);
 
   // Selection for bulk actions
@@ -597,7 +601,7 @@ export default function DossiersTabContent() {
       </Card>
 
       {/* Dossier Detail Dialog */}
-      <Dialog open={!!selectedDossier} onOpenChange={() => setSelectedDossier(null)}>
+      <Dialog open={!!selectedDossier} onOpenChange={() => { setSelectedDossier(null); setInlineComment(''); }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -721,67 +725,92 @@ export default function DossiersTabContent() {
                 </div>
               )}
 
-              {/* ── Action Buttons ── */}
+              {/* ── Commentaire + Actions inline ── */}
               {(canRefuserDevis(selectedDossier) || canValiderDevis(selectedDossier) || canDeclareRegle(selectedDossier) || isInactif(selectedDossier)) && (
-                <div className="border-t pt-4">
-                  <p className="text-sm font-medium mb-3">Actions</p>
-                  <div className="flex flex-wrap gap-2">
-                    {canValiderDevis(selectedDossier) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2 border-[hsl(var(--ap-success)/.4)] text-[hsl(var(--ap-success))] hover:bg-[hsl(var(--ap-success-light))]"
-                        onClick={() => {
-                          setSelectedDossier(null);
-                          setValiderDevisRefs([selectedDossier.ref]);
-                        }}
-                      >
-                        <CheckCircle2 className="w-4 h-4" />
-                        Valider le devis
-                      </Button>
-                    )}
-                    {canRefuserDevis(selectedDossier) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2 border-[hsl(var(--ap-danger)/.4)] text-[hsl(var(--ap-danger))] hover:bg-[hsl(var(--ap-danger-light))]"
-                        onClick={() => {
-                          setSelectedDossier(null);
-                          setRefuserDevisRefs([selectedDossier.ref]);
-                        }}
-                      >
-                        <XCircle className="w-4 h-4" />
-                        Refuser le devis
-                      </Button>
-                    )}
-                    {canDeclareRegle(selectedDossier) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2 border-[hsl(var(--ap-success)/.4)] text-[hsl(var(--ap-success))] hover:bg-[hsl(var(--ap-success-light))]"
-                        onClick={() => {
-                          setSelectedDossier(null);
-                          setFactureRegleeRef(selectedDossier.ref);
-                        }}
-                      >
-                        <CheckCircle2 className="w-4 h-4" />
-                        Déclarer réglée
-                      </Button>
-                    )}
-                    {isInactif(selectedDossier) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                        onClick={() => {
-                          setSelectedDossier(null);
-                          setInactifRef(selectedDossier.ref);
-                        }}
-                      >
-                        <MessageSquarePlus className="w-4 h-4" />
-                        Action dossier
-                      </Button>
-                    )}
+                <div className="border-t pt-4 space-y-3">
+                  {/* Commentaire */}
+                  {(canRefuserDevis(selectedDossier) || canValiderDevis(selectedDossier)) && (
+                    <div>
+                      <p className="text-sm font-medium mb-1.5">Commentaire</p>
+                      <Textarea
+                        placeholder="Commentaire à transmettre à l'agence (optionnel)..."
+                        value={inlineComment}
+                        onChange={(e) => setInlineComment(e.target.value)}
+                        rows={2}
+                        className="resize-none text-sm"
+                      />
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div>
+                    <p className="text-sm font-medium mb-2">Actions</p>
+                    <div className="flex flex-wrap gap-2">
+                      {canValiderDevis(selectedDossier) && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-2 border-[hsl(var(--ap-success)/.4)] text-[hsl(var(--ap-success))] hover:bg-[hsl(var(--ap-success-light))]"
+                          disabled={dossierAction.isPending}
+                          onClick={() => {
+                            const ref = selectedDossier.ref;
+                            dossierAction.mutate(
+                              { action: 'valider_devis', dossierRefs: [ref], message: inlineComment || undefined },
+                              { onSuccess: () => { setSelectedDossier(null); setInlineComment(''); } }
+                            );
+                          }}
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          {dossierAction.isPending ? 'Envoi…' : 'Valider le devis'}
+                        </Button>
+                      )}
+                      {canRefuserDevis(selectedDossier) && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-2 border-[hsl(var(--ap-danger)/.4)] text-[hsl(var(--ap-danger))] hover:bg-[hsl(var(--ap-danger-light))]"
+                          disabled={dossierAction.isPending}
+                          onClick={() => {
+                            const ref = selectedDossier.ref;
+                            dossierAction.mutate(
+                              { action: 'refuser_devis', dossierRefs: [ref], message: inlineComment || undefined },
+                              { onSuccess: () => { setSelectedDossier(null); setInlineComment(''); } }
+                            );
+                          }}
+                        >
+                          <XCircle className="w-4 h-4" />
+                          {dossierAction.isPending ? 'Envoi…' : 'Refuser le devis'}
+                        </Button>
+                      )}
+                      {canDeclareRegle(selectedDossier) && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-2 border-[hsl(var(--ap-success)/.4)] text-[hsl(var(--ap-success))] hover:bg-[hsl(var(--ap-success-light))]"
+                          onClick={() => {
+                            setSelectedDossier(null);
+                            setFactureRegleeRef(selectedDossier.ref);
+                          }}
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          Déclarer réglée
+                        </Button>
+                      )}
+                      {isInactif(selectedDossier) && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-2"
+                          onClick={() => {
+                            setSelectedDossier(null);
+                            setInactifRef(selectedDossier.ref);
+                          }}
+                        >
+                          <MessageSquarePlus className="w-4 h-4" />
+                          Action dossier
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
