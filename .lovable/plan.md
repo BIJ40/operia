@@ -1,109 +1,118 @@
 
-
 # Plan: Popup dossier partagee apporteur/agence + regle metier de reponse
 
-## Contexte
+## Etat actuel
 
-La popup `DossierDetailDialog` existe cote apporteur. Il faut la rendre utilisable cote OPERIA (agence), avec une regle metier simple pour le droit de reponse: N2 toujours, N1 assistante uniquement, tous les autres en lecture seule. Les boutons d'action legacy (Annuler, Relancer, Donner une info) sont supprimes au profit du fil d'echanges unique.
+- `DossierDetailDialog.tsx` (461 lignes) : popup apporteur avec stepper, infos, bloc "Actions" legacy (Annuler/Relancer/Info lines 303-385), fil d'echanges + chat input
+- `dossier_exchanges` table : `action_type CHECK ('annuler', 'relancer', 'info', 'reponse')` — a etendre
+- Source de verite poste : `profiles.role_agence` expose via `AuthContext.roleAgence`
+- Navigation OPERIA : section Organisation contient deja "Apporteurs" (subTab `apporteurs`)
 
 ---
 
-## Changements
+## 1. Creer `src/lib/canReplyToApporteur.ts`
 
-### 1. Refonte DossierDetailDialog — popup partagee
-
-**Fichier**: `src/apporteur/components/cockpit/DossierDetailDialog.tsx`
-
-- Ajouter prop `viewerType: 'apporteur' | 'agence'` (defaut: `'apporteur'`)
-- Ajouter prop optionnelle `viewerName?: string` et `viewerCanReply?: boolean`
-- **Supprimer** tout le bloc "Actions" (Annuler, Relancer, Donner une info + textarea associee, lignes 303-385)
-- Conserver Valider/Refuser devis uniquement si `viewerType === 'apporteur'`
-- Chat input: 
-  - Si `viewerCanReply === true` : actif, placeholder adapte selon viewerType
-  - Si `viewerCanReply === false` : desactive + message "Seuls le dirigeant et les assistantes peuvent repondre aux apporteurs."
-- Afficher le nom de l'expediteur dans chaque message du fil (deja fait)
-- Ajouter le poste a cote du nom dans les messages agence: "Marie (Assistante)"
-
-### 2. Fonction utilitaire — droit de reponse
-
-**Fichier**: `src/lib/canReplyToApporteur.ts` (nouveau)
+Helper unique, source de verite front pour le droit de reponse :
 
 ```typescript
 export function canReplyToApporteur(
-  globalRole: string | null, 
+  globalRole: string | null,
   roleAgence: string | null
 ): boolean {
   if (globalRole === 'franchisee_admin') return true;
-  if (globalRole === 'franchisee_user') {
-    const poste = roleAgence?.toLowerCase();
-    return poste?.includes('assistante') || poste?.includes('secretaire') || false;
+  const isAgencyUser = globalRole === 'franchisee_user' || globalRole === 'user' || globalRole === 'agency_user';
+  if (isAgencyUser) {
+    const poste = roleAgence?.toLowerCase() ?? '';
+    return poste.includes('assistante') || poste.includes('secretaire');
   }
   return false;
 }
 ```
 
-### 3. Edge Function reponse agence
+## 2. Migration SQL — etendre action_type
 
-**Fichier**: `supabase/functions/agency-dossier-reply/index.ts` (nouveau)
+```sql
+ALTER TABLE public.dossier_exchanges
+  DROP CONSTRAINT dossier_exchanges_action_type_check;
+ALTER TABLE public.dossier_exchanges
+  ADD CONSTRAINT dossier_exchanges_action_type_check
+  CHECK (action_type IN ('annuler', 'relancer', 'info', 'reponse', 'message', 'valider_devis', 'refuser_devis', 'systeme'));
+```
 
-- Authentification via JWT Supabase (utilisateur OPERIA connecte)
-- Recuperer le profil (global_role, role_agence) depuis `profiles`
-- Verification serveur: `canReplyToApporteur(global_role, role_agence)` — sinon 403
-- Inserer dans `dossier_exchanges` avec `sender_type = 'agence'`, `sender_name = "Prenom Nom (Poste)"`
-- Envoyer un email de notification a l'apporteur (via Resend)
-- Retourner succes
+## 3. Refonte `DossierDetailDialog.tsx`
 
-### 4. Migration SQL
+**Props ajoutees** :
+- `viewerType?: 'apporteur' | 'agence'` (defaut `'apporteur'`)
+- `viewerName?: string`
+- `viewerCanReply?: boolean` (defaut `true` pour apporteur)
 
-- Etendre le CHECK constraint `action_type` de `dossier_exchanges` pour ajouter `'valider_devis'`, `'refuser_devis'`, `'systeme'`, `'message'`
-- Pas de colonne `receive_apporteur_notifications` pour l'instant (simplifie — V1 sans systeme de preferences)
+**Suppressions** (lignes 42-48, 117, 127-144, 303-385) :
+- `ACTION_CONFIG`, `QuickAction`, `activeAction` state, `message` state
+- `handleSendAction` handler
+- Tout le bloc "Actions directes" (Quick actions + textarea conditionnelle)
 
-### 5. Section "Echanges apporteurs" cote OPERIA
+**Conserve** :
+- Valider/Refuser devis uniquement si `viewerType === 'apporteur'`
+- Chat input : placeholder adapte (`Ecrire a l'agence...` vs `Ecrire a l'apporteur...`)
+- Si `viewerCanReply === false` : textarea disabled + message explicatif
 
-**Fichier**: `src/components/agency/AgencyApporteurExchanges.tsx` (nouveau)
+**Ajouts** :
+- Dans le fil, pour les messages agence, afficher le poste a cote du nom si dispo dans `metadata`
+- Labels action_type enrichis : `message` → bulle classique, `valider_devis`/`refuser_devis` → badge metier, `systeme` → ligne timeline centree
 
-- Liste les dossiers ayant des echanges recents pour l'agence de l'utilisateur
-- Requete sur `dossier_exchanges` filtree par `agency_id`
-- Indicateur visuel: badge "Reponse requise" si dernier message = apporteur
-- Clic sur un dossier → ouvre `DossierDetailDialog` avec `viewerType='agence'`
-- Le `viewerCanReply` est calcule via `canReplyToApporteur(globalRole, roleAgence)`
+## 4. Edge Function `agency-dossier-reply`
 
-**Integration**: Ajouter un onglet/lien dans la navigation OPERIA (section Organisation ou Commercial)
+Nouveau fichier : `supabase/functions/agency-dossier-reply/index.ts`
 
-### 6. Hook echanges cote agence
+- Auth via JWT Supabase (`getClaims`)
+- Recupere profil : `global_role`, `role_agence`, `first_name`, `last_name`, `agency_id`
+- Applique `canReplyToApporteur(global_role, role_agence)` — sinon 403
+- Insere dans `dossier_exchanges` : `sender_type='agence'`, `sender_name`, `action_type='message'`, `metadata: { role_label: poste }`
+- Envoie email notification a l'apporteur via Resend (sujet : `[Dossier REF] Nouveau message de l'agence`)
+- Utilise CORS partage
 
-**Fichier**: `src/hooks/useAgencyExchanges.ts` (nouveau)
+## 5. Hook `src/hooks/useAgencyDossierReply.ts`
 
-- Requete directe Supabase (pas edge function) sur `dossier_exchanges` filtree par `agency_id`
-- Groupement par `dossier_ref` avec dernier message et compteur non-lu (basique: dernier sender_type)
+- `supabase.functions.invoke('agency-dossier-reply', { body: { dossierRef, message } })`
+- Invalidation `['apporteur-exchanges', dossierRef]` + `['agency-exchanges']`
 
-### 7. Hook reponse agence
+## 6. Hook `src/hooks/useAgencyExchanges.ts`
 
-**Fichier**: `src/hooks/useAgencyDossierReply.ts` (nouveau)
+- Query Supabase directe sur `dossier_exchanges` filtree par `agency_id` du user connecte
+- Retourne une liste agregee par `dossier_ref` : `last_message_at`, `last_sender_type`, `last_message_preview`, `sender_name`
+- Badge : "Reponse requise" si `last_sender_type === 'apporteur'`
 
-- Appel `supabase.functions.invoke('agency-dossier-reply', { body: { dossierRef, message } })`
-- Invalidation du cache echanges apres envoi
+## 7. Composant `src/components/agency/AgencyApporteurExchanges.tsx`
 
----
+- Liste des dossiers avec echanges pour l'agence
+- Recherche par ref/nom
+- Apercu dernier message + date + badge "Reponse requise"
+- Clic ligne → ouvre `DossierDetailDialog` avec `viewerType='agence'`, `viewerCanReply` calcule via `canReplyToApporteur`
+- Necessite `useAuth()` pour `globalRole`, `roleAgence`, `agencyId`, `firstName`, `lastName`
 
-## Details techniques importants
+## 8. Integration navigation OPERIA
 
-| Point | Decision |
-|---|---|
-| Poste "assistante" | Normalise en lowercase, match avec `includes('assistante')` ou `includes('secretaire')` |
-| Double reponse | Pas de verrou en V1 — auteur + timestamp visible suffisent |
-| Boutons actions | Supprimes de la popup — tout passe par le chat |
-| Valider/Refuser devis | Reste sur la popup apporteur uniquement, event ajoute au fil |
-| Inbound email | Phase ulterieure, pas dans ce scope |
+Dans `headerNavigation.ts`, sous le groupe Organisation, ajouter :
+```
+{ label: 'Echanges apporteurs', icon: MessagesSquare, tab: 'organisation',
+  description: 'Fil de discussion avec les apporteurs',
+  scope: 'organisation.apporteurs',
+  subTabKey: 'organisation_sub_tab', subTabValue: 'echanges-apporteurs' }
+```
+
+Ajouter le rendu du composant `AgencyApporteurExchanges` dans le routage de l'onglet Organisation pour le subTab `echanges-apporteurs`.
 
 ---
 
 ## Ordre d'implementation
 
-1. Creer `canReplyToApporteur.ts`
-2. Migration SQL (etendre action_type)
-3. Refondre `DossierDetailDialog` (supprimer actions, ajouter props viewerType/viewerCanReply)
-4. Creer edge function `agency-dossier-reply`
-5. Creer hooks agence (exchanges + reply)
-6. Creer `AgencyApporteurExchanges.tsx` + integration navigation OPERIA
+1. `canReplyToApporteur.ts`
+2. Migration SQL
+3. Refonte `DossierDetailDialog`
+4. Edge function `agency-dossier-reply` + deploy
+5. `useAgencyDossierReply` + `useAgencyExchanges`
+6. `AgencyApporteurExchanges` + integration navigation
 
+## Hors scope V1
+
+Inbound email, preferences notifications, non-lu, verrou anti-double, notes internes, statuts conversation.
