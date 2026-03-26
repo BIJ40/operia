@@ -1,15 +1,9 @@
 /**
- * BankConnectionSheet — Real Bridge Connect flow
- * 
- * Flow:
- * 1. User names connection
- * 2. Backend creates Bridge user + Connect session
- * 3. User is redirected to Bridge Connect
- * 4. On return, callback finalizes + triggers sync
+ * BankConnectionDialog — Real Bridge Connect flow (Dialog instead of Sheet)
  */
 
 import { useState } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -41,7 +35,6 @@ export function BankConnectionSheet({ open, onOpenChange }: Props) {
         setBridgeUrl(result.bridgeConnectUrl);
         setStep('redirect');
       } else {
-        // Fallback: connection created but no Bridge URL (config missing?)
         setErrorMsg("La session Bridge n'a pas pu être créée. Vérifiez la configuration.");
         setStep('error');
       }
@@ -72,19 +65,19 @@ export function BankConnectionSheet({ open, onOpenChange }: Props) {
   };
 
   return (
-    <Sheet open={open} onOpenChange={handleClose}>
-      <SheetContent className="sm:max-w-md">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
             <Landmark className="h-5 w-5 text-primary" />
             Connecter une banque
-          </SheetTitle>
-          <SheetDescription>
+          </DialogTitle>
+          <DialogDescription>
             Connectez votre compte bancaire via Bridge pour le suivi de trésorerie en temps réel.
-          </SheetDescription>
-        </SheetHeader>
+          </DialogDescription>
+        </DialogHeader>
 
-        <div className="mt-6 space-y-6">
+        <div className="space-y-6">
           {step === 'info' && (
             <div className="space-y-4">
               <div className="rounded-lg border border-border/60 bg-muted/30 p-4 space-y-3">
@@ -191,7 +184,7 @@ export function BankConnectionSheet({ open, onOpenChange }: Props) {
             </div>
           )}
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
