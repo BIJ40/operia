@@ -289,7 +289,7 @@ export default function MapsTabContent() {
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
 
-    if (mapMode === 'heatmap') return; // No pins in heatmap mode
+    if (mapMode === 'heatmap' || mapMode === 'profitability') return; // No pins in heatmap/profitability mode
 
     sortedRdvs.forEach((rdv, index) => {
       const isSelected = selectedRdv?.rdvId === rdv.rdvId;
