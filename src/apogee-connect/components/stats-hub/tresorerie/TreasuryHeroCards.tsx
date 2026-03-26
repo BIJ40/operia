@@ -1,5 +1,8 @@
 /**
  * TreasuryHeroCards — KPI cards premium pour le cockpit trésorerie
+ * 
+ * Affiche des états honnêtes : si aucune banque n'est connectée ou si les données
+ * ne sont pas encore remontées du provider, on affiche clairement "non disponible".
  */
 
 import { Landmark, CreditCard, RefreshCcw, ArrowDownRight, ArrowUpRight, AlertCircle, Clock, Link2 } from 'lucide-react';
@@ -12,6 +15,7 @@ interface Props {
   overview: TreasuryOverview | null;
   isLoading: boolean;
   hasConnections: boolean;
+  hasRealBankData: boolean;
 }
 
 function fmt(n: number) {
@@ -25,11 +29,12 @@ interface HeroCardProps {
   subtitle?: string;
   accent?: string;
   isEmpty?: boolean;
+  isPending?: boolean;
 }
 
-function HeroCard({ icon, label, value, subtitle, accent, isEmpty }: HeroCardProps) {
+function HeroCard({ icon, label, value, subtitle, accent, isEmpty, isPending }: HeroCardProps) {
   return (
-    <div className={`relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card to-muted/20 p-4 shadow-sm transition-all ${isEmpty ? 'opacity-60' : ''}`}>
+    <div className={`relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card to-muted/20 p-4 shadow-sm transition-all ${isEmpty || isPending ? 'opacity-60' : ''}`}>
       <div className="flex items-start justify-between gap-2">
         <div className="space-y-1.5 min-w-0">
           <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider truncate">{label}</p>
@@ -44,7 +49,7 @@ function HeroCard({ icon, label, value, subtitle, accent, isEmpty }: HeroCardPro
   );
 }
 
-export function TreasuryHeroCards({ overview, isLoading, hasConnections }: Props) {
+export function TreasuryHeroCards({ overview, isLoading, hasConnections, hasRealBankData }: Props) {
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -59,68 +64,82 @@ export function TreasuryHeroCards({ overview, isLoading, hasConnections }: Props
     );
   }
 
-  const empty = !hasConnections;
+  const noBank = !hasConnections;
+  const pendingSync = hasConnections && !hasRealBankData;
   const o = overview;
   const lastSync = o?.lastSyncAt
     ? formatDistanceToNow(new Date(o.lastSyncAt), { addSuffix: true, locale: fr })
     : null;
+
+  const pendingLabel = 'En attente de synchronisation';
+  const noBankLabel = 'Connectez une banque';
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
       <HeroCard
         icon={<Landmark className="h-4 w-4 text-emerald-600" />}
         label="Trésorerie consolidée"
-        value={empty ? '—' : fmt(o?.consolidatedBalance ?? 0)}
-        subtitle={empty ? 'Connectez une banque' : undefined}
-        accent={!empty && (o?.consolidatedBalance ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-600'}
-        isEmpty={empty}
+        value={noBank ? '—' : pendingSync ? '—' : fmt(o?.consolidatedBalance ?? 0)}
+        subtitle={noBank ? noBankLabel : pendingSync ? pendingLabel : undefined}
+        accent={!noBank && !pendingSync && (o?.consolidatedBalance ?? 0) >= 0 ? 'text-emerald-600' : noBank || pendingSync ? undefined : 'text-red-600'}
+        isEmpty={noBank}
+        isPending={pendingSync}
       />
       <HeroCard
         icon={<CreditCard className="h-4 w-4 text-blue-600" />}
         label="Comptes connectés"
-        value={empty ? '—' : String(o?.connectedAccountsCount ?? 0)}
-        subtitle={empty ? 'Aucun compte' : `${o?.connectedBanksCount ?? 0} banque${(o?.connectedBanksCount ?? 0) > 1 ? 's' : ''}`}
-        isEmpty={empty}
+        value={noBank ? '—' : pendingSync ? '0' : String(o?.connectedAccountsCount ?? 0)}
+        subtitle={noBank ? noBankLabel : pendingSync ? pendingLabel : `${o?.connectedBanksCount ?? 0} banque${(o?.connectedBanksCount ?? 0) > 1 ? 's' : ''}`}
+        isEmpty={noBank}
+        isPending={pendingSync}
       />
       <HeroCard
         icon={<Link2 className="h-4 w-4 text-indigo-600" />}
         label="Banques connectées"
-        value={empty ? '—' : String(o?.connectedBanksCount ?? 0)}
-        isEmpty={empty}
+        value={noBank ? '—' : pendingSync ? '0' : String(o?.connectedBanksCount ?? 0)}
+        subtitle={pendingSync ? pendingLabel : undefined}
+        isEmpty={noBank}
+        isPending={pendingSync}
       />
       <HeroCard
         icon={<Clock className="h-4 w-4 text-muted-foreground" />}
         label="Dernière synchro"
-        value={empty ? '—' : lastSync ?? 'Jamais'}
-        isEmpty={empty}
+        value={noBank ? '—' : lastSync ?? 'Jamais'}
+        subtitle={noBank ? noBankLabel : undefined}
+        isEmpty={noBank}
       />
       <HeroCard
         icon={<ArrowDownRight className="h-4 w-4 text-emerald-600" />}
         label="Encaissements récents"
-        value={empty ? '—' : fmt(o?.recentCredits ?? 0)}
+        value={noBank || pendingSync ? '—' : fmt(o?.recentCredits ?? 0)}
+        subtitle={noBank ? noBankLabel : pendingSync ? 'Disponible après première synchro' : undefined}
         accent="text-emerald-600"
-        isEmpty={empty}
+        isEmpty={noBank}
+        isPending={pendingSync}
       />
       <HeroCard
         icon={<ArrowUpRight className="h-4 w-4 text-red-500" />}
         label="Décaissements récents"
-        value={empty ? '—' : fmt(o?.recentDebits ?? 0)}
+        value={noBank || pendingSync ? '—' : fmt(o?.recentDebits ?? 0)}
+        subtitle={noBank ? noBankLabel : pendingSync ? 'Disponible après première synchro' : undefined}
         accent="text-red-600"
-        isEmpty={empty}
+        isEmpty={noBank}
+        isPending={pendingSync}
       />
       <HeroCard
         icon={<RefreshCcw className="h-4 w-4 text-yellow-600" />}
         label="Non rapprochées"
-        value={empty ? '—' : String(o?.unmatchedTransactionsCount ?? 0)}
-        subtitle="Transactions"
-        isEmpty={empty}
+        value={noBank || pendingSync ? '—' : String(o?.unmatchedTransactionsCount ?? 0)}
+        subtitle={noBank ? noBankLabel : pendingSync ? 'Disponible après première synchro' : 'Transactions'}
+        isEmpty={noBank}
+        isPending={pendingSync}
       />
       <HeroCard
         icon={<AlertCircle className="h-4 w-4 text-red-500" />}
         label="Comptes en erreur"
-        value={empty ? '—' : String(o?.errorAccountsCount ?? 0)}
+        value={noBank ? '—' : String(o?.errorAccountsCount ?? 0)}
         accent={(o?.errorAccountsCount ?? 0) > 0 ? 'text-red-600' : undefined}
-        isEmpty={empty}
+        isEmpty={noBank}
       />
     </div>
   );
