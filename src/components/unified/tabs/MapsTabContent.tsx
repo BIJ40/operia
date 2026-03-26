@@ -284,20 +284,38 @@ export default function MapsTabContent() {
       <div className="flex-none p-4 border rounded-t-xl bg-card space-y-3">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1">
-            <Button variant="outline" size="icon" onClick={goToPreviousDay}><ChevronLeft className="h-4 w-4" /></Button>
+            <Button variant="outline" size="icon" onClick={goToPreviousDay}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="min-w-[200px] justify-start">
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}
+                  {viewMode === 'week'
+                    ? `Sem. du ${format(startOfWeek(selectedDate, { weekStartsOn: 1 }), 'd MMM', { locale: fr })} au ${format(endOfWeek(selectedDate, { weekStartsOn: 1 }), 'd MMM yyyy', { locale: fr })}`
+                    : format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar mode="single" selected={selectedDate} onSelect={(date) => date && setSelectedDate(date)} initialFocus locale={fr} />
               </PopoverContent>
             </Popover>
-            <Button variant="outline" size="icon" onClick={goToNextDay}><ChevronRight className="h-4 w-4" /></Button>
-            <Button variant="ghost" size="sm" onClick={goToToday}>Aujourd'hui</Button>
+            <Button variant="outline" size="icon" onClick={goToNextDay}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <Button variant={viewMode === 'day' && format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') ? 'default' : 'ghost'} size="sm" onClick={goToToday}>
+              Aujourd'hui
+            </Button>
+            <Button variant={viewMode === 'day' && format(selectedDate, 'yyyy-MM-dd') === format(addDays(new Date(), 1), 'yyyy-MM-dd') ? 'default' : 'ghost'} size="sm" onClick={goToTomorrow}>
+              Demain
+            </Button>
+            <Button variant={viewMode === 'week' ? 'default' : 'ghost'} size="sm" onClick={toggleWeekMode} className="gap-1">
+              <CalendarDays className="h-3.5 w-3.5" />
+              Semaine
+            </Button>
           </div>
 
           <Popover open={techFilterOpen} onOpenChange={setTechFilterOpen}>
