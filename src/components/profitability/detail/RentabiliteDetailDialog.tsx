@@ -147,15 +147,15 @@ function VisiteBreakdown({
 
 function EnrichedDocsSection({ documents }: { documents: NormalizedDoc[] }) {
   const devis = documents.filter(d => d.category === 'devis');
-  const factures = documents.filter(d => d.category === 'factures' || d.category === 'facture');
-  const other = documents.filter(d => !['devis', 'factures', 'facture'].includes(d.category));
+  const factures = documents.filter(d => d.category === 'factures');
+  const other = documents.filter(d => d.category !== 'devis' && d.category !== 'factures');
 
   const renderDoc = (doc: NormalizedDoc) => (
     <div key={doc.id} className="flex items-center justify-between p-2.5 rounded-lg bg-muted/40 text-sm">
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
         <div className="min-w-0">
-          <p className="font-medium truncate">{doc.label || doc.category}</p>
+          <p className="font-medium truncate">{doc.docLabel || doc.categoryLabel || doc.category}</p>
           {doc.date && <p className="text-xs text-muted-foreground">{new Date(doc.date).toLocaleDateString('fr-FR')}</p>}
         </div>
       </div>
