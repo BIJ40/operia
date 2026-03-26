@@ -74,7 +74,7 @@ export const SAV_EXACT_TYPES = ['sav'];
 
 export const ABSENCE_KEYWORDS = [
   'arret', 'arrêt', 'maladie', 'absence', 'conge', 'congé',
-  'repos', 'indisponible', 'formation',
+  'formation',
 ];
 
 // ============================================================================
