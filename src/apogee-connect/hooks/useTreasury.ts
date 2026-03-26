@@ -180,7 +180,7 @@ export function useCreateBankConnection() {
             action: 'create',
             displayName: params.displayName,
             provider: params.provider ?? 'bridge',
-            redirectUrl: `${window.location.origin}/?tab=pilotage.tresorerie&bridge_callback=1`,
+            callbackUrl: `${window.location.origin}/?tab=pilotage.tresorerie&bridge_callback=1`,
           },
         }),
         'TREASURY_CREATE_CONNECTION'
