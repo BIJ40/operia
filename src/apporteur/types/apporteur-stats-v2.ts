@@ -85,6 +85,14 @@ export type AlerteType =
 
 export type AlerteSeverity = 'low' | 'medium' | 'high';
 
+export interface AlerteSampleDetail {
+  ref: string;
+  label?: string;
+  date?: string;       // ISO date (e.g. date facture)
+  amount?: number;     // montant HT du document
+  days?: number;       // jours de retard
+}
+
 export interface AlerteEntry {
   type: AlerteType;
   severity: AlerteSeverity;
@@ -93,6 +101,7 @@ export interface AlerteEntry {
   risk_blockage: number; // 0–100
   sample_refs: string[];
   sample_labels?: string[]; // Noms clients associés aux refs
+  sample_details?: AlerteSampleDetail[]; // Détails enrichis par dossier
 }
 
 // ── Series 12 mois ───────────────────────────────────────
