@@ -549,7 +549,163 @@ export default function MapsTabContent() {
     };
   }, [profitPoints, mapReady, mapMode]);
 
+  // Zones blanches layer — colored circles by activity level + opportunity score
   useEffect(() => {
+    const m = map.current;
+    if (!m || !mapReady) return;
+
+    // Clean previous zones layers
+    if (m.getLayer(ZONES_CIRCLES)) m.removeLayer(ZONES_CIRCLES);
+    if (m.getSource(ZONES_SOURCE)) m.removeSource(ZONES_SOURCE);
+
+    if (mapMode !== 'zones' || !zonesData?.length) return;
+
+    const geojson: GeoJSON.FeatureCollection = {
+      type: 'FeatureCollection',
+      features: zonesData.map(z => ({
+        type: 'Feature' as const,
+        properties: {
+          postalCode: z.postalCode,
+          city: z.city,
+          nbProjects: z.nbProjects,
+          nbClients: z.nbClients,
+          nbApporteurs: z.nbApporteurs,
+          nbUnivers: z.nbUnivers,
+          univers: JSON.stringify(z.univers),
+          ca: z.ca,
+          panierMoyen: z.panierMoyen,
+          devisTotal: z.devisTotal,
+          devisSigned: z.devisSigned,
+          interventionCount: z.interventionCount,
+          activityLevel: z.activityLevel,
+          opportunityScore: z.opportunityScore,
+          insights: JSON.stringify(z.insights),
+          // For color interpolation: 0=none, 1=low, 2=medium, 3=high
+          activityIndex: z.activityLevel === 'none' ? 0 : z.activityLevel === 'low' ? 1 : z.activityLevel === 'medium' ? 2 : 3,
+        },
+        geometry: { type: 'Point' as const, coordinates: [z.lng, z.lat] },
+      })),
+    };
+
+    m.addSource(ZONES_SOURCE, { type: 'geojson', data: geojson });
+
+    m.addLayer({
+      id: ZONES_CIRCLES,
+      type: 'circle',
+      source: ZONES_SOURCE,
+      paint: {
+        'circle-radius': [
+          'interpolate', ['linear'], ['zoom'],
+          4, ['interpolate', ['linear'], ['get', 'nbProjects'], 0, 8, 5, 12, 20, 18, 50, 24],
+          10, ['interpolate', ['linear'], ['get', 'nbProjects'], 0, 14, 5, 20, 20, 30, 50, 40],
+          14, ['interpolate', ['linear'], ['get', 'nbProjects'], 0, 20, 5, 28, 20, 38, 50, 50],
+        ],
+        // gris → jaune → vert → bleu foncé
+        'circle-color': [
+          'interpolate', ['linear'], ['get', 'activityIndex'],
+          0, '#d1d5db', // gris clair — zone blanche
+          1, '#fbbf24', // jaune — présence faible
+          2, '#22c55e', // vert — présence correcte
+          3, '#1e40af', // bleu foncé — zone forte
+        ],
+        'circle-opacity': [
+          'interpolate', ['linear'], ['get', 'activityIndex'],
+          0, 0.5,
+          1, 0.65,
+          2, 0.75,
+          3, 0.85,
+        ],
+        'circle-stroke-color': [
+          'interpolate', ['linear'], ['get', 'opportunityScore'],
+          0, '#9ca3af',
+          50, '#f59e0b',
+          80, '#ef4444',
+          100, '#dc2626',
+        ],
+        'circle-stroke-width': [
+          'interpolate', ['linear'], ['get', 'opportunityScore'],
+          0, 1,
+          50, 2,
+          80, 3,
+          100, 4,
+        ],
+        'circle-stroke-opacity': 0.9,
+      },
+    });
+
+    // Fit bounds
+    if (!hasFittedBoundsRef.current && zonesData.length > 0) {
+      let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+      zonesData.forEach(p => { minLng = Math.min(minLng, p.lng); maxLng = Math.max(maxLng, p.lng); minLat = Math.min(minLat, p.lat); maxLat = Math.max(maxLat, p.lat); });
+      const pad = 0.1;
+      const bounds: [[number, number], [number, number]] = [[minLng - pad, minLat - pad], [maxLng + pad, maxLat + pad]];
+      const container = m.getContainer();
+      const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
+      const padY = Math.max(56, Math.round((container.clientHeight || 600) * 0.12));
+      m.fitBounds(bounds, {
+        padding: { top: padY, bottom: padY + 60, left: padX, right: padX },
+        maxZoom: 12,
+        duration: 1000,
+      });
+      hasFittedBoundsRef.current = true;
+    }
+
+    // Popup on click with rich KPIs
+    const handleClick = (e: mapboxgl.MapMouseEvent) => {
+      const features = m.queryRenderedFeatures(e.point, { layers: [ZONES_CIRCLES] });
+      if (!features?.length) return;
+      const p = features[0].properties;
+      if (!p) return;
+      const coords = (features[0].geometry as any).coordinates as [number, number];
+      
+      const insights: string[] = (() => { try { return JSON.parse(p.insights); } catch { return []; } })();
+      const univers: string[] = (() => { try { return JSON.parse(p.univers); } catch { return []; } })();
+      
+      const scoreBg = p.opportunityScore >= 80 ? '#dc2626' : p.opportunityScore >= 60 ? '#f59e0b' : p.opportunityScore >= 30 ? '#6b7280' : '#9ca3af';
+      const scoreLabel = p.opportunityScore >= 80 ? 'Zone à attaquer' : p.opportunityScore >= 60 ? 'Potentiel intéressant' : p.opportunityScore >= 30 ? 'À surveiller' : 'Pas prioritaire';
+      
+      new mapboxgl.Popup({ closeButton: true, maxWidth: '340px' })
+        .setLngLat(coords)
+        .setHTML(`
+          <div style="font-family: system-ui; font-size: 12px; line-height: 1.6;">
+            <div style="font-weight: 700; font-size: 14px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+              ${p.postalCode} ${p.city}
+              <span style="background: ${scoreBg}; color: white; border-radius: 10px; padding: 1px 8px; font-size: 11px; font-weight: 600;">${p.opportunityScore}/100</span>
+            </div>
+            <div style="color: #6b7280; font-size: 11px; margin-bottom: 8px;">${scoreLabel}</div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; margin-bottom: 8px;">
+              <div>📁 <b>${p.nbProjects}</b> dossiers</div>
+              <div>👤 <b>${p.nbClients}</b> clients</div>
+              <div>📝 <b>${p.devisTotal}</b> devis (${p.devisSigned} signés)</div>
+              <div>🔧 <b>${p.interventionCount}</b> interventions</div>
+              <div>💰 CA: <b>${Number(p.ca).toLocaleString('fr-FR')} €</b></div>
+              <div>🧺 Panier: <b>${Number(p.panierMoyen).toLocaleString('fr-FR')} €</b></div>
+              <div>🤝 <b>${p.nbApporteurs}</b> apporteurs</div>
+              <div>🏗️ <b>${p.nbUnivers}</b> métiers</div>
+            </div>
+            
+            ${univers.length > 0 ? `<div style="margin-bottom: 6px; color: #4b5563;"><b>Métiers :</b> ${univers.join(', ')}</div>` : ''}
+            
+            ${insights.length > 0 ? `
+              <div style="background: #fef3c7; border-radius: 6px; padding: 6px 8px; margin-top: 4px;">
+                ${insights.map(i => `<div style="color: #92400e; font-size: 11px;">💡 ${i}</div>`).join('')}
+              </div>
+            ` : ''}
+          </div>
+        `)
+        .addTo(m);
+    };
+
+    m.on('click', ZONES_CIRCLES, handleClick);
+    m.on('mouseenter', ZONES_CIRCLES, () => { m.getCanvas().style.cursor = 'pointer'; });
+    m.on('mouseleave', ZONES_CIRCLES, () => { m.getCanvas().style.cursor = ''; });
+
+    return () => {
+      m.off('click', ZONES_CIRCLES, handleClick);
+    };
+  }, [zonesData, mapReady, mapMode]);
+
     const m = map.current;
     if (!m || !mapReady) return;
 
