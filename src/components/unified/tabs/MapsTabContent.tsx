@@ -1983,6 +1983,108 @@ export default function MapsTabContent() {
               </ScrollArea>
             </div>
           )}
+
+          {/* Panneau latéral Score Global — Top insights */}
+          {mapMode === 'score_global' && scoreData && scoreData.length > 0 && scoreMeta && (
+            <div className="w-80 border-l border-border bg-background flex flex-col">
+              <div className="p-3 border-b border-border">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <Trophy className="h-4 w-4" />
+                  Top Insights
+                </h3>
+              </div>
+              <ScrollArea className="flex-1">
+                <div className="p-3 space-y-4">
+                  {/* Top zones premium */}
+                  <div>
+                    <h4 className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
+                      <Star className="h-3 w-3" /> Top zones performantes
+                    </h4>
+                    {scoreData.slice(0, 5).map(z => (
+                      <button
+                        key={z.postalCode}
+                        onClick={() => { if (map.current) map.current.flyTo({ center: [z.lng, z.lat], zoom: 12, duration: 800 }); }}
+                        className="w-full text-left p-2 rounded-lg hover:bg-muted text-xs flex items-center gap-2"
+                      >
+                        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: z.scoreGlobal >= 85 ? '#3b82f6' : z.scoreGlobal >= 70 ? '#22c55e' : '#fbbf24' }} />
+                        <span className="font-medium">{z.postalCode} {z.city}</span>
+                        <span className="ml-auto font-semibold">{z.scoreGlobal}/100</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Zones à risque */}
+                  {scoreMeta.insights.topRisk.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
+                        <AlertTriangle className="h-3 w-3" /> Zones à risque
+                      </h4>
+                      {scoreMeta.insights.topRisk.map(z => (
+                        <button
+                          key={z.pc}
+                          onClick={() => {
+                            const zone = scoreData.find(s => s.postalCode === z.pc);
+                            if (zone && map.current) map.current.flyTo({ center: [zone.lng, zone.lat], zoom: 12, duration: 800 });
+                          }}
+                          className="w-full text-left p-2 rounded-lg hover:bg-muted text-xs flex items-center gap-2"
+                        >
+                          <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: '#dc2626' }} />
+                          <span className="font-medium">{z.pc} {z.city}</span>
+                          <span className="ml-auto font-semibold text-destructive">{z.score}/100</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Zones à développer */}
+                  {scoreMeta.insights.topDevelop.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
+                        <Target className="h-3 w-3" /> Zones à développer
+                      </h4>
+                      {scoreMeta.insights.topDevelop.map(z => (
+                        <button
+                          key={z.pc}
+                          onClick={() => {
+                            const zone = scoreData.find(s => s.postalCode === z.pc);
+                            if (zone && map.current) map.current.flyTo({ center: [zone.lng, zone.lat], zoom: 12, duration: 800 });
+                          }}
+                          className="w-full text-left p-2 rounded-lg hover:bg-muted text-xs flex items-center gap-2"
+                        >
+                          <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: '#f97316' }} />
+                          <span className="font-medium">{z.pc} {z.city}</span>
+                          <span className="ml-auto font-semibold">{z.score}/100</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Plus rentables */}
+                  {scoreMeta.insights.topRentable.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
+                        <BarChart3 className="h-3 w-3" /> Plus rentables
+                      </h4>
+                      {scoreMeta.insights.topRentable.map(z => (
+                        <button
+                          key={z.pc}
+                          onClick={() => {
+                            const zone = scoreData.find(s => s.postalCode === z.pc);
+                            if (zone && map.current) map.current.flyTo({ center: [zone.lng, zone.lat], zoom: 12, duration: 800 });
+                          }}
+                          className="w-full text-left p-2 rounded-lg hover:bg-muted text-xs flex items-center gap-2"
+                        >
+                          <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: '#22c55e' }} />
+                          <span className="font-medium">{z.pc} {z.city}</span>
+                          <span className="ml-auto font-semibold text-emerald-600">{(z.margin || 0).toLocaleString('fr-FR')} €</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
+          )}
         </div>
       </DraggableFolderContentContainer>
     </div>
