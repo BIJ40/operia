@@ -25,6 +25,7 @@ import {
   type PilotVerdict,
   type ProjectsReadiness,
 } from '@/services/mirrorPilotActivation';
+import { flushDecisions, maybePersistSnapshot } from '@/services/mirrorPilotActivation';
 import { getGlobalApogeeDataServices } from '@/statia/adapters/dataServiceAdapter';
 // ============================================================
 // TYPES
