@@ -1,7 +1,6 @@
 /**
  * MapsTabContent - Onglet "Maps" dans Pilotage
- * Réutilise la carte Mapbox de CartePage avec toutes ses features
- * (filtres date/techniciens, markers camembert, mode tournée, itinéraire routier)
+ * v3: Progress bar for analytics map modes
  */
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
@@ -10,6 +9,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { format, addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Loader2, MapPin, AlertCircle, CalendarDays, Flame, PieChart, Crosshair } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
