@@ -298,8 +298,8 @@ export default function ApporteurDossiers() {
                     </div>
                   </TableHead>
                   <TableHead className="hidden lg:table-cell">1er RDV</TableHead>
-                  <TableHead className="hidden lg:table-cell">Devis</TableHead>
-                  <TableHead className="hidden md:table-cell">Facturé</TableHead>
+                  <TableHead className="hidden lg:table-cell">Devis HT</TableHead>
+                  <TableHead className="hidden md:table-cell">Facturé HT</TableHead>
                   <TableHead 
                     className="text-right cursor-pointer hover:bg-muted/50"
                     onClick={() => handleSort('factureHT')}
