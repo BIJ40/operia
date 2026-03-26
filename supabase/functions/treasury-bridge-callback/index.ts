@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
 
     const updatePayload: Record<string, unknown> = {
       status: newInternalStatus,
-    updatePayload.provider_status = bridgeStep ?? (isExplicitSuccess ? "success" : isExplicitFailure ? "failed" : "ambiguous");
+      provider_status: bridgeStep ?? (isExplicitSuccess ? "success" : isExplicitFailure ? "failed" : "ambiguous"),
       updated_at: new Date().toISOString(),
     };
 
