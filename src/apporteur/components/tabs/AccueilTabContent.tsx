@@ -40,6 +40,8 @@ export default function AccueilTabContent() {
   const agencySubtitle = [agencyName, agencyCity].filter(Boolean).join(' — ') || displayApporteurName;
 
   const { data, isLoading, error } = useApporteurKpis({ period });
+  const { data: dossiersData } = useApporteurDossiers();
+  const dossiers = dossiersData?.data?.dossiers || [];
   const stats = data?.data;
   const kpis = stats?.kpis;
   const trends = stats?.trends;
