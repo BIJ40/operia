@@ -24,15 +24,18 @@ export function useFinancialStats() {
     queryFn: async () => {
       const allData = await DataService.loadAllData(true, false, agencySlug);
 
-      // SNAPSHOT MODE: include all invoices emitted UP TO the end date
-      // This gives a true "stock à date" view of outstanding debt
-      const endDate = filters.dateRange.end;
+      // SNAPSHOT MODE: include all invoices emitted UP TO the effective snapshot date
+      // Important: never age receivables against a future date (e.g. "Toutes" = end of current year)
+      const now = new Date();
+      const selectedEndDate = filters.dateRange.end;
+      const snapshotDate = selectedEndDate > now ? now : selectedEndDate;
+
       const facturesFiltered = (allData.factures || []).filter(f => {
         const dateRaw = (f as any).dateReelle || (f as any).dateEmission || (f as any).date || (f as any).created_at;
         if (!dateRaw) return false;
         try {
           const d = parseISO(dateRaw);
-          return isBefore(d, endDate) || isEqual(d, endDate);
+          return isBefore(d, snapshotDate) || isEqual(d, snapshotDate);
         } catch {
           return false;
         }
@@ -42,7 +45,7 @@ export function useFinancialStats() {
         facturesFiltered,
         allData.projects || [],
         allData.clients || [],
-        endDate // Use end date as reference for aging calculations
+        snapshotDate // Use real snapshot date as reference for aging calculations
       );
     },
   });
