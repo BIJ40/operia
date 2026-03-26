@@ -36,7 +36,7 @@ function clamp(v: number, min: number, max: number): number { return Math.min(ma
 function round2(v: number): number { return Math.round(v * 100) / 100; }
 
 function daysDiff(a: Date, b: Date): number {
-  return Math.abs(b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24);
+  return Math.floor(Math.abs(b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 // ── Date range with N-1 ─────────────────────────────────
