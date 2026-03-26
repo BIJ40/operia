@@ -21,7 +21,7 @@ import {
 } from '@/services/mirrorDataSource';
 import { readMirrorData } from '@/services/mirrorReadAdapter';
 import { mapMirrorRecords, runSilentComparison, isMirrorUsableForModule } from '@/services/mirrorValidation';
-import { logMirrorDecision, recordMetric } from '@/services/mirrorPilotActivation';
+import { logMirrorDecision, recordMetric, maybePersistSnapshot } from '@/services/mirrorPilotActivation';
 
 // ============================================================
 // AGENCY ID RESOLUTION HELPER

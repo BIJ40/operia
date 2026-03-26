@@ -226,6 +226,12 @@ export function runSilentComparison(
       // Store last N results
       lastComparisonResults = [result, ...lastComparisonResults.slice(0, 49)];
 
+      // Record in pilot metrics
+      try {
+        const { recordComparisonMetric } = await import('./mirrorPilotActivation');
+        recordComparisonMetric(moduleKey, result.passed);
+      } catch { /* silent */ }
+
       logApogee.debug(
         `[MirrorCompare] ${moduleKey} | agency=${agencyId} | live=${result.liveCount} mirror=${result.mirrorCount} | delta=${result.countDeltaPct}% | passed=${result.passed}${result.details ? ` | ${result.details}` : ''}`
       );
