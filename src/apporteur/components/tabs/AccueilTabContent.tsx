@@ -13,6 +13,7 @@ import { ApporteurPlanningCard } from '../ApporteurPlanningCard';
 import { NouvelleDemandeDialog } from '../NouvelleDemandeDialog';
 import { useApporteurKpis } from '../../hooks/useApporteurKpis';
 import { KpiCard } from '../cockpit/KpiCard';
+import { KpiDetailDialog, type KpiDetailType } from '../cockpit/KpiDetailDialog';
 import { CollaborationGauge } from '../cockpit/CollaborationGauge';
 import { UniversDonut } from '../cockpit/UniversDonut';
 import { AlertesBanner } from '../cockpit/AlertesBanner';
