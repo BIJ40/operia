@@ -283,13 +283,15 @@ export function RentabiliteTable({ items, isLoading, onSelectProject, onCalculat
           <Table>
             <TableHeader>
               <TableRow>
-                <SortableHead label="Dossier" sortKeyName="projectLabel" />
+                <SortableHead label="Réf" sortKeyName="projectRef" />
+                <SortableHead label="Apporteur" sortKeyName="apporteur" />
                 <SortableHead label="Client" sortKeyName="clientName" />
+                <SortableHead label="Libellé" sortKeyName="libelle" />
                 <SortableHead label="CA HT" sortKeyName="ca" className="text-right" />
-                <SortableHead label="Marge nette" sortKeyName="margin" className="text-right" />
-                <SortableHead label="% Marge" sortKeyName="marginPct" className="text-right" />
+                <SortableHead label="Marge" sortKeyName="margin" className="text-right" />
+                <SortableHead label="%" sortKeyName="marginPct" className="text-right" />
                 <SortableHead label="Fiabilité" sortKeyName="reliability" />
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-right w-20">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -306,18 +308,20 @@ export function RentabiliteTable({ items, isLoading, onSelectProject, onCalculat
                     )}
                     onClick={() => notCalc ? onCalculate(item.projectId) : onSelectProject(item.projectId, item.projectRef)}
                   >
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        {item.projectRef !== item.projectId ? item.projectRef : item.projectLabel}
-                        {notCalc && <Badge variant="outline" className="text-xs bg-muted">Non calculé</Badge>}
+                    <TableCell className="font-medium whitespace-nowrap">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-primary">{item.projectRef}</span>
+                        {notCalc && <Badge variant="outline" className="text-[10px] bg-muted px-1.5">—</Badge>}
                       </div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{item.clientName || '—'}</TableCell>
-                    <TableCell className="text-right tabular-nums">{snap ? formatCurrency(snap.ca_invoiced_ht) : '—'}</TableCell>
-                    <TableCell className={cn('text-right tabular-nums', snap ? marginColor(snap.margin_pct) : '')}>
+                    <TableCell className="text-muted-foreground text-xs max-w-[140px] truncate">{item.apporteurName || '—'}</TableCell>
+                    <TableCell className="max-w-[140px] truncate">{item.clientName || '—'}</TableCell>
+                    <TableCell className="text-muted-foreground text-xs max-w-[180px] truncate">{item.libelle || '—'}</TableCell>
+                    <TableCell className="text-right tabular-nums whitespace-nowrap">{snap ? formatCurrency(snap.ca_invoiced_ht) : '—'}</TableCell>
+                    <TableCell className={cn('text-right tabular-nums whitespace-nowrap', snap ? marginColor(snap.margin_pct) : '')}>
                       {snap ? formatCurrency(snap.net_margin) : '—'}
                     </TableCell>
-                    <TableCell className={cn('text-right tabular-nums', snap ? marginColor(snap.margin_pct) : '')}>
+                    <TableCell className={cn('text-right tabular-nums whitespace-nowrap', snap ? marginColor(snap.margin_pct) : '')}>
                       {snap ? formatPercent(snap.margin_pct) : '—'}
                     </TableCell>
                     <TableCell>
@@ -327,7 +331,7 @@ export function RentabiliteTable({ items, isLoading, onSelectProject, onCalculat
                       {notCalc ? (
                         <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); onCalculate(item.projectId); }}>
                           <Calculator className="h-3.5 w-3.5 mr-1" />
-                          Calculer
+                          Calc.
                         </Button>
                       ) : (
                         <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); onSelectProject(item.projectId, item.projectRef); }}>
