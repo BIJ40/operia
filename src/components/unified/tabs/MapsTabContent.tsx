@@ -784,7 +784,7 @@ export default function MapsTabContent() {
     if (!m || !mapReady) return;
 
     // Clean previous zones layers
-    if (m.getLayer(ZONES_CIRCLES)) m.removeLayer(ZONES_CIRCLES);
+    [ZONES_FILL, ZONES_LABELS, ZONES_CIRCLES].forEach(l => { if (m.getLayer(l)) m.removeLayer(l); });
     if (m.getSource(ZONES_SOURCE)) m.removeSource(ZONES_SOURCE);
 
     if (mapMode !== 'zones' || !zonesData?.length) return;
@@ -809,8 +809,8 @@ export default function MapsTabContent() {
           activityLevel: z.activityLevel,
           opportunityScore: z.opportunityScore,
           insights: JSON.stringify(z.insights),
-          // For color interpolation: 0=none, 1=low, 2=medium, 3=high
           activityIndex: z.activityLevel === 'none' ? 0 : z.activityLevel === 'low' ? 1 : z.activityLevel === 'medium' ? 2 : 3,
+          label: `${z.postalCode}`,
         },
         geometry: { type: 'Point' as const, coordinates: [z.lng, z.lat] },
       })),
@@ -818,6 +818,42 @@ export default function MapsTabContent() {
 
     m.addSource(ZONES_SOURCE, { type: 'geojson', data: geojson });
 
+    // Layer 1: Large blurred fill — zone highlighting like a choropleth
+    m.addLayer({
+      id: ZONES_FILL,
+      type: 'circle',
+      source: ZONES_SOURCE,
+      paint: {
+        // Large radius to create a "zone fill" effect
+        'circle-radius': [
+          'interpolate', ['linear'], ['zoom'],
+          4, ['interpolate', ['linear'], ['get', 'nbProjects'], 0, 18, 5, 28, 20, 40, 50, 55],
+          8, ['interpolate', ['linear'], ['get', 'nbProjects'], 0, 30, 5, 50, 20, 70, 50, 90],
+          12, ['interpolate', ['linear'], ['get', 'nbProjects'], 0, 40, 5, 65, 20, 90, 50, 120],
+          16, ['interpolate', ['linear'], ['get', 'nbProjects'], 0, 55, 5, 80, 20, 110, 50, 150],
+        ],
+        // Color by activity level: grey → amber → green → blue
+        'circle-color': [
+          'interpolate', ['linear'], ['get', 'activityIndex'],
+          0, '#d1d5db',
+          1, '#fbbf24',
+          2, '#22c55e',
+          3, '#1e40af',
+        ],
+        // Heavy blur for fill-like rendering
+        'circle-blur': 0.7,
+        'circle-opacity': [
+          'interpolate', ['linear'], ['get', 'activityIndex'],
+          0, 0.25,
+          1, 0.35,
+          2, 0.45,
+          3, 0.55,
+        ],
+        'circle-stroke-width': 0,
+      },
+    });
+
+    // Layer 2: Small crisp dot at center for click target + label anchor
     m.addLayer({
       id: ZONES_CIRCLES,
       type: 'circle',
@@ -825,40 +861,42 @@ export default function MapsTabContent() {
       paint: {
         'circle-radius': [
           'interpolate', ['linear'], ['zoom'],
-          4, ['interpolate', ['linear'], ['get', 'nbProjects'], 0, 8, 5, 12, 20, 18, 50, 24],
-          10, ['interpolate', ['linear'], ['get', 'nbProjects'], 0, 14, 5, 20, 20, 30, 50, 40],
-          14, ['interpolate', ['linear'], ['get', 'nbProjects'], 0, 20, 5, 28, 20, 38, 50, 50],
+          4, 4, 8, 6, 12, 8, 16, 10,
         ],
-        // gris → jaune → vert → bleu foncé
         'circle-color': [
           'interpolate', ['linear'], ['get', 'activityIndex'],
-          0, '#d1d5db', // gris clair — zone blanche
-          1, '#fbbf24', // jaune — présence faible
-          2, '#22c55e', // vert — présence correcte
-          3, '#1e40af', // bleu foncé — zone forte
-        ],
-        'circle-opacity': [
-          'interpolate', ['linear'], ['get', 'activityIndex'],
-          0, 0.5,
-          1, 0.65,
-          2, 0.75,
-          3, 0.85,
-        ],
-        'circle-stroke-color': [
-          'interpolate', ['linear'], ['get', 'opportunityScore'],
           0, '#9ca3af',
-          50, '#f59e0b',
-          80, '#ef4444',
-          100, '#dc2626',
+          1, '#d97706',
+          2, '#16a34a',
+          3, '#1e3a8a',
         ],
+        'circle-opacity': 0.9,
+        'circle-stroke-color': '#ffffff',
         'circle-stroke-width': [
           'interpolate', ['linear'], ['get', 'opportunityScore'],
-          0, 1,
-          50, 2,
-          80, 3,
-          100, 4,
+          0, 1, 50, 1.5, 80, 2.5, 100, 3,
         ],
         'circle-stroke-opacity': 0.9,
+      },
+    });
+
+    // Layer 3: Labels with postal code + city
+    m.addLayer({
+      id: ZONES_LABELS,
+      type: 'symbol',
+      source: ZONES_SOURCE,
+      layout: {
+        'text-field': ['get', 'city'],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 6, 9, 10, 11, 14, 13],
+        'text-offset': [0, 1.4],
+        'text-anchor': 'top',
+        'text-optional': true,
+        'text-allow-overlap': false,
+      },
+      paint: {
+        'text-color': '#374151',
+        'text-halo-color': '#ffffff',
+        'text-halo-width': 1.5,
       },
     });
 
