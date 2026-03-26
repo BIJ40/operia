@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { TabId } from './types';
 
 const STORAGE_KEY = 'stats-hub-active-tab';
-const VALID_TABS: TabId[] = ['general', 'apporteurs', 'techniciens', 'univers', 'sav', 'previsionnel'];
+const VALID_TABS: TabId[] = ['general', 'apporteurs', 'techniciens', 'univers', 'sav', 'previsionnel', 'financier'];
 
 function getStoredTab(): TabId {
   try {
