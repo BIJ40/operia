@@ -6222,6 +6222,7 @@ export type Database = {
         Row: {
           cache_key: string
           city: string
+          code_insee: string | null
           created_at: string | null
           id: string
           lat: number
@@ -6233,6 +6234,7 @@ export type Database = {
         Insert: {
           cache_key: string
           city: string
+          code_insee?: string | null
           created_at?: string | null
           id?: string
           lat: number
@@ -6244,6 +6246,7 @@ export type Database = {
         Update: {
           cache_key?: string
           city?: string
+          code_insee?: string | null
           created_at?: string | null
           id?: string
           lat?: number

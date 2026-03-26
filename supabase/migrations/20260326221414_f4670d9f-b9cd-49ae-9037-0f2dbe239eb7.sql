@@ -1,0 +1,1 @@
+ALTER TABLE public.geocode_cache ADD COLUMN IF NOT EXISTS code_insee TEXT;
