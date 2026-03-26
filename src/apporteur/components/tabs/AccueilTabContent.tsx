@@ -25,6 +25,7 @@ export default function AccueilTabContent() {
   const { apporteurUser } = useApporteurAuth();
   const { session } = useApporteurSession();
   const [demandeOpen, setDemandeOpen] = useState(false);
+  const [kpiDetail, setKpiDetail] = useState<KpiDetailType | null>(null);
   const [period, setPeriod] = useState<ApporteurStatsV2Request['period']>('month');
 
   const displayFirstName = session?.firstName || apporteurUser?.firstName || apporteurUser?.apporteurName || 'Partenaire';
