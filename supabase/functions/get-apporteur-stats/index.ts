@@ -479,7 +479,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const overdueInvoices: { ref: string; label: string; days: number; amount: number }[] = [];
+    const overdueInvoices: { ref: string; label: string; days: number; amount: number; date: string }[] = [];
     for (const f of allFactures) {
       if (!projectIds.has(f.projectId)) continue;
       const resteDu = Number(f.data?.calcReglementsReste || f.calcReglementsReste || 0);
@@ -494,7 +494,8 @@ Deno.serve(async (req) => {
           ref: String(proj?.ref || f.projectId), 
           label: resolveClientName(proj) || String(proj?.ref || f.projectId),
           days: age, 
-          amount: totalHT 
+          amount: totalHT,
+          date: fd.toISOString().slice(0, 10),
         });
       }
     }
@@ -513,6 +514,7 @@ Deno.serve(async (req) => {
         risk_blockage: risk,
         sample_refs: overdueInvoices.map(i => i.ref),
         sample_labels: overdueInvoices.map(i => i.label),
+        sample_details: overdueInvoices.map(i => ({ ref: i.ref, label: i.label, date: i.date, amount: i.amount, days: i.days })),
       });
     }
 
