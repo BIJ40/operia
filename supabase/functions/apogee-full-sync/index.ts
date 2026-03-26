@@ -1,12 +1,16 @@
 /**
- * APOGÉE FULL SYNC — Shadow Mirror Population
+ * APOGÉE FULL SYNC — Shadow Mirror Population (v2.1)
  * 
  * Boucle sur toutes les agences actives, appelle les endpoints Apogée,
  * et upsert les données dans les tables _mirror.
  * 
- * Déclenchement : CRON (06:00, 12:30, 18:00) ou manuel via apogee-sync-manual.
+ * v2.1 additions:
+ * - Per-agency API key support (fallback to global)
+ * - Real sync versioning (last_sync_run_id on every record)
+ * - Stale detection (mirror_status = 'missing_from_source')
+ * - Enhanced logging (key_source, records_marked_missing)
+ * 
  * Sécurité : CRON_SECRET obligatoire.
- * Stratégie : upsert par apogee_id, erreurs partielles tolérées.
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
@@ -22,7 +26,6 @@ const API_CALL_TIMEOUT_MS = 30_000;
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 2_000;
 
-// Endpoints to sync and their mirror table mapping
 const SYNC_ENDPOINTS = [
   { endpoint: 'apiGetProjects', table: 'projects_mirror', idField: 'id', refField: 'ref' },
   { endpoint: 'apiGetInterventions', table: 'interventions_mirror', idField: 'id' },
@@ -31,6 +34,46 @@ const SYNC_ENDPOINTS = [
   { endpoint: 'apiGetUsers', table: 'users_mirror', idField: 'id' },
   { endpoint: 'apiGetClients', table: 'clients_mirror', idField: 'id' },
 ] as const;
+
+// ============================================================
+// API KEY RESOLUTION
+// ============================================================
+
+async function resolveApiKey(
+  supabase: ReturnType<typeof createClient>,
+  agency: { id: string; slug: string; api_key_ref?: string | null },
+): Promise<{ apiKey: string; keySource: 'agency' | 'global' }> {
+  // Try per-agency key first
+  if (agency.api_key_ref) {
+    try {
+      const { data } = await supabase
+        .from('vault' as any)
+        .select('decrypted_secret')
+        .eq('name', agency.api_key_ref)
+        .maybeSingle();
+      
+      if (data?.decrypted_secret) {
+        return { apiKey: data.decrypted_secret, keySource: 'agency' };
+      }
+    } catch {
+      // Vault query failed — fallback silently
+    }
+
+    // Alternative: check env var named after the ref
+    const envKey = Deno.env.get(agency.api_key_ref);
+    if (envKey) {
+      return { apiKey: envKey, keySource: 'agency' };
+    }
+
+    console.warn(`[SYNC] Agency ${agency.slug}: api_key_ref="${agency.api_key_ref}" not resolved, falling back to global`);
+  }
+
+  if (!APOGEE_API_KEY) {
+    throw new Error('No API key available (no agency key, no global APOGEE_API_KEY)');
+  }
+
+  return { apiKey: APOGEE_API_KEY, keySource: 'global' };
+}
 
 // ============================================================
 // HELPERS
@@ -67,8 +110,7 @@ async function fetchApogeeEndpoint(
       }
 
       const rawData = await response.json();
-      const items = Array.isArray(rawData) ? rawData : [];
-      return { data: items };
+      return { data: Array.isArray(rawData) ? rawData : [] };
     } catch (err) {
       if (attempt < MAX_RETRIES) {
         await new Promise(r => setTimeout(r, RETRY_DELAY_MS * (attempt + 1)));
@@ -93,12 +135,13 @@ async function upsertMirrorData(
   agencyId: string,
   items: unknown[],
   idField: string,
+  runId: string,
   refField?: string,
-): Promise<{ upserted: number; errors: number }> {
+): Promise<{ upserted: number; errors: number; seenIds: Set<string> }> {
   let upserted = 0;
   let errors = 0;
+  const seenIds = new Set<string>();
 
-  // Batch upserts in chunks of 500
   const BATCH_SIZE = 500;
   for (let i = 0; i < items.length; i += BATCH_SIZE) {
     const batch = items.slice(i, i + BATCH_SIZE);
@@ -108,21 +151,23 @@ async function upsertMirrorData(
         const apogeeId = extractId(record, idField);
         if (!apogeeId) return null;
 
+        seenIds.add(apogeeId);
+
         const row: Record<string, unknown> = {
           agency_id: agencyId,
           apogee_id: apogeeId,
           raw_data: record,
           synced_at: new Date().toISOString(),
-          sync_version: 1, // Will be incremented by trigger later if needed
+          sync_version: 1,
           sync_status: 'synced',
+          last_sync_run_id: runId,
+          mirror_status: 'synced',
         };
 
-        // Extract ref for projects
         if (refField && record[refField]) {
           row.ref = String(record[refField]);
         }
 
-        // Try to extract source_updated_at
         const updatedAt = record.updatedAt || record.updated_at || record.dateModification;
         if (updatedAt && typeof updatedAt === 'string') {
           row.source_updated_at = updatedAt;
@@ -146,7 +191,55 @@ async function upsertMirrorData(
     }
   }
 
-  return { upserted, errors };
+  return { upserted, errors, seenIds };
+}
+
+// ============================================================
+// MARK MISSING RECORDS
+// ============================================================
+
+async function markMissingRecords(
+  supabase: ReturnType<typeof createClient>,
+  table: string,
+  agencyId: string,
+  runId: string,
+  seenIds: Set<string>,
+): Promise<number> {
+  // Get all current 'synced' records for this agency
+  const { data: existingRows, error } = await supabase
+    .from(table)
+    .select('id, apogee_id')
+    .eq('agency_id', agencyId)
+    .in('mirror_status', ['synced', 'stale']);
+
+  if (error || !existingRows) return 0;
+
+  const missingRows = existingRows.filter(
+    (row: { apogee_id: string }) => !seenIds.has(row.apogee_id)
+  );
+
+  if (missingRows.length === 0) return 0;
+
+  // Batch update missing records
+  const BATCH = 500;
+  let marked = 0;
+  for (let i = 0; i < missingRows.length; i += BATCH) {
+    const batch = missingRows.slice(i, i + BATCH);
+    const ids = batch.map((r: { id: string }) => r.id);
+
+    const { error: updateErr } = await supabase
+      .from(table)
+      .update({ mirror_status: 'missing_from_source', last_sync_run_id: runId })
+      .in('id', ids);
+
+    if (!updateErr) marked += ids.length;
+  }
+
+  if (marked > 0) {
+    console.log(`[SYNC] ${table}: marked ${marked} records as missing_from_source`);
+  }
+
+  return marked;
 }
 
 // ============================================================
@@ -155,21 +248,34 @@ async function upsertMirrorData(
 
 async function syncAgency(
   supabase: ReturnType<typeof createClient>,
-  agency: { id: string; slug: string; label: string },
+  agency: { id: string; slug: string; label: string; api_key_ref?: string | null },
   runId: string,
-  apiKey: string,
   modules?: string[],
-): Promise<{ success: boolean; totalRecords: number; totalSuccess: number; totalFailed: number }> {
+): Promise<{ success: boolean; totalRecords: number; totalSuccess: number; totalFailed: number; totalMissing: number }> {
   let totalRecords = 0;
   let totalSuccess = 0;
   let totalFailed = 0;
+  let totalMissing = 0;
+
+  // Resolve API key for this agency
+  let apiKey: string;
+  let keySource: 'agency' | 'global';
+  try {
+    const resolved = await resolveApiKey(supabase, agency);
+    apiKey = resolved.apiKey;
+    keySource = resolved.keySource;
+  } catch (err) {
+    console.error(`[SYNC] ${agency.slug}: ${err instanceof Error ? err.message : err}`);
+    return { success: false, totalRecords: 0, totalSuccess: 0, totalFailed: 1, totalMissing: 0 };
+  }
+
+  console.log(`[SYNC] ${agency.slug}: using ${keySource} API key`);
 
   const endpointsToSync = modules
     ? SYNC_ENDPOINTS.filter(e => modules.includes(e.table.replace('_mirror', '')))
     : SYNC_ENDPOINTS;
 
   for (const ep of endpointsToSync) {
-    // Create sync log entry
     const { data: logEntry } = await supabase
       .from('apogee_sync_logs')
       .insert({
@@ -177,13 +283,13 @@ async function syncAgency(
         agency_id: agency.id,
         endpoint: ep.endpoint,
         status: 'running',
+        key_source: keySource,
       })
       .select('id')
       .single();
 
     const logId = logEntry?.id;
 
-    // Fetch from Apogée
     const { data, error } = await fetchApogeeEndpoint(agency.slug, ep.endpoint, apiKey);
 
     if (error) {
@@ -202,54 +308,54 @@ async function syncAgency(
 
     totalRecords += data.length;
 
-    // Upsert into mirror table
     const result = await upsertMirrorData(
       supabase,
       ep.table,
       agency.id,
       data,
       ep.idField,
+      runId,
       'refField' in ep ? ep.refField : undefined,
     );
 
     totalSuccess += result.upserted;
     totalFailed += result.errors;
 
-    // Update sync log
+    // Mark missing records (only for full syncs — when no module filter)
+    let markedMissing = 0;
+    if (!modules) {
+      markedMissing = await markMissingRecords(supabase, ep.table, agency.id, runId, result.seenIds);
+      totalMissing += markedMissing;
+    }
+
     if (logId) {
       await supabase.from('apogee_sync_logs').update({
         status: result.errors > 0 ? 'failed' : 'success',
         finished_at: new Date().toISOString(),
         records_fetched: data.length,
         records_upserted: result.upserted,
+        records_marked_missing: markedMissing,
         error_message: result.errors > 0 ? `${result.errors} upsert errors` : null,
       }).eq('id', logId);
     }
 
-    console.log(`[SYNC] ${agency.slug}/${ep.endpoint}: fetched=${data.length} upserted=${result.upserted} errors=${result.errors}`);
+    console.log(`[SYNC] ${agency.slug}/${ep.endpoint}: fetched=${data.length} upserted=${result.upserted} errors=${result.errors} missing=${markedMissing}`);
   }
 
-  return {
-    success: totalFailed === 0,
-    totalRecords,
-    totalSuccess,
-    totalFailed,
-  };
+  return { success: totalFailed === 0, totalRecords, totalSuccess, totalFailed, totalMissing };
 }
 
 // ============================================================
-// MAIN — BATCH AGENCIES WITH CONCURRENCY LIMIT
+// MAIN
 // ============================================================
 
 async function runFullSync(
   supabase: ReturnType<typeof createClient>,
-  apiKey: string,
   syncType: 'full' | 'partial' | 'manual' = 'full',
   targetAgencyId?: string,
   modules?: string[],
   triggeredBy?: string,
 ): Promise<{ runId: string; status: string }> {
-  // Create sync run
   const { data: run, error: runErr } = await supabase
     .from('apogee_sync_runs')
     .insert({
@@ -267,10 +373,9 @@ async function runFullSync(
 
   const runId = run.id;
 
-  // Get active agencies
   let agencyQuery = supabase
     .from('apogee_agencies')
-    .select('id, slug, label')
+    .select('id, slug, label, api_key_ref')
     .eq('is_active', true);
 
   if (targetAgencyId) {
@@ -300,11 +405,10 @@ async function runFullSync(
   let globalRecordsFailed = 0;
   const errorLog: unknown[] = [];
 
-  // Process agencies with concurrency limit
   for (let i = 0; i < agencies.length; i += MAX_CONCURRENT_AGENCIES) {
     const batch = agencies.slice(i, i + MAX_CONCURRENT_AGENCIES);
     const results = await Promise.allSettled(
-      batch.map(agency => syncAgency(supabase, agency, runId, apiKey, modules))
+      batch.map(agency => syncAgency(supabase, agency, runId, modules))
     );
 
     for (let j = 0; j < results.length; j++) {
@@ -325,7 +429,6 @@ async function runFullSync(
     }
   }
 
-  // Determine final status
   const finalStatus = globalRecordsFailed === 0
     ? 'success'
     : globalRecordsSuccess > 0
@@ -351,7 +454,6 @@ async function runFullSync(
 // ============================================================
 
 Deno.serve(async (req) => {
-  // CRON_SECRET validation
   const cronSecret = req.headers.get('X-CRON-SECRET') || req.headers.get('Authorization')?.replace('Bearer ', '');
 
   if (!CRON_SECRET || cronSecret !== CRON_SECRET) {
@@ -362,14 +464,9 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
   }
 
-  if (!APOGEE_API_KEY) {
-    console.error('[SYNC] APOGEE_API_KEY not configured');
-    return new Response(JSON.stringify({ error: 'Missing APOGEE_API_KEY' }), { status: 500 });
-  }
-
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  // Check for double execution (no run started in last 5 minutes)
+  // Check for double execution
   const { data: recentRun } = await supabase
     .from('apogee_sync_runs')
     .select('id, started_at')
@@ -386,7 +483,7 @@ Deno.serve(async (req) => {
     }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   }
 
-  const result = await runFullSync(supabase, APOGEE_API_KEY);
+  const result = await runFullSync(supabase);
 
   return new Response(JSON.stringify(result), {
     status: 200,

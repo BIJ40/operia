@@ -1,8 +1,7 @@
 /**
- * APOGÉE SYNC MANUAL — Targeted Agency Refresh
+ * APOGÉE SYNC MANUAL — Targeted Agency Refresh (v2.1)
  * 
- * Permet un refresh ciblé par agence et/ou par modules.
- * Authentification JWT obligatoire, rôle N4+ requis.
+ * v2.1: per-agency key, real versioning, stale detection
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
@@ -29,6 +28,36 @@ const SYNC_ENDPOINTS = [
 ] as const;
 
 const VALID_MODULES = ['projects', 'interventions', 'devis', 'factures', 'users', 'clients'];
+
+// ============================================================
+// API KEY RESOLUTION
+// ============================================================
+
+async function resolveApiKey(
+  supabase: ReturnType<typeof createClient>,
+  agency: { api_key_ref?: string | null },
+): Promise<{ apiKey: string; keySource: 'agency' | 'global' }> {
+  if (agency.api_key_ref) {
+    try {
+      const { data } = await supabase
+        .from('vault' as any)
+        .select('decrypted_secret')
+        .eq('name', agency.api_key_ref)
+        .maybeSingle();
+      if (data?.decrypted_secret) return { apiKey: data.decrypted_secret, keySource: 'agency' };
+    } catch { /* fallback */ }
+
+    const envKey = Deno.env.get(agency.api_key_ref);
+    if (envKey) return { apiKey: envKey, keySource: 'agency' };
+  }
+
+  if (!APOGEE_API_KEY) throw new Error('No API key available');
+  return { apiKey: APOGEE_API_KEY, keySource: 'global' };
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
 
 async function fetchApogeeEndpoint(agencySlug: string, endpoint: string, apiKey: string) {
   const url = `https://${agencySlug}.hc-apogee.fr/api/${endpoint}`;
@@ -57,6 +86,45 @@ async function fetchApogeeEndpoint(agencySlug: string, endpoint: string, apiKey:
   return { data: [] as unknown[], error: 'Max retries' };
 }
 
+async function markMissingRecords(
+  supabase: ReturnType<typeof createClient>,
+  table: string,
+  agencyId: string,
+  runId: string,
+  seenIds: Set<string>,
+): Promise<number> {
+  const { data: existingRows, error } = await supabase
+    .from(table)
+    .select('id, apogee_id')
+    .eq('agency_id', agencyId)
+    .in('mirror_status', ['synced', 'stale']);
+
+  if (error || !existingRows) return 0;
+
+  const missingRows = existingRows.filter(
+    (row: { apogee_id: string }) => !seenIds.has(row.apogee_id)
+  );
+
+  if (missingRows.length === 0) return 0;
+
+  let marked = 0;
+  for (let i = 0; i < missingRows.length; i += BATCH_SIZE) {
+    const batch = missingRows.slice(i, i + BATCH_SIZE);
+    const ids = batch.map((r: { id: string }) => r.id);
+    const { error: updateErr } = await supabase
+      .from(table)
+      .update({ mirror_status: 'missing_from_source', last_sync_run_id: runId })
+      .in('id', ids);
+    if (!updateErr) marked += ids.length;
+  }
+
+  return marked;
+}
+
+// ============================================================
+// HANDLER
+// ============================================================
+
 Deno.serve(async (req) => {
   const corsResult = handleCorsPreflightOrReject(req);
   if (corsResult) return corsResult;
@@ -78,13 +146,6 @@ Deno.serve(async (req) => {
     ));
   }
 
-  if (!APOGEE_API_KEY) {
-    return withCors(req, new Response(
-      JSON.stringify({ error: 'APOGEE_API_KEY not configured' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    ));
-  }
-
   const body = await req.json().catch(() => ({}));
   const { agency_id, modules } = body as { agency_id?: string; modules?: string[] };
 
@@ -95,7 +156,6 @@ Deno.serve(async (req) => {
     ));
   }
 
-  // Validate modules if provided
   if (modules && !modules.every((m: string) => VALID_MODULES.includes(m))) {
     return withCors(req, new Response(
       JSON.stringify({ error: `Invalid modules. Valid: ${VALID_MODULES.join(', ')}` }),
@@ -105,10 +165,10 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  // Verify agency exists and is active
+  // Verify agency exists and is active, fetch api_key_ref
   const { data: agency, error: agencyErr } = await supabase
     .from('apogee_agencies')
-    .select('id, slug, label')
+    .select('id, slug, label, api_key_ref')
     .eq('id', agency_id)
     .eq('is_active', true)
     .maybeSingle();
@@ -120,7 +180,6 @@ Deno.serve(async (req) => {
     ));
   }
 
-  // Access check: user must belong to agency or be franchiseur
   const ctx = authResult.context;
   const isFranchiseur = ['franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(ctx.globalRole || '');
   if (!isFranchiseur && ctx.agencyId !== agency_id) {
@@ -128,6 +187,20 @@ Deno.serve(async (req) => {
     return withCors(req, new Response(
       JSON.stringify({ error: 'Access denied to this agency' }),
       { status: 403, headers: { 'Content-Type': 'application/json' } }
+    ));
+  }
+
+  // Resolve API key
+  let apiKey: string;
+  let keySource: 'agency' | 'global';
+  try {
+    const resolved = await resolveApiKey(supabase, agency);
+    apiKey = resolved.apiKey;
+    keySource = resolved.keySource;
+  } catch (err) {
+    return withCors(req, new Response(
+      JSON.stringify({ error: err instanceof Error ? err.message : 'No API key available' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     ));
   }
 
@@ -157,16 +230,23 @@ Deno.serve(async (req) => {
   let totalRecords = 0;
   let totalSuccess = 0;
   let totalFailed = 0;
+  let totalMissing = 0;
   const results: Record<string, unknown>[] = [];
 
   for (const ep of endpointsToSync) {
     const { data: logEntry } = await supabase
       .from('apogee_sync_logs')
-      .insert({ run_id: run.id, agency_id: agency.id, endpoint: ep.endpoint, status: 'running' })
+      .insert({
+        run_id: run.id,
+        agency_id: agency.id,
+        endpoint: ep.endpoint,
+        status: 'running',
+        key_source: keySource,
+      })
       .select('id')
       .single();
 
-    const { data, error } = await fetchApogeeEndpoint(agency.slug, ep.endpoint, APOGEE_API_KEY);
+    const { data, error } = await fetchApogeeEndpoint(agency.slug, ep.endpoint, apiKey);
 
     if (error) {
       if (logEntry?.id) {
@@ -181,18 +261,28 @@ Deno.serve(async (req) => {
 
     totalRecords += data.length;
 
-    // Upsert
+    // Upsert with run_id tracking
     let upserted = 0;
     let errors = 0;
+    const seenIds = new Set<string>();
+
     for (let i = 0; i < data.length; i += BATCH_SIZE) {
       const batch = data.slice(i, i + BATCH_SIZE);
       const rows = batch.map((item) => {
         const record = item as Record<string, unknown>;
         const apogeeId = String(record[ep.idField] ?? '');
         if (!apogeeId) return null;
+        seenIds.add(apogeeId);
+
         const row: Record<string, unknown> = {
-          agency_id: agency.id, apogee_id: apogeeId, raw_data: record,
-          synced_at: new Date().toISOString(), sync_version: 1, sync_status: 'synced',
+          agency_id: agency.id,
+          apogee_id: apogeeId,
+          raw_data: record,
+          synced_at: new Date().toISOString(),
+          sync_version: 1,
+          sync_status: 'synced',
+          last_sync_run_id: run.id,
+          mirror_status: 'synced',
         };
         if ('refField' in ep && ep.refField && record[ep.refField]) row.ref = String(record[ep.refField]);
         const updatedAt = record.updatedAt || record.updated_at || record.dateModification;
@@ -210,15 +300,24 @@ Deno.serve(async (req) => {
     totalSuccess += upserted;
     totalFailed += errors;
 
+    // Stale detection (only when no module filter = full agency sync)
+    let markedMissing = 0;
+    if (!modules) {
+      markedMissing = await markMissingRecords(supabase, ep.table, agency.id, run.id, seenIds);
+      totalMissing += markedMissing;
+    }
+
     if (logEntry?.id) {
       await supabase.from('apogee_sync_logs').update({
         status: errors > 0 ? 'failed' : 'success',
         finished_at: new Date().toISOString(),
-        records_fetched: data.length, records_upserted: upserted,
+        records_fetched: data.length,
+        records_upserted: upserted,
+        records_marked_missing: markedMissing,
       }).eq('id', logEntry.id);
     }
 
-    results.push({ endpoint: ep.endpoint, status: errors > 0 ? 'partial' : 'success', fetched: data.length, upserted });
+    results.push({ endpoint: ep.endpoint, status: errors > 0 ? 'partial' : 'success', fetched: data.length, upserted, missing: markedMissing });
   }
 
   const finalStatus = totalFailed === 0 ? 'success' : totalSuccess > 0 ? 'partial' : 'failed';
@@ -227,10 +326,12 @@ Deno.serve(async (req) => {
     records_total: totalRecords, records_success: totalSuccess, records_failed: totalFailed,
   }).eq('id', run.id);
 
-  secLog.audit('apogee-sync-manual', ctx.userId, `Manual sync completed: ${finalStatus}`, { agency: agency.slug, modules, totalRecords, totalSuccess, totalFailed });
+  secLog.audit('apogee-sync-manual', ctx.userId, `Manual sync completed: ${finalStatus}`, {
+    agency: agency.slug, keySource, modules, totalRecords, totalSuccess, totalFailed, totalMissing,
+  });
 
   return withCors(req, new Response(
-    JSON.stringify({ runId: run.id, status: finalStatus, agency: agency.slug, results }),
+    JSON.stringify({ runId: run.id, status: finalStatus, agency: agency.slug, keySource, results }),
     { status: 200, headers: { 'Content-Type': 'application/json' } }
   ));
 });
