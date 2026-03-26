@@ -201,7 +201,7 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
                                   'font-medium',
                                   (detail.days || 0) > 60 ? 'text-destructive' : 'text-[hsl(var(--ap-warning))]'
                                 )}>
-                                  {detail.days}j
+                                  {Math.round(detail.days || 0)}j
                                 </span>
                               </td>
                             )}
