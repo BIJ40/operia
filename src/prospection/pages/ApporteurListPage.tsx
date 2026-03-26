@@ -270,7 +270,7 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
       const cmp = typeof va === 'string' ? va.localeCompare(vb as string) : (va as number) - (vb as number);
       return sortDir === 'asc' ? cmp : -cmp;
     });
-  }, [apporteurs, search, getApporteurName, filterDossiersMin, filterCaMin, filterFacturesMin, filterTransfo, sortColumn, sortDir]);
+  }, [apporteurs, search, getApporteurName, filterDossiersMin, filterCaMin, filterFacturesMin, filterTransfo, filterPanier, stats.medianPanier, sortColumn, sortDir]);
 
   // Footer totals
   const totals = useMemo(() => {
@@ -446,7 +446,18 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
                         </SelectContent>
                       </Select>
                     </TableHead>
-                    <TableHead />
+                    <TableHead className="px-2 py-1">
+                      <Select value={filterPanier} onValueChange={v => setFilterPanier(v as PanierFilter)}>
+                        <SelectTrigger className="h-7 text-xs w-28 ml-auto">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Tous</SelectItem>
+                          <SelectItem value="below">Sous médiane</SelectItem>
+                          <SelectItem value="above">Au-dessus</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableHead>
                     <TableHead className="px-2 py-1">
                       <Input
                         type="number"
