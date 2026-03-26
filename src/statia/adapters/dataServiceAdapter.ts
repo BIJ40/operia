@@ -123,6 +123,8 @@ async function withMirrorResolution(
     logSourceResolution(moduleKey, agencyId, resolved, mappedData.length);
     recordMetric(moduleKey, resolved, mappedData.length);
     logMirrorDecision(moduleKey, agencyId, resolved, mappedData.length, quality);
+    // Periodic snapshot persistence (non-blocking)
+    if (agencyId) maybePersistSnapshot(moduleKey, agencyId).catch(() => {});
     return mappedData;
   } catch (err) {
     // If mirror read fails, fallback to live
