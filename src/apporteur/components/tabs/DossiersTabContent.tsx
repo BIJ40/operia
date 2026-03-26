@@ -717,12 +717,25 @@ export default function DossiersTabContent() {
                       <span className="ml-2 font-semibold">{formatCurrency(selectedDossier.factureHT)}</span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Reste dû:</span>
+                      <span className="text-muted-foreground">Facturé TTC:</span>
+                      <span className="ml-2 font-semibold">{formatCurrency(selectedDossier.factureTTC || selectedDossier.factureHT)}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Reste dû HT:</span>
                       <span className={cn(
                         "ml-2 font-semibold",
                         selectedDossier.restedu > 0 ? "text-[hsl(var(--ap-danger))]" : "text-[hsl(var(--ap-success))]"
                       )}>
                         {selectedDossier.restedu > 0 ? formatCurrency(selectedDossier.restedu) : 'Réglé'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Reste dû TTC:</span>
+                      <span className={cn(
+                        "ml-2 font-semibold",
+                        (selectedDossier.resteduTTC || selectedDossier.restedu) > 0 ? "text-[hsl(var(--ap-danger))]" : "text-[hsl(var(--ap-success))]"
+                      )}>
+                        {(selectedDossier.resteduTTC || selectedDossier.restedu) > 0 ? formatCurrency(selectedDossier.resteduTTC || selectedDossier.restedu) : 'Réglé'}
                       </span>
                     </div>
                   </div>
