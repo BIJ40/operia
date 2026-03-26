@@ -620,24 +620,25 @@ export default function MapsTabContent() {
       source: HEATMAP_SOURCE,
       paint: {
         'heatmap-weight': 1,
-        // Stronger intensity for dense choropleth-like look
-        'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 1, 8, 3, 12, 5, 16, 8],
-        // Color ramp: deep red choropleth — light pink → crimson → dark burgundy → near black
+        // Moderate intensity — avoids saturating into a single blob
+        'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 0.6, 6, 1, 10, 1.5, 14, 2],
+        // Choropleth-like color ramp: transparent → light pink → coral → crimson → dark burgundy
         'heatmap-color': [
           'interpolate', ['linear'], ['heatmap-density'],
           0,    'rgba(255,245,245,0)',
-          0.05, 'rgba(252,210,210,0.7)',
-          0.15, 'rgba(240,160,160,0.8)',
-          0.3,  'rgba(210,80,80,0.85)',
-          0.45, 'rgba(180,40,40,0.9)',
-          0.6,  'rgba(150,20,20,0.92)',
-          0.75, 'rgba(120,10,10,0.95)',
-          0.9,  'rgba(80,5,5,0.97)',
-          1,    'rgba(40,0,0,1)',
+          0.08, 'rgba(254,224,224,0.45)',
+          0.18, 'rgba(252,190,190,0.55)',
+          0.3,  'rgba(248,150,150,0.65)',
+          0.42, 'rgba(240,110,110,0.72)',
+          0.55, 'rgba(220,70,70,0.78)',
+          0.68, 'rgba(195,40,40,0.84)',
+          0.8,  'rgba(160,20,20,0.88)',
+          0.9,  'rgba(120,10,10,0.92)',
+          1,    'rgba(80,0,0,0.95)',
         ],
-        // Large radius for continuous fill (not dots)
-        'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 15, 6, 40, 10, 60, 14, 80, 18, 100],
-        'heatmap-opacity': 0.9,
+        // Tight radius for granular, polygon-like rendering
+        'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 4, 6, 12, 10, 22, 14, 35, 18, 50],
+        'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 0, 0.75, 10, 0.8, 16, 0.7],
       },
     });
 
