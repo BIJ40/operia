@@ -8,16 +8,20 @@ export function ImageModal() {
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       
-      // Gestion des boutons avec data-image-modal (directement ou parent)
-      const button = target.closest('[data-image-modal]') as HTMLElement;
-      if (button) {
-        e.preventDefault();
-        e.stopPropagation();
-        const url = button.getAttribute('data-image-modal');
+      // Gestion des boutons/containers de preview image dans le contenu enrichi
+      const imageTrigger = target.closest('[data-image-modal], [data-image-button], [data-src]') as HTMLElement | null;
+      if (imageTrigger) {
+        const url = imageTrigger.getAttribute('data-image-modal')
+          || imageTrigger.getAttribute('data-src')
+          || imageTrigger.closest('[data-image-button]')?.getAttribute('data-src')
+          || imageTrigger.querySelector('[data-image-modal]')?.getAttribute('data-image-modal');
+
         if (url) {
+          e.preventDefault();
+          e.stopPropagation();
           setImageUrl(url);
+          return;
         }
-        return;
       }
       
       // Gestion des images directes (inline)
