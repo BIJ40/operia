@@ -29,6 +29,70 @@ const SYNC_ENDPOINTS = [
 
 const VALID_MODULES = ['projects', 'interventions', 'devis', 'factures', 'users', 'clients'];
 
+type DiagnosticStage =
+  | 'config'
+  | 'auth'
+  | 'request'
+  | 'agency_lookup'
+  | 'api_key_resolution'
+  | 'sync_run_create'
+  | 'endpoint_fetch'
+  | 'endpoint_upsert'
+  | 'sync_run_finalize'
+  | 'unexpected';
+
+function jsonResponse(req: Request, status: number, payload: Record<string, unknown>): Response {
+  return withCors(req, new Response(JSON.stringify(payload), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  }));
+}
+
+function diagnosticError(
+  req: Request,
+  status: number,
+  stage: DiagnosticStage,
+  message: string,
+  diagnostics: Record<string, unknown> = {},
+): Response {
+  return jsonResponse(req, status, {
+    success: false,
+    error: {
+      stage,
+      message,
+      diagnostics,
+    },
+  });
+}
+
+function extractErrorDetails(error: unknown): Record<string, unknown> {
+  if (!error) return {};
+  if (error instanceof Error) {
+    return { name: error.name, message: error.message };
+  }
+  if (typeof error === 'object') {
+    const record = error as Record<string, unknown>;
+    return {
+      message: typeof record.message === 'string' ? record.message : String(error),
+      code: record.code,
+      details: record.details,
+      hint: record.hint,
+    };
+  }
+  return { message: String(error) };
+}
+
+function normalizeApogeePayload(raw: unknown): unknown[] {
+  if (Array.isArray(raw)) return raw;
+  if (raw && typeof raw === 'object') {
+    const record = raw as Record<string, unknown>;
+    if (Array.isArray(record.items)) return record.items;
+    if (Array.isArray(record.data)) return record.data;
+    if (Array.isArray(record.results)) return record.results;
+  }
+  return [];
+}
+
 // ============================================================
 // API KEY RESOLUTION
 // ============================================================
@@ -77,13 +141,30 @@ async function fetchApogeeEndpoint(agencySlug: string, endpoint: string, apiKey:
         return { data: [] as unknown[], error: `HTTP ${response.status}` };
       }
       const raw = await response.json();
-      return { data: Array.isArray(raw) ? raw : [] as unknown[] };
+      const normalized = normalizeApogeePayload(raw);
+      if (!Array.isArray(raw) && normalized.length === 0) {
+        return {
+          data: [] as unknown[],
+          error: 'Unexpected Apogée payload shape',
+          details: {
+            payloadType: typeof raw,
+            hasItemsArray: Boolean(raw && typeof raw === 'object' && Array.isArray((raw as Record<string, unknown>).items)),
+            hasDataArray: Boolean(raw && typeof raw === 'object' && Array.isArray((raw as Record<string, unknown>).data)),
+            hasResultsArray: Boolean(raw && typeof raw === 'object' && Array.isArray((raw as Record<string, unknown>).results)),
+          },
+        };
+      }
+      return { data: normalized };
     } catch (err) {
       if (attempt < MAX_RETRIES) { await new Promise(r => setTimeout(r, RETRY_DELAY_MS * (attempt + 1))); continue; }
-      return { data: [] as unknown[], error: err instanceof Error ? err.message : String(err) };
+      return {
+        data: [] as unknown[],
+        error: err instanceof Error ? err.message : String(err),
+        details: extractErrorDetails(err),
+      };
     }
   }
-  return { data: [] as unknown[], error: 'Max retries' };
+  return { data: [] as unknown[], error: 'Max retries', details: { attempts: MAX_RETRIES + 1 } };
 }
 
 async function markMissingRecords(
@@ -129,48 +210,72 @@ Deno.serve(async (req) => {
   const corsResult = handleCorsPreflightOrReject(req);
   if (corsResult) return corsResult;
 
-  // Support CRON_SECRET as alternative auth (for system-triggered syncs)
   const CRON_SECRET = Deno.env.get('CRON_SECRET');
-  const cronSecret = req.headers.get('X-CRON-SECRET');
-  const isCronAuth = CRON_SECRET && cronSecret === CRON_SECRET;
+  const providedCronSecret = req.headers.get('X-CRON-SECRET');
+  const hasCronSecretConfigured = Boolean(CRON_SECRET);
+  const hasCronHeader = Boolean(providedCronSecret);
+  const isCronAuth = hasCronSecretConfigured && providedCronSecret === CRON_SECRET;
+
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    console.error('[APOGEE-SYNC-MANUAL] Missing Supabase runtime config', {
+      hasSupabaseUrl: Boolean(SUPABASE_URL),
+      hasServiceRoleKey: Boolean(SUPABASE_SERVICE_ROLE_KEY),
+    });
+    return diagnosticError(req, 500, 'config', 'Supabase runtime configuration is missing', {
+      hasSupabaseUrl: Boolean(SUPABASE_URL),
+      hasServiceRoleKey: Boolean(SUPABASE_SERVICE_ROLE_KEY),
+    });
+  }
+
+  if (hasCronHeader && !isCronAuth) {
+    secLog.authFailure('apogee-sync-manual', 'Invalid X-CRON-SECRET');
+    return diagnosticError(req, 401, 'auth', 'Invalid X-CRON-SECRET', {
+      authMode: 'cron',
+      hasCronSecretConfigured,
+    });
+  }
 
   let ctx: { userId: string; globalRole: string | null; agencyId: string | null } | null = null;
+  const authMode = isCronAuth ? 'cron' : 'jwt';
 
   if (!isCronAuth) {
     const authResult = await getUserContext(req);
     if (!authResult.success) {
-      return withCors(req, new Response(
-        JSON.stringify({ error: authResult.error }),
-        { status: authResult.status, headers: { 'Content-Type': 'application/json' } }
-      ));
+      secLog.authFailure('apogee-sync-manual', authResult.error, { authMode });
+      return diagnosticError(req, authResult.status, 'auth', authResult.error, { authMode });
     }
 
     const roleCheck = assertRoleAtLeast(authResult.context, 'agency_admin');
-    if (roleCheck) {
+    if (!roleCheck.allowed) {
       secLog.denied('apogee-sync-manual', authResult.context.userId, 'Insufficient role for manual sync');
-      return withCors(req, new Response(
-        JSON.stringify({ error: roleCheck.error }),
-        { status: roleCheck.status, headers: { 'Content-Type': 'application/json' } }
-      ));
+      return diagnosticError(req, 403, 'auth', roleCheck.error ?? 'Insufficient role for manual sync', {
+        authMode,
+        userId: authResult.context.userId,
+        globalRole: authResult.context.globalRole,
+      });
     }
     ctx = authResult.context;
   }
 
-  const body = await req.json().catch(() => ({}));
+  const body = await req.json().catch((error) => ({ __parseError: error }));
+  if ('__parseError' in body) {
+    return diagnosticError(req, 400, 'request', 'Invalid JSON body', {
+      authMode,
+      error: extractErrorDetails(body.__parseError),
+    });
+  }
+
   const { agency_id, modules } = body as { agency_id?: string; modules?: string[] };
 
   if (!agency_id) {
-    return withCors(req, new Response(
-      JSON.stringify({ error: 'agency_id is required' }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
-    ));
+    return diagnosticError(req, 400, 'request', 'agency_id is required', { authMode });
   }
 
   if (modules && !modules.every((m: string) => VALID_MODULES.includes(m))) {
-    return withCors(req, new Response(
-      JSON.stringify({ error: `Invalid modules. Valid: ${VALID_MODULES.join(', ')}` }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
-    ));
+    return diagnosticError(req, 400, 'request', `Invalid modules. Valid: ${VALID_MODULES.join(', ')}`, {
+      authMode,
+      modules,
+    });
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -184,10 +289,12 @@ Deno.serve(async (req) => {
     .maybeSingle();
 
   if (agencyErr || !agency) {
-    return withCors(req, new Response(
-      JSON.stringify({ error: 'Agency not found or inactive' }),
-      { status: 404, headers: { 'Content-Type': 'application/json' } }
-    ));
+    console.error('[APOGEE-SYNC-MANUAL] Agency lookup failed', { agency_id, error: agencyErr?.message });
+    return diagnosticError(req, 404, 'agency_lookup', 'Agency not found or inactive', {
+      agencyId: agency_id,
+      authMode,
+      error: agencyErr ? extractErrorDetails(agencyErr) : null,
+    });
   }
 
   // Agency access check (skip for cron auth)
@@ -195,10 +302,11 @@ Deno.serve(async (req) => {
     const isFranchiseur = ['franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(ctx.globalRole || '');
     if (!isFranchiseur && ctx.agencyId !== agency_id) {
       secLog.denied('apogee-sync-manual', ctx.userId, 'Agency access denied', { requested: agency_id, userAgency: ctx.agencyId });
-      return withCors(req, new Response(
-        JSON.stringify({ error: 'Access denied to this agency' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
-      ));
+      return diagnosticError(req, 403, 'auth', 'Access denied to this agency', {
+        authMode,
+        requestedAgencyId: agency_id,
+        userAgencyId: ctx.agencyId,
+      });
     }
   }
 
@@ -210,16 +318,23 @@ Deno.serve(async (req) => {
     apiKey = resolved.apiKey;
     keySource = resolved.keySource;
   } catch (err) {
-    return withCors(req, new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : 'No API key available' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    ));
+    console.error('[APOGEE-SYNC-MANUAL] API key resolution failed', {
+      agency: agency.slug,
+      apiKeyRef: agency.api_key_ref,
+      error: extractErrorDetails(err),
+    });
+    return diagnosticError(req, 500, 'api_key_resolution', err instanceof Error ? err.message : 'No API key available', {
+      agencyId: agency.id,
+      agencySlug: agency.slug,
+      keySourceAttempted: agency.api_key_ref ? 'agency_then_global' : 'global',
+      hasGlobalApiKey: Boolean(APOGEE_API_KEY),
+    });
   }
 
   const triggeredBy = ctx?.userId || 'system-cron';
 
   // Create sync run
-  const { data: run } = await supabase
+  const { data: run, error: runError } = await supabase
     .from('apogee_sync_runs')
     .insert({
       status: 'running',
@@ -231,10 +346,15 @@ Deno.serve(async (req) => {
     .single();
 
   if (!run) {
-    return withCors(req, new Response(
-      JSON.stringify({ error: 'Failed to create sync run' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    ));
+    console.error('[APOGEE-SYNC-MANUAL] Failed to create sync run', {
+      agency: agency.slug,
+      error: runError?.message,
+    });
+    return diagnosticError(req, 500, 'sync_run_create', 'Failed to create sync run', {
+      agencyId: agency.id,
+      agencySlug: agency.slug,
+      error: runError ? extractErrorDetails(runError) : null,
+    });
   }
 
   const endpointsToSync = modules
@@ -246,6 +366,7 @@ Deno.serve(async (req) => {
   let totalFailed = 0;
   let totalMissing = 0;
   const results: Record<string, unknown>[] = [];
+  const errorLog: Record<string, unknown>[] = [];
 
   for (const ep of endpointsToSync) {
     const { data: logEntry } = await supabase
@@ -260,16 +381,27 @@ Deno.serve(async (req) => {
       .select('id')
       .single();
 
-    const { data, error } = await fetchApogeeEndpoint(agency.slug, ep.endpoint, apiKey);
+    const { data, error, details } = await fetchApogeeEndpoint(agency.slug, ep.endpoint, apiKey);
 
     if (error) {
+      console.error('[APOGEE-SYNC-MANUAL] Endpoint fetch failed', {
+        agency: agency.slug,
+        endpoint: ep.endpoint,
+        error,
+        details,
+      });
       if (logEntry?.id) {
         await supabase.from('apogee_sync_logs').update({
-          status: 'failed', finished_at: new Date().toISOString(), error_message: error, records_fetched: 0,
+          status: 'failed',
+          finished_at: new Date().toISOString(),
+          error_message: error,
+          error_detail: details ?? null,
+          records_fetched: 0,
         }).eq('id', logEntry.id);
       }
       totalFailed++;
-      results.push({ endpoint: ep.endpoint, status: 'failed', error });
+      errorLog.push({ stage: 'endpoint_fetch', endpoint: ep.endpoint, error, details: details ?? null });
+      results.push({ endpoint: ep.endpoint, status: 'failed', error, diagnostics: details ?? null });
       continue;
     }
 
@@ -279,6 +411,7 @@ Deno.serve(async (req) => {
     let upserted = 0;
     let errors = 0;
     const seenIds = new Set<string>();
+    const upsertDiagnostics: Array<Record<string, unknown>> = [];
 
     for (let i = 0; i < data.length; i += BATCH_SIZE) {
       const batch = data.slice(i, i + BATCH_SIZE);
@@ -308,7 +441,23 @@ Deno.serve(async (req) => {
       const { error: upsertErr } = await supabase
         .from(ep.table)
         .upsert(rows, { onConflict: 'agency_id,apogee_id', ignoreDuplicates: false });
-      if (upsertErr) { errors += rows.length; } else { upserted += rows.length; }
+      if (upsertErr) {
+        errors += rows.length;
+        const diagnostic = {
+          batchStart: i,
+          batchSize: rows.length,
+          error: extractErrorDetails(upsertErr),
+        };
+        upsertDiagnostics.push(diagnostic);
+        console.error('[APOGEE-SYNC-MANUAL] Upsert batch failed', {
+          agency: agency.slug,
+          endpoint: ep.endpoint,
+          table: ep.table,
+          ...diagnostic,
+        });
+      } else {
+        upserted += rows.length;
+      }
     }
 
     totalSuccess += upserted;
@@ -328,24 +477,76 @@ Deno.serve(async (req) => {
         records_fetched: data.length,
         records_upserted: upserted,
         records_marked_missing: markedMissing,
+        error_message: upsertDiagnostics.length > 0 ? 'One or more upsert batches failed' : null,
+        error_detail: upsertDiagnostics.length > 0 ? upsertDiagnostics : null,
       }).eq('id', logEntry.id);
     }
 
-    results.push({ endpoint: ep.endpoint, status: errors > 0 ? 'partial' : 'success', fetched: data.length, upserted, missing: markedMissing });
+    if (upsertDiagnostics.length > 0) {
+      errorLog.push({
+        stage: 'endpoint_upsert',
+        endpoint: ep.endpoint,
+        table: ep.table,
+        diagnostics: upsertDiagnostics,
+      });
+    }
+
+    results.push({
+      endpoint: ep.endpoint,
+      status: errors > 0 ? 'partial' : 'success',
+      fetched: data.length,
+      upserted,
+      missing: markedMissing,
+      diagnostics: upsertDiagnostics.length > 0 ? upsertDiagnostics : null,
+    });
   }
 
   const finalStatus = totalFailed === 0 ? 'success' : totalSuccess > 0 ? 'partial' : 'failed';
-  await supabase.from('apogee_sync_runs').update({
+  const { error: finalizeError } = await supabase.from('apogee_sync_runs').update({
     status: finalStatus, finished_at: new Date().toISOString(),
     records_total: totalRecords, records_success: totalSuccess, records_failed: totalFailed,
+    error_log: errorLog,
   }).eq('id', run.id);
 
-  secLog.audit('apogee-sync-manual', ctx.userId, `Manual sync completed: ${finalStatus}`, {
-    agency: agency.slug, keySource, modules, totalRecords, totalSuccess, totalFailed, totalMissing,
+  if (finalizeError) {
+    console.error('[APOGEE-SYNC-MANUAL] Failed to finalize sync run', {
+      runId: run.id,
+      error: extractErrorDetails(finalizeError),
+    });
+    return diagnosticError(req, 500, 'sync_run_finalize', 'Sync run finalized with persistence error', {
+      runId: run.id,
+      agencyId: agency.id,
+      agencySlug: agency.slug,
+      partialStatus: finalStatus,
+      error: extractErrorDetails(finalizeError),
+    });
+  }
+
+  secLog.audit('apogee-sync-manual', ctx?.userId ?? null, `Manual sync completed: ${finalStatus}`, {
+    agency: agency.slug,
+    authMode,
+    keySource,
+    modules,
+    totalRecords,
+    totalSuccess,
+    totalFailed,
+    totalMissing,
   });
 
-  return withCors(req, new Response(
-    JSON.stringify({ runId: run.id, status: finalStatus, agency: agency.slug, keySource, results }),
-    { status: 200, headers: { 'Content-Type': 'application/json' } }
-  ));
+  return jsonResponse(req, 200, {
+    success: true,
+    runId: run.id,
+    status: finalStatus,
+    agency: agency.slug,
+    agencyId: agency.id,
+    authMode,
+    keySource,
+    totals: {
+      totalRecords,
+      totalSuccess,
+      totalFailed,
+      totalMissing,
+    },
+    results,
+  });
 });
