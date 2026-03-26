@@ -352,7 +352,7 @@ Deno.serve(async (req) => {
 
     // 7. Fetch users pour les couleurs (skip in heatmap mode)
     const usersById = new Map<number, { name: string; color: string }>();
-    if (!isHeatmap && !isProfitability) {
+    if (!isHeatmap && !isProfitability && !isZones) {
       const usersUrl = `https://${targetAgency}.hc-apogee.fr/api/apiGetUsers`;
       const usersResponse = await fetch(usersUrl, {
         method: 'POST',
