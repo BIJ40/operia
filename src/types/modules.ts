@@ -663,6 +663,7 @@ export const MODULE_SHORT_LABELS: Partial<Record<ModuleKey, string>> = {
   'pilotage.incoherences': 'Incohérences',
   'pilotage.resultat': 'Résultat',
   'pilotage.rentabilite': 'Rentabilité',
+  'pilotage.tresorerie': 'Trésorerie',
   // Commercial
   'commercial.suivi_client': 'Suivi client',
   'commercial.comparateur': 'Comparateur',
