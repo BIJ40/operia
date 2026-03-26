@@ -150,7 +150,11 @@ function ExchangeRow({ exchange, onClick }: { exchange: AgencyExchangeSummary; o
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-medium text-sm truncate">#{exchange.dossier_ref}</span>
+            <span className="font-medium text-sm truncate">
+              {exchange.client_name
+                ? `${exchange.client_name} (réf. #${exchange.dossier_ref})`
+                : `#${exchange.dossier_ref}`}
+            </span>
             {exchange.needs_reply && (
               <Badge variant="destructive" className="text-[10px] py-0 px-1.5 h-4 shrink-0 gap-1">
                 <AlertCircle className="w-2.5 h-2.5" />

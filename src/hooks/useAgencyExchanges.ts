@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export interface AgencyExchangeSummary {
   dossier_ref: string;
+  client_name: string | null;
   last_message_at: string;
   last_sender_type: 'apporteur' | 'agence';
   last_message_preview: string;
@@ -25,19 +26,35 @@ export function useAgencyExchanges() {
     queryFn: async (): Promise<AgencyExchangeSummary[]> => {
       if (!agencyId) return [];
 
-      const { data, error } = await supabase
-        .from('dossier_exchanges')
-        .select('dossier_ref, sender_type, sender_name, message, created_at')
-        .eq('agency_id', agencyId)
-        .order('created_at', { ascending: false })
-        .limit(500);
+      // Fetch exchanges + intervention requests in parallel
+      const [exchangesResult, requestsResult] = await Promise.all([
+        supabase
+          .from('dossier_exchanges')
+          .select('dossier_ref, sender_type, sender_name, message, created_at')
+          .eq('agency_id', agencyId)
+          .order('created_at', { ascending: false })
+          .limit(500),
+        supabase
+          .from('apporteur_intervention_requests')
+          .select('reference, tenant_name')
+          .eq('agency_id', agencyId),
+      ]);
 
-      if (error) {
-        console.error('[useAgencyExchanges] Error:', error.message);
+      if (exchangesResult.error) {
+        console.error('[useAgencyExchanges] Error:', exchangesResult.error.message);
         return [];
       }
 
+      const data = exchangesResult.data;
       if (!data?.length) return [];
+
+      // Build ref → client_name map
+      const clientNames = new Map<string, string>();
+      for (const r of requestsResult.data ?? []) {
+        if (r.reference && r.tenant_name) {
+          clientNames.set(r.reference, r.tenant_name);
+        }
+      }
 
       // Group by dossier_ref, keep last message
       const grouped = new Map<string, AgencyExchangeSummary>();
@@ -47,6 +64,7 @@ export function useAgencyExchanges() {
         if (!grouped.has(ref)) {
           grouped.set(ref, {
             dossier_ref: ref,
+            client_name: clientNames.get(ref) ?? null,
             last_message_at: row.created_at,
             last_sender_type: row.sender_type as 'apporteur' | 'agence',
             last_message_preview: (row.message ?? '').substring(0, 120),
