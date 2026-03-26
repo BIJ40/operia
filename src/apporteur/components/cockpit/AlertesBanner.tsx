@@ -171,10 +171,14 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
                         {openAlerte.sample_details!.map((detail, idx) => (
                           <tr
                             key={`${detail.ref}-${idx}`}
-                            className="border-b last:border-0 hover:bg-muted/30 transition-colors"
+                            className="border-b last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
+                            onClick={() => {
+                              setOpenAlerte(null);
+                              navigate(`/apporteur/dashboard?tab=dossiers&search=${detail.ref}`);
+                            }}
                           >
                             <td className="py-2.5 pr-3 font-medium text-foreground max-w-[180px] truncate">
-                              {detail.label || `Dossier ${detail.ref}`}
+                              <span className="hover:underline">{detail.label || `Dossier ${detail.ref}`}</span>
                             </td>
                             <td className="py-2.5 pr-3 text-muted-foreground font-mono text-xs">
                               {detail.ref}
