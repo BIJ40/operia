@@ -72,6 +72,7 @@ export default function DossiersTabContent() {
   const [sortField, setSortField] = useState<SortField>('dateCreation');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [selectedDossier, setSelectedDossier] = useState<DossierRow | null>(null);
+  const [inlineComment, setInlineComment] = useState('');
   const [alerteRefs, setAlerteRefs] = useState<string[] | null>(null);
 
   // Selection for bulk actions
