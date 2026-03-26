@@ -390,9 +390,6 @@ export function usePerformanceTerrain(dateRange: DateRange) {
             ? Math.ceil((eventEnd.getTime() - eventStart.getTime()) / (1000 * 60 * 60 * 24))
             : dureeRaw > 0 ? Math.ceil(dureeRaw / (60 * 24)) : 1;
 
-          const isSingleDayConge = spansDays <= 1 && isAbsenceType;
-          const isLikelyRealLeave = absHours > 16.5 || spansDays > 1;
-
           // Extract user IDs
           const usersRaw = (rec.usersIds || (rec.data as Record<string, unknown>)?.usersIds || []) as unknown[];
           const userId = rec.userId != null ? String(rec.userId) : undefined;
@@ -418,6 +415,9 @@ export function usePerformanceTerrain(dateRange: DateRange) {
 
           // Fallback: 7h if still 0
           if (absHours <= 0) absHours = 7;
+
+          const isSingleDayConge = spansDays <= 1 && isAbsenceType;
+          const isLikelyRealLeave = absHours > 16.5 || spansDays > 1;
 
           const absLabel = combined.includes('maladie') ? 'Arrêt maladie'
             : combined.includes('arret') || combined.includes('arrêt') ? 'En arrêt'
