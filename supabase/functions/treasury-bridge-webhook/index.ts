@@ -69,16 +69,17 @@ Deno.serve(async (req) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceKey);
 
-  // Log event
-  await supabase.from("bank_webhook_events").insert({
+  // Log event — capture inserted ID for precise update later
+  let webhookEventId: string | null = null;
+  const { data: insertedRow, error: insertErr } = await supabase.from("bank_webhook_events").insert({
     event_type: eventType,
     external_item_id: itemId ? String(itemId) : null,
     payload,
     received_at: new Date().toISOString(),
     processed: false,
-  }).then(({ error }) => {
-    if (error) console.warn("[WEBHOOK_LOG_WARN]", error.message);
-  });
+  }).select("id").maybeSingle();
+  if (insertErr) console.warn("[WEBHOOK_LOG_WARN]", insertErr.message);
+  else if (insertedRow) webhookEventId = insertedRow.id;
 
   // Find connection
   let connectionId: string | null = null;
@@ -108,19 +109,17 @@ Deno.serve(async (req) => {
       const result = await resp.json().catch(() => ({}));
       console.log("[WEBHOOK_SYNC_RESULT]", { connectionId, status: resp.status, success: (result as Record<string, unknown>)?.success });
 
-      if (itemId) {
+      if (webhookEventId) {
         await supabase.from("bank_webhook_events")
           .update({ processed: true, processed_at: new Date().toISOString() })
-          .eq("external_item_id", String(itemId))
-          .eq("event_type", eventType)
-          .eq("processed", false);
+          .eq("id", webhookEventId);
       }
     } catch (err) {
       console.error("[WEBHOOK_SYNC_ERROR]", { connectionId, error: err instanceof Error ? err.message : String(err) });
     }
   } else if (LOG_ONLY_EVENTS.has(eventType)) {
     if (eventType === "item.needs_user_action") {
-      await supabase.from("bank_connections").update({ status: "action_required", provider_status: "needs_user_action", updated_at: new Date().toISOString() }).eq("id", connectionId);
+      await supabase.from("bank_connections").update({ status: "requires_reauth", provider_status: "needs_user_action", updated_at: new Date().toISOString() }).eq("id", connectionId);
     }
     if (eventType === "item.deleted") {
       await supabase.from("bank_connections").update({ status: "disconnected", provider_status: "item_deleted_by_provider", updated_at: new Date().toISOString() }).eq("id", connectionId);
