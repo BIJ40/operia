@@ -6,10 +6,11 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { format, addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
+import { format, addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval, parse } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Loader2, MapPin, AlertCircle, CalendarDays, Flame, PieChart, Crosshair, Network, Radio, Clock, Wrench, Navigation } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Loader2, MapPin, AlertCircle, CalendarDays, Flame, PieChart, Crosshair, Network, Radio, Clock, Wrench, Navigation, CalendarRange, Play, Pause, SkipBack, SkipForward, TrendingUp, TrendingDown } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -47,6 +48,8 @@ const APPORTEURS_SOURCE = 'apporteurs-source-pilotage';
 const DISPO_SOURCE = 'dispo-source-pilotage';
 const DISPO_CIRCLES = 'dispo-circles-pilotage';
 const APPORTEURS_CIRCLES = 'apporteurs-circles-pilotage';
+const SEASON_SOURCE = 'season-source-pilotage';
+const SEASON_CIRCLES = 'season-circles-pilotage';
 
 function enableStyleFallback(m: mapboxgl.Map) {
   let fallbackApplied = false;
@@ -73,9 +76,9 @@ function enableStyleFallback(m: mapboxgl.Map) {
 }
 
 type ViewMode = 'day' | 'week';
-type MapMode = 'pins' | 'heatmap' | 'profitability' | 'zones' | 'apporteurs' | 'disponibilite';
+type MapMode = 'pins' | 'heatmap' | 'profitability' | 'zones' | 'apporteurs' | 'disponibilite' | 'saisonnalite';
 
-type MapsSubTab = 'rdv' | 'densite' | 'rentabilite' | 'zones' | 'apporteurs' | 'disponibilite';
+type MapsSubTab = 'rdv' | 'densite' | 'rentabilite' | 'zones' | 'apporteurs' | 'disponibilite' | 'saisonnalite';
 
 const MAP_SUB_TABS: FolderTabConfig[] = [
   { id: 'rdv', label: 'Rendez-vous', icon: MapPin, accent: 'blue' },
@@ -84,6 +87,7 @@ const MAP_SUB_TABS: FolderTabConfig[] = [
   { id: 'zones', label: 'Zones blanches', icon: Crosshair, accent: 'orange' },
   { id: 'apporteurs', label: 'Apporteurs', icon: Network, accent: 'purple' },
   { id: 'disponibilite', label: 'Disponibilité', icon: Radio, accent: 'teal' },
+  { id: 'saisonnalite', label: 'Saisonnalité', icon: CalendarRange, accent: 'orange' },
 ];
 
 const TAB_ACCENT_COLORS: Record<string, string> = {
@@ -93,6 +97,7 @@ const TAB_ACCENT_COLORS: Record<string, string> = {
   orange: 'hsl(var(--warm-orange))',
   purple: 'hsl(var(--warm-purple, 270 60% 55%))',
   teal: 'hsl(var(--warm-teal, 190 60% 45%))',
+  amber: 'hsl(var(--warm-orange, 30 90% 55%))',
 };
 
 // ── Disponibilité types ──
@@ -152,6 +157,7 @@ function MapLoadingOverlay({ mode }: { mode: MapMode }) {
     zones: 'Analyse des zones commerciales…',
     apporteurs: 'Analyse des apporteurs par zone…',
     disponibilite: 'Calcul de disponibilité temps réel…',
+    saisonnalite: 'Analyse de saisonnalité géographique…',
   };
 
   return (
@@ -175,7 +181,7 @@ export default function MapsTabContent() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [activeSubTab, setActiveSubTab] = useSessionState<MapsSubTab>('maps_sub_tab', 'rdv');
-  const mapMode: MapMode = activeSubTab === 'densite' ? 'heatmap' : activeSubTab === 'rentabilite' ? 'profitability' : activeSubTab === 'zones' ? 'zones' : activeSubTab === 'apporteurs' ? 'apporteurs' : activeSubTab === 'disponibilite' ? 'disponibilite' : 'pins';
+  const mapMode: MapMode = activeSubTab === 'densite' ? 'heatmap' : activeSubTab === 'rentabilite' ? 'profitability' : activeSubTab === 'zones' ? 'zones' : activeSubTab === 'apporteurs' ? 'apporteurs' : activeSubTab === 'disponibilite' ? 'disponibilite' : activeSubTab === 'saisonnalite' ? 'saisonnalite' : 'pins';
   const [selectedTechIds, setSelectedTechIds] = useState<number[]>([]);
   const [techFilterOpen, setTechFilterOpen] = useState(false);
   const [selectedRdv, setSelectedRdv] = useState<MapRdv | null>(null);
@@ -368,6 +374,53 @@ export default function MapsTabContent() {
     refetchInterval: mapMode === 'disponibilite' ? 2 * 60 * 1000 : false, // Auto-refresh every 2 min
   });
 
+  // Saisonnalité: geographic seasonality time-series
+  interface SeasonZone {
+    postalCode: string; city: string; lat: number; lng: number;
+    totalNb: number; totalCA: number; panierMoyen: number;
+    series: Record<string, { nb: number; ca: number; topUnivers: string; urgences: number }>;
+    variations: Record<string, number>;
+    seasonalityIndex: number; predictabilityIndex: number;
+    peakMonth: string; peakCalMonth: number; insights: string[];
+  }
+  interface SeasonResponse { data: SeasonZone[]; meta: { months: string[]; totalZones: number; durationMs: number } }
+  const [seasonMonth, setSeasonMonth] = useState(0);
+  const [seasonPlaying, setSeasonPlaying] = useState(false);
+  const [seasonViewMode, setSeasonViewMode] = useState<'volume' | 'variation'>('volume');
+  const { data: seasonRaw, isLoading: seasonLoading } = useQuery({
+    queryKey: ['rdv-saisonnalite', agence],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Non authentifié');
+      const response = await supabase.functions.invoke('get-rdv-map', {
+        body: { mode: 'saisonnalite', agencySlug: agence },
+      });
+      if (response.error) throw new Error(response.error.message);
+      const result = response.data;
+      if (!result.success) throw new Error(result.error || 'Erreur');
+      return { data: result.data as SeasonZone[], meta: result.meta } as SeasonResponse;
+    },
+    enabled: mapMode === 'saisonnalite' && !!agence,
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+  const seasonData = seasonRaw?.data;
+  const seasonMonths = seasonRaw?.meta?.months || [];
+  const currentSeasonMonth = seasonMonths[seasonMonth] || '';
+
+  // Auto-play animation
+  useEffect(() => {
+    if (!seasonPlaying || seasonMonths.length <= 1) return;
+    const interval = setInterval(() => {
+      setSeasonMonth(prev => {
+        if (prev >= seasonMonths.length - 1) { setSeasonPlaying(false); return prev; }
+        return prev + 1;
+      });
+    }, 1200);
+    return () => clearInterval(interval);
+  }, [seasonPlaying, seasonMonths.length]);
+
   const rdvs = viewMode === 'day' ? dayRdvs : weekRdvs;
   const isLoading = viewMode === 'day' ? dayLoading : weekLoading;
   const error = viewMode === 'day' ? dayError : (weekError instanceof Error ? weekError.message : null);
@@ -464,7 +517,7 @@ export default function MapsTabContent() {
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
 
-    if (mapMode === 'heatmap' || mapMode === 'profitability' || mapMode === 'zones' || mapMode === 'apporteurs' || mapMode === 'disponibilite') return;
+    if (mapMode === 'heatmap' || mapMode === 'profitability' || mapMode === 'zones' || mapMode === 'apporteurs' || mapMode === 'disponibilite' || mapMode === 'saisonnalite') return;
 
     sortedRdvs.forEach((rdv, index) => {
       const isSelected = selectedRdv?.rdvId === rdv.rdvId;
@@ -1102,6 +1155,140 @@ export default function MapsTabContent() {
     return () => { m.off('click', DISPO_CIRCLES, handleClick); };
   }, [dispoData, mapReady, mapMode]);
 
+  // Saisonnalité layer — circles sized by volume, colored by variation
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !mapReady) return;
+
+    if (m.getLayer(SEASON_CIRCLES)) m.removeLayer(SEASON_CIRCLES);
+    if (m.getSource(SEASON_SOURCE)) m.removeSource(SEASON_SOURCE);
+
+    if (mapMode !== 'saisonnalite' || !seasonData?.length || !currentSeasonMonth) return;
+
+    const geojson: GeoJSON.FeatureCollection = {
+      type: 'FeatureCollection',
+      features: seasonData.map(z => {
+        const monthData = z.series[currentSeasonMonth];
+        const nb = monthData?.nb || 0;
+        const ca = monthData?.ca || 0;
+        const variation = z.variations[currentSeasonMonth] ?? 0;
+        return {
+          type: 'Feature' as const,
+          properties: {
+            postalCode: z.postalCode, city: z.city, nb, ca, variation,
+            seasonalityIndex: z.seasonalityIndex, predictabilityIndex: z.predictabilityIndex,
+            peakMonth: z.peakMonth, topUnivers: monthData?.topUnivers || '',
+            urgences: monthData?.urgences || 0, insights: JSON.stringify(z.insights), totalNb: z.totalNb,
+          },
+          geometry: { type: 'Point' as const, coordinates: [z.lng, z.lat] },
+        };
+      }).filter(f => f.properties.nb > 0 || seasonViewMode === 'variation'),
+    };
+
+    m.addSource(SEASON_SOURCE, { type: 'geojson', data: geojson });
+
+    m.addLayer({
+      id: SEASON_CIRCLES,
+      type: 'circle',
+      source: SEASON_SOURCE,
+      paint: {
+        'circle-radius': [
+          'interpolate', ['linear'], ['zoom'],
+          4, ['interpolate', ['linear'], ['get', 'nb'], 0, 4, 5, 10, 20, 18, 50, 26],
+          10, ['interpolate', ['linear'], ['get', 'nb'], 0, 8, 5, 16, 20, 28, 50, 40],
+          14, ['interpolate', ['linear'], ['get', 'nb'], 0, 12, 5, 22, 20, 36, 50, 52],
+        ],
+        'circle-color': seasonViewMode === 'variation' ? [
+          'interpolate', ['linear'], ['get', 'variation'],
+          -80, '#3b82f6', -30, '#93c5fd', 0, '#fbbf24', 30, '#f97316', 80, '#dc2626',
+        ] : [
+          'interpolate', ['linear'], ['get', 'nb'],
+          0, '#fef3c7', 3, '#fbbf24', 10, '#f97316', 25, '#dc2626', 50, '#7f1d1d',
+        ],
+        'circle-opacity': 0.8,
+        'circle-stroke-color': [
+          'interpolate', ['linear'], ['get', 'seasonalityIndex'],
+          0, '#9ca3af', 50, '#f59e0b', 100, '#dc2626',
+        ],
+        'circle-stroke-width': ['interpolate', ['linear'], ['get', 'seasonalityIndex'], 0, 1, 50, 2, 100, 3.5],
+        'circle-stroke-opacity': 0.9,
+      },
+    });
+
+    // Fit bounds on first load
+    if (!hasFittedBoundsRef.current && seasonData.length > 0) {
+      let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+      seasonData.forEach(p => { minLng = Math.min(minLng, p.lng); maxLng = Math.max(maxLng, p.lng); minLat = Math.min(minLat, p.lat); maxLat = Math.max(maxLat, p.lat); });
+      const pad = 0.1;
+      const container = m.getContainer();
+      const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
+      const padY = Math.max(56, Math.round((container.clientHeight || 600) * 0.12));
+      m.fitBounds([[minLng - pad, minLat - pad], [maxLng + pad, maxLat + pad]], {
+        padding: { top: padY, bottom: padY + 60, left: padX, right: padX }, maxZoom: 12, duration: 1000,
+      });
+      hasFittedBoundsRef.current = true;
+    }
+
+    // Popup on click
+    const handleClick = (e: mapboxgl.MapMouseEvent) => {
+      const features = m.queryRenderedFeatures(e.point, { layers: [SEASON_CIRCLES] });
+      if (!features?.length) return;
+      const p = features[0].properties;
+      if (!p) return;
+      const coords = (features[0].geometry as any).coordinates as [number, number];
+      const insights: string[] = (() => { try { return JSON.parse(p.insights); } catch { return []; } })();
+      const zone = seasonData?.find(z => z.postalCode === p.postalCode);
+      
+      const MONTH_SHORT = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+      let sparkHtml = '';
+      if (zone) {
+        const months = Object.keys(zone.series).sort();
+        const last12 = months.slice(-12);
+        const maxNb = Math.max(...last12.map(m2 => zone.series[m2]?.nb || 0), 1);
+        sparkHtml = `<div style="display:flex;align-items:flex-end;gap:2px;height:40px;margin:8px 0;">` +
+          last12.map(m2 => {
+            const nb = zone.series[m2]?.nb || 0;
+            const h = Math.max(2, Math.round((nb / maxNb) * 36));
+            const isCurrentM = m2 === currentSeasonMonth;
+            return `<div style="display:flex;flex-direction:column;align-items:center;gap:1px;"><div style="width:${isCurrentM ? 10 : 7}px;height:${h}px;background:${isCurrentM ? '#f97316' : '#fbbf24'};border-radius:2px;"></div><span style="font-size:8px;color:#9ca3af;">${MONTH_SHORT[parseInt(m2.slice(5, 7)) - 1]}</span></div>`;
+          }).join('') + `</div>`;
+      }
+
+      const varColor = p.variation > 20 ? '#dc2626' : p.variation < -20 ? '#3b82f6' : '#6b7280';
+      const varLabel = p.variation > 0 ? `+${p.variation}%` : `${p.variation}%`;
+
+      new mapboxgl.Popup({ closeButton: true, maxWidth: '360px' })
+        .setLngLat(coords)
+        .setHTML(`
+          <div style="font-family: system-ui; font-size: 12px; line-height: 1.6;">
+            <div style="font-weight: 700; font-size: 14px; margin-bottom: 2px;">${p.postalCode} ${p.city}</div>
+            <div style="color:#6b7280;font-size:11px;margin-bottom:6px;">Mois : ${currentSeasonMonth}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-bottom:6px;">
+              <div>📁 <b>${p.nb}</b> dossiers</div>
+              <div>💰 CA: <b>${Number(p.ca).toLocaleString('fr-FR')} €</b></div>
+              <div style="color:${varColor}">📈 Variation: <b>${varLabel}</b></div>
+              <div>🔧 ${p.topUnivers || 'N/A'}</div>
+            </div>
+            ${sparkHtml}
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;border-top:1px solid #e5e7eb;padding-top:6px;margin-top:4px;">
+              <div>🌡️ Saisonnalité: <b>${p.seasonalityIndex}/100</b></div>
+              <div>🎯 Prévisibilité: <b>${p.predictabilityIndex}/100</b></div>
+              <div>📍 Pic: <b>${p.peakMonth}</b></div>
+              <div>🚨 Urgences: <b>${p.urgences}</b></div>
+            </div>
+            ${insights.length > 0 ? `<div style="background:#fef3c7;border-radius:6px;padding:6px 8px;margin-top:6px;">${insights.map(i => `<div style="color:#92400e;font-size:11px;">💡 ${i}</div>`).join('')}</div>` : ''}
+          </div>
+        `)
+        .addTo(m);
+    };
+
+    m.on('click', SEASON_CIRCLES, handleClick);
+    m.on('mouseenter', SEASON_CIRCLES, () => { m.getCanvas().style.cursor = 'pointer'; });
+    m.on('mouseleave', SEASON_CIRCLES, () => { m.getCanvas().style.cursor = ''; });
+
+    return () => { m.off('click', SEASON_CIRCLES, handleClick); };
+  }, [seasonData, currentSeasonMonth, seasonViewMode, mapReady, mapMode]);
+
   useEffect(() => {
     const m = map.current;
     if (!m || !mapReady) return;
@@ -1401,6 +1588,79 @@ export default function MapsTabContent() {
           </div>
         )}
 
+        {/* Barre info + timeline saisonnalité */}
+        {mapMode === 'saisonnalite' && (
+          <div className="flex-none p-4 space-y-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <CalendarRange className="h-4 w-4" />
+              <span>Saisonnalité géographique</span>
+              <div className="flex items-center gap-1 ml-2">
+                <Button variant={seasonViewMode === 'volume' ? 'default' : 'ghost'} size="sm" className="h-6 text-xs gap-1" onClick={() => setSeasonViewMode('volume')}>
+                  Volume
+                </Button>
+                <Button variant={seasonViewMode === 'variation' ? 'default' : 'ghost'} size="sm" className="h-6 text-xs gap-1" onClick={() => setSeasonViewMode('variation')}>
+                  <TrendingUp className="h-3 w-3" />Variation
+                </Button>
+              </div>
+              <span className="ml-auto">
+                {seasonLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${seasonData?.length || 0} zones · ${seasonMonths.length} mois`}
+              </span>
+            </div>
+            {seasonMonths.length > 0 && (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1">
+                  <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => setSeasonMonth(0)} disabled={seasonMonth === 0}>
+                    <SkipBack className="h-3 w-3" />
+                  </Button>
+                  <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => setSeasonMonth(m2 => Math.max(0, m2 - 1))} disabled={seasonMonth === 0}>
+                    <ChevronLeft className="h-3 w-3" />
+                  </Button>
+                  <Button variant={seasonPlaying ? 'default' : 'outline'} size="icon" className="h-7 w-7" onClick={() => { if (seasonMonth >= seasonMonths.length - 1) setSeasonMonth(0); setSeasonPlaying(p => !p); }}>
+                    {seasonPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                  </Button>
+                  <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => setSeasonMonth(m2 => Math.min(seasonMonths.length - 1, m2 + 1))} disabled={seasonMonth >= seasonMonths.length - 1}>
+                    <ChevronRight className="h-3 w-3" />
+                  </Button>
+                  <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => setSeasonMonth(seasonMonths.length - 1)} disabled={seasonMonth >= seasonMonths.length - 1}>
+                    <SkipForward className="h-3 w-3" />
+                  </Button>
+                </div>
+                <div className="flex-1">
+                  <Slider
+                    value={[seasonMonth]}
+                    onValueChange={([v]) => { setSeasonPlaying(false); setSeasonMonth(v); }}
+                    min={0}
+                    max={Math.max(0, seasonMonths.length - 1)}
+                    step={1}
+                  />
+                </div>
+                <span className="text-sm font-semibold min-w-[90px] text-right">
+                  {currentSeasonMonth ? format(parse(currentSeasonMonth, 'yyyy-MM', new Date()), 'MMM yyyy', { locale: fr }) : ''}
+                </span>
+              </div>
+            )}
+            <div className="flex items-center gap-4 text-xs flex-wrap">
+              {seasonViewMode === 'variation' ? (
+                <>
+                  <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#3b82f6' }} /><span className="text-muted-foreground">Forte baisse</span></div>
+                  <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#fbbf24' }} /><span className="text-muted-foreground">Stable</span></div>
+                  <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#dc2626' }} /><span className="text-muted-foreground">Forte hausse</span></div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#fef3c7' }} /><span className="text-muted-foreground">Faible</span></div>
+                  <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#f97316' }} /><span className="text-muted-foreground">Moyen</span></div>
+                  <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#7f1d1d' }} /><span className="text-muted-foreground">Élevé</span></div>
+                </>
+              )}
+              <div className="flex items-center gap-1.5 ml-2 pl-2 border-l">
+                <span className="w-3 h-3 rounded-full border-2" style={{ borderColor: '#dc2626', backgroundColor: 'transparent' }} />
+                <span className="text-muted-foreground">Bordure = saisonnalité forte</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex-1 min-h-0 flex" style={{ minHeight: '400px' }}>
           <div className="relative h-full w-full overflow-hidden bg-background">
             {!mapboxToken ? (
@@ -1420,7 +1680,7 @@ export default function MapsTabContent() {
               </div>
             )}
 
-            {((isLoading && mapMode === 'pins') || (heatmapLoading && mapMode === 'heatmap') || (profitLoading && mapMode === 'profitability') || (zonesLoading && mapMode === 'zones') || (apporteursLoading && mapMode === 'apporteurs') || (dispoLoading && mapMode === 'disponibilite')) && mapboxToken && !mapInitError && (
+            {((isLoading && mapMode === 'pins') || (heatmapLoading && mapMode === 'heatmap') || (profitLoading && mapMode === 'profitability') || (zonesLoading && mapMode === 'zones') || (apporteursLoading && mapMode === 'apporteurs') || (dispoLoading && mapMode === 'disponibilite') || (seasonLoading && mapMode === 'saisonnalite')) && mapboxToken && !mapInitError && (
               <MapLoadingOverlay mode={mapMode} />
             )}
 
