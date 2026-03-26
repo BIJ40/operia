@@ -818,8 +818,8 @@ export function computeChargeTravauxAvenirParUnivers(
   // pipelineMaturity (priority: planifie > bloque > pret_planification > a_commander > commercial)
   const pipelineMaturity: PipelineMaturityInfo = { commercial: 0, a_commander: 0, pret_planification: 0, planifie: 0, bloque: 0 };
   for (const p of parProjet) {
-    const hasFuturePlannedDate = !p.dataQualityFlags.includes('missing_planned_date');
-    if (hasFuturePlannedDate) {
+    const hasDateFuture = !p.dataQualityFlags.includes('missing_planned_date') && !p.dataQualityFlags.includes('planned_date_past');
+    if (hasDateFuture) {
       pipelineMaturity.planifie++;
     } else if (p.etatWorkflow === 'wait_fourn') {
       pipelineMaturity.bloque++;
