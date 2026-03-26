@@ -69,6 +69,8 @@ export function ReadOnlyEnforcer() {
       const button = target.closest('button, [role="button"], [role="menuitem"]') as HTMLElement | null;
       
       if (!button) return;
+      // Allow links and buttons inside prose content (guide content, not mutation actions)
+      if (button.closest('.prose')) return;
       // Allow exempt elements (navigation, tabs, accordions, search, filters, collapsibles)
       if (button.closest('[data-readonly-exempt]')) return;
       if (button.closest('nav')) return;
