@@ -1,8 +1,8 @@
 /**
  * Hooks Trésorerie — TanStack Query hooks for treasury module
  * 
- * Uses type assertions for bank_* tables not yet in generated Supabase types.
- * All mutations go through the treasury-connection edge function (no direct DB writes from frontend).
+ * All mutations go through the treasury-connection edge function.
+ * Bridge callback handled via treasury-bridge-callback edge function.
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -130,8 +130,8 @@ export function useTreasuryOverview() {
       .filter(Boolean)
       .sort()
       .reverse()[0] ?? null,
-    recentCredits: 0, // Real value once provider is connected
-    recentDebits: 0,  // Real value once provider is connected
+    recentCredits: 0,
+    recentDebits: 0,
     unmatchedTransactionsCount: 0,
     errorAccountsCount: accounts.filter(a => a.sync_status === 'error').length,
   } : null;
@@ -161,25 +161,60 @@ export function useBankSyncLogs(connectionId?: string) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// Mutations — all via edge function (no direct DB writes)
+// Mutations — all via edge functions
 // ═══════════════════════════════════════════════════════════
+
+interface CreateConnectionResult {
+  connectionId: string;
+  bridgeConnectUrl?: string;
+  bridgeSessionId?: string;
+}
 
 export function useCreateBankConnection() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (params: { displayName: string; provider?: string }) => {
-      const result = await safeInvoke<{ id: string }>(
+    mutationFn: async (params: { displayName: string; provider?: string }): Promise<CreateConnectionResult> => {
+      const result = await safeInvoke<{ data: CreateConnectionResult }>(
         supabase.functions.invoke('treasury-connection', {
-          body: { action: 'create', displayName: params.displayName, provider: params.provider ?? 'bridge' },
+          body: {
+            action: 'create',
+            displayName: params.displayName,
+            provider: params.provider ?? 'bridge',
+            redirectUrl: `${window.location.origin}/?tab=pilotage.tresorerie&bridge_callback=1`,
+          },
         }),
         'TREASURY_CREATE_CONNECTION'
       );
       if (!result.success) throw new Error(result.error?.message ?? 'Erreur');
-      return result.data;
+      // The edge function wraps in { success: true, data: {...} }
+      const responseData = result.data as unknown as { data?: CreateConnectionResult } & CreateConnectionResult;
+      return responseData.data ?? responseData;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: TREASURY_KEYS.connections });
       qc.invalidateQueries({ queryKey: TREASURY_KEYS.overview });
+    },
+  });
+}
+
+/**
+ * Process Bridge callback after user returns from Bridge Connect.
+ */
+export function useProcessBridgeCallback() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: { connectionId: string; bridgeStatus: string }) => {
+      const result = await safeInvoke(
+        supabase.functions.invoke('treasury-bridge-callback', {
+          body: params,
+        }),
+        'TREASURY_BRIDGE_CALLBACK'
+      );
+      if (!result.success) throw new Error(result.error?.message ?? 'Erreur callback');
+      return result.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: TREASURY_KEYS.all });
     },
   });
 }
@@ -213,9 +248,10 @@ export function useSyncBankConnection() {
         'TREASURY_SYNC'
       );
       if (!result.success) throw new Error(result.error?.message ?? 'Erreur');
+      return result.data;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: TREASURY_KEYS.connections });
+      qc.invalidateQueries({ queryKey: TREASURY_KEYS.all });
     },
   });
 }
