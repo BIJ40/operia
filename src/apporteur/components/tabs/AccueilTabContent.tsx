@@ -3,7 +3,7 @@
  * Consomme useApporteurKpis pour afficher KPIs, collaboration, univers, alertes
  */
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useApporteurAuth } from '@/contexts/ApporteurAuthContext';
 import { useApporteurSession } from '@/apporteur/contexts/ApporteurSessionContext';
 import { Button } from '@/components/ui/button';
@@ -12,8 +12,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ApporteurPlanningCard } from '../ApporteurPlanningCard';
 import { NouvelleDemandeDialog } from '../NouvelleDemandeDialog';
 import { useApporteurKpis } from '../../hooks/useApporteurKpis';
+import { useApporteurDossiers, DossierRow } from '../../hooks/useApporteurDossiers';
 import { KpiCard } from '../cockpit/KpiCard';
 import { KpiDetailDialog, type KpiDetailType } from '../cockpit/KpiDetailDialog';
+import { DossierDetailDialog } from '../cockpit/DossierDetailDialog';
 import { CollaborationGauge } from '../cockpit/CollaborationGauge';
 import { UniversDonut } from '../cockpit/UniversDonut';
 import { AlertesBanner } from '../cockpit/AlertesBanner';
@@ -26,6 +28,7 @@ export default function AccueilTabContent() {
   const { session } = useApporteurSession();
   const [demandeOpen, setDemandeOpen] = useState(false);
   const [kpiDetail, setKpiDetail] = useState<KpiDetailType | null>(null);
+  const [selectedDossier, setSelectedDossier] = useState<DossierRow | null>(null);
   const [period, setPeriod] = useState<ApporteurStatsV2Request['period']>('month');
 
   const displayFirstName = session?.firstName || apporteurUser?.firstName || apporteurUser?.apporteurName || 'Partenaire';
@@ -37,9 +40,16 @@ export default function AccueilTabContent() {
   const agencySubtitle = [agencyName, agencyCity].filter(Boolean).join(' — ') || displayApporteurName;
 
   const { data, isLoading, error } = useApporteurKpis({ period });
+  const { data: dossiersData } = useApporteurDossiers();
+  const dossiers = dossiersData?.data?.dossiers || [];
   const stats = data?.data;
   const kpis = stats?.kpis;
   const trends = stats?.trends;
+
+  const handleDossierClick = useCallback((ref: string) => {
+    const found = dossiers.find(d => d.ref === ref);
+    if (found) setSelectedDossier(found);
+  }, [dossiers]);
 
   return (
     <div className="p-4 sm:p-6 space-y-4">
@@ -81,7 +91,7 @@ export default function AccueilTabContent() {
         <>
           {/* Alertes — compact inline chips */}
           {stats.alertes && stats.alertes.length > 0 && (
-            <AlertesBanner alertes={stats.alertes} />
+            <AlertesBanner alertes={stats.alertes} onDossierClick={handleDossierClick} />
           )}
 
           {/* Period selector — just above KPI tiles */}
@@ -193,6 +203,7 @@ export default function AccueilTabContent() {
           series={stats.series_12m}
         />
       )}
+      <DossierDetailDialog dossier={selectedDossier} onClose={() => setSelectedDossier(null)} />
     </div>
   );
 }
