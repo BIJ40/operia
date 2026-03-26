@@ -203,6 +203,7 @@ export default function AccueilTabContent() {
           series={stats.series_12m}
         />
       )}
+      <DossierDetailDialog dossier={selectedDossier} onClose={() => setSelectedDossier(null)} />
     </div>
   );
 }
