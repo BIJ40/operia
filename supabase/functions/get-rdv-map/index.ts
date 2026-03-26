@@ -493,7 +493,7 @@ Deno.serve(async (req) => {
         }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
       }
 
-      // ── PROFITABILITY MODE ──
+      // ── PROFITABILITY MODE — Choropleth by commune ──
       if (isProfitability) {
         const caByProject = new Map<number, number>();
         for (const f of factures) {
@@ -517,35 +517,49 @@ Deno.serve(async (req) => {
         }
 
         const HOURLY_COST = 35;
-        const projectPoints: any[] = [];
-        const processedProjects = new Set<number>();
-
-        for (const intervention of interventionArray) {
-          const pid = intervention.projectId;
-          if (processedProjects.has(pid)) continue;
-          processedProjects.add(pid);
-
-          const pc = projectToPostalCode.get(pid);
-          if (!pc) continue;
-          const coords = coordsByPostalCode.get(pc);
-          if (!coords) continue;
-
-          const ca = caByProject.get(pid) || 0;
-          const hours = hoursByProject.get(pid) || 0;
-          if (ca <= 0) continue; // Pas de CA facturé = pas de rentabilité à calculer
-
-          projectPoints.push({
-            lat: coords.lat + (Math.random() - 0.5) * 0.005,
-            lng: coords.lng + (Math.random() - 0.5) * 0.005,
-            ca, hours, margin: ca - hours * HOURLY_COST, projectId: pid,
+        
+        // Aggregate by code_insee
+        const metricsByInsee = new Map<string, Record<string, any>>();
+        for (const [insee, pids] of projectsByInsee.entries()) {
+          let totalCA = 0, totalHours = 0, nbProjects = 0;
+          for (const pid of pids) {
+            const ca = caByProject.get(pid) || 0;
+            if (ca <= 0) continue;
+            totalCA += ca;
+            totalHours += hoursByProject.get(pid) || 0;
+            nbProjects++;
+          }
+          if (nbProjects === 0) continue;
+          
+          const margin = totalCA - totalHours * HOURLY_COST;
+          const marginRate = totalCA > 0 ? margin / totalCA : 0;
+          
+          metricsByInsee.set(insee, {
+            ca: Math.round(totalCA),
+            hours: Math.round(totalHours * 10) / 10,
+            margin: Math.round(margin),
+            marginRate: Math.round(marginRate * 100),
+            nbProjects,
+            city: inseeCities.get(insee) || '',
           });
         }
 
-        console.log(`[GET-RDV-MAP] Profitability: ${projectPoints.length} projects in ${Date.now() - t0}ms total`);
+        // Normalize marginRate for color interpolation
+        const allMarginRates = Array.from(metricsByInsee.values()).map(m => m.marginRate);
+        const maxMarginRate = Math.max(...allMarginRates, 1);
+        const minMarginRate = Math.min(...allMarginRates, -1);
+        for (const metrics of metricsByInsee.values()) {
+          metrics.marginNorm = minMarginRate === maxMarginRate ? 0 :
+            ((metrics.marginRate - minMarginRate) / (maxMarginRate - minMarginRate)) * 2 - 1; // -1 to 1
+        }
+
+        const choropleth = buildChoroplethGeoJSON(communePolygons, metricsByInsee);
+        
+        console.log(`[GET-RDV-MAP] Profitability choropleth: ${choropleth.features.length} communes in ${Date.now() - t0}ms total`);
         return withCors(req, new Response(JSON.stringify({
           success: true,
-          data: projectPoints,
-          meta: { mode: 'profitability', agencySlug: targetAgency, totalPoints: projectPoints.length, estimatedHourlyCost: HOURLY_COST, durationMs: Date.now() - t0 },
+          data: choropleth,
+          meta: { mode: 'profitability', format: 'choropleth', agencySlug: targetAgency, totalCommunes: choropleth.features.length, estimatedHourlyCost: HOURLY_COST, durationMs: Date.now() - t0 },
         }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
       }
 
