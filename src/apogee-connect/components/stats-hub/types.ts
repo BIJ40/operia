@@ -2,7 +2,7 @@
  * Types pour le Stats Hub unifié
  */
 
-export type TabId = 'general' | 'apporteurs' | 'techniciens' | 'univers' | 'sav' | 'previsionnel' | 'financier';
+export type TabId = 'general' | 'apporteurs' | 'techniciens' | 'univers' | 'sav' | 'previsionnel' | 'financier' | 'tresorerie';
 
 export interface TabConfig {
   id: TabId;
@@ -19,6 +19,7 @@ export const TABS_CONFIG: TabConfig[] = [
   { id: 'sav', label: 'SAV', icon: 'AlertTriangle', color: 'orange' },
   { id: 'previsionnel', label: 'Prévisionnel', icon: 'Calendar', color: 'cyan' },
   { id: 'financier', label: 'Recouvrement', icon: 'Wallet', color: 'emerald' },
+  { id: 'tresorerie', label: 'Trésorerie', icon: 'Landmark', color: 'teal' },
 ];
 
 export type MiniGraphType = 'sparkline' | 'gauge' | 'bar' | 'none';

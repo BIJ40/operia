@@ -27,6 +27,7 @@ export const MODULES = {
   'pilotage.statistiques.sav': 'pilotage.statistiques.sav',
   'pilotage.statistiques.previsionnel': 'pilotage.statistiques.previsionnel',
   'pilotage.statistiques.financier': 'pilotage.statistiques.financier',
+  'pilotage.tresorerie': 'pilotage.tresorerie',
   'pilotage.statistiques.exports': 'pilotage.statistiques.exports',
   'pilotage.performance': 'pilotage.performance',
   'pilotage.actions_a_mener': 'pilotage.actions_a_mener',
@@ -662,6 +663,7 @@ export const MODULE_SHORT_LABELS: Partial<Record<ModuleKey, string>> = {
   'pilotage.incoherences': 'Incohérences',
   'pilotage.resultat': 'Résultat',
   'pilotage.rentabilite': 'Rentabilité',
+  'pilotage.tresorerie': 'Trésorerie',
   // Commercial
   'commercial.suivi_client': 'Suivi client',
   'commercial.comparateur': 'Comparateur',
