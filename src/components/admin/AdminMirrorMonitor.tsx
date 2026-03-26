@@ -1,6 +1,7 @@
 /**
  * Admin Mirror Monitor — Enhanced pilot monitoring panel
- * Shows pilot module status, metrics, pre-activation checks, decision journal.
+ * Shows pilot module status, metrics, pre-activation checks, decision journal,
+ * persisted snapshots, projects readiness checkpoint.
  */
 
 import { useEffect, useState, useCallback } from 'react';
@@ -9,10 +10,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { RefreshCw, Database, Wifi, AlertTriangle, CheckCircle2, Clock, Activity, ShieldCheck, ArrowDownUp, List } from 'lucide-react';
+import { RefreshCw, Database, Wifi, AlertTriangle, CheckCircle2, Clock, Activity, ShieldCheck, ArrowDownUp, List, BarChart3, Rocket } from 'lucide-react';
 import { getLastComparisonResults, type ComparisonResult } from '@/services/mirrorValidation';
 import { invalidateFlagsCache } from '@/services/mirrorDataSource';
-import { getPilotMetrics, evaluatePilotSuccess, canActivateMirrorPilot, PILOT_SUCCESS_CRITERIA, type PilotMetrics } from '@/services/mirrorPilotActivation';
+import {
+  getPilotMetrics,
+  evaluatePilotSuccess,
+  PILOT_SUCCESS_CRITERIA,
+  computePilotVerdictFromMetrics,
+  loadPersistedSnapshots,
+  checkProjectsReadiness,
+  type PilotMetrics,
+  type PilotVerdict,
+  type ProjectsReadiness,
+} from '@/services/mirrorPilotActivation';
 
 // ============================================================
 // TYPES
@@ -52,6 +63,22 @@ interface DecisionLogRow {
   item_count: number | null;
 }
 
+interface SnapshotRow {
+  id: string;
+  created_at: string;
+  mirror_reads: number;
+  live_reads: number;
+  fallback_to_live: number;
+  comparisons_total: number;
+  comparisons_passed: number;
+  comparisons_failed: number;
+  last_freshness_minutes: number | null;
+  last_mirror_count: number | null;
+  verdict: string | null;
+  verdict_reasons: string[] | null;
+}
+
+const DAX_AGENCY_ID = '58d8d39f-7544-4e78-86f9-c182eacf29f5';
 const PILOT_MODULES = ['users', 'projects', 'factures'] as const;
 
 const MODE_COLORS: Record<string, string> = {
@@ -67,56 +94,17 @@ const FRESHNESS_COLORS: Record<string, string> = {
   never_synced: 'text-muted-foreground',
 };
 
-// ============================================================
-// PILOT VERDICT
-// ============================================================
-
-type PilotVerdict = 'stable' | 'à surveiller' | 'rollback conseillé' | 'inactif';
-
-function computePilotVerdict(m: PilotMetrics | undefined, comparisons: ComparisonResult[], moduleKey: string): { verdict: PilotVerdict; reasons: string[] } {
-  if (!m || (m.mirrorReads === 0 && m.fallbackToLive === 0 && m.liveReads === 0)) {
-    return { verdict: 'inactif', reasons: ['Aucune lecture enregistrée'] };
-  }
-  const totalNonPureLive = m.mirrorReads + m.fallbackToLive;
-  if (totalNonPureLive === 0) return { verdict: 'inactif', reasons: ['Aucune lecture miroir/fallback'] };
-
-  const fallbackRatio = totalNonPureLive > 0 ? m.fallbackToLive / totalNonPureLive : 0;
-  const reasons: string[] = [];
-  let verdict: PilotVerdict = 'stable';
-
-  // Fallback ratio thresholds
-  if (fallbackRatio > 0.5) {
-    verdict = 'rollback conseillé';
-    reasons.push(`Fallback ratio ${Math.round(fallbackRatio * 100)}% > 50%`);
-  } else if (fallbackRatio > 0.2) {
-    verdict = 'à surveiller';
-    reasons.push(`Fallback ratio ${Math.round(fallbackRatio * 100)}% > 20%`);
-  }
-
-  // Consecutive failed comparisons
-  const moduleCmps = comparisons.filter(c => c.module === moduleKey);
-  const recentFailed = moduleCmps.filter(c => !c.passed);
-  if (recentFailed.length >= 2) {
-    verdict = 'rollback conseillé';
-    reasons.push(`${recentFailed.length} comparaisons échouées`);
-  }
-
-  // Volume delta check
-  const lastCmp = moduleCmps[0];
-  if (lastCmp && Math.abs(lastCmp.countDeltaPct) > 15) {
-    if (verdict !== 'rollback conseillé') verdict = 'à surveiller';
-    reasons.push(`Delta volume ${lastCmp.countDeltaPct}% > 15%`);
-  }
-
-  if (reasons.length === 0) reasons.push('Tous les indicateurs sont normaux');
-  return { verdict, reasons };
-}
-
 const VERDICT_STYLES: Record<PilotVerdict, string> = {
   'stable': 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-200 dark:border-green-700',
   'à surveiller': 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-700',
   'rollback conseillé': 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-200 dark:border-red-700',
   'inactif': 'bg-muted text-muted-foreground border-border',
+};
+
+const SIGNAL_STYLES = {
+  green: 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-200',
+  orange: 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/30 dark:text-amber-200',
+  red: 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-200',
 };
 
 // ============================================================
@@ -128,14 +116,16 @@ export default function AdminMirrorMonitor() {
   const [syncStatus, setSyncStatus] = useState<SyncStatusRow[]>([]);
   const [comparisons, setComparisons] = useState<ComparisonResult[]>([]);
   const [decisions, setDecisions] = useState<DecisionLogRow[]>([]);
+  const [snapshots, setSnapshots] = useState<SnapshotRow[]>([]);
+  const [projectsReadiness, setProjectsReadiness] = useState<ProjectsReadiness | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'decisions' | 'criteria'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'evidence' | 'decisions' | 'criteria'>('overview');
 
   const loadData = useCallback(async () => {
     setRefreshing(true);
     try {
-      const [flagsRes, syncRes, decisionsRes] = await Promise.all([
+      const [flagsRes, syncRes, decisionsRes, snapshotsData] = await Promise.all([
         supabase
           .from('data_source_flags')
           .select('id, module_key, source_mode, agency_id, is_enabled, freshness_threshold_minutes, updated_at')
@@ -148,12 +138,17 @@ export default function AdminMirrorMonitor() {
           .select('id, created_at, module_key, agency_id, mode_requested, source_used, fallback_reason, freshness_minutes, item_count')
           .order('created_at', { ascending: false })
           .limit(50) as any,
+        loadPersistedSnapshots('users', DAX_AGENCY_ID, 50),
       ]);
 
       if (flagsRes.data) setFlags(flagsRes.data as FlagRow[]);
       if (syncRes.data) setSyncStatus(syncRes.data as SyncStatusRow[]);
       if (decisionsRes.data) setDecisions(decisionsRes.data as DecisionLogRow[]);
+      setSnapshots(snapshotsData as SnapshotRow[]);
       setComparisons(getLastComparisonResults());
+
+      // Check projects readiness (non-blocking)
+      checkProjectsReadiness(DAX_AGENCY_ID).then(setProjectsReadiness).catch(() => {});
     } catch (err) {
       console.error('[MirrorMonitor] Load failed:', err);
     } finally {
@@ -184,6 +179,20 @@ export default function AdminMirrorMonitor() {
   const agencyFlags = flags.filter(f => f.agency_id !== null);
   const metrics = getPilotMetrics();
 
+  // Compute verdict from both session + persisted data
+  const usersMetrics = metrics['users'];
+  const { verdict: currentVerdict, reasons: verdictReasons } = computePilotVerdictFromMetrics(usersMetrics, comparisons, 'users');
+  const daxFlag = agencyFlags.find(f => f.module_key === 'users' && f.agency_id === DAX_AGENCY_ID);
+
+  // Aggregate from persisted snapshots for evidence pack
+  const latestSnapshot = snapshots[0] as SnapshotRow | undefined;
+  const totalMirrorReads = (usersMetrics?.mirrorReads ?? 0) + snapshots.reduce((s, r) => s + r.mirror_reads, 0);
+  const totalFallbacks = (usersMetrics?.fallbackToLive ?? 0) + snapshots.reduce((s, r) => s + r.fallback_to_live, 0);
+  const totalComparisons = (usersMetrics?.comparisonsTotal ?? 0) + snapshots.reduce((s, r) => s + r.comparisons_total, 0);
+  const totalCmpPassed = (usersMetrics?.comparisonsPassed ?? 0) + snapshots.reduce((s, r) => s + r.comparisons_passed, 0);
+  const aggregatedFallbackRatio = (totalMirrorReads + totalFallbacks) > 0
+    ? totalFallbacks / (totalMirrorReads + totalFallbacks) : 0;
+
   return (
     <div className="space-y-6 p-4">
       {/* Header */}
@@ -196,13 +205,13 @@ export default function AdminMirrorMonitor() {
         </div>
         <div className="flex items-center gap-2">
           <div className="flex border rounded-lg overflow-hidden text-xs">
-            {(['overview', 'decisions', 'criteria'] as const).map(tab => (
+            {(['overview', 'evidence', 'decisions', 'criteria'] as const).map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`px-3 py-1.5 transition-colors ${activeTab === tab ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
               >
-                {tab === 'overview' ? 'Vue' : tab === 'decisions' ? 'Journal' : 'Critères'}
+                {tab === 'overview' ? 'Vue' : tab === 'evidence' ? 'Evidence' : tab === 'decisions' ? 'Journal' : 'Critères'}
               </button>
             ))}
           </div>
@@ -216,43 +225,39 @@ export default function AdminMirrorMonitor() {
       {/* Rollback info banner */}
       <div className="bg-muted/50 border rounded-lg p-3 text-xs text-muted-foreground space-y-1">
         <p className="font-medium text-foreground flex items-center gap-1">
-          <ShieldCheck className="h-3.5 w-3.5" /> Rollback immédiat
+          <ShieldCheck className="h-3.5 w-3.5" /> Rollback immédiat DAX users
         </p>
         <code className="block bg-background rounded px-2 py-1 font-mono text-[11px]">
-          UPDATE data_source_flags SET source_mode = 'live' WHERE module_key = 'users';
+          DELETE FROM data_source_flags WHERE module_key = 'users' AND agency_id = '{DAX_AGENCY_ID}';
         </code>
         <p>Aucun redéploiement requis. Le cache flags expire en 60s.</p>
       </div>
 
+      {/* ====================== OVERVIEW TAB ====================== */}
       {activeTab === 'overview' && (
         <>
           {/* Pilot Verdict Banner */}
-          {(() => {
-            const usersMetrics = metrics['users'];
-            const { verdict, reasons } = computePilotVerdict(usersMetrics, comparisons, 'users');
-            const daxFlag = agencyFlags.find(f => f.module_key === 'users' && f.agency_id === '58d8d39f-7544-4e78-86f9-c182eacf29f5');
-            if (!daxFlag) return null;
-            return (
-              <div className={`border rounded-lg p-3 text-sm space-y-1 ${VERDICT_STYLES[verdict]}`}>
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold flex items-center gap-2">
-                    {verdict === 'stable' && <CheckCircle2 className="h-4 w-4" />}
-                    {verdict === 'à surveiller' && <AlertTriangle className="h-4 w-4" />}
-                    {verdict === 'rollback conseillé' && <AlertTriangle className="h-4 w-4" />}
-                    {verdict === 'inactif' && <Clock className="h-4 w-4" />}
-                    Pilote DAX — users — Verdict : {verdict.toUpperCase()}
-                  </span>
-                  <span className="text-xs opacity-75">Activé le {new Date(daxFlag.updated_at).toLocaleString('fr-FR')}</span>
-                </div>
-                <ul className="text-xs list-disc pl-5 space-y-0.5">
-                  {reasons.map((r, i) => <li key={i}>{r}</li>)}
-                </ul>
-                <div className="text-[10px] opacity-75 mt-1">
-                  Seuils : fallback &gt;20% = surveiller | &gt;50% = rollback | 2+ comparaisons KO = rollback | delta vol &gt;15% = surveiller
-                </div>
+          {daxFlag && (
+            <div className={`border rounded-lg p-3 text-sm space-y-1 ${VERDICT_STYLES[currentVerdict]}`}>
+              <div className="flex items-center justify-between">
+                <span className="font-semibold flex items-center gap-2">
+                  {currentVerdict === 'stable' && <CheckCircle2 className="h-4 w-4" />}
+                  {(currentVerdict === 'à surveiller' || currentVerdict === 'rollback conseillé') && <AlertTriangle className="h-4 w-4" />}
+                  {currentVerdict === 'inactif' && <Clock className="h-4 w-4" />}
+                  Pilote DAX — users — Verdict : {currentVerdict.toUpperCase()}
+                </span>
+                <span className="text-xs opacity-75">Activé le {new Date(daxFlag.updated_at).toLocaleString('fr-FR')}</span>
               </div>
-            );
-          })()}
+              <ul className="text-xs list-disc pl-5 space-y-0.5">
+                {verdictReasons.map((r, i) => <li key={i}>{r}</li>)}
+              </ul>
+              <div className="text-[10px] opacity-75 mt-1">
+                Seuils : fallback &gt;20% = surveiller | &gt;50% = rollback | 2+ comparaisons KO = rollback | delta vol &gt;15% = surveiller
+              </div>
+            </div>
+          )}
+
+          {/* Pilot Module Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {PILOT_MODULES.map(moduleKey => {
               const flag = globalFlags.find(f => f.module_key === moduleKey);
@@ -284,7 +289,6 @@ export default function AdminMirrorMonitor() {
                       <span>{threshold} min</span>
                     </div>
 
-                    {/* Metrics */}
                     {m && (
                       <div className="border rounded p-2 space-y-1">
                         <p className="text-xs font-medium flex items-center gap-1">
@@ -304,6 +308,11 @@ export default function AdminMirrorMonitor() {
                             fallback
                           </div>
                         </div>
+                        {m.comparisonsTotal > 0 && (
+                          <div className="text-[10px] text-muted-foreground mt-1">
+                            Comparaisons: {m.comparisonsPassed}✓ / {m.comparisonsFailed}✗ sur {m.comparisonsTotal}
+                          </div>
+                        )}
                         {Object.keys(m.fallbackReasons).length > 0 && (
                           <div className="text-[10px] text-amber-600 mt-1">
                             {Object.entries(m.fallbackReasons).map(([r, c]) => `${r}(${c})`).join(', ')}
@@ -312,7 +321,6 @@ export default function AdminMirrorMonitor() {
                       </div>
                     )}
 
-                    {/* Last comparison */}
                     {lastComparison ? (
                       <div className="border rounded p-2 space-y-1">
                         <div className="flex items-center gap-1">
@@ -391,6 +399,139 @@ export default function AdminMirrorMonitor() {
         </>
       )}
 
+      {/* ====================== EVIDENCE TAB ====================== */}
+      {activeTab === 'evidence' && (
+        <div className="space-y-4">
+          {/* Evidence Pack Summary */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" /> Evidence Pack — users / DAX
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="border rounded-lg p-3 text-center">
+                  <span className="text-2xl font-bold text-foreground">{totalMirrorReads}</span>
+                  <p className="text-xs text-muted-foreground">Lectures miroir (cumulé)</p>
+                </div>
+                <div className="border rounded-lg p-3 text-center">
+                  <span className="text-2xl font-bold text-foreground">{totalFallbacks}</span>
+                  <p className="text-xs text-muted-foreground">Fallbacks → live (cumulé)</p>
+                </div>
+                <div className="border rounded-lg p-3 text-center">
+                  <span className={`text-2xl font-bold ${aggregatedFallbackRatio > 0.2 ? 'text-amber-600' : 'text-foreground'}`}>
+                    {Math.round(aggregatedFallbackRatio * 100)}%
+                  </span>
+                  <p className="text-xs text-muted-foreground">Ratio fallback (cumulé)</p>
+                </div>
+                <div className="border rounded-lg p-3 text-center">
+                  <span className="text-2xl font-bold text-foreground">
+                    {totalComparisons > 0 ? `${Math.round(totalCmpPassed / totalComparisons * 100)}%` : '—'}
+                  </span>
+                  <p className="text-xs text-muted-foreground">Comparaisons OK</p>
+                </div>
+              </div>
+
+              {latestSnapshot && (
+                <div className="bg-muted/30 rounded-lg p-3 text-xs space-y-1">
+                  <p className="font-medium text-foreground">Dernier snapshot persisté</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-muted-foreground">
+                    <span>Fraîcheur: {latestSnapshot.last_freshness_minutes != null ? `${Math.round(latestSnapshot.last_freshness_minutes)} min` : '—'}</span>
+                    <span>Volume miroir: {latestSnapshot.last_mirror_count ?? '—'}</span>
+                    <span>Verdict: {latestSnapshot.verdict ?? '—'}</span>
+                    <span>{new Date(latestSnapshot.created_at).toLocaleString('fr-FR')}</span>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Snapshot History */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Historique des snapshots</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {snapshots.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Aucun snapshot persisté. Les snapshots sont créés automatiquement toutes les 5 minutes lors de lectures miroir.</p>
+              ) : (
+                <div className="overflow-x-auto max-h-64 overflow-y-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b text-left text-muted-foreground">
+                        <th className="pb-1 pr-3">Date</th>
+                        <th className="pb-1 pr-3">Miroir</th>
+                        <th className="pb-1 pr-3">Fallback</th>
+                        <th className="pb-1 pr-3">Cmp OK/KO</th>
+                        <th className="pb-1 pr-3">Fraîcheur</th>
+                        <th className="pb-1">Verdict</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {snapshots.map((s) => (
+                        <tr key={s.id} className="border-b last:border-0">
+                          <td className="py-1 pr-3">{new Date(s.created_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
+                          <td className="py-1 pr-3">{s.mirror_reads}</td>
+                          <td className="py-1 pr-3">{s.fallback_to_live}</td>
+                          <td className="py-1 pr-3">{s.comparisons_passed}✓/{s.comparisons_failed}✗</td>
+                          <td className="py-1 pr-3">{s.last_freshness_minutes != null ? `${Math.round(s.last_freshness_minutes)}m` : '—'}</td>
+                          <td className="py-1">
+                            <Badge variant="outline" className="text-[10px]">{s.verdict ?? '—'}</Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Projects Readiness */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Rocket className="h-4 w-4" /> Checkpoint → projects
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!projectsReadiness ? (
+                <p className="text-sm text-muted-foreground">Chargement…</p>
+              ) : (
+                <div className="space-y-3">
+                  <div className={`border rounded-lg p-3 text-sm ${SIGNAL_STYLES[projectsReadiness.signal]}`}>
+                    <span className="font-semibold">
+                      {projectsReadiness.signal === 'green' ? '🟢 FEU VERT' : projectsReadiness.signal === 'orange' ? '🟡 FEU ORANGE' : '🔴 FEU ROUGE'}
+                      {' — '}ready_for_projects = {projectsReadiness.signal === 'green' ? 'true' : 'false'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    {Object.entries(projectsReadiness.checks).map(([key, value]) => (
+                      <div key={key} className="flex items-center gap-1.5">
+                        {typeof value === 'boolean' ? (
+                          value ? <CheckCircle2 className="h-3 w-3 text-green-600 shrink-0" /> : <AlertTriangle className="h-3 w-3 text-red-600 shrink-0" />
+                        ) : (
+                          <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
+                        )}
+                        <span className="text-muted-foreground">{key}:</span>
+                        <span className="font-medium">{String(value)}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <ul className="text-xs text-muted-foreground list-disc pl-5 space-y-0.5">
+                    {projectsReadiness.reasons.map((r, i) => <li key={i}>{r}</li>)}
+                  </ul>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ====================== DECISIONS TAB ====================== */}
       {activeTab === 'decisions' && (
         <Card>
           <CardHeader>
@@ -430,9 +571,9 @@ export default function AdminMirrorMonitor() {
         </Card>
       )}
 
+      {/* ====================== CRITERIA TAB ====================== */}
       {activeTab === 'criteria' && (
         <div className="space-y-4">
-          {/* Success Criteria */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
@@ -472,20 +613,16 @@ export default function AdminMirrorMonitor() {
             </CardContent>
           </Card>
 
-          {/* Next steps */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Prochaines étapes</CardTitle>
             </CardHeader>
             <CardContent className="text-sm space-y-2 text-muted-foreground">
-              <p><strong>1.</strong> Lancer une sync complète pour remplir les tables miroir</p>
-              <p><strong>2.</strong> Activer <code>users</code> en <code>fallback</code> pour 1 agence pilote :</p>
-              <code className="block bg-muted rounded px-2 py-1 font-mono text-[11px] my-1">
-                INSERT INTO data_source_flags (module_key, source_mode, agency_id, is_enabled, freshness_threshold_minutes)
-                VALUES ('users', 'fallback', 'AGENCY_UUID', true, 480);
-              </code>
-              <p><strong>3.</strong> Surveiller les métriques et le journal pendant 48h–7j</p>
-              <p><strong>4.</strong> Si critères atteints → étendre à <code>projects</code></p>
+              <p><strong>1.</strong> Pilote <code>users</code> DAX activé ✓</p>
+              <p><strong>2.</strong> Surveiller métriques et journal pendant 48h–7j</p>
+              <p><strong>3.</strong> Vérifier <strong>Evidence Pack</strong> pour données cumulées</p>
+              <p><strong>4.</strong> Consulter <strong>Checkpoint → projects</strong> pour feu vert</p>
+              <p><strong>5.</strong> Si tous critères atteints → activer <code>projects</code> en <code>fallback</code> pour DAX</p>
             </CardContent>
           </Card>
         </div>
