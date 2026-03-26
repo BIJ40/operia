@@ -761,6 +761,232 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ── DISPONIBILITE MODE — Real-time tech availability ──
+    if (isDispo) {
+      const [intResp, usersResp, projResp, clientResp, creneauxResp] = await Promise.all([
+        apiFetch('apiGetInterventions', { API_KEY: apiKey, from: date, to: date }),
+        apiFetch('apiGetUsers'),
+        apiFetch('apiGetProjects'),
+        apiFetch('apiGetClients'),
+        apiFetch('apiGetPlanningCreneaux', { API_KEY: apiKey }),
+      ]);
+
+      const interventions = intResp.ok ? await intResp.json() : [];
+      const users = usersResp.ok ? await usersResp.json() : [];
+      const projects = projResp.ok ? await projResp.json() : [];
+      const clients = clientResp.ok ? await clientResp.json() : [];
+      const creneaux = creneauxResp.ok ? await creneauxResp.json() : [];
+
+      // Identify technicians (same logic as techTools.ts)
+      const EXCLUDED_TYPES = ['commercial', 'admin', 'assistant', 'administratif'];
+      const techMap = new Map<number, { id: number; name: string; color: string; skills: string[] }>();
+      for (const u of users) {
+        const isOn = u.is_on === true || u.is_on === 1 || u.is_on === '1';
+        if (!isOn) continue;
+        const uType = ((u.type || '') + '').toLowerCase().trim();
+        if (EXCLUDED_TYPES.includes(uType)) continue;
+        const hasUniverses = Array.isArray(u?.data?.universes) && u.data.universes.length > 0;
+        const isTech = u.isTechnicien === true || u.isTechnicien === 1 || uType === 'technicien' || (uType === 'utilisateur' && hasUniverses);
+        if (!isTech) continue;
+        const dataObj = u.data || {};
+        const color = dataObj.bgcolor?.hex || u.bgcolor?.hex || dataObj.color?.hex || u.color?.hex || '#6366f1';
+        const skills = Array.isArray(dataObj.universes) ? dataObj.universes : (Array.isArray(dataObj.skills) ? dataObj.skills : []);
+        techMap.set(u.id, {
+          id: u.id,
+          name: `${u.firstname || ''} ${u.name || u.lastname || ''}`.trim() || `Tech ${u.id}`,
+          color,
+          skills,
+        });
+      }
+
+      // Build project/client maps
+      const projectsById = new Map<number, { clientId?: number; ref: string }>();
+      for (const p of projects) {
+        projectsById.set(p.id, { clientId: typeof p.clientId === 'number' ? p.clientId : undefined, ref: p.ref || `#${p.id}` });
+      }
+      const clientsById = new Map<number, { name: string; address: string; postalCode: string; city: string }>();
+      for (const c of clients) {
+        const data = c.data || {};
+        clientsById.set(c.id, {
+          name: c.name || c.nom || data.nom || `Client #${c.id}`,
+          address: data.adresse || c.adresse || c.address || '',
+          postalCode: data.codePostal || c.codePostal || c.postalCode || '',
+          city: data.ville || c.ville || c.city || '',
+        });
+      }
+
+      // Parse interventions for today → build per-tech RDV list
+      const interventionArray = Array.isArray(interventions) ? interventions : [];
+      interface TechRdv {
+        startTime: string;
+        endTime: string;
+        durationMin: number;
+        label: string;
+        postalCode: string;
+        city: string;
+        done: boolean; // estimated: past current time
+      }
+      const techRdvs = new Map<number, TechRdv[]>();
+
+      const now = new Date();
+      const nowStr = now.toISOString();
+
+      for (const it of interventionArray) {
+        const data = it?.data || {};
+        const visites = Array.isArray(data.visites) ? data.visites : [];
+        const todayVisits = visites.filter((v: any) => typeof v?.date === 'string' && v.date.startsWith(date!));
+        if (todayVisits.length === 0) continue;
+
+        const project = projectsById.get(it.projectId);
+        const client = project?.clientId ? clientsById.get(project.clientId) : undefined;
+
+        for (const v of todayVisits) {
+          const userIds: number[] = Array.isArray(v.usersIds) ? v.usersIds : [];
+          const dur = typeof v.duree === 'number' ? v.duree : 60;
+          const startStr = v.date || '';
+          const startDate = new Date(startStr);
+          const endDate = new Date(startDate.getTime() + dur * 60000);
+          const done = endDate < now;
+
+          for (const uid of userIds) {
+            if (!techMap.has(uid)) continue;
+            if (!techRdvs.has(uid)) techRdvs.set(uid, []);
+            techRdvs.get(uid)!.push({
+              startTime: startStr,
+              endTime: endDate.toISOString(),
+              durationMin: dur,
+              label: client?.name || project?.ref || `Intervention #${it.id}`,
+              postalCode: client?.postalCode || '',
+              city: client?.city || '',
+              done,
+            });
+          }
+        }
+      }
+
+      // Also check creneaux for blocks (conge, etc.)
+      const creneauxArray = Array.isArray(creneaux) ? creneaux : [];
+      const techBlocks = new Map<number, number>(); // techId → total blocked minutes today
+      for (const c of creneauxArray) {
+        if (!c.date || !c.date.startsWith(date!)) continue;
+        if (c.refType === 'visite-interv') continue; // already handled via interventions
+        const dur = typeof c.duree === 'number' ? c.duree : 0;
+        const ids: number[] = Array.isArray(c.usersIds) ? c.usersIds : [];
+        for (const uid of ids) {
+          if (techMap.has(uid)) {
+            techBlocks.set(uid, (techBlocks.get(uid) || 0) + dur);
+          }
+        }
+      }
+
+      // Geocode tech positions (last completed or current RDV postal code)
+      const postalCodesToGeocode = new Map<string, string>();
+      for (const [uid, rdvs] of techRdvs.entries()) {
+        const sorted = [...rdvs].sort((a, b) => a.startTime.localeCompare(b.startTime));
+        // Find current or last done
+        const current = sorted.find(r => !r.done && new Date(r.startTime) <= now);
+        const lastDone = [...sorted].reverse().find(r => r.done);
+        const next = sorted.find(r => !r.done && new Date(r.startTime) > now);
+        const ref = current || lastDone || next;
+        if (ref?.postalCode) postalCodesToGeocode.set(ref.postalCode, ref.city);
+      }
+      const geoResults = await batchGeocodePostalCodes(postalCodesToGeocode, supabaseAdmin);
+
+      // Build results
+      const DEFAULT_DAY_MINUTES = 8 * 60; // 480 min
+      const dispoResults: any[] = [];
+
+      for (const [uid, tech] of techMap.entries()) {
+        const rdvs = techRdvs.get(uid) || [];
+        const sorted = [...rdvs].sort((a, b) => a.startTime.localeCompare(b.startTime));
+        const totalOccupied = sorted.reduce((s, r) => s + r.durationMin, 0);
+        const blockedMin = techBlocks.get(uid) || 0;
+        const totalEngaged = totalOccupied + blockedMin;
+        const remainingCapacity = Math.max(0, DEFAULT_DAY_MINUTES - totalEngaged);
+
+        // Status logic
+        const doneRdvs = sorted.filter(r => r.done);
+        const remainingRdvs = sorted.filter(r => !r.done);
+        const currentRdv = sorted.find(r => {
+          const s = new Date(r.startTime);
+          const e = new Date(r.endTime);
+          return s <= now && e > now;
+        });
+        const nextRdv = remainingRdvs.find(r => new Date(r.startTime) > now);
+
+        // Time free until next RDV
+        let freeMinutes = 0;
+        if (currentRdv) {
+          freeMinutes = 0;
+        } else if (nextRdv) {
+          freeMinutes = Math.max(0, Math.round((new Date(nextRdv.startTime).getTime() - now.getTime()) / 60000));
+        } else {
+          // No more RDV today
+          freeMinutes = remainingCapacity;
+        }
+
+        // Determine status
+        let status: string;
+        let statusLabel: string;
+        const loadPct = DEFAULT_DAY_MINUTES > 0 ? totalEngaged / DEFAULT_DAY_MINUTES : 0;
+
+        if (blockedMin >= DEFAULT_DAY_MINUTES * 0.8) {
+          status = 'unavailable'; statusLabel = 'Indisponible';
+        } else if (currentRdv) {
+          if (loadPct >= 0.9) { status = 'saturated'; statusLabel = 'Saturé'; }
+          else { status = 'busy'; statusLabel = 'Occupé'; }
+        } else if (freeMinutes <= 30 && nextRdv) {
+          status = 'soon'; statusLabel = 'Bientôt dispo';
+        } else if (freeMinutes > 30 || remainingRdvs.length === 0) {
+          status = 'available'; statusLabel = 'Disponible';
+        } else {
+          status = 'busy'; statusLabel = 'Occupé';
+        }
+
+        // Estimate travel time (rough: 1 min per km, assume 15km avg between RDVs)
+        const travelEstimate = Math.max(0, (sorted.length - 1)) * 15;
+
+        // Position: current/last/next RDV location
+        const posRef = currentRdv || [...sorted].reverse().find(r => r.done) || nextRdv;
+        let lat = 0, lng = 0;
+        if (posRef?.postalCode) {
+          const coords = geoResults.get(posRef.postalCode);
+          if (coords) { lat = coords.lat; lng = coords.lng; }
+        }
+
+        dispoResults.push({
+          techId: uid,
+          name: tech.name,
+          color: tech.color,
+          lat, lng,
+          status, statusLabel,
+          currentTask: currentRdv?.label || null,
+          nextTask: nextRdv?.label || null,
+          nextTaskTime: nextRdv ? nextRdv.startTime.substring(11, 16) : null,
+          freeMinutes,
+          remainingCapacityMin: remainingCapacity,
+          totalDayMin: DEFAULT_DAY_MINUTES,
+          occupiedMin: totalEngaged,
+          travelEstimateMin: travelEstimate,
+          skills: tech.skills,
+          rdvCount: sorted.length,
+          rdvDone: doneRdvs.length,
+          rdvRemaining: remainingRdvs.length,
+        });
+      }
+
+      // Sort: available first
+      const statusOrder: Record<string, number> = { available: 0, soon: 1, busy: 2, saturated: 3, unavailable: 4 };
+      dispoResults.sort((a, b) => (statusOrder[a.status] ?? 5) - (statusOrder[b.status] ?? 5));
+
+      console.log(`[GET-RDV-MAP] Disponibilite: ${dispoResults.length} techs in ${Date.now() - t0}ms`);
+      return withCors(req, new Response(JSON.stringify({
+        success: true,
+        data: dispoResults,
+        meta: { mode: 'disponibilite', date, agencySlug: targetAgency, totalTechs: dispoResults.length, durationMs: Date.now() - t0 },
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+    }
+
     // ── NORMAL MODE (RDV pins for a specific date) ──
     const interventionsResponse = await apiFetch('apiGetInterventions', { API_KEY: apiKey, from: effectiveFrom, to: effectiveTo });
     if (!interventionsResponse.ok) {
