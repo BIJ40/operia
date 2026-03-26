@@ -236,8 +236,8 @@ export function buildFinancialAnalysis(
     const data = (facture as any).data ?? {};
     const isAvoir = ((facture as any).typeFacture || '').toLowerCase() === 'avoir';
 
-    // Date
-    const dateRaw = (facture as any).dateReelle || (facture as any).dateEmission || (facture as any).date || (facture as any).created_at;
+    // Date: for aging, use dateEmission (invoice date) NOT dateReelle (intervention date)
+    const dateRaw = (facture as any).dateEmission || (facture as any).date || (facture as any).dateReelle || (facture as any).created_at;
     const dateEmission = parseDateSafe(dateRaw);
     if (!dateEmission) {
       quality.facturesSansDate++;
