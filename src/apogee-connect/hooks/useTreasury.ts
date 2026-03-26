@@ -203,7 +203,15 @@ export function useCreateBankConnection() {
 export function useProcessBridgeCallback() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (params: { connectionId: string; bridgeStatus: string }) => {
+    mutationFn: async (params: {
+      connectionId: string;
+      success?: boolean;
+      item_id?: string;
+      step?: string;
+      source?: string;
+      context?: string;
+      user_uuid?: string;
+    }) => {
       const result = await safeInvoke(
         supabase.functions.invoke('treasury-bridge-callback', {
           body: params,
