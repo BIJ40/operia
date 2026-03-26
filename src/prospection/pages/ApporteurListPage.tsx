@@ -27,6 +27,7 @@ type PeriodKey = '30j' | '90j' | '6m' | '12m';
 type SortColumn = 'name' | 'dossiers' | 'ca_ht' | 'taux_transfo' | 'panier_moyen' | 'factures';
 type SortDir = 'asc' | 'desc';
 type TransfoFilter = 'all' | 'low' | 'mid' | 'high';
+type PanierFilter = 'all' | 'below' | 'above';
 
 function getPeriodDates(period: PeriodKey): { from: string; to: string } {
   const to = format(new Date(), 'yyyy-MM-dd');
@@ -90,14 +91,35 @@ function PanierBadge({ value, median }: { value: number | null; median: number |
 /** Mini progress bar in background of cell */
 function DossierCell({ value, max }: { value: number; max: number }) {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
+  const barColor = pct >= 70
+    ? 'bg-emerald-200/60 dark:bg-emerald-800/30'
+    : pct >= 30
+      ? 'bg-primary/10'
+      : 'bg-muted/60';
   return (
     <div className="relative flex items-center justify-end">
       <div
-        className="absolute inset-y-0 right-0 bg-primary/10 rounded-sm transition-all"
+        className={cn('absolute inset-y-0 right-0 rounded-sm transition-all', barColor)}
         style={{ width: `${pct}%` }}
       />
       <span className="relative z-10 font-medium">{value}</span>
     </div>
+  );
+}
+
+/** Factures badge coloré */
+function FacturesBadge({ value, max }: { value: number; max: number }) {
+  const ratio = max > 0 ? value / max : 0;
+  if (value === 0) return <span className="text-muted-foreground">0</span>;
+  const cls = ratio >= 0.6
+    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'
+    : ratio >= 0.25
+      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400'
+      : 'bg-muted text-muted-foreground';
+  return (
+    <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold', cls)}>
+      {value}
+    </span>
   );
 }
 
@@ -143,14 +165,16 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
   const [filterDossiersMin, setFilterDossiersMin] = useState('');
   const [filterCaMin, setFilterCaMin] = useState('');
   const [filterTransfo, setFilterTransfo] = useState<TransfoFilter>('all');
+  const [filterPanier, setFilterPanier] = useState<PanierFilter>('all');
   const [filterFacturesMin, setFilterFacturesMin] = useState('');
 
-  const hasFilters = filterDossiersMin !== '' || filterCaMin !== '' || filterTransfo !== 'all' || filterFacturesMin !== '';
+  const hasFilters = filterDossiersMin !== '' || filterCaMin !== '' || filterTransfo !== 'all' || filterPanier !== 'all' || filterFacturesMin !== '';
 
   const resetFilters = useCallback(() => {
     setFilterDossiersMin('');
     setFilterCaMin('');
     setFilterTransfo('all');
+    setFilterPanier('all');
     setFilterFacturesMin('');
   }, []);
 
@@ -199,9 +223,10 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
   const stats = useMemo(() => {
     const maxDossiers = Math.max(1, ...apporteurs.map(a => a.kpis.dossiers_received));
     const maxCa = Math.max(1, ...apporteurs.map(a => a.kpis.ca_ht));
+    const maxFactures = Math.max(1, ...apporteurs.map(a => a.kpis.factures));
     const paniers = apporteurs.map(a => a.kpis.panier_moyen).filter((v): v is number => v != null).sort((a, b) => a - b);
     const medianPanier = paniers.length > 0 ? paniers[Math.floor(paniers.length / 2)] : null;
-    return { maxDossiers, maxCa, medianPanier };
+    return { maxDossiers, maxCa, maxFactures, medianPanier };
   }, [apporteurs]);
 
   // Filter + sort pipeline
@@ -239,6 +264,14 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
         return t >= 60;
       });
     }
+    if (filterPanier !== 'all') {
+      list = list.filter(a => {
+        const p = a.kpis.panier_moyen;
+        if (p == null) return filterPanier === 'below';
+        if (filterPanier === 'below') return stats.medianPanier != null && p < stats.medianPanier;
+        return stats.medianPanier != null && p >= stats.medianPanier;
+      });
+    }
 
     // Sort
     const getValue = (a: ApporteurListItem): number | string => {
@@ -259,7 +292,7 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
       const cmp = typeof va === 'string' ? va.localeCompare(vb as string) : (va as number) - (vb as number);
       return sortDir === 'asc' ? cmp : -cmp;
     });
-  }, [apporteurs, search, getApporteurName, filterDossiersMin, filterCaMin, filterFacturesMin, filterTransfo, sortColumn, sortDir]);
+  }, [apporteurs, search, getApporteurName, filterDossiersMin, filterCaMin, filterFacturesMin, filterTransfo, filterPanier, stats.medianPanier, sortColumn, sortDir]);
 
   // Footer totals
   const totals = useMemo(() => {
@@ -435,7 +468,18 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
                         </SelectContent>
                       </Select>
                     </TableHead>
-                    <TableHead />
+                    <TableHead className="px-2 py-1">
+                      <Select value={filterPanier} onValueChange={v => setFilterPanier(v as PanierFilter)}>
+                        <SelectTrigger className="h-7 text-xs w-28 ml-auto">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Tous</SelectItem>
+                          <SelectItem value="below">Sous médiane</SelectItem>
+                          <SelectItem value="above">Au-dessus</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableHead>
                     <TableHead className="px-2 py-1">
                       <Input
                         type="number"
@@ -493,7 +537,9 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
                           <TableCell className="text-right">
                             <PanierBadge value={a.kpis.panier_moyen} median={stats.medianPanier} />
                           </TableCell>
-                          <TableCell className="text-right font-medium">{a.kpis.factures}</TableCell>
+                          <TableCell className="text-right">
+                            <FacturesBadge value={a.kpis.factures} max={stats.maxFactures} />
+                          </TableCell>
                         </TableRow>
                       );
                     })
