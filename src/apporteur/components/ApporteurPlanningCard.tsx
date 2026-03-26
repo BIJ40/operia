@@ -8,12 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
   useApporteurPlanning,
   PlanningEvent,
 } from '../hooks/useApporteurPlanning';
@@ -21,8 +15,6 @@ import {
   useApporteurDossiers,
   DossierRow,
   STATUS_CONFIG,
-  formatCurrency,
-  formatDate,
 } from '../hooks/useApporteurDossiers';
 import {
   Calendar,
@@ -32,17 +24,11 @@ import {
   User,
   Loader2,
   AlertTriangle,
-  FolderOpen,
-  FileText,
-  Receipt,
-  Euro,
-  CheckCircle2,
-  Circle,
   Sun,
   Moon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { STEPPER_STEPS_ORDERED, STEPPER_LABELS, type StepperStep } from '../types/apporteur-dossier-v2';
+import { DossierDetailDialog } from './cockpit/DossierDetailDialog';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
