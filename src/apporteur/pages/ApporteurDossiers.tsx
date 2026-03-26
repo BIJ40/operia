@@ -315,12 +315,13 @@ export default function ApporteurDossiers() {
                       Reste dû <SortIcon field="restedu" />
                     </div>
                   </TableHead>
+                  <TableHead className="w-12 text-center">PDF</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredDossiers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       Aucun dossier trouvé
                     </TableCell>
                   </TableRow>
@@ -348,28 +349,28 @@ export default function ApporteurDossiers() {
                         <TableCell className="hidden lg:table-cell text-sm">
                           {formatDate(d.datePremierRdv)}
                         </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          {d.devisHT > 0 ? (
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-sm">{formatCurrency(d.devisHT)}</span>
-                              <DocDownloadButton dossierRef={d.ref} docType="devis" className="text-primary hover:text-primary/80" />
-                            </div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">-</span>
-                          )}
+                        <TableCell className="hidden lg:table-cell text-sm">
+                          {d.devisHT > 0 ? formatCurrency(d.devisHT) : '-'}
                         </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {d.factureHT > 0 ? (
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-sm">{formatCurrency(d.factureHT)}</span>
-                              <DocDownloadButton dossierRef={d.ref} docType="factures" className="text-primary hover:text-primary/80" />
-                            </div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">-</span>
-                          )}
+                        <TableCell className="hidden md:table-cell text-sm">
+                          {d.factureHT > 0 ? formatCurrency(d.factureHT) : '-'}
                         </TableCell>
                         <TableCell className="text-right font-medium text-foreground">
                           {d.restedu > 0 ? formatCurrency(d.restedu) : d.factureHT > 0 ? '✓' : '-'}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {(d.devisHT > 0 || d.factureHT > 0) ? (
+                            <div className="flex items-center justify-center gap-1">
+                              {d.devisHT > 0 && (
+                                <DocDownloadButton dossierRef={d.ref} docType="devis" />
+                              )}
+                              {d.factureHT > 0 && (
+                                <DocDownloadButton dossierRef={d.ref} docType="factures" />
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
                         </TableCell>
                       </TableRow>
                     );
