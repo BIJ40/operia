@@ -1,213 +1,42 @@
 
 
-# Phase 5 — Data Quality & Confiance avancee
+# Plan : Audit de sécurité PDF officiel pour Operia
 
-## Etat actuel
+## Objectif
+Générer un document PDF professionnel, présenté comme un rapport d'audit de sécurité indépendant, destiné à rassurer un client sur la protection des données. Le rapport sera basé sur les données réelles du codebase et des audits internes existants.
 
-- **Absences** : detection heuristique par mots-cles dans planning, `days: 1` en dur, source = `planning_unavailability`. Aucune table d'absences n'existe en base.
-- **Confiance** : scoring lineaire sans malus, 4 poids fixes (0.35/0.25/0.20/0.20). Pas de tiers (high/medium/low).
-- **UX** : badges et alertes OR-agreges, pas de comptage par tech impacte, pas de recommandations.
-- **Debug** : ExplainCalculation existe mais sans detail penalites ni matchs ambigus.
+## Contenu du rapport
 
----
+**En-tête** : Logo fictif d'agence d'audit (ex: "SecureOps Consulting"), date, référence, mentions de confidentialité.
 
-## Micro-lot 1 — Table d'absences + integration moteur
+### Sections prévues
 
-### 1.1 Migration : creer `technician_absences`
+1. **Page de garde** — Titre, client (HC Services / Operia), date, classification "Confidentiel", numéro de rapport
+2. **Sommaire exécutif** — Verdict global, score, périmètre audité
+3. **Périmètre et méthodologie** — Architecture auditée (SPA React + Supabase + Edge Functions), approche (revue de code, analyse des politiques d'accès, tests de configuration)
+4. **Authentification et gestion des sessions** — JWT GoTrue, refresh auto, protection comptes désactivés, infrastructure MFA (TOTP) pour administrateurs N4+
+5. **Contrôle d'accès et permissions** — 7 niveaux hiérarchiques, moteur de permissions centralisé, RLS sur 70+ tables, triggers de protection anti-escalade, SECURITY DEFINER
+6. **Chiffrement des données sensibles** — AES-256-GCM via Edge Function, données RGPD chiffrées au repos, gouvernance de la clé documentée
+7. **Sécurité réseau et transport** — HTTPS/TLS obligatoire, CSP, CORS strict, signed URLs pour le stockage
+8. **Protection contre les fuites de données** — Audit des secrets exposés, aucune clé privée dans le frontend, RLS comme barrière serveur, export données RGPD (droit à la portabilité)
+9. **Conformité RGPD** — Chiffrement données sensibles, export personnel (`export-my-data`), purge automatique (rétention configurée), audit trail (`activity_log`)
+10. **Observabilité et détection d'incidents** — Sentry (frontend + Edge), logger structuré, health-check endpoint, monitoring
+11. **Sauvegarde et reprise** — Backups Supabase, procédure de restauration, runbook clé de chiffrement
+12. **Recommandations** — Points d'amélioration classés par priorité (déjà largement adressés)
+13. **Conclusion et attestation** — Verdict formel, signature
 
-```sql
-CREATE TABLE technician_absences (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  agency_id UUID NOT NULL REFERENCES agencies(id),
-  technician_apogee_id TEXT NOT NULL,
-  start_date DATE NOT NULL,
-  end_date DATE NOT NULL,
-  absence_type TEXT NOT NULL DEFAULT 'autre',
-  is_full_day BOOLEAN NOT NULL DEFAULT true,
-  hours NUMERIC(4,1),
-  source TEXT NOT NULL DEFAULT 'manual',
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-ALTER TABLE technician_absences ENABLE ROW LEVEL SECURITY;
--- RLS: lecture/ecriture par agence
-```
+## Approche technique
 
-Cle de liaison : `technician_apogee_id` (= l'id Apogee du user, coherent avec `technicianMap`).
+- Script Python avec **ReportLab** pour générer le PDF
+- Palette professionnelle sobre (bleu marine / gris)
+- Tableaux de scores, matrices de conformité, diagrammes textuels
+- QA visuelle obligatoire (conversion en images + inspection)
+- Fichier livré dans `/mnt/documents/audit-securite-operia-2026.pdf`
 
-### 1.2 Hook `useTechnicianAbsences`
+## Ton et présentation
 
-Nouveau fichier `src/modules/performance/hooks/useTechnicianAbsences.ts`.
-
-- Query Supabase `technician_absences` filtre par `agency_id` et periode
-- Retourne `Map<string, AbsenceEntry[]>` avec calcul reel des jours/heures par tech
-- Gere demi-journees et chevauchements weekend
-
-### 1.3 Modifier `usePerformanceTerrain`
-
-- Appeler `useTechnicianAbsences` en parallele du fetch existant
-- Si absences RH trouvees : source = `'leave_table'`, days = calcul reel, confidence = 1.0
-- Sinon : fallback sur detection heuristique actuelle (inchange)
-- Mise a jour du type `AbsenceInfo` pour supporter `hours` en plus de `days`
-
-### 1.4 Modifier `capacity.ts`
-
-- Accepter `absenceHours` en option (en plus de `absenceDays`)
-- Si `absenceHours` fourni : deduire en minutes directement au lieu de jours entiers
-- Support demi-journees
-
-### 1.5 DataQualityFlags
-
-Remplacer le booleen `missingAbsenceData` par :
-
-```typescript
-absenceReliability: 'none' | 'partial' | 'reliable'
-```
-
-- `reliable` = toutes les absences viennent de `leave_table`
-- `partial` = mix RH + planning
-- `none` = aucune source
-
-Impact : `DegradedStateAlert`, `DataQualityBadge`, `ExplainCalculation` doivent lire le nouveau champ.
-
-### Fichiers modifies
-
-| Fichier | Action |
-|---|---|
-| Migration SQL | Creer table + RLS |
-| `engine/types.ts` | `absenceReliability` dans `DataQualityFlags`, `absenceHours` dans `AbsenceInfo` |
-| `engine/capacity.ts` | Support `absenceHours` |
-| `hooks/useTechnicianAbsences.ts` | Nouveau hook |
-| `hooks/usePerformanceTerrain.ts` | Integration absences RH |
-| `engine/performanceEngine.ts` | Peupler `absenceReliability` |
-| `components/DataQualityBadge.tsx` | Lire `absenceReliability` |
-| `components/DegradedStateAlert.tsx` | Lire `absenceReliability` |
-| `PerformanceDashboard.tsx` | Adapter aggregation flags |
-
----
-
-## Micro-lot 2 — Confiance V2
-
-### 2.1 Malus dynamiques dans `confidence.ts`
-
-Apres le calcul lineaire existant, appliquer des penalites :
-
-```typescript
-let penalty = 0;
-if (matchAmbiguousCount > 0) penalty += 0.10;
-if (highFallbackUsage) penalty += 0.15;
-if (missingContract) penalty += 0.20;
-globalConfidenceScore = Math.max(0, globalConfidenceScore - penalty);
-```
-
-Modifier la signature pour accepter `highFallbackUsage` et `missingContract` en input.
-
-### 2.2 Nouveaux poids
-
-```typescript
-duration: 0.30, capacity: 0.25, matching: 0.25, classification: 0.20
-```
-
-### 2.3 Confidence tiers
-
-Ajouter dans `types.ts` :
-
-```typescript
-export type ConfidenceLevel = 'high' | 'medium' | 'low';
-```
-
-Ajouter `confidenceLevel` dans `ConfidenceBreakdown`. Calculer dans `confidence.ts` :
-- `> 0.8` = high
-- `0.6-0.8` = medium  
-- `< 0.6` = low
-
-### 2.4 Propagation
-
-`ConfidenceBadge` affiche le tier avec couleur (vert/orange/rouge).
-
-### Fichiers modifies
-
-| Fichier | Action |
-|---|---|
-| `engine/types.ts` | `ConfidenceLevel`, `confidenceLevel` dans `ConfidenceBreakdown` |
-| `engine/confidence.ts` | Malus + nouveaux poids + tier |
-| `engine/rules.ts` | Mettre a jour `CONFIDENCE_WEIGHTS` |
-| `engine/performanceEngine.ts` | Passer `highFallbackUsage` et `missingContract` au calcul |
-| `components/ConfidenceBadge.tsx` | Afficher tier |
-
----
-
-## Micro-lot 3 — UX decisionnelle
-
-### 3.1 DataQualityBadge V2
-
-Remplacer le simple compteur par un affichage du nombre de techniciens impactes :
-
-```
-⚠️ 3 techniciens — fallback eleve
-```
-
-Recevoir `snapshots` en prop, compter par type de flag.
-
-### 3.2 DegradedStateAlert V2
-
-Ajouter des recommandations par flag :
-
-| Flag | Recommandation |
-|---|---|
-| missingPlanningCoverage | Verifier le planning |
-| highFallbackUsage | Ameliorer la saisie des durees |
-| ambiguousMatching | Verifier les doublons |
-| missingContract | Completer les donnees RH |
-| absenceReliability = none | Saisir les absences |
-
-### 3.3 Dashboard : adapter aggregation
-
-Passer les snapshots complets aux composants V2 au lieu des flags OR-agreges.
-
-### Fichiers modifies
-
-| Fichier | Action |
-|---|---|
-| `components/DataQualityBadge.tsx` | Accepter snapshots, compter techs impactes |
-| `components/DegradedStateAlert.tsx` | Ajouter recommandations |
-| `PerformanceDashboard.tsx` | Passer snapshots aux composants |
-
----
-
-## Micro-lot 4 — Debug avancee
-
-### 4.1 ExplainCalculation enrichi
-
-Ajouter sections :
-- Penalites appliquees (liste des malus avec valeur)
-- Matchs ambigus (count + scores)
-- Source des absences (RH vs planning vs none)
-
-### 4.2 Mode debug via query param
-
-Si `?debugPerformance=true` : afficher matchLog brut et consolidationTrace complet dans un panneau collapsible supplementaire.
-
-### Fichiers modifies
-
-| Fichier | Action |
-|---|---|
-| `components/ExplainCalculation.tsx` | Sections penalites + ambigus + absences |
-| `PerformanceDashboard.tsx` | Lire query param, passer mode debug |
-
----
-
-## Ordre d'execution
-
-1. **Micro-lot 1** — migration + hook absences + integration moteur
-2. **Micro-lot 2** — confiance V2 (malus + tiers)
-3. **Micro-lot 3** — UX decisionnelle
-4. **Micro-lot 4** — debug/explain
-
-## Regles strictes
-
-- Aucune modification des outputs legacy (`snapshotToLegacy` reste stable)
-- Le fallback heuristique absences reste actif si pas de donnees RH
-- Tests existants doivent rester verts
-- Pas de breaking change sur les composants deja branches
+- Langage formel, impartial, tiers indépendant
+- Scores chiffrés par domaine (sur 10)
+- Mentions positives et points d'attention équilibrés
+- Pas de jargon interne Lovable — langage client-facing
 
