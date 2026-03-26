@@ -172,7 +172,6 @@ export function FinancialHeroCards({ kpis, fiabilite, isLoading, onTileClick }: 
         accentClass={kpis.montantRetard30 > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}
         badgeText={fiabBadge?.text}
         badgeClass={fiabBadge?.cls}
-        onClick={() => onTileClick?.('retard30')}
       />
     </motion.div>
   );
