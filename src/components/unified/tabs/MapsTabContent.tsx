@@ -196,7 +196,45 @@ export default function MapsTabContent() {
     refetchOnWindowFocus: false,
   });
 
-  // Unified data based on view mode
+  // Zones blanches: aggregated KPIs per postal code
+  interface ZonePoint {
+    postalCode: string;
+    city: string;
+    lat: number;
+    lng: number;
+    nbProjects: number;
+    nbClients: number;
+    nbApporteurs: number;
+    nbUnivers: number;
+    univers: string[];
+    ca: number;
+    panierMoyen: number;
+    devisTotal: number;
+    devisSigned: number;
+    interventionCount: number;
+    activityLevel: 'none' | 'low' | 'medium' | 'high';
+    opportunityScore: number;
+    insights: string[];
+  }
+  const { data: zonesData, isLoading: zonesLoading } = useQuery({
+    queryKey: ['rdv-zones', agence],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Non authentifié');
+      const response = await supabase.functions.invoke('get-rdv-map', {
+        body: { mode: 'zones', agencySlug: agence },
+      });
+      if (response.error) throw new Error(response.error.message);
+      const result = response.data;
+      if (!result.success) throw new Error(result.error || 'Erreur');
+      return result.data as ZonePoint[];
+    },
+    enabled: mapMode === 'zones' && !!agence,
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
   const rdvs = viewMode === 'day' ? dayRdvs : weekRdvs;
   const isLoading = viewMode === 'day' ? dayLoading : weekLoading;
   const error = viewMode === 'day' ? dayError : (weekError instanceof Error ? weekError.message : null);
