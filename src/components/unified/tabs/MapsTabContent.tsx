@@ -521,7 +521,7 @@ export default function MapsTabContent() {
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
 
-    if (mapMode === 'heatmap' || mapMode === 'profitability' || mapMode === 'zones' || mapMode === 'apporteurs' || mapMode === 'disponibilite' || mapMode === 'saisonnalite') return;
+    if (mapMode === 'heatmap' || mapMode === 'profitability' || mapMode === 'zones' || mapMode === 'apporteurs' || mapMode === 'disponibilite' || mapMode === 'saisonnalite' || mapMode === 'score_global') return;
 
     sortedRdvs.forEach((rdv, index) => {
       const isSelected = selectedRdv?.rdvId === rdv.rdvId;
