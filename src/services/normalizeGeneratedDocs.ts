@@ -82,7 +82,7 @@ export function normalizeGeneratedDocs(raw: unknown): NormalizedDoc[] {
         }
 
         docs.push({
-          id: doc.id || `${apiKey}-${docs.length}`,
+          id: String(doc.id || `${apiKey}-${docs.length}`),
           category,
           categoryLabel: CATEGORY_LABELS[apiKey] || apiKey,
           fileName: doc.fileName || 'Document',
