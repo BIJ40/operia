@@ -8,8 +8,9 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { format, addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Loader2, MapPin, AlertCircle, CalendarDays, Flame, PieChart, Crosshair, Network } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Loader2, MapPin, AlertCircle, CalendarDays, Flame, PieChart, Crosshair, Network, Radio, Clock, Wrench, Navigation } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -43,6 +44,8 @@ const PROFIT_CIRCLES = 'profit-circles-pilotage';
 const ZONES_SOURCE = 'zones-source-pilotage';
 const ZONES_CIRCLES = 'zones-circles-pilotage';
 const APPORTEURS_SOURCE = 'apporteurs-source-pilotage';
+const DISPO_SOURCE = 'dispo-source-pilotage';
+const DISPO_CIRCLES = 'dispo-circles-pilotage';
 const APPORTEURS_CIRCLES = 'apporteurs-circles-pilotage';
 
 function enableStyleFallback(m: mapboxgl.Map) {
@@ -70,9 +73,9 @@ function enableStyleFallback(m: mapboxgl.Map) {
 }
 
 type ViewMode = 'day' | 'week';
-type MapMode = 'pins' | 'heatmap' | 'profitability' | 'zones' | 'apporteurs';
+type MapMode = 'pins' | 'heatmap' | 'profitability' | 'zones' | 'apporteurs' | 'disponibilite';
 
-type MapsSubTab = 'rdv' | 'densite' | 'rentabilite' | 'zones' | 'apporteurs';
+type MapsSubTab = 'rdv' | 'densite' | 'rentabilite' | 'zones' | 'apporteurs' | 'disponibilite';
 
 const MAP_SUB_TABS: FolderTabConfig[] = [
   { id: 'rdv', label: 'Rendez-vous', icon: MapPin, accent: 'blue' },
@@ -80,6 +83,7 @@ const MAP_SUB_TABS: FolderTabConfig[] = [
   { id: 'rentabilite', label: 'Rentabilité', icon: PieChart, accent: 'green' },
   { id: 'zones', label: 'Zones blanches', icon: Crosshair, accent: 'orange' },
   { id: 'apporteurs', label: 'Apporteurs', icon: Network, accent: 'purple' },
+  { id: 'disponibilite', label: 'Disponibilité', icon: Radio, accent: 'cyan' },
 ];
 
 const TAB_ACCENT_COLORS: Record<string, string> = {
@@ -88,6 +92,39 @@ const TAB_ACCENT_COLORS: Record<string, string> = {
   green: 'hsl(var(--warm-green))',
   orange: 'hsl(var(--warm-orange))',
   purple: 'hsl(var(--warm-purple, 270 60% 55%))',
+  cyan: 'hsl(190 80% 45%)',
+};
+
+// ── Disponibilité types ──
+interface DispoTech {
+  techId: number;
+  name: string;
+  color: string;
+  lat: number;
+  lng: number;
+  status: 'available' | 'soon' | 'busy' | 'saturated' | 'unavailable';
+  statusLabel: string;
+  currentTask: string | null;
+  nextTask: string | null;
+  nextTaskTime: string | null;
+  freeMinutes: number;
+  remainingCapacityMin: number;
+  totalDayMin: number;
+  occupiedMin: number;
+  travelEstimateMin: number;
+  skills: string[];
+  rdvCount: number;
+  rdvDone: number;
+  rdvRemaining: number;
+  dispatchScore?: number;
+}
+
+const DISPO_STATUS_COLORS: Record<string, string> = {
+  available: '#22c55e',
+  soon: '#eab308',
+  busy: '#f97316',
+  saturated: '#dc2626',
+  unavailable: '#9ca3af',
 };
 
 /** Animated progress overlay for analytics map modes */
@@ -114,6 +151,7 @@ function MapLoadingOverlay({ mode }: { mode: MapMode }) {
     profitability: 'Calcul de rentabilité par zone…',
     zones: 'Analyse des zones commerciales…',
     apporteurs: 'Analyse des apporteurs par zone…',
+    disponibilite: 'Calcul de disponibilité temps réel…',
   };
 
   return (
@@ -137,7 +175,7 @@ export default function MapsTabContent() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [activeSubTab, setActiveSubTab] = useSessionState<MapsSubTab>('maps_sub_tab', 'rdv');
-  const mapMode: MapMode = activeSubTab === 'densite' ? 'heatmap' : activeSubTab === 'rentabilite' ? 'profitability' : activeSubTab === 'zones' ? 'zones' : activeSubTab === 'apporteurs' ? 'apporteurs' : 'pins';
+  const mapMode: MapMode = activeSubTab === 'densite' ? 'heatmap' : activeSubTab === 'rentabilite' ? 'profitability' : activeSubTab === 'zones' ? 'zones' : activeSubTab === 'apporteurs' ? 'apporteurs' : activeSubTab === 'disponibilite' ? 'disponibilite' : 'pins';
   const [selectedTechIds, setSelectedTechIds] = useState<number[]>([]);
   const [techFilterOpen, setTechFilterOpen] = useState(false);
   const [selectedRdv, setSelectedRdv] = useState<MapRdv | null>(null);
