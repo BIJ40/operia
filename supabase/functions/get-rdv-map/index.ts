@@ -244,12 +244,24 @@ Deno.serve(async (req) => {
     }
 
     const baseUrl = `https://${targetAgency}.hc-apogee.fr/api`;
-    const apiFetch = (endpoint: string, body: any = { API_KEY: apiKey }) =>
-      fetch(`${baseUrl}/${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+    const apiFetch = async (endpoint: string, body: any = { API_KEY: apiKey }): Promise<any[]> => {
+      try {
+        const resp = await fetch(`${baseUrl}/${endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          signal: AbortSignal.timeout(25000),
+        });
+        if (!resp.ok) {
+          console.warn(`[GET-RDV-MAP] API ${endpoint} returned ${resp.status}`);
+          return [];
+        }
+        return await resp.json();
+      } catch (e) {
+        console.warn(`[GET-RDV-MAP] API ${endpoint} fetch failed: ${e.message}`);
+        return [];
+      }
+    };
 
     // 6. Fetch data from Apogée
     const t0 = Date.now();
@@ -274,14 +286,12 @@ Deno.serve(async (req) => {
         fetchPromises.push(apiFetch('apiGetDevis'));
       }
 
-      const responses = await Promise.all(fetchPromises);
-      const [intResp, projResp, clientResp] = responses;
-      
-      const interventions = intResp.ok ? await intResp.json() : [];
-      const projects = projResp.ok ? await projResp.json() : [];
-      const clients = clientResp.ok ? await clientResp.json() : [];
-      const factures = (isProfitability || isZones || isApporteurs) && responses[3]?.ok ? await responses[3].json() : [];
-      const devis = (isZones || isApporteurs) && responses[4]?.ok ? await responses[4].json() : [];
+      const results = await Promise.all(fetchPromises);
+      const interventions = results[0] || [];
+      const projects = results[1] || [];
+      const clients = results[2] || [];
+      const factures = (isProfitability || isZones || isApporteurs) ? (results[3] || []) : [];
+      const devis = (isZones || isApporteurs) ? (results[4] || []) : [];
 
       console.log(`[GET-RDV-MAP] Fetched ${Array.isArray(interventions) ? interventions.length : 0} interventions, ${projects.length} projects, ${clients.length} clients in ${Date.now() - t0}ms`);
 
