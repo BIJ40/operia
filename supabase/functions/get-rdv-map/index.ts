@@ -429,7 +429,47 @@ Deno.serve(async (req) => {
       clientsById.set(c.id, { name, address, postalCode, city });
     }
 
-    // 9. Transformer les interventions en MapRdv
+    // ── HEATMAP FAST PATH ──
+    // In heatmap mode, skip user/project enrichment; just return {lat, lng} for each intervention
+    if (isHeatmap) {
+      const heatPoints: { lat: number; lng: number }[] = [];
+      let heatSkipped = 0;
+
+      for (const intervention of interventions as any[]) {
+        const project = projectsById.get(intervention.projectId);
+        if (!project) { heatSkipped++; continue; }
+
+        const rawClientId = intervention.client_id ?? project.clientId;
+        const clientId = typeof rawClientId === 'number' ? rawClientId : null;
+        const client = clientId ? clientsById.get(clientId) : undefined;
+        if (!client?.address) { heatSkipped++; continue; }
+
+        const coords = await geocodeAddress(client.address, client.postalCode, client.city);
+        if (!coords) { heatSkipped++; continue; }
+
+        heatPoints.push(coords);
+      }
+
+      console.log(`[GET-RDV-MAP] Heatmap for ${targetAgency}: ${heatPoints.length} points, ${heatSkipped} skipped`);
+
+      return withCors(req, new Response(
+        JSON.stringify({
+          success: true,
+          data: heatPoints,
+          meta: {
+            mode: 'heatmap',
+            from: effectiveFrom,
+            to: effectiveTo,
+            agencySlug: targetAgency,
+            totalPoints: heatPoints.length,
+            timestamp: new Date().toISOString(),
+          },
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      ));
+    }
+
+    // 9. Transformer les interventions en MapRdv (normal mode)
     const mapRdvs: MapRdv[] = [];
     let skippedNoProject = 0;
     let skippedNoClientAddress = 0;
@@ -442,7 +482,7 @@ Deno.serve(async (req) => {
 
       // IMPORTANT: Filtrer les visites du jour AVANT d'extraire les techniciens
       const visitesDuJour = visites.filter(
-        (v: any) => typeof v?.date === 'string' && v.date.startsWith(date)
+        (v: any) => typeof v?.date === 'string' && v.date.startsWith(date!)
       );
 
       // Si aucune visite ce jour-là, on skip cette intervention
