@@ -3,7 +3,7 @@
  * Consomme useApporteurKpis pour afficher KPIs, collaboration, univers, alertes
  */
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useApporteurAuth } from '@/contexts/ApporteurAuthContext';
 import { useApporteurSession } from '@/apporteur/contexts/ApporteurSessionContext';
 import { Button } from '@/components/ui/button';
@@ -12,8 +12,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ApporteurPlanningCard } from '../ApporteurPlanningCard';
 import { NouvelleDemandeDialog } from '../NouvelleDemandeDialog';
 import { useApporteurKpis } from '../../hooks/useApporteurKpis';
+import { useApporteurDossiers, DossierRow } from '../../hooks/useApporteurDossiers';
 import { KpiCard } from '../cockpit/KpiCard';
 import { KpiDetailDialog, type KpiDetailType } from '../cockpit/KpiDetailDialog';
+import { DossierDetailDialog } from '../cockpit/DossierDetailDialog';
 import { CollaborationGauge } from '../cockpit/CollaborationGauge';
 import { UniversDonut } from '../cockpit/UniversDonut';
 import { AlertesBanner } from '../cockpit/AlertesBanner';
