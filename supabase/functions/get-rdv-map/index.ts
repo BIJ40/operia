@@ -348,37 +348,37 @@ Deno.serve(async (req) => {
       `[GET-RDV-MAP] Got ${interventions.length}/${Array.isArray(interventionsAll) ? interventionsAll.length : 0} interventions for ${targetAgency} ${isHeatmap ? `(heatmap ${effectiveFrom}→${effectiveTo})` : `on ${date}`}`
     );
 
-    // 7. Fetch users pour les couleurs
-    const usersUrl = `https://${targetAgency}.hc-apogee.fr/api/apiGetUsers`;
-    const usersResponse = await fetch(usersUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ API_KEY: apiKey }),
-    });
-
-    const users = usersResponse.ok ? await usersResponse.json() : [];
+    // 7. Fetch users pour les couleurs (skip in heatmap mode)
     const usersById = new Map<number, { name: string; color: string }>();
-    
-    // Log sample user pour debug des champs couleur
-    if (users.length > 0) {
-      const sample = users[0];
-      console.log(`[GET-RDV-MAP] Sample user keys: ${Object.keys(sample).join(', ')}`);
-      console.log(`[GET-RDV-MAP] Sample user color fields: bgcolor=${sample.bgcolor}, color=${sample.color}, bgColor=${sample.bgColor}`);
-    }
-    
-    for (const u of users) {
-      // L'API Apogée stocke les couleurs dans data.bgcolor.hex ou data.color.hex
-      const dataObj = u.data || {};
-      const color = dataObj.bgcolor?.hex || dataObj.bgColor?.hex || dataObj.color?.hex 
-        || u.bgcolor?.hex || u.bgColor?.hex || u.color?.hex
-        || (typeof u.bgcolor === 'string' ? u.bgcolor : null)
-        || (typeof u.color === 'string' ? u.color : null)
-        || '#6366f1';
-      
-      usersById.set(u.id, {
-        name: `${u.firstname || ''} ${u.lastname || u.name || ''}`.trim() || `User ${u.id}`,
-        color,
+    if (!isHeatmap) {
+      const usersUrl = `https://${targetAgency}.hc-apogee.fr/api/apiGetUsers`;
+      const usersResponse = await fetch(usersUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ API_KEY: apiKey }),
       });
+
+      const users = usersResponse.ok ? await usersResponse.json() : [];
+      
+      if (users.length > 0) {
+        const sample = users[0];
+        console.log(`[GET-RDV-MAP] Sample user keys: ${Object.keys(sample).join(', ')}`);
+        console.log(`[GET-RDV-MAP] Sample user color fields: bgcolor=${sample.bgcolor}, color=${sample.color}, bgColor=${sample.bgColor}`);
+      }
+      
+      for (const u of users) {
+        const dataObj = u.data || {};
+        const color = dataObj.bgcolor?.hex || dataObj.bgColor?.hex || dataObj.color?.hex 
+          || u.bgcolor?.hex || u.bgColor?.hex || u.color?.hex
+          || (typeof u.bgcolor === 'string' ? u.bgcolor : null)
+          || (typeof u.color === 'string' ? u.color : null)
+          || '#6366f1';
+        
+        usersById.set(u.id, {
+          name: `${u.firstname || ''} ${u.lastname || u.name || ''}`.trim() || `User ${u.id}`,
+          color,
+        });
+      }
     }
 
     // 8. Fetch projects pour les adresses et univers
