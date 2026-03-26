@@ -27,12 +27,37 @@ import { useProfile } from '@/contexts/ProfileContext';
 import { supabase } from '@/integrations/supabase/client';
 
 const MAPBOX_STYLE = 'mapbox://styles/bij40/cmjbi8grj000t01s3ajxo3amm';
+const FALLBACK_MAPBOX_STYLE = 'mapbox://styles/mapbox/streets-v12';
 const DEFAULT_CENTER: [number, number] = [1.4442, 43.6047];
 const DEFAULT_ZOOM = 6;
 const TOUR_ROUTE_SOURCE = 'tour-route-source-pilotage';
 const TOUR_ROUTE_LAYER = 'tour-route-layer-pilotage';
 const HEATMAP_SOURCE = 'heatmap-source-pilotage';
 const HEATMAP_LAYER = 'heatmap-layer-pilotage';
+
+function enableStyleFallback(m: mapboxgl.Map) {
+  let fallbackApplied = false;
+  const applyFallback = () => {
+    if (fallbackApplied) return;
+    fallbackApplied = true;
+    m.setStyle(FALLBACK_MAPBOX_STYLE);
+    m.once('style.load', () => m.resize());
+  };
+  m.on('error', (event: any) => {
+    const message = String(event?.error?.message ?? '').toLowerCase();
+    const status = event?.error?.status ?? event?.error?.statusCode;
+    if (message.includes('style') || message.includes('sprite') || message.includes('source') || status === 401 || status === 403 || status === 404) {
+      applyFallback();
+    }
+  });
+  m.on('styledata', () => {
+    if (!m.isStyleLoaded()) return;
+    const style = m.getStyle();
+    const sourceCount = Object.keys(style?.sources ?? {}).length;
+    const hasRenderableLayer = (style?.layers ?? []).some(layer => layer.type !== 'background');
+    if (sourceCount === 0 || !hasRenderableLayer) applyFallback();
+  });
+}
 
 type ViewMode = 'day' | 'week';
 type MapMode = 'pins' | 'heatmap';
@@ -139,46 +164,55 @@ export default function MapsTabContent() {
     fetchToken();
   }, []);
 
-  // Init map
+  // Init map — delayed to ensure container has dimensions
   useEffect(() => {
     if (!mapContainer.current || !mapboxToken || map.current) return;
     if (!mapboxgl.supported()) { setMapInitError('WebGL non supporté.'); return; }
     setMapInitError(null);
     setMapReady(false);
 
-    try {
-      mapboxgl.accessToken = mapboxToken;
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: MAPBOX_STYLE,
-        center: DEFAULT_CENTER,
-        zoom: DEFAULT_ZOOM,
-      });
+    const container = mapContainer.current;
+    let ro: ResizeObserver | null = null;
 
-      const safeResize = () => { try { map.current?.resize(); } catch {} };
-      map.current.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-right');
+    const initTimer = setTimeout(() => {
+      try {
+        mapboxgl.accessToken = mapboxToken;
+        map.current = new mapboxgl.Map({
+          container,
+          style: MAPBOX_STYLE,
+          center: DEFAULT_CENTER,
+          zoom: DEFAULT_ZOOM,
+          attributionControl: true,
+        });
 
-      let ro: ResizeObserver | null = null;
-      if (typeof ResizeObserver !== 'undefined') {
-        ro = new ResizeObserver(() => safeResize());
-        ro.observe(mapContainer.current);
+        map.current.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-right');
+
+        map.current.on('load', () => {
+          setMapReady(true);
+          map.current?.resize();
+        });
+
+        enableStyleFallback(map.current);
+
+        ro = new ResizeObserver(() => {
+          if (map.current && !(map.current as any)._removed) {
+            map.current.resize();
+          }
+        });
+        ro.observe(container);
+      } catch (err) {
+        setMapInitError(err instanceof Error ? err.message : 'Erreur init carte');
+        map.current = null;
       }
+    }, 150);
 
-      requestAnimationFrame(safeResize);
-      setTimeout(safeResize, 50);
-      setTimeout(safeResize, 250);
-
-      map.current.on('load', () => { setMapReady(true); requestAnimationFrame(safeResize); });
-      map.current.on('error', (e) => {
-        const msg = (e as any)?.error?.message || 'Erreur Mapbox';
-        setMapInitError(String(msg));
-      });
-
-      return () => { ro?.disconnect(); setMapReady(false); map.current?.remove(); map.current = null; };
-    } catch (err) {
-      setMapInitError(err instanceof Error ? err.message : 'Erreur init carte');
+    return () => {
+      clearTimeout(initTimer);
+      ro?.disconnect();
+      setMapReady(false);
+      map.current?.remove();
       map.current = null;
-    }
+    };
   }, [mapboxToken]);
 
   const hasFittedBoundsRef = useRef(false);
