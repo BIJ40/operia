@@ -174,13 +174,16 @@ export function useCreateBankConnection() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (params: { displayName: string; provider?: string }): Promise<CreateConnectionResult> => {
+      const isPreviewHost = window.location.hostname.endsWith('.lovableproject.com') || window.location.hostname.startsWith('id-preview--');
+      const callbackOrigin = isPreviewHost ? 'https://operiav2.lovable.app' : window.location.origin;
+
       const result = await safeInvoke<{ data: CreateConnectionResult }>(
         supabase.functions.invoke('treasury-connection', {
           body: {
             action: 'create',
             displayName: params.displayName,
             provider: params.provider ?? 'bridge',
-            callbackUrl: `${window.location.origin}/?tab=pilotage.tresorerie&bridge_callback=1`,
+            callbackUrl: `${callbackOrigin}/?tab=pilotage.tresorerie&bridge_callback=1`,
           },
         }),
         'TREASURY_CREATE_CONNECTION'
