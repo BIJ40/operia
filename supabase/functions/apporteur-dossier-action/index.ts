@@ -216,9 +216,7 @@ Deno.serve(async (req) => {
     try {
       const exchangeActionType = action === 'dossier_inactif'
         ? (inactifAction === 'donner_info' ? 'info' : inactifAction ?? 'info')
-        : action === 'refuser_devis' ? 'annuler'
-        : action === 'valider_devis' ? 'info'
-        : 'info';
+        : action; // valider_devis, refuser_devis, facture_reglee → stored as-is
 
       for (const ref of dossierRefs) {
         await supabaseAdmin.from('dossier_exchanges').insert({
