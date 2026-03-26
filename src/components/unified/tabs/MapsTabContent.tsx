@@ -50,6 +50,8 @@ const DISPO_CIRCLES = 'dispo-circles-pilotage';
 const APPORTEURS_CIRCLES = 'apporteurs-circles-pilotage';
 const SEASON_SOURCE = 'season-source-pilotage';
 const SEASON_CIRCLES = 'season-circles-pilotage';
+const SCORE_SOURCE = 'score-source-pilotage';
+const SCORE_CIRCLES = 'score-circles-pilotage';
 
 function enableStyleFallback(m: mapboxgl.Map) {
   let fallbackApplied = false;
