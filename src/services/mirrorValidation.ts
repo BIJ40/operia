@@ -21,17 +21,27 @@ export function mapMirrorUserToAppShape(raw: Record<string, unknown>): User | nu
   const id = raw.id;
   if (id == null) return null;
 
+  const data = (raw.data && typeof raw.data === 'object') ? raw.data as Record<string, unknown> : undefined;
+  const universes = Array.isArray(raw.universes)
+    ? raw.universes.map(String)
+    : Array.isArray(data?.universes)
+      ? data.universes.map(String)
+      : undefined;
+
   return {
     id: String(id),
     nom: String(raw.nom ?? raw.name ?? ''),
-    prenom: String(raw.prenom ?? raw.firstName ?? ''),
+    prenom: String(raw.prenom ?? raw.firstname ?? raw.firstName ?? ''),
     email: String(raw.email ?? ''),
     tel: raw.tel != null ? String(raw.tel) : undefined,
     role: raw.role != null ? String(raw.role) : undefined,
     type: raw.type != null ? String(raw.type) : undefined,
-    universes: Array.isArray(raw.universes) ? raw.universes.map(String) : undefined,
+    universes,
     initiales: raw.initiales != null ? String(raw.initiales) : undefined,
-  };
+    is_on: raw.is_on,
+    isActive: raw.isActive,
+    data: data as User['data'] | undefined,
+  } as User;
 }
 
 /**
