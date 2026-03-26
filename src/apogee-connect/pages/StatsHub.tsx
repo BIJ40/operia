@@ -44,7 +44,7 @@ const TAB_MODULE_KEYS: Record<TabId, ModuleKey> = {
   univers: 'pilotage.statistiques.univers',
   sav: 'pilotage.statistiques.sav',
   previsionnel: 'pilotage.statistiques.previsionnel',
-  financier: 'pilotage.statistiques.general',
+  financier: 'pilotage.statistiques.financier' as ModuleKey,
 };
 
 function StatsHubContent() {

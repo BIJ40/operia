@@ -1,6 +1,6 @@
 /**
  * Financial Calculations Engine — Pure functions for recouvrement/aging/risk
- * Builds on existing recouvrementCalculations.ts patterns but with richer output
+ * V2: Snapshot mode, renamed "âge moyen encours", avoir ambiguity, reliability score
  */
 
 import { parseISO, differenceInDays } from 'date-fns';
@@ -17,6 +17,9 @@ import type {
   InvoicePaymentStatus,
   DebtRiskLevel,
   DataQualityFlags,
+  AvoirMatchStatus,
+  FiabiliteScore,
+  FiabiliteLevel,
 } from '@/apogee-connect/types/financial';
 
 // ─── Helpers ──────────────────────────────────────────────
@@ -67,6 +70,22 @@ function emptyAging(): AgingBreakdown {
   return { '0_30': 0, '31_60': 0, '61_90': 0, '90_plus': 0 };
 }
 
+// ─── Avoir matching ─────────────────────────────────────
+
+function classifyAvoirMatch(
+  facture: Facture,
+  projectsMap: Map<string, Project>
+): AvoirMatchStatus {
+  const projectId = String(facture.projectId || '');
+  const project = projectsMap.get(projectId);
+  // Avoir linked to a real project = matched
+  if (project && projectId) return 'matched';
+  // Avoir with projectId but no matching project = ambiguous
+  if (projectId && projectId !== '' && !project) return 'ambiguous';
+  // Avoir without any link = unmatched
+  return 'unmatched';
+}
+
 // ─── Core: resolve entity from project ──────────────────
 
 export function resolveEntityFromProject(
@@ -83,7 +102,6 @@ export function resolveEntityFromProject(
     return { entityType: 'apporteur', entityId: cid, entityLabel: label };
   }
 
-  // Client direct = the project's clientId
   const clientId = String(project.clientId || '');
   if (clientId) {
     const client = clientsMap.get(clientId);
@@ -96,34 +114,93 @@ export function resolveEntityFromProject(
 
 // ─── Core: extract invoice financial data ────────────────
 
-function extractInvoiceMontantRegle(facture: Facture): number {
+function extractInvoiceMontantRegle(facture: Facture): { amount: number; isRealData: boolean } {
   const data = (facture as any).data ?? {};
 
   // Priority 1: calcReglementsTotal (true API field)
   const calcTotal = data.calcReglementsTotal;
   if (calcTotal !== undefined && calcTotal !== null) {
-    return Math.abs(safeNumber(calcTotal));
+    return { amount: Math.abs(safeNumber(calcTotal)), isRealData: true };
   }
 
   // Priority 2: sommesPercues array
   const sommesPercues = data.financier?.sommesPercues;
   if (Array.isArray(sommesPercues) && sommesPercues.length > 0) {
-    return sommesPercues.reduce((sum: number, sp: any) => sum + Math.abs(safeNumber(sp?.amount)), 0);
+    return {
+      amount: sommesPercues.reduce((sum: number, sp: any) => sum + Math.abs(safeNumber(sp?.amount)), 0),
+      isRealData: true,
+    };
   }
 
   // Priority 3: calc.paidTTC from typed interface
   if (facture.calc?.paidTTC !== undefined) {
-    return Math.abs(safeNumber(facture.calc.paidTTC));
+    return { amount: Math.abs(safeNumber(facture.calc.paidTTC)), isRealData: true };
   }
 
-  // Priority 4: payment state fallback
+  // Priority 4: payment state fallback (NOT real data)
   const state = (facture as any).state;
   const paymentStatus = (facture as any).paymentStatus;
   if (paymentStatus === 'paid' || (state === 'paid' && paymentStatus !== 'partially_paid')) {
-    return Math.abs(safeNumber(data.totalTTC ?? (facture as any).totalTTC));
+    return {
+      amount: Math.abs(safeNumber(data.totalTTC ?? (facture as any).totalTTC)),
+      isRealData: false,
+    };
   }
 
-  return 0;
+  return { amount: 0, isRealData: false };
+}
+
+// ─── Fiability Score ────────────────────────────────────
+
+function computeFiabiliteScore(quality: DataQualityFlags): FiabiliteScore {
+  const total = quality.totalFacturesAnalysees + quality.totalFacturesExclues;
+  if (total === 0) return { score: 100, level: 'forte', details: [] };
+
+  const details: FiabiliteScore['details'] = [];
+
+  if (quality.facturesSansDate > 0) {
+    details.push({ label: 'Factures sans date', count: quality.facturesSansDate, severity: 'error' });
+  }
+  if (quality.facturesSansMontant > 0) {
+    details.push({ label: 'Factures sans montant', count: quality.facturesSansMontant, severity: 'error' });
+  }
+  if (quality.facturesSansProject > 0) {
+    details.push({ label: 'Factures sans projet', count: quality.facturesSansProject, severity: 'warn' });
+  }
+  if (quality.projectsSansCommanditaire > 0) {
+    details.push({ label: 'Projets sans commanditaire', count: quality.projectsSansCommanditaire, severity: 'warn' });
+  }
+  if (quality.avoirsNonRapproches > 0) {
+    details.push({ label: 'Avoirs non rapprochés', count: quality.avoirsNonRapproches, severity: 'warn' });
+  }
+  if (quality.reglementsViaFallbackStatut > 0) {
+    details.push({ label: 'Règlements estimés (fallback)', count: quality.reglementsViaFallbackStatut, severity: 'warn' });
+  }
+
+  // Score: penalize each issue
+  const excludedPenalty = total > 0 ? (quality.totalFacturesExclues / total) * 40 : 0;
+  const fallbackPenalty = quality.totalFacturesAnalysees > 0
+    ? (quality.reglementsViaFallbackStatut / quality.totalFacturesAnalysees) * 20
+    : 0;
+  const avoirPenalty = quality.avoirsNonRapproches * 2;
+  const noProjectPenalty = quality.facturesSansProject * 1;
+
+  const rawScore = Math.max(0, 100 - excludedPenalty - fallbackPenalty - avoirPenalty - noProjectPenalty);
+  const score = Math.round(rawScore);
+
+  let level: FiabiliteLevel = 'forte';
+  if (score < 75) level = 'fragile';
+  else if (score < 90) level = 'moyenne';
+
+  if (quality.reglementsViaDonneeReelle > 0) {
+    details.push({
+      label: 'Règlements via donnée réelle',
+      count: quality.reglementsViaDonneeReelle,
+      severity: 'ok',
+    });
+  }
+
+  return { score, level, details };
 }
 
 // ─── Main: build full financial analysis ─────────────────
@@ -145,6 +222,10 @@ export function buildFinancialAnalysis(
     facturesSansMontant: 0,
     facturesSansProject: 0,
     projectsSansCommanditaire: 0,
+    avoirsNonRapproches: 0,
+    montantAvoirsAmbigus: 0,
+    reglementsViaDonneeReelle: 0,
+    reglementsViaFallbackStatut: 0,
     totalFacturesAnalysees: 0,
     totalFacturesExclues: 0,
   };
@@ -176,9 +257,28 @@ export function buildFinancialAnalysis(
     quality.totalFacturesAnalysees++;
 
     const montantTTC = isAvoir ? -Math.abs(montantTTCBase) : Math.abs(montantTTCBase);
-    const montantRegleBrut = extractInvoiceMontantRegle(facture);
+    const { amount: montantRegleBrut, isRealData } = extractInvoiceMontantRegle(facture);
     const montantRegle = isAvoir ? -Math.min(montantRegleBrut, Math.abs(montantTTCBase)) : Math.min(montantRegleBrut, Math.abs(montantTTCBase));
     const resteDu = montantTTC - montantRegle;
+
+    // Track data quality for règlements
+    if (isRealData) {
+      quality.reglementsViaDonneeReelle++;
+    } else if (montantRegleBrut > 0) {
+      quality.reglementsViaFallbackStatut++;
+    }
+
+    // Avoir ambiguity
+    let avoirMatchStatus: AvoirMatchStatus | undefined;
+    if (isAvoir) {
+      avoirMatchStatus = classifyAvoirMatch(facture, projectsMap);
+      if (avoirMatchStatus === 'unmatched') {
+        quality.avoirsNonRapproches++;
+        quality.montantAvoirsAmbigus += Math.abs(montantTTCBase);
+      } else if (avoirMatchStatus === 'ambiguous') {
+        quality.montantAvoirsAmbigus += Math.abs(montantTTCBase);
+      }
+    }
 
     // Aging
     const agingDays = Math.max(0, differenceInDays(referenceDate, dateEmission));
@@ -209,6 +309,7 @@ export function buildFinancialAnalysis(
       montantRegle,
       resteDu,
       isAvoir,
+      avoirMatchStatus,
       paymentStatus,
       agingDays,
       agingBucket,
@@ -233,7 +334,7 @@ export function buildFinancialAnalysis(
         totalEncaisse: 0,
         resteDu: 0,
         tauxRecouvrement: 0,
-        delaiMoyenPaiement: null,
+        ageMoyenEncours: null,
         partDuGlobal: 0,
         riskLevel: 'healthy',
         aging: emptyAging(),
@@ -276,12 +377,12 @@ export function buildFinancialAnalysis(
       : 0;
     entity.riskLevel = classifyDebtRisk(entity);
 
-    // Delay: average aging of unpaid invoices
+    // Âge moyen des encours (NOT a real payment delay)
     const unpaidInvs = entity.invoices.filter(i => i.resteDu > 0.01 && !i.isAvoir);
     if (unpaidInvs.length > 0) {
-      const avgDelay = Math.round(unpaidInvs.reduce((s, i) => s + i.agingDays, 0) / unpaidInvs.length);
-      entity.delaiMoyenPaiement = avgDelay;
-      allAgingDelays.push(avgDelay);
+      const avgAge = Math.round(unpaidInvs.reduce((s, i) => s + i.agingDays, 0) / unpaidInvs.length);
+      entity.ageMoyenEncours = avgAge;
+      allAgingDelays.push(avgAge);
     }
   }
 
@@ -321,7 +422,7 @@ export function buildFinancialAnalysis(
     totalFacture,
     tauxRecouvrement: totalFacture > 0 ? Math.round((totalEncaisse / totalFacture) * 1000) / 10 : 100,
     nbFacturesAvecSolde: allInvoices.filter(i => i.resteDu > 0.01).length,
-    delaiMoyenPaiement: allAgingDelays.length > 0
+    ageMoyenEncours: allAgingDelays.length > 0
       ? Math.round(allAgingDelays.reduce((a, b) => a + b, 0) / allAgingDelays.length)
       : null,
     montantRetard30: globalAging['31_60'] + globalAging['61_90'] + globalAging['90_plus'],
@@ -333,6 +434,10 @@ export function buildFinancialAnalysis(
 
   const alerts = buildFinancialAlerts(kpis, byApporteur, byClient, allInvoices, globalAging);
 
+  // ─── Fiability ─────────────────────────────────────────
+
+  const fiabilite = computeFiabiliteScore(quality);
+
   return {
     kpis,
     byApporteur,
@@ -341,6 +446,7 @@ export function buildFinancialAnalysis(
     aging: globalAging,
     alerts,
     dataQuality: quality,
+    fiabilite,
   };
 }
 
@@ -356,7 +462,6 @@ function buildFinancialAlerts(
   const alerts: FinancialAlert[] = [];
   let id = 0;
 
-  // Overdue buckets
   const inv30 = invoices.filter(i => i.resteDu > 0.01 && i.agingDays > 30 && !i.isAvoir);
   const inv60 = invoices.filter(i => i.resteDu > 0.01 && i.agingDays > 60 && !i.isAvoir);
   const inv90 = invoices.filter(i => i.resteDu > 0.01 && i.agingDays > 90 && !i.isAvoir);
@@ -392,7 +497,6 @@ function buildFinancialAlerts(
     });
   }
 
-  // Top 5 apporteurs à relancer
   const topDebtors = byApporteur.filter(e => e.resteDu > 0).slice(0, 5);
   if (topDebtors.length > 0) {
     const top3Names = topDebtors.slice(0, 3).map(e => e.entityLabel).join(', ');
@@ -408,7 +512,6 @@ function buildFinancialAlerts(
     });
   }
 
-  // Critical entities
   const criticalEntities = [...byApporteur, ...byClient].filter(e => e.riskLevel === 'critical');
   if (criticalEntities.length > 0) {
     alerts.push({

@@ -1,16 +1,19 @@
 /**
- * FinancialDetailsSheet — Premium drill-down drawer for entity detail
+ * FinancialDetailsDialog — Center modal drill-down for entity detail
+ * V2: Dialog instead of Sheet, prev/next navigation arrows, sorting
  */
 
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { useState, useMemo } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
 import { formatEuros, formatDate } from '@/apogee-connect/utils/formatters';
 import { cn } from '@/lib/utils';
 import type { FinancialEntityStats, FinancialInvoice, InvoicePaymentStatus } from '@/apogee-connect/types/financial';
-import { FileText, CalendarDays, Banknote, TrendingDown, Clock, Package } from 'lucide-react';
+import { FileText, CalendarDays, Banknote, TrendingDown, Clock, Package, ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react';
 
 const STATUS_STYLES: Record<InvoicePaymentStatus, { label: string; cls: string }> = {
   paid: { label: 'Payé', cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
@@ -22,10 +25,15 @@ const STATUS_STYLES: Record<InvoicePaymentStatus, { label: string; cls: string }
   critical: { label: 'Critique', cls: 'bg-destructive/15 text-destructive' },
 };
 
+type InvoiceSortField = 'agingDays' | 'montantTTC' | 'resteDu' | 'dateEmission';
+
 interface FinancialDetailsSheetProps {
   entity: FinancialEntityStats | null;
   open: boolean;
   onClose: () => void;
+  /** All entities in current list for prev/next navigation */
+  allEntities?: FinancialEntityStats[];
+  onNavigate?: (entity: FinancialEntityStats) => void;
 }
 
 function SummaryCard({ icon, label, value, cls }: { icon: React.ReactNode; label: string; value: string; cls?: string }) {
@@ -40,25 +48,103 @@ function SummaryCard({ icon, label, value, cls }: { icon: React.ReactNode; label
   );
 }
 
-export function FinancialDetailsSheet({ entity, open, onClose }: FinancialDetailsSheetProps) {
+export function FinancialDetailsSheet({ entity, open, onClose, allEntities, onNavigate }: FinancialDetailsSheetProps) {
+  const [invoiceSort, setInvoiceSort] = useState<{ field: InvoiceSortField; dir: 'asc' | 'desc' }>({ field: 'agingDays', dir: 'desc' });
+
+  // Navigation
+  const currentIndex = useMemo(() => {
+    if (!entity || !allEntities) return -1;
+    return allEntities.findIndex(e => e.entityId === entity.entityId && e.entityType === entity.entityType);
+  }, [entity, allEntities]);
+
+  const canGoPrev = currentIndex > 0;
+  const canGoNext = allEntities ? currentIndex < allEntities.length - 1 : false;
+
+  const invoices = useMemo(() => {
+    if (!entity) return [];
+    return [...entity.invoices].sort((a, b) => {
+      const aVal = invoiceSort.field === 'dateEmission'
+        ? (a.dateEmission?.getTime() ?? 0)
+        : a[invoiceSort.field];
+      const bVal = invoiceSort.field === 'dateEmission'
+        ? (b.dateEmission?.getTime() ?? 0)
+        : b[invoiceSort.field];
+      return invoiceSort.dir === 'asc' ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
+    });
+  }, [entity, invoiceSort]);
+
+  const toggleInvoiceSort = (field: InvoiceSortField) => {
+    setInvoiceSort(prev => ({
+      field,
+      dir: prev.field === field && prev.dir === 'desc' ? 'asc' : 'desc',
+    }));
+  };
+
+  const handlePrev = () => {
+    if (canGoPrev && allEntities && onNavigate) {
+      onNavigate(allEntities[currentIndex - 1]);
+    }
+  };
+  const handleNext = () => {
+    if (canGoNext && allEntities && onNavigate) {
+      onNavigate(allEntities[currentIndex + 1]);
+    }
+  };
+
+  const InvSortHeader = ({ field, children }: { field: InvoiceSortField; children: React.ReactNode }) => (
+    <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => toggleInvoiceSort(field)}>
+      {children}
+      <ArrowUpDown className={cn('h-2.5 w-2.5', invoiceSort.field === field ? 'text-foreground' : 'text-muted-foreground/40')} />
+    </button>
+  );
+
   if (!entity) return null;
 
-  const invoices = [...entity.invoices].sort((a, b) => b.agingDays - a.agingDays);
-
   return (
-    <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
-        <SheetHeader className="pb-4">
-          <SheetTitle className="flex items-center gap-2">
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="pb-2">
+          <div className="flex items-center justify-between gap-2">
+            {/* Prev/Next navigation */}
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                disabled={!canGoPrev}
+                onClick={handlePrev}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              {allEntities && currentIndex >= 0 && (
+                <span className="text-[11px] text-muted-foreground tabular-nums">
+                  {currentIndex + 1}/{allEntities.length}
+                </span>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                disabled={!canGoNext}
+                onClick={handleNext}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          <DialogTitle className="flex items-center gap-2 text-xl">
             <span className="truncate">{entity.entityLabel}</span>
             <Badge variant="secondary" className="text-[10px] shrink-0">
               {entity.entityType === 'apporteur' ? 'Apporteur' : 'Client'}
             </Badge>
-          </SheetTitle>
-        </SheetHeader>
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            Détail financier de {entity.entityLabel}
+          </DialogDescription>
+        </DialogHeader>
 
         {/* Summary Grid */}
-        <div className="grid grid-cols-2 gap-2 mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
           <SummaryCard icon={<Package className="h-4 w-4" />} label="Dossiers" value={String(entity.nbDossiers)} />
           <SummaryCard icon={<FileText className="h-4 w-4" />} label="Factures" value={String(entity.nbFactures)} />
           <SummaryCard icon={<Banknote className="h-4 w-4" />} label="Facturé TTC" value={formatEuros(entity.totalFactureTTC)} />
@@ -71,8 +157,8 @@ export function FinancialDetailsSheet({ entity, open, onClose }: FinancialDetail
           />
           <SummaryCard
             icon={<Clock className="h-4 w-4" />}
-            label="Délai moyen"
-            value={entity.delaiMoyenPaiement !== null ? `${entity.delaiMoyenPaiement} j` : 'N/A'}
+            label="Âge moyen encours"
+            value={entity.ageMoyenEncours !== null ? `${entity.ageMoyenEncours} j` : 'N/A'}
           />
         </div>
 
@@ -100,23 +186,24 @@ export function FinancialDetailsSheet({ entity, open, onClose }: FinancialDetail
 
         {/* Invoice List */}
         <p className="text-sm font-semibold mb-2">Détail des factures ({invoices.length})</p>
-        <div className="overflow-auto max-h-[400px] rounded-lg border">
+        <div className="overflow-auto max-h-[350px] rounded-lg border">
           <Table>
             <TableHeader className="sticky top-0 bg-card z-10">
               <TableRow>
                 <TableHead className="text-xs">Facture</TableHead>
                 <TableHead className="text-xs">Dossier</TableHead>
-                <TableHead className="text-xs">Date</TableHead>
-                <TableHead className="text-xs text-right">TTC</TableHead>
+                <TableHead className="text-xs"><InvSortHeader field="dateEmission">Date</InvSortHeader></TableHead>
+                <TableHead className="text-xs text-right"><InvSortHeader field="montantTTC">TTC</InvSortHeader></TableHead>
                 <TableHead className="text-xs text-right">Réglé</TableHead>
-                <TableHead className="text-xs text-right">Reste</TableHead>
+                <TableHead className="text-xs text-right"><InvSortHeader field="resteDu">Reste</InvSortHeader></TableHead>
+                <TableHead className="text-xs"><InvSortHeader field="agingDays">Âge</InvSortHeader></TableHead>
                 <TableHead className="text-xs">Statut</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {invoices.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">Aucune facture</TableCell>
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">Aucune facture</TableCell>
                 </TableRow>
               ) : (
                 invoices.map(inv => {
@@ -133,6 +220,7 @@ export function FinancialDetailsSheet({ entity, open, onClose }: FinancialDetail
                       )}>
                         {formatEuros(inv.resteDu)}
                       </TableCell>
+                      <TableCell className="text-xs tabular-nums text-muted-foreground">{inv.agingDays}j</TableCell>
                       <TableCell>
                         <Badge variant="secondary" className={cn('text-[9px] px-1 py-0', st.cls)}>
                           {st.label}
@@ -145,7 +233,7 @@ export function FinancialDetailsSheet({ entity, open, onClose }: FinancialDetail
             </TableBody>
           </Table>
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }

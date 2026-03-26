@@ -1,13 +1,14 @@
 /**
  * FinancialHeroCards — Strategic KPI cards for the Financier tab hero section
+ * V2: Clickable tiles, renamed "Âge moyen encours", fiabilité badge
  */
 
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatEuros } from '@/apogee-connect/utils/formatters';
-import { Banknote, Building2, Users, CheckCircle2, Percent, FileWarning, Clock, AlertTriangle } from 'lucide-react';
-import type { FinancialKPIs } from '@/apogee-connect/types/financial';
+import { Banknote, Building2, Users, CheckCircle2, Percent, FileWarning, Clock, AlertTriangle, ShieldCheck } from 'lucide-react';
+import type { FinancialKPIs, FiabiliteScore } from '@/apogee-connect/types/financial';
 import { cn } from '@/lib/utils';
 
 const itemVariants = {
@@ -23,12 +24,19 @@ interface HeroCardProps {
   accentClass?: string;
   badgeText?: string;
   badgeClass?: string;
+  onClick?: () => void;
 }
 
-function HeroCard({ icon, label, value, subtitle, accentClass = 'text-foreground', badgeText, badgeClass }: HeroCardProps) {
+function HeroCard({ icon, label, value, subtitle, accentClass = 'text-foreground', badgeText, badgeClass, onClick }: HeroCardProps) {
   return (
     <motion.div variants={itemVariants}>
-      <Card className="relative overflow-hidden p-4 h-full border-border/50 bg-gradient-to-br from-card to-muted/20 hover:shadow-md transition-shadow">
+      <Card
+        className={cn(
+          'relative overflow-hidden p-4 h-full border-border/50 bg-gradient-to-br from-card to-muted/20 transition-all',
+          onClick && 'cursor-pointer hover:shadow-md hover:border-primary/30 hover:scale-[1.01]'
+        )}
+        onClick={onClick}
+      >
         {badgeText && (
           <span className={cn('absolute top-2 right-2 text-[10px] font-semibold px-1.5 py-0.5 rounded-full', badgeClass)}>
             {badgeText}
@@ -68,12 +76,16 @@ function SkeletonCards() {
   );
 }
 
+export type KpiTileId = 'duTotal' | 'duClients' | 'duApporteurs' | 'encaisse' | 'tauxRecouvrement' | 'facturesAvecSolde' | 'ageMoyen' | 'retard30';
+
 interface FinancialHeroCardsProps {
   kpis: FinancialKPIs | null;
+  fiabilite?: FiabiliteScore | null;
   isLoading: boolean;
+  onTileClick?: (tileId: KpiTileId) => void;
 }
 
-export function FinancialHeroCards({ kpis, isLoading }: FinancialHeroCardsProps) {
+export function FinancialHeroCards({ kpis, fiabilite, isLoading, onTileClick }: FinancialHeroCardsProps) {
   if (isLoading || !kpis) return <SkeletonCards />;
 
   const riskColor = kpis.tauxRecouvrement >= 90
@@ -87,6 +99,15 @@ export function FinancialHeroCards({ kpis, isLoading }: FinancialHeroCardsProps)
     : kpis.montantRetard30 > 0
       ? { text: 'Surveillance', cls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' }
       : null;
+
+  const fiabBadge = fiabilite ? {
+    text: fiabilite.level === 'forte' ? '✓ Fiable' : fiabilite.level === 'moyenne' ? '~ Moyenne' : '⚠ Fragile',
+    cls: fiabilite.level === 'forte'
+      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+      : fiabilite.level === 'moyenne'
+        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+        : 'bg-destructive/15 text-destructive',
+  } : null;
 
   return (
     <motion.div
@@ -102,6 +123,7 @@ export function FinancialHeroCards({ kpis, isLoading }: FinancialHeroCardsProps)
         accentClass="text-destructive"
         badgeText={retardBadge?.text}
         badgeClass={retardBadge?.cls}
+        onClick={() => onTileClick?.('duTotal')}
       />
       <HeroCard
         icon={<Building2 className="h-5 w-5" />}
@@ -109,6 +131,7 @@ export function FinancialHeroCards({ kpis, isLoading }: FinancialHeroCardsProps)
         value={formatEuros(kpis.duClientsDirects)}
         subtitle={`${kpis.duTotal > 0 ? Math.round((kpis.duClientsDirects / kpis.duTotal) * 100) : 0}% du total`}
         accentClass="text-blue-600 dark:text-blue-400"
+        onClick={() => onTileClick?.('duClients')}
       />
       <HeroCard
         icon={<Users className="h-5 w-5" />}
@@ -116,35 +139,44 @@ export function FinancialHeroCards({ kpis, isLoading }: FinancialHeroCardsProps)
         value={formatEuros(kpis.duApporteurs)}
         subtitle={`${kpis.duTotal > 0 ? Math.round((kpis.duApporteurs / kpis.duTotal) * 100) : 0}% du total`}
         accentClass="text-violet-600 dark:text-violet-400"
+        onClick={() => onTileClick?.('duApporteurs')}
       />
       <HeroCard
         icon={<CheckCircle2 className="h-5 w-5" />}
         label="Montant encaissé"
         value={formatEuros(kpis.totalEncaisse)}
         accentClass="text-emerald-600 dark:text-emerald-400"
+        onClick={() => onTileClick?.('encaisse')}
       />
       <HeroCard
         icon={<Percent className="h-5 w-5" />}
         label="Taux de recouvrement"
         value={`${kpis.tauxRecouvrement}%`}
         accentClass={riskColor}
+        onClick={() => onTileClick?.('tauxRecouvrement')}
       />
       <HeroCard
         icon={<FileWarning className="h-5 w-5" />}
         label="Factures avec solde"
         value={String(kpis.nbFacturesAvecSolde)}
         subtitle="factures non soldées"
+        onClick={() => onTileClick?.('facturesAvecSolde')}
       />
       <HeroCard
         icon={<Clock className="h-5 w-5" />}
-        label="Délai moyen paiement"
-        value={kpis.delaiMoyenPaiement !== null ? `${kpis.delaiMoyenPaiement} j` : 'N/A'}
+        label="Âge moyen encours"
+        value={kpis.ageMoyenEncours !== null ? `${kpis.ageMoyenEncours} j` : 'N/A'}
+        subtitle="des factures non soldées"
+        onClick={() => onTileClick?.('ageMoyen')}
       />
       <HeroCard
         icon={<AlertTriangle className="h-5 w-5" />}
         label="Retard > 30 jours"
         value={formatEuros(kpis.montantRetard30)}
         accentClass={kpis.montantRetard30 > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}
+        badgeText={fiabBadge?.text}
+        badgeClass={fiabBadge?.cls}
+        onClick={() => onTileClick?.('retard30')}
       />
     </motion.div>
   );
