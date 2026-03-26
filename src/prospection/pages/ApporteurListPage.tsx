@@ -223,9 +223,10 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
   const stats = useMemo(() => {
     const maxDossiers = Math.max(1, ...apporteurs.map(a => a.kpis.dossiers_received));
     const maxCa = Math.max(1, ...apporteurs.map(a => a.kpis.ca_ht));
+    const maxFactures = Math.max(1, ...apporteurs.map(a => a.kpis.factures));
     const paniers = apporteurs.map(a => a.kpis.panier_moyen).filter((v): v is number => v != null).sort((a, b) => a - b);
     const medianPanier = paniers.length > 0 ? paniers[Math.floor(paniers.length / 2)] : null;
-    return { maxDossiers, maxCa, medianPanier };
+    return { maxDossiers, maxCa, maxFactures, medianPanier };
   }, [apporteurs]);
 
   // Filter + sort pipeline
@@ -536,7 +537,9 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
                           <TableCell className="text-right">
                             <PanierBadge value={a.kpis.panier_moyen} median={stats.medianPanier} />
                           </TableCell>
-                          <TableCell className="text-right font-medium">{a.kpis.factures}</TableCell>
+                          <TableCell className="text-right">
+                            <FacturesBadge value={a.kpis.factures} max={stats.maxFactures} />
+                          </TableCell>
                         </TableRow>
                       );
                     })
