@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertTriangle, Clock, FileX, CalendarX, ChevronRight, ExternalLink, Info } from 'lucide-react';
+import { AlertTriangle, Clock, FileX, CalendarX, ChevronRight, Info, FileDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/formatters';
 import {
@@ -10,7 +10,10 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { DocDownloadButton } from '@/apporteur/components/DocDownloadButton';
 import type { AlerteEntry } from '../../types/apporteur-stats-v2';
+import { format, parseISO } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 const ALERTE_CONFIG: Record<string, { icon: typeof AlertTriangle; label: string; description: string }> = {
   factures_retard_30j: {
@@ -71,6 +74,10 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
     ? (ALERTE_CONFIG[openAlerte.type] || { icon: AlertTriangle, label: openAlerte.type, description: '' })
     : null;
 
+  const hasDetails = openAlerte?.sample_details && openAlerte.sample_details.length > 0;
+  const isFactureAlert = openAlerte?.type === 'factures_retard_30j';
+  const isDevisAlert = openAlerte?.type === 'devis_non_valide_15j' || openAlerte?.type === 'devis_refuse';
+
   return (
     <>
       {/* Compact inline alerts */}
@@ -101,9 +108,9 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
         })}
       </div>
 
-      {/* Dialog détail alerte */}
+      {/* Dialog détail alerte — élargi avec tableau */}
       <Dialog open={!!openAlerte} onOpenChange={(open) => !open && setOpenAlerte(null)}>
-        <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden">
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden">
           {openAlerte && openConf && (
             <>
               {/* Header */}
@@ -134,34 +141,100 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
                 )}
               </DialogHeader>
 
-              {/* Content */}
+              {/* Content — table enrichie */}
               <div className="flex-1 min-h-0 px-6 py-4">
                 <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">
                   Dossiers concernés
                 </div>
-                <ScrollArea className="h-[min(400px,50vh)]">
-                  <div className="space-y-1 pr-2">
-                    {openAlerte.sample_refs.map((ref, idx) => {
-                      const label = openAlerte.sample_labels?.[idx];
-                      const displayName = label && label !== ref ? label : null;
+                <ScrollArea className="h-[min(450px,55vh)]">
+                  {hasDetails ? (
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b text-left text-xs text-muted-foreground uppercase tracking-wide">
+                          <th className="pb-2 pr-3 font-medium">Dossier</th>
+                          <th className="pb-2 pr-3 font-medium">Réf.</th>
+                          {(isFactureAlert || isDevisAlert) && (
+                            <th className="pb-2 pr-3 font-medium">Date</th>
+                          )}
+                          {(isFactureAlert || isDevisAlert) && (
+                            <th className="pb-2 pr-3 font-medium text-right">Montant HT</th>
+                          )}
+                          {isFactureAlert && (
+                            <th className="pb-2 pr-3 font-medium text-right">Retard</th>
+                          )}
+                          <th className="pb-2 font-medium text-center">PDF</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {openAlerte.sample_details!.map((detail, idx) => (
+                          <tr
+                            key={`${detail.ref}-${idx}`}
+                            className="border-b last:border-0 hover:bg-muted/30 transition-colors"
+                          >
+                            <td className="py-2.5 pr-3 font-medium text-foreground max-w-[180px] truncate">
+                              {detail.label || `Dossier ${detail.ref}`}
+                            </td>
+                            <td className="py-2.5 pr-3 text-muted-foreground font-mono text-xs">
+                              {detail.ref}
+                            </td>
+                            {(isFactureAlert || isDevisAlert) && (
+                              <td className="py-2.5 pr-3 text-muted-foreground text-xs whitespace-nowrap">
+                                {detail.date
+                                  ? format(parseISO(detail.date), 'dd MMM yyyy', { locale: fr })
+                                  : '—'}
+                              </td>
+                            )}
+                            {(isFactureAlert || isDevisAlert) && (
+                              <td className="py-2.5 pr-3 text-right tabular-nums">
+                                {detail.amount ? formatCurrency(detail.amount) : '—'}
+                              </td>
+                            )}
+                            {isFactureAlert && (
+                              <td className="py-2.5 pr-3 text-right text-xs">
+                                <span className={cn(
+                                  'font-medium',
+                                  (detail.days || 0) > 60 ? 'text-destructive' : 'text-[hsl(var(--ap-warning))]'
+                                )}>
+                                  {detail.days}j
+                                </span>
+                              </td>
+                            )}
+                            <td className="py-2.5 text-center">
+                              <DocDownloadButton
+                                dossierRef={detail.ref}
+                                docType={isFactureAlert ? 'factures' : 'devis'}
+                                className="mx-auto"
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : (
+                    /* Fallback pour alertes sans details enrichis */
+                    <div className="space-y-1 pr-2">
+                      {openAlerte.sample_refs.map((ref, idx) => {
+                        const label = openAlerte.sample_labels?.[idx];
+                        const displayName = label && label !== ref ? label : null;
 
-                      return (
-                        <div
-                          key={`${ref}-${idx}`}
-                          className="flex items-center justify-between py-2.5 px-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-                        >
-                          <div className="min-w-0 flex-1">
-                            <span className="text-sm font-medium truncate block text-foreground">
-                              {displayName || `Dossier ${ref}`}
-                            </span>
-                            <span className="text-xs text-muted-foreground font-mono">
-                              Réf. {ref}
-                            </span>
+                        return (
+                          <div
+                            key={`${ref}-${idx}`}
+                            className="flex items-center justify-between py-2.5 px-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <span className="text-sm font-medium truncate block text-foreground">
+                                {displayName || `Dossier ${ref}`}
+                              </span>
+                              <span className="text-xs text-muted-foreground font-mono">
+                                Réf. {ref}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </ScrollArea>
               </div>
             </>
