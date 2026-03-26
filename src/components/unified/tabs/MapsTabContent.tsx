@@ -39,21 +39,25 @@ const TOUR_ROUTE_LAYER = 'tour-route-layer-pilotage';
 const HEATMAP_SOURCE = 'heatmap-source-pilotage';
 const HEATMAP_LAYER = 'heatmap-layer-pilotage';
 const PROFIT_SOURCE = 'profit-source-pilotage';
-const PROFIT_LAYER_POS = 'profit-layer-pos-pilotage';
-const PROFIT_LAYER_NEG = 'profit-layer-neg-pilotage';
-const PROFIT_CIRCLES = 'profit-circles-pilotage';
+const PROFIT_FILL = 'profit-fill-pilotage';
+const PROFIT_LINE = 'profit-line-pilotage';
+const PROFIT_LABELS = 'profit-labels-pilotage';
 const ZONES_SOURCE = 'zones-source-pilotage';
 const ZONES_FILL = 'zones-fill-pilotage';
+const ZONES_LINE = 'zones-line-pilotage';
 const ZONES_LABELS = 'zones-labels-pilotage';
-const ZONES_CIRCLES = 'zones-circles-pilotage'; // kept for click handler compat
 const APPORTEURS_SOURCE = 'apporteurs-source-pilotage';
+const APPORTEURS_FILL = 'apporteurs-fill-pilotage';
+const APPORTEURS_LINE = 'apporteurs-line-pilotage';
+const APPORTEURS_LABELS = 'apporteurs-labels-pilotage';
 const DISPO_SOURCE = 'dispo-source-pilotage';
 const DISPO_CIRCLES = 'dispo-circles-pilotage';
-const APPORTEURS_CIRCLES = 'apporteurs-circles-pilotage';
 const SEASON_SOURCE = 'season-source-pilotage';
 const SEASON_CIRCLES = 'season-circles-pilotage';
 const SCORE_SOURCE = 'score-source-pilotage';
-const SCORE_CIRCLES = 'score-circles-pilotage';
+const SCORE_FILL = 'score-fill-pilotage';
+const SCORE_LINE = 'score-line-pilotage';
+const SCORE_LABELS = 'score-labels-pilotage';
 
 function enableStyleFallback(m: mapboxgl.Map) {
   let fallbackApplied = false;
@@ -267,9 +271,8 @@ export default function MapsTabContent() {
     refetchOnWindowFocus: false,
   });
 
-  // Profitability: fetch per-project margin data
-  interface ProfitPoint { lat: number; lng: number; ca: number; hours: number; margin: number; projectId: number }
-  const { data: profitPoints, isLoading: profitLoading } = useQuery({
+  // Profitability: choropleth GeoJSON (commune polygons with margin metrics)
+  const { data: profitGeoJson, isLoading: profitLoading } = useQuery({
     queryKey: ['rdv-profitability', agence],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -280,7 +283,7 @@ export default function MapsTabContent() {
       if (response.error) throw new Error(response.error.message);
       const result = response.data;
       if (!result.success) throw new Error(result.error || 'Erreur');
-      return result.data as ProfitPoint[];
+      return result.data as GeoJSON.FeatureCollection;
     },
     enabled: mapMode === 'profitability' && !!agence,
     staleTime: 30 * 60 * 1000,
@@ -288,27 +291,8 @@ export default function MapsTabContent() {
     refetchOnWindowFocus: false,
   });
 
-  // Zones blanches: aggregated KPIs per postal code
-  interface ZonePoint {
-    postalCode: string;
-    city: string;
-    lat: number;
-    lng: number;
-    nbProjects: number;
-    nbClients: number;
-    nbApporteurs: number;
-    nbUnivers: number;
-    univers: string[];
-    ca: number;
-    panierMoyen: number;
-    devisTotal: number;
-    devisSigned: number;
-    interventionCount: number;
-    activityLevel: 'none' | 'low' | 'medium' | 'high';
-    opportunityScore: number;
-    insights: string[];
-  }
-  const { data: zonesData, isLoading: zonesLoading } = useQuery({
+  // Zones blanches: choropleth GeoJSON (commune polygons with activity metrics)
+  const { data: zonesGeoJson, isLoading: zonesLoading } = useQuery({
     queryKey: ['rdv-zones', agence],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -319,7 +303,7 @@ export default function MapsTabContent() {
       if (response.error) throw new Error(response.error.message);
       const result = response.data;
       if (!result.success) throw new Error(result.error || 'Erreur');
-      return result.data as ZonePoint[];
+      return result.data as GeoJSON.FeatureCollection;
     },
     enabled: mapMode === 'zones' && !!agence,
     staleTime: 30 * 60 * 1000,
@@ -327,19 +311,8 @@ export default function MapsTabContent() {
     refetchOnWindowFocus: false,
   });
 
-  // Apporteurs: origin breakdown per postal code
-  interface ApporteurBreakdown { type: string; count: number; ca: number; color: string; share: number; nbApporteurs: number; }
-  interface ApporteurZonePoint {
-    postalCode: string; city: string; lat: number; lng: number;
-    totalProjects: number; totalCA: number; panierMoyen: number;
-    devisTotal: number; devisSigned: number; transformRate: number; interventionCount: number;
-    dominantOrigin: string; dominantColor: string;
-    breakdown: ApporteurBreakdown[];
-    top1Share: number; top3Share: number; diversificationIndex: number;
-    topApporteurs: { name: string; count: number; ca: number }[];
-    insights: string[];
-  }
-  const { data: apporteursData, isLoading: apporteursLoading } = useQuery({
+  // Apporteurs: choropleth GeoJSON (commune polygons with origin breakdown)
+  const { data: apporteursGeoJson, isLoading: apporteursLoading } = useQuery({
     queryKey: ['rdv-apporteurs', agence],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -350,7 +323,7 @@ export default function MapsTabContent() {
       if (response.error) throw new Error(response.error.message);
       const result = response.data;
       if (!result.success) throw new Error(result.error || 'Erreur');
-      return result.data as ApporteurZonePoint[];
+      return result.data as GeoJSON.FeatureCollection;
     },
     enabled: mapMode === 'apporteurs' && !!agence,
     staleTime: 30 * 60 * 1000,
