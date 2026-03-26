@@ -21,7 +21,7 @@ import {
 } from '@/services/mirrorDataSource';
 import { readMirrorData } from '@/services/mirrorReadAdapter';
 import { mapMirrorRecords, runSilentComparison, isMirrorUsableForModule } from '@/services/mirrorValidation';
-import { logMirrorDecision, recordMetric } from '@/services/mirrorPilotActivation';
+import { logMirrorDecision, recordMetric, maybePersistSnapshot } from '@/services/mirrorPilotActivation';
 
 // ============================================================
 // AGENCY ID RESOLUTION HELPER
@@ -123,6 +123,8 @@ async function withMirrorResolution(
     logSourceResolution(moduleKey, agencyId, resolved, mappedData.length);
     recordMetric(moduleKey, resolved, mappedData.length);
     logMirrorDecision(moduleKey, agencyId, resolved, mappedData.length, quality);
+    // Periodic snapshot persistence (non-blocking)
+    if (agencyId) maybePersistSnapshot(moduleKey, agencyId).catch(() => {});
     return mappedData;
   } catch (err) {
     // If mirror read fails, fallback to live

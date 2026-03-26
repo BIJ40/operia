@@ -6941,6 +6941,63 @@ export type Database = {
           },
         ]
       }
+      mirror_pilot_snapshots: {
+        Row: {
+          agency_id: string
+          comparisons_failed: number
+          comparisons_passed: number
+          comparisons_total: number
+          created_at: string
+          fallback_reasons: Json | null
+          fallback_to_live: number
+          id: string
+          last_freshness_minutes: number | null
+          last_mirror_count: number | null
+          live_reads: number
+          mirror_reads: number
+          module_key: string
+          total_items: number
+          verdict: string | null
+          verdict_reasons: string[] | null
+        }
+        Insert: {
+          agency_id: string
+          comparisons_failed?: number
+          comparisons_passed?: number
+          comparisons_total?: number
+          created_at?: string
+          fallback_reasons?: Json | null
+          fallback_to_live?: number
+          id?: string
+          last_freshness_minutes?: number | null
+          last_mirror_count?: number | null
+          live_reads?: number
+          mirror_reads?: number
+          module_key: string
+          total_items?: number
+          verdict?: string | null
+          verdict_reasons?: string[] | null
+        }
+        Update: {
+          agency_id?: string
+          comparisons_failed?: number
+          comparisons_passed?: number
+          comparisons_total?: number
+          created_at?: string
+          fallback_reasons?: Json | null
+          fallback_to_live?: number
+          id?: string
+          last_freshness_minutes?: number | null
+          last_mirror_count?: number | null
+          live_reads?: number
+          mirror_reads?: number
+          module_key?: string
+          total_items?: number
+          verdict?: string | null
+          verdict_reasons?: string[] | null
+        }
+        Relationships: []
+      }
       module_registry: {
         Row: {
           is_deployed: boolean
@@ -12493,6 +12550,7 @@ export type Database = {
         Returns: number
       }
       purge_old_mirror_decisions: { Args: never; Returns: undefined }
+      purge_old_pilot_snapshots: { Args: never; Returns: undefined }
       purge_old_ticket_history: {
         Args: { p_retention_months?: number }
         Returns: number
