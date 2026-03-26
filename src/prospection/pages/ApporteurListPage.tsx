@@ -242,6 +242,14 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
         return t >= 60;
       });
     }
+    if (filterPanier !== 'all') {
+      list = list.filter(a => {
+        const p = a.kpis.panier_moyen;
+        if (p == null) return filterPanier === 'below';
+        if (filterPanier === 'below') return stats.medianPanier != null && p < stats.medianPanier;
+        return stats.medianPanier != null && p >= stats.medianPanier;
+      });
+    }
 
     // Sort
     const getValue = (a: ApporteurListItem): number | string => {
