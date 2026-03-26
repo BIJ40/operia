@@ -1324,7 +1324,7 @@ export default function MapsTabContent() {
               <PieChart className="h-4 w-4 text-primary" />
               <span>Rentabilité par zone — historique complet (CA – coûts estimés à 35 €/h)</span>
               <span className="ml-auto">
-                {profitLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${profitPoints?.length || 0} dossiers`}
+                {profitLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${profitGeoJson?.features?.length || 0} communes`}
               </span>
             </div>
             <div className="flex items-center gap-4 text-xs">
