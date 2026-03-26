@@ -1,32 +1,60 @@
 import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { AlertTriangle, Clock, FileX, CalendarX, ChevronRight, ExternalLink } from 'lucide-react';
+import { AlertTriangle, Clock, FileX, CalendarX, ChevronRight, ExternalLink, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/formatters';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { AlerteEntry } from '../../types/apporteur-stats-v2';
 
-const ALERTE_CONFIG: Record<string, { icon: typeof AlertTriangle; label: string }> = {
-  factures_retard_30j: { icon: Clock, label: 'Factures en retard +30j' },
-  devis_non_valide_15j: { icon: FileX, label: 'Devis non validés +15j' },
-  dossier_sans_rdv: { icon: CalendarX, label: 'Dossiers sans RDV' },
-  dossier_sans_action_7j: { icon: Clock, label: 'Dossiers inactifs +7j' },
-  rdv_annule: { icon: CalendarX, label: 'RDV annulés' },
-  devis_refuse: { icon: FileX, label: 'Devis refusés' },
+const ALERTE_CONFIG: Record<string, { icon: typeof AlertTriangle; label: string; description: string }> = {
+  factures_retard_30j: {
+    icon: Clock,
+    label: 'Factures en retard +30j',
+    description: 'Ces factures ont été émises il y a plus de 30 jours et n\'ont pas encore été réglées.',
+  },
+  devis_non_valide_15j: {
+    icon: FileX,
+    label: 'Devis non validés +15j',
+    description: 'Ces devis ont été envoyés il y a plus de 15 jours et sont toujours en attente de validation.',
+  },
+  dossier_sans_rdv: {
+    icon: CalendarX,
+    label: 'Dossiers sans RDV',
+    description: 'Ces dossiers n\'ont pas encore de rendez-vous planifié.',
+  },
+  dossier_sans_action_7j: {
+    icon: Clock,
+    label: 'Dossiers inactifs +7j',
+    description: 'Aucune activité n\'a été enregistrée sur ces dossiers depuis plus de 7 jours.',
+  },
+  rdv_annule: {
+    icon: CalendarX,
+    label: 'RDV annulés',
+    description: 'Des rendez-vous ont été annulés sur ces dossiers.',
+  },
+  devis_refuse: {
+    icon: FileX,
+    label: 'Devis refusés',
+    description: 'Des devis ont été refusés par le client sur ces dossiers.',
+  },
 };
 
 const SEVERITY_BADGE: Record<string, string> = {
-  high: 'bg-[hsl(var(--ap-warning-light))] text-[hsl(var(--ap-warning))]',
-  medium: 'bg-[hsl(var(--ap-warning-light))] text-[hsl(var(--ap-warning))]',
-  low: 'bg-muted text-muted-foreground',
+  high: 'bg-destructive/10 text-destructive border-destructive/20',
+  medium: 'bg-[hsl(var(--ap-warning-light))] text-[hsl(var(--ap-warning))] border-[hsl(var(--ap-warning))]/20',
+  low: 'bg-muted text-muted-foreground border-border',
+};
+
+const SEVERITY_LABEL: Record<string, string> = {
+  high: 'Critique',
+  medium: 'Attention',
+  low: 'Info',
 };
 
 interface AlertesBannerProps {
@@ -34,30 +62,21 @@ interface AlertesBannerProps {
 }
 
 export function AlertesBanner({ alertes }: AlertesBannerProps) {
-  const [, setSearchParams] = useSearchParams();
   const [openAlerte, setOpenAlerte] = useState<AlerteEntry | null>(null);
-  
+
   const important = alertes.filter(a => a.severity === 'high' || a.severity === 'medium');
   if (important.length === 0) return null;
 
-  const handleViewInDossiers = (refs: string[]) => {
-    setSearchParams(prev => {
-      const newParams = new URLSearchParams(prev);
-      newParams.set('tab', 'dossiers');
-      newParams.set('alerteRefs', refs.join(','));
-      return newParams;
-    });
-    setOpenAlerte(null);
-  };
-
-  const openConf = openAlerte ? (ALERTE_CONFIG[openAlerte.type] || { icon: AlertTriangle, label: openAlerte.type }) : null;
+  const openConf = openAlerte
+    ? (ALERTE_CONFIG[openAlerte.type] || { icon: AlertTriangle, label: openAlerte.type, description: '' })
+    : null;
 
   return (
     <>
-      {/* Compact inline alerts — half-line style, no yellow background */}
+      {/* Compact inline alerts */}
       <div className="flex flex-wrap gap-2">
         {important.map((alerte) => {
-          const conf = ALERTE_CONFIG[alerte.type] || { icon: AlertTriangle, label: alerte.type };
+          const conf = ALERTE_CONFIG[alerte.type] || { icon: AlertTriangle, label: alerte.type, description: '' };
           const Icon = conf.icon;
 
           return (
@@ -82,70 +101,63 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
         })}
       </div>
 
-      {/* Sheet détail alerte */}
-      <Sheet open={!!openAlerte} onOpenChange={(open) => !open && setOpenAlerte(null)}>
-        <SheetContent className="w-full sm:max-w-md">
+      {/* Dialog détail alerte */}
+      <Dialog open={!!openAlerte} onOpenChange={(open) => !open && setOpenAlerte(null)}>
+        <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden">
           {openAlerte && openConf && (
             <>
-              <SheetHeader className="pb-4">
-                <SheetTitle className="flex items-center gap-2">
-                  <openConf.icon className="w-5 h-5 text-muted-foreground" />
+              {/* Header */}
+              <DialogHeader className="px-6 pt-6 pb-4 border-b bg-muted/30">
+                <DialogTitle className="flex items-center gap-2.5 text-base">
+                  <div className="p-1.5 rounded-md bg-background border">
+                    <openConf.icon className="w-4 h-4 text-muted-foreground" />
+                  </div>
                   {openConf.label}
-                </SheetTitle>
-                <div className="flex items-center gap-2 mt-2">
-                  <Badge className={cn('text-xs', SEVERITY_BADGE[openAlerte.severity])}>
-                    {openAlerte.severity === 'high' ? 'Critique' : openAlerte.severity === 'medium' ? 'Attention' : 'Info'}
+                </DialogTitle>
+                <div className="flex items-center gap-2 mt-3">
+                  <Badge
+                    variant="outline"
+                    className={cn('text-xs', SEVERITY_BADGE[openAlerte.severity])}
+                  >
+                    {SEVERITY_LABEL[openAlerte.severity] || openAlerte.severity}
                   </Badge>
                   <span className="text-sm text-muted-foreground">
-                    {openAlerte.count} dossier(s)
+                    {openAlerte.count} dossier{openAlerte.count !== 1 ? 's' : ''}
                     {openAlerte.amount ? ` · ${formatCurrency(openAlerte.amount)}` : ''}
                   </span>
                 </div>
-              </SheetHeader>
+                {openConf.description && (
+                  <p className="text-xs text-muted-foreground mt-2 flex items-start gap-1.5">
+                    <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                    {openConf.description}
+                  </p>
+                )}
+              </DialogHeader>
 
-              <div className="space-y-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => handleViewInDossiers(openAlerte.sample_refs)}
-                >
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Filtrer dans l'onglet Dossiers
-                </Button>
-
-                <div className="text-sm font-medium text-muted-foreground">
-                  Dossiers concernés ({openAlerte.sample_refs.length})
+              {/* Content */}
+              <div className="flex-1 min-h-0 px-6 py-4">
+                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">
+                  Dossiers concernés
                 </div>
-                <ScrollArea className="h-[calc(100vh-280px)]">
-                  <div className="space-y-1.5 pr-4">
+                <ScrollArea className="h-[min(400px,50vh)]">
+                  <div className="space-y-1 pr-2">
                     {openAlerte.sample_refs.map((ref, idx) => {
                       const label = openAlerte.sample_labels?.[idx];
                       const displayName = label && label !== ref ? label : null;
-                      
+
                       return (
                         <div
                           key={`${ref}-${idx}`}
-                          className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
-                          onClick={() => {
-                            setSearchParams(prev => {
-                              const newParams = new URLSearchParams(prev);
-                              newParams.set('tab', 'dossiers');
-                              newParams.set('alerteRefs', ref);
-                              return newParams;
-                            });
-                            setOpenAlerte(null);
-                          }}
+                          className="flex items-center justify-between py-2.5 px-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
                         >
                           <div className="min-w-0 flex-1">
-                            <span className="text-sm font-medium truncate block">
+                            <span className="text-sm font-medium truncate block text-foreground">
                               {displayName || `Dossier ${ref}`}
                             </span>
-                            {displayName && (
-                              <span className="text-xs text-muted-foreground font-mono">{ref}</span>
-                            )}
+                            <span className="text-xs text-muted-foreground font-mono">
+                              Réf. {ref}
+                            </span>
                           </div>
-                          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0 ml-2" />
                         </div>
                       );
                     })}
@@ -154,8 +166,8 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
               </div>
             </>
           )}
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
