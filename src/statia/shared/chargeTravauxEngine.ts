@@ -622,18 +622,29 @@ export function computeChargeTravauxAvenirParUnivers(
     if (normalizedUniverses.length === 1 && normalizedUniverses[0] === 'Non classé') dataQualityFlags.push('missing_univers');
     if (ageDays === null) dataQualityFlags.push('missing_created_at');
 
-    // Check for planned date
+    // Check for planned date + future planned date
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
     let hasPlannedDate = false;
+    let hasFuturePlannedDate = false;
     for (const itv of intervs) {
       const d = itv?.dateReelle ?? itv?.date;
-      if (d) { hasPlannedDate = true; break; }
+      if (d) {
+        hasPlannedDate = true;
+        if (String(d).slice(0, 10) >= todayStr) hasFuturePlannedDate = true;
+      }
       const visites = Array.isArray(itv?.visites) ? itv.visites : (Array.isArray(itv?.data?.visites) ? itv.data.visites : []);
       for (const v of visites) {
-        if (v?.dateReelle ?? v?.date) { hasPlannedDate = true; break; }
+        const vd = v?.dateReelle ?? v?.date;
+        if (vd) {
+          hasPlannedDate = true;
+          if (String(vd).slice(0, 10) >= todayStr) hasFuturePlannedDate = true;
+        }
       }
-      if (hasPlannedDate) break;
+      if (hasFuturePlannedDate) break;
     }
     if (!hasPlannedDate) dataQualityFlags.push('missing_planned_date');
+    if (hasPlannedDate && !hasFuturePlannedDate) dataQualityFlags.push('planned_date_past');
 
     // technicianIds — comprehensive extraction (aligned with caParTechnicienCore)
     const techIdSet = new Set<string>();
