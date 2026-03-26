@@ -1165,6 +1165,14 @@ body[data-read-only] [draggable="true"] {
   cursor: default !important;
 }
 
+/* Links and buttons inside prose content should remain clickable (navigation, not mutation) */
+body[data-read-only] .prose a,
+body[data-read-only] .prose button:not([type="submit"]) {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  opacity: 1 !important;
+}
+
 
 /* ============================================
    THEME APPORTEUR (depan40) — Scoped
