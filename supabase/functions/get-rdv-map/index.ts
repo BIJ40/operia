@@ -313,8 +313,8 @@ Deno.serve(async (req) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         API_KEY: apiKey,
-        from: date,
-        to: date,
+        from: effectiveFrom,
+        to: effectiveTo,
       }),
     });
 
@@ -328,22 +328,24 @@ Deno.serve(async (req) => {
 
     const interventionsAll = await interventionsResponse.json();
 
+    // In heatmap mode, no date filtering needed (we want all data)
     const interventions = Array.isArray(interventionsAll)
-      ? interventionsAll.filter((it: any) => {
-          const rawDate = typeof it?.date === 'string' ? it.date : '';
-          if (rawDate.startsWith(date)) return true;
-
-          const visites = it?.data?.visites;
-          if (Array.isArray(visites)) {
-            return visites.some((v: any) => typeof v?.date === 'string' && v.date.startsWith(date));
-          }
-
-          return false;
-        })
+      ? (isHeatmap
+        ? interventionsAll
+        : interventionsAll.filter((it: any) => {
+            const rawDate = typeof it?.date === 'string' ? it.date : '';
+            if (rawDate.startsWith(date!)) return true;
+            const visites = it?.data?.visites;
+            if (Array.isArray(visites)) {
+              return visites.some((v: any) => typeof v?.date === 'string' && v.date.startsWith(date!));
+            }
+            return false;
+          })
+      )
       : [];
 
     console.log(
-      `[GET-RDV-MAP] Got ${interventions.length}/${Array.isArray(interventionsAll) ? interventionsAll.length : 0} interventions for ${targetAgency} on ${date}`
+      `[GET-RDV-MAP] Got ${interventions.length}/${Array.isArray(interventionsAll) ? interventionsAll.length : 0} interventions for ${targetAgency} ${isHeatmap ? `(heatmap ${effectiveFrom}→${effectiveTo})` : `on ${date}`}`
     );
 
     // 7. Fetch users pour les couleurs
