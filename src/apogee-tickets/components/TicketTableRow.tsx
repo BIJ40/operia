@@ -193,7 +193,7 @@ export function TicketTableRow({
             >
               <SelectTrigger 
                 ref={statusSelectRef}
-                className="h-7 text-xs w-full max-w-[110px] rounded-full border-muted"
+                className="h-7 text-xs w-full rounded-full border-muted"
                 onClick={(e) => e.stopPropagation()}
               >
                 <SelectValue />
