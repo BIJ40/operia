@@ -244,7 +244,7 @@ export function FinancialChartsSection({ analysis, isLoading }: FinancialChartsS
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2 pt-4 px-4">
-            <CardTitle className="text-sm font-semibold">Aging Balance</CardTitle>
+            <CardTitle className="text-sm font-semibold">Ancienneté des encours</CardTitle>
           </CardHeader>
           <CardContent className="px-2 pb-3">
             <AgingBalanceChart aging={analysis.aging} />
