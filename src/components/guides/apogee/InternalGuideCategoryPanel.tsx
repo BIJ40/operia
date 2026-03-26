@@ -320,6 +320,24 @@ export function InternalGuideCategoryPanel({ slug }: InternalGuideCategoryPanelP
     setEditingSection(null);
   }, [editingSection, updateBlock, toast]);
 
+  const handleRichContentClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement;
+    const imageTrigger = target.closest('[data-image-modal], [data-image-button], [data-src]') as HTMLElement | null;
+
+    if (!imageTrigger) return;
+
+    const url = imageTrigger.getAttribute('data-image-modal')
+      || imageTrigger.getAttribute('data-src')
+      || imageTrigger.closest('[data-image-button]')?.getAttribute('data-src')
+      || imageTrigger.querySelector('[data-image-modal]')?.getAttribute('data-image-modal');
+
+    if (!url) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    window.dispatchEvent(new CustomEvent('open-image-modal', { detail: { url } }));
+  }, []);
+
   if (loading) {
     return (
       <div className="p-6">
@@ -340,24 +358,6 @@ export function InternalGuideCategoryPanel({ slug }: InternalGuideCategoryPanelP
       </div>
     );
   }
-
-  const handleRichContentClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
-    const target = event.target as HTMLElement;
-    const imageTrigger = target.closest('[data-image-modal], [data-image-button], [data-src]') as HTMLElement | null;
-
-    if (!imageTrigger) return;
-
-    const url = imageTrigger.getAttribute('data-image-modal')
-      || imageTrigger.getAttribute('data-src')
-      || imageTrigger.closest('[data-image-button]')?.getAttribute('data-src')
-      || imageTrigger.querySelector('[data-image-modal]')?.getAttribute('data-image-modal');
-
-    if (!url) return;
-
-    event.preventDefault();
-    event.stopPropagation();
-    window.dispatchEvent(new CustomEvent('open-image-modal', { detail: { url } }));
-  }, []);
 
   const renderSectionContent = (section: Block) => {
     const isTips = section.contentType === 'tips';
