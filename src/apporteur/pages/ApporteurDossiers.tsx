@@ -299,13 +299,12 @@ export default function ApporteurDossiers() {
                   </TableHead>
                   <TableHead className="hidden lg:table-cell">1er RDV</TableHead>
                   <TableHead className="hidden lg:table-cell">Devis HT</TableHead>
-                  <TableHead className="hidden md:table-cell">Facturé HT</TableHead>
                   <TableHead 
-                    className="text-right cursor-pointer hover:bg-muted/50"
+                    className="hidden md:table-cell cursor-pointer hover:bg-muted/50"
                     onClick={() => handleSort('factureHT')}
                   >
-                    <div className="flex items-center justify-end">
-                      Montant <SortIcon field="factureHT" />
+                    <div className="flex items-center">
+                      Facturé HT <SortIcon field="factureHT" />
                     </div>
                   </TableHead>
                   <TableHead 
@@ -321,7 +320,7 @@ export default function ApporteurDossiers() {
               <TableBody>
                 {filteredDossiers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       Aucun dossier trouvé
                     </TableCell>
                   </TableRow>
@@ -368,9 +367,6 @@ export default function ApporteurDossiers() {
                           ) : (
                             <span className="text-sm text-muted-foreground">-</span>
                           )}
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {d.factureHT > 0 ? formatCurrency(d.factureHT) : '-'}
                         </TableCell>
                         <TableCell className="text-right font-medium text-foreground">
                           {d.restedu > 0 ? formatCurrency(d.restedu) : d.factureHT > 0 ? '✓' : '-'}
