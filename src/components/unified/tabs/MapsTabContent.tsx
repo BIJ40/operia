@@ -83,7 +83,7 @@ const MAP_SUB_TABS: FolderTabConfig[] = [
   { id: 'rentabilite', label: 'Rentabilité', icon: PieChart, accent: 'green' },
   { id: 'zones', label: 'Zones blanches', icon: Crosshair, accent: 'orange' },
   { id: 'apporteurs', label: 'Apporteurs', icon: Network, accent: 'purple' },
-  { id: 'disponibilite', label: 'Disponibilité', icon: Radio, accent: 'cyan' },
+  { id: 'disponibilite', label: 'Disponibilité', icon: Radio, accent: 'teal' },
 ];
 
 const TAB_ACCENT_COLORS: Record<string, string> = {
@@ -92,7 +92,7 @@ const TAB_ACCENT_COLORS: Record<string, string> = {
   green: 'hsl(var(--warm-green))',
   orange: 'hsl(var(--warm-orange))',
   purple: 'hsl(var(--warm-purple, 270 60% 55%))',
-  cyan: 'hsl(190 80% 45%)',
+  teal: 'hsl(var(--warm-teal, 190 60% 45%))',
 };
 
 // ── Disponibilité types ──
