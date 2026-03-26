@@ -779,7 +779,142 @@ export default function MapsTabContent() {
     };
   }, [zonesData, mapReady, mapMode]);
 
-  // Draw/remove route layer
+  // Apporteurs layer — circles colored by dominant origin type
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !mapReady) return;
+
+    if (m.getLayer(APPORTEURS_CIRCLES)) m.removeLayer(APPORTEURS_CIRCLES);
+    if (m.getSource(APPORTEURS_SOURCE)) m.removeSource(APPORTEURS_SOURCE);
+
+    if (mapMode !== 'apporteurs' || !apporteursData?.length) return;
+
+    const geojson: GeoJSON.FeatureCollection = {
+      type: 'FeatureCollection',
+      features: apporteursData.map(z => ({
+        type: 'Feature' as const,
+        properties: {
+          postalCode: z.postalCode,
+          city: z.city,
+          totalProjects: z.totalProjects,
+          totalCA: z.totalCA,
+          panierMoyen: z.panierMoyen,
+          dominantOrigin: z.dominantOrigin,
+          dominantColor: z.dominantColor,
+          top1Share: z.top1Share,
+          diversificationIndex: z.diversificationIndex,
+          transformRate: z.transformRate,
+          breakdown: JSON.stringify(z.breakdown),
+          topApporteurs: JSON.stringify(z.topApporteurs),
+          insights: JSON.stringify(z.insights),
+          devisTotal: z.devisTotal,
+          devisSigned: z.devisSigned,
+          interventionCount: z.interventionCount,
+        },
+        geometry: { type: 'Point' as const, coordinates: [z.lng, z.lat] },
+      })),
+    };
+
+    m.addSource(APPORTEURS_SOURCE, { type: 'geojson', data: geojson });
+
+    m.addLayer({
+      id: APPORTEURS_CIRCLES,
+      type: 'circle',
+      source: APPORTEURS_SOURCE,
+      paint: {
+        'circle-radius': [
+          'interpolate', ['linear'], ['zoom'],
+          4, ['interpolate', ['linear'], ['get', 'totalProjects'], 1, 8, 10, 14, 30, 20, 80, 28],
+          10, ['interpolate', ['linear'], ['get', 'totalProjects'], 1, 14, 10, 22, 30, 32, 80, 44],
+          14, ['interpolate', ['linear'], ['get', 'totalProjects'], 1, 20, 10, 30, 30, 42, 80, 56],
+        ],
+        'circle-color': ['get', 'dominantColor'],
+        'circle-opacity': 0.75,
+        'circle-stroke-color': [
+          'interpolate', ['linear'], ['get', 'top1Share'],
+          0, '#9ca3af',
+          50, '#f59e0b',
+          70, '#ef4444',
+          100, '#991b1b',
+        ],
+        'circle-stroke-width': [
+          'interpolate', ['linear'], ['get', 'top1Share'],
+          0, 1,
+          50, 2,
+          70, 3,
+          100, 4,
+        ],
+        'circle-stroke-opacity': 0.9,
+      },
+    });
+
+    // Fit bounds
+    if (!hasFittedBoundsRef.current && apporteursData.length > 0) {
+      let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+      apporteursData.forEach(p => { minLng = Math.min(minLng, p.lng); maxLng = Math.max(maxLng, p.lng); minLat = Math.min(minLat, p.lat); maxLat = Math.max(maxLat, p.lat); });
+      const pad = 0.1;
+      const bounds: [[number, number], [number, number]] = [[minLng - pad, minLat - pad], [maxLng + pad, maxLat + pad]];
+      const container = m.getContainer();
+      const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
+      const padY = Math.max(56, Math.round((container.clientHeight || 600) * 0.12));
+      m.fitBounds(bounds, { padding: { top: padY, bottom: padY + 60, left: padX, right: padX }, maxZoom: 12, duration: 1000 });
+      hasFittedBoundsRef.current = true;
+    }
+
+    // Popup on click
+    const handleClick = (e: mapboxgl.MapMouseEvent) => {
+      const features = m.queryRenderedFeatures(e.point, { layers: [APPORTEURS_CIRCLES] });
+      if (!features?.length) return;
+      const p = features[0].properties;
+      if (!p) return;
+      const coords = (features[0].geometry as any).coordinates as [number, number];
+
+      const breakdown: ApporteurBreakdown[] = (() => { try { return JSON.parse(p.breakdown); } catch { return []; } })();
+      const topAps: { name: string; count: number; ca: number }[] = (() => { try { return JSON.parse(p.topApporteurs); } catch { return []; } })();
+      const insights: string[] = (() => { try { return JSON.parse(p.insights); } catch { return []; } })();
+
+      const depBg = p.top1Share >= 70 ? '#dc2626' : p.top1Share >= 50 ? '#f59e0b' : '#22c55e';
+      const depLabel = p.top1Share >= 70 ? 'Dépendance critique' : p.top1Share >= 50 ? 'Concentration modérée' : 'Bien diversifié';
+
+      const breakdownHtml = breakdown.map(b =>
+        `<div style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:50%;background:${b.color};flex-shrink:0;"></span><span>${b.type}</span><b>${b.share}%</b> <span style="color:#6b7280;">(${b.count} dossiers)</span></div>`
+      ).join('');
+
+      const topApsHtml = topAps.length > 0 ? `<div style="margin-top:6px;border-top:1px solid #e5e7eb;padding-top:6px;"><div style="font-weight:600;margin-bottom:4px;">Top apporteurs</div>${topAps.map(a =>
+        `<div style="display:flex;justify-content:space-between;"><span>${a.name}</span><span><b>${a.count}</b> dossiers · ${a.ca.toLocaleString('fr-FR')} €</span></div>`
+      ).join('')}</div>` : '';
+
+      new mapboxgl.Popup({ closeButton: true, maxWidth: '380px' })
+        .setLngLat(coords)
+        .setHTML(`
+          <div style="font-family: system-ui; font-size: 12px; line-height: 1.6;">
+            <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px;">${p.postalCode} ${p.city}</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <span style="background:${p.dominantColor};color:white;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:600;">${p.dominantOrigin}</span>
+              <span style="background:${depBg};color:white;border-radius:10px;padding:1px 8px;font-size:11px;">${depLabel} (${p.top1Share}%)</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-bottom:8px;">
+              <div>📁 <b>${p.totalProjects}</b> dossiers</div>
+              <div>💰 CA: <b>${Number(p.totalCA).toLocaleString('fr-FR')} €</b></div>
+              <div>🧺 Panier: <b>${Number(p.panierMoyen).toLocaleString('fr-FR')} €</b></div>
+              <div>📝 Transfo: <b>${p.transformRate}%</b></div>
+            </div>
+            <div style="margin-bottom:6px;"><b>Répartition origines</b></div>
+            ${breakdownHtml}
+            ${topApsHtml}
+            ${insights.length > 0 ? `<div style="background:#fef3c7;border-radius:6px;padding:6px 8px;margin-top:6px;">${insights.map(i => `<div style="color:#92400e;font-size:11px;">💡 ${i}</div>`).join('')}</div>` : ''}
+          </div>
+        `)
+        .addTo(m);
+    };
+
+    m.on('click', APPORTEURS_CIRCLES, handleClick);
+    m.on('mouseenter', APPORTEURS_CIRCLES, () => { m.getCanvas().style.cursor = 'pointer'; });
+    m.on('mouseleave', APPORTEURS_CIRCLES, () => { m.getCanvas().style.cursor = ''; });
+
+    return () => { m.off('click', APPORTEURS_CIRCLES, handleClick); };
+  }, [apporteursData, mapReady, mapMode]);
+
   useEffect(() => {
     const m = map.current;
     if (!m || !mapReady) return;
