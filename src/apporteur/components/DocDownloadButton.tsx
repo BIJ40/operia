@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { FileDown, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+// Button not needed — using native button for minimal footprint
 import { getProjectDetail } from '@/services/projectDetailLoader';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
