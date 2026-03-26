@@ -104,12 +104,14 @@ Deno.serve(async (req) => {
     }
 
     // Determine internal status from Bridge callback params
-    const isSuccess = bridgeSuccess === true || bridgeSuccess === "true";
+    // IMPORTANT: never assume success — only explicit success=true counts
+    const isExplicitSuccess = bridgeSuccess === true || bridgeSuccess === "true";
+    const isExplicitFailure = bridgeSuccess === false || bridgeSuccess === "false";
     let newInternalStatus: string;
     let errorCode: string | null = null;
     let errorMessage: string | null = null;
 
-    if (isSuccess) {
+    if (isExplicitSuccess) {
       newInternalStatus = "active";
     } else if (bridgeStep === "consent_declined" || bridgeContext === "consent_declined") {
       newInternalStatus = "error";
@@ -119,18 +121,20 @@ Deno.serve(async (req) => {
       newInternalStatus = "error";
       errorCode = "SCA_FAILED";
       errorMessage = "Authentification forte (SCA) échouée";
-    } else if (bridgeSuccess === false || bridgeSuccess === "false") {
+    } else if (isExplicitFailure) {
       newInternalStatus = "error";
       errorCode = "BRIDGE_CONNECT_FAILED";
       errorMessage = `Échec Connect Bridge (step=${bridgeStep ?? "unknown"})`;
     } else {
-      // Unknown state — keep pending
-      newInternalStatus = conn.status === "connecting" ? "pending" : conn.status as string;
+      // Ambiguous: success param absent — do NOT assume success, keep pending for verification
+      newInternalStatus = "pending";
+      errorCode = "CALLBACK_AMBIGUOUS";
+      errorMessage = "Retour Bridge sans confirmation explicite de succès";
     }
 
     const updatePayload: Record<string, unknown> = {
       status: newInternalStatus,
-      provider_status: bridgeStep ?? (isSuccess ? "success" : "failed"),
+      provider_status: bridgeStep ?? (isExplicitSuccess ? "success" : isExplicitFailure ? "failed" : "ambiguous"),
       updated_at: new Date().toISOString(),
     };
 
@@ -171,7 +175,7 @@ Deno.serve(async (req) => {
         module: "tresorerie",
         entity_type: "bank_connection",
         entity_id: connectionId,
-        action: `bank_connection.bridge_callback.${isSuccess ? "success" : "failed"}`,
+        action: `bank_connection.bridge_callback.${isExplicitSuccess ? "success" : isExplicitFailure ? "failed" : "ambiguous"}`,
         metadata: {
           success: bridgeSuccess,
           item_id: bridgeItemId,
@@ -187,7 +191,7 @@ Deno.serve(async (req) => {
       connectionId,
       status: newInternalStatus,
       itemId: bridgeItemId ?? null,
-      needsSync: isSuccess,
+      needsSync: isExplicitSuccess,
     });
 
   } catch (err) {

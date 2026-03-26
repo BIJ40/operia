@@ -359,9 +359,14 @@ async function handleCreate(
   }
 
   // 4. Create Bridge Connect session via v3
-  const callbackUrlValue = typeof bodyCallbackUrl === "string" && bodyCallbackUrl
+  const baseCallbackUrl = typeof bodyCallbackUrl === "string" && bodyCallbackUrl
     ? bodyCallbackUrl
     : Deno.env.get("BRIDGE_CALLBACK_URL") ?? "https://operiav2.lovable.app/?tab=pilotage.tresorerie&bridge_callback=1";
+
+  // Inject connectionId into callback URL for reliable correlation on return
+  const callbackUrlObj = new URL(baseCallbackUrl);
+  callbackUrlObj.searchParams.set("bridge_connection_id", connection.id);
+  const callbackUrlValue = callbackUrlObj.toString();
 
   const userEmail = ctx.email ?? `operia_${ctx.agencyId}_${ctx.userId}@operia.app`;
 
