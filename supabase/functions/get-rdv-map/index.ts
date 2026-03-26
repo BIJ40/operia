@@ -278,8 +278,8 @@ Deno.serve(async (req) => {
         apiFetch('apiGetClients'),
       ];
       
-      // For profitability/zones/apporteurs, also fetch factures
-      if (isProfitability || isZones || isApporteurs) {
+      // For profitability/zones/apporteurs/saisonnalite, also fetch factures
+      if (isProfitability || isZones || isApporteurs || isSaisonnalite) {
         fetchPromises.push(apiFetch('apiGetFactures'));
       }
       // For zones/apporteurs, also fetch devis
@@ -291,7 +291,7 @@ Deno.serve(async (req) => {
       const interventions = results[0] || [];
       const projects = results[1] || [];
       const clients = results[2] || [];
-      const factures = (isProfitability || isZones || isApporteurs) ? (results[3] || []) : [];
+      const factures = (isProfitability || isZones || isApporteurs || isSaisonnalite) ? (results[3] || []) : [];
       const devis = (isZones || isApporteurs) ? (results[4] || []) : [];
 
       console.log(`[GET-RDV-MAP] Fetched ${Array.isArray(interventions) ? interventions.length : 0} interventions, ${projects.length} projects, ${clients.length} clients in ${Date.now() - t0}ms`);
