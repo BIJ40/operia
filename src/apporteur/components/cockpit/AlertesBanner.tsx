@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Clock, FileX, CalendarX, ChevronRight, Info, ExternalLink } from 'lucide-react';
+import { AlertTriangle, Clock, FileX, CalendarX, ChevronRight, Info, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/formatters';
 import {
@@ -8,10 +8,14 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { DocDownloadButton } from '@/apporteur/components/DocDownloadButton';
+import { useApporteurDossierActions } from '@/apporteur/hooks/useApporteurDossierActions';
 import type { AlerteEntry } from '../../types/apporteur-stats-v2';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -61,6 +65,15 @@ const SEVERITY_LABEL: Record<string, string> = {
   low: 'Info',
 };
 
+type DevisAction = 'valider' | 'refuser';
+
+interface DevisActionState {
+  action: DevisAction;
+  detail: { ref: string; label?: string; amount?: number };
+  comment: string;
+  sending: boolean;
+}
+
 interface AlertesBannerProps {
   alertes: AlerteEntry[];
 }
@@ -68,6 +81,8 @@ interface AlertesBannerProps {
 export function AlertesBanner({ alertes }: AlertesBannerProps) {
   const navigate = useNavigate();
   const [openAlerte, setOpenAlerte] = useState<AlerteEntry | null>(null);
+  const [devisAction, setDevisAction] = useState<DevisActionState | null>(null);
+  const dossierAction = useApporteurDossierActions();
 
   const important = alertes.filter(a => a.severity === 'high' || a.severity === 'medium');
   if (important.length === 0) return null;
@@ -79,6 +94,33 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
   const hasDetails = openAlerte?.sample_details && openAlerte.sample_details.length > 0;
   const isFactureAlert = openAlerte?.type === 'factures_retard_30j';
   const isDevisAlert = openAlerte?.type === 'devis_non_valide_15j' || openAlerte?.type === 'devis_refuse';
+  const isDevisNonValide = openAlerte?.type === 'devis_non_valide_15j';
+
+  const handleDevisAction = (action: DevisAction, detail: { ref: string; label?: string; amount?: number }) => {
+    setDevisAction({ action, detail, comment: '', sending: false });
+  };
+
+  const handleConfirmDevisAction = () => {
+    if (!devisAction) return;
+    setDevisAction(prev => prev ? { ...prev, sending: true } : null);
+
+    dossierAction.mutate(
+      {
+        action: devisAction.action === 'valider' ? 'valider_devis' : 'refuser_devis',
+        dossierRefs: [devisAction.detail.ref],
+        message: devisAction.comment || undefined,
+      },
+      {
+        onSuccess: () => setDevisAction(null),
+        onSettled: () => setDevisAction(prev => prev ? { ...prev, sending: false } : null),
+      }
+    );
+  };
+
+  const navigateToDossier = (ref: string) => {
+    setOpenAlerte(null);
+    navigate(`/apporteur/dashboard?tab=dossiers&search=${ref}`);
+  };
 
   return (
     <>
@@ -110,7 +152,7 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
         })}
       </div>
 
-      {/* Dialog détail alerte — élargi avec tableau */}
+      {/* Dialog détail alerte */}
       <Dialog open={!!openAlerte} onOpenChange={(open) => !open && setOpenAlerte(null)}>
         <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden">
           {openAlerte && openConf && (
@@ -165,6 +207,12 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
                             <th className="pb-2 pr-3 font-medium text-right">Retard</th>
                           )}
                           <th className="pb-2 font-medium text-center">PDF</th>
+                          {isDevisNonValide && (
+                            <>
+                              <th className="pb-2 font-medium text-center">Valider</th>
+                              <th className="pb-2 font-medium text-center">Refuser</th>
+                            </>
+                          )}
                         </tr>
                       </thead>
                       <tbody>
@@ -172,10 +220,7 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
                           <tr
                             key={`${detail.ref}-${idx}`}
                             className="border-b last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
-                            onClick={() => {
-                              setOpenAlerte(null);
-                              navigate(`/apporteur/dashboard?tab=dossiers&search=${detail.ref}`);
-                            }}
+                            onClick={() => navigateToDossier(detail.ref)}
                           >
                             <td className="py-2.5 pr-3 font-medium text-foreground max-w-[180px] truncate">
                               <span className="hover:underline">{detail.label || `Dossier ${detail.ref}`}</span>
@@ -205,13 +250,35 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
                                 </span>
                               </td>
                             )}
-                            <td className="py-2.5 text-center">
+                            <td className="py-2.5 text-center" onClick={(e) => e.stopPropagation()}>
                               <DocDownloadButton
                                 dossierRef={detail.ref}
                                 docType={isFactureAlert ? 'factures' : 'devis'}
                                 className="mx-auto"
                               />
                             </td>
+                            {isDevisNonValide && (
+                              <>
+                                <td className="py-2.5 text-center" onClick={(e) => e.stopPropagation()}>
+                                  <button
+                                    className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-600 transition-colors border border-emerald-200"
+                                    title="Valider ce devis"
+                                    onClick={() => handleDevisAction('valider', detail)}
+                                  >
+                                    <Check className="w-4 h-4" />
+                                  </button>
+                                </td>
+                                <td className="py-2.5 text-center" onClick={(e) => e.stopPropagation()}>
+                                  <button
+                                    className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-50 hover:bg-red-100 text-destructive transition-colors border border-red-200"
+                                    title="Refuser ce devis"
+                                    onClick={() => handleDevisAction('refuser', detail)}
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </td>
+                              </>
+                            )}
                           </tr>
                         ))}
                       </tbody>
@@ -226,10 +293,11 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
                         return (
                           <div
                             key={`${ref}-${idx}`}
-                            className="flex items-center justify-between py-2.5 px-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                            className="flex items-center justify-between py-2.5 px-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
+                            onClick={() => navigateToDossier(ref)}
                           >
                             <div className="min-w-0 flex-1">
-                              <span className="text-sm font-medium truncate block text-foreground">
+                              <span className="text-sm font-medium truncate block text-foreground hover:underline">
                                 {displayName || `Dossier ${ref}`}
                               </span>
                               <span className="text-xs text-muted-foreground font-mono">
@@ -243,6 +311,84 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
                   )}
                 </ScrollArea>
               </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog confirmation action devis */}
+      <Dialog open={!!devisAction} onOpenChange={(open) => !open && setDevisAction(null)}>
+        <DialogContent className="sm:max-w-md">
+          {devisAction && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  {devisAction.action === 'valider' ? (
+                    <div className="p-1.5 rounded-full bg-emerald-50 border border-emerald-200">
+                      <Check className="w-4 h-4 text-emerald-600" />
+                    </div>
+                  ) : (
+                    <div className="p-1.5 rounded-full bg-red-50 border border-red-200">
+                      <X className="w-4 h-4 text-destructive" />
+                    </div>
+                  )}
+                  {devisAction.action === 'valider' ? 'Valider le devis ?' : 'Refuser le devis ?'}
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4 py-2">
+                <div className="p-3 rounded-lg bg-muted/50 border text-sm">
+                  <p className="font-medium text-foreground">
+                    {devisAction.detail.label || `Dossier ${devisAction.detail.ref}`}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Réf. {devisAction.detail.ref}
+                    {devisAction.detail.amount ? ` · ${formatCurrency(Math.round(devisAction.detail.amount))}` : ''}
+                  </p>
+                </div>
+
+                <p className="text-sm text-muted-foreground">
+                  L'agence sera notifiée de votre décision par e-mail.
+                </p>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">
+                    Commentaire {devisAction.action === 'refuser' ? '(motif du refus)' : '(optionnel)'}
+                  </label>
+                  <Textarea
+                    value={devisAction.comment}
+                    onChange={(e) => setDevisAction(prev => prev ? { ...prev, comment: e.target.value } : null)}
+                    placeholder={
+                      devisAction.action === 'valider'
+                        ? 'Ajoutez un commentaire si nécessaire…'
+                        : 'Précisez la raison du refus…'
+                    }
+                    rows={3}
+                    className="resize-none"
+                  />
+                </div>
+              </div>
+
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button
+                  variant="outline"
+                  onClick={() => setDevisAction(null)}
+                  disabled={devisAction.sending}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  variant={devisAction.action === 'valider' ? 'default' : 'destructive'}
+                  onClick={handleConfirmDevisAction}
+                  disabled={devisAction.sending}
+                >
+                  {devisAction.sending
+                    ? 'Envoi en cours…'
+                    : devisAction.action === 'valider'
+                      ? 'Confirmer la validation'
+                      : 'Confirmer le refus'}
+                </Button>
+              </DialogFooter>
             </>
           )}
         </DialogContent>
