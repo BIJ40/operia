@@ -87,6 +87,9 @@ export default function DossiersTabContent() {
   const [factureRegleeRef, setFactureRegleeRef] = useState<string | null>(null);
   const [inactifRef, setInactifRef] = useState<string | null>(null);
 
+  const dossiers = data?.data?.dossiers || [];
+  const totals = data?.data?.totals || { count: 0, resteDu: 0 };
+
   useEffect(() => {
     const urlStatus = searchParams.get('status');
     if (urlStatus) {
@@ -96,7 +99,7 @@ export default function DossiersTabContent() {
     if (urlAlerteRefs) {
       const refs = urlAlerteRefs.split(',').filter(Boolean);
       setAlerteRefs(refs);
-      setStatusFilter('all'); // Reset status filter when alerte filter is active
+      setStatusFilter('all');
       setSearchParams(prev => {
         const newParams = new URLSearchParams(prev);
         newParams.delete('alerteRefs');
@@ -120,9 +123,6 @@ export default function DossiersTabContent() {
       }, { replace: true });
     }
   }, [searchParams, dossiers, selectedDossier, setSearchParams]);
-
-  const dossiers = data?.data?.dossiers || [];
-  const totals = data?.data?.totals || { count: 0, resteDu: 0 };
 
   // Friendly label mapping for apporteur view
   const getApporteurLabel = (d: DossierRow): string => {
