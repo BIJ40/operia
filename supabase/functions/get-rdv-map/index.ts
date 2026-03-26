@@ -37,7 +37,7 @@ async function geocodeAddress(address: string, postalCode: string, city: string)
     const params = [`q=${encodeURIComponent(textQuery)}`, 'limit=1'];
     if (postalCode?.length >= 2) params.push(`postcode=${encodeURIComponent(postalCode)}`);
     
-    const response = await fetch(`https://api-adresse.data.gouv.fr/search/?${params.join('&')}`);
+    const response = await fetch(`https://api-adresse.data.gouv.fr/search/?${params.join('&')}`, { signal: AbortSignal.timeout(10000) });
     if (!response.ok) {
       console.warn(`[GET-RDV-MAP] BAN API error: ${response.status} for ${textQuery}`);
       geoCache.set(cacheKey, null);
