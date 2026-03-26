@@ -9,6 +9,7 @@
 import { useMemo, useCallback } from 'react';
 import { useUserModules, useToggleModule } from '@/hooks/useUserModules';
 import { N2_ASSIGNABLE_MODULES, getPresetForRole } from '@/config/roleAgenceModulePresets';
+import { useAgencyHasApporteurs } from '@/hooks/useAgencyHasApporteurs';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
