@@ -59,10 +59,18 @@ function classifyPaymentStatus(resteDu: number, agingDays: number, isAvoir: bool
 
 function classifyDebtRisk(entity: { resteDu: number; aging: AgingBreakdown; tauxRecouvrement: number }): DebtRiskLevel {
   if (entity.resteDu <= 0.01) return 'healthy';
-  const criticalPortion = entity.aging['90_plus'] / Math.max(entity.resteDu, 1);
-  if (criticalPortion > 0.5 || entity.tauxRecouvrement < 50) return 'critical';
-  if (entity.aging['61_90'] + entity.aging['90_plus'] > entity.resteDu * 0.3 || entity.tauxRecouvrement < 70) return 'warning';
-  if (entity.resteDu > 0) return 'watch';
+  // Classify based on where the majority of debt sits (aging buckets)
+  const total = Math.max(entity.resteDu, 0.01);
+  const pct90 = entity.aging['90_plus'] / total;
+  const pct60 = (entity.aging['61_90'] + entity.aging['90_plus']) / total;
+  const pct30 = (entity.aging['31_60'] + entity.aging['61_90'] + entity.aging['90_plus']) / total;
+  // + de 90 jours dominant → critique
+  if (entity.aging['90_plus'] > 0 && pct90 >= 0.2) return 'critical';
+  // 60–90 jours dominant → alerte (warning)
+  if (entity.aging['61_90'] > 0 && pct60 >= 0.2) return 'warning';
+  // 30–60 jours dominant → surveillance (watch)
+  if (entity.aging['31_60'] > 0 && pct30 >= 0.2) return 'watch';
+  // Tout est < 30 jours → sain
   return 'healthy';
 }
 
