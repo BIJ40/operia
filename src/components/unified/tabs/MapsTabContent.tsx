@@ -39,21 +39,25 @@ const TOUR_ROUTE_LAYER = 'tour-route-layer-pilotage';
 const HEATMAP_SOURCE = 'heatmap-source-pilotage';
 const HEATMAP_LAYER = 'heatmap-layer-pilotage';
 const PROFIT_SOURCE = 'profit-source-pilotage';
-const PROFIT_LAYER_POS = 'profit-layer-pos-pilotage';
-const PROFIT_LAYER_NEG = 'profit-layer-neg-pilotage';
-const PROFIT_CIRCLES = 'profit-circles-pilotage';
+const PROFIT_FILL = 'profit-fill-pilotage';
+const PROFIT_LINE = 'profit-line-pilotage';
+const PROFIT_LABELS = 'profit-labels-pilotage';
 const ZONES_SOURCE = 'zones-source-pilotage';
 const ZONES_FILL = 'zones-fill-pilotage';
+const ZONES_LINE = 'zones-line-pilotage';
 const ZONES_LABELS = 'zones-labels-pilotage';
-const ZONES_CIRCLES = 'zones-circles-pilotage'; // kept for click handler compat
 const APPORTEURS_SOURCE = 'apporteurs-source-pilotage';
+const APPORTEURS_FILL = 'apporteurs-fill-pilotage';
+const APPORTEURS_LINE = 'apporteurs-line-pilotage';
+const APPORTEURS_LABELS = 'apporteurs-labels-pilotage';
 const DISPO_SOURCE = 'dispo-source-pilotage';
 const DISPO_CIRCLES = 'dispo-circles-pilotage';
-const APPORTEURS_CIRCLES = 'apporteurs-circles-pilotage';
 const SEASON_SOURCE = 'season-source-pilotage';
 const SEASON_CIRCLES = 'season-circles-pilotage';
 const SCORE_SOURCE = 'score-source-pilotage';
-const SCORE_CIRCLES = 'score-circles-pilotage';
+const SCORE_FILL = 'score-fill-pilotage';
+const SCORE_LINE = 'score-line-pilotage';
+const SCORE_LABELS = 'score-labels-pilotage';
 
 function enableStyleFallback(m: mapboxgl.Map) {
   let fallbackApplied = false;
@@ -267,9 +271,8 @@ export default function MapsTabContent() {
     refetchOnWindowFocus: false,
   });
 
-  // Profitability: fetch per-project margin data
-  interface ProfitPoint { lat: number; lng: number; ca: number; hours: number; margin: number; projectId: number }
-  const { data: profitPoints, isLoading: profitLoading } = useQuery({
+  // Profitability: choropleth GeoJSON (commune polygons with margin metrics)
+  const { data: profitGeoJson, isLoading: profitLoading } = useQuery({
     queryKey: ['rdv-profitability', agence],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -280,7 +283,7 @@ export default function MapsTabContent() {
       if (response.error) throw new Error(response.error.message);
       const result = response.data;
       if (!result.success) throw new Error(result.error || 'Erreur');
-      return result.data as ProfitPoint[];
+      return result.data as GeoJSON.FeatureCollection;
     },
     enabled: mapMode === 'profitability' && !!agence,
     staleTime: 30 * 60 * 1000,
@@ -288,27 +291,8 @@ export default function MapsTabContent() {
     refetchOnWindowFocus: false,
   });
 
-  // Zones blanches: aggregated KPIs per postal code
-  interface ZonePoint {
-    postalCode: string;
-    city: string;
-    lat: number;
-    lng: number;
-    nbProjects: number;
-    nbClients: number;
-    nbApporteurs: number;
-    nbUnivers: number;
-    univers: string[];
-    ca: number;
-    panierMoyen: number;
-    devisTotal: number;
-    devisSigned: number;
-    interventionCount: number;
-    activityLevel: 'none' | 'low' | 'medium' | 'high';
-    opportunityScore: number;
-    insights: string[];
-  }
-  const { data: zonesData, isLoading: zonesLoading } = useQuery({
+  // Zones blanches: choropleth GeoJSON (commune polygons with activity metrics)
+  const { data: zonesGeoJson, isLoading: zonesLoading } = useQuery({
     queryKey: ['rdv-zones', agence],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -319,7 +303,7 @@ export default function MapsTabContent() {
       if (response.error) throw new Error(response.error.message);
       const result = response.data;
       if (!result.success) throw new Error(result.error || 'Erreur');
-      return result.data as ZonePoint[];
+      return result.data as GeoJSON.FeatureCollection;
     },
     enabled: mapMode === 'zones' && !!agence,
     staleTime: 30 * 60 * 1000,
@@ -327,19 +311,8 @@ export default function MapsTabContent() {
     refetchOnWindowFocus: false,
   });
 
-  // Apporteurs: origin breakdown per postal code
-  interface ApporteurBreakdown { type: string; count: number; ca: number; color: string; share: number; nbApporteurs: number; }
-  interface ApporteurZonePoint {
-    postalCode: string; city: string; lat: number; lng: number;
-    totalProjects: number; totalCA: number; panierMoyen: number;
-    devisTotal: number; devisSigned: number; transformRate: number; interventionCount: number;
-    dominantOrigin: string; dominantColor: string;
-    breakdown: ApporteurBreakdown[];
-    top1Share: number; top3Share: number; diversificationIndex: number;
-    topApporteurs: { name: string; count: number; ca: number }[];
-    insights: string[];
-  }
-  const { data: apporteursData, isLoading: apporteursLoading } = useQuery({
+  // Apporteurs: choropleth GeoJSON (commune polygons with origin breakdown)
+  const { data: apporteursGeoJson, isLoading: apporteursLoading } = useQuery({
     queryKey: ['rdv-apporteurs', agence],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -350,7 +323,7 @@ export default function MapsTabContent() {
       if (response.error) throw new Error(response.error.message);
       const result = response.data;
       if (!result.success) throw new Error(result.error || 'Erreur');
-      return result.data as ApporteurZonePoint[];
+      return result.data as GeoJSON.FeatureCollection;
     },
     enabled: mapMode === 'apporteurs' && !!agence,
     staleTime: 30 * 60 * 1000,
@@ -427,18 +400,7 @@ export default function MapsTabContent() {
     return () => clearInterval(interval);
   }, [seasonPlaying, seasonMonths.length]);
 
-  // Score Global: composite multi-criteria score per postal code
-  interface ScoreZone {
-    postalCode: string; city: string; lat: number; lng: number;
-    scoreGlobal: number; scoreCommercial: number; scoreEconomique: number;
-    scoreOperationnel: number; scoreQualite: number; scoreResilience: number;
-    scoreLabel: string; nbProjects: number; nbClients: number;
-    ca: number; margin: number; panierMoyen: number;
-    devisTotal: number; devisSigned: number; transfoRate: number; savRate: number;
-    mainStrength: string; mainStrengthScore: number;
-    mainWeakness: string; mainWeaknessScore: number;
-    recommendation: string;
-  }
+  // Score Global: choropleth GeoJSON (commune polygons with composite scores)
   interface ScoreInsight { pc: string; city: string; score?: number; margin?: number }
   interface ScoreMeta { totalZones: number; durationMs: number; insights: { topDevelop: ScoreInsight[]; topTension: ScoreInsight[]; topRentable: ScoreInsight[]; topRisk: ScoreInsight[] } }
   const [scoreSubView, setScoreSubView] = useState<'global' | 'commercial' | 'economique' | 'operationnel' | 'qualite' | 'resilience'>('global');
@@ -453,14 +415,14 @@ export default function MapsTabContent() {
       if (response.error) throw new Error(response.error.message);
       const result = response.data;
       if (!result.success) throw new Error(result.error || 'Erreur');
-      return { data: result.data as ScoreZone[], meta: result.meta as ScoreMeta };
+      return { data: result.data as GeoJSON.FeatureCollection, meta: result.meta as ScoreMeta };
     },
     enabled: mapMode === 'score_global' && !!agence,
     staleTime: 30 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
-  const scoreData = scoreRaw?.data;
+  const scoreGeoJson = scoreRaw?.data;
   const scoreMeta = scoreRaw?.meta;
 
   const rdvs = viewMode === 'day' ? dayRdvs : weekRdvs;
@@ -662,452 +624,191 @@ export default function MapsTabContent() {
     }
   }, [heatmapPoints, mapReady, mapMode]);
 
-  // Profitability layer — colored circles: green (profitable) → red (unprofitable)
+  // ── Helper: fit bounds to GeoJSON polygon features ──
+  const fitBoundsToGeoJson = useCallback((m: mapboxgl.Map, geojson: GeoJSON.FeatureCollection) => {
+    if (hasFittedBoundsRef.current || !geojson.features.length) return;
+    let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+    const processCoords = (coords: any) => {
+      if (typeof coords[0] === 'number') {
+        minLng = Math.min(minLng, coords[0]); maxLng = Math.max(maxLng, coords[0]);
+        minLat = Math.min(minLat, coords[1]); maxLat = Math.max(maxLat, coords[1]);
+      } else { coords.forEach(processCoords); }
+    };
+    geojson.features.forEach(f => { if (f.geometry) processCoords((f.geometry as any).coordinates); });
+    if (minLng === Infinity) return;
+    const container = m.getContainer();
+    const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
+    const padY = Math.max(56, Math.round((container.clientHeight || 600) * 0.12));
+    m.fitBounds([[minLng - 0.05, minLat - 0.05], [maxLng + 0.05, maxLat + 0.05]], {
+      padding: { top: padY, bottom: padY + 60, left: padX, right: padX }, maxZoom: 12, duration: 1000,
+    });
+    hasFittedBoundsRef.current = true;
+  }, []);
+
+  // ── Helper: add choropleth layers (fill + line + labels) ──
+  const addChoroplethLayers = useCallback((
+    m: mapboxgl.Map, sourceId: string, fillId: string, lineId: string, labelId: string,
+    geojson: GeoJSON.FeatureCollection, colorExpr: any[], opacityVal = 0.7,
+  ) => {
+    m.addSource(sourceId, { type: 'geojson', data: geojson });
+    m.addLayer({
+      id: fillId, type: 'fill', source: sourceId,
+      paint: { 'fill-color': colorExpr, 'fill-opacity': opacityVal },
+    });
+    m.addLayer({
+      id: lineId, type: 'line', source: sourceId,
+      paint: { 'line-color': '#ffffff', 'line-width': 1, 'line-opacity': 0.8 },
+    });
+    m.addLayer({
+      id: labelId, type: 'symbol', source: sourceId,
+      layout: {
+        'text-field': ['get', 'nom'], 'text-size': ['interpolate', ['linear'], ['zoom'], 8, 9, 12, 12, 16, 14],
+        'text-allow-overlap': false, 'text-optional': true,
+      },
+      paint: { 'text-color': '#1f2937', 'text-halo-color': '#ffffff', 'text-halo-width': 1.5 },
+    });
+  }, []);
+
+  // ── Helper: clean layers ──
+  const cleanLayers = useCallback((m: mapboxgl.Map, layers: string[], source: string) => {
+    layers.forEach(l => { if (m.getLayer(l)) m.removeLayer(l); });
+    if (m.getSource(source)) m.removeSource(source);
+  }, []);
+
+  // Profitability choropleth layer — fill communes by margin
   useEffect(() => {
     const m = map.current;
     if (!m || !mapReady) return;
+    cleanLayers(m, [PROFIT_FILL, PROFIT_LINE, PROFIT_LABELS], PROFIT_SOURCE);
+    if (mapMode !== 'profitability' || !profitGeoJson?.features?.length) return;
 
-    // Clean previous profitability layers
-    [PROFIT_CIRCLES, PROFIT_LAYER_POS, PROFIT_LAYER_NEG].forEach(l => { if (m.getLayer(l)) m.removeLayer(l); });
-    if (m.getSource(PROFIT_SOURCE)) m.removeSource(PROFIT_SOURCE);
+    addChoroplethLayers(m, PROFIT_SOURCE, PROFIT_FILL, PROFIT_LINE, PROFIT_LABELS, profitGeoJson, [
+      'interpolate', ['linear'], ['get', 'marginNorm'],
+      -1, '#dc2626',   // Deep red
+      -0.3, '#ef4444',
+      0, '#fbbf24',    // Yellow — breakeven
+      0.3, '#22c55e',
+      1, '#15803d',    // Deep green
+    ]);
+    fitBoundsToGeoJson(m, profitGeoJson);
 
-    if (mapMode !== 'profitability' || !profitPoints?.length) return;
-
-    // Compute max absolute margin for normalization
-    const maxAbsMargin = Math.max(...profitPoints.map(p => Math.abs(p.margin)), 1);
-
-    const geojson: GeoJSON.FeatureCollection = {
-      type: 'FeatureCollection',
-      features: profitPoints.map(pt => ({
-        type: 'Feature' as const,
-        properties: {
-          margin: pt.margin,
-          ca: pt.ca,
-          hours: pt.hours,
-          // Normalized margin [-1, 1]
-          marginNorm: Math.max(-1, Math.min(1, pt.margin / maxAbsMargin)),
-        },
-        geometry: { type: 'Point' as const, coordinates: [pt.lng, pt.lat] },
-      })),
-    };
-
-    m.addSource(PROFIT_SOURCE, { type: 'geojson', data: geojson });
-
-    // Circle layer: color interpolated from red (negative margin) to green (positive margin)
-    m.addLayer({
-      id: PROFIT_CIRCLES,
-      type: 'circle',
-      source: PROFIT_SOURCE,
-      paint: {
-        'circle-radius': [
-          'interpolate', ['linear'], ['zoom'],
-          4, 6,
-          10, 12,
-          14, 18,
-          18, 24,
-        ],
-        'circle-color': [
-          'interpolate', ['linear'], ['get', 'marginNorm'],
-          -1, '#dc2626',   // Deep red — very unprofitable
-          -0.3, '#ef4444', // Red
-          0, '#fbbf24',    // Yellow — breakeven
-          0.3, '#22c55e',  // Green
-          1, '#15803d',    // Deep green — very profitable
-        ],
-        'circle-opacity': 0.75,
-        'circle-stroke-color': [
-          'interpolate', ['linear'], ['get', 'marginNorm'],
-          -1, '#991b1b',
-          0, '#a16207',
-          1, '#166534',
-        ],
-        'circle-stroke-width': 1.5,
-        'circle-stroke-opacity': 0.9,
-      },
-    });
-
-    // Fit bounds
-    if (!hasFittedBoundsRef.current && profitPoints.length > 0) {
-      let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
-      profitPoints.forEach(p => { minLng = Math.min(minLng, p.lng); maxLng = Math.max(maxLng, p.lng); minLat = Math.min(minLat, p.lat); maxLat = Math.max(maxLat, p.lat); });
-      const pad = 0.1;
-      const bounds: [[number, number], [number, number]] = [[minLng - pad, minLat - pad], [maxLng + pad, maxLat + pad]];
-      const container = m.getContainer();
-      const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
-      const padY = Math.max(56, Math.round((container.clientHeight || 600) * 0.12));
-      m.fitBounds(bounds, {
-        padding: { top: padY, bottom: padY + 60, left: padX, right: padX },
-        maxZoom: 12,
-        duration: 1000,
-      });
-      hasFittedBoundsRef.current = true;
-    }
-
-    // Popup on click
     const handleClick = (e: mapboxgl.MapMouseEvent) => {
-      const features = m.queryRenderedFeatures(e.point, { layers: [PROFIT_CIRCLES] });
+      const features = m.queryRenderedFeatures(e.point, { layers: [PROFIT_FILL] });
       if (!features?.length) return;
-      const props = features[0].properties;
-      if (!props) return;
-      const margin = props.margin as number;
-      const ca = props.ca as number;
-      const hours = props.hours as number;
-      const coords = (features[0].geometry as any).coordinates as [number, number];
-      
-      new mapboxgl.Popup({ closeButton: true, maxWidth: '260px' })
-        .setLngLat(coords)
+      const p = features[0].properties;
+      if (!p) return;
+      new mapboxgl.Popup({ closeButton: true, maxWidth: '300px' })
+        .setLngLat(e.lngLat)
         .setHTML(`
-          <div style="font-family: system-ui; font-size: 13px; line-height: 1.5;">
-            <div style="font-weight: 600; margin-bottom: 4px; color: ${margin >= 0 ? '#15803d' : '#dc2626'}">
-              Marge: ${margin >= 0 ? '+' : ''}${Math.round(margin).toLocaleString('fr-FR')} €
+          <div style="font-family:system-ui;font-size:13px;line-height:1.5;">
+            <div style="font-weight:700;font-size:14px;margin-bottom:4px;">${p.nom || ''} ${p.city || ''}</div>
+            <div style="font-weight:600;color:${(p.margin||0) >= 0 ? '#15803d' : '#dc2626'}">
+              Marge: ${(p.margin||0) >= 0 ? '+' : ''}${Math.round(p.margin||0).toLocaleString('fr-FR')} €
             </div>
-            <div>CA facturé: ${Math.round(ca).toLocaleString('fr-FR')} €</div>
-            <div>Heures estimées: ${hours.toFixed(1)} h</div>
-            <div>Coût estimé: ${Math.round(hours * 35).toLocaleString('fr-FR')} €</div>
+            <div>CA facturé: ${Math.round(p.ca||0).toLocaleString('fr-FR')} €</div>
+            <div>Heures: ${(p.hours||0).toFixed?.(1) || p.hours} h</div>
+            <div>Dossiers: ${p.nbProjects || 0}</div>
+            <div>Taux de marge: ${p.marginRate || 0}%</div>
           </div>
         `)
         .addTo(m);
     };
+    m.on('click', PROFIT_FILL, handleClick);
+    m.on('mouseenter', PROFIT_FILL, () => { m.getCanvas().style.cursor = 'pointer'; });
+    m.on('mouseleave', PROFIT_FILL, () => { m.getCanvas().style.cursor = ''; });
+    return () => { m.off('click', PROFIT_FILL, handleClick); };
+  }, [profitGeoJson, mapReady, mapMode, cleanLayers, addChoroplethLayers, fitBoundsToGeoJson]);
 
-    m.on('click', PROFIT_CIRCLES, handleClick);
-    m.on('mouseenter', PROFIT_CIRCLES, () => { m.getCanvas().style.cursor = 'pointer'; });
-    m.on('mouseleave', PROFIT_CIRCLES, () => { m.getCanvas().style.cursor = ''; });
-
-    return () => {
-      m.off('click', PROFIT_CIRCLES, handleClick);
-    };
-  }, [profitPoints, mapReady, mapMode]);
-
-  // Zones blanches layer — colored circles by activity level + opportunity score
+  // Zones blanches choropleth layer
   useEffect(() => {
     const m = map.current;
     if (!m || !mapReady) return;
+    cleanLayers(m, [ZONES_FILL, ZONES_LINE, ZONES_LABELS], ZONES_SOURCE);
+    if (mapMode !== 'zones' || !zonesGeoJson?.features?.length) return;
 
-    // Clean previous zones layers
-    [ZONES_FILL, ZONES_LABELS, ZONES_CIRCLES].forEach(l => { if (m.getLayer(l)) m.removeLayer(l); });
-    if (m.getSource(ZONES_SOURCE)) m.removeSource(ZONES_SOURCE);
+    addChoroplethLayers(m, ZONES_SOURCE, ZONES_FILL, ZONES_LINE, ZONES_LABELS, zonesGeoJson, [
+      'interpolate', ['linear'], ['get', 'activityIndex'],
+      0, '#d1d5db', 1, '#fbbf24', 2, '#22c55e', 3, '#1e40af',
+    ]);
+    fitBoundsToGeoJson(m, zonesGeoJson);
 
-    if (mapMode !== 'zones' || !zonesData?.length) return;
-
-    const geojson: GeoJSON.FeatureCollection = {
-      type: 'FeatureCollection',
-      features: zonesData.map(z => ({
-        type: 'Feature' as const,
-        properties: {
-          postalCode: z.postalCode,
-          city: z.city,
-          nbProjects: z.nbProjects,
-          nbClients: z.nbClients,
-          nbApporteurs: z.nbApporteurs,
-          nbUnivers: z.nbUnivers,
-          univers: JSON.stringify(z.univers),
-          ca: z.ca,
-          panierMoyen: z.panierMoyen,
-          devisTotal: z.devisTotal,
-          devisSigned: z.devisSigned,
-          interventionCount: z.interventionCount,
-          activityLevel: z.activityLevel,
-          opportunityScore: z.opportunityScore,
-          insights: JSON.stringify(z.insights),
-          activityIndex: z.activityLevel === 'none' ? 0 : z.activityLevel === 'low' ? 1 : z.activityLevel === 'medium' ? 2 : 3,
-          label: `${z.postalCode}`,
-        },
-        geometry: { type: 'Point' as const, coordinates: [z.lng, z.lat] },
-      })),
-    };
-
-    m.addSource(ZONES_SOURCE, { type: 'geojson', data: geojson });
-
-    // Layer 1: Large blurred fill — zone highlighting like a choropleth
-    m.addLayer({
-      id: ZONES_FILL,
-      type: 'circle',
-      source: ZONES_SOURCE,
-      paint: {
-        // Large radius to create a "zone fill" effect
-        'circle-radius': [
-          'interpolate', ['linear'], ['zoom'],
-          4, ['interpolate', ['linear'], ['get', 'nbProjects'], 0, 18, 5, 28, 20, 40, 50, 55],
-          8, ['interpolate', ['linear'], ['get', 'nbProjects'], 0, 30, 5, 50, 20, 70, 50, 90],
-          12, ['interpolate', ['linear'], ['get', 'nbProjects'], 0, 40, 5, 65, 20, 90, 50, 120],
-          16, ['interpolate', ['linear'], ['get', 'nbProjects'], 0, 55, 5, 80, 20, 110, 50, 150],
-        ],
-        // Color by activity level: grey → amber → green → blue
-        'circle-color': [
-          'interpolate', ['linear'], ['get', 'activityIndex'],
-          0, '#d1d5db',
-          1, '#fbbf24',
-          2, '#22c55e',
-          3, '#1e40af',
-        ],
-        // Heavy blur for fill-like rendering
-        'circle-blur': 0.7,
-        'circle-opacity': [
-          'interpolate', ['linear'], ['get', 'activityIndex'],
-          0, 0.25,
-          1, 0.35,
-          2, 0.45,
-          3, 0.55,
-        ],
-        'circle-stroke-width': 0,
-      },
-    });
-
-    // Layer 2: Small crisp dot at center for click target + label anchor
-    m.addLayer({
-      id: ZONES_CIRCLES,
-      type: 'circle',
-      source: ZONES_SOURCE,
-      paint: {
-        'circle-radius': [
-          'interpolate', ['linear'], ['zoom'],
-          4, 4, 8, 6, 12, 8, 16, 10,
-        ],
-        'circle-color': [
-          'interpolate', ['linear'], ['get', 'activityIndex'],
-          0, '#9ca3af',
-          1, '#d97706',
-          2, '#16a34a',
-          3, '#1e3a8a',
-        ],
-        'circle-opacity': 0.9,
-        'circle-stroke-color': '#ffffff',
-        'circle-stroke-width': [
-          'interpolate', ['linear'], ['get', 'opportunityScore'],
-          0, 1, 50, 1.5, 80, 2.5, 100, 3,
-        ],
-        'circle-stroke-opacity': 0.9,
-      },
-    });
-
-    // Layer 3: Labels with postal code + city
-    m.addLayer({
-      id: ZONES_LABELS,
-      type: 'symbol',
-      source: ZONES_SOURCE,
-      layout: {
-        'text-field': ['get', 'city'],
-        'text-size': ['interpolate', ['linear'], ['zoom'], 6, 9, 10, 11, 14, 13],
-        'text-offset': [0, 1.4],
-        'text-anchor': 'top',
-        'text-optional': true,
-        'text-allow-overlap': false,
-      },
-      paint: {
-        'text-color': '#374151',
-        'text-halo-color': '#ffffff',
-        'text-halo-width': 1.5,
-      },
-    });
-
-    // Fit bounds
-    if (!hasFittedBoundsRef.current && zonesData.length > 0) {
-      let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
-      zonesData.forEach(p => { minLng = Math.min(minLng, p.lng); maxLng = Math.max(maxLng, p.lng); minLat = Math.min(minLat, p.lat); maxLat = Math.max(maxLat, p.lat); });
-      const pad = 0.1;
-      const bounds: [[number, number], [number, number]] = [[minLng - pad, minLat - pad], [maxLng + pad, maxLat + pad]];
-      const container = m.getContainer();
-      const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
-      const padY = Math.max(56, Math.round((container.clientHeight || 600) * 0.12));
-      m.fitBounds(bounds, {
-        padding: { top: padY, bottom: padY + 60, left: padX, right: padX },
-        maxZoom: 12,
-        duration: 1000,
-      });
-      hasFittedBoundsRef.current = true;
-    }
-
-    // Popup on click with rich KPIs
     const handleClick = (e: mapboxgl.MapMouseEvent) => {
-      const features = m.queryRenderedFeatures(e.point, { layers: [ZONES_CIRCLES] });
+      const features = m.queryRenderedFeatures(e.point, { layers: [ZONES_FILL] });
       if (!features?.length) return;
       const p = features[0].properties;
       if (!p) return;
-      const coords = (features[0].geometry as any).coordinates as [number, number];
-      
       const insights: string[] = (() => { try { return JSON.parse(p.insights); } catch { return []; } })();
       const univers: string[] = (() => { try { return JSON.parse(p.univers); } catch { return []; } })();
-      
-      const scoreBg = p.opportunityScore >= 80 ? '#dc2626' : p.opportunityScore >= 60 ? '#f59e0b' : p.opportunityScore >= 30 ? '#6b7280' : '#9ca3af';
-      const scoreLabel = p.opportunityScore >= 80 ? 'Zone à attaquer' : p.opportunityScore >= 60 ? 'Potentiel intéressant' : p.opportunityScore >= 30 ? 'À surveiller' : 'Pas prioritaire';
-      
+      const scoreBg = p.opportunityScore >= 80 ? '#dc2626' : p.opportunityScore >= 60 ? '#f59e0b' : '#6b7280';
       new mapboxgl.Popup({ closeButton: true, maxWidth: '340px' })
-        .setLngLat(coords)
+        .setLngLat(e.lngLat)
         .setHTML(`
-          <div style="font-family: system-ui; font-size: 12px; line-height: 1.6;">
-            <div style="font-weight: 700; font-size: 14px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
-              ${p.postalCode} ${p.city}
-              <span style="background: ${scoreBg}; color: white; border-radius: 10px; padding: 1px 8px; font-size: 11px; font-weight: 600;">${p.opportunityScore}/100</span>
+          <div style="font-family:system-ui;font-size:12px;line-height:1.6;">
+            <div style="font-weight:700;font-size:14px;margin-bottom:6px;">${p.nom || ''} ${p.city || ''} <span style="background:${scoreBg};color:white;border-radius:10px;padding:1px 8px;font-size:11px;">${p.opportunityScore}/100</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-bottom:8px;">
+              <div>📁 <b>${p.nbProjects}</b> dossiers</div><div>👤 <b>${p.nbClients}</b> clients</div>
+              <div>💰 CA: <b>${Number(p.ca||0).toLocaleString('fr-FR')} €</b></div><div>🤝 <b>${p.nbApporteurs}</b> apporteurs</div>
             </div>
-            <div style="color: #6b7280; font-size: 11px; margin-bottom: 8px;">${scoreLabel}</div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; margin-bottom: 8px;">
-              <div>📁 <b>${p.nbProjects}</b> dossiers</div>
-              <div>👤 <b>${p.nbClients}</b> clients</div>
-              <div>📝 <b>${p.devisTotal}</b> devis (${p.devisSigned} signés)</div>
-              <div>🔧 <b>${p.interventionCount}</b> interventions</div>
-              <div>💰 CA: <b>${Number(p.ca).toLocaleString('fr-FR')} €</b></div>
-              <div>🧺 Panier: <b>${Number(p.panierMoyen).toLocaleString('fr-FR')} €</b></div>
-              <div>🤝 <b>${p.nbApporteurs}</b> apporteurs</div>
-              <div>🏗️ <b>${p.nbUnivers}</b> métiers</div>
-            </div>
-            
-            ${univers.length > 0 ? `<div style="margin-bottom: 6px; color: #4b5563;"><b>Métiers :</b> ${univers.join(', ')}</div>` : ''}
-            
-            ${insights.length > 0 ? `
-              <div style="background: #fef3c7; border-radius: 6px; padding: 6px 8px; margin-top: 4px;">
-                ${insights.map(i => `<div style="color: #92400e; font-size: 11px;">💡 ${i}</div>`).join('')}
-              </div>
-            ` : ''}
+            ${univers.length > 0 ? `<div style="margin-bottom:6px;color:#4b5563;"><b>Métiers:</b> ${univers.join(', ')}</div>` : ''}
+            ${insights.length > 0 ? `<div style="background:#fef3c7;border-radius:6px;padding:6px 8px;">${insights.map((i: string) => `<div style="color:#92400e;font-size:11px;">💡 ${i}</div>`).join('')}</div>` : ''}
           </div>
         `)
         .addTo(m);
     };
+    m.on('click', ZONES_FILL, handleClick);
+    m.on('mouseenter', ZONES_FILL, () => { m.getCanvas().style.cursor = 'pointer'; });
+    m.on('mouseleave', ZONES_FILL, () => { m.getCanvas().style.cursor = ''; });
+    return () => { m.off('click', ZONES_FILL, handleClick); };
+  }, [zonesGeoJson, mapReady, mapMode, cleanLayers, addChoroplethLayers, fitBoundsToGeoJson]);
 
-    m.on('click', ZONES_CIRCLES, handleClick);
-    m.on('mouseenter', ZONES_CIRCLES, () => { m.getCanvas().style.cursor = 'pointer'; });
-    m.on('mouseleave', ZONES_CIRCLES, () => { m.getCanvas().style.cursor = ''; });
-
-    return () => {
-      m.off('click', ZONES_CIRCLES, handleClick);
-    };
-  }, [zonesData, mapReady, mapMode]);
-
-  // Apporteurs layer — circles colored by dominant origin type
+  // Apporteurs choropleth layer
   useEffect(() => {
     const m = map.current;
     if (!m || !mapReady) return;
+    cleanLayers(m, [APPORTEURS_FILL, APPORTEURS_LINE, APPORTEURS_LABELS], APPORTEURS_SOURCE);
+    if (mapMode !== 'apporteurs' || !apporteursGeoJson?.features?.length) return;
 
-    if (m.getLayer(APPORTEURS_CIRCLES)) m.removeLayer(APPORTEURS_CIRCLES);
-    if (m.getSource(APPORTEURS_SOURCE)) m.removeSource(APPORTEURS_SOURCE);
+    addChoroplethLayers(m, APPORTEURS_SOURCE, APPORTEURS_FILL, APPORTEURS_LINE, APPORTEURS_LABELS, apporteursGeoJson, [
+      'match', ['get', 'dominantOrigin'],
+      'Assurance', '#3b82f6', 'Agence Immobilière', '#8b5cf6', 'Syndic', '#f97316',
+      'Bailleur', '#06b6d4', 'Franchise / Réseau', '#10b981', 'Client direct', '#6b7280',
+      '#9ca3af',
+    ], 0.65);
+    fitBoundsToGeoJson(m, apporteursGeoJson);
 
-    if (mapMode !== 'apporteurs' || !apporteursData?.length) return;
-
-    const geojson: GeoJSON.FeatureCollection = {
-      type: 'FeatureCollection',
-      features: apporteursData.map(z => ({
-        type: 'Feature' as const,
-        properties: {
-          postalCode: z.postalCode,
-          city: z.city,
-          totalProjects: z.totalProjects,
-          totalCA: z.totalCA,
-          panierMoyen: z.panierMoyen,
-          dominantOrigin: z.dominantOrigin,
-          dominantColor: z.dominantColor,
-          top1Share: z.top1Share,
-          diversificationIndex: z.diversificationIndex,
-          transformRate: z.transformRate,
-          breakdown: JSON.stringify(z.breakdown),
-          topApporteurs: JSON.stringify(z.topApporteurs),
-          insights: JSON.stringify(z.insights),
-          devisTotal: z.devisTotal,
-          devisSigned: z.devisSigned,
-          interventionCount: z.interventionCount,
-        },
-        geometry: { type: 'Point' as const, coordinates: [z.lng, z.lat] },
-      })),
-    };
-
-    m.addSource(APPORTEURS_SOURCE, { type: 'geojson', data: geojson });
-
-    m.addLayer({
-      id: APPORTEURS_CIRCLES,
-      type: 'circle',
-      source: APPORTEURS_SOURCE,
-      paint: {
-        'circle-radius': [
-          'interpolate', ['linear'], ['zoom'],
-          4, ['interpolate', ['linear'], ['get', 'totalProjects'], 1, 8, 10, 14, 30, 20, 80, 28],
-          10, ['interpolate', ['linear'], ['get', 'totalProjects'], 1, 14, 10, 22, 30, 32, 80, 44],
-          14, ['interpolate', ['linear'], ['get', 'totalProjects'], 1, 20, 10, 30, 30, 42, 80, 56],
-        ],
-        'circle-color': ['get', 'dominantColor'],
-        'circle-opacity': 0.75,
-        'circle-stroke-color': [
-          'interpolate', ['linear'], ['get', 'top1Share'],
-          0, '#9ca3af',
-          50, '#f59e0b',
-          70, '#ef4444',
-          100, '#991b1b',
-        ],
-        'circle-stroke-width': [
-          'interpolate', ['linear'], ['get', 'top1Share'],
-          0, 1,
-          50, 2,
-          70, 3,
-          100, 4,
-        ],
-        'circle-stroke-opacity': 0.9,
-      },
-    });
-
-    // Fit bounds
-    if (!hasFittedBoundsRef.current && apporteursData.length > 0) {
-      let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
-      apporteursData.forEach(p => { minLng = Math.min(minLng, p.lng); maxLng = Math.max(maxLng, p.lng); minLat = Math.min(minLat, p.lat); maxLat = Math.max(maxLat, p.lat); });
-      const pad = 0.1;
-      const bounds: [[number, number], [number, number]] = [[minLng - pad, minLat - pad], [maxLng + pad, maxLat + pad]];
-      const container = m.getContainer();
-      const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
-      const padY = Math.max(56, Math.round((container.clientHeight || 600) * 0.12));
-      m.fitBounds(bounds, { padding: { top: padY, bottom: padY + 60, left: padX, right: padX }, maxZoom: 12, duration: 1000 });
-      hasFittedBoundsRef.current = true;
-    }
-
-    // Popup on click
     const handleClick = (e: mapboxgl.MapMouseEvent) => {
-      const features = m.queryRenderedFeatures(e.point, { layers: [APPORTEURS_CIRCLES] });
+      const features = m.queryRenderedFeatures(e.point, { layers: [APPORTEURS_FILL] });
       if (!features?.length) return;
       const p = features[0].properties;
       if (!p) return;
-      const coords = (features[0].geometry as any).coordinates as [number, number];
-
-      const breakdown: ApporteurBreakdown[] = (() => { try { return JSON.parse(p.breakdown); } catch { return []; } })();
-      const topAps: { name: string; count: number; ca: number }[] = (() => { try { return JSON.parse(p.topApporteurs); } catch { return []; } })();
-      const insights: string[] = (() => { try { return JSON.parse(p.insights); } catch { return []; } })();
-
+      interface BreakdownItem { type: string; count: number; share: number; color: string; }
+      const breakdown: BreakdownItem[] = (() => { try { return JSON.parse(p.breakdown); } catch { return []; } })();
       const depBg = p.top1Share >= 70 ? '#dc2626' : p.top1Share >= 50 ? '#f59e0b' : '#22c55e';
-      const depLabel = p.top1Share >= 70 ? 'Dépendance critique' : p.top1Share >= 50 ? 'Concentration modérée' : 'Bien diversifié';
-
-      const breakdownHtml = breakdown.map(b =>
-        `<div style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:50%;background:${b.color};flex-shrink:0;"></span><span>${b.type}</span><b>${b.share}%</b> <span style="color:#6b7280;">(${b.count} dossiers)</span></div>`
+      const breakdownHtml = breakdown.map((b: BreakdownItem) =>
+        `<div style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:50%;background:${b.color};flex-shrink:0;"></span><span>${b.type}</span><b>${b.share}%</b></div>`
       ).join('');
-
-      const topApsHtml = topAps.length > 0 ? `<div style="margin-top:6px;border-top:1px solid #e5e7eb;padding-top:6px;"><div style="font-weight:600;margin-bottom:4px;">Top apporteurs</div>${topAps.map(a =>
-        `<div style="display:flex;justify-content:space-between;"><span>${a.name}</span><span><b>${a.count}</b> dossiers · ${a.ca.toLocaleString('fr-FR')} €</span></div>`
-      ).join('')}</div>` : '';
-
       new mapboxgl.Popup({ closeButton: true, maxWidth: '380px' })
-        .setLngLat(coords)
+        .setLngLat(e.lngLat)
         .setHTML(`
-          <div style="font-family: system-ui; font-size: 12px; line-height: 1.6;">
-            <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px;">${p.postalCode} ${p.city}</div>
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-              <span style="background:${p.dominantColor};color:white;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:600;">${p.dominantOrigin}</span>
-              <span style="background:${depBg};color:white;border-radius:10px;padding:1px 8px;font-size:11px;">${depLabel} (${p.top1Share}%)</span>
+          <div style="font-family:system-ui;font-size:12px;line-height:1.6;">
+            <div style="font-weight:700;font-size:14px;margin-bottom:4px;">${p.nom || ''} ${p.city || ''}</div>
+            <div style="display:flex;gap:8px;margin-bottom:8px;">
+              <span style="background:${p.dominantColor};color:white;border-radius:10px;padding:1px 8px;font-size:11px;">${p.dominantOrigin}</span>
+              <span style="background:${depBg};color:white;border-radius:10px;padding:1px 8px;font-size:11px;">${p.top1Share}% concentration</span>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-bottom:8px;">
-              <div>📁 <b>${p.totalProjects}</b> dossiers</div>
-              <div>💰 CA: <b>${Number(p.totalCA).toLocaleString('fr-FR')} €</b></div>
-              <div>🧺 Panier: <b>${Number(p.panierMoyen).toLocaleString('fr-FR')} €</b></div>
-              <div>📝 Transfo: <b>${p.transformRate}%</b></div>
+              <div>📁 <b>${p.totalProjects}</b> dossiers</div><div>💰 CA: <b>${Number(p.totalCA||0).toLocaleString('fr-FR')} €</b></div>
             </div>
-            <div style="margin-bottom:6px;"><b>Répartition origines</b></div>
             ${breakdownHtml}
-            ${topApsHtml}
-            ${insights.length > 0 ? `<div style="background:#fef3c7;border-radius:6px;padding:6px 8px;margin-top:6px;">${insights.map(i => `<div style="color:#92400e;font-size:11px;">💡 ${i}</div>`).join('')}</div>` : ''}
           </div>
         `)
         .addTo(m);
     };
-
-    m.on('click', APPORTEURS_CIRCLES, handleClick);
-    m.on('mouseenter', APPORTEURS_CIRCLES, () => { m.getCanvas().style.cursor = 'pointer'; });
-    m.on('mouseleave', APPORTEURS_CIRCLES, () => { m.getCanvas().style.cursor = ''; });
-
-    return () => { m.off('click', APPORTEURS_CIRCLES, handleClick); };
-  }, [apporteursData, mapReady, mapMode]);
+    m.on('click', APPORTEURS_FILL, handleClick);
+    m.on('mouseenter', APPORTEURS_FILL, () => { m.getCanvas().style.cursor = 'pointer'; });
+    m.on('mouseleave', APPORTEURS_FILL, () => { m.getCanvas().style.cursor = ''; });
+    return () => { m.off('click', APPORTEURS_FILL, handleClick); };
+  }, [apporteursGeoJson, mapReady, mapMode, cleanLayers, addChoroplethLayers, fitBoundsToGeoJson]);
 
   // Disponibilité layer — tech positions with status colors
   useEffect(() => {
@@ -1370,116 +1071,48 @@ export default function MapsTabContent() {
     return () => { m.off('click', SEASON_CIRCLES, handleClick); };
   }, [seasonData, currentSeasonMonth, seasonViewMode, mapReady, mapMode]);
 
-  // Score Global layer — circles colored by composite score
+  // Score Global choropleth layer
   useEffect(() => {
     const m = map.current;
     if (!m || !mapReady) return;
+    cleanLayers(m, [SCORE_FILL, SCORE_LINE, SCORE_LABELS], SCORE_SOURCE);
+    if (mapMode !== 'score_global' || !scoreGeoJson?.features?.length) return;
 
-    if (m.getLayer(SCORE_CIRCLES)) m.removeLayer(SCORE_CIRCLES);
-    if (m.getSource(SCORE_SOURCE)) m.removeSource(SCORE_SOURCE);
-
-    if (mapMode !== 'score_global' || !scoreData?.length) return;
-
+    // Inject the active score key into each feature for color interpolation
     const scoreKey = scoreSubView === 'global' ? 'scoreGlobal' : scoreSubView === 'commercial' ? 'scoreCommercial' : scoreSubView === 'economique' ? 'scoreEconomique' : scoreSubView === 'operationnel' ? 'scoreOperationnel' : scoreSubView === 'qualite' ? 'scoreQualite' : 'scoreResilience';
-
-    const geojson: GeoJSON.FeatureCollection = {
+    const enriched: GeoJSON.FeatureCollection = {
       type: 'FeatureCollection',
-      features: scoreData.map(z => ({
-        type: 'Feature' as const,
-        properties: {
-          postalCode: z.postalCode, city: z.city,
-          score: (z as any)[scoreKey] as number,
-          scoreGlobal: z.scoreGlobal, scoreCommercial: z.scoreCommercial,
-          scoreEconomique: z.scoreEconomique, scoreOperationnel: z.scoreOperationnel,
-          scoreQualite: z.scoreQualite, scoreResilience: z.scoreResilience,
-          scoreLabel: z.scoreLabel, nbProjects: z.nbProjects, nbClients: z.nbClients,
-          ca: z.ca, margin: z.margin, panierMoyen: z.panierMoyen,
-          transfoRate: z.transfoRate, savRate: z.savRate,
-          mainStrength: z.mainStrength, mainStrengthScore: z.mainStrengthScore,
-          mainWeakness: z.mainWeakness, mainWeaknessScore: z.mainWeaknessScore,
-          recommendation: z.recommendation,
-        },
-        geometry: { type: 'Point' as const, coordinates: [z.lng, z.lat] },
+      features: scoreGeoJson.features.map(f => ({
+        ...f,
+        properties: { ...f.properties, score: f.properties?.[scoreKey] ?? 0 },
       })),
     };
 
-    m.addSource(SCORE_SOURCE, { type: 'geojson', data: geojson });
+    addChoroplethLayers(m, SCORE_SOURCE, SCORE_FILL, SCORE_LINE, SCORE_LABELS, enriched, [
+      'interpolate', ['linear'], ['get', 'score'],
+      0, '#dc2626', 40, '#f97316', 55, '#fbbf24', 70, '#22c55e', 85, '#3b82f6',
+    ]);
+    fitBoundsToGeoJson(m, enriched);
 
-    m.addLayer({
-      id: SCORE_CIRCLES,
-      type: 'circle',
-      source: SCORE_SOURCE,
-      paint: {
-        'circle-radius': [
-          'interpolate', ['linear'], ['zoom'],
-          4, ['interpolate', ['linear'], ['get', 'nbProjects'], 1, 8, 10, 14, 30, 20, 80, 28],
-          10, ['interpolate', ['linear'], ['get', 'nbProjects'], 1, 14, 10, 22, 30, 32, 80, 44],
-          14, ['interpolate', ['linear'], ['get', 'nbProjects'], 1, 20, 10, 30, 30, 42, 80, 56],
-        ],
-        'circle-color': [
-          'interpolate', ['linear'], ['get', 'score'],
-          0, '#dc2626',    // rouge — critique
-          40, '#f97316',   // orange — fragile
-          55, '#fbbf24',   // jaune — moyen
-          70, '#22c55e',   // vert — sain
-          85, '#3b82f6',   // bleu — premium
-        ],
-        'circle-opacity': 0.8,
-        'circle-stroke-color': [
-          'interpolate', ['linear'], ['get', 'score'],
-          0, '#991b1b', 40, '#c2410c', 55, '#a16207', 70, '#166534', 85, '#1e40af',
-        ],
-        'circle-stroke-width': 2,
-        'circle-stroke-opacity': 0.9,
-      },
-    });
-
-    // Fit bounds
-    if (!hasFittedBoundsRef.current && scoreData.length > 0) {
-      let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
-      scoreData.forEach(p => { minLng = Math.min(minLng, p.lng); maxLng = Math.max(maxLng, p.lng); minLat = Math.min(minLat, p.lat); maxLat = Math.max(maxLat, p.lat); });
-      const pad = 0.1;
-      const container = m.getContainer();
-      const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
-      const padY = Math.max(56, Math.round((container.clientHeight || 600) * 0.12));
-      m.fitBounds([[minLng - pad, minLat - pad], [maxLng + pad, maxLat + pad]], {
-        padding: { top: padY, bottom: padY + 60, left: padX, right: padX }, maxZoom: 12, duration: 1000,
-      });
-      hasFittedBoundsRef.current = true;
-    }
-
-    // Popup on click
     const handleClick = (e: mapboxgl.MapMouseEvent) => {
-      const features = m.queryRenderedFeatures(e.point, { layers: [SCORE_CIRCLES] });
+      const features = m.queryRenderedFeatures(e.point, { layers: [SCORE_FILL] });
       if (!features?.length) return;
       const p = features[0].properties;
       if (!p) return;
-      const coords = (features[0].geometry as any).coordinates as [number, number];
-
       const scoreBg = p.scoreGlobal >= 85 ? '#3b82f6' : p.scoreGlobal >= 70 ? '#22c55e' : p.scoreGlobal >= 55 ? '#fbbf24' : p.scoreGlobal >= 40 ? '#f97316' : '#dc2626';
-
       const scoreBar = (label: string, value: number, icon: string) => {
         const bg = value >= 70 ? '#22c55e' : value >= 50 ? '#fbbf24' : '#dc2626';
-        return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
-          <span style="width:14px;text-align:center;">${icon}</span>
-          <span style="flex:1;font-size:11px;">${label}</span>
-          <div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden;">
-            <div style="height:100%;width:${value}%;background:${bg};border-radius:3px;"></div>
-          </div>
-          <span style="font-size:11px;font-weight:600;width:24px;text-align:right;">${value}</span>
-        </div>`;
+        return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="width:14px;text-align:center;">${icon}</span><span style="flex:1;font-size:11px;">${label}</span><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden;"><div style="height:100%;width:${value}%;background:${bg};border-radius:3px;"></div></div><span style="font-size:11px;font-weight:600;width:24px;text-align:right;">${value}</span></div>`;
       };
-
       new mapboxgl.Popup({ closeButton: true, maxWidth: '380px' })
-        .setLngLat(coords)
+        .setLngLat(e.lngLat)
         .setHTML(`
-          <div style="font-family: system-ui; font-size: 12px; line-height: 1.6;">
+          <div style="font-family:system-ui;font-size:12px;line-height:1.6;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-              <span style="font-weight:700;font-size:14px;">${p.postalCode} ${p.city}</span>
+              <span style="font-weight:700;font-size:14px;">${p.nom || ''} ${p.city || ''}</span>
               <span style="background:${scoreBg};color:white;border-radius:10px;padding:2px 10px;font-size:12px;font-weight:700;">${p.scoreGlobal}/100</span>
               <span style="font-size:11px;color:#6b7280;">${p.scoreLabel}</span>
             </div>
-
             <div style="margin-bottom:8px;">
               ${scoreBar('Commercial', p.scoreCommercial, '📊')}
               ${scoreBar('Économique', p.scoreEconomique, '💰')}
@@ -1487,37 +1120,23 @@ export default function MapsTabContent() {
               ${scoreBar('Qualité', p.scoreQualite, '✅')}
               ${scoreBar('Résilience', p.scoreResilience, '🛡️')}
             </div>
-
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px 12px;padding:6px 0;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;margin-bottom:6px;">
-              <div>📁 <b>${p.nbProjects}</b> dossiers</div>
-              <div>👤 <b>${p.nbClients}</b> clients</div>
-              <div>💰 CA: <b>${Number(p.ca).toLocaleString('fr-FR')} €</b></div>
-              <div>📈 Marge: <b style="color:${p.margin >= 0 ? '#15803d' : '#dc2626'}">${Number(p.margin).toLocaleString('fr-FR')} €</b></div>
-              <div>📝 Transfo: <b>${p.transfoRate}%</b></div>
-              <div>🔧 SAV: <b>${p.savRate}%</b></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px 12px;padding:6px 0;border-top:1px solid #e5e7eb;margin-bottom:6px;">
+              <div>📁 <b>${p.nbProjects}</b> dossiers</div><div>👤 <b>${p.nbClients}</b> clients</div>
+              <div>💰 CA: <b>${Number(p.ca||0).toLocaleString('fr-FR')} €</b></div>
+              <div>📈 Marge: <b style="color:${(p.margin||0) >= 0 ? '#15803d' : '#dc2626'}">${Number(p.margin||0).toLocaleString('fr-FR')} €</b></div>
             </div>
-
-            <div style="font-size:11px;margin-bottom:4px;">
-              <span style="color:#22c55e;">▲</span> Force : <b>${p.mainStrength}</b> (${p.mainStrengthScore}/100)
-            </div>
-            <div style="font-size:11px;margin-bottom:6px;">
-              <span style="color:#dc2626;">▼</span> Faiblesse : <b>${p.mainWeakness}</b> (${p.mainWeaknessScore}/100)
-            </div>
-
-            <div style="background:#f0f9ff;border-radius:6px;padding:6px 8px;">
-              <div style="color:#1e40af;font-size:11px;font-weight:600;">💡 ${p.recommendation}</div>
-            </div>
+            <div style="font-size:11px;margin-bottom:4px;"><span style="color:#22c55e;">▲</span> Force: <b>${p.mainStrength}</b> (${p.mainStrengthScore}/100)</div>
+            <div style="font-size:11px;margin-bottom:6px;"><span style="color:#dc2626;">▼</span> Faiblesse: <b>${p.mainWeakness}</b> (${p.mainWeaknessScore}/100)</div>
+            <div style="background:#f0f9ff;border-radius:6px;padding:6px 8px;"><div style="color:#1e40af;font-size:11px;font-weight:600;">💡 ${p.recommendation}</div></div>
           </div>
         `)
         .addTo(m);
     };
-
-    m.on('click', SCORE_CIRCLES, handleClick);
-    m.on('mouseenter', SCORE_CIRCLES, () => { m.getCanvas().style.cursor = 'pointer'; });
-    m.on('mouseleave', SCORE_CIRCLES, () => { m.getCanvas().style.cursor = ''; });
-
-    return () => { m.off('click', SCORE_CIRCLES, handleClick); };
-  }, [scoreData, scoreSubView, mapReady, mapMode]);
+    m.on('click', SCORE_FILL, handleClick);
+    m.on('mouseenter', SCORE_FILL, () => { m.getCanvas().style.cursor = 'pointer'; });
+    m.on('mouseleave', SCORE_FILL, () => { m.getCanvas().style.cursor = ''; });
+    return () => { m.off('click', SCORE_FILL, handleClick); };
+  }, [scoreGeoJson, scoreSubView, mapReady, mapMode, cleanLayers, addChoroplethLayers, fitBoundsToGeoJson]);
 
   useEffect(() => {
     const m = map.current;
