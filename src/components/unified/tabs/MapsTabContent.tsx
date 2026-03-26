@@ -277,7 +277,37 @@ export default function MapsTabContent() {
     refetchOnWindowFocus: false,
   });
 
-  const rdvs = viewMode === 'day' ? dayRdvs : weekRdvs;
+  // Apporteurs: origin breakdown per postal code
+  interface ApporteurBreakdown { type: string; count: number; ca: number; color: string; share: number; nbApporteurs: number; }
+  interface ApporteurZonePoint {
+    postalCode: string; city: string; lat: number; lng: number;
+    totalProjects: number; totalCA: number; panierMoyen: number;
+    devisTotal: number; devisSigned: number; transformRate: number; interventionCount: number;
+    dominantOrigin: string; dominantColor: string;
+    breakdown: ApporteurBreakdown[];
+    top1Share: number; top3Share: number; diversificationIndex: number;
+    topApporteurs: { name: string; count: number; ca: number }[];
+    insights: string[];
+  }
+  const { data: apporteursData, isLoading: apporteursLoading } = useQuery({
+    queryKey: ['rdv-apporteurs', agence],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Non authentifié');
+      const response = await supabase.functions.invoke('get-rdv-map', {
+        body: { mode: 'apporteurs', agencySlug: agence },
+      });
+      if (response.error) throw new Error(response.error.message);
+      const result = response.data;
+      if (!result.success) throw new Error(result.error || 'Erreur');
+      return result.data as ApporteurZonePoint[];
+    },
+    enabled: mapMode === 'apporteurs' && !!agence,
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
   const isLoading = viewMode === 'day' ? dayLoading : weekLoading;
   const error = viewMode === 'day' ? dayError : (weekError instanceof Error ? weekError.message : null);
 
