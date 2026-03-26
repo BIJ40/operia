@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { useRdvMap, calculateBounds, MapRdv } from '@/hooks/useRdvMap';
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { createPinMarkerElement } from '@/components/map/PinMarker';
 import { RdvMiniPreview } from '@/components/map/RdvMiniPreview';
 import { TourSummaryBar } from '@/components/map/TourSummaryBar';
@@ -126,6 +126,29 @@ export default function MapsTabContent() {
 
   const weekLoading = viewMode === 'week' && weekQueries.some(q => q.isLoading);
   const weekError = viewMode === 'week' ? weekQueries.find(q => q.error)?.error : null;
+
+  // Heatmap: fetch ALL historical coordinates (independent of date)
+  const { data: heatmapPoints, isLoading: heatmapLoading } = useQuery({
+    queryKey: ['rdv-heatmap', agence],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Non authentifié');
+      const response = await supabase.functions.invoke('get-rdv-map', {
+        body: {
+          mode: 'heatmap',
+          agencySlug: agence,
+        },
+      });
+      if (response.error) throw new Error(response.error.message);
+      const result = response.data;
+      if (!result.success) throw new Error(result.error || 'Erreur');
+      return result.data as { lat: number; lng: number }[];
+    },
+    enabled: mapMode === 'heatmap' && !!agence,
+    staleTime: 30 * 60 * 1000, // 30 min cache
+    gcTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
 
   // Unified data based on view mode
   const rdvs = viewMode === 'day' ? dayRdvs : weekRdvs;
@@ -259,7 +282,7 @@ export default function MapsTabContent() {
     }
   }, [sortedRdvs, selectedRdv, mapReady, isTourMode, mapMode]);
 
-  // Heatmap layer
+  // Heatmap layer — uses historical data, not date-filtered
   useEffect(() => {
     const m = map.current;
     if (!m || !mapReady) return;
@@ -268,14 +291,14 @@ export default function MapsTabContent() {
     if (m.getLayer(HEATMAP_LAYER)) m.removeLayer(HEATMAP_LAYER);
     if (m.getSource(HEATMAP_SOURCE)) m.removeSource(HEATMAP_SOURCE);
 
-    if (mapMode !== 'heatmap' || sortedRdvs.length === 0) return;
+    if (mapMode !== 'heatmap' || !heatmapPoints?.length) return;
 
     const geojson: GeoJSON.FeatureCollection = {
       type: 'FeatureCollection',
-      features: sortedRdvs.map(rdv => ({
+      features: heatmapPoints.map(pt => ({
         type: 'Feature' as const,
         properties: { weight: 1 },
-        geometry: { type: 'Point' as const, coordinates: [rdv.lng, rdv.lat] },
+        geometry: { type: 'Point' as const, coordinates: [pt.lng, pt.lat] },
       })),
     };
 
@@ -286,42 +309,45 @@ export default function MapsTabContent() {
       type: 'heatmap',
       source: HEATMAP_SOURCE,
       paint: {
-        // Increase weight at higher zoom
-        'heatmap-weight': ['interpolate', ['linear'], ['get', 'weight'], 0, 0, 1, 1],
-        // Increase intensity at higher zoom
-        'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 0.5, 12, 2, 16, 4],
-        // Color ramp: transparent → white → light red → red → dark red → near black
+        'heatmap-weight': 1,
+        // Stronger intensity for dense choropleth-like look
+        'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 1, 8, 3, 12, 5, 16, 8],
+        // Color ramp: deep red choropleth — light pink → crimson → dark burgundy → near black
         'heatmap-color': [
           'interpolate', ['linear'], ['heatmap-density'],
-          0, 'rgba(255,255,255,0)',
-          0.1, 'rgba(255,235,235,0.6)',
-          0.25, 'rgba(255,180,180,0.7)',
-          0.4, 'rgba(240,100,100,0.8)',
-          0.6, 'rgba(200,40,40,0.85)',
-          0.8, 'rgba(150,10,10,0.9)',
-          1, 'rgba(60,0,0,0.95)',
+          0,    'rgba(255,245,245,0)',
+          0.05, 'rgba(252,210,210,0.7)',
+          0.15, 'rgba(240,160,160,0.8)',
+          0.3,  'rgba(210,80,80,0.85)',
+          0.45, 'rgba(180,40,40,0.9)',
+          0.6,  'rgba(150,20,20,0.92)',
+          0.75, 'rgba(120,10,10,0.95)',
+          0.9,  'rgba(80,5,5,0.97)',
+          1,    'rgba(40,0,0,1)',
         ],
-        // Radius by zoom
-        'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 8, 8, 20, 12, 35, 16, 50],
-        // Full opacity
-        'heatmap-opacity': 0.85,
+        // Large radius for continuous fill (not dots)
+        'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 15, 6, 40, 10, 60, 14, 80, 18, 100],
+        'heatmap-opacity': 0.9,
       },
     });
 
-    // Fit bounds for heatmap too
-    const bounds = calculateBounds(sortedRdvs);
-    if (bounds && !hasFittedBoundsRef.current) {
+    // Fit bounds
+    if (!hasFittedBoundsRef.current && heatmapPoints.length > 0) {
+      let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+      heatmapPoints.forEach(p => { minLng = Math.min(minLng, p.lng); maxLng = Math.max(maxLng, p.lng); minLat = Math.min(minLat, p.lat); maxLat = Math.max(maxLat, p.lat); });
+      const pad = 0.1;
+      const bounds: [[number, number], [number, number]] = [[minLng - pad, minLat - pad], [maxLng + pad, maxLat + pad]];
       const container = m.getContainer();
       const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
       const padY = Math.max(56, Math.round((container.clientHeight || 600) * 0.12));
       m.fitBounds(bounds, {
         padding: { top: padY, bottom: padY + 60, left: padX, right: padX },
-        maxZoom: 14,
+        maxZoom: 12,
         duration: 1000,
       });
       hasFittedBoundsRef.current = true;
     }
-  }, [sortedRdvs, mapReady, mapMode]);
+  }, [heatmapPoints, mapReady, mapMode]);
 
   // Draw/remove route layer
   useEffect(() => {
@@ -469,7 +495,11 @@ export default function MapsTabContent() {
             </Button>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <MapPin className="h-4 w-4" />
-              <span>{isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${rdvs.length} RDV`}</span>
+              <span>
+                {mapMode === 'heatmap'
+                  ? (heatmapLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${heatmapPoints?.length || 0} interventions`)
+                  : (isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${rdvs.length} RDV`)}
+              </span>
             </div>
           </div>
         </div>
@@ -511,10 +541,10 @@ export default function MapsTabContent() {
             </div>
           )}
 
-          {isLoading && mapboxToken && !mapInitError && (
+          {((isLoading && mapMode === 'pins') || (heatmapLoading && mapMode === 'heatmap')) && mapboxToken && !mapInitError && (
             <div className="absolute top-4 left-4 bg-background/80 backdrop-blur rounded-lg px-4 py-2 flex items-center gap-2 shadow-lg">
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="text-sm">Chargement des RDV...</span>
+              <span className="text-sm">{mapMode === 'heatmap' ? 'Chargement de l\'historique...' : 'Chargement des RDV...'}</span>
             </div>
           )}
 

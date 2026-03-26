@@ -39,7 +39,10 @@ interface MapRdv {
 }
 
 interface RequestBody {
-  date: string; // YYYY-MM-DD
+  date?: string; // YYYY-MM-DD (required for normal mode)
+  from?: string; // YYYY-MM-DD (heatmap mode range start)
+  to?: string;   // YYYY-MM-DD (heatmap mode range end)
+  mode?: 'normal' | 'heatmap'; // heatmap returns lightweight {lat,lng}[]
   techIds?: number[];
   agencySlug?: string; // Pour franchiseur multi-agences
 }
@@ -201,9 +204,14 @@ Deno.serve(async (req) => {
 
     // 4. Parser la requête
     const body: RequestBody = await req.json();
-    const { date, techIds, agencySlug: requestedAgency } = body;
+    const { date, from: fromDate, to: toDate, techIds, agencySlug: requestedAgency, mode = 'normal' } = body;
+    const isHeatmap = mode === 'heatmap';
 
-    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    // Date validation
+    const effectiveFrom = isHeatmap ? (fromDate || '2020-01-01') : date;
+    const effectiveTo = isHeatmap ? (toDate || new Date().toISOString().slice(0, 10)) : date;
+
+    if (!isHeatmap && (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date))) {
       return withCors(req, new Response(
         JSON.stringify({ success: false, error: 'Invalid date format (expected YYYY-MM-DD)' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -305,8 +313,8 @@ Deno.serve(async (req) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         API_KEY: apiKey,
-        from: date,
-        to: date,
+        from: effectiveFrom,
+        to: effectiveTo,
       }),
     });
 
@@ -320,55 +328,57 @@ Deno.serve(async (req) => {
 
     const interventionsAll = await interventionsResponse.json();
 
+    // In heatmap mode, no date filtering needed (we want all data)
     const interventions = Array.isArray(interventionsAll)
-      ? interventionsAll.filter((it: any) => {
-          const rawDate = typeof it?.date === 'string' ? it.date : '';
-          if (rawDate.startsWith(date)) return true;
-
-          const visites = it?.data?.visites;
-          if (Array.isArray(visites)) {
-            return visites.some((v: any) => typeof v?.date === 'string' && v.date.startsWith(date));
-          }
-
-          return false;
-        })
+      ? (isHeatmap
+        ? interventionsAll
+        : interventionsAll.filter((it: any) => {
+            const rawDate = typeof it?.date === 'string' ? it.date : '';
+            if (rawDate.startsWith(date!)) return true;
+            const visites = it?.data?.visites;
+            if (Array.isArray(visites)) {
+              return visites.some((v: any) => typeof v?.date === 'string' && v.date.startsWith(date!));
+            }
+            return false;
+          })
+      )
       : [];
 
     console.log(
-      `[GET-RDV-MAP] Got ${interventions.length}/${Array.isArray(interventionsAll) ? interventionsAll.length : 0} interventions for ${targetAgency} on ${date}`
+      `[GET-RDV-MAP] Got ${interventions.length}/${Array.isArray(interventionsAll) ? interventionsAll.length : 0} interventions for ${targetAgency} ${isHeatmap ? `(heatmap ${effectiveFrom}→${effectiveTo})` : `on ${date}`}`
     );
 
-    // 7. Fetch users pour les couleurs
-    const usersUrl = `https://${targetAgency}.hc-apogee.fr/api/apiGetUsers`;
-    const usersResponse = await fetch(usersUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ API_KEY: apiKey }),
-    });
-
-    const users = usersResponse.ok ? await usersResponse.json() : [];
+    // 7. Fetch users pour les couleurs (skip in heatmap mode)
     const usersById = new Map<number, { name: string; color: string }>();
-    
-    // Log sample user pour debug des champs couleur
-    if (users.length > 0) {
-      const sample = users[0];
-      console.log(`[GET-RDV-MAP] Sample user keys: ${Object.keys(sample).join(', ')}`);
-      console.log(`[GET-RDV-MAP] Sample user color fields: bgcolor=${sample.bgcolor}, color=${sample.color}, bgColor=${sample.bgColor}`);
-    }
-    
-    for (const u of users) {
-      // L'API Apogée stocke les couleurs dans data.bgcolor.hex ou data.color.hex
-      const dataObj = u.data || {};
-      const color = dataObj.bgcolor?.hex || dataObj.bgColor?.hex || dataObj.color?.hex 
-        || u.bgcolor?.hex || u.bgColor?.hex || u.color?.hex
-        || (typeof u.bgcolor === 'string' ? u.bgcolor : null)
-        || (typeof u.color === 'string' ? u.color : null)
-        || '#6366f1';
-      
-      usersById.set(u.id, {
-        name: `${u.firstname || ''} ${u.lastname || u.name || ''}`.trim() || `User ${u.id}`,
-        color,
+    if (!isHeatmap) {
+      const usersUrl = `https://${targetAgency}.hc-apogee.fr/api/apiGetUsers`;
+      const usersResponse = await fetch(usersUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ API_KEY: apiKey }),
       });
+
+      const users = usersResponse.ok ? await usersResponse.json() : [];
+      
+      if (users.length > 0) {
+        const sample = users[0];
+        console.log(`[GET-RDV-MAP] Sample user keys: ${Object.keys(sample).join(', ')}`);
+        console.log(`[GET-RDV-MAP] Sample user color fields: bgcolor=${sample.bgcolor}, color=${sample.color}, bgColor=${sample.bgColor}`);
+      }
+      
+      for (const u of users) {
+        const dataObj = u.data || {};
+        const color = dataObj.bgcolor?.hex || dataObj.bgColor?.hex || dataObj.color?.hex 
+          || u.bgcolor?.hex || u.bgColor?.hex || u.color?.hex
+          || (typeof u.bgcolor === 'string' ? u.bgcolor : null)
+          || (typeof u.color === 'string' ? u.color : null)
+          || '#6366f1';
+        
+        usersById.set(u.id, {
+          name: `${u.firstname || ''} ${u.lastname || u.name || ''}`.trim() || `User ${u.id}`,
+          color,
+        });
+      }
     }
 
     // 8. Fetch projects pour les adresses et univers
@@ -419,7 +429,47 @@ Deno.serve(async (req) => {
       clientsById.set(c.id, { name, address, postalCode, city });
     }
 
-    // 9. Transformer les interventions en MapRdv
+    // ── HEATMAP FAST PATH ──
+    // In heatmap mode, skip user/project enrichment; just return {lat, lng} for each intervention
+    if (isHeatmap) {
+      const heatPoints: { lat: number; lng: number }[] = [];
+      let heatSkipped = 0;
+
+      for (const intervention of interventions as any[]) {
+        const project = projectsById.get(intervention.projectId);
+        if (!project) { heatSkipped++; continue; }
+
+        const rawClientId = intervention.client_id ?? project.clientId;
+        const clientId = typeof rawClientId === 'number' ? rawClientId : null;
+        const client = clientId ? clientsById.get(clientId) : undefined;
+        if (!client?.address) { heatSkipped++; continue; }
+
+        const coords = await geocodeAddress(client.address, client.postalCode, client.city);
+        if (!coords) { heatSkipped++; continue; }
+
+        heatPoints.push(coords);
+      }
+
+      console.log(`[GET-RDV-MAP] Heatmap for ${targetAgency}: ${heatPoints.length} points, ${heatSkipped} skipped`);
+
+      return withCors(req, new Response(
+        JSON.stringify({
+          success: true,
+          data: heatPoints,
+          meta: {
+            mode: 'heatmap',
+            from: effectiveFrom,
+            to: effectiveTo,
+            agencySlug: targetAgency,
+            totalPoints: heatPoints.length,
+            timestamp: new Date().toISOString(),
+          },
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      ));
+    }
+
+    // 9. Transformer les interventions en MapRdv (normal mode)
     const mapRdvs: MapRdv[] = [];
     let skippedNoProject = 0;
     let skippedNoClientAddress = 0;
@@ -432,7 +482,7 @@ Deno.serve(async (req) => {
 
       // IMPORTANT: Filtrer les visites du jour AVANT d'extraire les techniciens
       const visitesDuJour = visites.filter(
-        (v: any) => typeof v?.date === 'string' && v.date.startsWith(date)
+        (v: any) => typeof v?.date === 'string' && v.date.startsWith(date!)
       );
 
       // Si aucune visite ce jour-là, on skip cette intervention
