@@ -4,6 +4,7 @@
  */
 
 import { lazy, Suspense, useMemo } from 'react';
+import { useAgencyHasApporteurs } from '@/hooks/useAgencyHasApporteurs';
 import { cn } from '@/lib/utils';
 import { Users, Handshake, CalendarDays, Users2, Car, FileText, Shield, MapPin, MessagesSquare, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
