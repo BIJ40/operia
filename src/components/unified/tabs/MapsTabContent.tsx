@@ -68,20 +68,22 @@ function enableStyleFallback(m: mapboxgl.Map) {
 }
 
 type ViewMode = 'day' | 'week';
-type MapMode = 'pins' | 'heatmap' | 'profitability';
+type MapMode = 'pins' | 'heatmap' | 'profitability' | 'zones';
 
-type MapsSubTab = 'rdv' | 'densite' | 'rentabilite';
+type MapsSubTab = 'rdv' | 'densite' | 'rentabilite' | 'zones';
 
 const MAP_SUB_TABS: FolderTabConfig[] = [
   { id: 'rdv', label: 'Rendez-vous', icon: MapPin, accent: 'blue' },
   { id: 'densite', label: 'Densité', icon: Flame, accent: 'pink' },
   { id: 'rentabilite', label: 'Rentabilité', icon: PieChart, accent: 'green' },
+  { id: 'zones', label: 'Zones blanches', icon: Crosshair, accent: 'orange' },
 ];
 
 const TAB_ACCENT_COLORS: Record<string, string> = {
   blue: 'hsl(var(--warm-blue))',
   pink: 'hsl(var(--warm-pink))',
   green: 'hsl(var(--warm-green))',
+  orange: 'hsl(var(--warm-orange))',
 };
 
 export default function MapsTabContent() {
