@@ -206,6 +206,7 @@ Deno.serve(async (req) => {
     const body: RequestBody = await req.json();
     const { date, from: fromDate, to: toDate, techIds, agencySlug: requestedAgency, mode = 'normal' } = body;
     const isHeatmap = mode === 'heatmap';
+    const isProfitability = mode === 'profitability';
 
     // Date validation
     const effectiveFrom = isHeatmap ? (fromDate || '2020-01-01') : date;
