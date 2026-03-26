@@ -226,7 +226,33 @@ export default function AdminMirrorMonitor() {
 
       {activeTab === 'overview' && (
         <>
-          {/* Pilot Module Cards */}
+          {/* Pilot Verdict Banner */}
+          {(() => {
+            const usersMetrics = metrics['users'];
+            const { verdict, reasons } = computePilotVerdict(usersMetrics, comparisons, 'users');
+            const daxFlag = agencyFlags.find(f => f.module_key === 'users' && f.agency_id === '58d8d39f-7544-4e78-86f9-c182eacf29f5');
+            if (!daxFlag) return null;
+            return (
+              <div className={`border rounded-lg p-3 text-sm space-y-1 ${VERDICT_STYLES[verdict]}`}>
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold flex items-center gap-2">
+                    {verdict === 'stable' && <CheckCircle2 className="h-4 w-4" />}
+                    {verdict === 'à surveiller' && <AlertTriangle className="h-4 w-4" />}
+                    {verdict === 'rollback conseillé' && <AlertTriangle className="h-4 w-4" />}
+                    {verdict === 'inactif' && <Clock className="h-4 w-4" />}
+                    Pilote DAX — users — Verdict : {verdict.toUpperCase()}
+                  </span>
+                  <span className="text-xs opacity-75">Activé le {new Date(daxFlag.updated_at).toLocaleString('fr-FR')}</span>
+                </div>
+                <ul className="text-xs list-disc pl-5 space-y-0.5">
+                  {reasons.map((r, i) => <li key={i}>{r}</li>)}
+                </ul>
+                <div className="text-[10px] opacity-75 mt-1">
+                  Seuils : fallback &gt;20% = surveiller | &gt;50% = rollback | 2+ comparaisons KO = rollback | delta vol &gt;15% = surveiller
+                </div>
+              </div>
+            );
+          })()}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {PILOT_MODULES.map(moduleKey => {
               const flag = globalFlags.find(f => f.module_key === moduleKey);
