@@ -42,7 +42,7 @@ interface RequestBody {
   date?: string; // YYYY-MM-DD (required for normal mode)
   from?: string; // YYYY-MM-DD (heatmap mode range start)
   to?: string;   // YYYY-MM-DD (heatmap mode range end)
-  mode?: 'normal' | 'heatmap' | 'profitability'; // profitability = CA-based zone coloring
+  mode?: 'normal' | 'heatmap' | 'profitability' | 'zones'; // zones = white zones analysis
   techIds?: number[];
   agencySlug?: string; // Pour franchiseur multi-agences
 }
