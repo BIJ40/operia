@@ -1,8 +1,8 @@
 /**
  * TreasuryBridgeReturnHandler — Handles Bridge Connect callback on return
  * 
- * When the user returns from Bridge Connect, URL params contain callback info.
- * This component detects bridge_callback=1 and processes the return.
+ * Bridge callback_url returns with query params: user_uuid, item_id, success, step, source, context.
+ * This component detects the callback and processes the return via edge function.
  */
 
 import { useEffect, useRef } from 'react';
@@ -23,28 +23,32 @@ export function TreasuryBridgeReturnHandler() {
     const isBridgeCallback = searchParams.get('bridge_callback') === '1';
     if (!isBridgeCallback) return;
 
-    // Find the most recent "connecting" connection to process
+    // Find the most recent "connecting" or "pending" connection
     const connectingConn = connections?.find(c => c.status === 'connecting' || c.status === 'pending');
     if (!connectingConn) return;
 
     processed.current = true;
 
-    // Bridge doesn't pass detailed status in redirect URL by default,
-    // so we assume success and let the sync determine the real state
-    const bridgeStatus = searchParams.get('bridge_status') ?? 'success';
+    // Extract real Bridge callback params from URL
+    const bridgeParams = {
+      connectionId: connectingConn.id,
+      success: searchParams.get('success') === 'true' || searchParams.get('success') === null, // default true if not present
+      item_id: searchParams.get('item_id') ?? undefined,
+      step: searchParams.get('step') ?? undefined,
+      source: searchParams.get('source') ?? undefined,
+      context: searchParams.get('context') ?? undefined,
+      user_uuid: searchParams.get('user_uuid') ?? undefined,
+    };
 
     (async () => {
       try {
         toast.info('Finalisation de la connexion bancaire...');
 
-        // 1. Process callback
-        const callbackResult = await processCallback.mutateAsync({
-          connectionId: connectingConn.id,
-          bridgeStatus,
-        });
+        // 1. Process callback with real Bridge params
+        const callbackResult = await processCallback.mutateAsync(bridgeParams);
 
         const resultData = callbackResult as unknown as { data?: { needsSync?: boolean; status?: string } };
-        const needsSync = resultData?.data?.needsSync ?? bridgeStatus === 'success';
+        const needsSync = resultData?.data?.needsSync ?? bridgeParams.success;
 
         if (needsSync) {
           // 2. Trigger initial sync
@@ -67,7 +71,12 @@ export function TreasuryBridgeReturnHandler() {
       // Clean URL params
       const newParams = new URLSearchParams(searchParams);
       newParams.delete('bridge_callback');
-      newParams.delete('bridge_status');
+      newParams.delete('success');
+      newParams.delete('item_id');
+      newParams.delete('step');
+      newParams.delete('source');
+      newParams.delete('context');
+      newParams.delete('user_uuid');
       setSearchParams(newParams, { replace: true });
     })();
   }, [connections, searchParams]);
