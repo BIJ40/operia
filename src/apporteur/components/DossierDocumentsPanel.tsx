@@ -68,7 +68,8 @@ export default function DossierDocumentsPanel({ dossierRef, agencySlug }: Props)
     );
   }
 
-  const documents = data.data?.documents || [];
+  // Filtrer uniquement devis et factures pour les apporteurs
+  const documents = (data.data?.documents || []).filter(d => d.category === 'factures' || d.category === 'devis');
 
   // Aucun document
   if (documents.length === 0) {
