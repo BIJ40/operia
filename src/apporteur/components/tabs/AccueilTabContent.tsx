@@ -96,6 +96,7 @@ export default function AccueilTabContent() {
               iconBg="bg-[hsl(var(--ap-success-light))]"
               iconColor="text-[hsl(var(--ap-success))]"
               trend={trends?.ca_genere}
+              onClick={() => setKpiDetail('ca_genere')}
             />
             <KpiCard
               label="Panier moyen"
@@ -104,6 +105,7 @@ export default function AccueilTabContent() {
               iconBg="bg-primary/10"
               iconColor="text-primary"
               trend={trends?.panier_moyen}
+              onClick={() => setKpiDetail('panier_moyen')}
             />
             <KpiCard
               label="Taux transfo"
@@ -112,6 +114,7 @@ export default function AccueilTabContent() {
               iconBg="bg-accent"
               iconColor="text-accent-foreground"
               trend={trends?.taux_transformation}
+              onClick={() => setKpiDetail('taux_transfo')}
             />
             <KpiCard
               label="Dossiers en cours"
@@ -120,6 +123,7 @@ export default function AccueilTabContent() {
               iconBg="bg-primary/10"
               iconColor="text-primary"
               trend={trends?.dossiers_en_cours}
+              onClick={() => setKpiDetail('dossiers_en_cours')}
             />
             <KpiCard
               label="Devis envoyés"
@@ -128,6 +132,7 @@ export default function AccueilTabContent() {
               iconBg="bg-secondary/10"
               iconColor="text-secondary"
               trend={trends?.devis_envoyes}
+              onClick={() => setKpiDetail('devis_envoyes')}
             />
             <KpiCard
               label="Factures en attente"
@@ -137,6 +142,7 @@ export default function AccueilTabContent() {
               iconColor="text-[hsl(var(--ap-warning))]"
               subtitle={`${kpis!.factures_en_attente.count} facture(s)`}
               trend={trends?.factures_en_attente}
+              onClick={() => setKpiDetail('factures_en_attente')}
             />
             <KpiCard
               label="Délai RDV"
@@ -146,6 +152,7 @@ export default function AccueilTabContent() {
               iconColor="text-[hsl(var(--ap-info))]"
               subtitle={kpis!.coverage_rdv_delay < 100 ? `${kpis!.coverage_rdv_delay.toFixed(0)}% couverture` : undefined}
               trend={trends?.avg_rdv_delay_days}
+              onClick={() => setKpiDetail('delai_rdv')}
             />
             <KpiCard
               label="Délai validation devis"
@@ -155,6 +162,7 @@ export default function AccueilTabContent() {
               iconColor="text-accent-foreground"
               subtitle={kpis!.coverage_devis_validation_delay < 100 ? `${kpis!.coverage_devis_validation_delay.toFixed(0)}% couverture` : undefined}
               trend={trends?.avg_devis_validation_delay_days}
+              onClick={() => setKpiDetail('delai_devis')}
             />
           </div>
 
