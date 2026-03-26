@@ -1,9 +1,9 @@
 /**
  * treasury-bridge-callback
  * 
- * Handles the return from Bridge Connect.
- * After the user completes bank consent in Bridge, they are redirected back.
- * This function finalizes the connection status and triggers initial sync.
+ * Processes the return from Bridge Connect.
+ * Bridge callback_url receives: user_uuid, item_id, success, step, source, context.
+ * This function finalizes the connection and prepares for initial sync.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -50,12 +50,12 @@ Deno.serve(async (req) => {
     });
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: userData, error: userError } = await userClient.auth.getUser(token);
+    if (userError || !userData?.user) {
       return errorResponse("AUTH", "Token invalide", 401);
     }
 
-    const userId = claimsData.claims.sub as string;
+    const userId = userData.user.id;
     const serviceClient = createClient(supabaseUrl, serviceKey);
 
     const { data: profile } = await serviceClient
@@ -75,10 +75,18 @@ Deno.serve(async (req) => {
       return errorResponse("VALIDATION", "JSON invalide", 400);
     }
 
-    const { connectionId, bridgeStatus } = body;
+    const { connectionId } = body;
     if (!connectionId || typeof connectionId !== "string") {
       return errorResponse("VALIDATION", "connectionId requis", 400);
     }
+
+    // Bridge callback params (from callback_url query string, forwarded by front)
+    const bridgeSuccess = body.success; // true/false from Bridge
+    const bridgeItemId = body.item_id as string | undefined; // Bridge item ID
+    const bridgeStep = body.step as string | undefined; // e.g. "item_created", "sca"
+    const bridgeSource = body.source as string | undefined; // e.g. "connect"
+    const bridgeContext = body.context as string | undefined;
+    const bridgeUserUuid = body.user_uuid as string | undefined;
 
     // Verify ownership
     const { data: conn, error: connErr } = await serviceClient
@@ -95,45 +103,41 @@ Deno.serve(async (req) => {
       return errorResponse("FORBIDDEN_SCOPE", "Connexion hors périmètre", 403);
     }
 
-    // Determine status from Bridge callback
-    // Bridge Connect redirects with status parameter: success, consent_declined, etc.
-    const status = typeof bridgeStatus === "string" ? bridgeStatus : "unknown";
-
+    // Determine internal status from Bridge callback params
+    const isSuccess = bridgeSuccess === true || bridgeSuccess === "true";
     let newInternalStatus: string;
     let errorCode: string | null = null;
     let errorMessage: string | null = null;
 
-    switch (status) {
-      case "success":
-      case "item_created":
-        newInternalStatus = "active";
-        break;
-      case "consent_declined":
-        newInternalStatus = "error";
-        errorCode = "CONSENT_DECLINED";
-        errorMessage = "L'utilisateur a refusé le consentement bancaire";
-        break;
-      case "sca_failed":
-        newInternalStatus = "error";
-        errorCode = "SCA_FAILED";
-        errorMessage = "Authentification forte (SCA) échouée";
-        break;
-      case "error":
-        newInternalStatus = "error";
-        errorCode = "BRIDGE_CONNECT_ERROR";
-        errorMessage = "Erreur lors de la connexion Bridge";
-        break;
-      default:
-        // If unknown, mark as pending and let sync determine real status
-        newInternalStatus = conn.status === "connecting" ? "pending" : conn.status as string;
-        break;
+    if (isSuccess) {
+      newInternalStatus = "active";
+    } else if (bridgeStep === "consent_declined" || bridgeContext === "consent_declined") {
+      newInternalStatus = "error";
+      errorCode = "CONSENT_DECLINED";
+      errorMessage = "L'utilisateur a refusé le consentement bancaire";
+    } else if (bridgeStep === "sca_failed" || bridgeContext === "sca_failed") {
+      newInternalStatus = "error";
+      errorCode = "SCA_FAILED";
+      errorMessage = "Authentification forte (SCA) échouée";
+    } else if (bridgeSuccess === false || bridgeSuccess === "false") {
+      newInternalStatus = "error";
+      errorCode = "BRIDGE_CONNECT_FAILED";
+      errorMessage = `Échec Connect Bridge (step=${bridgeStep ?? "unknown"})`;
+    } else {
+      // Unknown state — keep pending
+      newInternalStatus = conn.status === "connecting" ? "pending" : conn.status as string;
     }
 
     const updatePayload: Record<string, unknown> = {
       status: newInternalStatus,
-      provider_status: status,
+      provider_status: bridgeStep ?? (isSuccess ? "success" : "failed"),
       updated_at: new Date().toISOString(),
     };
+
+    // Store Bridge item_id if returned
+    if (bridgeItemId) {
+      updatePayload.external_item_id = bridgeItemId;
+    }
 
     if (errorCode) {
       updatePayload.error_code = errorCode;
@@ -144,11 +148,21 @@ Deno.serve(async (req) => {
       updatePayload.error_message = null;
     }
 
+    updatePayload.provider_last_payload = {
+      success: bridgeSuccess,
+      item_id: bridgeItemId,
+      step: bridgeStep,
+      source: bridgeSource,
+      context: bridgeContext,
+      user_uuid: bridgeUserUuid,
+      processed_at: new Date().toISOString(),
+    };
+
     await serviceClient.from("bank_connections")
       .update(updatePayload)
       .eq("id", connectionId);
 
-    // Log
+    // Activity log (best effort)
     try {
       await serviceClient.from("activity_log").insert({
         actor_id: userId,
@@ -157,8 +171,13 @@ Deno.serve(async (req) => {
         module: "tresorerie",
         entity_type: "bank_connection",
         entity_id: connectionId,
-        action: `bank_connection.bridge_callback.${status}`,
-        metadata: { bridgeStatus: status },
+        action: `bank_connection.bridge_callback.${isSuccess ? "success" : "failed"}`,
+        metadata: {
+          success: bridgeSuccess,
+          item_id: bridgeItemId,
+          step: bridgeStep,
+          source: bridgeSource,
+        },
       });
     } catch (e) {
       console.error("[CALLBACK_LOG_FAILED]", e);
@@ -167,8 +186,8 @@ Deno.serve(async (req) => {
     return successResponse({
       connectionId,
       status: newInternalStatus,
-      bridgeStatus: status,
-      needsSync: newInternalStatus === "active",
+      itemId: bridgeItemId ?? null,
+      needsSync: isSuccess,
     });
 
   } catch (err) {

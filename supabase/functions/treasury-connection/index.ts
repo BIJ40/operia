@@ -29,6 +29,7 @@ interface UserContext {
   userId: string;
   agencyId: string;
   globalRole: string;
+  email?: string;
 }
 
 const TREASURY_WRITE_ALLOWED_ROLES = new Set([
@@ -39,7 +40,6 @@ const TREASURY_WRITE_ALLOWED_ROLES = new Set([
 ]);
 
 const BRIDGE_API_BASE = "https://api.bridgeapi.io";
-const BRIDGE_SANDBOX_BASE = "https://api.bridgeapi.io"; // Same base, sandbox via credentials
 
 // ═══════════════════════════════════════════════════════════
 // Helpers
@@ -72,7 +72,8 @@ function getBridgeCredentials(): { clientId: string; clientSecret: string } | nu
 }
 
 /**
- * Call Bridge API with proper auth headers
+ * Call Bridge API v3 with proper headers.
+ * If accessToken is provided, sends Bearer authorization (user-scoped calls).
  */
 async function bridgeRequest(
   path: string,
@@ -124,12 +125,13 @@ async function getAuthenticatedUserContext(
   });
 
   const token = authHeader.replace("Bearer ", "");
-  const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
-  if (claimsError || !claimsData?.claims) {
+  const { data: userData, error: userError } = await userClient.auth.getUser(token);
+  if (userError || !userData?.user) {
     return errorResponse("AUTH", "Token invalide ou expiré", 401);
   }
 
-  const userId = claimsData.claims.sub as string;
+  const userId = userData.user.id;
+  const userEmail = userData.user.email ?? undefined;
   const serviceClient = createClient(supabaseUrl, serviceKey);
 
   const { data: profile, error: profileErr } = await serviceClient
@@ -147,7 +149,12 @@ async function getAuthenticatedUserContext(
   }
 
   return {
-    ctx: { userId, agencyId: profile.agency_id, globalRole: profile.global_role ?? "base_user" },
+    ctx: {
+      userId,
+      agencyId: profile.agency_id,
+      globalRole: profile.global_role ?? "base_user",
+      email: userEmail,
+    },
     serviceClient,
   };
 }
@@ -218,12 +225,12 @@ async function safeActivityLog(
 }
 
 // ═══════════════════════════════════════════════════════════
-// Bridge user management
+// Bridge v3 aggregation helpers
 // ═══════════════════════════════════════════════════════════
 
 /**
- * Get or create a Bridge user for the current Operia user.
- * Returns the bridge_user_uuid.
+ * Get or create a Bridge user via POST /v3/aggregation/users.
+ * Stores the mapping in bridge_user_mappings.
  */
 async function ensureBridgeUser(
   serviceClient: ReturnType<typeof createClient>,
@@ -242,11 +249,14 @@ async function ensureBridgeUser(
     return { bridgeUserUuid: existing.bridge_user_uuid };
   }
 
-  // Create Bridge user
+  // Create Bridge user via v3 aggregation endpoint
   const externalUserId = `operia_${ctx.agencyId}_${ctx.userId}`;
-  const resp = await bridgeRequest("/v2/users", {
+  const resp = await bridgeRequest("/v3/aggregation/users", {
     method: "POST",
-    body: { external_user_id: externalUserId },
+    body: {
+      external_user_id: externalUserId,
+      email: ctx.email ?? `${externalUserId}@operia.app`,
+    },
     clientId: creds.clientId,
     clientSecret: creds.clientSecret,
   });
@@ -266,15 +276,44 @@ async function ensureBridgeUser(
     user_id: ctx.userId,
     agency_id: ctx.agencyId,
     bridge_user_uuid: bridgeUser.uuid,
-    bridge_user_email: bridgeUser.email ?? null,
+    bridge_user_email: bridgeUser.email ?? ctx.email ?? null,
     updated_at: new Date().toISOString(),
   }, { onConflict: "user_id,agency_id" });
 
   return { bridgeUserUuid: bridgeUser.uuid };
 }
 
+/**
+ * Get a Bridge authorization token for a specific user.
+ * POST /v3/aggregation/authorization/token
+ * Returns an access_token valid ~2h, required for connect sessions and data fetching.
+ */
+async function getBridgeAccessToken(
+  bridgeUserUuid: string,
+  creds: { clientId: string; clientSecret: string }
+): Promise<{ accessToken: string } | Response> {
+  const resp = await bridgeRequest("/v3/aggregation/authorization/token", {
+    method: "POST",
+    body: { user_uuid: bridgeUserUuid },
+    clientId: creds.clientId,
+    clientSecret: creds.clientSecret,
+  });
+
+  if (!resp.ok) {
+    console.error("[BRIDGE_AUTH_TOKEN_FAILED]", resp.data);
+    return errorResponse("BRIDGE_ERROR", `Échec obtention token Bridge (${resp.status})`, 502);
+  }
+
+  const tokenData = resp.data as { access_token?: string };
+  if (!tokenData.access_token) {
+    return errorResponse("BRIDGE_ERROR", "Token Bridge invalide (pas d'access_token)", 502);
+  }
+
+  return { accessToken: tokenData.access_token };
+}
+
 // ═══════════════════════════════════════════════════════════
-// Action: CREATE — real Bridge Connect session
+// Action: CREATE — real Bridge Connect session (v3)
 // ═══════════════════════════════════════════════════════════
 
 async function handleCreate(
@@ -282,7 +321,7 @@ async function handleCreate(
   ctx: UserContext,
   body: Record<string, unknown>
 ): Promise<Response> {
-  const { displayName, redirectUrl } = body;
+  const { displayName, callbackUrl: bodyCallbackUrl } = body;
 
   if (!displayName || typeof displayName !== "string" || displayName.trim().length < 2) {
     return errorResponse("VALIDATION", "Nom de connexion invalide (minimum 2 caractères)", 400);
@@ -293,12 +332,17 @@ async function handleCreate(
     return errorResponse("BRIDGE_NOT_CONFIGURED", "Bridge n'est pas configuré (secrets manquants)", 503);
   }
 
-  // 1. Ensure Bridge user
+  // 1. Ensure Bridge user (v3)
   const userResult = await ensureBridgeUser(serviceClient, ctx, creds);
   if (userResult instanceof Response) return userResult;
   const { bridgeUserUuid } = userResult;
 
-  // 2. Create internal connection record first
+  // 2. Get authorization token for this user
+  const tokenResult = await getBridgeAccessToken(bridgeUserUuid, creds);
+  if (tokenResult instanceof Response) return tokenResult;
+  const { accessToken } = tokenResult;
+
+  // 3. Create internal connection record
   const { data: connection, error: insertErr } = await serviceClient
     .from("bank_connections")
     .insert({
@@ -317,43 +361,52 @@ async function handleCreate(
     return errorResponse("DB", "Erreur lors de la création de la connexion", 500);
   }
 
-  // 3. Create Bridge Connect session
-  const callbackUrl = typeof redirectUrl === "string" && redirectUrl
-    ? redirectUrl
-    : Deno.env.get("BRIDGE_REDIRECT_URL") ?? "https://operiav2.lovable.app/?tab=pilotage.tresorerie&bridge_callback=1";
+  // 4. Create Bridge Connect session via v3
+  const callbackUrlValue = typeof bodyCallbackUrl === "string" && bodyCallbackUrl
+    ? bodyCallbackUrl
+    : Deno.env.get("BRIDGE_CALLBACK_URL") ?? "https://operiav2.lovable.app/?tab=pilotage.tresorerie&bridge_callback=1";
+
+  const userEmail = ctx.email ?? `operia_${ctx.agencyId}_${ctx.userId}@operia.app`;
 
   const sessionResp = await bridgeRequest("/v3/aggregation/connect-sessions", {
     method: "POST",
     body: {
-      user_uuid: bridgeUserUuid,
-      redirect_url: callbackUrl,
-      // default mode = payment accounts (most robust for PME treasury)
+      callback_url: callbackUrlValue,
+      user_email: userEmail,
     },
     clientId: creds.clientId,
     clientSecret: creds.clientSecret,
+    accessToken, // Bearer token required for connect session
   });
 
   if (!sessionResp.ok) {
     console.error("[BRIDGE_CONNECT_SESSION_FAILED]", sessionResp.data);
-    // Rollback connection to error
     await serviceClient.from("bank_connections")
-      .update({ status: "error", error_code: "BRIDGE_SESSION_FAIL", error_message: JSON.stringify(sessionResp.data), updated_at: new Date().toISOString() })
+      .update({
+        status: "error",
+        error_code: "BRIDGE_SESSION_FAIL",
+        error_message: JSON.stringify(sessionResp.data).slice(0, 500),
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", connection.id);
     return errorResponse("BRIDGE_ERROR", `Échec création session Bridge Connect (${sessionResp.status})`, 502);
   }
 
-  const session = sessionResp.data as { id: string; url: string };
-  if (!session.url || !session.id) {
+  const session = sessionResp.data as { id?: string; url?: string; connect_url?: string };
+  const connectUrl = session.url ?? session.connect_url;
+  const sessionId = session.id;
+
+  if (!connectUrl) {
     await serviceClient.from("bank_connections")
       .update({ status: "error", error_code: "BRIDGE_SESSION_INVALID", updated_at: new Date().toISOString() })
       .eq("id", connection.id);
-    return errorResponse("BRIDGE_ERROR", "Réponse Bridge Connect invalide", 502);
+    return errorResponse("BRIDGE_ERROR", "Réponse Bridge Connect invalide (pas d'URL)", 502);
   }
 
-  // 4. Update connection with session info
+  // 5. Update connection with session info
   await serviceClient.from("bank_connections")
     .update({
-      redirect_session_id: session.id,
+      redirect_session_id: sessionId ?? null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", connection.id);
@@ -364,13 +417,13 @@ async function handleCreate(
     action: "bank_connection.bridge_session_created",
     entityId: connection.id,
     entityLabel: (displayName as string).trim(),
-    metadata: { bridgeSessionId: session.id, role: ctx.globalRole },
+    metadata: { bridgeSessionId: sessionId, role: ctx.globalRole },
   });
 
   return successResponse({
     connectionId: connection.id,
-    bridgeConnectUrl: session.url,
-    bridgeSessionId: session.id,
+    bridgeConnectUrl: connectUrl,
+    bridgeSessionId: sessionId,
   });
 }
 
@@ -387,18 +440,21 @@ async function handleDisconnect(
   if (ownership instanceof Response) return ownership;
   const { conn } = ownership;
 
-  // If Bridge item exists, try to delete it
+  // If Bridge item exists, try to delete it via v3
   const creds = getBridgeCredentials();
-  if (creds && conn.external_item_id) {
+  if (creds && conn.external_item_id && conn.external_user_id) {
     try {
-      await bridgeRequest(`/v2/items/${conn.external_item_id}/delete`, {
-        method: "POST",
-        clientId: creds.clientId,
-        clientSecret: creds.clientSecret,
-      });
+      const tokenResult = await getBridgeAccessToken(conn.external_user_id as string, creds);
+      if (!(tokenResult instanceof Response)) {
+        await bridgeRequest(`/v3/aggregation/items/${conn.external_item_id}`, {
+          method: "DELETE",
+          clientId: creds.clientId,
+          clientSecret: creds.clientSecret,
+          accessToken: tokenResult.accessToken,
+        });
+      }
     } catch (e) {
       console.error("[BRIDGE_DELETE_ITEM_WARN]", e);
-      // Non-blocking
     }
   }
 
@@ -425,7 +481,7 @@ async function handleDisconnect(
 }
 
 // ═══════════════════════════════════════════════════════════
-// Action: SYNC — triggers real Bridge sync
+// Action: SYNC — real Bridge v3 sync
 // ═══════════════════════════════════════════════════════════
 
 async function handleSync(
@@ -442,9 +498,15 @@ async function handleSync(
     return errorResponse("BRIDGE_NOT_CONFIGURED", "Bridge n'est pas configuré", 503);
   }
 
-  if (!conn.external_user_id) {
+  const bridgeUserUuid = conn.external_user_id as string | null;
+  if (!bridgeUserUuid) {
     return errorResponse("VALIDATION", "Connexion sans utilisateur Bridge associé", 400);
   }
+
+  // Get access token for data fetching
+  const tokenResult = await getBridgeAccessToken(bridgeUserUuid, creds);
+  if (tokenResult instanceof Response) return tokenResult;
+  const { accessToken } = tokenResult;
 
   // Mark syncing
   await serviceClient.from("bank_connections")
@@ -464,28 +526,37 @@ async function handleSync(
   let itemsUpdated = 0;
 
   try {
-    // 1. Fetch items for user
-    const itemsResp = await bridgeRequest(`/v2/items?user_uuid=${conn.external_user_id}`, {
+    // ── 1. Fetch accounts via GET /v3/aggregation/accounts ──
+    const accountsResp = await bridgeRequest("/v3/aggregation/accounts", {
       clientId: creds.clientId,
       clientSecret: creds.clientSecret,
+      accessToken,
     });
 
-    if (!itemsResp.ok) {
-      throw new Error(`Bridge items fetch failed (${itemsResp.status}): ${JSON.stringify(itemsResp.data)}`);
+    if (!accountsResp.ok) {
+      throw new Error(`Bridge accounts fetch failed (${accountsResp.status}): ${JSON.stringify(accountsResp.data)}`);
     }
 
-    const items = ((itemsResp.data as { resources?: unknown[] })?.resources ?? []) as Array<{
+    const accountsData = accountsResp.data as { resources?: unknown[] };
+    const bridgeAccounts = (accountsData.resources ?? []) as Array<{
       id: number;
-      status: number;
+      item_id?: number;
+      name: string;
+      balance: number;
+      iban?: string;
+      currency_code?: string;
+      type?: string;
+      bank_id?: number;
+      instant_balance?: { amount: number };
+      status?: number;
       status_code_info?: string;
     }>;
 
-    if (items.length === 0) {
-      // No items yet — connection may still be pending
+    if (bridgeAccounts.length === 0) {
       await serviceClient.from("bank_connections")
         .update({
           status: "pending",
-          provider_status: "no_items",
+          provider_status: "no_accounts",
           updated_at: new Date().toISOString(),
         })
         .eq("id", body.connectionId);
@@ -496,44 +567,23 @@ async function handleSync(
           .eq("id", syncLogId);
       }
 
-      return successResponse({ message: "Aucun item Bridge trouvé. Le consentement bancaire est peut-être en attente." });
+      return successResponse({ message: "Aucun compte Bridge trouvé. Le consentement est peut-être en attente." });
     }
-
-    // Use first item (standard case for single-bank connection)
-    const item = items[0];
-    await serviceClient.from("bank_connections")
-      .update({
-        external_item_id: String(item.id),
-        provider_status: item.status_code_info ?? String(item.status),
-        provider_last_payload: item,
-      })
-      .eq("id", body.connectionId);
-
-    // 2. Fetch accounts
-    const accountsResp = await bridgeRequest(`/v2/accounts?item_id=${item.id}`, {
-      clientId: creds.clientId,
-      clientSecret: creds.clientSecret,
-    });
-
-    if (!accountsResp.ok) {
-      throw new Error(`Bridge accounts fetch failed (${accountsResp.status})`);
-    }
-
-    const bridgeAccounts = ((accountsResp.data as { resources?: unknown[] })?.resources ?? []) as Array<{
-      id: number;
-      name: string;
-      balance: number;
-      iban?: string;
-      currency_code?: string;
-      type?: string;
-      bank_id?: number;
-      instant_balance?: { amount: number };
-      status?: number;
-    }>;
 
     itemsReceived += bridgeAccounts.length;
 
-    // Upsert accounts
+    // Extract item_id from the first account if available
+    const firstItemId = bridgeAccounts[0]?.item_id;
+    if (firstItemId) {
+      await serviceClient.from("bank_connections")
+        .update({
+          external_item_id: String(firstItemId),
+          provider_status: bridgeAccounts[0]?.status_code_info ?? String(bridgeAccounts[0]?.status ?? ""),
+        })
+        .eq("id", body.connectionId);
+    }
+
+    // ── 2. Upsert accounts ──
     for (const ba of bridgeAccounts) {
       const extId = String(ba.id);
       const ibanMasked = ba.iban ? ba.iban.replace(/(.{4})(.*)(.{4})/, "$1****$3") : null;
@@ -579,44 +629,56 @@ async function handleSync(
       }
     }
 
-    // 3. Fetch transactions for each account
-    for (const ba of bridgeAccounts) {
-      const txResp = await bridgeRequest(`/v2/accounts/${ba.id}/transactions?limit=500`, {
+    // ── 3. Fetch transactions via GET /v3/aggregation/transactions ──
+    // Paginate with starting_after cursor
+    let hasMoreTx = true;
+    let startingAfter: string | undefined;
+
+    while (hasMoreTx) {
+      let txPath = "/v3/aggregation/transactions?limit=100";
+      if (startingAfter) txPath += `&starting_after=${startingAfter}`;
+
+      // If we have a since date from last sync, use it for incremental
+      const lastSuccessSync = conn.last_success_sync_at as string | null;
+      if (lastSuccessSync) {
+        const sinceDate = lastSuccessSync.split("T")[0]; // YYYY-MM-DD
+        txPath += `&since=${sinceDate}`;
+      }
+
+      const txResp = await bridgeRequest(txPath, {
         clientId: creds.clientId,
         clientSecret: creds.clientSecret,
+        accessToken,
       });
 
       if (!txResp.ok) {
-        console.error(`[BRIDGE_TX_FETCH_WARN] account ${ba.id}:`, txResp.status);
-        continue;
+        console.error("[BRIDGE_TX_FETCH_WARN]", txResp.status, txResp.data);
+        break;
       }
 
-      const transactions = ((txResp.data as { resources?: unknown[] })?.resources ?? []) as Array<{
-        id: number;
-        clean_description?: string;
-        raw_description?: string;
-        amount: number;
-        date: string;
-        currency_code?: string;
-        category_id?: number;
-        is_future?: boolean;
-      }>;
+      const txData = txResp.data as {
+        resources?: Array<{
+          id: number;
+          account_id: number;
+          clean_description?: string;
+          raw_description?: string;
+          amount: number;
+          date: string;
+          value_date?: string;
+          currency_code?: string;
+          category_id?: number;
+          is_future?: boolean;
+        }>;
+        pagination?: { next_uri?: string };
+      };
 
-      // Get internal account id
-      const { data: internalAccount } = await serviceClient
-        .from("bank_accounts")
-        .select("id")
-        .eq("external_account_id", String(ba.id))
-        .eq("bank_connection_id", body.connectionId)
-        .single();
-
-      if (!internalAccount) continue;
-
+      const transactions = txData.resources ?? [];
       itemsReceived += transactions.length;
 
       for (const tx of transactions) {
         const extTxId = String(tx.id);
 
+        // Deduplicate by external_transaction_id
         const { data: existingTx } = await serviceClient
           .from("bank_transactions")
           .select("id")
@@ -625,13 +687,24 @@ async function handleSync(
 
         if (existingTx) {
           itemsUpdated++;
-          continue; // Don't overwrite existing transactions
+          continue;
         }
+
+        // Find internal account by bridge account_id
+        const { data: internalAccount } = await serviceClient
+          .from("bank_accounts")
+          .select("id")
+          .eq("external_account_id", String(tx.account_id))
+          .eq("bank_connection_id", body.connectionId)
+          .maybeSingle();
+
+        if (!internalAccount) continue;
 
         await serviceClient.from("bank_transactions").insert({
           bank_account_id: internalAccount.id,
           external_transaction_id: extTxId,
           booking_date: tx.date,
+          value_date: tx.value_date ?? null,
           label: tx.clean_description ?? tx.raw_description ?? "Transaction",
           raw_label: tx.raw_description ?? null,
           amount: Math.abs(tx.amount),
@@ -643,13 +716,19 @@ async function handleSync(
         });
         itemsCreated++;
       }
+
+      // Pagination: check for next page
+      if (txData.pagination?.next_uri && transactions.length > 0) {
+        startingAfter = String(transactions[transactions.length - 1].id);
+      } else {
+        hasMoreTx = false;
+      }
     }
 
-    // 4. Finalize
-    const finalStatus = mapBridgeItemStatus(items[0].status);
+    // ── 4. Finalize ──
     await serviceClient.from("bank_connections")
       .update({
-        status: finalStatus,
+        status: "active",
         last_success_sync_at: new Date().toISOString(),
         error_code: null,
         error_message: null,
@@ -678,7 +757,7 @@ async function handleSync(
       metadata: { itemsReceived, itemsCreated, itemsUpdated, role: ctx.globalRole },
     });
 
-    return successResponse({ itemsReceived, itemsCreated, itemsUpdated, status: finalStatus });
+    return successResponse({ itemsReceived, itemsCreated, itemsUpdated, status: "active" });
 
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
@@ -716,18 +795,6 @@ function mapBridgeAccountType(bridgeType?: string): string {
   if (t.includes("loan") || t.includes("pret") || t.includes("credit")) return "loan";
   if (t.includes("checking") || t.includes("courant")) return "checking";
   return "other";
-}
-
-/**
- * Map Bridge item status code to internal connection status.
- * Bridge status codes: 0 = OK, 402 = needs user action, 429 = rate limited, 1003 = needs reauth, etc.
- */
-function mapBridgeItemStatus(bridgeStatus: number): string {
-  if (bridgeStatus === 0) return "active";
-  if (bridgeStatus === 402 || bridgeStatus === 1003 || bridgeStatus === 1010) return "requires_reauth";
-  if (bridgeStatus === 429) return "error"; // rate limited
-  if (bridgeStatus >= 1000) return "error";
-  return "active";
 }
 
 // ═══════════════════════════════════════════════════════════
