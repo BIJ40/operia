@@ -79,7 +79,7 @@ function getStatusFromProject(project: AnyRecord, facture: AnyRecord | null, dev
   if (facture) {
     const resteDu = Number(facture.data?.calcReglementsReste || facture.calcReglementsReste || 0);
     if (resteDu <= 0) {
-      return { status: 'regle', label: 'Réglé' };
+      return { status: 'clos', label: 'Clos' };
     }
     return { status: 'attente_paiement', label: 'Attente paiement' };
   }

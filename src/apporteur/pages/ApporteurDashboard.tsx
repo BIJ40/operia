@@ -28,7 +28,7 @@ export default function ApporteurDashboard() {
 
   // Compute KPIs
   const kpis = useMemo(() => {
-    const enCours = dossiers.filter(d => !['regle', 'clos', 'annule'].includes(d.status));
+    const enCours = dossiers.filter(d => !['clos', 'annule'].includes(d.status));
     const facturesNonReglees = dossiers.filter(d => d.factureId && d.restedu > 0);
     const devisEnvoyes = dossiers.filter(d => d.status === 'devis_envoye');
 
