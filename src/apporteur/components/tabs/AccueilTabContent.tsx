@@ -46,6 +46,11 @@ export default function AccueilTabContent() {
   const kpis = stats?.kpis;
   const trends = stats?.trends;
 
+  const handleDossierClick = useCallback((ref: string) => {
+    const found = dossiers.find(d => d.ref === ref);
+    if (found) setSelectedDossier(found);
+  }, [dossiers]);
+
   return (
     <div className="p-4 sm:p-6 space-y-4">
       {/* Header */}
