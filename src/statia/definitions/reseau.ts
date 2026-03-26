@@ -23,7 +23,10 @@ function isFieldTechnician(user: any): boolean {
 
   const skills = user?.data?.skills ?? user?.skills;
   const hasSkills = Array.isArray(skills) && skills.length > 0;
-  const isActive = normalizeIsOn(user?.is_on) || normalizeIsOn(user?.isActive);
+  const isActive =
+    normalizeIsOn(user?.is_on) ||
+    normalizeIsOn(user?.isActive) ||
+    (user?.is_on === undefined && user?.isActive === undefined);
 
   return isActive && hasSkills;
 }
