@@ -27,7 +27,9 @@ interface DossierRow {
   lastModified: string | null;
   devisHT: number;
   factureHT: number;
+  factureTTC: number;
   restedu: number;
+  resteduTTC: number;
   devisId: number | null;
   factureId: number | null;
 }
@@ -79,7 +81,7 @@ function getStatusFromProject(project: AnyRecord, facture: AnyRecord | null, dev
   if (facture) {
     const resteDu = Number(facture.data?.calcReglementsReste || facture.calcReglementsReste || 0);
     if (resteDu <= 0) {
-      return { status: 'regle', label: 'Réglé' };
+      return { status: 'clos', label: 'Clos' };
     }
     return { status: 'attente_paiement', label: 'Attente paiement' };
   }
@@ -104,12 +106,28 @@ function getStatusFromProject(project: AnyRecord, facture: AnyRecord | null, dev
     }
   }
 
-  // PRIORITÉ 5: Stand-by / en attente
+  // PRIORITÉ 5: Dossiers à chiffrer / devis à produire
+  // Certains dossiers gardent un état Apogée contenant "planifié/programmé"
+  // alors qu'ils sont revenus administrativement en phase devis.
+  // On force donc la lecture métier du workflow avant le mapping générique "planifié".
+  if ([
+    'devis_a_faire',
+    'devis a faire',
+    'devis à faire',
+    'quote_to_do',
+    'quote to do',
+    'to_quote',
+    'to quote',
+  ].some((s) => state.includes(s))) {
+    return { status: 'devis_en_cours', label: 'Devis à faire' };
+  }
+
+  // PRIORITÉ 6: Stand-by / en attente
   if (['stand_by', 'standby', 'stand by', 'en attente', 'attente', 'suspendu'].some((s) => state.includes(s))) {
     return { status: 'stand_by', label: 'Stand-by' };
   }
 
-  // PRIORITÉ 6: États intermédiaires
+  // PRIORITÉ 7: États intermédiaires
   if (['rdv_tvx', 'rdv travaux', 'travaux planifié'].some((s) => state.includes(s))) {
     return { status: 'rdv_travaux', label: 'RDV Travaux' };
   }
@@ -495,7 +513,9 @@ Deno.serve(async (req) => {
         lastModified: formatDateISO(lastModified),
         devisHT: Math.round(devisHT * 100) / 100,
         factureHT: Math.round(factureHT * 100) / 100,
+        factureTTC: Math.round(totalTTC * 100) / 100,
         restedu: Math.round(Math.max(0, resteDuHT) * 100) / 100,
+        resteduTTC: Math.round(Math.max(0, resteDuTTC) * 100) / 100,
         devisId: devis && !devisIsCancelled ? Number(devis.id) : null,
         factureId: facture ? Number(facture.id) : null,
         v2,

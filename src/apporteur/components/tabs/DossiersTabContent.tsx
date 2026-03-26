@@ -52,17 +52,22 @@ import {
 import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { DossierStepper } from '../cockpit/DossierStepper';
+import { DossierDetailDialog } from '../cockpit/DossierDetailDialog';
 import type { DossierRowV2 } from '../../types/apporteur-dossier-v2';
 import { RefuserDevisDialog } from '../dialogs/RefuserDevisDialog';
 import { ValiderDevisDialog } from '../dialogs/ValiderDevisDialog';
 import { FactureRegleeDialog } from '../dialogs/FactureRegleeDialog';
 import { DossierInactifDialog } from '../dialogs/DossierInactifDialog';
+import { DocDownloadButton } from '../DocDownloadButton';
+import { useApporteurDossierActions } from '../../hooks/useApporteurDossierActions';
+import { Textarea } from '@/components/ui/textarea';
 
 type SortField = 'ref' | 'clientName' | 'status' | 'dateCreation' | 'factureHT' | 'restedu';
 type SortDirection = 'asc' | 'desc';
 
 export default function DossiersTabContent() {
   const queryClient = useQueryClient();
+  const dossierAction = useApporteurDossierActions();
   const [searchParams, setSearchParams] = useSearchParams();
   const { data, isLoading, error, isFetching } = useApporteurDossiers();
   
@@ -71,6 +76,7 @@ export default function DossiersTabContent() {
   const [sortField, setSortField] = useState<SortField>('dateCreation');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [selectedDossier, setSelectedDossier] = useState<DossierRow | null>(null);
+  const [inlineComment, setInlineComment] = useState('');
   const [alerteRefs, setAlerteRefs] = useState<string[] | null>(null);
 
   // Selection for bulk actions
@@ -82,6 +88,9 @@ export default function DossiersTabContent() {
   const [factureRegleeRef, setFactureRegleeRef] = useState<string | null>(null);
   const [inactifRef, setInactifRef] = useState<string | null>(null);
 
+  const dossiers = data?.data?.dossiers || [];
+  const totals = data?.data?.totals || { count: 0, resteDu: 0 };
+
   useEffect(() => {
     const urlStatus = searchParams.get('status');
     if (urlStatus) {
@@ -91,7 +100,7 @@ export default function DossiersTabContent() {
     if (urlAlerteRefs) {
       const refs = urlAlerteRefs.split(',').filter(Boolean);
       setAlerteRefs(refs);
-      setStatusFilter('all'); // Reset status filter when alerte filter is active
+      setStatusFilter('all');
       setSearchParams(prev => {
         const newParams = new URLSearchParams(prev);
         newParams.delete('alerteRefs');
@@ -100,8 +109,21 @@ export default function DossiersTabContent() {
     }
   }, [searchParams, setSearchParams]);
 
-  const dossiers = data?.data?.dossiers || [];
-  const totals = data?.data?.totals || { count: 0, resteDu: 0 };
+  // Auto-open dossier detail from URL param (e.g. from AlertesBanner)
+  useEffect(() => {
+    const dossierRef = searchParams.get('dossierRef');
+    if (dossierRef && dossiers.length > 0 && !selectedDossier) {
+      const found = dossiers.find(d => d.ref === dossierRef);
+      if (found) {
+        setSelectedDossier(found);
+      }
+      setSearchParams(prev => {
+        const newParams = new URLSearchParams(prev);
+        newParams.delete('dossierRef');
+        return newParams;
+      }, { replace: true });
+    }
+  }, [searchParams, dossiers, selectedDossier, setSearchParams]);
 
   // Friendly label mapping for apporteur view
   const getApporteurLabel = (d: DossierRow): string => {
@@ -115,9 +137,9 @@ export default function DossiersTabContent() {
   };
 
   // Virtual status for filtering: "en_cours_all" = everything not facturé+
-  const FINISHED_STATUSES = new Set(['facture', 'attente_paiement', 'regle', 'clos', 'annule']);
+  const FINISHED_STATUSES = new Set(['facture', 'attente_paiement', 'clos', 'annule']);
 
-  const STATUS_ORDER = ['en_cours_all', 'en_cours', 'programme', 'stand_by', 'devis_en_cours', 'devis_envoye', 'devis_valide', 'attente_paiement', 'facture', 'regle', 'clos', 'annule'];
+  const STATUS_ORDER = ['en_cours_all', 'en_cours', 'programme', 'stand_by', 'devis_en_cours', 'devis_envoye', 'devis_valide', 'attente_paiement', 'facture', 'clos', 'annule'];
 
   const statuses = useMemo(() => {
     const unique = new Set(dossiers.map(d => d.status));
@@ -215,7 +237,9 @@ export default function DossiersTabContent() {
   const filteredTotals = useMemo(() => ({
     count: filteredDossiers.length,
     resteDu: filteredDossiers.reduce((sum, d) => sum + d.restedu, 0),
+    resteDuTTC: filteredDossiers.reduce((sum, d) => sum + (d.resteduTTC || 0), 0),
     factureHT: filteredDossiers.reduce((sum, d) => sum + d.factureHT, 0),
+    factureTTC: filteredDossiers.reduce((sum, d) => sum + (d.factureTTC || 0), 0),
   }), [filteredDossiers]);
 
   // Dossiers with devis_envoye status (selectable for bulk refus)
@@ -488,7 +512,7 @@ export default function DossiersTabContent() {
                     onClick={() => handleSort('factureHT')}
                   >
                     <div className="flex items-center justify-end">
-                      Facturé HT <SortIcon field="factureHT" />
+                      Facturé TTC <SortIcon field="factureHT" />
                     </div>
                   </TableHead>
                   <TableHead 
@@ -496,15 +520,16 @@ export default function DossiersTabContent() {
                     onClick={() => handleSort('restedu')}
                   >
                     <div className="flex items-center justify-end">
-                      Reste dû <SortIcon field="restedu" />
+                      Reste dû TTC <SortIcon field="restedu" />
                     </div>
                   </TableHead>
+                  <TableHead className="w-16 text-center">PDF</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredDossiers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                       Aucun dossier trouvé
                     </TableCell>
                   </TableRow>
@@ -548,10 +573,19 @@ export default function DossiersTabContent() {
                           {d.devisHT > 0 ? formatCurrency(d.devisHT) : '-'}
                         </TableCell>
                         <TableCell className="text-right font-medium" onClick={() => setSelectedDossier(d)}>
-                          {d.factureHT > 0 ? formatCurrency(d.factureHT) : '-'}
+                          {(d.factureTTC || 0) > 0 ? formatCurrency(d.factureTTC) : d.factureHT > 0 ? formatCurrency(d.factureHT) : '-'}
                         </TableCell>
                         <TableCell className="text-right font-medium text-foreground" onClick={() => setSelectedDossier(d)}>
-                          {d.restedu > 0 ? formatCurrency(d.restedu) : d.factureHT > 0 ? '✓' : '-'}
+                          {(d.resteduTTC || d.restedu) > 0 ? formatCurrency(d.resteduTTC || d.restedu) : d.factureHT > 0 ? '✓' : '-'}
+                        </TableCell>
+                        <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                          {d.devisHT > 0 ? (
+                            <DocDownloadButton dossierRef={d.ref} docType="devis" />
+                          ) : d.factureHT > 0 ? (
+                            <DocDownloadButton dossierRef={d.ref} docType="factures" />
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
                         </TableCell>
                       </TableRow>
                     );
@@ -572,12 +606,14 @@ export default function DossiersTabContent() {
               <div className="flex items-center gap-2 text-sm">
                 <Euro className="w-4 h-4 text-muted-foreground" />
                 <span className="text-muted-foreground">Facturé:</span>
-                <span className="font-semibold">{formatCurrency(filteredTotals.factureHT)}</span>
+                <span className="font-semibold">{formatCurrency(filteredTotals.factureHT)} HT</span>
+                <span className="text-muted-foreground mx-1">·</span>
+                <span className="font-semibold">{formatCurrency(filteredTotals.factureTTC)} TTC</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-muted-foreground">Reste dû:</span>
                 <span className="font-semibold text-foreground">
-                  {formatCurrency(filteredTotals.resteDu)}
+                  {formatCurrency(filteredTotals.resteDu)} HT · {formatCurrency(filteredTotals.resteDuTTC)} TTC
                 </span>
               </div>
             </div>
@@ -585,199 +621,11 @@ export default function DossiersTabContent() {
         </CardContent>
       </Card>
 
-      {/* Dossier Detail Dialog */}
-      <Dialog open={!!selectedDossier} onOpenChange={() => setSelectedDossier(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FolderOpen className="w-5 h-5 text-primary" />
-              Dossier — {selectedDossier?.clientName}
-            </DialogTitle>
-          </DialogHeader>
-          {selectedDossier && (
-            <div className="space-y-4">
-              {/* V2 Stepper */}
-              <div className="pb-2">
-                <DossierStepper
-                  v2={(selectedDossier as DossierRowV2)?.v2}
-                  dates={{
-                    dateCreation: selectedDossier.dateCreation,
-                    datePremierRdv: selectedDossier.datePremierRdv,
-                    dateDevisEnvoye: selectedDossier.dateDevisEnvoye,
-                    dateDevisValide: selectedDossier.dateDevisValide,
-                    dateFacture: selectedDossier.dateFacture,
-                    dateReglement: selectedDossier.dateReglement,
-                  }}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Client</p>
-                  <p className="font-medium">{selectedDossier.clientName}</p>
-                </div>
-                {selectedDossier.city && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Ville</p>
-                    <p className="font-medium">{selectedDossier.city}</p>
-                  </div>
-                )}
-                {selectedDossier.address && (
-                  <div className="col-span-2">
-                    <p className="text-sm text-muted-foreground">Adresse</p>
-                    <p className="font-medium">{selectedDossier.address}</p>
-                  </div>
-                )}
-                <div>
-                  <p className="text-sm text-muted-foreground">Statut du dossier</p>
-                  <p className="font-medium">{getApporteurLabel(selectedDossier)}</p>
-                </div>
-              </div>
-
-              {/* Triple badges (V2) or single badge (V1) */}
-              <div>
-                <p className="text-sm text-muted-foreground mb-1.5">Statuts</p>
-                <div className="flex flex-wrap gap-2">
-                  {(() => {
-                    const v2 = (selectedDossier as DossierRowV2)?.v2;
-                    if (v2?.status) {
-                      return (
-                        <>
-                          <Badge className={cn(
-                            STATUS_CONFIG[selectedDossier.status]?.bgColor,
-                            STATUS_CONFIG[selectedDossier.status]?.color
-                          )}>
-                            📁 {getApporteurLabel(selectedDossier)}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            📄 Devis: {v2.status.devis.replace('_', ' ')}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            🧾 Facture: {v2.status.facture.replace('_', ' ')}
-                          </Badge>
-                        </>
-                      );
-                    }
-                    return (
-                      <Badge className={cn(
-                        STATUS_CONFIG[selectedDossier.status]?.bgColor,
-                        STATUS_CONFIG[selectedDossier.status]?.color
-                      )}>
-                        {getApporteurLabel(selectedDossier)}
-                      </Badge>
-                    );
-                  })()}
-                </div>
-              </div>
-
-              {/* Univers (V2) */}
-              {(() => {
-                const v2 = (selectedDossier as DossierRowV2)?.v2;
-                if (v2?.universes && v2.universes.length > 0) {
-                  return (
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Univers</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {v2.universes.map(u => (
-                          <Badge key={u} variant="secondary" className="text-xs">{u}</Badge>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                }
-                return null;
-              })()}
-
-              {/* Financier */}
-              {selectedDossier.factureHT > 0 && (
-                <div className="border-t pt-4">
-                  <p className="text-sm font-medium mb-3">Financier</p>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Facturé HT:</span>
-                      <span className="ml-2 font-semibold">{formatCurrency(selectedDossier.factureHT)}</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Reste dû:</span>
-                      <span className={cn(
-                        "ml-2 font-semibold",
-                        selectedDossier.restedu > 0 ? "text-[hsl(var(--ap-danger))]" : "text-[hsl(var(--ap-success))]"
-                      )}>
-                        {selectedDossier.restedu > 0 ? formatCurrency(selectedDossier.restedu) : 'Réglé'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ── Action Buttons ── */}
-              {(canRefuserDevis(selectedDossier) || canValiderDevis(selectedDossier) || canDeclareRegle(selectedDossier) || isInactif(selectedDossier)) && (
-                <div className="border-t pt-4">
-                  <p className="text-sm font-medium mb-3">Actions</p>
-                  <div className="flex flex-wrap gap-2">
-                    {canValiderDevis(selectedDossier) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2 border-[hsl(var(--ap-success)/.4)] text-[hsl(var(--ap-success))] hover:bg-[hsl(var(--ap-success-light))]"
-                        onClick={() => {
-                          setSelectedDossier(null);
-                          setValiderDevisRefs([selectedDossier.ref]);
-                        }}
-                      >
-                        <CheckCircle2 className="w-4 h-4" />
-                        Valider le devis
-                      </Button>
-                    )}
-                    {canRefuserDevis(selectedDossier) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2 border-[hsl(var(--ap-danger)/.4)] text-[hsl(var(--ap-danger))] hover:bg-[hsl(var(--ap-danger-light))]"
-                        onClick={() => {
-                          setSelectedDossier(null);
-                          setRefuserDevisRefs([selectedDossier.ref]);
-                        }}
-                      >
-                        <XCircle className="w-4 h-4" />
-                        Refuser le devis
-                      </Button>
-                    )}
-                    {canDeclareRegle(selectedDossier) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2 border-[hsl(var(--ap-success)/.4)] text-[hsl(var(--ap-success))] hover:bg-[hsl(var(--ap-success-light))]"
-                        onClick={() => {
-                          setSelectedDossier(null);
-                          setFactureRegleeRef(selectedDossier.ref);
-                        }}
-                      >
-                        <CheckCircle2 className="w-4 h-4" />
-                        Déclarer réglée
-                      </Button>
-                    )}
-                    {isInactif(selectedDossier) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                        onClick={() => {
-                          setSelectedDossier(null);
-                          setInactifRef(selectedDossier.ref);
-                        }}
-                      >
-                        <MessageSquarePlus className="w-4 h-4" />
-                        Action dossier
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Unified Dossier Detail Dialog */}
+      <DossierDetailDialog
+        dossier={selectedDossier}
+        onClose={() => { setSelectedDossier(null); setInlineComment(''); }}
+      />
 
       {/* Action Dialogs */}
       <RefuserDevisDialog

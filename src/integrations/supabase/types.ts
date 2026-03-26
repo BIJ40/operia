@@ -2619,6 +2619,387 @@ export type Database = {
           },
         ]
       }
+      bank_accounts: {
+        Row: {
+          account_label: string
+          account_type: string
+          available_balance: number | null
+          balance: number
+          balance_updated_at: string | null
+          bank_connection_id: string
+          bank_name: string
+          created_at: string
+          currency: string
+          external_account_id: string | null
+          iban_masked: string | null
+          id: string
+          instant_balance: number | null
+          metadata: Json | null
+          provider_account_type: string | null
+          sync_status: string
+          updated_at: string
+        }
+        Insert: {
+          account_label: string
+          account_type?: string
+          available_balance?: number | null
+          balance?: number
+          balance_updated_at?: string | null
+          bank_connection_id: string
+          bank_name: string
+          created_at?: string
+          currency?: string
+          external_account_id?: string | null
+          iban_masked?: string | null
+          id?: string
+          instant_balance?: number | null
+          metadata?: Json | null
+          provider_account_type?: string | null
+          sync_status?: string
+          updated_at?: string
+        }
+        Update: {
+          account_label?: string
+          account_type?: string
+          available_balance?: number | null
+          balance?: number
+          balance_updated_at?: string | null
+          bank_connection_id?: string
+          bank_name?: string
+          created_at?: string
+          currency?: string
+          external_account_id?: string | null
+          iban_masked?: string | null
+          id?: string
+          instant_balance?: number | null
+          metadata?: Json | null
+          provider_account_type?: string | null
+          sync_status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_accounts_bank_connection_id_fkey"
+            columns: ["bank_connection_id"]
+            isOneToOne: false
+            referencedRelation: "bank_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bank_connections: {
+        Row: {
+          agency_id: string
+          consent_expires_at: string | null
+          created_at: string
+          display_name: string
+          error_code: string | null
+          error_message: string | null
+          external_connection_id: string | null
+          external_item_id: string | null
+          external_user_id: string | null
+          id: string
+          last_error_at: string | null
+          last_success_sync_at: string | null
+          last_sync_at: string | null
+          metadata: Json | null
+          provider: string
+          provider_last_payload: Json | null
+          provider_status: string | null
+          redirect_session_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agency_id: string
+          consent_expires_at?: string | null
+          created_at?: string
+          display_name: string
+          error_code?: string | null
+          error_message?: string | null
+          external_connection_id?: string | null
+          external_item_id?: string | null
+          external_user_id?: string | null
+          id?: string
+          last_error_at?: string | null
+          last_success_sync_at?: string | null
+          last_sync_at?: string | null
+          metadata?: Json | null
+          provider?: string
+          provider_last_payload?: Json | null
+          provider_status?: string | null
+          redirect_session_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agency_id?: string
+          consent_expires_at?: string | null
+          created_at?: string
+          display_name?: string
+          error_code?: string | null
+          error_message?: string | null
+          external_connection_id?: string | null
+          external_item_id?: string | null
+          external_user_id?: string | null
+          id?: string
+          last_error_at?: string | null
+          last_success_sync_at?: string | null
+          last_sync_at?: string | null
+          metadata?: Json | null
+          provider?: string
+          provider_last_payload?: Json | null
+          provider_status?: string | null
+          redirect_session_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_connections_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_connections_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+        ]
+      }
+      bank_provider_configs: {
+        Row: {
+          agency_id: string
+          config_status: string
+          created_at: string
+          environment: string
+          has_client_id: boolean
+          has_secret_key: boolean
+          id: string
+          is_enabled: boolean
+          is_ready: boolean
+          metadata: Json | null
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          config_status?: string
+          created_at?: string
+          environment?: string
+          has_client_id?: boolean
+          has_secret_key?: boolean
+          id?: string
+          is_enabled?: boolean
+          is_ready?: boolean
+          metadata?: Json | null
+          provider?: string
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          config_status?: string
+          created_at?: string
+          environment?: string
+          has_client_id?: boolean
+          has_secret_key?: boolean
+          id?: string
+          is_enabled?: boolean
+          is_ready?: boolean
+          metadata?: Json | null
+          provider?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_provider_configs_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_provider_configs_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+        ]
+      }
+      bank_sync_logs: {
+        Row: {
+          bank_connection_id: string
+          error_message: string | null
+          finished_at: string | null
+          id: string
+          items_created: number
+          items_received: number
+          items_updated: number
+          metadata: Json | null
+          started_at: string
+          status: string
+          sync_type: string
+        }
+        Insert: {
+          bank_connection_id: string
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          items_created?: number
+          items_received?: number
+          items_updated?: number
+          metadata?: Json | null
+          started_at?: string
+          status?: string
+          sync_type?: string
+        }
+        Update: {
+          bank_connection_id?: string
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          items_created?: number
+          items_received?: number
+          items_updated?: number
+          metadata?: Json | null
+          started_at?: string
+          status?: string
+          sync_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_sync_logs_bank_connection_id_fkey"
+            columns: ["bank_connection_id"]
+            isOneToOne: false
+            referencedRelation: "bank_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bank_transactions: {
+        Row: {
+          amount: number
+          bank_account_id: string
+          booking_date: string
+          created_at: string
+          currency: string
+          external_transaction_id: string | null
+          id: string
+          internal_category: string | null
+          label: string
+          matched_facture_id: string | null
+          matched_invoice_id: string | null
+          matched_project_id: string | null
+          metadata: Json | null
+          pointed_at: string | null
+          provider_category: string | null
+          raw_label: string | null
+          raw_payload: Json | null
+          reconciliation_confidence: number | null
+          reconciliation_status: string
+          transaction_type: string
+          updated_at: string
+          value_date: string | null
+        }
+        Insert: {
+          amount: number
+          bank_account_id: string
+          booking_date: string
+          created_at?: string
+          currency?: string
+          external_transaction_id?: string | null
+          id?: string
+          internal_category?: string | null
+          label: string
+          matched_facture_id?: string | null
+          matched_invoice_id?: string | null
+          matched_project_id?: string | null
+          metadata?: Json | null
+          pointed_at?: string | null
+          provider_category?: string | null
+          raw_label?: string | null
+          raw_payload?: Json | null
+          reconciliation_confidence?: number | null
+          reconciliation_status?: string
+          transaction_type?: string
+          updated_at?: string
+          value_date?: string | null
+        }
+        Update: {
+          amount?: number
+          bank_account_id?: string
+          booking_date?: string
+          created_at?: string
+          currency?: string
+          external_transaction_id?: string | null
+          id?: string
+          internal_category?: string | null
+          label?: string
+          matched_facture_id?: string | null
+          matched_invoice_id?: string | null
+          matched_project_id?: string | null
+          metadata?: Json | null
+          pointed_at?: string | null
+          provider_category?: string | null
+          raw_label?: string | null
+          raw_payload?: Json | null
+          reconciliation_confidence?: number | null
+          reconciliation_status?: string
+          transaction_type?: string
+          updated_at?: string
+          value_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_transactions_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bank_webhook_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          external_item_id: string | null
+          id: string
+          payload: Json | null
+          processed: boolean
+          processed_at: string | null
+          received_at: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          external_item_id?: string | null
+          id?: string
+          payload?: Json | null
+          processed?: boolean
+          processed_at?: string | null
+          received_at?: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          external_item_id?: string | null
+          id?: string
+          payload?: Json | null
+          processed?: boolean
+          processed_at?: string | null
+          received_at?: string
+        }
+        Relationships: []
+      }
       bd_story_batches: {
         Row: {
           agency_id: string
@@ -3007,6 +3388,51 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "blocks"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      bridge_user_mappings: {
+        Row: {
+          agency_id: string
+          bridge_user_email: string | null
+          bridge_user_uuid: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agency_id: string
+          bridge_user_email?: string | null
+          bridge_user_uuid: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agency_id?: string
+          bridge_user_email?: string | null
+          bridge_user_uuid?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bridge_user_mappings_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bridge_user_mappings_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
         ]
       }
@@ -3954,6 +4380,60 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "blocks"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      dossier_exchanges: {
+        Row: {
+          action_type: string
+          agency_id: string
+          created_at: string
+          dossier_ref: string
+          id: string
+          message: string
+          metadata: Json | null
+          sender_email: string | null
+          sender_name: string
+          sender_type: string
+        }
+        Insert: {
+          action_type: string
+          agency_id: string
+          created_at?: string
+          dossier_ref: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          sender_email?: string | null
+          sender_name: string
+          sender_type: string
+        }
+        Update: {
+          action_type?: string
+          agency_id?: string
+          created_at?: string
+          dossier_ref?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          sender_email?: string | null
+          sender_name?: string
+          sender_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dossier_exchanges_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dossier_exchanges_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
         ]
       }

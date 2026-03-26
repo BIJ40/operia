@@ -6,12 +6,12 @@
 import { useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { useNavigationMode } from '@/hooks/useNavigationMode';
-import { Tv, LayoutDashboard, Building2, Users, Layers, AlertTriangle, CalendarClock } from 'lucide-react';
+import { Tv, LayoutDashboard, Building2, Users, Layers, AlertTriangle, CalendarClock, Wallet, Landmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useStatsHub } from '@/apogee-connect/components/stats-hub/StatsHubContext';
 import { TabId } from '@/apogee-connect/components/stats-hub/types';
-import { GeneralTab, ApporteursTab, TechniciensTab, UniversTab, SAVTab, PrevisionnelTab } from '@/apogee-connect/components/stats-hub/tabs';
+import { GeneralTab, ApporteursTab, TechniciensTab, UniversTab, SAVTab, PrevisionnelTab, FinancierTab, TresorerieTab } from '@/apogee-connect/components/stats-hub/tabs';
 import { PeriodSelector } from '@/apogee-connect/components/filters/PeriodSelector';
 import { PeriodDisplay } from '@/apogee-connect/components/filters/PeriodDisplay';
 import { openInNewTabPreservingPreviewToken } from '@/lib/openInNewTab';
@@ -32,6 +32,8 @@ const TAB_COMPONENTS: Record<TabId, React.ComponentType> = {
   univers: UniversTab,
   sav: SAVTab,
   previsionnel: PrevisionnelTab,
+  financier: FinancierTab,
+  tresorerie: TresorerieTab,
 };
 
 const TAB_ACCENT_COLORS: Record<string, string> = {
@@ -56,6 +58,8 @@ export default function StatsTabContent() {
     { id: 'univers', label: getShortLabel('pilotage.statistiques.univers', 'Univers'), icon: Layers, accent: 'orange' as const, requiresModule: 'pilotage.statistiques.univers' as ModuleKey },
     { id: 'sav', label: getShortLabel('pilotage.statistiques.sav', 'SAV'), icon: AlertTriangle, accent: 'pink' as const, requiresModule: 'pilotage.statistiques.sav' as ModuleKey },
     { id: 'previsionnel', label: getShortLabel('pilotage.statistiques.previsionnel', 'Prévisionnel'), icon: CalendarClock, accent: 'teal' as const, requiresModule: 'pilotage.statistiques.previsionnel' as ModuleKey },
+    { id: 'financier', label: 'Recouvrement', icon: Wallet, accent: 'green' as const, requiresModule: 'pilotage.statistiques.financier' as ModuleKey },
+    { id: 'tresorerie', label: 'Trésorerie', icon: Landmark, accent: 'teal' as const, requiresModule: 'pilotage.tresorerie' as ModuleKey },
   ], [getShortLabel]);
 
   const { isDeployedModule } = usePermissions();

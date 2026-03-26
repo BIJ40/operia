@@ -26,7 +26,9 @@ export interface DossierRow {
   lastModified: string | null;
   devisHT: number;
   factureHT: number;
+  factureTTC: number;
   restedu: number;
+  resteduTTC: number;
   devisId: number | null;
   factureId: number | null;
 }
@@ -83,8 +85,8 @@ export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
   }).format(amount);
 }
 

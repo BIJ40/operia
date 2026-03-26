@@ -4,8 +4,9 @@
  */
 
 import { lazy, Suspense, useMemo } from 'react';
+import { useAgencyHasApporteurs } from '@/hooks/useAgencyHasApporteurs';
 import { cn } from '@/lib/utils';
-import { Users, Handshake, CalendarDays, Users2, Car, FileText, Shield, MapPin, Loader2 } from 'lucide-react';
+import { Users, Handshake, CalendarDays, Users2, Car, FileText, Shield, MapPin, MessagesSquare, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
@@ -24,8 +25,9 @@ const VehiculesTabContent = lazy(() => import('@/components/unified/tabs/Vehicul
 const AgencyAdminDocuments = lazy(() => import('@/components/outils/AgencyAdminDocuments').then(m => ({ default: m.AgencyAdminDocuments })));
 const AgencyTeamRightsPanel = lazy(() => import('@/components/agency/AgencyTeamRightsPanel').then(m => ({ default: m.AgencyTeamRightsPanel })));
 const ZonesDeplacementTab = lazy(() => import('@/components/organisation/ZonesDeplacementTab'));
+const AgencyApporteurExchanges = lazy(() => import('@/components/agency/AgencyApporteurExchanges'));
 
-type OrganisationSubTab = 'collaborateurs' | 'apporteurs' | 'plannings' | 'reunions' | 'parc' | 'conformite' | 'droits-equipe' | 'zones';
+type OrganisationSubTab = 'collaborateurs' | 'apporteurs' | 'plannings' | 'reunions' | 'parc' | 'conformite' | 'droits-equipe' | 'zones' | 'echanges-apporteurs';
 
 function LoadingFallback() {
   return (
@@ -39,6 +41,7 @@ export default function OrganisationTabContent() {
   const { hasModule, isDeployedModule, globalRole, isAdmin } = usePermissions();
   const { getShortLabel } = useModuleLabels();
   const { mode: navMode } = useNavigationMode();
+  const agencyHasApporteurs = useAgencyHasApporteurs();
 
   const allTabs: (PillTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
     { id: 'collaborateurs', label: getShortLabel('organisation.salaries', 'Salariés'), icon: Users, accent: 'blue', requiresModule: 'organisation.salaries' },
@@ -48,6 +51,7 @@ export default function OrganisationTabContent() {
     { id: 'reunions', label: getShortLabel('organisation.reunions', 'Réunions'), icon: Users2, accent: 'orange', requiresModule: 'organisation.reunions' },
     { id: 'parc', label: getShortLabel('organisation.parc', 'Parc'), icon: Car, accent: 'pink', requiresModule: 'organisation.parc' },
     { id: 'conformite', label: getShortLabel('organisation.documents_legaux', 'Documents légaux'), icon: FileText, accent: 'teal', requiresModule: 'organisation.documents_legaux' },
+    { id: 'echanges-apporteurs', label: 'Échanges apporteurs', icon: MessagesSquare, accent: 'purple', requiresModule: 'organisation.apporteurs' },
     ...(globalRole && ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(globalRole)
       ? [{ id: 'droits-equipe', label: 'Droits équipe', icon: Shield, accent: 'blue' as const, requiresModule: 'organisation.salaries' as ModuleKey }]
       : []),
@@ -57,13 +61,15 @@ export default function OrganisationTabContent() {
     return allTabs
       .filter(tab => {
         if (tab.requiresModule && !isDeployedModule(tab.requiresModule)) return false;
+        // Hide apporteur tabs if agency has no apporteurs
+        if ((tab.id === 'apporteurs' || tab.id === 'echanges-apporteurs') && !agencyHasApporteurs) return false;
         return true;
       })
       .map(tab => {
         if (!tab.requiresModule) return tab;
         return { ...tab, disabled: !isAdmin && !hasModule(tab.requiresModule) };
       });
-  }, [allTabs, hasModule, isAdmin, isDeployedModule]);
+  }, [allTabs, hasModule, isAdmin, isDeployedModule, agencyHasApporteurs]);
 
   const defaultTab = (visibleTabs.find(t => !t.disabled)?.id as OrganisationSubTab) ?? 'collaborateurs';
   const [activeTab, setActiveTab] = useSessionState<OrganisationSubTab>('organisation_sub_tab', defaultTab);
@@ -124,6 +130,12 @@ export default function OrganisationTabContent() {
         <TabsContent value="zones" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
             <ZonesDeplacementTab />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="echanges-apporteurs" className="mt-4">
+          <Suspense fallback={<LoadingFallback />}>
+            <AgencyApporteurExchanges />
           </Suspense>
         </TabsContent>
       </Tabs>

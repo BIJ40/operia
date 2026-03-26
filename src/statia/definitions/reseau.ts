@@ -13,7 +13,66 @@ import {
   normalizeInterventionType
 } from '../engine/normalizers';
 import { indexProjectsById, indexUsersById } from '../engine/loaders';
-import { isActiveTechnician } from '@/shared/utils/technicienUniversEngine';
+import { isExcludedUserType, normalizeIsOn } from '@/apogee-connect/utils/techTools';
+
+function isFieldTechnician(user: any): boolean {
+  if (!user) return false;
+
+  const userType = String(user?.type || '').trim();
+  if (isExcludedUserType(userType)) return false;
+
+  const skills = user?.data?.skills ?? user?.skills;
+  const hasSkills = Array.isArray(skills) && skills.length > 0;
+  const isActive =
+    normalizeIsOn(user?.is_on) ||
+    normalizeIsOn(user?.isActive) ||
+    (user?.is_on === undefined && user?.isActive === undefined);
+
+  return isActive && hasSkills;
+}
+
+function collectAssignedTechnicianIds(intervention: any): Array<string | number> {
+  const ids = new Set<string | number>();
+
+  const addOne = (value: unknown) => {
+    if (value === null || value === undefined) return;
+    const normalized = typeof value === 'number' ? value : String(value).trim();
+    if (normalized === '') return;
+    ids.add(normalized);
+  };
+
+  const addMany = (values: unknown) => {
+    if (!Array.isArray(values)) return;
+    values.forEach(addOne);
+  };
+
+  addOne(intervention?.userId ?? intervention?.user_id);
+  addMany(intervention?.usersIds ?? intervention?.userIds ?? intervention?.users_ids ?? intervention?.data?.usersIds ?? intervention?.data?.userIds ?? intervention?.data?.users_ids);
+
+  const visites = Array.isArray(intervention?.data?.visites)
+    ? intervention.data.visites
+    : Array.isArray(intervention?.visites)
+      ? intervention.visites
+      : [];
+
+  for (const visite of visites) {
+    addOne(visite?.userId ?? visite?.user_id);
+    addMany(visite?.usersIds ?? visite?.userIds ?? visite?.users_ids ?? visite?.data?.usersIds ?? visite?.data?.userIds ?? visite?.data?.users_ids);
+
+    const creneaux = Array.isArray(visite?.creneaux) ? visite.creneaux : [];
+    for (const creneau of creneaux) {
+      addOne(creneau?.userId ?? creneau?.user_id);
+      addMany(creneau?.usersIds ?? creneau?.userIds ?? creneau?.users_ids ?? creneau?.data?.usersIds ?? creneau?.data?.userIds ?? creneau?.data?.users_ids);
+    }
+  }
+
+  const biV3Items = Array.isArray(intervention?.data?.biV3?.items) ? intervention.data.biV3.items : [];
+  for (const item of biV3Items) {
+    addMany(item?.usersIds ?? item?.userIds ?? item?.users_ids);
+  }
+
+  return Array.from(ids);
+}
 
 /**
  * CA par Agence sur période
@@ -469,65 +528,31 @@ export const coutSavReseau: StatDefinition = {
 
 /**
  * Nombre de techniciens actifs
- * Techniciens ayant au moins 1 intervention réalisée dans la période
+ * = tous les users actifs avec des compétences (skills), sans filtre sur interventions
  */
 export const nbTechniciensActifs: StatDefinition = {
   id: 'nb_techniciens_actifs',
   label: 'Techniciens actifs',
-  description: 'Nombre de techniciens avec au moins 1 intervention sur la période',
+  description: 'Nombre de techniciens actifs avec compétences renseignées',
   category: 'reseau',
-  source: ['interventions', 'users'],
+  source: ['users'],
   aggregation: 'count',
-  compute: (data: LoadedData, params: StatParams): StatResult => {
-    const { interventions, users } = data;
+  compute: (data: LoadedData, _params: StatParams): StatResult => {
+    const { users } = data;
     
-    const usersById = indexUsersById(users);
-    const techniciensActifs = new Set<string | number>();
-    
-    for (const intervention of interventions) {
-      if (!isValidInterventionState(intervention.state)) continue;
-      
-      const dateStr = intervention.dateReelle || intervention.date || intervention.created_at;
-      if (dateStr) {
-        try {
-          const date = parseISO(dateStr);
-          if (!isWithinInterval(date, { start: params.dateRange.start, end: params.dateRange.end })) {
-            continue;
-          }
-        } catch {
-          continue;
-        }
-      }
-      
-      // Récupérer les techniciens des visites validées
-      const visites = intervention.data?.visites || intervention.visites || [];
-      for (const visite of visites) {
-        if (visite.state !== 'validated' && visite.state !== 'done') continue;
-        
-        const usersIds = visite.usersIds || [];
-        for (const userId of usersIds) {
-          const user = usersById.get(userId);
-          if (user && isActiveTechnician(user)) {
-            techniciensActifs.add(userId);
-          }
-        }
-      }
-      
-      // Fallback: userId principal
-      if (intervention.userId) {
-        const user = usersById.get(intervention.userId);
-        if (user && isActiveTechnician(user)) {
-          techniciensActifs.add(intervention.userId);
-        }
+    let count = 0;
+    for (const user of users) {
+      if (isFieldTechnician(user)) {
+        count++;
       }
     }
     
     return {
-      value: techniciensActifs.size,
+      value: count,
       metadata: {
         computedAt: new Date(),
-        source: 'interventions',
-        recordCount: techniciensActifs.size,
+        source: 'users',
+        recordCount: count,
       }
     };
   }
@@ -587,7 +612,7 @@ export const caMoyenParTechnicienActif: StatDefinition = {
           if (!techId) continue;
           
           const user = usersById.get(techId);
-          if (!user || !isActiveTechnician(user)) continue;
+          if (!user || !isFieldTechnician(user)) continue;
           
           techniciensActifs.add(techId);
           

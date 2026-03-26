@@ -46,6 +46,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import DossierDocumentsPanel from '../components/DossierDocumentsPanel';
+import { DocDownloadButton } from '../components/DocDownloadButton';
 
 type SortField = 'ref' | 'clientName' | 'status' | 'dateCreation' | 'factureHT' | 'restedu';
 type SortDirection = 'asc' | 'desc';
@@ -297,14 +298,13 @@ export default function ApporteurDossiers() {
                     </div>
                   </TableHead>
                   <TableHead className="hidden lg:table-cell">1er RDV</TableHead>
-                  <TableHead className="hidden lg:table-cell">Devis</TableHead>
-                  <TableHead className="hidden md:table-cell">Facturé</TableHead>
+                  <TableHead className="hidden lg:table-cell">Devis HT</TableHead>
                   <TableHead 
-                    className="text-right cursor-pointer hover:bg-muted/50"
+                    className="hidden md:table-cell cursor-pointer hover:bg-muted/50"
                     onClick={() => handleSort('factureHT')}
                   >
-                    <div className="flex items-center justify-end">
-                      Montant <SortIcon field="factureHT" />
+                    <div className="flex items-center">
+                      Facturé HT <SortIcon field="factureHT" />
                     </div>
                   </TableHead>
                   <TableHead 
@@ -315,6 +315,7 @@ export default function ApporteurDossiers() {
                       Reste dû <SortIcon field="restedu" />
                     </div>
                   </TableHead>
+                  <TableHead className="w-12 text-center">PDF</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -348,37 +349,28 @@ export default function ApporteurDossiers() {
                         <TableCell className="hidden lg:table-cell text-sm">
                           {formatDate(d.datePremierRdv)}
                         </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          {d.devisId ? (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-7 px-2"
-                              onClick={(e) => { e.stopPropagation(); }}
-                            >
-                              <FileText className="w-3.5 h-3.5 mr-1" />
-                              {formatDate(d.dateDevisValide || d.dateDevisEnvoye)}
-                            </Button>
-                          ) : '-'}
+                        <TableCell className="hidden lg:table-cell text-sm">
+                          {d.devisHT > 0 ? formatCurrency(d.devisHT) : '-'}
                         </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {d.factureId ? (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-7 px-2"
-                              onClick={(e) => { e.stopPropagation(); }}
-                            >
-                              <Receipt className="w-3.5 h-3.5 mr-1" />
-                              {formatDate(d.dateFacture)}
-                            </Button>
-                          ) : '-'}
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
+                        <TableCell className="hidden md:table-cell text-sm">
                           {d.factureHT > 0 ? formatCurrency(d.factureHT) : '-'}
                         </TableCell>
                         <TableCell className="text-right font-medium text-foreground">
                           {d.restedu > 0 ? formatCurrency(d.restedu) : d.factureHT > 0 ? '✓' : '-'}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {(d.devisHT > 0 || d.factureHT > 0) ? (
+                            <div className="flex items-center justify-center gap-1">
+                              {d.devisHT > 0 && (
+                                <DocDownloadButton dossierRef={d.ref} docType="devis" />
+                              )}
+                              {d.factureHT > 0 && (
+                                <DocDownloadButton dossierRef={d.ref} docType="factures" />
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
                         </TableCell>
                       </TableRow>
                     );

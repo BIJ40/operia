@@ -9,6 +9,7 @@
 import { useMemo, useCallback } from 'react';
 import { useUserModules, useToggleModule } from '@/hooks/useUserModules';
 import { N2_ASSIGNABLE_MODULES, getPresetForRole } from '@/config/roleAgenceModulePresets';
+import { useAgencyHasApporteurs } from '@/hooks/useAgencyHasApporteurs';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -42,10 +43,14 @@ export function TeamMemberModules({ userId, roleAgence, n2HasModule, isDeployedM
   const queryClient = useQueryClient();
   const { user } = useAuthCore();
   const { getShortLabel } = useModuleLabels();
+  const agencyHasApporteurs = useAgencyHasApporteurs();
 
   const assignableModules = useMemo(() => {
-    return N2_ASSIGNABLE_MODULES.filter(m => isDeployedModule(m.key) && n2HasModule(m.key));
-  }, [n2HasModule, isDeployedModule]);
+    return N2_ASSIGNABLE_MODULES.filter(m => {
+      if (m.key === 'organisation.apporteurs' && !agencyHasApporteurs) return false;
+      return isDeployedModule(m.key) && n2HasModule(m.key);
+    });
+  }, [n2HasModule, isDeployedModule, agencyHasApporteurs]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, typeof assignableModules>();

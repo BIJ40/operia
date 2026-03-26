@@ -37,6 +37,7 @@ export function useApporteurDossierActions() {
       };
       toast.success(messages[variables.action]);
       queryClient.invalidateQueries({ queryKey: ['apporteur-dossiers'] });
+      queryClient.invalidateQueries({ queryKey: ['apporteur-exchanges'] });
     },
     onError: (error: Error) => {
       toast.error(`Erreur: ${error.message}`);

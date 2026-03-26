@@ -76,6 +76,7 @@ export const HEADER_NAV_GROUPS: HeaderNavGroup[] = [
       { label: 'Plannings', icon: CalendarDays, tab: 'organisation', description: 'Calendrier équipe', scope: 'organisation.plannings', subTabKey: 'organisation_sub_tab', subTabValue: 'plannings' },
       { label: 'Réunions', icon: MessagesSquare, tab: 'organisation', description: 'Comptes rendus', scope: 'organisation.reunions', subTabKey: 'organisation_sub_tab', subTabValue: 'reunions' },
       { label: 'Documents légaux', icon: FolderOpen, tab: 'organisation', description: 'Kbis, RC Pro…', subTabKey: 'organisation_sub_tab', subTabValue: 'conformite' },
+      { label: 'Échanges apporteurs', icon: MessagesSquare, tab: 'organisation', description: 'Fil de discussion avec les apporteurs', scope: 'organisation.apporteurs', subTabKey: 'organisation_sub_tab', subTabValue: 'echanges-apporteurs' },
     ],
   },
   {

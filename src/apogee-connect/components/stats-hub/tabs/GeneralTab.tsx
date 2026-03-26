@@ -65,6 +65,7 @@ function useGeneralTabKpis() {
         caTrancheHoraire,
         topTechs,
         caGlobalPrev,
+        nbTechsActifsResult,
       ] = await Promise.all([
         getMetricForAgency('ca_global_ht', agencySlug, statiaParams, services),
         getMetricForAgency('nb_dossiers_crees', agencySlug, statiaParams, services),
@@ -78,6 +79,7 @@ function useGeneralTabKpis() {
         getMetricForAgency('top_techniciens_ca', agencySlug, statiaParams, services),
         // CA du mois précédent pour l'évolution
         getMetricForAgency('ca_global_ht', agencySlug, prevStatiaParams, services),
+        getMetricForAgency('nb_techniciens_actifs', agencySlug, statiaParams, services),
       ]);
 
       // Extraire nombre factures depuis breakdown CA
@@ -92,9 +94,8 @@ function useGeneralTabKpis() {
         ?? interventionsBreakdown?.rt
         ?? 0;
       
-      // Extraire nombre techniciens actifs
-      const topTechBreakdown = topTechs?.breakdown as any;
-      const nbTechsActifs = topTechBreakdown?.ranking?.length ?? 0;
+      // Nombre de techniciens actifs (au moins 1 intervention sur la période)
+      const nbTechsActifs = Number(nbTechsActifsResult?.value) || 0;
 
       // Calcul évolution CA : (CA_M - CA_M-1) / CA_M-1 * 100
       const caM = Number(caGlobal?.value) || 0;

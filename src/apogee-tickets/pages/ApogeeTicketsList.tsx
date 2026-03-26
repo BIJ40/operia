@@ -179,39 +179,48 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
     return new Set(repliesData.map(r => r.ticketId));
   }, [repliesData]);
 
-  // Tickets "nouveaux" (modifiés depuis la dernière visite, EXCLUDING those already in Réponses)
+  // Set of final status IDs (tickets in final status should NOT appear in Nouveaux)
+  const finalStatusIds = useMemo(() => {
+    return new Set(statuses.filter(s => s.is_final).map(s => s.id));
+  }, [statuses]);
+
+  // Tickets "nouveaux" = tickets CRÉÉS (pas modifiés) que l'utilisateur n'a pas encore lus
+  // Réponses prend la priorité : si un ticket a des réponses non lues, il va dans Réponses, pas Nouveaux
   const newTickets = useMemo(() => {
     if (!user?.id) return [];
 
+    // Only consider tickets created in the last 30 days
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 30);
+    const cutoffTime = cutoffDate.getTime();
+
     return tickets
       .filter((ticket) => {
-        // Use last_modified_at if available, otherwise fall back to created_at
-        const relevantDate = ticket.last_modified_at || ticket.created_at;
-        const relevantAuthor = ticket.last_modified_by_user_id || ticket.created_by_user_id;
+        const createdTime = new Date(ticket.created_at).getTime();
 
-        if (!relevantDate) return false;
+        // Ignore tickets created more than 30 days ago
+        if (createdTime < cutoffTime) return false;
 
-        // Exclude if the user is the author of the last modification (or creation)
-        if (relevantAuthor === user.id) {
-          return false;
-        }
+        // Exclude tickets with a final status (resolved, closed, etc.)
+        if (finalStatusIds.has(ticket.kanban_status)) return false;
+
+        // Exclude tickets created by the current user
+        if (ticket.created_by_user_id === user.id) return false;
 
         // Réponses takes priority: if ticket has unread replies, don't show in Nouveaux
-        if (repliesTicketIds.has(ticket.id)) {
-          return false;
-        }
+        if (repliesTicketIds.has(ticket.id)) return false;
 
+        // Check if user has already viewed this ticket
         const myView = myViews.find((v) => v.ticket_id === ticket.id);
-        if (!myView) return true;
+        if (!myView) return true; // Never viewed = new
 
-        return new Date(relevantDate).getTime() > new Date(myView.viewed_at).getTime();
+        // If viewed AFTER creation, it's no longer "new"
+        return createdTime > new Date(myView.viewed_at).getTime();
       })
       .sort((a, b) => {
-        const dateA = a.last_modified_at || a.created_at;
-        const dateB = b.last_modified_at || b.created_at;
-        return new Date(dateB).getTime() - new Date(dateA).getTime();
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
-  }, [tickets, myViews, user?.id, repliesTicketIds]);
+  }, [tickets, myViews, user?.id, repliesTicketIds, finalStatusIds]);
 
   const newTicketsCount = newTickets.length;
 

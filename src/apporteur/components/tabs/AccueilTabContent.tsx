@@ -3,7 +3,7 @@
  * Consomme useApporteurKpis pour afficher KPIs, collaboration, univers, alertes
  */
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useApporteurAuth } from '@/contexts/ApporteurAuthContext';
 import { useApporteurSession } from '@/apporteur/contexts/ApporteurSessionContext';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ApporteurPlanningCard } from '../ApporteurPlanningCard';
 import { NouvelleDemandeDialog } from '../NouvelleDemandeDialog';
 import { useApporteurKpis } from '../../hooks/useApporteurKpis';
+import { useApporteurDossiers, DossierRow } from '../../hooks/useApporteurDossiers';
 import { KpiCard } from '../cockpit/KpiCard';
+import { KpiDetailDialog, type KpiDetailType } from '../cockpit/KpiDetailDialog';
+import { DossierDetailDialog } from '../cockpit/DossierDetailDialog';
 import { CollaborationGauge } from '../cockpit/CollaborationGauge';
 import { UniversDonut } from '../cockpit/UniversDonut';
 import { AlertesBanner } from '../cockpit/AlertesBanner';
@@ -24,6 +27,8 @@ export default function AccueilTabContent() {
   const { apporteurUser } = useApporteurAuth();
   const { session } = useApporteurSession();
   const [demandeOpen, setDemandeOpen] = useState(false);
+  const [kpiDetail, setKpiDetail] = useState<KpiDetailType | null>(null);
+  const [selectedDossier, setSelectedDossier] = useState<DossierRow | null>(null);
   const [period, setPeriod] = useState<ApporteurStatsV2Request['period']>('month');
 
   const displayFirstName = session?.firstName || apporteurUser?.firstName || apporteurUser?.apporteurName || 'Partenaire';
@@ -35,9 +40,16 @@ export default function AccueilTabContent() {
   const agencySubtitle = [agencyName, agencyCity].filter(Boolean).join(' — ') || displayApporteurName;
 
   const { data, isLoading, error } = useApporteurKpis({ period });
+  const { data: dossiersData } = useApporteurDossiers();
+  const dossiers = dossiersData?.data?.dossiers || [];
   const stats = data?.data;
   const kpis = stats?.kpis;
   const trends = stats?.trends;
+
+  const handleDossierClick = useCallback((ref: string) => {
+    const found = dossiers.find(d => d.ref === ref);
+    if (found) setSelectedDossier(found);
+  }, [dossiers]);
 
   return (
     <div className="p-4 sm:p-6 space-y-4">
@@ -79,7 +91,7 @@ export default function AccueilTabContent() {
         <>
           {/* Alertes — compact inline chips */}
           {stats.alertes && stats.alertes.length > 0 && (
-            <AlertesBanner alertes={stats.alertes} />
+            <AlertesBanner alertes={stats.alertes} onDossierClick={handleDossierClick} />
           )}
 
           {/* Period selector — just above KPI tiles */}
@@ -94,6 +106,7 @@ export default function AccueilTabContent() {
               iconBg="bg-[hsl(var(--ap-success-light))]"
               iconColor="text-[hsl(var(--ap-success))]"
               trend={trends?.ca_genere}
+              onClick={() => setKpiDetail('ca_genere')}
             />
             <KpiCard
               label="Panier moyen"
@@ -102,6 +115,7 @@ export default function AccueilTabContent() {
               iconBg="bg-primary/10"
               iconColor="text-primary"
               trend={trends?.panier_moyen}
+              onClick={() => setKpiDetail('panier_moyen')}
             />
             <KpiCard
               label="Taux transfo"
@@ -110,6 +124,7 @@ export default function AccueilTabContent() {
               iconBg="bg-accent"
               iconColor="text-accent-foreground"
               trend={trends?.taux_transformation}
+              onClick={() => setKpiDetail('taux_transfo')}
             />
             <KpiCard
               label="Dossiers en cours"
@@ -118,6 +133,7 @@ export default function AccueilTabContent() {
               iconBg="bg-primary/10"
               iconColor="text-primary"
               trend={trends?.dossiers_en_cours}
+              onClick={() => setKpiDetail('dossiers_en_cours')}
             />
             <KpiCard
               label="Devis envoyés"
@@ -126,6 +142,7 @@ export default function AccueilTabContent() {
               iconBg="bg-secondary/10"
               iconColor="text-secondary"
               trend={trends?.devis_envoyes}
+              onClick={() => setKpiDetail('devis_envoyes')}
             />
             <KpiCard
               label="Factures en attente"
@@ -135,6 +152,7 @@ export default function AccueilTabContent() {
               iconColor="text-[hsl(var(--ap-warning))]"
               subtitle={`${kpis!.factures_en_attente.count} facture(s)`}
               trend={trends?.factures_en_attente}
+              onClick={() => setKpiDetail('factures_en_attente')}
             />
             <KpiCard
               label="Délai RDV"
@@ -144,6 +162,7 @@ export default function AccueilTabContent() {
               iconColor="text-[hsl(var(--ap-info))]"
               subtitle={kpis!.coverage_rdv_delay < 100 ? `${kpis!.coverage_rdv_delay.toFixed(0)}% couverture` : undefined}
               trend={trends?.avg_rdv_delay_days}
+              onClick={() => setKpiDetail('delai_rdv')}
             />
             <KpiCard
               label="Délai validation devis"
@@ -153,6 +172,7 @@ export default function AccueilTabContent() {
               iconColor="text-accent-foreground"
               subtitle={kpis!.coverage_devis_validation_delay < 100 ? `${kpis!.coverage_devis_validation_delay.toFixed(0)}% couverture` : undefined}
               trend={trends?.avg_devis_validation_delay_days}
+              onClick={() => setKpiDetail('delai_devis')}
             />
           </div>
 
@@ -171,8 +191,19 @@ export default function AccueilTabContent() {
       {/* Planning Card */}
       <ApporteurPlanningCard />
 
-      {/* Dialog */}
+      {/* Dialogs */}
       <NouvelleDemandeDialog open={demandeOpen} onOpenChange={setDemandeOpen} />
+      {kpis && trends && stats?.series_12m && (
+        <KpiDetailDialog
+          open={!!kpiDetail}
+          onClose={() => setKpiDetail(null)}
+          type={kpiDetail}
+          kpis={kpis}
+          trends={trends}
+          series={stats.series_12m}
+        />
+      )}
+      <DossierDetailDialog dossier={selectedDossier} onClose={() => setSelectedDossier(null)} />
     </div>
   );
 }

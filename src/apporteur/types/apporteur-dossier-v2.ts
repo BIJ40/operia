@@ -13,7 +13,6 @@ export type DossierStatus =
   | 'rdv_travaux'
   | 'facture'
   | 'attente_paiement'
-  | 'regle'
   | 'clos'
   | 'annule';
 
