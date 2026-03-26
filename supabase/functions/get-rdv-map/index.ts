@@ -1024,24 +1024,41 @@ Deno.serve(async (req) => {
           agencyCoords = coordsByPostalCode.get(agencyData.code_postal) || await geocodeAddress(agencyData.adresse || '', agencyData.code_postal, agencyData.ville || '');
         }
 
-        // Aggregate per postal code
+        // Aggregate per code_insee (choropleth)
         const HOURLY_COST = 35;
-        const zoneScores: any[] = [];
         const allZoneData: Array<{
-          pc: string; nbProjects: number; ca: number; margin: number;
+          insee: string; nbProjects: number; ca: number; margin: number;
           devisTotal: number; devisSigned: number; panierMoyen: number;
           savRate: number; originTypes: number; top1Share: number;
           monthSpread: number; nbClients: number;
         }> = [];
 
-        for (const [pc, pids] of projectsByPostalCode.entries()) {
-          const coords = coordsByPostalCode.get(pc);
-          if (!coords) continue;
+        // Also build interventionsByInsee, savByInsee, totalIntervByInsee, interventionMonthsByInsee
+        const interventionsByInsee2 = new Map<string, number>();
+        const savByInsee = new Map<string, number>();
+        const totalIntervByInsee = new Map<string, number>();
+        const interventionMonthsByInsee = new Map<string, Set<string>>();
+        for (const it of interventionArray) {
+          const pid = it.projectId;
+          if (typeof pid !== 'number') continue;
+          const insee = projectToInsee.get(pid);
+          if (!insee) continue;
+          interventionsByInsee2.set(insee, (interventionsByInsee2.get(insee) || 0) + 1);
+          totalIntervByInsee.set(insee, (totalIntervByInsee.get(insee) || 0) + 1);
+          const type2 = ((it?.data?.type2 || it?.type2 || '') + '').toLowerCase();
+          if (type2 === 'sav') savByInsee.set(insee, (savByInsee.get(insee) || 0) + 1);
+          const rawDate = typeof it?.date === 'string' ? it.date : '';
+          const month = rawDate.slice(0, 7);
+          if (month.length === 7) {
+            if (!interventionMonthsByInsee.has(insee)) interventionMonthsByInsee.set(insee, new Set());
+            interventionMonthsByInsee.get(insee)!.add(month);
+          }
+        }
 
+        for (const [insee, pids] of projectsByInsee.entries()) {
           let zoneCA = 0, zoneHours = 0, devisT = 0, devisS = 0;
           const originCounts: Record<string, number> = {};
           const clientIds = new Set<number>();
-          const universSet = new Set<string>();
 
           for (const pid of pids) {
             zoneCA += caByProject.get(pid) || 0;
@@ -1050,7 +1067,6 @@ Deno.serve(async (req) => {
             if (dv) { devisT += dv.total; devisS += dv.signed; }
             const proj = projectsById.get(pid);
             if (proj?.clientId) clientIds.add(proj.clientId);
-            if (proj?.univers && proj.univers !== 'Non classé') universSet.add(proj.univers);
             const origin = projectApporteurType.get(pid) || 'Autre';
             originCounts[origin] = (originCounts[origin] || 0) + 1;
           }
@@ -1058,16 +1074,16 @@ Deno.serve(async (req) => {
           const nbProjects = pids.size;
           const margin = zoneCA - zoneHours * HOURLY_COST;
           const panierMoyen = nbProjects > 0 ? zoneCA / nbProjects : 0;
-          const savCount = savByPC.get(pc) || 0;
-          const totalInterv = totalIntervByPC.get(pc) || 0;
+          const savCount = savByInsee.get(insee) || 0;
+          const totalInterv = totalIntervByInsee.get(insee) || 0;
           const savRate = totalInterv > 0 ? savCount / totalInterv : 0;
           const originTypes = Object.keys(originCounts).length;
           const originValues = Object.values(originCounts);
           const maxOriginCount = Math.max(...originValues, 0);
           const top1Share = nbProjects > 0 ? maxOriginCount / nbProjects : 0;
-          const monthSpread = interventionMonthsByPC.get(pc)?.size || 0;
+          const monthSpread = interventionMonthsByInsee.get(insee)?.size || 0;
 
-          allZoneData.push({ pc, nbProjects, ca: zoneCA, margin, devisTotal: devisT, devisSigned: devisS, panierMoyen, savRate, originTypes, top1Share, monthSpread, nbClients: clientIds.size });
+          allZoneData.push({ insee, nbProjects, ca: zoneCA, margin, devisTotal: devisT, devisSigned: devisS, panierMoyen, savRate, originTypes, top1Share, monthSpread, nbClients: clientIds.size });
         }
 
         // Compute normalization bounds
@@ -1078,9 +1094,22 @@ Deno.serve(async (req) => {
         const minMargin = Math.min(...allZoneData.map(z => z.margin), 0);
         const maxMonths = Math.max(...allZoneData.map(z => z.monthSpread), 1);
 
+        // Agency coords for proximity
+        const { data: agencyData } = await supabase.from('apogee_agencies').select('adresse, code_postal, ville').eq('slug', targetAgency).maybeSingle();
+        let agencyCoords: { lat: number; lng: number } | null = null;
+        if (agencyData?.code_postal) {
+          agencyCoords = coordsByPostalCode.get(agencyData.code_postal) || await geocodeAddress(agencyData.adresse || '', agencyData.code_postal, agencyData.ville || '');
+        }
+
+        const metricsByInsee = new Map<string, Record<string, any>>();
+        const insightsList: any[] = []; // for meta
+
         for (const z of allZoneData) {
-          const coords = coordsByPostalCode.get(z.pc);
-          if (!coords) continue;
+          // Get coords for proximity calc — use first postal code mapped to this insee
+          let zoneCoords: { lat: number; lng: number } | null = null;
+          for (const [pc, ins] of postalToInsee.entries()) {
+            if (ins === z.insee) { zoneCoords = coordsByPostalCode.get(pc) || null; break; }
+          }
 
           // ── BLOC 1: Commercial (25%) ──
           const transfoDevis = z.devisTotal > 0 ? z.devisSigned / z.devisTotal : 0;
@@ -1094,11 +1123,11 @@ Deno.serve(async (req) => {
           const marginNorm = minMargin < 0 ? (z.margin - minMargin) / (maxMargin - minMargin) * 100 : (maxMargin > 0 ? (z.margin / maxMargin) * 100 : 50);
           const marginScore = Math.min(100, Math.max(0, marginNorm));
           let proximityScore = 50;
-          if (agencyCoords) {
+          if (agencyCoords && zoneCoords) {
             const R = 6371;
-            const dLat = (coords.lat - agencyCoords.lat) * Math.PI / 180;
-            const dLon = (coords.lng - agencyCoords.lng) * Math.PI / 180;
-            const a = Math.sin(dLat/2)**2 + Math.cos(agencyCoords.lat*Math.PI/180)*Math.cos(coords.lat*Math.PI/180)*Math.sin(dLon/2)**2;
+            const dLat = (zoneCoords.lat - agencyCoords.lat) * Math.PI / 180;
+            const dLon = (zoneCoords.lng - agencyCoords.lng) * Math.PI / 180;
+            const a = Math.sin(dLat/2)**2 + Math.cos(agencyCoords.lat*Math.PI/180)*Math.cos(zoneCoords.lat*Math.PI/180)*Math.sin(dLon/2)**2;
             const distKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
             proximityScore = distKm <= 15 ? 100 : distKm <= 40 ? Math.round(100-(distKm-15)*2.5) : distKm <= 80 ? Math.round(40-(distKm-40)*0.5) : 10;
             proximityScore = Math.max(0, Math.min(100, proximityScore));
@@ -1106,13 +1135,12 @@ Deno.serve(async (req) => {
           const scoreEconomique = Math.round(0.35 * caScore + 0.35 * marginScore + 0.30 * proximityScore);
 
           // ── BLOC 3: Operationnel (20%) ──
-          // Simplified: use volume/intervention ratio as proxy
-          const interventionCount = interventionsByPC.get(z.pc) || 0;
+          const interventionCount = interventionsByInsee2.get(z.insee) || 0;
           const projectToIntervRatio = z.nbProjects > 0 ? Math.min(1, interventionCount / (z.nbProjects * 2)) : 0;
           const scoreOperationnel = Math.round(projectToIntervRatio * 100);
 
           // ── BLOC 4: Qualité (15%) ──
-          const savScore = Math.round(Math.max(0, (1 - z.savRate * 5)) * 100); // 0% SAV = 100, 20% SAV = 0
+          const savScore = Math.round(Math.max(0, (1 - z.savRate * 5)) * 100);
           const scoreQualite = savScore;
 
           // ── BLOC 5: Résilience (15%) ──
@@ -1131,7 +1159,6 @@ Deno.serve(async (req) => {
             0.15 * scoreResilience
           );
 
-          // Identify main strength and weakness
           const scores = [
             { label: 'Commercial', value: scoreCommercial },
             { label: 'Économique', value: scoreEconomique },
@@ -1143,7 +1170,6 @@ Deno.serve(async (req) => {
           const mainStrength = sorted[0];
           const mainWeakness = sorted[sorted.length - 1];
 
-          // Recommendation
           let recommendation = '';
           if (scoreGlobal >= 85) recommendation = 'Zone premium — consolider et développer';
           else if (scoreGlobal >= 70) recommendation = 'Zone saine — maintenir la performance';
@@ -1159,60 +1185,49 @@ Deno.serve(async (req) => {
             recommendation = 'Zone critique — action corrective urgente';
           }
 
-          // Score label
           const scoreLabel = scoreGlobal >= 85 ? 'Premium' : scoreGlobal >= 70 ? 'Saine' : scoreGlobal >= 55 ? 'Moyenne' : scoreGlobal >= 40 ? 'Fragile' : 'Critique';
+          const city = inseeCities.get(z.insee) || '';
 
-          zoneScores.push({
-            postalCode: z.pc,
-            city: postalCodeCities.get(z.pc) || '',
-            lat: coords.lat,
-            lng: coords.lng,
-            scoreGlobal,
-            scoreCommercial,
-            scoreEconomique,
-            scoreOperationnel,
-            scoreQualite,
-            scoreResilience,
-            scoreLabel,
-            nbProjects: z.nbProjects,
-            nbClients: z.nbClients,
-            ca: Math.round(z.ca),
-            margin: Math.round(z.margin),
+          metricsByInsee.set(z.insee, {
+            city,
+            scoreGlobal, scoreCommercial, scoreEconomique, scoreOperationnel, scoreQualite, scoreResilience,
+            scoreLabel, nbProjects: z.nbProjects, nbClients: z.nbClients,
+            ca: Math.round(z.ca), margin: Math.round(z.margin),
             panierMoyen: Math.round(z.panierMoyen),
-            devisTotal: z.devisTotal,
-            devisSigned: z.devisSigned,
             transfoRate: z.devisTotal > 0 ? Math.round((z.devisSigned / z.devisTotal) * 100) : 0,
             savRate: Math.round(z.savRate * 100),
-            mainStrength: mainStrength.label,
-            mainStrengthScore: mainStrength.value,
-            mainWeakness: mainWeakness.label,
-            mainWeaknessScore: mainWeakness.value,
+            mainStrength: mainStrength.label, mainStrengthScore: mainStrength.value,
+            mainWeakness: mainWeakness.label, mainWeaknessScore: mainWeakness.value,
             recommendation,
           });
+
+          insightsList.push({ insee: z.insee, city, scoreGlobal, margin: Math.round(z.margin), scoreCommercial, scoreOperationnel });
         }
 
-        zoneScores.sort((a, b) => b.scoreGlobal - a.scoreGlobal);
+        const choropleth = buildChoroplethGeoJSON(communePolygons, metricsByInsee);
 
-        // Build top insights
-        const topDevelop = zoneScores.filter(z => z.scoreCommercial < 50 && z.scoreEconomique > 50).slice(0, 5);
-        const topTension = zoneScores.filter(z => z.scoreOperationnel < 40).slice(0, 5);
-        const topRentable = [...zoneScores].sort((a, b) => b.margin - a.margin).slice(0, 5);
-        const topRisk = zoneScores.filter(z => z.scoreGlobal < 50).slice(0, 5);
+        // Build top insights from the computed data
+        const sortedInsights = [...insightsList].sort((a, b) => b.scoreGlobal - a.scoreGlobal);
+        const topDevelop = sortedInsights.filter(z => z.scoreCommercial < 50).slice(0, 5);
+        const topTension = sortedInsights.filter(z => z.scoreOperationnel < 40).slice(0, 5);
+        const topRentable = [...insightsList].sort((a, b) => b.margin - a.margin).slice(0, 5);
+        const topRisk = sortedInsights.filter(z => z.scoreGlobal < 50).slice(0, 5);
 
-        console.log(`[GET-RDV-MAP] ScoreGlobal: ${zoneScores.length} zones in ${Date.now() - t0}ms`);
+        console.log(`[GET-RDV-MAP] ScoreGlobal choropleth: ${choropleth.features.length} communes in ${Date.now() - t0}ms`);
         return withCors(req, new Response(JSON.stringify({
           success: true,
-          data: zoneScores,
+          data: choropleth,
           meta: {
             mode: 'score_global',
+            format: 'choropleth',
             agencySlug: targetAgency,
-            totalZones: zoneScores.length,
+            totalZones: choropleth.features.length,
             durationMs: Date.now() - t0,
             insights: {
-              topDevelop: topDevelop.map(z => ({ pc: z.postalCode, city: z.city, score: z.scoreGlobal })),
-              topTension: topTension.map(z => ({ pc: z.postalCode, city: z.city, score: z.scoreGlobal })),
-              topRentable: topRentable.map(z => ({ pc: z.postalCode, city: z.city, margin: z.margin })),
-              topRisk: topRisk.map(z => ({ pc: z.postalCode, city: z.city, score: z.scoreGlobal })),
+              topDevelop: topDevelop.map(z => ({ pc: z.insee, city: z.city, score: z.scoreGlobal })),
+              topTension: topTension.map(z => ({ pc: z.insee, city: z.city, score: z.scoreGlobal })),
+              topRentable: topRentable.map(z => ({ pc: z.insee, city: z.city, margin: z.margin })),
+              topRisk: topRisk.map(z => ({ pc: z.insee, city: z.city, score: z.scoreGlobal })),
             },
           },
         }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
