@@ -337,17 +337,15 @@ export default function MapsTabContent() {
       heatmapPoints.forEach(p => { minLng = Math.min(minLng, p.lng); maxLng = Math.max(maxLng, p.lng); minLat = Math.min(minLat, p.lat); maxLat = Math.max(maxLat, p.lat); });
       const pad = 0.1;
       const bounds: [[number, number], [number, number]] = [[minLng - pad, minLat - pad], [maxLng + pad, maxLat + pad]];
-      if (bounds) {
-        const container = m.getContainer();
-        const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
-        const padY = Math.max(56, Math.round((container.clientHeight || 600) * 0.12));
-        m.fitBounds(bounds, {
-          padding: { top: padY, bottom: padY + 60, left: padX, right: padX },
-          maxZoom: 12,
-          duration: 1000,
-        });
-        hasFittedBoundsRef.current = true;
-      }
+      const container = m.getContainer();
+      const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
+      const padY = Math.max(56, Math.round((container.clientHeight || 600) * 0.12));
+      m.fitBounds(bounds, {
+        padding: { top: padY, bottom: padY + 60, left: padX, right: padX },
+        maxZoom: 12,
+        duration: 1000,
+      });
+      hasFittedBoundsRef.current = true;
     }
   }, [heatmapPoints, mapReady, mapMode]);
 
