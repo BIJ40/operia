@@ -1197,7 +1197,7 @@ export default function MapsTabContent() {
               </div>
             )}
 
-            {((isLoading && mapMode === 'pins') || (heatmapLoading && mapMode === 'heatmap') || (profitLoading && mapMode === 'profitability') || (zonesLoading && mapMode === 'zones')) && mapboxToken && !mapInitError && (
+            {((isLoading && mapMode === 'pins') || (heatmapLoading && mapMode === 'heatmap') || (profitLoading && mapMode === 'profitability') || (zonesLoading && mapMode === 'zones') || (apporteursLoading && mapMode === 'apporteurs')) && mapboxToken && !mapInitError && (
               <MapLoadingOverlay mode={mapMode} />
             )}
 
