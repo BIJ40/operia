@@ -261,12 +261,12 @@ Deno.serve(async (req) => {
         apiFetch('apiGetClients'),
       ];
       
-      // For profitability/zones, also fetch factures
-      if (isProfitability || isZones) {
+      // For profitability/zones/apporteurs, also fetch factures
+      if (isProfitability || isZones || isApporteurs) {
         fetchPromises.push(apiFetch('apiGetFactures'));
       }
-      // For zones, also fetch devis
-      if (isZones) {
+      // For zones/apporteurs, also fetch devis
+      if (isZones || isApporteurs) {
         fetchPromises.push(apiFetch('apiGetDevis'));
       }
 
