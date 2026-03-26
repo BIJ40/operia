@@ -522,7 +522,7 @@ Deno.serve(async (req) => {
     // Règle : un devis dont le projet a déjà une facture OU dont le projet
     // est dans un état terminal (facturé, clos, annulé) n'est PAS en retard.
     const TERMINAL_PROJECT_STATES = ['done', 'closed', 'canceled', 'cancelled', 'billed', 'clos', 'facture', 'annul'];
-    const overdueDevis: { ref: string; label: string }[] = [];
+    const overdueDevis: { ref: string; label: string; date: string; amount: number; days: number }[] = [];
     const seenProjectsForDevisAlerte = new Set<number>();
     for (const d of allDevis) {
       if (!projectIds.has(d.projectId)) continue;
@@ -538,12 +538,14 @@ Deno.serve(async (req) => {
       if (REFUSED_DEVIS.some(s => state.includes(s))) continue;
       const dd = parseDate(d.dateReelle || d.date);
       if (!dd) continue;
-      if (daysDiff(dd, now) > 15) {
+      const age = daysDiff(dd, now);
+      if (age > 15) {
         // Éviter doublons par projet (plusieurs devis sur un même dossier)
         if (seenProjectsForDevisAlerte.has(d.projectId)) continue;
         seenProjectsForDevisAlerte.add(d.projectId);
         const ref = String(proj?.ref || d.projectId);
-        overdueDevis.push({ ref, label: resolveClientName(proj) || ref });
+        const totalHT = Number(d.data?.totalHT || d.totalHT || 0);
+        overdueDevis.push({ ref, label: resolveClientName(proj) || ref, date: dd.toISOString().slice(0, 10), amount: totalHT, days: age });
       }
     }
     if (overdueDevis.length > 0) {
@@ -555,6 +557,7 @@ Deno.serve(async (req) => {
         risk_blockage: risk,
         sample_refs: overdueDevis.map(d => d.ref),
         sample_labels: overdueDevis.map(d => d.label),
+        sample_details: overdueDevis.map(d => ({ ref: d.ref, label: d.label, date: d.date, amount: d.amount, days: d.days })),
       });
     }
 
