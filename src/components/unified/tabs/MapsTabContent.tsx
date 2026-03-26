@@ -9,7 +9,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { format, addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Loader2, MapPin, AlertCircle, CalendarDays } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Loader2, MapPin, AlertCircle, CalendarDays, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -31,8 +31,11 @@ const DEFAULT_CENTER: [number, number] = [1.4442, 43.6047];
 const DEFAULT_ZOOM = 6;
 const TOUR_ROUTE_SOURCE = 'tour-route-source-pilotage';
 const TOUR_ROUTE_LAYER = 'tour-route-layer-pilotage';
+const HEATMAP_SOURCE = 'heatmap-source-pilotage';
+const HEATMAP_LAYER = 'heatmap-layer-pilotage';
 
 type ViewMode = 'day' | 'week';
+type MapMode = 'pins' | 'heatmap';
 
 export default function MapsTabContent() {
   const { agence } = useProfile();
@@ -42,6 +45,7 @@ export default function MapsTabContent() {
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('day');
+  const [mapMode, setMapMode] = useState<MapMode>('pins');
   const [selectedTechIds, setSelectedTechIds] = useState<number[]>([]);
   const [techFilterOpen, setTechFilterOpen] = useState(false);
   const [selectedRdv, setSelectedRdv] = useState<MapRdv | null>(null);
