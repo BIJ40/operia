@@ -39,7 +39,10 @@ interface MapRdv {
 }
 
 interface RequestBody {
-  date: string; // YYYY-MM-DD
+  date?: string; // YYYY-MM-DD (required for normal mode)
+  from?: string; // YYYY-MM-DD (heatmap mode range start)
+  to?: string;   // YYYY-MM-DD (heatmap mode range end)
+  mode?: 'normal' | 'heatmap'; // heatmap returns lightweight {lat,lng}[]
   techIds?: number[];
   agencySlug?: string; // Pour franchiseur multi-agences
 }
