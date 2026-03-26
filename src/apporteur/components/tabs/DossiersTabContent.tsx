@@ -220,7 +220,9 @@ export default function DossiersTabContent() {
   const filteredTotals = useMemo(() => ({
     count: filteredDossiers.length,
     resteDu: filteredDossiers.reduce((sum, d) => sum + d.restedu, 0),
+    resteDuTTC: filteredDossiers.reduce((sum, d) => sum + (d.resteduTTC || 0), 0),
     factureHT: filteredDossiers.reduce((sum, d) => sum + d.factureHT, 0),
+    factureTTC: filteredDossiers.reduce((sum, d) => sum + (d.factureTTC || 0), 0),
   }), [filteredDossiers]);
 
   // Dossiers with devis_envoye status (selectable for bulk refus)
@@ -493,7 +495,7 @@ export default function DossiersTabContent() {
                     onClick={() => handleSort('factureHT')}
                   >
                     <div className="flex items-center justify-end">
-                      Facturé HT <SortIcon field="factureHT" />
+                      Facturé TTC <SortIcon field="factureHT" />
                     </div>
                   </TableHead>
                   <TableHead 
@@ -501,7 +503,7 @@ export default function DossiersTabContent() {
                     onClick={() => handleSort('restedu')}
                   >
                     <div className="flex items-center justify-end">
-                      Reste dû <SortIcon field="restedu" />
+                      Reste dû TTC <SortIcon field="restedu" />
                     </div>
                   </TableHead>
                   <TableHead className="w-16 text-center">PDF</TableHead>
@@ -554,10 +556,10 @@ export default function DossiersTabContent() {
                           {d.devisHT > 0 ? formatCurrency(d.devisHT) : '-'}
                         </TableCell>
                         <TableCell className="text-right font-medium" onClick={() => setSelectedDossier(d)}>
-                          {d.factureHT > 0 ? formatCurrency(d.factureHT) : '-'}
+                          {(d.factureTTC || 0) > 0 ? formatCurrency(d.factureTTC) : d.factureHT > 0 ? formatCurrency(d.factureHT) : '-'}
                         </TableCell>
                         <TableCell className="text-right font-medium text-foreground" onClick={() => setSelectedDossier(d)}>
-                          {d.restedu > 0 ? formatCurrency(d.restedu) : d.factureHT > 0 ? '✓' : '-'}
+                          {(d.resteduTTC || d.restedu) > 0 ? formatCurrency(d.resteduTTC || d.restedu) : d.factureHT > 0 ? '✓' : '-'}
                         </TableCell>
                         <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                           {d.devisHT > 0 ? (
@@ -587,12 +589,14 @@ export default function DossiersTabContent() {
               <div className="flex items-center gap-2 text-sm">
                 <Euro className="w-4 h-4 text-muted-foreground" />
                 <span className="text-muted-foreground">Facturé:</span>
-                <span className="font-semibold">{formatCurrency(filteredTotals.factureHT)}</span>
+                <span className="font-semibold">{formatCurrency(filteredTotals.factureHT)} HT</span>
+                <span className="text-muted-foreground mx-1">·</span>
+                <span className="font-semibold">{formatCurrency(filteredTotals.factureTTC)} TTC</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-muted-foreground">Reste dû:</span>
                 <span className="font-semibold text-foreground">
-                  {formatCurrency(filteredTotals.resteDu)}
+                  {formatCurrency(filteredTotals.resteDu)} HT · {formatCurrency(filteredTotals.resteDuTTC)} TTC
                 </span>
               </div>
             </div>
