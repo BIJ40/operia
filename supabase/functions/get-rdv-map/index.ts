@@ -18,7 +18,7 @@ interface MapRdv {
 }
 interface RequestBody {
   date?: string; from?: string; to?: string;
-  mode?: 'normal' | 'heatmap' | 'profitability' | 'zones' | 'apporteurs' | 'disponibilite' | 'saisonnalite';
+  mode?: 'normal' | 'heatmap' | 'profitability' | 'zones' | 'apporteurs' | 'disponibilite' | 'saisonnalite' | 'score_global';
   techIds?: number[]; agencySlug?: string;
 }
 
@@ -192,7 +192,8 @@ Deno.serve(async (req) => {
     const isApporteurs = mode === 'apporteurs';
     const isDispo = mode === 'disponibilite';
     const isSaisonnalite = mode === 'saisonnalite';
-    const isAnalyticsMode = isHeatmap || isProfitability || isZones || isApporteurs || isSaisonnalite;
+    const isScoreGlobal = mode === 'score_global';
+    const isAnalyticsMode = isHeatmap || isProfitability || isZones || isApporteurs || isSaisonnalite || isScoreGlobal;
 
     const effectiveFrom = isAnalyticsMode ? (fromDate || '2020-01-01') : date;
     const effectiveTo = isAnalyticsMode ? (toDate || new Date().toISOString().slice(0, 10)) : date;
@@ -278,12 +279,12 @@ Deno.serve(async (req) => {
         apiFetch('apiGetClients'),
       ];
       
-      // For profitability/zones/apporteurs/saisonnalite, also fetch factures
-      if (isProfitability || isZones || isApporteurs || isSaisonnalite) {
+      // For profitability/zones/apporteurs/saisonnalite/score_global, also fetch factures
+      if (isProfitability || isZones || isApporteurs || isSaisonnalite || isScoreGlobal) {
         fetchPromises.push(apiFetch('apiGetFactures'));
       }
-      // For zones/apporteurs, also fetch devis
-      if (isZones || isApporteurs) {
+      // For zones/apporteurs/score_global, also fetch devis
+      if (isZones || isApporteurs || isScoreGlobal) {
         fetchPromises.push(apiFetch('apiGetDevis'));
       }
 
@@ -291,8 +292,8 @@ Deno.serve(async (req) => {
       const interventions = results[0] || [];
       const projects = results[1] || [];
       const clients = results[2] || [];
-      const factures = (isProfitability || isZones || isApporteurs || isSaisonnalite) ? (results[3] || []) : [];
-      const devis = (isZones || isApporteurs) ? (results[4] || []) : [];
+      const factures = (isProfitability || isZones || isApporteurs || isSaisonnalite || isScoreGlobal) ? (results[3] || []) : [];
+      const devis = (isZones || isApporteurs || isScoreGlobal) ? (results[4] || []) : [];
 
       console.log(`[GET-RDV-MAP] Fetched ${Array.isArray(interventions) ? interventions.length : 0} interventions, ${projects.length} projects, ${clients.length} clients in ${Date.now() - t0}ms`);
 
@@ -932,6 +933,293 @@ Deno.serve(async (req) => {
           success: true,
           data: seasonResults,
           meta: { mode: 'saisonnalite', agencySlug: targetAgency, totalZones: seasonResults.length, months: sortedMonths, durationMs: Date.now() - t0 },
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      }
+
+      // ── SCORE GLOBAL MODE — Composite multi-criteria score per postal code ──
+      if (isScoreGlobal) {
+        // Build base data
+        const caByProject = new Map<number, number>();
+        for (const f of factures) {
+          const pid = f.projectId;
+          if (typeof pid !== 'number') continue;
+          const isAvoir = (f.typeFacture || f.type || '').toLowerCase() === 'avoir';
+          const montant = parseFloat(f.data?.totalHT ?? f.totalHT ?? f.montantHT ?? 0) || 0;
+          caByProject.set(pid, (caByProject.get(pid) || 0) + (isAvoir ? -Math.abs(montant) : montant));
+        }
+
+        const devisByProject = new Map<number, { total: number; signed: number }>();
+        for (const d of devis) {
+          const pid = d.projectId;
+          if (typeof pid !== 'number') continue;
+          const entry = devisByProject.get(pid) || { total: 0, signed: 0 };
+          entry.total++;
+          if (['accepted', 'validated', 'order', 'signed'].includes((d.state || '').toLowerCase())) entry.signed++;
+          devisByProject.set(pid, entry);
+        }
+
+        const interventionArray = Array.isArray(interventions) ? interventions : [];
+        const hoursByProject = new Map<number, number>();
+        const interventionsByPC = new Map<string, number>();
+        const interventionMonthsByPC = new Map<string, Set<string>>();
+        // SAV detection
+        const savByPC = new Map<string, number>();
+        const totalIntervByPC = new Map<string, number>();
+
+        // Apporteur classification
+        const ORIGIN_KEYWORDS: Record<string, string[]> = {
+          'Assurance': ['assur', 'axa', 'maif', 'macif', 'groupama', 'allianz', 'generali', 'matmut', 'maaf', 'gan', 'mma'],
+          'Agence Immobilière': ['immo', 'agence', 'laforet', 'century', 'orpi', 'foncia'],
+          'Syndic': ['syndic', 'copropriété', 'gestionnaire', 'citya'],
+          'Bailleur': ['bailleur', 'hlm', 'habitat', 'opac'],
+        };
+        function classifyOriginSG(clientName: string): string {
+          const lower = (clientName || '').toLowerCase();
+          for (const [type, keywords] of Object.entries(ORIGIN_KEYWORDS)) {
+            if (keywords.some(kw => lower.includes(kw))) return type;
+          }
+          return 'Client direct';
+        }
+        const projectApporteurType = new Map<number, string>();
+        for (const p of projects) {
+          const data = p.data || {};
+          const commanditaireId = data.commanditaireId || data.commanditaire_id;
+          if (typeof commanditaireId === 'number' && commanditaireId !== p.clientId) {
+            const cmdClient = clientsById.get(commanditaireId);
+            projectApporteurType.set(p.id, cmdClient ? classifyOriginSG(cmdClient.name) : 'Autre');
+          } else {
+            projectApporteurType.set(p.id, 'Client direct');
+          }
+        }
+
+        for (const it of interventionArray) {
+          const pid = it.projectId;
+          if (typeof pid !== 'number') continue;
+          const pc = projectToPostalCode.get(pid);
+          if (!pc) continue;
+
+          // Count interventions
+          interventionsByPC.set(pc, (interventionsByPC.get(pc) || 0) + 1);
+          totalIntervByPC.set(pc, (totalIntervByPC.get(pc) || 0) + 1);
+
+          // Hours
+          const visites = Array.isArray(it?.data?.visites) ? it.data.visites : [];
+          let totalMin = 0;
+          for (const v of visites) totalMin += typeof v?.duree === 'number' ? v.duree : 60;
+          if (totalMin === 0) totalMin = typeof it?.duree === 'number' ? it.duree : 60;
+          hoursByProject.set(pid, (hoursByProject.get(pid) || 0) + totalMin / 60);
+
+          // SAV detection
+          const type2 = ((it?.data?.type2 || it?.type2 || '') + '').toLowerCase();
+          if (type2 === 'sav') savByPC.set(pc, (savByPC.get(pc) || 0) + 1);
+
+          // Month tracking for seasonality
+          const rawDate = typeof it?.date === 'string' ? it.date : '';
+          const month = rawDate.slice(0, 7);
+          if (month.length === 7) {
+            if (!interventionMonthsByPC.has(pc)) interventionMonthsByPC.set(pc, new Set());
+            interventionMonthsByPC.get(pc)!.add(month);
+          }
+        }
+
+        // Agency coords for proximity
+        const { data: agencyData } = await supabase.from('apogee_agencies').select('adresse, code_postal, ville').eq('slug', targetAgency).maybeSingle();
+        let agencyCoords: { lat: number; lng: number } | null = null;
+        if (agencyData?.code_postal) {
+          agencyCoords = coordsByPostalCode.get(agencyData.code_postal) || await geocodeAddress(agencyData.adresse || '', agencyData.code_postal, agencyData.ville || '');
+        }
+
+        // Aggregate per postal code
+        const HOURLY_COST = 35;
+        const zoneScores: any[] = [];
+        const allZoneData: Array<{
+          pc: string; nbProjects: number; ca: number; margin: number;
+          devisTotal: number; devisSigned: number; panierMoyen: number;
+          savRate: number; originTypes: number; top1Share: number;
+          monthSpread: number; nbClients: number;
+        }> = [];
+
+        for (const [pc, pids] of projectsByPostalCode.entries()) {
+          const coords = coordsByPostalCode.get(pc);
+          if (!coords) continue;
+
+          let zoneCA = 0, zoneHours = 0, devisT = 0, devisS = 0;
+          const originCounts: Record<string, number> = {};
+          const clientIds = new Set<number>();
+          const universSet = new Set<string>();
+
+          for (const pid of pids) {
+            zoneCA += caByProject.get(pid) || 0;
+            zoneHours += hoursByProject.get(pid) || 0;
+            const dv = devisByProject.get(pid);
+            if (dv) { devisT += dv.total; devisS += dv.signed; }
+            const proj = projectsById.get(pid);
+            if (proj?.clientId) clientIds.add(proj.clientId);
+            if (proj?.univers && proj.univers !== 'Non classé') universSet.add(proj.univers);
+            const origin = projectApporteurType.get(pid) || 'Autre';
+            originCounts[origin] = (originCounts[origin] || 0) + 1;
+          }
+
+          const nbProjects = pids.size;
+          const margin = zoneCA - zoneHours * HOURLY_COST;
+          const panierMoyen = nbProjects > 0 ? zoneCA / nbProjects : 0;
+          const savCount = savByPC.get(pc) || 0;
+          const totalInterv = totalIntervByPC.get(pc) || 0;
+          const savRate = totalInterv > 0 ? savCount / totalInterv : 0;
+          const originTypes = Object.keys(originCounts).length;
+          const originValues = Object.values(originCounts);
+          const maxOriginCount = Math.max(...originValues, 0);
+          const top1Share = nbProjects > 0 ? maxOriginCount / nbProjects : 0;
+          const monthSpread = interventionMonthsByPC.get(pc)?.size || 0;
+
+          allZoneData.push({ pc, nbProjects, ca: zoneCA, margin, devisTotal: devisT, devisSigned: devisS, panierMoyen, savRate, originTypes, top1Share, monthSpread, nbClients: clientIds.size });
+        }
+
+        // Compute normalization bounds
+        const maxCA = Math.max(...allZoneData.map(z => z.ca), 1);
+        const maxProjects = Math.max(...allZoneData.map(z => z.nbProjects), 1);
+        const maxPanier = Math.max(...allZoneData.map(z => z.panierMoyen), 1);
+        const maxMargin = Math.max(...allZoneData.map(z => z.margin), 1);
+        const minMargin = Math.min(...allZoneData.map(z => z.margin), 0);
+        const maxMonths = Math.max(...allZoneData.map(z => z.monthSpread), 1);
+
+        for (const z of allZoneData) {
+          const coords = coordsByPostalCode.get(z.pc);
+          if (!coords) continue;
+
+          // ── BLOC 1: Commercial (25%) ──
+          const transfoDevis = z.devisTotal > 0 ? z.devisSigned / z.devisTotal : 0;
+          const volumeScore = Math.min(100, (z.nbProjects / maxProjects) * 100);
+          const panierScore = Math.min(100, (z.panierMoyen / maxPanier) * 100);
+          const transfoScore = transfoDevis * 100;
+          const scoreCommercial = Math.round(0.30 * transfoScore + 0.30 * volumeScore + 0.20 * panierScore + 0.20 * Math.min(100, (z.devisTotal / Math.max(1, z.nbProjects)) * 50));
+
+          // ── BLOC 2: Economique (25%) ──
+          const caScore = Math.min(100, (z.ca / maxCA) * 100);
+          const marginNorm = minMargin < 0 ? (z.margin - minMargin) / (maxMargin - minMargin) * 100 : (maxMargin > 0 ? (z.margin / maxMargin) * 100 : 50);
+          const marginScore = Math.min(100, Math.max(0, marginNorm));
+          let proximityScore = 50;
+          if (agencyCoords) {
+            const R = 6371;
+            const dLat = (coords.lat - agencyCoords.lat) * Math.PI / 180;
+            const dLon = (coords.lng - agencyCoords.lng) * Math.PI / 180;
+            const a = Math.sin(dLat/2)**2 + Math.cos(agencyCoords.lat*Math.PI/180)*Math.cos(coords.lat*Math.PI/180)*Math.sin(dLon/2)**2;
+            const distKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            proximityScore = distKm <= 15 ? 100 : distKm <= 40 ? Math.round(100-(distKm-15)*2.5) : distKm <= 80 ? Math.round(40-(distKm-40)*0.5) : 10;
+            proximityScore = Math.max(0, Math.min(100, proximityScore));
+          }
+          const scoreEconomique = Math.round(0.35 * caScore + 0.35 * marginScore + 0.30 * proximityScore);
+
+          // ── BLOC 3: Operationnel (20%) ──
+          // Simplified: use volume/intervention ratio as proxy
+          const interventionCount = interventionsByPC.get(z.pc) || 0;
+          const projectToIntervRatio = z.nbProjects > 0 ? Math.min(1, interventionCount / (z.nbProjects * 2)) : 0;
+          const scoreOperationnel = Math.round(projectToIntervRatio * 100);
+
+          // ── BLOC 4: Qualité (15%) ──
+          const savScore = Math.round(Math.max(0, (1 - z.savRate * 5)) * 100); // 0% SAV = 100, 20% SAV = 0
+          const scoreQualite = savScore;
+
+          // ── BLOC 5: Résilience (15%) ──
+          const diversityScore = Math.min(100, z.originTypes * 20);
+          const nonDependenceScore = Math.round((1 - z.top1Share) * 100);
+          const stabilityScore = Math.min(100, (z.monthSpread / maxMonths) * 100);
+          const clientDensityScore = Math.min(100, z.nbClients * 10);
+          const scoreResilience = Math.round(0.30 * diversityScore + 0.30 * nonDependenceScore + 0.20 * stabilityScore + 0.20 * clientDensityScore);
+
+          // ── SCORE GLOBAL ──
+          const scoreGlobal = Math.round(
+            0.25 * scoreCommercial +
+            0.25 * scoreEconomique +
+            0.20 * scoreOperationnel +
+            0.15 * scoreQualite +
+            0.15 * scoreResilience
+          );
+
+          // Identify main strength and weakness
+          const scores = [
+            { label: 'Commercial', value: scoreCommercial },
+            { label: 'Économique', value: scoreEconomique },
+            { label: 'Opérationnel', value: scoreOperationnel },
+            { label: 'Qualité', value: scoreQualite },
+            { label: 'Résilience', value: scoreResilience },
+          ];
+          const sorted = [...scores].sort((a, b) => b.value - a.value);
+          const mainStrength = sorted[0];
+          const mainWeakness = sorted[sorted.length - 1];
+
+          // Recommendation
+          let recommendation = '';
+          if (scoreGlobal >= 85) recommendation = 'Zone premium — consolider et développer';
+          else if (scoreGlobal >= 70) recommendation = 'Zone saine — maintenir la performance';
+          else if (scoreGlobal >= 55) {
+            if (mainWeakness.label === 'Commercial') recommendation = 'Renforcer la prospection commerciale';
+            else if (mainWeakness.label === 'Résilience') recommendation = 'Diversifier les sources de clients';
+            else if (mainWeakness.label === 'Qualité') recommendation = 'Améliorer la qualité d\'exécution';
+            else if (mainWeakness.label === 'Opérationnel') recommendation = 'Optimiser la capacité opérationnelle';
+            else recommendation = 'Améliorer la rentabilité des interventions';
+          } else if (scoreGlobal >= 40) {
+            recommendation = `Zone fragile — priorité ${mainWeakness.label.toLowerCase()}`;
+          } else {
+            recommendation = 'Zone critique — action corrective urgente';
+          }
+
+          // Score label
+          const scoreLabel = scoreGlobal >= 85 ? 'Premium' : scoreGlobal >= 70 ? 'Saine' : scoreGlobal >= 55 ? 'Moyenne' : scoreGlobal >= 40 ? 'Fragile' : 'Critique';
+
+          zoneScores.push({
+            postalCode: z.pc,
+            city: postalCodeCities.get(z.pc) || '',
+            lat: coords.lat,
+            lng: coords.lng,
+            scoreGlobal,
+            scoreCommercial,
+            scoreEconomique,
+            scoreOperationnel,
+            scoreQualite,
+            scoreResilience,
+            scoreLabel,
+            nbProjects: z.nbProjects,
+            nbClients: z.nbClients,
+            ca: Math.round(z.ca),
+            margin: Math.round(z.margin),
+            panierMoyen: Math.round(z.panierMoyen),
+            devisTotal: z.devisTotal,
+            devisSigned: z.devisSigned,
+            transfoRate: z.devisTotal > 0 ? Math.round((z.devisSigned / z.devisTotal) * 100) : 0,
+            savRate: Math.round(z.savRate * 100),
+            mainStrength: mainStrength.label,
+            mainStrengthScore: mainStrength.value,
+            mainWeakness: mainWeakness.label,
+            mainWeaknessScore: mainWeakness.value,
+            recommendation,
+          });
+        }
+
+        zoneScores.sort((a, b) => b.scoreGlobal - a.scoreGlobal);
+
+        // Build top insights
+        const topDevelop = zoneScores.filter(z => z.scoreCommercial < 50 && z.scoreEconomique > 50).slice(0, 5);
+        const topTension = zoneScores.filter(z => z.scoreOperationnel < 40).slice(0, 5);
+        const topRentable = [...zoneScores].sort((a, b) => b.margin - a.margin).slice(0, 5);
+        const topRisk = zoneScores.filter(z => z.scoreGlobal < 50).slice(0, 5);
+
+        console.log(`[GET-RDV-MAP] ScoreGlobal: ${zoneScores.length} zones in ${Date.now() - t0}ms`);
+        return withCors(req, new Response(JSON.stringify({
+          success: true,
+          data: zoneScores,
+          meta: {
+            mode: 'score_global',
+            agencySlug: targetAgency,
+            totalZones: zoneScores.length,
+            durationMs: Date.now() - t0,
+            insights: {
+              topDevelop: topDevelop.map(z => ({ pc: z.postalCode, city: z.city, score: z.scoreGlobal })),
+              topTension: topTension.map(z => ({ pc: z.postalCode, city: z.city, score: z.scoreGlobal })),
+              topRentable: topRentable.map(z => ({ pc: z.postalCode, city: z.city, margin: z.margin })),
+              topRisk: topRisk.map(z => ({ pc: z.postalCode, city: z.city, score: z.scoreGlobal })),
+            },
+          },
         }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
       }
     }

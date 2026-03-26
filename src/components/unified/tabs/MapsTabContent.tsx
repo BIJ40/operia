@@ -8,7 +8,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { format, addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval, parse } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Loader2, MapPin, AlertCircle, CalendarDays, Flame, PieChart, Crosshair, Network, Radio, Clock, Wrench, Navigation, CalendarRange, Play, Pause, SkipBack, SkipForward, TrendingUp, TrendingDown } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Loader2, MapPin, AlertCircle, CalendarDays, Flame, PieChart, Crosshair, Network, Radio, Clock, Wrench, Navigation, CalendarRange, Play, Pause, SkipBack, SkipForward, TrendingUp, TrendingDown, Trophy, Shield, Target, BarChart3, Star, AlertTriangle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -50,6 +50,8 @@ const DISPO_CIRCLES = 'dispo-circles-pilotage';
 const APPORTEURS_CIRCLES = 'apporteurs-circles-pilotage';
 const SEASON_SOURCE = 'season-source-pilotage';
 const SEASON_CIRCLES = 'season-circles-pilotage';
+const SCORE_SOURCE = 'score-source-pilotage';
+const SCORE_CIRCLES = 'score-circles-pilotage';
 
 function enableStyleFallback(m: mapboxgl.Map) {
   let fallbackApplied = false;
@@ -76,9 +78,9 @@ function enableStyleFallback(m: mapboxgl.Map) {
 }
 
 type ViewMode = 'day' | 'week';
-type MapMode = 'pins' | 'heatmap' | 'profitability' | 'zones' | 'apporteurs' | 'disponibilite' | 'saisonnalite';
+type MapMode = 'pins' | 'heatmap' | 'profitability' | 'zones' | 'apporteurs' | 'disponibilite' | 'saisonnalite' | 'score_global';
 
-type MapsSubTab = 'rdv' | 'densite' | 'rentabilite' | 'zones' | 'apporteurs' | 'disponibilite' | 'saisonnalite';
+type MapsSubTab = 'rdv' | 'densite' | 'rentabilite' | 'zones' | 'apporteurs' | 'disponibilite' | 'saisonnalite' | 'score_global';
 
 const MAP_SUB_TABS: FolderTabConfig[] = [
   { id: 'rdv', label: 'Rendez-vous', icon: MapPin, accent: 'blue' },
@@ -88,6 +90,7 @@ const MAP_SUB_TABS: FolderTabConfig[] = [
   { id: 'apporteurs', label: 'Apporteurs', icon: Network, accent: 'purple' },
   { id: 'disponibilite', label: 'Disponibilité', icon: Radio, accent: 'teal' },
   { id: 'saisonnalite', label: 'Saisonnalité', icon: CalendarRange, accent: 'orange' },
+  { id: 'score_global', label: 'Score Global', icon: Trophy, accent: 'orange' },
 ];
 
 const TAB_ACCENT_COLORS: Record<string, string> = {
@@ -158,6 +161,7 @@ function MapLoadingOverlay({ mode }: { mode: MapMode }) {
     apporteurs: 'Analyse des apporteurs par zone…',
     disponibilite: 'Calcul de disponibilité temps réel…',
     saisonnalite: 'Analyse de saisonnalité géographique…',
+    score_global: 'Calcul du score global multi-critères…',
   };
 
   return (
@@ -181,7 +185,7 @@ export default function MapsTabContent() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [activeSubTab, setActiveSubTab] = useSessionState<MapsSubTab>('maps_sub_tab', 'rdv');
-  const mapMode: MapMode = activeSubTab === 'densite' ? 'heatmap' : activeSubTab === 'rentabilite' ? 'profitability' : activeSubTab === 'zones' ? 'zones' : activeSubTab === 'apporteurs' ? 'apporteurs' : activeSubTab === 'disponibilite' ? 'disponibilite' : activeSubTab === 'saisonnalite' ? 'saisonnalite' : 'pins';
+  const mapMode: MapMode = activeSubTab === 'densite' ? 'heatmap' : activeSubTab === 'rentabilite' ? 'profitability' : activeSubTab === 'zones' ? 'zones' : activeSubTab === 'apporteurs' ? 'apporteurs' : activeSubTab === 'disponibilite' ? 'disponibilite' : activeSubTab === 'saisonnalite' ? 'saisonnalite' : activeSubTab === 'score_global' ? 'score_global' : 'pins';
   const [selectedTechIds, setSelectedTechIds] = useState<number[]>([]);
   const [techFilterOpen, setTechFilterOpen] = useState(false);
   const [selectedRdv, setSelectedRdv] = useState<MapRdv | null>(null);
@@ -421,6 +425,42 @@ export default function MapsTabContent() {
     return () => clearInterval(interval);
   }, [seasonPlaying, seasonMonths.length]);
 
+  // Score Global: composite multi-criteria score per postal code
+  interface ScoreZone {
+    postalCode: string; city: string; lat: number; lng: number;
+    scoreGlobal: number; scoreCommercial: number; scoreEconomique: number;
+    scoreOperationnel: number; scoreQualite: number; scoreResilience: number;
+    scoreLabel: string; nbProjects: number; nbClients: number;
+    ca: number; margin: number; panierMoyen: number;
+    devisTotal: number; devisSigned: number; transfoRate: number; savRate: number;
+    mainStrength: string; mainStrengthScore: number;
+    mainWeakness: string; mainWeaknessScore: number;
+    recommendation: string;
+  }
+  interface ScoreInsight { pc: string; city: string; score?: number; margin?: number }
+  interface ScoreMeta { totalZones: number; durationMs: number; insights: { topDevelop: ScoreInsight[]; topTension: ScoreInsight[]; topRentable: ScoreInsight[]; topRisk: ScoreInsight[] } }
+  const [scoreSubView, setScoreSubView] = useState<'global' | 'commercial' | 'economique' | 'operationnel' | 'qualite' | 'resilience'>('global');
+  const { data: scoreRaw, isLoading: scoreLoading } = useQuery({
+    queryKey: ['rdv-score-global', agence],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Non authentifié');
+      const response = await supabase.functions.invoke('get-rdv-map', {
+        body: { mode: 'score_global', agencySlug: agence },
+      });
+      if (response.error) throw new Error(response.error.message);
+      const result = response.data;
+      if (!result.success) throw new Error(result.error || 'Erreur');
+      return { data: result.data as ScoreZone[], meta: result.meta as ScoreMeta };
+    },
+    enabled: mapMode === 'score_global' && !!agence,
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+  const scoreData = scoreRaw?.data;
+  const scoreMeta = scoreRaw?.meta;
+
   const rdvs = viewMode === 'day' ? dayRdvs : weekRdvs;
   const isLoading = viewMode === 'day' ? dayLoading : weekLoading;
   const error = viewMode === 'day' ? dayError : (weekError instanceof Error ? weekError.message : null);
@@ -517,7 +557,7 @@ export default function MapsTabContent() {
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
 
-    if (mapMode === 'heatmap' || mapMode === 'profitability' || mapMode === 'zones' || mapMode === 'apporteurs' || mapMode === 'disponibilite' || mapMode === 'saisonnalite') return;
+    if (mapMode === 'heatmap' || mapMode === 'profitability' || mapMode === 'zones' || mapMode === 'apporteurs' || mapMode === 'disponibilite' || mapMode === 'saisonnalite' || mapMode === 'score_global') return;
 
     sortedRdvs.forEach((rdv, index) => {
       const isSelected = selectedRdv?.rdvId === rdv.rdvId;
@@ -1289,6 +1329,155 @@ export default function MapsTabContent() {
     return () => { m.off('click', SEASON_CIRCLES, handleClick); };
   }, [seasonData, currentSeasonMonth, seasonViewMode, mapReady, mapMode]);
 
+  // Score Global layer — circles colored by composite score
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !mapReady) return;
+
+    if (m.getLayer(SCORE_CIRCLES)) m.removeLayer(SCORE_CIRCLES);
+    if (m.getSource(SCORE_SOURCE)) m.removeSource(SCORE_SOURCE);
+
+    if (mapMode !== 'score_global' || !scoreData?.length) return;
+
+    const scoreKey = scoreSubView === 'global' ? 'scoreGlobal' : scoreSubView === 'commercial' ? 'scoreCommercial' : scoreSubView === 'economique' ? 'scoreEconomique' : scoreSubView === 'operationnel' ? 'scoreOperationnel' : scoreSubView === 'qualite' ? 'scoreQualite' : 'scoreResilience';
+
+    const geojson: GeoJSON.FeatureCollection = {
+      type: 'FeatureCollection',
+      features: scoreData.map(z => ({
+        type: 'Feature' as const,
+        properties: {
+          postalCode: z.postalCode, city: z.city,
+          score: (z as any)[scoreKey] as number,
+          scoreGlobal: z.scoreGlobal, scoreCommercial: z.scoreCommercial,
+          scoreEconomique: z.scoreEconomique, scoreOperationnel: z.scoreOperationnel,
+          scoreQualite: z.scoreQualite, scoreResilience: z.scoreResilience,
+          scoreLabel: z.scoreLabel, nbProjects: z.nbProjects, nbClients: z.nbClients,
+          ca: z.ca, margin: z.margin, panierMoyen: z.panierMoyen,
+          transfoRate: z.transfoRate, savRate: z.savRate,
+          mainStrength: z.mainStrength, mainStrengthScore: z.mainStrengthScore,
+          mainWeakness: z.mainWeakness, mainWeaknessScore: z.mainWeaknessScore,
+          recommendation: z.recommendation,
+        },
+        geometry: { type: 'Point' as const, coordinates: [z.lng, z.lat] },
+      })),
+    };
+
+    m.addSource(SCORE_SOURCE, { type: 'geojson', data: geojson });
+
+    m.addLayer({
+      id: SCORE_CIRCLES,
+      type: 'circle',
+      source: SCORE_SOURCE,
+      paint: {
+        'circle-radius': [
+          'interpolate', ['linear'], ['zoom'],
+          4, ['interpolate', ['linear'], ['get', 'nbProjects'], 1, 8, 10, 14, 30, 20, 80, 28],
+          10, ['interpolate', ['linear'], ['get', 'nbProjects'], 1, 14, 10, 22, 30, 32, 80, 44],
+          14, ['interpolate', ['linear'], ['get', 'nbProjects'], 1, 20, 10, 30, 30, 42, 80, 56],
+        ],
+        'circle-color': [
+          'interpolate', ['linear'], ['get', 'score'],
+          0, '#dc2626',    // rouge — critique
+          40, '#f97316',   // orange — fragile
+          55, '#fbbf24',   // jaune — moyen
+          70, '#22c55e',   // vert — sain
+          85, '#3b82f6',   // bleu — premium
+        ],
+        'circle-opacity': 0.8,
+        'circle-stroke-color': [
+          'interpolate', ['linear'], ['get', 'score'],
+          0, '#991b1b', 40, '#c2410c', 55, '#a16207', 70, '#166534', 85, '#1e40af',
+        ],
+        'circle-stroke-width': 2,
+        'circle-stroke-opacity': 0.9,
+      },
+    });
+
+    // Fit bounds
+    if (!hasFittedBoundsRef.current && scoreData.length > 0) {
+      let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+      scoreData.forEach(p => { minLng = Math.min(minLng, p.lng); maxLng = Math.max(maxLng, p.lng); minLat = Math.min(minLat, p.lat); maxLat = Math.max(maxLat, p.lat); });
+      const pad = 0.1;
+      const container = m.getContainer();
+      const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
+      const padY = Math.max(56, Math.round((container.clientHeight || 600) * 0.12));
+      m.fitBounds([[minLng - pad, minLat - pad], [maxLng + pad, maxLat + pad]], {
+        padding: { top: padY, bottom: padY + 60, left: padX, right: padX }, maxZoom: 12, duration: 1000,
+      });
+      hasFittedBoundsRef.current = true;
+    }
+
+    // Popup on click
+    const handleClick = (e: mapboxgl.MapMouseEvent) => {
+      const features = m.queryRenderedFeatures(e.point, { layers: [SCORE_CIRCLES] });
+      if (!features?.length) return;
+      const p = features[0].properties;
+      if (!p) return;
+      const coords = (features[0].geometry as any).coordinates as [number, number];
+
+      const scoreBg = p.scoreGlobal >= 85 ? '#3b82f6' : p.scoreGlobal >= 70 ? '#22c55e' : p.scoreGlobal >= 55 ? '#fbbf24' : p.scoreGlobal >= 40 ? '#f97316' : '#dc2626';
+
+      const scoreBar = (label: string, value: number, icon: string) => {
+        const bg = value >= 70 ? '#22c55e' : value >= 50 ? '#fbbf24' : '#dc2626';
+        return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+          <span style="width:14px;text-align:center;">${icon}</span>
+          <span style="flex:1;font-size:11px;">${label}</span>
+          <div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden;">
+            <div style="height:100%;width:${value}%;background:${bg};border-radius:3px;"></div>
+          </div>
+          <span style="font-size:11px;font-weight:600;width:24px;text-align:right;">${value}</span>
+        </div>`;
+      };
+
+      new mapboxgl.Popup({ closeButton: true, maxWidth: '380px' })
+        .setLngLat(coords)
+        .setHTML(`
+          <div style="font-family: system-ui; font-size: 12px; line-height: 1.6;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <span style="font-weight:700;font-size:14px;">${p.postalCode} ${p.city}</span>
+              <span style="background:${scoreBg};color:white;border-radius:10px;padding:2px 10px;font-size:12px;font-weight:700;">${p.scoreGlobal}/100</span>
+              <span style="font-size:11px;color:#6b7280;">${p.scoreLabel}</span>
+            </div>
+
+            <div style="margin-bottom:8px;">
+              ${scoreBar('Commercial', p.scoreCommercial, '📊')}
+              ${scoreBar('Économique', p.scoreEconomique, '💰')}
+              ${scoreBar('Opérationnel', p.scoreOperationnel, '⚙️')}
+              ${scoreBar('Qualité', p.scoreQualite, '✅')}
+              ${scoreBar('Résilience', p.scoreResilience, '🛡️')}
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px 12px;padding:6px 0;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;margin-bottom:6px;">
+              <div>📁 <b>${p.nbProjects}</b> dossiers</div>
+              <div>👤 <b>${p.nbClients}</b> clients</div>
+              <div>💰 CA: <b>${Number(p.ca).toLocaleString('fr-FR')} €</b></div>
+              <div>📈 Marge: <b style="color:${p.margin >= 0 ? '#15803d' : '#dc2626'}">${Number(p.margin).toLocaleString('fr-FR')} €</b></div>
+              <div>📝 Transfo: <b>${p.transfoRate}%</b></div>
+              <div>🔧 SAV: <b>${p.savRate}%</b></div>
+            </div>
+
+            <div style="font-size:11px;margin-bottom:4px;">
+              <span style="color:#22c55e;">▲</span> Force : <b>${p.mainStrength}</b> (${p.mainStrengthScore}/100)
+            </div>
+            <div style="font-size:11px;margin-bottom:6px;">
+              <span style="color:#dc2626;">▼</span> Faiblesse : <b>${p.mainWeakness}</b> (${p.mainWeaknessScore}/100)
+            </div>
+
+            <div style="background:#f0f9ff;border-radius:6px;padding:6px 8px;">
+              <div style="color:#1e40af;font-size:11px;font-weight:600;">💡 ${p.recommendation}</div>
+            </div>
+          </div>
+        `)
+        .addTo(m);
+    };
+
+    m.on('click', SCORE_CIRCLES, handleClick);
+    m.on('mouseenter', SCORE_CIRCLES, () => { m.getCanvas().style.cursor = 'pointer'; });
+    m.on('mouseleave', SCORE_CIRCLES, () => { m.getCanvas().style.cursor = ''; });
+
+    return () => { m.off('click', SCORE_CIRCLES, handleClick); };
+  }, [scoreData, scoreSubView, mapReady, mapMode]);
+
   useEffect(() => {
     const m = map.current;
     if (!m || !mapReady) return;
@@ -1661,6 +1850,33 @@ export default function MapsTabContent() {
           </div>
         )}
 
+        {/* Barre info + panneau latéral Score Global */}
+        {mapMode === 'score_global' && (
+          <div className="flex-none p-4 space-y-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Trophy className="h-4 w-4" />
+              <span>Score Global — synthèse multi-critères par zone</span>
+              <div className="flex items-center gap-1 ml-2">
+                {([['global', 'Global'], ['commercial', 'Commercial'], ['economique', 'Économique'], ['operationnel', 'Opérationnel'], ['qualite', 'Qualité'], ['resilience', 'Résilience']] as const).map(([key, label]) => (
+                  <Button key={key} variant={scoreSubView === key ? 'default' : 'ghost'} size="sm" className="h-6 text-xs" onClick={() => setScoreSubView(key)}>
+                    {label}
+                  </Button>
+                ))}
+              </div>
+              <span className="ml-auto">
+                {scoreLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${scoreData?.length || 0} zones`}
+              </span>
+            </div>
+            <div className="flex items-center gap-4 text-xs flex-wrap">
+              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#dc2626' }} /><span className="text-muted-foreground">Critique (&lt;40)</span></div>
+              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#f97316' }} /><span className="text-muted-foreground">Fragile (40-54)</span></div>
+              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#fbbf24' }} /><span className="text-muted-foreground">Moyenne (55-69)</span></div>
+              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#22c55e' }} /><span className="text-muted-foreground">Saine (70-84)</span></div>
+              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#3b82f6' }} /><span className="text-muted-foreground">Premium (85+)</span></div>
+            </div>
+          </div>
+        )}
+
         <div className="flex-1 min-h-0 flex" style={{ minHeight: '400px' }}>
           <div className="relative h-full w-full overflow-hidden bg-background">
             {!mapboxToken ? (
@@ -1680,7 +1896,7 @@ export default function MapsTabContent() {
               </div>
             )}
 
-            {((isLoading && mapMode === 'pins') || (heatmapLoading && mapMode === 'heatmap') || (profitLoading && mapMode === 'profitability') || (zonesLoading && mapMode === 'zones') || (apporteursLoading && mapMode === 'apporteurs') || (dispoLoading && mapMode === 'disponibilite') || (seasonLoading && mapMode === 'saisonnalite')) && mapboxToken && !mapInitError && (
+            {((isLoading && mapMode === 'pins') || (heatmapLoading && mapMode === 'heatmap') || (profitLoading && mapMode === 'profitability') || (zonesLoading && mapMode === 'zones') || (apporteursLoading && mapMode === 'apporteurs') || (dispoLoading && mapMode === 'disponibilite') || (seasonLoading && mapMode === 'saisonnalite') || (scoreLoading && mapMode === 'score_global')) && mapboxToken && !mapInitError && (
               <MapLoadingOverlay mode={mapMode} />
             )}
 
@@ -1763,6 +1979,108 @@ export default function MapsTabContent() {
                         </button>
                       );
                     })}
+                </div>
+              </ScrollArea>
+            </div>
+          )}
+
+          {/* Panneau latéral Score Global — Top insights */}
+          {mapMode === 'score_global' && scoreData && scoreData.length > 0 && scoreMeta && (
+            <div className="w-80 border-l border-border bg-background flex flex-col">
+              <div className="p-3 border-b border-border">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <Trophy className="h-4 w-4" />
+                  Top Insights
+                </h3>
+              </div>
+              <ScrollArea className="flex-1">
+                <div className="p-3 space-y-4">
+                  {/* Top zones premium */}
+                  <div>
+                    <h4 className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
+                      <Star className="h-3 w-3" /> Top zones performantes
+                    </h4>
+                    {scoreData.slice(0, 5).map(z => (
+                      <button
+                        key={z.postalCode}
+                        onClick={() => { if (map.current) map.current.flyTo({ center: [z.lng, z.lat], zoom: 12, duration: 800 }); }}
+                        className="w-full text-left p-2 rounded-lg hover:bg-muted text-xs flex items-center gap-2"
+                      >
+                        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: z.scoreGlobal >= 85 ? '#3b82f6' : z.scoreGlobal >= 70 ? '#22c55e' : '#fbbf24' }} />
+                        <span className="font-medium">{z.postalCode} {z.city}</span>
+                        <span className="ml-auto font-semibold">{z.scoreGlobal}/100</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Zones à risque */}
+                  {scoreMeta.insights.topRisk.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
+                        <AlertTriangle className="h-3 w-3" /> Zones à risque
+                      </h4>
+                      {scoreMeta.insights.topRisk.map(z => (
+                        <button
+                          key={z.pc}
+                          onClick={() => {
+                            const zone = scoreData.find(s => s.postalCode === z.pc);
+                            if (zone && map.current) map.current.flyTo({ center: [zone.lng, zone.lat], zoom: 12, duration: 800 });
+                          }}
+                          className="w-full text-left p-2 rounded-lg hover:bg-muted text-xs flex items-center gap-2"
+                        >
+                          <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: '#dc2626' }} />
+                          <span className="font-medium">{z.pc} {z.city}</span>
+                          <span className="ml-auto font-semibold text-destructive">{z.score}/100</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Zones à développer */}
+                  {scoreMeta.insights.topDevelop.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
+                        <Target className="h-3 w-3" /> Zones à développer
+                      </h4>
+                      {scoreMeta.insights.topDevelop.map(z => (
+                        <button
+                          key={z.pc}
+                          onClick={() => {
+                            const zone = scoreData.find(s => s.postalCode === z.pc);
+                            if (zone && map.current) map.current.flyTo({ center: [zone.lng, zone.lat], zoom: 12, duration: 800 });
+                          }}
+                          className="w-full text-left p-2 rounded-lg hover:bg-muted text-xs flex items-center gap-2"
+                        >
+                          <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: '#f97316' }} />
+                          <span className="font-medium">{z.pc} {z.city}</span>
+                          <span className="ml-auto font-semibold">{z.score}/100</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Plus rentables */}
+                  {scoreMeta.insights.topRentable.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
+                        <BarChart3 className="h-3 w-3" /> Plus rentables
+                      </h4>
+                      {scoreMeta.insights.topRentable.map(z => (
+                        <button
+                          key={z.pc}
+                          onClick={() => {
+                            const zone = scoreData.find(s => s.postalCode === z.pc);
+                            if (zone && map.current) map.current.flyTo({ center: [zone.lng, zone.lat], zoom: 12, duration: 800 });
+                          }}
+                          className="w-full text-left p-2 rounded-lg hover:bg-muted text-xs flex items-center gap-2"
+                        >
+                          <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: '#22c55e' }} />
+                          <span className="font-medium">{z.pc} {z.city}</span>
+                          <span className="ml-auto font-semibold text-emerald-600">{(z.margin || 0).toLocaleString('fr-FR')} €</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </ScrollArea>
             </div>
