@@ -109,12 +109,10 @@ Deno.serve(async (req) => {
       const result = await resp.json().catch(() => ({}));
       console.log("[WEBHOOK_SYNC_RESULT]", { connectionId, status: resp.status, success: (result as Record<string, unknown>)?.success });
 
-      if (itemId) {
+      if (webhookEventId) {
         await supabase.from("bank_webhook_events")
           .update({ processed: true, processed_at: new Date().toISOString() })
-          .eq("external_item_id", String(itemId))
-          .eq("event_type", eventType)
-          .eq("processed", false);
+          .eq("id", webhookEventId);
       }
     } catch (err) {
       console.error("[WEBHOOK_SYNC_ERROR]", { connectionId, error: err instanceof Error ? err.message : String(err) });
