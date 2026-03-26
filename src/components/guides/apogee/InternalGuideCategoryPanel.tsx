@@ -341,6 +341,24 @@ export function InternalGuideCategoryPanel({ slug }: InternalGuideCategoryPanelP
     );
   }
 
+  const handleRichContentClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement;
+    const imageTrigger = target.closest('[data-image-modal], [data-image-button], [data-src]') as HTMLElement | null;
+
+    if (!imageTrigger) return;
+
+    const url = imageTrigger.getAttribute('data-image-modal')
+      || imageTrigger.getAttribute('data-src')
+      || imageTrigger.closest('[data-image-button]')?.getAttribute('data-src')
+      || imageTrigger.querySelector('[data-image-modal]')?.getAttribute('data-image-modal');
+
+    if (!url) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    window.dispatchEvent(new CustomEvent('open-image-modal', { detail: { url } }));
+  }, []);
+
   const renderSectionContent = (section: Block) => {
     const isTips = section.contentType === 'tips';
     const tipsType = section.tipsType || 'information';
@@ -357,6 +375,7 @@ export function InternalGuideCategoryPanel({ slug }: InternalGuideCategoryPanelP
             <Lightbulb className={cn("w-5 h-5 mt-0.5 flex-shrink-0", colors.icon)} />
             <div 
               className="prose prose-sm dark:prose-invert max-w-none flex-1"
+              onClickCapture={handleRichContentClick}
               dangerouslySetInnerHTML={createSanitizedHtml(section.content)}
             />
           </div>
@@ -367,6 +386,7 @@ export function InternalGuideCategoryPanel({ slug }: InternalGuideCategoryPanelP
     return (
       <div 
         className="prose prose-sm dark:prose-invert max-w-none"
+        onClickCapture={handleRichContentClick}
         dangerouslySetInnerHTML={createSanitizedHtml(section.content)}
       />
     );
