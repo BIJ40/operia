@@ -181,8 +181,18 @@ export default function AccueilTabContent() {
       {/* Planning Card */}
       <ApporteurPlanningCard />
 
-      {/* Dialog */}
+      {/* Dialogs */}
       <NouvelleDemandeDialog open={demandeOpen} onOpenChange={setDemandeOpen} />
+      {kpis && trends && stats?.series_12m && (
+        <KpiDetailDialog
+          open={!!kpiDetail}
+          onClose={() => setKpiDetail(null)}
+          type={kpiDetail}
+          kpis={kpis}
+          trends={trends}
+          series={stats.series_12m}
+        />
+      )}
     </div>
   );
 }
