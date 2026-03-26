@@ -82,6 +82,7 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
   const navigate = useNavigate();
   const [openAlerte, setOpenAlerte] = useState<AlerteEntry | null>(null);
   const [devisAction, setDevisAction] = useState<DevisActionState | null>(null);
+  const dossierAction = useApporteurDossierActions();
 
   const important = alertes.filter(a => a.severity === 'high' || a.severity === 'medium');
   if (important.length === 0) return null;
@@ -99,32 +100,21 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
     setDevisAction({ action, detail, comment: '', sending: false });
   };
 
-  const handleConfirmDevisAction = async () => {
+  const handleConfirmDevisAction = () => {
     if (!devisAction) return;
     setDevisAction(prev => prev ? { ...prev, sending: true } : null);
 
-    try {
-      const { error } = await supabase.functions.invoke('apporteur-devis-action', {
-        body: {
-          dossierRef: devisAction.detail.ref,
-          action: devisAction.action,
-          comment: devisAction.comment,
-        },
-      });
-
-      if (error) throw error;
-
-      toast.success(
-        devisAction.action === 'valider'
-          ? 'Devis validé — l\'agence a été notifiée'
-          : 'Devis refusé — l\'agence a été notifiée'
-      );
-      setDevisAction(null);
-    } catch (err) {
-      console.error('Erreur action devis:', err);
-      toast.error('Une erreur est survenue. Veuillez réessayer.');
-      setDevisAction(prev => prev ? { ...prev, sending: false } : null);
-    }
+    dossierAction.mutate(
+      {
+        action: devisAction.action === 'valider' ? 'valider_devis' : 'refuser_devis',
+        dossierRefs: [devisAction.detail.ref],
+        message: devisAction.comment || undefined,
+      },
+      {
+        onSuccess: () => setDevisAction(null),
+        onSettled: () => setDevisAction(prev => prev ? { ...prev, sending: false } : null),
+      }
+    );
   };
 
   const navigateToDossier = (ref: string) => {
