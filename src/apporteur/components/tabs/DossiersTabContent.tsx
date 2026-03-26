@@ -116,9 +116,9 @@ export default function DossiersTabContent() {
   };
 
   // Virtual status for filtering: "en_cours_all" = everything not facturé+
-  const FINISHED_STATUSES = new Set(['facture', 'attente_paiement', 'regle', 'clos', 'annule']);
+  const FINISHED_STATUSES = new Set(['facture', 'attente_paiement', 'clos', 'annule']);
 
-  const STATUS_ORDER = ['en_cours_all', 'en_cours', 'programme', 'stand_by', 'devis_en_cours', 'devis_envoye', 'devis_valide', 'attente_paiement', 'facture', 'regle', 'clos', 'annule'];
+  const STATUS_ORDER = ['en_cours_all', 'en_cours', 'programme', 'stand_by', 'devis_en_cours', 'devis_envoye', 'devis_valide', 'attente_paiement', 'facture', 'clos', 'annule'];
 
   const statuses = useMemo(() => {
     const unique = new Set(dossiers.map(d => d.status));
