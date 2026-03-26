@@ -400,18 +400,7 @@ export default function MapsTabContent() {
     return () => clearInterval(interval);
   }, [seasonPlaying, seasonMonths.length]);
 
-  // Score Global: composite multi-criteria score per postal code
-  interface ScoreZone {
-    postalCode: string; city: string; lat: number; lng: number;
-    scoreGlobal: number; scoreCommercial: number; scoreEconomique: number;
-    scoreOperationnel: number; scoreQualite: number; scoreResilience: number;
-    scoreLabel: string; nbProjects: number; nbClients: number;
-    ca: number; margin: number; panierMoyen: number;
-    devisTotal: number; devisSigned: number; transfoRate: number; savRate: number;
-    mainStrength: string; mainStrengthScore: number;
-    mainWeakness: string; mainWeaknessScore: number;
-    recommendation: string;
-  }
+  // Score Global: choropleth GeoJSON (commune polygons with composite scores)
   interface ScoreInsight { pc: string; city: string; score?: number; margin?: number }
   interface ScoreMeta { totalZones: number; durationMs: number; insights: { topDevelop: ScoreInsight[]; topTension: ScoreInsight[]; topRentable: ScoreInsight[]; topRisk: ScoreInsight[] } }
   const [scoreSubView, setScoreSubView] = useState<'global' | 'commercial' | 'economique' | 'operationnel' | 'qualite' | 'resilience'>('global');
@@ -426,14 +415,14 @@ export default function MapsTabContent() {
       if (response.error) throw new Error(response.error.message);
       const result = response.data;
       if (!result.success) throw new Error(result.error || 'Erreur');
-      return { data: result.data as ScoreZone[], meta: result.meta as ScoreMeta };
+      return { data: result.data as GeoJSON.FeatureCollection, meta: result.meta as ScoreMeta };
     },
     enabled: mapMode === 'score_global' && !!agence,
     staleTime: 30 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
-  const scoreData = scoreRaw?.data;
+  const scoreGeoJson = scoreRaw?.data;
   const scoreMeta = scoreRaw?.meta;
 
   const rdvs = viewMode === 'day' ? dayRdvs : weekRdvs;
