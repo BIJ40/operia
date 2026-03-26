@@ -18,7 +18,7 @@ interface MapRdv {
 }
 interface RequestBody {
   date?: string; from?: string; to?: string;
-  mode?: 'normal' | 'heatmap' | 'profitability' | 'zones' | 'apporteurs' | 'disponibilite';
+  mode?: 'normal' | 'heatmap' | 'profitability' | 'zones' | 'apporteurs' | 'disponibilite' | 'saisonnalite';
   techIds?: number[]; agencySlug?: string;
 }
 
@@ -191,7 +191,8 @@ Deno.serve(async (req) => {
     const isZones = mode === 'zones';
     const isApporteurs = mode === 'apporteurs';
     const isDispo = mode === 'disponibilite';
-    const isAnalyticsMode = isHeatmap || isProfitability || isZones || isApporteurs;
+    const isSaisonnalite = mode === 'saisonnalite';
+    const isAnalyticsMode = isHeatmap || isProfitability || isZones || isApporteurs || isSaisonnalite;
 
     const effectiveFrom = isAnalyticsMode ? (fromDate || '2020-01-01') : date;
     const effectiveTo = isAnalyticsMode ? (toDate || new Date().toISOString().slice(0, 10)) : date;
