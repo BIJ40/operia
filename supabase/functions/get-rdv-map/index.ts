@@ -412,7 +412,7 @@ Deno.serve(async (req) => {
 
           const ca = caByProject.get(pid) || 0;
           const hours = hoursByProject.get(pid) || 0;
-          if (ca === 0 && hours === 0) continue;
+          if (ca <= 0) continue; // Pas de CA facturé = pas de rentabilité à calculer
 
           projectPoints.push({
             lat: coords.lat + (Math.random() - 0.5) * 0.005,
