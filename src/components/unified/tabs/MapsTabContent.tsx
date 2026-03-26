@@ -90,7 +90,7 @@ const MAP_SUB_TABS: FolderTabConfig[] = [
   { id: 'apporteurs', label: 'Apporteurs', icon: Network, accent: 'purple' },
   { id: 'disponibilite', label: 'Disponibilité', icon: Radio, accent: 'teal' },
   { id: 'saisonnalite', label: 'Saisonnalité', icon: CalendarRange, accent: 'orange' },
-  { id: 'score_global', label: 'Score Global', icon: Trophy, accent: 'amber' },
+  { id: 'score_global', label: 'Score Global', icon: Trophy, accent: 'orange' },
 ];
 
 const TAB_ACCENT_COLORS: Record<string, string> = {
@@ -161,6 +161,7 @@ function MapLoadingOverlay({ mode }: { mode: MapMode }) {
     apporteurs: 'Analyse des apporteurs par zone…',
     disponibilite: 'Calcul de disponibilité temps réel…',
     saisonnalite: 'Analyse de saisonnalité géographique…',
+    score_global: 'Calcul du score global multi-critères…',
   };
 
   return (
