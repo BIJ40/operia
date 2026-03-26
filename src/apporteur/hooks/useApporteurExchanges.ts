@@ -9,7 +9,7 @@ export interface DossierExchange {
   id: string;
   sender_type: 'apporteur' | 'agence';
   sender_name: string;
-  action_type: 'annuler' | 'relancer' | 'info' | 'reponse';
+  action_type: 'annuler' | 'relancer' | 'info' | 'reponse' | 'message' | 'valider_devis' | 'refuser_devis' | 'systeme';
   message: string;
   created_at: string;
 }

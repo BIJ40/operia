@@ -1,7 +1,10 @@
 /**
  * DossierDetailDialog — Fiche dossier complète et unifiée
- * Layout: gauche (infos + actions) | droite (fil d'échanges)
- * Ouvert depuis n'importe où dans le portail apporteur
+ * Layout: gauche (infos) | droite (fil d'échanges + chat)
+ * 
+ * Supporte deux modes :
+ * - viewerType='apporteur' (défaut) : portail apporteur, actions devis disponibles
+ * - viewerType='agence' : vue OPERIA, lecture + réponse selon viewerCanReply
  */
 
 import { useState, useRef, useEffect } from 'react';
@@ -13,8 +16,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import {
-  FolderOpen, CheckCircle2, XCircle, Ban, RefreshCw, Info,
-  Send, MessageCircle, Loader2, FileText,
+  FolderOpen, CheckCircle2, XCircle,
+  Send, MessageCircle, Loader2, Lock,
 } from 'lucide-react';
 import { DossierRow, STATUS_CONFIG, formatCurrency, formatDate } from '../../hooks/useApporteurDossiers';
 import { DossierStepper } from './DossierStepper';
@@ -25,9 +28,19 @@ import { useApporteurExchanges, type DossierExchange } from '../../hooks/useAppo
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
-interface DossierDetailDialogProps {
+export interface DossierDetailDialogProps {
   dossier: DossierRow | null;
   onClose: () => void;
+  /** Mode de visualisation : apporteur (portail) ou agence (OPERIA) */
+  viewerType?: 'apporteur' | 'agence';
+  /** Nom affiché de l'expéditeur côté agence */
+  viewerName?: string;
+  /** Autorisé à répondre dans le fil ? (défaut: true pour apporteur) */
+  viewerCanReply?: boolean;
+  /** Hook de réponse custom côté agence (optionnel) */
+  onSendMessage?: (message: string) => Promise<void>;
+  /** Mutation en cours (côté agence) */
+  isSending?: boolean;
 }
 
 const getApporteurLabel = (d: DossierRow): string => {
@@ -39,15 +52,19 @@ const getApporteurLabel = (d: DossierRow): string => {
 const canRefuserDevis = (d: DossierRow) => d.status === 'devis_envoye';
 const canValiderDevis = (d: DossierRow) => d.status === 'devis_envoye';
 
-const ACTION_CONFIG = {
-  annuler: { label: 'Annuler', icon: Ban, color: 'text-destructive border-destructive/40 hover:bg-destructive/10' },
-  relancer: { label: 'Relancer', icon: RefreshCw, color: 'text-[hsl(var(--ap-warning))] border-[hsl(var(--ap-warning))]/40 hover:bg-[hsl(var(--ap-warning-light))]' },
-  info: { label: 'Donner une info', icon: Info, color: 'text-[hsl(var(--ap-info))] border-[hsl(var(--ap-info))]/40 hover:bg-[hsl(var(--ap-info-light))]' },
-} as const;
+/** Labels d'action enrichis pour le fil d'échanges */
+const ACTION_LABELS: Record<string, string> = {
+  annuler: '🚫 Annulation',
+  relancer: '🔄 Relance',
+  info: 'ℹ️ Information',
+  reponse: '💬 Réponse',
+  message: '💬 Message',
+  valider_devis: '✅ Devis validé',
+  refuser_devis: '❌ Devis refusé',
+  systeme: '🔔 Système',
+};
 
-type QuickAction = keyof typeof ACTION_CONFIG;
-
-function ExchangeThread({ exchanges, isLoading }: { exchanges: DossierExchange[]; isLoading: boolean }) {
+function ExchangeThread({ exchanges, isLoading, viewerType }: { exchanges: DossierExchange[]; isLoading: boolean; viewerType: 'apporteur' | 'agence' }) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -67,7 +84,11 @@ function ExchangeThread({ exchanges, isLoading }: { exchanges: DossierExchange[]
       <div className="flex flex-col items-center justify-center py-8 text-center">
         <MessageCircle className="w-8 h-8 text-muted-foreground/30 mb-2" />
         <p className="text-sm text-muted-foreground">Aucun échange pour ce dossier</p>
-        <p className="text-xs text-muted-foreground/60 mt-1">Utilisez les actions ci-contre pour contacter l'agence</p>
+        <p className="text-xs text-muted-foreground/60 mt-1">
+          {viewerType === 'apporteur'
+            ? 'Écrivez un message ci-dessous pour contacter l\'agence'
+            : 'Les échanges avec l\'apporteur apparaîtront ici'}
+        </p>
       </div>
     );
   }
@@ -76,17 +97,34 @@ function ExchangeThread({ exchanges, isLoading }: { exchanges: DossierExchange[]
     <div className="space-y-3">
       {exchanges.map((ex) => {
         const isApporteur = ex.sender_type === 'apporteur';
-        const actionLabel = ex.action_type === 'annuler' ? '🚫 Annulation'
-          : ex.action_type === 'relancer' ? '🔄 Relance'
-          : ex.action_type === 'info' ? 'ℹ️ Information'
-          : ex.action_type === 'reponse' ? '💬 Réponse' : ex.action_type;
+        const actionLabel = ACTION_LABELS[ex.action_type] ?? ex.action_type;
+        const isSystem = ex.action_type === 'systeme' || ex.action_type === 'valider_devis' || ex.action_type === 'refuser_devis';
+
+        // System messages: centered timeline style
+        if (isSystem) {
+          return (
+            <div key={ex.id} className="flex justify-center py-1">
+              <div className="bg-muted/60 rounded-full px-3 py-1 text-xs text-muted-foreground text-center">
+                {actionLabel} — {ex.sender_name}
+                <span className="ml-2 text-[10px]">
+                  {format(parseISO(ex.created_at), 'dd/MM HH:mm', { locale: fr })}
+                </span>
+                {ex.message && <span className="block mt-0.5 text-foreground/80">{ex.message}</span>}
+              </div>
+            </div>
+          );
+        }
+
+        // Regular messages: chat bubbles
+        // Determine alignment based on viewer
+        const isOwnMessage = viewerType === 'apporteur' ? isApporteur : !isApporteur;
 
         return (
           <div
             key={ex.id}
             className={cn(
               'rounded-lg p-3 text-sm',
-              isApporteur
+              isOwnMessage
                 ? 'bg-primary/5 border border-primary/10 ml-0 mr-4'
                 : 'bg-muted/50 border border-border ml-4 mr-0'
             )}
@@ -111,49 +149,58 @@ function ExchangeThread({ exchanges, isLoading }: { exchanges: DossierExchange[]
   );
 }
 
-export function DossierDetailDialog({ dossier, onClose }: DossierDetailDialogProps) {
-  const [message, setMessage] = useState('');
+export function DossierDetailDialog({
+  dossier,
+  onClose,
+  viewerType = 'apporteur',
+  viewerName,
+  viewerCanReply = viewerType === 'apporteur',
+  onSendMessage,
+  isSending = false,
+}: DossierDetailDialogProps) {
   const [chatMessage, setChatMessage] = useState('');
-  const [activeAction, setActiveAction] = useState<QuickAction | null>(null);
   const dossierAction = useApporteurDossierActions();
   const { data: exchanges = [], isLoading: exchangesLoading, invalidate } = useApporteurExchanges(dossier?.ref || null);
 
-  const handleClose = () => {
-    setMessage('');
-    setActiveAction(null);
-    onClose();
-  };
+  const isPending = viewerType === 'agence' ? isSending : dossierAction.isPending;
 
-  const handleSendAction = (actionType: QuickAction) => {
-    if (!dossier || !message.trim()) return;
-    dossierAction.mutate(
-      {
-        action: 'dossier_inactif',
-        dossierRefs: [dossier.ref],
-        inactifAction: actionType === 'info' ? 'donner_info' : actionType,
-        message: message.trim(),
-      },
-      {
-        onSuccess: () => {
-          setMessage('');
-          setActiveAction(null);
-          invalidate();
-        },
-      }
-    );
+  const handleClose = () => {
+    setChatMessage('');
+    onClose();
   };
 
   const handleDevisAction = (action: 'valider_devis' | 'refuser_devis') => {
     if (!dossier) return;
     dossierAction.mutate(
-      { action, dossierRefs: [dossier.ref], message: message.trim() || undefined },
-      {
-        onSuccess: () => {
-          setMessage('');
-          invalidate();
-        },
-      }
+      { action, dossierRefs: [dossier.ref] },
+      { onSuccess: () => invalidate() }
     );
+  };
+
+  const handleSendChat = async () => {
+    if (!chatMessage.trim() || !dossier || isPending) return;
+
+    if (viewerType === 'agence' && onSendMessage) {
+      await onSendMessage(chatMessage.trim());
+      setChatMessage('');
+      invalidate();
+    } else {
+      // Apporteur: use existing action hook
+      dossierAction.mutate(
+        {
+          action: 'dossier_inactif',
+          dossierRefs: [dossier.ref],
+          inactifAction: 'donner_info',
+          message: chatMessage.trim(),
+        },
+        {
+          onSuccess: () => {
+            setChatMessage('');
+            invalidate();
+          },
+        }
+      );
+    }
   };
 
   const v2 = dossier ? (dossier as DossierRowV2)?.v2 : undefined;
@@ -173,7 +220,7 @@ export function DossierDetailDialog({ dossier, onClose }: DossierDetailDialogPro
 
         {dossier && (
           <div className="flex flex-col lg:flex-row min-h-0 max-h-[calc(90vh-72px)]">
-            {/* ─── LEFT: Info + Actions ─── */}
+            {/* ─── LEFT: Info ─── */}
             <ScrollArea className="flex-1 lg:border-r border-border">
               <div className="p-6 pt-2 space-y-4">
                 {/* Stepper */}
@@ -300,89 +347,41 @@ export function DossierDetailDialog({ dossier, onClose }: DossierDetailDialogPro
                   </div>
                 </div>
 
-                {/* Actions directes */}
-                <Separator />
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Actions</p>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {/* Devis actions */}
-                    {canValiderDevis(dossier) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1.5 text-xs border-[hsl(var(--ap-success)/.4)] text-[hsl(var(--ap-success))] hover:bg-[hsl(var(--ap-success-light))]"
-                        disabled={dossierAction.isPending}
-                        onClick={() => handleDevisAction('valider_devis')}
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        Valider devis
-                      </Button>
-                    )}
-                    {canRefuserDevis(dossier) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1.5 text-xs border-[hsl(var(--ap-danger)/.4)] text-[hsl(var(--ap-danger))] hover:bg-[hsl(var(--ap-danger-light))]"
-                        disabled={dossierAction.isPending}
-                        onClick={() => handleDevisAction('refuser_devis')}
-                      >
-                        <XCircle className="w-3.5 h-3.5" />
-                        Refuser devis
-                      </Button>
-                    )}
-
-                    {/* Quick actions: Annuler, Relancer, Info */}
-                    {(Object.entries(ACTION_CONFIG) as [QuickAction, typeof ACTION_CONFIG[QuickAction]][]).map(([key, conf]) => {
-                      const Icon = conf.icon;
-                      const isActive = activeAction === key;
-                      return (
-                        <Button
-                          key={key}
-                          variant="outline"
-                          size="sm"
-                          className={cn('gap-1.5 text-xs', conf.color, isActive && 'ring-2 ring-offset-1')}
-                          onClick={() => setActiveAction(isActive ? null : key)}
-                        >
-                          <Icon className="w-3.5 h-3.5" />
-                          {conf.label}
-                        </Button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Message input for active action */}
-                  {activeAction && (
-                    <div className="space-y-2">
-                      <Textarea
-                        placeholder={`Votre message pour "${ACTION_CONFIG[activeAction].label}"...`}
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        rows={3}
-                        className="resize-none text-sm"
-                        autoFocus
-                      />
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          className="gap-1.5 text-xs"
-                          disabled={!message.trim() || dossierAction.isPending}
-                          onClick={() => handleSendAction(activeAction)}
-                        >
-                          <Send className="w-3.5 h-3.5" />
-                          {dossierAction.isPending ? 'Envoi…' : 'Envoyer à l\'agence'}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-xs"
-                          onClick={() => { setActiveAction(null); setMessage(''); }}
-                        >
-                          Annuler
-                        </Button>
+                {/* Devis actions — apporteur only */}
+                {viewerType === 'apporteur' && (canValiderDevis(dossier) || canRefuserDevis(dossier)) && (
+                  <>
+                    <Separator />
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Actions devis</p>
+                      <div className="flex flex-wrap gap-2">
+                        {canValiderDevis(dossier) && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1.5 text-xs border-[hsl(var(--ap-success)/.4)] text-[hsl(var(--ap-success))] hover:bg-[hsl(var(--ap-success-light))]"
+                            disabled={dossierAction.isPending}
+                            onClick={() => handleDevisAction('valider_devis')}
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Valider devis
+                          </Button>
+                        )}
+                        {canRefuserDevis(dossier) && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1.5 text-xs border-[hsl(var(--ap-danger)/.4)] text-[hsl(var(--ap-danger))] hover:bg-[hsl(var(--ap-danger-light))]"
+                            disabled={dossierAction.isPending}
+                            onClick={() => handleDevisAction('refuser_devis')}
+                          >
+                            <XCircle className="w-3.5 h-3.5" />
+                            Refuser devis
+                          </Button>
+                        )}
                       </div>
                     </div>
-                  )}
-                </div>
+                  </>
+                )}
               </div>
             </ScrollArea>
 
@@ -399,59 +398,53 @@ export function DossierDetailDialog({ dossier, onClose }: DossierDetailDialogPro
               </div>
               <ScrollArea className="flex-1 max-h-[300px] lg:max-h-none">
                 <div className="p-3">
-                  <ExchangeThread exchanges={exchanges} isLoading={exchangesLoading} />
+                  <ExchangeThread exchanges={exchanges} isLoading={exchangesLoading} viewerType={viewerType} />
                 </div>
               </ScrollArea>
+
               {/* Chat input bar */}
-              <div className="border-t bg-background p-2">
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    if (!chatMessage.trim() || !dossier || dossierAction.isPending) return;
-                    dossierAction.mutate(
-                      {
-                        action: 'dossier_inactif',
-                        dossierRefs: [dossier.ref],
-                        inactifAction: 'donner_info',
-                        message: chatMessage.trim(),
-                      },
-                      {
-                        onSuccess: () => {
-                          setChatMessage('');
-                          invalidate();
-                        },
-                      }
-                    );
-                  }}
-                  className="flex items-end gap-1.5"
-                >
-                  <Textarea
-                    placeholder="Écrire à l'agence…"
-                    value={chatMessage}
-                    onChange={(e) => setChatMessage(e.target.value)}
-                    rows={1}
-                    className="resize-none text-sm min-h-[36px] max-h-[80px] flex-1"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        e.currentTarget.form?.requestSubmit();
-                      }
+              {viewerCanReply ? (
+                <div className="border-t bg-background p-2">
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleSendChat();
                     }}
-                  />
-                  <Button
-                    type="submit"
-                    size="icon"
-                    className="h-9 w-9 shrink-0"
-                    disabled={!chatMessage.trim() || dossierAction.isPending}
+                    className="flex items-end gap-1.5"
                   >
-                    {dossierAction.isPending ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Send className="w-4 h-4" />
-                    )}
-                  </Button>
-                </form>
-              </div>
+                    <Textarea
+                      placeholder={viewerType === 'apporteur' ? "Écrire à l'agence…" : "Écrire à l'apporteur…"}
+                      value={chatMessage}
+                      onChange={(e) => setChatMessage(e.target.value)}
+                      rows={1}
+                      className="resize-none text-sm min-h-[36px] max-h-[80px] flex-1"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          e.currentTarget.form?.requestSubmit();
+                        }
+                      }}
+                    />
+                    <Button
+                      type="submit"
+                      size="icon"
+                      className="h-9 w-9 shrink-0"
+                      disabled={!chatMessage.trim() || isPending}
+                    >
+                      {isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Send className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </form>
+                </div>
+              ) : (
+                <div className="border-t bg-muted/30 p-3 flex items-center gap-2 text-xs text-muted-foreground">
+                  <Lock className="w-3.5 h-3.5 shrink-0" />
+                  <span>Seuls le dirigeant et les assistantes peuvent répondre aux apporteurs.</span>
+                </div>
+              )}
             </div>
           </div>
         )}
