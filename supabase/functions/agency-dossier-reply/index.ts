@@ -150,64 +150,113 @@ Deno.serve(async (req) => {
       let apporteurName: string | null = null;
       let emailSource: EmailSource = 'not_found';
 
-      // Chemin principal : dossier_ref → apporteur_intervention_requests → apporteur_manager_id → email
-      const { data: request } = await supabaseAdmin
-        .from('apporteur_intervention_requests')
-        .select('apporteur_manager_id, apporteur_id, tenant_name')
+      // PRIORITÉ 1 : sender_email historisé dans le dernier message apporteur du thread
+      const { data: prevExchange } = await supabaseAdmin
+        .from('dossier_exchanges')
+        .select('sender_email, sender_name')
         .eq('agency_id', profile.agency_id)
-        .eq('reference', dossierRef)
+        .eq('dossier_ref', dossierRef)
+        .eq('sender_type', 'apporteur')
+        .not('sender_email', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
-      if (request?.apporteur_manager_id) {
-        const { data: manager } = await supabaseAdmin
-          .from('apporteur_managers')
-          .select('email, first_name, last_name')
-          .eq('id', request.apporteur_manager_id)
-          .eq('is_active', true)
+      if (prevExchange?.sender_email) {
+        apporteurEmail = prevExchange.sender_email;
+        apporteurName = prevExchange.sender_name;
+        emailSource = 'previous_exchange_fallback';
+      }
+
+      // PRIORITÉ 2 : manager_id stocké dans metadata du dernier message apporteur
+      if (!apporteurEmail) {
+        const { data: prevMetaExchange } = await supabaseAdmin
+          .from('dossier_exchanges')
+          .select('metadata, sender_name')
+          .eq('agency_id', profile.agency_id)
+          .eq('dossier_ref', dossierRef)
+          .eq('sender_type', 'apporteur')
+          .order('created_at', { ascending: false })
+          .limit(1)
           .maybeSingle();
 
-        if (manager?.email) {
-          apporteurEmail = manager.email;
-          apporteurName = [manager.first_name, manager.last_name].filter(Boolean).join(' ') || null;
-          emailSource = 'manager_id';
+        const managerId = (prevMetaExchange?.metadata as Record<string, unknown>)?.manager_id as string | undefined;
+        if (managerId) {
+          const { data: manager } = await supabaseAdmin
+            .from('apporteur_managers')
+            .select('email, first_name, last_name')
+            .eq('id', managerId)
+            .eq('is_active', true)
+            .maybeSingle();
+
+          if (manager?.email) {
+            apporteurEmail = manager.email;
+            apporteurName = [manager.first_name, manager.last_name].filter(Boolean).join(' ') || prevMetaExchange?.sender_name || null;
+            emailSource = 'manager_id';
+          }
         }
       }
 
-      // Fallback 1 : apporteur_users (comptes de connexion OPERIA apporteur)
-      if (!apporteurEmail && request?.apporteur_id) {
-        const { data: appUsers } = await supabaseAdmin
-          .from('apporteur_users')
-          .select('email, first_name, last_name')
-          .eq('apporteur_id', request.apporteur_id)
-          .eq('is_active', true)
-          .order('created_at', { ascending: true })
-          .limit(1);
+      // PRIORITÉ 3 : dossier_ref → apporteur_intervention_requests → apporteur_manager_id → email
+      if (!apporteurEmail) {
+        const { data: request } = await supabaseAdmin
+          .from('apporteur_intervention_requests')
+          .select('apporteur_manager_id, apporteur_id, tenant_name')
+          .eq('agency_id', profile.agency_id)
+          .eq('reference', dossierRef)
+          .maybeSingle();
 
-        if (appUsers?.length && appUsers[0].email) {
-          apporteurEmail = appUsers[0].email;
-          apporteurName = [appUsers[0].first_name, appUsers[0].last_name].filter(Boolean).join(' ') || null;
-          emailSource = 'apporteur_user_fallback';
+        if (request?.apporteur_manager_id) {
+          const { data: manager } = await supabaseAdmin
+            .from('apporteur_managers')
+            .select('email, first_name, last_name')
+            .eq('id', request.apporteur_manager_id)
+            .eq('is_active', true)
+            .maybeSingle();
+
+          if (manager?.email) {
+            apporteurEmail = manager.email;
+            apporteurName = [manager.first_name, manager.last_name].filter(Boolean).join(' ') || null;
+            emailSource = 'manager_id';
+          }
+        }
+
+        // Fallback : apporteur_users
+        if (!apporteurEmail && request?.apporteur_id) {
+          const { data: appUsers } = await supabaseAdmin
+            .from('apporteur_users')
+            .select('email, first_name, last_name')
+            .eq('apporteur_id', request.apporteur_id)
+            .eq('is_active', true)
+            .order('created_at', { ascending: true })
+            .limit(1);
+
+          if (appUsers?.length && appUsers[0].email) {
+            apporteurEmail = appUsers[0].email;
+            apporteurName = [appUsers[0].first_name, appUsers[0].last_name].filter(Boolean).join(' ') || null;
+            emailSource = 'apporteur_user_fallback';
+          }
+        }
+
+        // Fallback : premier manager actif
+        if (!apporteurEmail && request?.apporteur_id) {
+          const { data: managers } = await supabaseAdmin
+            .from('apporteur_managers')
+            .select('email, first_name, last_name')
+            .eq('apporteur_id', request.apporteur_id)
+            .eq('is_active', true)
+            .order('created_at', { ascending: true })
+            .limit(1);
+
+          if (managers?.length && managers[0].email) {
+            apporteurEmail = managers[0].email;
+            apporteurName = [managers[0].first_name, managers[0].last_name].filter(Boolean).join(' ') || null;
+            emailSource = 'apporteur_manager_fallback';
+          }
         }
       }
 
-      // Fallback 2 : manager actif lié à l'apporteur_id
-      if (!apporteurEmail && request?.apporteur_id) {
-        const { data: managers } = await supabaseAdmin
-          .from('apporteur_managers')
-          .select('email, first_name, last_name')
-          .eq('apporteur_id', request.apporteur_id)
-          .eq('is_active', true)
-          .order('created_at', { ascending: true })
-          .limit(1);
-
-        if (managers?.length && managers[0].email) {
-          apporteurEmail = managers[0].email;
-          apporteurName = [managers[0].first_name, managers[0].last_name].filter(Boolean).join(' ') || null;
-          emailSource = 'apporteur_manager_fallback';
-        }
-      }
-
-      // Fallback 3 : retrouver l'apporteur par son nom dans le thread, puis lire un manager actif
+      // PRIORITÉ 4 : retrouver l'apporteur par son nom dans le thread
       if (!apporteurEmail) {
         const { data: prevApporteurMessage } = await supabaseAdmin
           .from('dossier_exchanges')
@@ -242,26 +291,6 @@ Deno.serve(async (req) => {
               emailSource = 'apporteur_name_fallback';
             }
           }
-        }
-      }
-
-      // Fallback 4 : sender_email dans les échanges précédents
-      if (!apporteurEmail) {
-        const { data: prevExchange } = await supabaseAdmin
-          .from('dossier_exchanges')
-          .select('sender_email, sender_name')
-          .eq('agency_id', profile.agency_id)
-          .eq('dossier_ref', dossierRef)
-          .eq('sender_type', 'apporteur')
-          .not('sender_email', 'is', null)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (prevExchange?.sender_email) {
-          apporteurEmail = prevExchange.sender_email;
-          apporteurName = prevExchange.sender_name;
-          emailSource = 'previous_exchange_fallback';
         }
       }
 
