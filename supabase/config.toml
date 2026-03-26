@@ -225,3 +225,6 @@ verify_jwt = false
 
 [functions.apogee-sync-manual]
 verify_jwt = false
+
+[functions.treasury-connection]
+verify_jwt = false
