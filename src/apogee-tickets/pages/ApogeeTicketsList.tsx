@@ -179,9 +179,19 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
     return new Set(repliesData.map(r => r.ticketId));
   }, [repliesData]);
 
+  // Set of final status IDs (tickets in final status should NOT appear in Nouveaux)
+  const finalStatusIds = useMemo(() => {
+    return new Set(statuses.filter(s => s.is_final).map(s => s.id));
+  }, [statuses]);
+
   // Tickets "nouveaux" (modifiés depuis la dernière visite, EXCLUDING those already in Réponses)
   const newTickets = useMemo(() => {
     if (!user?.id) return [];
+
+    // Only consider tickets modified in the last 30 days
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 30);
+    const cutoffTime = cutoffDate.getTime();
 
     return tickets
       .filter((ticket) => {
@@ -190,6 +200,14 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
         const relevantAuthor = ticket.last_modified_by_user_id || ticket.created_by_user_id;
 
         if (!relevantDate) return false;
+
+        const relevantTime = new Date(relevantDate).getTime();
+
+        // Ignore tickets older than 30 days
+        if (relevantTime < cutoffTime) return false;
+
+        // Exclude tickets with a final status (resolved, closed, etc.)
+        if (finalStatusIds.has(ticket.kanban_status)) return false;
 
         // Exclude if the user is the author of the last modification (or creation)
         if (relevantAuthor === user.id) {
@@ -204,14 +222,14 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
         const myView = myViews.find((v) => v.ticket_id === ticket.id);
         if (!myView) return true;
 
-        return new Date(relevantDate).getTime() > new Date(myView.viewed_at).getTime();
+        return relevantTime > new Date(myView.viewed_at).getTime();
       })
       .sort((a, b) => {
         const dateA = a.last_modified_at || a.created_at;
         const dateB = b.last_modified_at || b.created_at;
         return new Date(dateB).getTime() - new Date(dateA).getTime();
       });
-  }, [tickets, myViews, user?.id, repliesTicketIds]);
+  }, [tickets, myViews, user?.id, repliesTicketIds, finalStatusIds]);
 
   const newTicketsCount = newTickets.length;
 
