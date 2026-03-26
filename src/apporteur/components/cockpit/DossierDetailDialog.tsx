@@ -385,7 +385,7 @@ export function DossierDetailDialog({ dossier, onClose }: DossierDetailDialogPro
               </div>
             </ScrollArea>
 
-            {/* ─── RIGHT: Fil d'échanges ─── */}
+            {/* ─── RIGHT: Fil d'échanges + chat input ─── */}
             <div className="w-full lg:w-80 flex flex-col min-h-0 border-t lg:border-t-0">
               <div className="px-4 py-3 border-b bg-muted/20">
                 <div className="flex items-center gap-2">
@@ -396,11 +396,61 @@ export function DossierDetailDialog({ dossier, onClose }: DossierDetailDialogPro
                   )}
                 </div>
               </div>
-              <ScrollArea className="flex-1 max-h-[350px] lg:max-h-none">
+              <ScrollArea className="flex-1 max-h-[300px] lg:max-h-none">
                 <div className="p-3">
                   <ExchangeThread exchanges={exchanges} isLoading={exchangesLoading} />
                 </div>
               </ScrollArea>
+              {/* Chat input bar */}
+              <div className="border-t bg-background p-2">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!chatMessage.trim() || !dossier || dossierAction.isPending) return;
+                    dossierAction.mutate(
+                      {
+                        action: 'dossier_inactif',
+                        dossierRefs: [dossier.ref],
+                        inactifAction: 'donner_info',
+                        message: chatMessage.trim(),
+                      },
+                      {
+                        onSuccess: () => {
+                          setChatMessage('');
+                          invalidate();
+                        },
+                      }
+                    );
+                  }}
+                  className="flex items-end gap-1.5"
+                >
+                  <Textarea
+                    placeholder="Écrire à l'agence…"
+                    value={chatMessage}
+                    onChange={(e) => setChatMessage(e.target.value)}
+                    rows={1}
+                    className="resize-none text-sm min-h-[36px] max-h-[80px] flex-1"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        e.currentTarget.form?.requestSubmit();
+                      }
+                    }}
+                  />
+                  <Button
+                    type="submit"
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
+                    disabled={!chatMessage.trim() || dossierAction.isPending}
+                  >
+                    {dossierAction.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
+                  </Button>
+                </form>
+              </div>
             </div>
           </div>
         )}
