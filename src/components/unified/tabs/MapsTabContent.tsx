@@ -7,9 +7,9 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { format, addDays, subDays } from 'date-fns';
+import { format, addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Loader2, MapPin, AlertCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Loader2, MapPin, AlertCircle, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { useRdvMap, calculateBounds, MapRdv } from '@/hooks/useRdvMap';
+import { useQueries } from '@tanstack/react-query';
 import { createPinMarkerElement } from '@/components/map/PinMarker';
 import { RdvMiniPreview } from '@/components/map/RdvMiniPreview';
 import { TourSummaryBar } from '@/components/map/TourSummaryBar';
@@ -31,6 +32,8 @@ const DEFAULT_ZOOM = 6;
 const TOUR_ROUTE_SOURCE = 'tour-route-source-pilotage';
 const TOUR_ROUTE_LAYER = 'tour-route-layer-pilotage';
 
+type ViewMode = 'day' | 'week';
+
 export default function MapsTabContent() {
   const { agence } = useProfile();
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -38,6 +41,7 @@ export default function MapsTabContent() {
   const markersRef = useRef<mapboxgl.Marker[]>([]);
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [selectedTechIds, setSelectedTechIds] = useState<number[]>([]);
   const [techFilterOpen, setTechFilterOpen] = useState(false);
   const [selectedRdv, setSelectedRdv] = useState<MapRdv | null>(null);
@@ -46,11 +50,58 @@ export default function MapsTabContent() {
   const [mapInitError, setMapInitError] = useState<string | null>(null);
   const [mapReady, setMapReady] = useState(false);
 
-  const { rdvs, isLoading, error, technicians } = useRdvMap({
+  // Day mode: single date query
+  const { rdvs: dayRdvs, isLoading: dayLoading, error: dayError, technicians } = useRdvMap({
     date: selectedDate,
     techIds: selectedTechIds.length > 0 ? selectedTechIds : undefined,
     agencySlug: agence || undefined,
   });
+
+  // Week mode: fetch each day of the week
+  const weekDays = useMemo(() => {
+    if (viewMode !== 'week') return [];
+    const start = startOfWeek(selectedDate, { weekStartsOn: 1 });
+    const end = endOfWeek(selectedDate, { weekStartsOn: 1 });
+    return eachDayOfInterval({ start, end });
+  }, [selectedDate, viewMode]);
+
+  const weekQueries = useQueries({
+    queries: weekDays.map(day => ({
+      queryKey: ['rdv-map', format(day, 'yyyy-MM-dd'), selectedTechIds.join(',') || 'all', agence],
+      queryFn: async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) throw new Error('Non authentifié');
+        const response = await supabase.functions.invoke('get-rdv-map', {
+          body: {
+            date: format(day, 'yyyy-MM-dd'),
+            techIds: selectedTechIds.length ? selectedTechIds : undefined,
+            agencySlug: agence,
+          },
+        });
+        if (response.error) throw new Error(response.error.message);
+        const result = response.data;
+        if (!result.success) throw new Error(result.error || 'Erreur');
+        return result.data as MapRdv[];
+      },
+      enabled: viewMode === 'week' && !!agence,
+      staleTime: 10 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+      refetchOnWindowFocus: false,
+    })),
+  });
+
+  const weekRdvs = useMemo(() => {
+    if (viewMode !== 'week') return [];
+    return weekQueries.flatMap(q => q.data || []);
+  }, [weekQueries, viewMode]);
+
+  const weekLoading = viewMode === 'week' && weekQueries.some(q => q.isLoading);
+  const weekError = viewMode === 'week' ? weekQueries.find(q => q.error)?.error : null;
+
+  // Unified data based on view mode
+  const rdvs = viewMode === 'day' ? dayRdvs : weekRdvs;
+  const isLoading = viewMode === 'day' ? dayLoading : weekLoading;
+  const error = viewMode === 'day' ? dayError : (weekError instanceof Error ? weekError.message : null);
 
   // Tour mode
   const isTourMode = selectedTechIds.length === 1;
@@ -197,11 +248,17 @@ export default function MapsTabContent() {
     });
   }, [routeGeometry, isTourMode, mapReady, tourTech?.color]);
 
-  useEffect(() => { hasFittedBoundsRef.current = false; }, [selectedDate, selectedTechIds]);
+  useEffect(() => { hasFittedBoundsRef.current = false; }, [selectedDate, selectedTechIds, viewMode]);
 
-  const goToPreviousDay = () => setSelectedDate(d => subDays(d, 1));
-  const goToNextDay = () => setSelectedDate(d => addDays(d, 1));
+  const goToPreviousDay = () => {
+    setSelectedDate(d => viewMode === 'week' ? subDays(d, 7) : subDays(d, 1));
+  };
+  const goToNextDay = () => {
+    setSelectedDate(d => viewMode === 'week' ? addDays(d, 7) : addDays(d, 1));
+  };
   const goToToday = () => setSelectedDate(new Date());
+  const goToTomorrow = () => { setViewMode('day'); setSelectedDate(addDays(new Date(), 1)); };
+  const toggleWeekMode = () => setViewMode(prev => prev === 'week' ? 'day' : 'week');
 
   const toggleTechnician = (techId: number) => {
     setSelectedTechIds(prev =>
@@ -227,20 +284,38 @@ export default function MapsTabContent() {
       <div className="flex-none p-4 border rounded-t-xl bg-card space-y-3">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1">
-            <Button variant="outline" size="icon" onClick={goToPreviousDay}><ChevronLeft className="h-4 w-4" /></Button>
+            <Button variant="outline" size="icon" onClick={goToPreviousDay}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="min-w-[200px] justify-start">
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}
+                  {viewMode === 'week'
+                    ? `Sem. du ${format(startOfWeek(selectedDate, { weekStartsOn: 1 }), 'd MMM', { locale: fr })} au ${format(endOfWeek(selectedDate, { weekStartsOn: 1 }), 'd MMM yyyy', { locale: fr })}`
+                    : format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar mode="single" selected={selectedDate} onSelect={(date) => date && setSelectedDate(date)} initialFocus locale={fr} />
               </PopoverContent>
             </Popover>
-            <Button variant="outline" size="icon" onClick={goToNextDay}><ChevronRight className="h-4 w-4" /></Button>
-            <Button variant="ghost" size="sm" onClick={goToToday}>Aujourd'hui</Button>
+            <Button variant="outline" size="icon" onClick={goToNextDay}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <Button variant={viewMode === 'day' && format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') ? 'default' : 'ghost'} size="sm" onClick={goToToday}>
+              Aujourd'hui
+            </Button>
+            <Button variant={viewMode === 'day' && format(selectedDate, 'yyyy-MM-dd') === format(addDays(new Date(), 1), 'yyyy-MM-dd') ? 'default' : 'ghost'} size="sm" onClick={goToTomorrow}>
+              Demain
+            </Button>
+            <Button variant={viewMode === 'week' ? 'default' : 'ghost'} size="sm" onClick={toggleWeekMode} className="gap-1">
+              <CalendarDays className="h-3.5 w-3.5" />
+              Semaine
+            </Button>
           </div>
 
           <Popover open={techFilterOpen} onOpenChange={setTechFilterOpen}>
