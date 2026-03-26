@@ -351,28 +351,18 @@ export default function ApporteurDossiers() {
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
                           {d.devisId ? (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-7 px-2"
-                              onClick={(e) => { e.stopPropagation(); }}
-                            >
-                              <FileText className="w-3.5 h-3.5 mr-1" />
-                              {formatDate(d.dateDevisValide || d.dateDevisEnvoye)}
-                            </Button>
+                            <div className="flex items-center gap-1">
+                              <span className="text-sm">{formatDate(d.dateDevisValide || d.dateDevisEnvoye)}</span>
+                              <DocDownloadButton dossierRef={d.ref} docType="devis" />
+                            </div>
                           ) : '-'}
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
                           {d.factureId ? (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-7 px-2"
-                              onClick={(e) => { e.stopPropagation(); }}
-                            >
-                              <Receipt className="w-3.5 h-3.5 mr-1" />
-                              {formatDate(d.dateFacture)}
-                            </Button>
+                            <div className="flex items-center gap-1">
+                              <span className="text-sm">{formatDate(d.dateFacture)}</span>
+                              <DocDownloadButton dossierRef={d.ref} docType="factures" />
+                            </div>
                           ) : '-'}
                         </TableCell>
                         <TableCell className="text-right font-medium">
