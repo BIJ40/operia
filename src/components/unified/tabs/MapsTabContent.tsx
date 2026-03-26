@@ -36,6 +36,10 @@ const TOUR_ROUTE_SOURCE = 'tour-route-source-pilotage';
 const TOUR_ROUTE_LAYER = 'tour-route-layer-pilotage';
 const HEATMAP_SOURCE = 'heatmap-source-pilotage';
 const HEATMAP_LAYER = 'heatmap-layer-pilotage';
+const PROFIT_SOURCE = 'profit-source-pilotage';
+const PROFIT_LAYER_POS = 'profit-layer-pos-pilotage';
+const PROFIT_LAYER_NEG = 'profit-layer-neg-pilotage';
+const PROFIT_CIRCLES = 'profit-circles-pilotage';
 
 function enableStyleFallback(m: mapboxgl.Map) {
   let fallbackApplied = false;
