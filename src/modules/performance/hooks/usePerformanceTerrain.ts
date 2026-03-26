@@ -359,7 +359,11 @@ export function usePerformanceTerrain(dateRange: DateRange) {
           const combined = `${refType} ${type} ${type2} ${label}`;
 
           const isAbsenceType = PLANNING_ABSENCE_TYPES.some(t => refType === t || type === t);
-          const isAbsenceKeyword = !isAbsenceType && ABSENCE_KEYWORDS.some(kw => combined.includes(kw));
+          const isAbsenceKeyword = !isAbsenceType
+            && ABSENCE_KEYWORDS.some(kw => combined.includes(kw))
+            && !combined.includes('repos')
+            && !combined.includes('indispo')
+            && !combined.includes('indisponible');
 
           if (!isAbsenceType && !isAbsenceKeyword) continue;
 
@@ -387,6 +391,7 @@ export function usePerformanceTerrain(dateRange: DateRange) {
             : dureeRaw > 0 ? Math.ceil(dureeRaw / (60 * 24)) : 1;
 
           const isSingleDayConge = spansDays <= 1 && isAbsenceType;
+          const isLikelyRealLeave = absHours > 16.5 || spansDays > 1;
 
           // Extract user IDs
           const usersRaw = (rec.usersIds || (rec.data as Record<string, unknown>)?.usersIds || []) as unknown[];
@@ -425,12 +430,12 @@ export function usePerformanceTerrain(dateRange: DateRange) {
             if (absences.has(id)) continue;
 
             // Check if this is a rest day (tech works other days of the same week)
-            if (isSingleDayConge && eventStart) {
+            if (isSingleDayConge && eventStart && !isLikelyRealLeave) {
               const weekKey = getISOWeekKey(eventStart);
               const k = `${id}:${weekKey}`;
               const activeDays = activityByTechWeek.get(k);
               if (activeDays && activeDays.size >= 3) {
-                // Tech has ≥3 other active days this week → this is a rest day, skip
+                // Tech has activity on the rest of the week → likely weekly rest day, skip
                 logDebug('PERF_TERRAIN_V2', `Repos hebdo ignoré pour tech ${id}`, {
                   date: eventStart.toISOString().slice(0, 10),
                   activeDaysInWeek: activeDays.size,
