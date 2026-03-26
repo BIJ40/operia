@@ -1,10 +1,348 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// ═══════════════════════════════════════════════════════════
+// CORS
+// ═══════════════════════════════════════════════════════════
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+// ═══════════════════════════════════════════════════════════
+// Types & Constants
+// ═══════════════════════════════════════════════════════════
+type ErrorCode =
+  | "AUTH"
+  | "NO_AGENCY"
+  | "FORBIDDEN_ROLE"
+  | "FORBIDDEN_SCOPE"
+  | "VALIDATION"
+  | "NOT_FOUND"
+  | "DB"
+  | "UNKNOWN_ACTION"
+  | "INTERNAL";
+
+interface UserContext {
+  userId: string;
+  agencyId: string;
+  globalRole: string;
+}
+
+/**
+ * Rôles autorisés pour les mutations trésorerie.
+ * N2+ = franchisee_admin (dirigeant agence) et au-dessus.
+ * Aligné sur src/types/globalRoles.ts GLOBAL_ROLES hierarchy.
+ */
+const TREASURY_WRITE_ROLES: Record<string, number> = {
+  base_user: 0,        // N0
+  franchisee_user: 1,  // N1
+  franchisee_admin: 2, // N2 ← seuil minimum
+  franchisor_user: 3,  // N3
+  franchisor_admin: 4, // N4
+  platform_admin: 5,   // N5
+  superadmin: 6,       // N6
+};
+
+const MIN_TREASURY_WRITE_LEVEL = 2; // franchisee_admin (N2)
+
+// ═══════════════════════════════════════════════════════════
+// Helpers
+// ═══════════════════════════════════════════════════════════
+
+function errorResponse(code: ErrorCode, message: string, status: number) {
+  return new Response(
+    JSON.stringify({ success: false, error: { code, message } }),
+    { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+}
+
+function successResponse(data?: unknown, status = 200) {
+  return new Response(
+    JSON.stringify({ success: true, ...(data !== undefined ? { data } : {}) }),
+    { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+}
+
+/**
+ * Vérifie si un rôle global atteint le seuil N2+ pour les mutations trésorerie.
+ */
+function isTreasuryManagerRole(role: string | null): boolean {
+  if (!role) return false;
+  const level = TREASURY_WRITE_ROLES[role];
+  return typeof level === "number" && level >= MIN_TREASURY_WRITE_LEVEL;
+}
+
+/**
+ * Récupère le contexte utilisateur authentifié : userId, agencyId, globalRole.
+ * Lève une Response HTTP en cas d'échec.
+ */
+async function getAuthenticatedUserContext(
+  req: Request,
+  supabaseUrl: string,
+  anonKey: string,
+  serviceKey: string
+): Promise<{ ctx: UserContext; serviceClient: ReturnType<typeof createClient> } | Response> {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return errorResponse("AUTH", "Non authentifié", 401);
+  }
+
+  const userClient = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+
+  const token = authHeader.replace("Bearer ", "");
+  const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+  if (claimsError || !claimsData?.claims) {
+    return errorResponse("AUTH", "Token invalide ou expiré", 401);
+  }
+
+  const userId = claimsData.claims.sub as string;
+  const serviceClient = createClient(supabaseUrl, serviceKey);
+
+  const { data: profile, error: profileErr } = await serviceClient
+    .from("profiles")
+    .select("agency_id, global_role")
+    .eq("id", userId)
+    .single();
+
+  if (profileErr || !profile) {
+    return errorResponse("NO_AGENCY", "Profil utilisateur introuvable", 400);
+  }
+
+  if (!profile.agency_id) {
+    return errorResponse("NO_AGENCY", "Aucune agence associée à cet utilisateur", 400);
+  }
+
+  return {
+    ctx: {
+      userId,
+      agencyId: profile.agency_id,
+      globalRole: profile.global_role ?? "base_user",
+    },
+    serviceClient,
+  };
+}
+
+/**
+ * Vérifie que l'utilisateur a le niveau de rôle N2+ requis pour les mutations trésorerie.
+ * Retourne une Response 403 si refusé, null si autorisé.
+ */
+function assertTreasuryWriteAccess(ctx: UserContext): Response | null {
+  if (!isTreasuryManagerRole(ctx.globalRole)) {
+    return errorResponse(
+      "FORBIDDEN_ROLE",
+      "Accès réservé aux dirigeants ou administrateurs autorisés (niveau N2+).",
+      403
+    );
+  }
+  return null;
+}
+
+/**
+ * Vérifie qu'une connexion bancaire existe et appartient à l'agence de l'utilisateur.
+ */
+async function assertConnectionOwnership(
+  serviceClient: ReturnType<typeof createClient>,
+  connectionId: string,
+  agencyId: string
+): Promise<{ conn: Record<string, unknown> } | Response> {
+  if (!connectionId || typeof connectionId !== "string") {
+    return errorResponse("VALIDATION", "connectionId requis", 400);
+  }
+
+  const { data: conn, error } = await serviceClient
+    .from("bank_connections")
+    .select("id, agency_id, user_id, display_name, status")
+    .eq("id", connectionId)
+    .single();
+
+  if (error || !conn) {
+    return errorResponse("NOT_FOUND", "Connexion bancaire introuvable", 404);
+  }
+
+  if (conn.agency_id !== agencyId) {
+    return errorResponse("FORBIDDEN_SCOPE", "Cette connexion n'appartient pas à votre agence", 403);
+  }
+
+  return { conn };
+}
+
+/**
+ * Écrit dans activity_log de manière non-bloquante (best effort).
+ * Un échec de logging ne doit jamais casser l'action principale.
+ */
+async function safeActivityLog(
+  serviceClient: ReturnType<typeof createClient>,
+  params: {
+    actorId: string;
+    agencyId: string;
+    action: string;
+    entityId?: string;
+    entityLabel?: string;
+    metadata?: Record<string, unknown>;
+  }
+) {
+  try {
+    await serviceClient.from("activity_log").insert({
+      actor_id: params.actorId,
+      actor_type: "user",
+      agency_id: params.agencyId,
+      module: "tresorerie",
+      entity_type: "bank_connection",
+      entity_id: params.entityId ?? null,
+      entity_label: params.entityLabel ?? null,
+      action: params.action,
+      metadata: params.metadata ?? null,
+    });
+  } catch (err) {
+    console.error("[TREASURY_ACTIVITY_LOG_FAILED]", {
+      action: params.action,
+      userId: params.actorId,
+      agencyId: params.agencyId,
+      entityId: params.entityId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// Action handlers
+// ═══════════════════════════════════════════════════════════
+
+async function handleCreate(
+  serviceClient: ReturnType<typeof createClient>,
+  ctx: UserContext,
+  body: Record<string, unknown>
+): Promise<Response> {
+  const { displayName, provider } = body;
+
+  if (!displayName || typeof displayName !== "string" || displayName.trim().length < 2) {
+    return errorResponse("VALIDATION", "Nom de connexion invalide (minimum 2 caractères)", 400);
+  }
+
+  const { data: connection, error: insertErr } = await serviceClient
+    .from("bank_connections")
+    .insert({
+      agency_id: ctx.agencyId,
+      user_id: ctx.userId,
+      display_name: (displayName as string).trim(),
+      provider: typeof provider === "string" && provider ? provider : "bridge",
+      status: "pending",
+    })
+    .select()
+    .single();
+
+  if (insertErr) {
+    console.error("[TREASURY_DB_ERROR] create:", insertErr);
+    return errorResponse("DB", "Erreur lors de la création de la connexion", 500);
+  }
+
+  await safeActivityLog(serviceClient, {
+    actorId: ctx.userId,
+    agencyId: ctx.agencyId,
+    action: "bank_connection.create",
+    entityId: connection.id,
+    entityLabel: (displayName as string).trim(),
+    metadata: { provider: connection.provider, role: ctx.globalRole },
+  });
+
+  return successResponse(connection);
+}
+
+async function handleDisconnect(
+  serviceClient: ReturnType<typeof createClient>,
+  ctx: UserContext,
+  body: Record<string, unknown>
+): Promise<Response> {
+  const ownership = await assertConnectionOwnership(
+    serviceClient,
+    body.connectionId as string,
+    ctx.agencyId
+  );
+  if (ownership instanceof Response) return ownership;
+  const { conn } = ownership;
+
+  const { error: updateErr } = await serviceClient
+    .from("bank_connections")
+    .update({ status: "disconnected", updated_at: new Date().toISOString() })
+    .eq("id", body.connectionId);
+
+  if (updateErr) {
+    console.error("[TREASURY_DB_ERROR] disconnect:", updateErr);
+    return errorResponse("DB", "Erreur lors de la déconnexion", 500);
+  }
+
+  await safeActivityLog(serviceClient, {
+    actorId: ctx.userId,
+    agencyId: ctx.agencyId,
+    action: "bank_connection.disconnect",
+    entityId: body.connectionId as string,
+    entityLabel: conn.display_name as string,
+    metadata: { role: ctx.globalRole },
+  });
+
+  return successResponse();
+}
+
+async function handleSync(
+  serviceClient: ReturnType<typeof createClient>,
+  ctx: UserContext,
+  body: Record<string, unknown>
+): Promise<Response> {
+  const ownership = await assertConnectionOwnership(
+    serviceClient,
+    body.connectionId as string,
+    ctx.agencyId
+  );
+  if (ownership instanceof Response) return ownership;
+  const { conn } = ownership;
+
+  // Create sync log entry
+  const { error: logErr } = await serviceClient.from("bank_sync_logs").insert({
+    bank_connection_id: body.connectionId,
+    sync_type: "full",
+    status: "started",
+  });
+
+  if (logErr) {
+    console.error("[TREASURY_DB_ERROR] sync_log insert:", logErr);
+    // Non-bloquant : on continue quand même
+  }
+
+  // Update connection timestamp (real sync will come with provider)
+  const { error: updateErr } = await serviceClient
+    .from("bank_connections")
+    .update({
+      last_sync_at: new Date().toISOString(),
+      status: (conn.status as string) === "error" ? "pending" : conn.status,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", body.connectionId);
+
+  if (updateErr) {
+    console.error("[TREASURY_DB_ERROR] sync update:", updateErr);
+    return errorResponse("DB", "Erreur lors de la synchronisation", 500);
+  }
+
+  await safeActivityLog(serviceClient, {
+    actorId: ctx.userId,
+    agencyId: ctx.agencyId,
+    action: "bank_connection.sync",
+    entityId: body.connectionId as string,
+    entityLabel: conn.display_name as string,
+    metadata: { role: ctx.globalRole, previousStatus: conn.status },
+  });
+
+  return successResponse({
+    message: "Synchronisation enregistrée. Le provider bancaire n'est pas encore branché.",
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// Main handler
+// ═══════════════════════════════════════════════════════════
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -12,209 +350,45 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ success: false, error: { code: "AUTH", message: "Non authentifié" } }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // User client for auth
-    const userClient = createClient(supabaseUrl, supabaseKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
+    // ── Auth + context ──
+    const authResult = await getAuthenticatedUserContext(req, supabaseUrl, anonKey, serviceKey);
+    if (authResult instanceof Response) return authResult;
+    const { ctx, serviceClient } = authResult;
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
-      return new Response(JSON.stringify({ success: false, error: { code: "AUTH", message: "Token invalide" } }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // ── Parse body ──
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      return errorResponse("VALIDATION", "Corps de requête JSON invalide", 400);
     }
 
-    const userId = claimsData.claims.sub as string;
-
-    // Service client for writes
-    const serviceClient = createClient(supabaseUrl, serviceKey);
-
-    const body = await req.json();
     const { action } = body;
-
-    // Get user's agency
-    const { data: profile } = await serviceClient
-      .from("profiles")
-      .select("agency_id")
-      .eq("id", userId)
-      .single();
-
-    if (!profile?.agency_id) {
-      return new Response(JSON.stringify({ success: false, error: { code: "NO_AGENCY", message: "Agence non trouvée" } }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (!action || typeof action !== "string") {
+      return errorResponse("VALIDATION", "Le champ 'action' est requis", 400);
     }
 
-    const agencyId = profile.agency_id;
+    // ── Role guard for all write actions ──
+    const roleGuard = assertTreasuryWriteAccess(ctx);
+    if (roleGuard) return roleGuard;
 
-    // ── CREATE CONNECTION ──
-    if (action === "create") {
-      const { displayName, provider } = body;
-      if (!displayName || typeof displayName !== "string" || displayName.trim().length < 2) {
-        return new Response(JSON.stringify({ success: false, error: { code: "VALIDATION", message: "Nom de connexion invalide (min 2 caractères)" } }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const { data: connection, error: insertErr } = await serviceClient
-        .from("bank_connections")
-        .insert({
-          agency_id: agencyId,
-          user_id: userId,
-          display_name: displayName.trim(),
-          provider: provider || "bridge",
-          status: "pending",
-        })
-        .select()
-        .single();
-
-      if (insertErr) {
-        console.error("Insert error:", insertErr);
-        return new Response(JSON.stringify({ success: false, error: { code: "DB", message: "Erreur lors de la création" } }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // Log the action
-      await serviceClient.from("activity_log").insert({
-        actor_id: userId,
-        actor_type: "user",
-        agency_id: agencyId,
-        module: "tresorerie",
-        entity_type: "bank_connection",
-        entity_id: connection.id,
-        entity_label: displayName.trim(),
-        action: "create",
-      });
-
-      return new Response(JSON.stringify({ success: true, data: connection }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // ── Route to handler ──
+    switch (action) {
+      case "create":
+        return await handleCreate(serviceClient, ctx, body);
+      case "disconnect":
+        return await handleDisconnect(serviceClient, ctx, body);
+      case "sync":
+        return await handleSync(serviceClient, ctx, body);
+      default:
+        return errorResponse("UNKNOWN_ACTION", `Action '${action}' inconnue`, 400);
     }
-
-    // ── DISCONNECT ──
-    if (action === "disconnect") {
-      const { connectionId } = body;
-      if (!connectionId) {
-        return new Response(JSON.stringify({ success: false, error: { code: "VALIDATION", message: "connectionId requis" } }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // Verify ownership
-      const { data: conn } = await serviceClient
-        .from("bank_connections")
-        .select("id, agency_id, user_id, display_name")
-        .eq("id", connectionId)
-        .single();
-
-      if (!conn || conn.agency_id !== agencyId) {
-        return new Response(JSON.stringify({ success: false, error: { code: "FORBIDDEN", message: "Connexion non trouvée ou accès refusé" } }), {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const { error: updateErr } = await serviceClient
-        .from("bank_connections")
-        .update({ status: "disconnected", updated_at: new Date().toISOString() })
-        .eq("id", connectionId);
-
-      if (updateErr) {
-        return new Response(JSON.stringify({ success: false, error: { code: "DB", message: "Erreur lors de la déconnexion" } }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      await serviceClient.from("activity_log").insert({
-        actor_id: userId,
-        actor_type: "user",
-        agency_id: agencyId,
-        module: "tresorerie",
-        entity_type: "bank_connection",
-        entity_id: connectionId,
-        entity_label: conn.display_name,
-        action: "disconnect",
-      });
-
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // ── SYNC (placeholder — will call real provider later) ──
-    if (action === "sync") {
-      const { connectionId } = body;
-      if (!connectionId) {
-        return new Response(JSON.stringify({ success: false, error: { code: "VALIDATION", message: "connectionId requis" } }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const { data: conn } = await serviceClient
-        .from("bank_connections")
-        .select("id, agency_id, status")
-        .eq("id", connectionId)
-        .single();
-
-      if (!conn || conn.agency_id !== agencyId) {
-        return new Response(JSON.stringify({ success: false, error: { code: "FORBIDDEN", message: "Connexion non trouvée" } }), {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // Create sync log
-      await serviceClient.from("bank_sync_logs").insert({
-        bank_connection_id: connectionId,
-        sync_type: "full",
-        status: "started",
-      });
-
-      // For now, just update last_sync_at — real provider sync will come later
-      await serviceClient
-        .from("bank_connections")
-        .update({
-          last_sync_at: new Date().toISOString(),
-          status: conn.status === "error" ? "pending" : conn.status,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", connectionId);
-
-      return new Response(JSON.stringify({ success: true, message: "Synchronisation enregistrée. Le provider bancaire n'est pas encore branché." }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    return new Response(JSON.stringify({ success: false, error: { code: "UNKNOWN_ACTION", message: `Action '${action}' inconnue` } }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
   } catch (err) {
-    console.error("treasury-connection error:", err);
-    return new Response(JSON.stringify({ success: false, error: { code: "INTERNAL", message: "Erreur serveur" } }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("[TREASURY_INTERNAL_ERROR]", err instanceof Error ? err.message : err);
+    return errorResponse("INTERNAL", "Erreur serveur inattendue", 500);
   }
 });
