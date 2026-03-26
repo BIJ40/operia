@@ -18,7 +18,7 @@ interface MapRdv {
 }
 interface RequestBody {
   date?: string; from?: string; to?: string;
-  mode?: 'normal' | 'heatmap' | 'profitability' | 'zones' | 'apporteurs';
+  mode?: 'normal' | 'heatmap' | 'profitability' | 'zones' | 'apporteurs' | 'disponibilite';
   techIds?: number[]; agencySlug?: string;
 }
 
@@ -190,13 +190,17 @@ Deno.serve(async (req) => {
     const isProfitability = mode === 'profitability';
     const isZones = mode === 'zones';
     const isApporteurs = mode === 'apporteurs';
+    const isDispo = mode === 'disponibilite';
     const isAnalyticsMode = isHeatmap || isProfitability || isZones || isApporteurs;
 
     const effectiveFrom = isAnalyticsMode ? (fromDate || '2020-01-01') : date;
     const effectiveTo = isAnalyticsMode ? (toDate || new Date().toISOString().slice(0, 10)) : date;
 
-    if (!isAnalyticsMode && (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date))) {
+    if (!isAnalyticsMode && !isDispo && (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date))) {
       return withCors(req, new Response(JSON.stringify({ success: false, error: 'Invalid date format' }), { status: 400, headers: { 'Content-Type': 'application/json' } }));
+    }
+    if (isDispo && (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date))) {
+      return withCors(req, new Response(JSON.stringify({ success: false, error: 'Date required for disponibilite mode' }), { status: 400, headers: { 'Content-Type': 'application/json' } }));
     }
 
     // 4. Determine target agency
