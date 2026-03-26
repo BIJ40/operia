@@ -212,29 +212,28 @@ Deno.serve(async (req) => {
 
     console.log(`[apporteur-dossier-action] Email sent: action=${action}, refs=${refsStr}, result=`, emailResult);
 
-    // Log the action
+    // Insert into dossier_exchanges for the conversation thread
     try {
-      // Get manager info for logging
-      const tokenHash = await sha256(extractToken(req));
-      if (tokenHash) {
-        const { data: session } = await supabaseAdmin
-          .from('apporteur_sessions')
-          .select('manager_id')
-          .eq('token_hash', tokenHash)
-          .maybeSingle();
+      const exchangeActionType = action === 'dossier_inactif'
+        ? (inactifAction === 'donner_info' ? 'info' : inactifAction ?? 'info')
+        : action === 'refuser_devis' ? 'annuler'
+        : action === 'valider_devis' ? 'info'
+        : 'info';
 
-        if (session?.manager_id) {
-          const { data: manager } = await supabaseAdmin
-            .from('apporteur_managers')
-            .select('id')
-            .eq('id', session.manager_id)
-            .maybeSingle();
-
-          // We could log to apporteur_access_logs here if needed
-        }
+      for (const ref of dossierRefs) {
+        await supabaseAdmin.from('dossier_exchanges').insert({
+          agency_id: auth.agencyId,
+          dossier_ref: ref,
+          sender_type: 'apporteur',
+          sender_name: auth.apporteurName,
+          sender_email: auth.email || null,
+          action_type: exchangeActionType,
+          message: message || `${ACTION_LABELS[action]}${inactifAction ? ' — ' + INACTIF_LABELS[inactifAction] : ''}`,
+          metadata: { action, inactifAction, dateReglement, typeReglement },
+        });
       }
-    } catch (logErr) {
-      console.warn('[apporteur-dossier-action] Logging failed (non-critical):', logErr);
+    } catch (exchangeErr) {
+      console.warn('[apporteur-dossier-action] Exchange insert failed (non-critical):', exchangeErr);
     }
 
     return withCors(req, new Response(

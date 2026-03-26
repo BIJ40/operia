@@ -3957,6 +3957,60 @@ export type Database = {
           },
         ]
       }
+      dossier_exchanges: {
+        Row: {
+          action_type: string
+          agency_id: string
+          created_at: string
+          dossier_ref: string
+          id: string
+          message: string
+          metadata: Json | null
+          sender_email: string | null
+          sender_name: string
+          sender_type: string
+        }
+        Insert: {
+          action_type: string
+          agency_id: string
+          created_at?: string
+          dossier_ref: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          sender_email?: string | null
+          sender_name: string
+          sender_type: string
+        }
+        Update: {
+          action_type?: string
+          agency_id?: string
+          created_at?: string
+          dossier_ref?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          sender_email?: string | null
+          sender_name?: string
+          sender_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dossier_exchanges_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dossier_exchanges_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+        ]
+      }
       duration_calibration: {
         Row: {
           agency_id: string
