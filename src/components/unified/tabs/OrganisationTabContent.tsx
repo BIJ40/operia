@@ -41,6 +41,8 @@ export default function OrganisationTabContent() {
   const { hasModule, isDeployedModule, globalRole, isAdmin } = usePermissions();
   const { getShortLabel } = useModuleLabels();
   const { mode: navMode } = useNavigationMode();
+  const agencyHasApporteurs = useAgencyHasApporteurs();
+  const { mode: navMode } = useNavigationMode();
 
   const allTabs: (PillTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
     { id: 'collaborateurs', label: getShortLabel('organisation.salaries', 'Salariés'), icon: Users, accent: 'blue', requiresModule: 'organisation.salaries' },
