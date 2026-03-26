@@ -346,6 +346,28 @@ export default function MapsTabContent() {
     refetchOnWindowFocus: false,
   });
 
+  // Disponibilité temps réel: tech positions + availability
+  const [selectedDispoTech, setSelectedDispoTech] = useState<DispoTech | null>(null);
+  const { data: dispoData, isLoading: dispoLoading } = useQuery({
+    queryKey: ['rdv-disponibilite', agence, format(selectedDate, 'yyyy-MM-dd')],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Non authentifié');
+      const response = await supabase.functions.invoke('get-rdv-map', {
+        body: { mode: 'disponibilite', agencySlug: agence, date: format(selectedDate, 'yyyy-MM-dd') },
+      });
+      if (response.error) throw new Error(response.error.message);
+      const result = response.data;
+      if (!result.success) throw new Error(result.error || 'Erreur');
+      return result.data as DispoTech[];
+    },
+    enabled: mapMode === 'disponibilite' && !!agence,
+    staleTime: 2 * 60 * 1000, // 2 min — quasi temps réel
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchInterval: mapMode === 'disponibilite' ? 2 * 60 * 1000 : false, // Auto-refresh every 2 min
+  });
+
   const rdvs = viewMode === 'day' ? dayRdvs : weekRdvs;
   const isLoading = viewMode === 'day' ? dayLoading : weekLoading;
   const error = viewMode === 'day' ? dayError : (weekError instanceof Error ? weekError.message : null);
