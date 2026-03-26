@@ -76,9 +76,10 @@ interface DevisActionState {
 
 interface AlertesBannerProps {
   alertes: AlerteEntry[];
+  onDossierClick?: (ref: string) => void;
 }
 
-export function AlertesBanner({ alertes }: AlertesBannerProps) {
+export function AlertesBanner({ alertes, onDossierClick }: AlertesBannerProps) {
   const navigate = useNavigate();
   const [openAlerte, setOpenAlerte] = useState<AlerteEntry | null>(null);
   const [devisAction, setDevisAction] = useState<DevisActionState | null>(null);
@@ -119,7 +120,11 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
 
   const navigateToDossier = (ref: string) => {
     setOpenAlerte(null);
-    navigate(`/apporteur/dashboard?tab=dossiers&dossierRef=${encodeURIComponent(ref)}`);
+    if (onDossierClick) {
+      onDossierClick(ref);
+    } else {
+      navigate(`/apporteur/dashboard?tab=dossiers&dossierRef=${encodeURIComponent(ref)}`);
+    }
   };
 
   return (
