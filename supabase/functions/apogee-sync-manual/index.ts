@@ -129,21 +129,31 @@ Deno.serve(async (req) => {
   const corsResult = handleCorsPreflightOrReject(req);
   if (corsResult) return corsResult;
 
-  const authResult = await getUserContext(req);
-  if (!authResult.success) {
-    return withCors(req, new Response(
-      JSON.stringify({ error: authResult.error }),
-      { status: authResult.status, headers: { 'Content-Type': 'application/json' } }
-    ));
-  }
+  // Support CRON_SECRET as alternative auth (for system-triggered syncs)
+  const CRON_SECRET = Deno.env.get('CRON_SECRET');
+  const cronSecret = req.headers.get('X-CRON-SECRET');
+  const isCronAuth = CRON_SECRET && cronSecret === CRON_SECRET;
 
-  const roleCheck = assertRoleAtLeast(authResult.context, 'agency_admin');
-  if (roleCheck) {
-    secLog.denied('apogee-sync-manual', authResult.context.userId, 'Insufficient role for manual sync');
-    return withCors(req, new Response(
-      JSON.stringify({ error: roleCheck.error }),
-      { status: roleCheck.status, headers: { 'Content-Type': 'application/json' } }
-    ));
+  let ctx: { userId: string; globalRole: string | null; agencyId: string | null } | null = null;
+
+  if (!isCronAuth) {
+    const authResult = await getUserContext(req);
+    if (!authResult.success) {
+      return withCors(req, new Response(
+        JSON.stringify({ error: authResult.error }),
+        { status: authResult.status, headers: { 'Content-Type': 'application/json' } }
+      ));
+    }
+
+    const roleCheck = assertRoleAtLeast(authResult.context, 'agency_admin');
+    if (roleCheck) {
+      secLog.denied('apogee-sync-manual', authResult.context.userId, 'Insufficient role for manual sync');
+      return withCors(req, new Response(
+        JSON.stringify({ error: roleCheck.error }),
+        { status: roleCheck.status, headers: { 'Content-Type': 'application/json' } }
+      ));
+    }
+    ctx = authResult.context;
   }
 
   const body = await req.json().catch(() => ({}));
@@ -180,14 +190,16 @@ Deno.serve(async (req) => {
     ));
   }
 
-  const ctx = authResult.context;
-  const isFranchiseur = ['franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(ctx.globalRole || '');
-  if (!isFranchiseur && ctx.agencyId !== agency_id) {
-    secLog.denied('apogee-sync-manual', ctx.userId, 'Agency access denied', { requested: agency_id, userAgency: ctx.agencyId });
-    return withCors(req, new Response(
-      JSON.stringify({ error: 'Access denied to this agency' }),
-      { status: 403, headers: { 'Content-Type': 'application/json' } }
-    ));
+  // Agency access check (skip for cron auth)
+  if (ctx) {
+    const isFranchiseur = ['franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(ctx.globalRole || '');
+    if (!isFranchiseur && ctx.agencyId !== agency_id) {
+      secLog.denied('apogee-sync-manual', ctx.userId, 'Agency access denied', { requested: agency_id, userAgency: ctx.agencyId });
+      return withCors(req, new Response(
+        JSON.stringify({ error: 'Access denied to this agency' }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      ));
+    }
   }
 
   // Resolve API key
