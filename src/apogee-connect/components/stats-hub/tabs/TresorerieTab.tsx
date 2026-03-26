@@ -70,6 +70,7 @@ export function TresorerieTab() {
           overview={overview}
           isLoading={isLoading}
           hasConnections={hasConnections}
+          hasRealBankData={hasRealBankData}
         />
       </section>
 
