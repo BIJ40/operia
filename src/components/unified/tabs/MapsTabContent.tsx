@@ -333,7 +333,10 @@ export default function MapsTabContent() {
 
     // Fit bounds
     if (!hasFittedBoundsRef.current && heatmapPoints.length > 0) {
-      const bounds = calculateBounds(heatmapPoints.map(p => ({ ...p, rdvId: 0, projectId: 0, projectRef: '', clientName: '', startAt: '', durationMin: 0, univers: '', address: '', users: [] })));
+      let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+      heatmapPoints.forEach(p => { minLng = Math.min(minLng, p.lng); maxLng = Math.max(maxLng, p.lng); minLat = Math.min(minLat, p.lat); maxLat = Math.max(maxLat, p.lat); });
+      const pad = 0.1;
+      const bounds: [[number, number], [number, number]] = [[minLng - pad, minLat - pad], [maxLng + pad, maxLat + pad]];
       if (bounds) {
         const container = m.getContainer();
         const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
