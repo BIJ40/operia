@@ -374,6 +374,53 @@ export default function MapsTabContent() {
     refetchInterval: mapMode === 'disponibilite' ? 2 * 60 * 1000 : false, // Auto-refresh every 2 min
   });
 
+  // Saisonnalité: geographic seasonality time-series
+  interface SeasonZone {
+    postalCode: string; city: string; lat: number; lng: number;
+    totalNb: number; totalCA: number; panierMoyen: number;
+    series: Record<string, { nb: number; ca: number; topUnivers: string; urgences: number }>;
+    variations: Record<string, number>;
+    seasonalityIndex: number; predictabilityIndex: number;
+    peakMonth: string; peakCalMonth: number; insights: string[];
+  }
+  interface SeasonResponse { data: SeasonZone[]; meta: { months: string[]; totalZones: number; durationMs: number } }
+  const [seasonMonth, setSeasonMonth] = useState(0);
+  const [seasonPlaying, setSeasonPlaying] = useState(false);
+  const [seasonViewMode, setSeasonViewMode] = useState<'volume' | 'variation'>('volume');
+  const { data: seasonRaw, isLoading: seasonLoading } = useQuery({
+    queryKey: ['rdv-saisonnalite', agence],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Non authentifié');
+      const response = await supabase.functions.invoke('get-rdv-map', {
+        body: { mode: 'saisonnalite', agencySlug: agence },
+      });
+      if (response.error) throw new Error(response.error.message);
+      const result = response.data;
+      if (!result.success) throw new Error(result.error || 'Erreur');
+      return { data: result.data as SeasonZone[], meta: result.meta } as SeasonResponse;
+    },
+    enabled: mapMode === 'saisonnalite' && !!agence,
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+  const seasonData = seasonRaw?.data;
+  const seasonMonths = seasonRaw?.meta?.months || [];
+  const currentSeasonMonth = seasonMonths[seasonMonth] || '';
+
+  // Auto-play animation
+  useEffect(() => {
+    if (!seasonPlaying || seasonMonths.length <= 1) return;
+    const interval = setInterval(() => {
+      setSeasonMonth(prev => {
+        if (prev >= seasonMonths.length - 1) { setSeasonPlaying(false); return prev; }
+        return prev + 1;
+      });
+    }, 1200);
+    return () => clearInterval(interval);
+  }, [seasonPlaying, seasonMonths.length]);
+
   const rdvs = viewMode === 'day' ? dayRdvs : weekRdvs;
   const isLoading = viewMode === 'day' ? dayLoading : weekLoading;
   const error = viewMode === 'day' ? dayError : (weekError instanceof Error ? weekError.message : null);
