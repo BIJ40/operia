@@ -68,6 +68,58 @@ const FRESHNESS_COLORS: Record<string, string> = {
 };
 
 // ============================================================
+// PILOT VERDICT
+// ============================================================
+
+type PilotVerdict = 'stable' | 'à surveiller' | 'rollback conseillé' | 'inactif';
+
+function computePilotVerdict(m: PilotMetrics | undefined, comparisons: ComparisonResult[], moduleKey: string): { verdict: PilotVerdict; reasons: string[] } {
+  if (!m || (m.mirrorReads === 0 && m.fallbackToLive === 0 && m.liveReads === 0)) {
+    return { verdict: 'inactif', reasons: ['Aucune lecture enregistrée'] };
+  }
+  const totalNonPureLive = m.mirrorReads + m.fallbackToLive;
+  if (totalNonPureLive === 0) return { verdict: 'inactif', reasons: ['Aucune lecture miroir/fallback'] };
+
+  const fallbackRatio = totalNonPureLive > 0 ? m.fallbackToLive / totalNonPureLive : 0;
+  const reasons: string[] = [];
+  let verdict: PilotVerdict = 'stable';
+
+  // Fallback ratio thresholds
+  if (fallbackRatio > 0.5) {
+    verdict = 'rollback conseillé';
+    reasons.push(`Fallback ratio ${Math.round(fallbackRatio * 100)}% > 50%`);
+  } else if (fallbackRatio > 0.2) {
+    verdict = 'à surveiller';
+    reasons.push(`Fallback ratio ${Math.round(fallbackRatio * 100)}% > 20%`);
+  }
+
+  // Consecutive failed comparisons
+  const moduleCmps = comparisons.filter(c => c.module === moduleKey);
+  const recentFailed = moduleCmps.filter(c => !c.passed);
+  if (recentFailed.length >= 2) {
+    verdict = 'rollback conseillé';
+    reasons.push(`${recentFailed.length} comparaisons échouées`);
+  }
+
+  // Volume delta check
+  const lastCmp = moduleCmps[0];
+  if (lastCmp && Math.abs(lastCmp.countDeltaPct) > 15) {
+    if (verdict !== 'rollback conseillé') verdict = 'à surveiller';
+    reasons.push(`Delta volume ${lastCmp.countDeltaPct}% > 15%`);
+  }
+
+  if (reasons.length === 0) reasons.push('Tous les indicateurs sont normaux');
+  return { verdict, reasons };
+}
+
+const VERDICT_STYLES: Record<PilotVerdict, string> = {
+  'stable': 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-200 dark:border-green-700',
+  'à surveiller': 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-700',
+  'rollback conseillé': 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-200 dark:border-red-700',
+  'inactif': 'bg-muted text-muted-foreground border-border',
+};
+
+// ============================================================
 // COMPONENT
 // ============================================================
 
