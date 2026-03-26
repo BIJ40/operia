@@ -30,47 +30,25 @@ interface UserContext {
 }
 
 /**
- * Rôles autorisés pour les mutations trésorerie.
- * N2+ = franchisee_admin (dirigeant agence) et au-dessus.
- * Aligné sur src/types/globalRoles.ts GLOBAL_ROLES hierarchy.
+ * Allowlist explicite des rôles autorisés pour les mutations trésorerie.
+ * 
+ * Décision métier : franchisor_user (N3) est EXCLU car son rôle réseau
+ * ne justifie pas un accès aux opérations bancaires d'agence.
+ * Seuls les dirigeants d'agence et les administrateurs sont autorisés.
  */
-const TREASURY_WRITE_ROLES: Record<string, number> = {
-  base_user: 0,        // N0
-  franchisee_user: 1,  // N1
-  franchisee_admin: 2, // N2 ← seuil minimum
-  franchisor_user: 3,  // N3
-  franchisor_admin: 4, // N4
-  platform_admin: 5,   // N5
-  superadmin: 6,       // N6
-};
-
-const MIN_TREASURY_WRITE_LEVEL = 2; // franchisee_admin (N2)
-
-// ═══════════════════════════════════════════════════════════
-// Helpers
-// ═══════════════════════════════════════════════════════════
-
-function errorResponse(code: ErrorCode, message: string, status: number) {
-  return new Response(
-    JSON.stringify({ success: false, error: { code, message } }),
-    { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-  );
-}
-
-function successResponse(data?: unknown, status = 200) {
-  return new Response(
-    JSON.stringify({ success: true, ...(data !== undefined ? { data } : {}) }),
-    { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-  );
-}
+const TREASURY_WRITE_ALLOWED_ROLES = new Set([
+  "franchisee_admin",  // N2 — dirigeant agence
+  "franchisor_admin",  // N4 — directeur réseau
+  "platform_admin",    // N5 — admin plateforme
+  "superadmin",        // N6 — super admin
+]);
 
 /**
- * Vérifie si un rôle global atteint le seuil N2+ pour les mutations trésorerie.
+ * Vérifie si un rôle global est dans l'allowlist trésorerie.
  */
 function isTreasuryManagerRole(role: string | null): boolean {
   if (!role) return false;
-  const level = TREASURY_WRITE_ROLES[role];
-  return typeof level === "number" && level >= MIN_TREASURY_WRITE_LEVEL;
+  return TREASURY_WRITE_ALLOWED_ROLES.has(role);
 }
 
 /**
