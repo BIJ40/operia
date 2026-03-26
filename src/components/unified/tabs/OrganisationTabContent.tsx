@@ -24,8 +24,9 @@ const VehiculesTabContent = lazy(() => import('@/components/unified/tabs/Vehicul
 const AgencyAdminDocuments = lazy(() => import('@/components/outils/AgencyAdminDocuments').then(m => ({ default: m.AgencyAdminDocuments })));
 const AgencyTeamRightsPanel = lazy(() => import('@/components/agency/AgencyTeamRightsPanel').then(m => ({ default: m.AgencyTeamRightsPanel })));
 const ZonesDeplacementTab = lazy(() => import('@/components/organisation/ZonesDeplacementTab'));
+const AgencyApporteurExchanges = lazy(() => import('@/components/agency/AgencyApporteurExchanges'));
 
-type OrganisationSubTab = 'collaborateurs' | 'apporteurs' | 'plannings' | 'reunions' | 'parc' | 'conformite' | 'droits-equipe' | 'zones';
+type OrganisationSubTab = 'collaborateurs' | 'apporteurs' | 'plannings' | 'reunions' | 'parc' | 'conformite' | 'droits-equipe' | 'zones' | 'echanges-apporteurs';
 
 function LoadingFallback() {
   return (
