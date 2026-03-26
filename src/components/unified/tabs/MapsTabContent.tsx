@@ -48,6 +48,8 @@ const APPORTEURS_SOURCE = 'apporteurs-source-pilotage';
 const DISPO_SOURCE = 'dispo-source-pilotage';
 const DISPO_CIRCLES = 'dispo-circles-pilotage';
 const APPORTEURS_CIRCLES = 'apporteurs-circles-pilotage';
+const SEASON_SOURCE = 'season-source-pilotage';
+const SEASON_CIRCLES = 'season-circles-pilotage';
 
 function enableStyleFallback(m: mapboxgl.Map) {
   let fallbackApplied = false;
@@ -74,9 +76,9 @@ function enableStyleFallback(m: mapboxgl.Map) {
 }
 
 type ViewMode = 'day' | 'week';
-type MapMode = 'pins' | 'heatmap' | 'profitability' | 'zones' | 'apporteurs' | 'disponibilite';
+type MapMode = 'pins' | 'heatmap' | 'profitability' | 'zones' | 'apporteurs' | 'disponibilite' | 'saisonnalite';
 
-type MapsSubTab = 'rdv' | 'densite' | 'rentabilite' | 'zones' | 'apporteurs' | 'disponibilite';
+type MapsSubTab = 'rdv' | 'densite' | 'rentabilite' | 'zones' | 'apporteurs' | 'disponibilite' | 'saisonnalite';
 
 const MAP_SUB_TABS: FolderTabConfig[] = [
   { id: 'rdv', label: 'Rendez-vous', icon: MapPin, accent: 'blue' },
@@ -85,6 +87,7 @@ const MAP_SUB_TABS: FolderTabConfig[] = [
   { id: 'zones', label: 'Zones blanches', icon: Crosshair, accent: 'orange' },
   { id: 'apporteurs', label: 'Apporteurs', icon: Network, accent: 'purple' },
   { id: 'disponibilite', label: 'Disponibilité', icon: Radio, accent: 'teal' },
+  { id: 'saisonnalite', label: 'Saisonnalité', icon: CalendarRange, accent: 'amber' },
 ];
 
 const TAB_ACCENT_COLORS: Record<string, string> = {
@@ -94,6 +97,7 @@ const TAB_ACCENT_COLORS: Record<string, string> = {
   orange: 'hsl(var(--warm-orange))',
   purple: 'hsl(var(--warm-purple, 270 60% 55%))',
   teal: 'hsl(var(--warm-teal, 190 60% 45%))',
+  amber: 'hsl(var(--warm-orange, 30 90% 55%))',
 };
 
 // ── Disponibilité types ──
