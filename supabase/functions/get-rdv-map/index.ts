@@ -279,12 +279,12 @@ Deno.serve(async (req) => {
         apiFetch('apiGetClients'),
       ];
       
-      // For profitability/zones/apporteurs/saisonnalite, also fetch factures
-      if (isProfitability || isZones || isApporteurs || isSaisonnalite) {
+      // For profitability/zones/apporteurs/saisonnalite/score_global, also fetch factures
+      if (isProfitability || isZones || isApporteurs || isSaisonnalite || isScoreGlobal) {
         fetchPromises.push(apiFetch('apiGetFactures'));
       }
-      // For zones/apporteurs, also fetch devis
-      if (isZones || isApporteurs) {
+      // For zones/apporteurs/score_global, also fetch devis
+      if (isZones || isApporteurs || isScoreGlobal) {
         fetchPromises.push(apiFetch('apiGetDevis'));
       }
 
@@ -292,8 +292,8 @@ Deno.serve(async (req) => {
       const interventions = results[0] || [];
       const projects = results[1] || [];
       const clients = results[2] || [];
-      const factures = (isProfitability || isZones || isApporteurs || isSaisonnalite) ? (results[3] || []) : [];
-      const devis = (isZones || isApporteurs) ? (results[4] || []) : [];
+      const factures = (isProfitability || isZones || isApporteurs || isSaisonnalite || isScoreGlobal) ? (results[3] || []) : [];
+      const devis = (isZones || isApporteurs || isScoreGlobal) ? (results[4] || []) : [];
 
       console.log(`[GET-RDV-MAP] Fetched ${Array.isArray(interventions) ? interventions.length : 0} interventions, ${projects.length} projects, ${clients.length} clients in ${Date.now() - t0}ms`);
 
