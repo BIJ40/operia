@@ -204,9 +204,9 @@ Deno.serve(async (req) => {
 </html>`;
 
     const emailResult = await resend.emails.send({
-      from: 'HelpConfort <noreply@helpconfort.services>',
+      from: `${auth.apporteurName} <noreply@helpconfort.services>`,
       to: [agencyEmail],
-      subject,
+      subject: `${auth.apporteurName} — ${subject.replace('[Portail Apporteur] ' + auth.apporteurName + ' — ', '')}`,
       html: emailHtml,
     });
 
