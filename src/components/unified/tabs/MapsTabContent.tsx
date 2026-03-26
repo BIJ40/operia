@@ -1098,7 +1098,9 @@ export default function MapsTabContent() {
     m.on('click', DISPO_CIRCLES, handleClick);
     m.on('mouseenter', DISPO_CIRCLES, () => { m.getCanvas().style.cursor = 'pointer'; });
     m.on('mouseleave', DISPO_CIRCLES, () => { m.getCanvas().style.cursor = ''; });
-  }, [apporteursData, mapReady, mapMode]);
+
+    return () => { m.off('click', DISPO_CIRCLES, handleClick); };
+  }, [dispoData, mapReady, mapMode]);
 
   useEffect(() => {
     const m = map.current;
@@ -1418,7 +1420,7 @@ export default function MapsTabContent() {
               </div>
             )}
 
-            {((isLoading && mapMode === 'pins') || (heatmapLoading && mapMode === 'heatmap') || (profitLoading && mapMode === 'profitability') || (zonesLoading && mapMode === 'zones') || (apporteursLoading && mapMode === 'apporteurs')) && mapboxToken && !mapInitError && (
+            {((isLoading && mapMode === 'pins') || (heatmapLoading && mapMode === 'heatmap') || (profitLoading && mapMode === 'profitability') || (zonesLoading && mapMode === 'zones') || (apporteursLoading && mapMode === 'apporteurs') || (dispoLoading && mapMode === 'disponibilite')) && mapboxToken && !mapInitError && (
               <MapLoadingOverlay mode={mapMode} />
             )}
 
@@ -1446,6 +1448,65 @@ export default function MapsTabContent() {
               />
             )}
           </div>
+
+          {/* Panneau latéral disponibilité */}
+          {mapMode === 'disponibilite' && dispoData && dispoData.length > 0 && (
+            <div className="w-72 border-l border-border bg-background flex flex-col">
+              <div className="p-3 border-b border-border">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Techniciens ({dispoData.length})
+                </h3>
+              </div>
+              <ScrollArea className="flex-1">
+                <div className="p-2 space-y-1">
+                  {[...dispoData]
+                    .sort((a, b) => {
+                      const order = { available: 0, soon: 1, busy: 2, saturated: 3, unavailable: 4 };
+                      return (order[a.status] ?? 5) - (order[b.status] ?? 5);
+                    })
+                    .map(tech => {
+                      const statusColor = DISPO_STATUS_COLORS[tech.status] || '#9ca3af';
+                      const capacityPct = tech.totalDayMin > 0 ? Math.round((tech.occupiedMin / tech.totalDayMin) * 100) : 0;
+                      const isSelected = selectedDispoTech?.techId === tech.techId;
+                      return (
+                        <button
+                          key={tech.techId}
+                          onClick={() => {
+                            setSelectedDispoTech(isSelected ? null : tech);
+                            if (map.current && tech.lat && tech.lng) {
+                              map.current.flyTo({ center: [tech.lng, tech.lat], zoom: 12, duration: 800 });
+                            }
+                          }}
+                          className={cn(
+                            'w-full text-left p-2.5 rounded-lg transition-colors text-xs',
+                            isSelected ? 'bg-accent border border-border' : 'hover:bg-muted'
+                          )}
+                        >
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: tech.color, border: `2px solid ${statusColor}` }} />
+                            <span className="font-medium truncate">{tech.name}</span>
+                            <span className="ml-auto px-1.5 py-0.5 rounded-full text-white text-[10px] font-semibold" style={{ backgroundColor: statusColor }}>
+                              {tech.statusLabel}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 text-muted-foreground">
+                            <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{tech.freeMinutes}m libre</span>
+                            <span className="flex items-center gap-1"><Wrench className="h-3 w-3" />{tech.rdvDone}/{tech.rdvCount}</span>
+                            <span>{capacityPct}%</span>
+                          </div>
+                          {tech.nextTask && (
+                            <div className="mt-1 text-muted-foreground truncate">
+                              ⏭️ {tech.nextTask} {tech.nextTaskTime ? `à ${tech.nextTaskTime}` : ''}
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                </div>
+              </ScrollArea>
+            </div>
+          )}
         </div>
       </DraggableFolderContentContainer>
     </div>
