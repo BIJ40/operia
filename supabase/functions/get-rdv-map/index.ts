@@ -244,12 +244,24 @@ Deno.serve(async (req) => {
     }
 
     const baseUrl = `https://${targetAgency}.hc-apogee.fr/api`;
-    const apiFetch = (endpoint: string, body: any = { API_KEY: apiKey }) =>
-      fetch(`${baseUrl}/${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+    const apiFetch = async (endpoint: string, body: any = { API_KEY: apiKey }): Promise<any[]> => {
+      try {
+        const resp = await fetch(`${baseUrl}/${endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          signal: AbortSignal.timeout(25000),
+        });
+        if (!resp.ok) {
+          console.warn(`[GET-RDV-MAP] API ${endpoint} returned ${resp.status}`);
+          return [];
+        }
+        return await resp.json();
+      } catch (e) {
+        console.warn(`[GET-RDV-MAP] API ${endpoint} fetch failed: ${e.message}`);
+        return [];
+      }
+    };
 
     // 6. Fetch data from Apogée
     const t0 = Date.now();
@@ -274,14 +286,12 @@ Deno.serve(async (req) => {
         fetchPromises.push(apiFetch('apiGetDevis'));
       }
 
-      const responses = await Promise.all(fetchPromises);
-      const [intResp, projResp, clientResp] = responses;
-      
-      const interventions = intResp.ok ? await intResp.json() : [];
-      const projects = projResp.ok ? await projResp.json() : [];
-      const clients = clientResp.ok ? await clientResp.json() : [];
-      const factures = (isProfitability || isZones || isApporteurs) && responses[3]?.ok ? await responses[3].json() : [];
-      const devis = (isZones || isApporteurs) && responses[4]?.ok ? await responses[4].json() : [];
+      const results = await Promise.all(fetchPromises);
+      const interventions = results[0] || [];
+      const projects = results[1] || [];
+      const clients = results[2] || [];
+      const factures = (isProfitability || isZones || isApporteurs) ? (results[3] || []) : [];
+      const devis = (isZones || isApporteurs) ? (results[4] || []) : [];
 
       console.log(`[GET-RDV-MAP] Fetched ${Array.isArray(interventions) ? interventions.length : 0} interventions, ${projects.length} projects, ${clients.length} clients in ${Date.now() - t0}ms`);
 
@@ -763,19 +773,13 @@ Deno.serve(async (req) => {
 
     // ── DISPONIBILITE MODE — Real-time tech availability ──
     if (isDispo) {
-      const [intResp, usersResp, projResp, clientResp, creneauxResp] = await Promise.all([
+      const [interventions, users, projects, clients, creneaux] = await Promise.all([
         apiFetch('apiGetInterventions', { API_KEY: apiKey, from: date, to: date }),
         apiFetch('apiGetUsers'),
         apiFetch('apiGetProjects'),
         apiFetch('apiGetClients'),
         apiFetch('apiGetPlanningCreneaux', { API_KEY: apiKey }),
       ]);
-
-      const interventions = intResp.ok ? await intResp.json() : [];
-      const users = usersResp.ok ? await usersResp.json() : [];
-      const projects = projResp.ok ? await projResp.json() : [];
-      const clients = clientResp.ok ? await clientResp.json() : [];
-      const creneaux = creneauxResp.ok ? await creneauxResp.json() : [];
 
       // Identify technicians (same logic as techTools.ts)
       const EXCLUDED_TYPES = ['commercial', 'admin', 'assistant', 'administratif'];
@@ -988,11 +992,7 @@ Deno.serve(async (req) => {
     }
 
     // ── NORMAL MODE (RDV pins for a specific date) ──
-    const interventionsResponse = await apiFetch('apiGetInterventions', { API_KEY: apiKey, from: effectiveFrom, to: effectiveTo });
-    if (!interventionsResponse.ok) {
-      return withCors(req, new Response(JSON.stringify({ success: false, error: 'Apogee API error' }), { status: 502, headers: { 'Content-Type': 'application/json' } }));
-    }
-    const interventionsAll = await interventionsResponse.json();
+    const interventionsAll = await apiFetch('apiGetInterventions', { API_KEY: apiKey, from: effectiveFrom, to: effectiveTo });
     const interventions = Array.isArray(interventionsAll) ? interventionsAll.filter((it: any) => {
       const rawDate = typeof it?.date === 'string' ? it.date : '';
       if (rawDate.startsWith(date!)) return true;
@@ -1002,15 +1002,11 @@ Deno.serve(async (req) => {
     }) : [];
 
     // Fetch users + projects + clients in parallel
-    const [usersResp, projResp, clientResp] = await Promise.all([
+    const [users, projects, clients] = await Promise.all([
       apiFetch('apiGetUsers'),
       apiFetch('apiGetProjects'),
       apiFetch('apiGetClients'),
     ]);
-
-    const users = usersResp.ok ? await usersResp.json() : [];
-    const projects = projResp.ok ? await projResp.json() : [];
-    const clients = clientResp.ok ? await clientResp.json() : [];
 
     const usersById = new Map<number, { name: string; color: string }>();
     for (const u of users) {
