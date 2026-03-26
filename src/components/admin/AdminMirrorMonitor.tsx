@@ -2,6 +2,7 @@
  * Admin Mirror Monitor — Enhanced pilot monitoring panel
  * Shows pilot module status, metrics, pre-activation checks, decision journal,
  * persisted snapshots, projects readiness checkpoint.
+ * Includes controlled validation read for pilot testing.
  */
 
 import { useEffect, useState, useCallback } from 'react';
@@ -10,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { RefreshCw, Database, Wifi, AlertTriangle, CheckCircle2, Clock, Activity, ShieldCheck, ArrowDownUp, List, BarChart3, Rocket } from 'lucide-react';
+import { RefreshCw, Database, Wifi, AlertTriangle, CheckCircle2, Clock, Activity, ShieldCheck, ArrowDownUp, List, BarChart3, Rocket, Zap } from 'lucide-react';
 import { getLastComparisonResults, type ComparisonResult } from '@/services/mirrorValidation';
 import { invalidateFlagsCache } from '@/services/mirrorDataSource';
 import {
@@ -24,7 +25,7 @@ import {
   type PilotVerdict,
   type ProjectsReadiness,
 } from '@/services/mirrorPilotActivation';
-
+import { getGlobalApogeeDataServices } from '@/statia/adapters/dataServiceAdapter';
 // ============================================================
 // TYPES
 // ============================================================
