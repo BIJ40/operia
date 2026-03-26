@@ -8,7 +8,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { format, addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Loader2, MapPin, AlertCircle, CalendarDays, Flame, PieChart, Crosshair } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Loader2, MapPin, AlertCircle, CalendarDays, Flame, PieChart, Crosshair, Network } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -42,6 +42,8 @@ const PROFIT_LAYER_NEG = 'profit-layer-neg-pilotage';
 const PROFIT_CIRCLES = 'profit-circles-pilotage';
 const ZONES_SOURCE = 'zones-source-pilotage';
 const ZONES_CIRCLES = 'zones-circles-pilotage';
+const APPORTEURS_SOURCE = 'apporteurs-source-pilotage';
+const APPORTEURS_CIRCLES = 'apporteurs-circles-pilotage';
 
 function enableStyleFallback(m: mapboxgl.Map) {
   let fallbackApplied = false;
@@ -68,15 +70,16 @@ function enableStyleFallback(m: mapboxgl.Map) {
 }
 
 type ViewMode = 'day' | 'week';
-type MapMode = 'pins' | 'heatmap' | 'profitability' | 'zones';
+type MapMode = 'pins' | 'heatmap' | 'profitability' | 'zones' | 'apporteurs';
 
-type MapsSubTab = 'rdv' | 'densite' | 'rentabilite' | 'zones';
+type MapsSubTab = 'rdv' | 'densite' | 'rentabilite' | 'zones' | 'apporteurs';
 
 const MAP_SUB_TABS: FolderTabConfig[] = [
   { id: 'rdv', label: 'Rendez-vous', icon: MapPin, accent: 'blue' },
   { id: 'densite', label: 'Densité', icon: Flame, accent: 'pink' },
   { id: 'rentabilite', label: 'Rentabilité', icon: PieChart, accent: 'green' },
   { id: 'zones', label: 'Zones blanches', icon: Crosshair, accent: 'orange' },
+  { id: 'apporteurs', label: 'Apporteurs', icon: Network, accent: 'purple' },
 ];
 
 const TAB_ACCENT_COLORS: Record<string, string> = {
@@ -84,6 +87,7 @@ const TAB_ACCENT_COLORS: Record<string, string> = {
   pink: 'hsl(var(--warm-pink))',
   green: 'hsl(var(--warm-green))',
   orange: 'hsl(var(--warm-orange))',
+  purple: 'hsl(var(--warm-purple, 270 60% 55%))',
 };
 
 /** Animated progress overlay for analytics map modes */
@@ -109,6 +113,7 @@ function MapLoadingOverlay({ mode }: { mode: MapMode }) {
     heatmap: 'Analyse de densité historique…',
     profitability: 'Calcul de rentabilité par zone…',
     zones: 'Analyse des zones commerciales…',
+    apporteurs: 'Analyse des apporteurs par zone…',
   };
 
   return (
@@ -132,7 +137,7 @@ export default function MapsTabContent() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [activeSubTab, setActiveSubTab] = useSessionState<MapsSubTab>('maps_sub_tab', 'rdv');
-  const mapMode: MapMode = activeSubTab === 'densite' ? 'heatmap' : activeSubTab === 'rentabilite' ? 'profitability' : activeSubTab === 'zones' ? 'zones' : 'pins';
+  const mapMode: MapMode = activeSubTab === 'densite' ? 'heatmap' : activeSubTab === 'rentabilite' ? 'profitability' : activeSubTab === 'zones' ? 'zones' : activeSubTab === 'apporteurs' ? 'apporteurs' : 'pins';
   const [selectedTechIds, setSelectedTechIds] = useState<number[]>([]);
   const [techFilterOpen, setTechFilterOpen] = useState(false);
   const [selectedRdv, setSelectedRdv] = useState<MapRdv | null>(null);
@@ -272,6 +277,37 @@ export default function MapsTabContent() {
     refetchOnWindowFocus: false,
   });
 
+  // Apporteurs: origin breakdown per postal code
+  interface ApporteurBreakdown { type: string; count: number; ca: number; color: string; share: number; nbApporteurs: number; }
+  interface ApporteurZonePoint {
+    postalCode: string; city: string; lat: number; lng: number;
+    totalProjects: number; totalCA: number; panierMoyen: number;
+    devisTotal: number; devisSigned: number; transformRate: number; interventionCount: number;
+    dominantOrigin: string; dominantColor: string;
+    breakdown: ApporteurBreakdown[];
+    top1Share: number; top3Share: number; diversificationIndex: number;
+    topApporteurs: { name: string; count: number; ca: number }[];
+    insights: string[];
+  }
+  const { data: apporteursData, isLoading: apporteursLoading } = useQuery({
+    queryKey: ['rdv-apporteurs', agence],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Non authentifié');
+      const response = await supabase.functions.invoke('get-rdv-map', {
+        body: { mode: 'apporteurs', agencySlug: agence },
+      });
+      if (response.error) throw new Error(response.error.message);
+      const result = response.data;
+      if (!result.success) throw new Error(result.error || 'Erreur');
+      return result.data as ApporteurZonePoint[];
+    },
+    enabled: mapMode === 'apporteurs' && !!agence,
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
   const rdvs = viewMode === 'day' ? dayRdvs : weekRdvs;
   const isLoading = viewMode === 'day' ? dayLoading : weekLoading;
   const error = viewMode === 'day' ? dayError : (weekError instanceof Error ? weekError.message : null);
@@ -368,7 +404,7 @@ export default function MapsTabContent() {
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
 
-    if (mapMode === 'heatmap' || mapMode === 'profitability' || mapMode === 'zones') return;
+    if (mapMode === 'heatmap' || mapMode === 'profitability' || mapMode === 'zones' || mapMode === 'apporteurs') return;
 
     sortedRdvs.forEach((rdv, index) => {
       const isSelected = selectedRdv?.rdvId === rdv.rdvId;
@@ -743,7 +779,142 @@ export default function MapsTabContent() {
     };
   }, [zonesData, mapReady, mapMode]);
 
-  // Draw/remove route layer
+  // Apporteurs layer — circles colored by dominant origin type
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !mapReady) return;
+
+    if (m.getLayer(APPORTEURS_CIRCLES)) m.removeLayer(APPORTEURS_CIRCLES);
+    if (m.getSource(APPORTEURS_SOURCE)) m.removeSource(APPORTEURS_SOURCE);
+
+    if (mapMode !== 'apporteurs' || !apporteursData?.length) return;
+
+    const geojson: GeoJSON.FeatureCollection = {
+      type: 'FeatureCollection',
+      features: apporteursData.map(z => ({
+        type: 'Feature' as const,
+        properties: {
+          postalCode: z.postalCode,
+          city: z.city,
+          totalProjects: z.totalProjects,
+          totalCA: z.totalCA,
+          panierMoyen: z.panierMoyen,
+          dominantOrigin: z.dominantOrigin,
+          dominantColor: z.dominantColor,
+          top1Share: z.top1Share,
+          diversificationIndex: z.diversificationIndex,
+          transformRate: z.transformRate,
+          breakdown: JSON.stringify(z.breakdown),
+          topApporteurs: JSON.stringify(z.topApporteurs),
+          insights: JSON.stringify(z.insights),
+          devisTotal: z.devisTotal,
+          devisSigned: z.devisSigned,
+          interventionCount: z.interventionCount,
+        },
+        geometry: { type: 'Point' as const, coordinates: [z.lng, z.lat] },
+      })),
+    };
+
+    m.addSource(APPORTEURS_SOURCE, { type: 'geojson', data: geojson });
+
+    m.addLayer({
+      id: APPORTEURS_CIRCLES,
+      type: 'circle',
+      source: APPORTEURS_SOURCE,
+      paint: {
+        'circle-radius': [
+          'interpolate', ['linear'], ['zoom'],
+          4, ['interpolate', ['linear'], ['get', 'totalProjects'], 1, 8, 10, 14, 30, 20, 80, 28],
+          10, ['interpolate', ['linear'], ['get', 'totalProjects'], 1, 14, 10, 22, 30, 32, 80, 44],
+          14, ['interpolate', ['linear'], ['get', 'totalProjects'], 1, 20, 10, 30, 30, 42, 80, 56],
+        ],
+        'circle-color': ['get', 'dominantColor'],
+        'circle-opacity': 0.75,
+        'circle-stroke-color': [
+          'interpolate', ['linear'], ['get', 'top1Share'],
+          0, '#9ca3af',
+          50, '#f59e0b',
+          70, '#ef4444',
+          100, '#991b1b',
+        ],
+        'circle-stroke-width': [
+          'interpolate', ['linear'], ['get', 'top1Share'],
+          0, 1,
+          50, 2,
+          70, 3,
+          100, 4,
+        ],
+        'circle-stroke-opacity': 0.9,
+      },
+    });
+
+    // Fit bounds
+    if (!hasFittedBoundsRef.current && apporteursData.length > 0) {
+      let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+      apporteursData.forEach(p => { minLng = Math.min(minLng, p.lng); maxLng = Math.max(maxLng, p.lng); minLat = Math.min(minLat, p.lat); maxLat = Math.max(maxLat, p.lat); });
+      const pad = 0.1;
+      const bounds: [[number, number], [number, number]] = [[minLng - pad, minLat - pad], [maxLng + pad, maxLat + pad]];
+      const container = m.getContainer();
+      const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
+      const padY = Math.max(56, Math.round((container.clientHeight || 600) * 0.12));
+      m.fitBounds(bounds, { padding: { top: padY, bottom: padY + 60, left: padX, right: padX }, maxZoom: 12, duration: 1000 });
+      hasFittedBoundsRef.current = true;
+    }
+
+    // Popup on click
+    const handleClick = (e: mapboxgl.MapMouseEvent) => {
+      const features = m.queryRenderedFeatures(e.point, { layers: [APPORTEURS_CIRCLES] });
+      if (!features?.length) return;
+      const p = features[0].properties;
+      if (!p) return;
+      const coords = (features[0].geometry as any).coordinates as [number, number];
+
+      const breakdown: ApporteurBreakdown[] = (() => { try { return JSON.parse(p.breakdown); } catch { return []; } })();
+      const topAps: { name: string; count: number; ca: number }[] = (() => { try { return JSON.parse(p.topApporteurs); } catch { return []; } })();
+      const insights: string[] = (() => { try { return JSON.parse(p.insights); } catch { return []; } })();
+
+      const depBg = p.top1Share >= 70 ? '#dc2626' : p.top1Share >= 50 ? '#f59e0b' : '#22c55e';
+      const depLabel = p.top1Share >= 70 ? 'Dépendance critique' : p.top1Share >= 50 ? 'Concentration modérée' : 'Bien diversifié';
+
+      const breakdownHtml = breakdown.map(b =>
+        `<div style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:50%;background:${b.color};flex-shrink:0;"></span><span>${b.type}</span><b>${b.share}%</b> <span style="color:#6b7280;">(${b.count} dossiers)</span></div>`
+      ).join('');
+
+      const topApsHtml = topAps.length > 0 ? `<div style="margin-top:6px;border-top:1px solid #e5e7eb;padding-top:6px;"><div style="font-weight:600;margin-bottom:4px;">Top apporteurs</div>${topAps.map(a =>
+        `<div style="display:flex;justify-content:space-between;"><span>${a.name}</span><span><b>${a.count}</b> dossiers · ${a.ca.toLocaleString('fr-FR')} €</span></div>`
+      ).join('')}</div>` : '';
+
+      new mapboxgl.Popup({ closeButton: true, maxWidth: '380px' })
+        .setLngLat(coords)
+        .setHTML(`
+          <div style="font-family: system-ui; font-size: 12px; line-height: 1.6;">
+            <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px;">${p.postalCode} ${p.city}</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <span style="background:${p.dominantColor};color:white;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:600;">${p.dominantOrigin}</span>
+              <span style="background:${depBg};color:white;border-radius:10px;padding:1px 8px;font-size:11px;">${depLabel} (${p.top1Share}%)</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-bottom:8px;">
+              <div>📁 <b>${p.totalProjects}</b> dossiers</div>
+              <div>💰 CA: <b>${Number(p.totalCA).toLocaleString('fr-FR')} €</b></div>
+              <div>🧺 Panier: <b>${Number(p.panierMoyen).toLocaleString('fr-FR')} €</b></div>
+              <div>📝 Transfo: <b>${p.transformRate}%</b></div>
+            </div>
+            <div style="margin-bottom:6px;"><b>Répartition origines</b></div>
+            ${breakdownHtml}
+            ${topApsHtml}
+            ${insights.length > 0 ? `<div style="background:#fef3c7;border-radius:6px;padding:6px 8px;margin-top:6px;">${insights.map(i => `<div style="color:#92400e;font-size:11px;">💡 ${i}</div>`).join('')}</div>` : ''}
+          </div>
+        `)
+        .addTo(m);
+    };
+
+    m.on('click', APPORTEURS_CIRCLES, handleClick);
+    m.on('mouseenter', APPORTEURS_CIRCLES, () => { m.getCanvas().style.cursor = 'pointer'; });
+    m.on('mouseleave', APPORTEURS_CIRCLES, () => { m.getCanvas().style.cursor = ''; });
+
+    return () => { m.off('click', APPORTEURS_CIRCLES, handleClick); };
+  }, [apporteursData, mapReady, mapMode]);
+
   useEffect(() => {
     const m = map.current;
     if (!m || !mapReady) return;
@@ -976,6 +1147,37 @@ export default function MapsTabContent() {
           </div>
         )}
 
+        {/* Barre info apporteurs */}
+        {mapMode === 'apporteurs' && (
+          <div className="flex-none p-4 space-y-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Network className="h-4 w-4" />
+              <span>Origine des clients & apporteurs — analyse par code postal</span>
+              <span className="ml-auto">
+                {apporteursLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${apporteursData?.length || 0} zones`}
+              </span>
+            </div>
+            <div className="flex items-center gap-4 text-xs flex-wrap">
+              {[
+                { label: 'Assurance', color: '#3b82f6' },
+                { label: 'Agence Immo', color: '#8b5cf6' },
+                { label: 'Syndic', color: '#f97316' },
+                { label: 'Bailleur', color: '#06b6d4' },
+                { label: 'Client direct', color: '#6b7280' },
+              ].map(({ label, color }) => (
+                <div key={label} className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
+                  <span className="text-muted-foreground">{label}</span>
+                </div>
+              ))}
+              <div className="flex items-center gap-1.5 ml-2 pl-2 border-l">
+                <span className="w-3 h-3 rounded-full border-2" style={{ borderColor: '#dc2626', backgroundColor: 'transparent' }} />
+                <span className="text-muted-foreground">Bordure = dépendance</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex-1 min-h-0" style={{ minHeight: '400px' }}>
           <div className="relative h-full w-full overflow-hidden bg-background">
             {!mapboxToken ? (
@@ -995,7 +1197,7 @@ export default function MapsTabContent() {
               </div>
             )}
 
-            {((isLoading && mapMode === 'pins') || (heatmapLoading && mapMode === 'heatmap') || (profitLoading && mapMode === 'profitability') || (zonesLoading && mapMode === 'zones')) && mapboxToken && !mapInitError && (
+            {((isLoading && mapMode === 'pins') || (heatmapLoading && mapMode === 'heatmap') || (profitLoading && mapMode === 'profitability') || (zonesLoading && mapMode === 'zones') || (apporteursLoading && mapMode === 'apporteurs')) && mapboxToken && !mapInitError && (
               <MapLoadingOverlay mode={mapMode} />
             )}
 
