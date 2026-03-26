@@ -773,19 +773,13 @@ Deno.serve(async (req) => {
 
     // ── DISPONIBILITE MODE — Real-time tech availability ──
     if (isDispo) {
-      const [intResp, usersResp, projResp, clientResp, creneauxResp] = await Promise.all([
+      const [interventions, users, projects, clients, creneaux] = await Promise.all([
         apiFetch('apiGetInterventions', { API_KEY: apiKey, from: date, to: date }),
         apiFetch('apiGetUsers'),
         apiFetch('apiGetProjects'),
         apiFetch('apiGetClients'),
         apiFetch('apiGetPlanningCreneaux', { API_KEY: apiKey }),
       ]);
-
-      const interventions = intResp.ok ? await intResp.json() : [];
-      const users = usersResp.ok ? await usersResp.json() : [];
-      const projects = projResp.ok ? await projResp.json() : [];
-      const clients = clientResp.ok ? await clientResp.json() : [];
-      const creneaux = creneauxResp.ok ? await creneauxResp.json() : [];
 
       // Identify technicians (same logic as techTools.ts)
       const EXCLUDED_TYPES = ['commercial', 'admin', 'assistant', 'administratif'];
@@ -998,11 +992,7 @@ Deno.serve(async (req) => {
     }
 
     // ── NORMAL MODE (RDV pins for a specific date) ──
-    const interventionsResponse = await apiFetch('apiGetInterventions', { API_KEY: apiKey, from: effectiveFrom, to: effectiveTo });
-    if (!interventionsResponse.ok) {
-      return withCors(req, new Response(JSON.stringify({ success: false, error: 'Apogee API error' }), { status: 502, headers: { 'Content-Type': 'application/json' } }));
-    }
-    const interventionsAll = await interventionsResponse.json();
+    const interventionsAll = await apiFetch('apiGetInterventions', { API_KEY: apiKey, from: effectiveFrom, to: effectiveTo });
     const interventions = Array.isArray(interventionsAll) ? interventionsAll.filter((it: any) => {
       const rawDate = typeof it?.date === 'string' ? it.date : '';
       if (rawDate.startsWith(date!)) return true;
@@ -1012,15 +1002,11 @@ Deno.serve(async (req) => {
     }) : [];
 
     // Fetch users + projects + clients in parallel
-    const [usersResp, projResp, clientResp] = await Promise.all([
+    const [users, projects, clients] = await Promise.all([
       apiFetch('apiGetUsers'),
       apiFetch('apiGetProjects'),
       apiFetch('apiGetClients'),
     ]);
-
-    const users = usersResp.ok ? await usersResp.json() : [];
-    const projects = projResp.ok ? await projResp.json() : [];
-    const clients = clientResp.ok ? await clientResp.json() : [];
 
     const usersById = new Map<number, { name: string; color: string }>();
     for (const u of users) {
