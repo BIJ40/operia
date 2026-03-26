@@ -26,6 +26,7 @@ export const MODULES = {
   'pilotage.statistiques.univers': 'pilotage.statistiques.univers',
   'pilotage.statistiques.sav': 'pilotage.statistiques.sav',
   'pilotage.statistiques.previsionnel': 'pilotage.statistiques.previsionnel',
+  'pilotage.statistiques.financier': 'pilotage.statistiques.financier',
   'pilotage.statistiques.exports': 'pilotage.statistiques.exports',
   'pilotage.performance': 'pilotage.performance',
   'pilotage.actions_a_mener': 'pilotage.actions_a_mener',

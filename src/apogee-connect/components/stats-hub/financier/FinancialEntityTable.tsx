@@ -1,5 +1,6 @@
 /**
  * FinancialEntityTable — Premium sortable, searchable table for apporteurs/clients
+ * V2: Sort by risk, risk filter chips
  */
 
 import { useState, useMemo } from 'react';
@@ -8,15 +9,16 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatEuros, formatPercent } from '@/apogee-connect/utils/formatters';
 import { cn } from '@/lib/utils';
 import { Search, ArrowUpDown, ChevronRight, Building2, Users } from 'lucide-react';
 import type { FinancialEntityStats, DebtRiskLevel } from '@/apogee-connect/types/financial';
 
-type SortField = 'entityLabel' | 'totalFactureTTC' | 'totalEncaisse' | 'resteDu' | 'nbFactures' | 'delaiMoyenPaiement' | 'partDuGlobal';
+type SortField = 'entityLabel' | 'totalFactureTTC' | 'totalEncaisse' | 'resteDu' | 'nbFactures' | 'ageMoyenEncours' | 'partDuGlobal' | 'riskLevel';
 type SortDir = 'asc' | 'desc';
+
+const RISK_ORDER: Record<DebtRiskLevel, number> = { critical: 4, warning: 3, watch: 2, healthy: 1 };
 
 const RISK_STYLES: Record<DebtRiskLevel, { label: string; cls: string }> = {
   healthy: { label: 'Sain', cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
@@ -24,6 +26,8 @@ const RISK_STYLES: Record<DebtRiskLevel, { label: string; cls: string }> = {
   warning: { label: 'Alerte', cls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
   critical: { label: 'Critique', cls: 'bg-destructive/15 text-destructive' },
 };
+
+type RiskFilter = 'all' | DebtRiskLevel;
 
 interface FinancialEntityTableProps {
   byApporteur: FinancialEntityStats[];
@@ -36,16 +40,31 @@ export function FinancialEntityTable({ byApporteur, byClient, isLoading, onEntit
   const [view, setView] = useState<'apporteur' | 'client'>('apporteur');
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<{ field: SortField; dir: SortDir }>({ field: 'resteDu', dir: 'desc' });
+  const [riskFilter, setRiskFilter] = useState<RiskFilter>('all');
 
   const entities = view === 'apporteur' ? byApporteur : byClient;
 
   const filtered = useMemo(() => {
     let result = entities;
+
+    // Risk filter
+    if (riskFilter !== 'all') {
+      result = result.filter(e => e.riskLevel === riskFilter);
+    }
+
+    // Search
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(e => e.entityLabel.toLowerCase().includes(q));
     }
+
+    // Sort
     result = [...result].sort((a, b) => {
+      if (sort.field === 'riskLevel') {
+        const aVal = RISK_ORDER[a.riskLevel];
+        const bVal = RISK_ORDER[b.riskLevel];
+        return sort.dir === 'asc' ? aVal - bVal : bVal - aVal;
+      }
       const aVal = a[sort.field] ?? 0;
       const bVal = b[sort.field] ?? 0;
       if (typeof aVal === 'string' && typeof bVal === 'string') {
@@ -54,7 +73,7 @@ export function FinancialEntityTable({ byApporteur, byClient, isLoading, onEntit
       return sort.dir === 'asc' ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
     });
     return result;
-  }, [entities, search, sort]);
+  }, [entities, search, sort, riskFilter]);
 
   const toggleSort = (field: SortField) => {
     setSort(prev => ({ field, dir: prev.field === field && prev.dir === 'desc' ? 'asc' : 'desc' }));
@@ -66,6 +85,13 @@ export function FinancialEntityTable({ byApporteur, byClient, isLoading, onEntit
       <ArrowUpDown className={cn('h-3 w-3', sort.field === field ? 'text-foreground' : 'text-muted-foreground/40')} />
     </button>
   );
+
+  // Count entities per risk level
+  const riskCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: entities.length, healthy: 0, watch: 0, warning: 0, critical: 0 };
+    entities.forEach(e => { counts[e.riskLevel]++; });
+    return counts;
+  }, [entities]);
 
   if (isLoading) {
     return (
@@ -84,7 +110,7 @@ export function FinancialEntityTable({ byApporteur, byClient, isLoading, onEntit
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <CardTitle className="text-base font-semibold">Détail par tiers</CardTitle>
           <div className="flex items-center gap-3">
-            <Tabs value={view} onValueChange={(v) => setView(v as any)}>
+            <Tabs value={view} onValueChange={(v) => { setView(v as any); setRiskFilter('all'); }}>
               <TabsList className="h-8">
                 <TabsTrigger value="apporteur" className="text-xs gap-1.5 px-3 h-7">
                   <Users className="h-3.5 w-3.5" />Apporteurs
@@ -105,6 +131,33 @@ export function FinancialEntityTable({ byApporteur, byClient, isLoading, onEntit
             </div>
           </div>
         </div>
+
+        {/* Risk filter chips */}
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          {(['all', 'critical', 'warning', 'watch', 'healthy'] as RiskFilter[]).map(level => {
+            const labels: Record<string, string> = { all: 'Tous', critical: 'Critique', warning: 'Alerte', watch: 'Surveillance', healthy: 'Sain' };
+            const count = riskCounts[level] || 0;
+            if (level !== 'all' && count === 0) return null;
+            return (
+              <button
+                key={level}
+                onClick={() => setRiskFilter(level)}
+                className={cn(
+                  'text-[11px] px-2.5 py-1 rounded-full font-medium transition-all border',
+                  riskFilter === level
+                    ? level === 'all' ? 'bg-primary text-primary-foreground border-primary'
+                      : level === 'critical' ? 'bg-destructive/15 text-destructive border-destructive/30'
+                      : level === 'warning' ? 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700'
+                      : level === 'watch' ? 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700'
+                      : 'bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700'
+                    : 'bg-muted/50 text-muted-foreground border-border/50 hover:bg-muted'
+                )}
+              >
+                {labels[level]} ({count})
+              </button>
+            );
+          })}
+        </div>
       </CardHeader>
       <CardContent className="px-0 pb-2">
         <div className="overflow-auto max-h-[500px]">
@@ -116,9 +169,9 @@ export function FinancialEntityTable({ byApporteur, byClient, isLoading, onEntit
                 <TableHead className="text-right"><SortHeader field="totalEncaisse">Encaissé</SortHeader></TableHead>
                 <TableHead className="text-right"><SortHeader field="resteDu">Reste dû</SortHeader></TableHead>
                 <TableHead className="text-right"><SortHeader field="nbFactures">Factures</SortHeader></TableHead>
-                <TableHead className="text-right"><SortHeader field="delaiMoyenPaiement">Délai moy.</SortHeader></TableHead>
+                <TableHead className="text-right"><SortHeader field="ageMoyenEncours">Âge moy.</SortHeader></TableHead>
                 <TableHead className="text-right"><SortHeader field="partDuGlobal">% du dû</SortHeader></TableHead>
-                <TableHead className="w-[90px]">Risque</TableHead>
+                <TableHead className="w-[90px]"><SortHeader field="riskLevel">Risque</SortHeader></TableHead>
                 <TableHead className="w-[32px]" />
               </TableRow>
             </TableHeader>
@@ -126,7 +179,7 @@ export function FinancialEntityTable({ byApporteur, byClient, isLoading, onEntit
               {filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={9} className="text-center text-muted-foreground py-12">
-                    {search ? 'Aucun résultat pour cette recherche' : 'Aucune donnée disponible'}
+                    {search || riskFilter !== 'all' ? 'Aucun résultat pour ces critères' : 'Aucune donnée disponible'}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -148,7 +201,7 @@ export function FinancialEntityTable({ byApporteur, byClient, isLoading, onEntit
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{entity.nbFactures}</TableCell>
                       <TableCell className="text-right tabular-nums">
-                        {entity.delaiMoyenPaiement !== null ? `${entity.delaiMoyenPaiement} j` : '—'}
+                        {entity.ageMoyenEncours !== null ? `${entity.ageMoyenEncours} j` : '—'}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{formatPercent(entity.partDuGlobal)}</TableCell>
                       <TableCell>
