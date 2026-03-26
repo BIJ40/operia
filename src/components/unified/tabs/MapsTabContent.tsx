@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { useRdvMap, calculateBounds, MapRdv } from '@/hooks/useRdvMap';
+import { useQueries } from '@tanstack/react-query';
 import { createPinMarkerElement } from '@/components/map/PinMarker';
 import { RdvMiniPreview } from '@/components/map/RdvMiniPreview';
 import { TourSummaryBar } from '@/components/map/TourSummaryBar';
