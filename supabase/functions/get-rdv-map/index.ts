@@ -468,6 +468,16 @@ Deno.serve(async (req) => {
         }
 
         // Aggregate per postal code
+        // Build apporteur (commanditaire) mapping for zones
+        const zoneApporteurIds = new Map<number, number>(); // projectId → commanditaireId
+        for (const p of projects) {
+          const data = p.data || {};
+          const commanditaireId = data.commanditaireId || data.commanditaire_id;
+          if (typeof commanditaireId === 'number' && commanditaireId !== p.clientId) {
+            zoneApporteurIds.set(p.id, commanditaireId);
+          }
+        }
+
         const allUnivers = new Set<string>();
         const zoneAggregates = new Map<string, {
           projects: Set<number>; clients: Set<number>; apporteurs: Set<number>;
@@ -485,6 +495,9 @@ Deno.serve(async (req) => {
             zone.ca += caByProject.get(pid) || 0;
             const dv = devisByProject.get(pid);
             if (dv) { zone.devisTotal += dv.total; zone.devisSigned += dv.signed; }
+            // Populate apporteur set
+            const apporteurId = zoneApporteurIds.get(pid);
+            if (apporteurId) zone.apporteurs.add(apporteurId);
           }
           zoneAggregates.set(pc, zone);
         }
