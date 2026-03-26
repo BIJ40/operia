@@ -133,6 +133,47 @@ export default function AdminMirrorMonitor() {
     error?: string;
   }>({ status: 'idle' });
 
+  // Controlled validation read — triggers mirror-aware path for users/DAX
+  const handleTestRead = useCallback(async () => {
+    setTestResult({ status: 'loading' });
+    try {
+      const services = getGlobalApogeeDataServices();
+      const startTime = Date.now();
+      const users = await services.getUsers('dax');
+      const elapsed = Date.now() - startTime;
+      
+      // Read latest metrics to determine what source was used
+      const latestMetrics = getPilotMetrics()['users'];
+      const latestDecisions = getLastComparisonResults().filter(c => c.module === 'users');
+      
+      // Check the most recent decision log entry
+      const { data: recentDecision } = await supabase
+        .from('mirror_decision_log' as any)
+        .select('source_used, mode_requested, fallback_reason, freshness_minutes, item_count')
+        .eq('module_key', 'users')
+        .eq('agency_id', DAX_AGENCY_ID)
+        .order('created_at', { ascending: false })
+        .limit(1) as any;
+      
+      const decision = recentDecision?.[0];
+      
+      setTestResult({
+        status: 'success',
+        source: decision?.source_used || (latestMetrics?.mirrorReads ? 'mirror' : 'live'),
+        itemCount: users?.length ?? 0,
+        freshness: decision?.freshness_minutes ? Math.round(decision.freshness_minutes) : undefined,
+        fallbackReason: decision?.fallback_reason || undefined,
+        mode: decision?.mode_requested || 'unknown',
+        timestamp: new Date().toISOString(),
+      });
+      
+      // Refresh all data to show updated metrics/decisions
+      setTimeout(() => { invalidateFlagsCache(); loadData(); }, 1000);
+    } catch (err: any) {
+      setTestResult({ status: 'error', error: err?.message || 'Erreur inconnue' });
+    }
+  }, []);
+
   const loadData = useCallback(async () => {
     setRefreshing(true);
     try {
