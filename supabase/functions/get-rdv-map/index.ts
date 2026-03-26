@@ -769,7 +769,172 @@ Deno.serve(async (req) => {
           data: apporteurResults,
           meta: { mode: 'apporteurs', agencySlug: targetAgency, totalZones: apporteurResults.length, originColors: ORIGIN_COLORS, durationMs: Date.now() - t0 },
         }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      // ── SAISONNALITE MODE ──
+      if (isSaisonnalite) {
+        // Build CA per project
+        const caByProject = new Map<number, number>();
+        for (const f of factures) {
+          const pid = f.projectId;
+          if (typeof pid !== 'number') continue;
+          const isAvoir = (f.typeFacture || f.type || '').toLowerCase() === 'avoir';
+          const montant = parseFloat(f.data?.totalHT ?? f.totalHT ?? f.montantHT ?? 0) || 0;
+          caByProject.set(pid, (caByProject.get(pid) || 0) + (isAvoir ? -Math.abs(montant) : montant));
+        }
+
+        // Map intervention → month
+        const interventionArray = Array.isArray(interventions) ? interventions : [];
+
+        // Aggregate: postalCode × YYYY-MM → { nb, ca, univers counts }
+        interface MonthCell { nb: number; ca: number; universCounts: Record<string, number>; urgences: number; }
+        const grid = new Map<string, Map<string, MonthCell>>(); // pc → month → cell
+        const allMonths = new Set<string>();
+
+        for (const it of interventionArray) {
+          const pid = it.projectId;
+          if (typeof pid !== 'number') continue;
+          const pc = projectToPostalCode.get(pid);
+          if (!pc) continue;
+
+          // Extract month from intervention date
+          const rawDate = typeof it?.date === 'string' ? it.date : '';
+          const month = rawDate.slice(0, 7); // YYYY-MM
+          if (!month || month.length !== 7) continue;
+          allMonths.add(month);
+
+          if (!grid.has(pc)) grid.set(pc, new Map());
+          const pcGrid = grid.get(pc)!;
+          if (!pcGrid.has(month)) pcGrid.set(month, { nb: 0, ca: 0, universCounts: {}, urgences: 0 });
+          const cell = pcGrid.get(month)!;
+          cell.nb++;
+          cell.ca += caByProject.get(pid) || 0;
+
+          const proj = projectsById.get(pid);
+          if (proj?.univers && proj.univers !== 'Non classé') {
+            cell.universCounts[proj.univers] = (cell.universCounts[proj.univers] || 0) + 1;
+          }
+
+          // Check urgency flag
+          const isUrgent = it.data?.isUrgent === true || it.data?.is_urgent === true || (it.data?.priorite || '').toLowerCase().includes('urgent');
+          if (isUrgent) cell.urgences++;
+        }
+
+        // Sort months
+        const sortedMonths = Array.from(allMonths).sort();
+        if (sortedMonths.length === 0) {
+          return withCors(req, new Response(JSON.stringify({ success: true, data: [], meta: { mode: 'saisonnalite', months: [], totalZones: 0, durationMs: Date.now() - t0 } }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+        }
+
+        // Build zone-level results with time series
+        const seasonResults: any[] = [];
+
+        for (const [pc, monthMap] of grid.entries()) {
+          const coords = coordsByPostalCode.get(pc);
+          if (!coords) continue;
+
+          const series: Record<string, { nb: number; ca: number; topUnivers: string; urgences: number }> = {};
+          let totalNb = 0;
+          let totalCA = 0;
+          const monthValues: number[] = [];
+
+          for (const m of sortedMonths) {
+            const cell = monthMap.get(m);
+            const nb = cell?.nb || 0;
+            const ca = cell?.ca || 0;
+            totalNb += nb;
+            totalCA += ca;
+            monthValues.push(nb);
+
+            // Find dominant univers for this month
+            let topUnivers = '';
+            let topCount = 0;
+            if (cell) {
+              for (const [u, c] of Object.entries(cell.universCounts)) {
+                if (c > topCount) { topUnivers = u; topCount = c; }
+              }
+            }
+
+            series[m] = { nb, ca: Math.round(ca), topUnivers, urgences: cell?.urgences || 0 };
+          }
+
+          // Seasonality index: coefficient of variation of monthly values
+          const mean = monthValues.length > 0 ? monthValues.reduce((a, b) => a + b, 0) / monthValues.length : 0;
+          const variance = monthValues.length > 0 ? monthValues.reduce((a, v) => a + (v - mean) ** 2, 0) / monthValues.length : 0;
+          const stdDev = Math.sqrt(variance);
+          const seasonalityIndex = mean > 0 ? Math.round((stdDev / mean) * 100) : 0; // CV as percentage
+
+          // Predictability: correlation between same months across years
+          // Simple approach: check if same calendar months have similar values
+          const monthOfYearAvg: Record<number, number[]> = {};
+          for (const m of sortedMonths) {
+            const calMonth = parseInt(m.slice(5, 7));
+            if (!monthOfYearAvg[calMonth]) monthOfYearAvg[calMonth] = [];
+            monthOfYearAvg[calMonth].push(series[m]?.nb || 0);
+          }
+          // Predictability = low intra-month variance relative to inter-month variance
+          let intraVar = 0;
+          let count = 0;
+          for (const vals of Object.values(monthOfYearAvg)) {
+            if (vals.length >= 2) {
+              const m2 = vals.reduce((a, b) => a + b, 0) / vals.length;
+              intraVar += vals.reduce((a, v) => a + (v - m2) ** 2, 0) / vals.length;
+              count++;
+            }
+          }
+          const predictabilityIndex = count > 0 && variance > 0 ? Math.max(0, Math.min(100, Math.round((1 - (intraVar / count) / (variance || 1)) * 100))) : 50;
+
+          // Find peak month (calendar month with highest average)
+          let peakCalMonth = 1;
+          let peakAvg = 0;
+          for (const [cm, vals] of Object.entries(monthOfYearAvg)) {
+            const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+            if (avg > peakAvg) { peakAvg = avg; peakCalMonth = parseInt(cm); }
+          }
+          const MONTH_NAMES = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+
+          // Variation vs previous month for each month
+          const variations: Record<string, number> = {};
+          for (let i = 1; i < sortedMonths.length; i++) {
+            const prev = series[sortedMonths[i - 1]]?.nb || 0;
+            const curr = series[sortedMonths[i]]?.nb || 0;
+            variations[sortedMonths[i]] = prev > 0 ? Math.round(((curr - prev) / prev) * 100) : (curr > 0 ? 100 : 0);
+          }
+
+          // Insights
+          const insights: string[] = [];
+          if (seasonalityIndex > 80) insights.push('Activité très cyclique');
+          else if (seasonalityIndex > 50) insights.push('Saisonnalité marquée');
+          else if (seasonalityIndex < 20) insights.push('Activité stable toute l\'année');
+          insights.push(`Pic habituel : ${MONTH_NAMES[peakCalMonth]}`);
+          if (predictabilityIndex > 70) insights.push('Schéma prévisible d\'une année sur l\'autre');
+
+          seasonResults.push({
+            postalCode: pc,
+            city: postalCodeCities.get(pc) || '',
+            lat: coords.lat,
+            lng: coords.lng,
+            totalNb: totalNb,
+            totalCA: Math.round(totalCA),
+            panierMoyen: totalNb > 0 ? Math.round(totalCA / totalNb) : 0,
+            series,
+            variations,
+            seasonalityIndex,
+            predictabilityIndex,
+            peakMonth: MONTH_NAMES[peakCalMonth],
+            peakCalMonth,
+            insights,
+          });
+        }
+
+        seasonResults.sort((a, b) => b.totalNb - a.totalNb);
+
+        console.log(`[GET-RDV-MAP] Saisonnalite: ${seasonResults.length} zones, ${sortedMonths.length} months in ${Date.now() - t0}ms`);
+        return withCors(req, new Response(JSON.stringify({
+          success: true,
+          data: seasonResults,
+          meta: { mode: 'saisonnalite', agencySlug: targetAgency, totalZones: seasonResults.length, months: sortedMonths, durationMs: Date.now() - t0 },
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
       }
+    }
     }
 
     // ── DISPONIBILITE MODE — Real-time tech availability ──
