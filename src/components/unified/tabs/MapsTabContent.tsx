@@ -157,6 +157,7 @@ function MapLoadingOverlay({ mode }: { mode: MapMode }) {
     zones: 'Analyse des zones commerciales…',
     apporteurs: 'Analyse des apporteurs par zone…',
     disponibilite: 'Calcul de disponibilité temps réel…',
+    saisonnalite: 'Analyse de saisonnalité géographique…',
   };
 
   return (
