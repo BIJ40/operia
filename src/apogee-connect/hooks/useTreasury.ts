@@ -18,8 +18,8 @@ import type {
 } from '../types/treasury';
 
 // Typed helper — tables not yet in generated types
-const fromTable = (table: string) =>
-  (supabase as unknown as { from: (t: string) => ReturnType<typeof supabase.from<any>> }).from(table);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const fromTable = (table: string) => (supabase as any).from(table);
 
 // ── Query keys ──
 export const TREASURY_KEYS = {

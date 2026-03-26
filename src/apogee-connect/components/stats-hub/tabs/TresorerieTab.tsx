@@ -54,6 +54,7 @@ export function TresorerieTab() {
   const handleDisconnect = useCallback((id: string) => disconnectMutation.mutate(id), [disconnectMutation]);
 
   const hasConnections = connections.length > 0;
+  const hasRealBankData = accounts.length > 0;
   const isLoading = loadingOverview || loadingConfig || loadingConns || loadingAccounts;
 
   return (
