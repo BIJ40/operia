@@ -68,7 +68,71 @@ export type Database = {
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "activity_log_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
         ]
+      }
+      agencies: {
+        Row: {
+          allmysms_api_key: string | null
+          allmysms_login: string | null
+          allmysms_sender: string | null
+          api_subdomain: string
+          contact_email: string
+          created_at: string
+          google_reviews_url: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          logo_url: string | null
+          name: string
+          primary_color: string | null
+          slug: string
+          stripe_enabled: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          allmysms_api_key?: string | null
+          allmysms_login?: string | null
+          allmysms_sender?: string | null
+          api_subdomain: string
+          contact_email: string
+          created_at?: string
+          google_reviews_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          logo_url?: string | null
+          name: string
+          primary_color?: string | null
+          slug: string
+          stripe_enabled?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          allmysms_api_key?: string | null
+          allmysms_login?: string | null
+          allmysms_sender?: string | null
+          api_subdomain?: string
+          contact_email?: string
+          created_at?: string
+          google_reviews_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          logo_url?: string | null
+          name?: string
+          primary_color?: string | null
+          slug?: string
+          stripe_enabled?: boolean | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       agency_admin_documents: {
         Row: {
@@ -123,6 +187,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_admin_documents_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
         ]
       }
@@ -231,6 +302,13 @@ export type Database = {
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "agency_commercial_profile_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
         ]
       }
       agency_financial_charges: {
@@ -280,6 +358,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_financial_charges_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
         ]
       }
@@ -388,6 +473,13 @@ export type Database = {
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "agency_financial_months_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
         ]
       }
       agency_overhead_rules: {
@@ -438,6 +530,82 @@ export type Database = {
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "agency_overhead_rules_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+        ]
+      }
+      agency_performance_config: {
+        Row: {
+          agency_id: string
+          created_at: string
+          deduct_planning_unavailability: boolean
+          default_task_duration_minutes: number
+          default_weekly_hours: number
+          holidays: Json
+          id: string
+          load_max: number
+          load_min: number
+          productivity_optimal: number
+          productivity_warning: number
+          sav_optimal: number
+          sav_warning: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          deduct_planning_unavailability?: boolean
+          default_task_duration_minutes?: number
+          default_weekly_hours?: number
+          holidays?: Json
+          id?: string
+          load_max?: number
+          load_min?: number
+          productivity_optimal?: number
+          productivity_warning?: number
+          sav_optimal?: number
+          sav_warning?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          deduct_planning_unavailability?: boolean
+          default_task_duration_minutes?: number
+          default_weekly_hours?: number
+          holidays?: Json
+          id?: string
+          load_max?: number
+          load_min?: number
+          productivity_optimal?: number
+          productivity_warning?: number
+          sav_optimal?: number
+          sav_warning?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_performance_config_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: true
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_performance_config_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: true
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
         ]
       }
       agency_rh_roles: {
@@ -469,6 +637,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_rh_roles_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "agency_rh_roles_granted_by_fkey"
@@ -532,6 +707,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "agency_royalty_calculations_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "agency_royalty_calculations_config_id_fkey"
             columns: ["config_id"]
             isOneToOne: false
@@ -578,6 +760,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_royalty_config_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
         ]
       }
@@ -660,6 +849,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_stamps_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "agency_stamps_uploaded_by_fkey"
@@ -784,6 +980,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "animator_visits_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "animator_visits_animator_id_fkey"
             columns: ["animator_id"]
             isOneToOne: false
@@ -827,6 +1030,10 @@ export type Database = {
       apogee_agencies: {
         Row: {
           adresse: string | null
+          allmysms_api_key: string | null
+          allmysms_login: string | null
+          allmysms_sender: string | null
+          api_key_ref: string | null
           code_postal: string | null
           contact_email: string | null
           contact_phone: string | null
@@ -834,15 +1041,25 @@ export type Database = {
           created_at: string
           date_cloture_bilan: string | null
           date_ouverture: string | null
+          google_reviews_url: string | null
           id: string
           is_active: boolean
           label: string
           slug: string
+          stripe_account_id: string | null
+          stripe_enabled: boolean | null
+          suivi_enabled: boolean | null
+          suivi_logo_url: string | null
+          suivi_primary_color: string | null
           updated_at: string
           ville: string | null
         }
         Insert: {
           adresse?: string | null
+          allmysms_api_key?: string | null
+          allmysms_login?: string | null
+          allmysms_sender?: string | null
+          api_key_ref?: string | null
           code_postal?: string | null
           contact_email?: string | null
           contact_phone?: string | null
@@ -850,15 +1067,25 @@ export type Database = {
           created_at?: string
           date_cloture_bilan?: string | null
           date_ouverture?: string | null
+          google_reviews_url?: string | null
           id?: string
           is_active?: boolean
           label: string
           slug: string
+          stripe_account_id?: string | null
+          stripe_enabled?: boolean | null
+          suivi_enabled?: boolean | null
+          suivi_logo_url?: string | null
+          suivi_primary_color?: string | null
           updated_at?: string
           ville?: string | null
         }
         Update: {
           adresse?: string | null
+          allmysms_api_key?: string | null
+          allmysms_login?: string | null
+          allmysms_sender?: string | null
+          api_key_ref?: string | null
           code_postal?: string | null
           contact_email?: string | null
           contact_phone?: string | null
@@ -866,10 +1093,16 @@ export type Database = {
           created_at?: string
           date_cloture_bilan?: string | null
           date_ouverture?: string | null
+          google_reviews_url?: string | null
           id?: string
           is_active?: boolean
           label?: string
           slug?: string
+          stripe_account_id?: string | null
+          stripe_enabled?: boolean | null
+          suivi_enabled?: boolean | null
+          suivi_logo_url?: string | null
+          suivi_primary_color?: string | null
           updated_at?: string
           ville?: string | null
         }
@@ -1028,6 +1261,118 @@ export type Database = {
           display_order?: number
           id?: string
           label?: string
+        }
+        Relationships: []
+      }
+      apogee_sync_logs: {
+        Row: {
+          agency_id: string
+          endpoint: string
+          error_detail: Json | null
+          error_message: string | null
+          finished_at: string | null
+          id: string
+          key_source: string | null
+          records_fetched: number | null
+          records_marked_missing: number | null
+          records_upserted: number | null
+          run_id: string
+          started_at: string
+          status: string
+        }
+        Insert: {
+          agency_id: string
+          endpoint: string
+          error_detail?: Json | null
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          key_source?: string | null
+          records_fetched?: number | null
+          records_marked_missing?: number | null
+          records_upserted?: number | null
+          run_id: string
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          agency_id?: string
+          endpoint?: string
+          error_detail?: Json | null
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          key_source?: string | null
+          records_fetched?: number | null
+          records_marked_missing?: number | null
+          records_upserted?: number | null
+          run_id?: string
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apogee_sync_logs_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apogee_sync_logs_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
+            foreignKeyName: "apogee_sync_logs_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apogee_sync_runs: {
+        Row: {
+          agencies_count: number
+          error_log: Json | null
+          finished_at: string | null
+          id: string
+          records_failed: number
+          records_success: number
+          records_total: number
+          started_at: string
+          status: string
+          sync_type: string
+          triggered_by: string | null
+        }
+        Insert: {
+          agencies_count?: number
+          error_log?: Json | null
+          finished_at?: string | null
+          id?: string
+          records_failed?: number
+          records_success?: number
+          records_total?: number
+          started_at?: string
+          status?: string
+          sync_type?: string
+          triggered_by?: string | null
+        }
+        Update: {
+          agencies_count?: number
+          error_log?: Json | null
+          finished_at?: string | null
+          id?: string
+          records_failed?: number
+          records_success?: number
+          records_total?: number
+          started_at?: string
+          status?: string
+          sync_type?: string
+          triggered_by?: string | null
         }
         Relationships: []
       }
@@ -1626,6 +1971,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "apporteur_access_logs_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "apporteur_access_logs_apporteur_user_id_fkey"
             columns: ["apporteur_user_id"]
             isOneToOne: false
@@ -1767,6 +2119,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "apporteur_contacts_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "apporteur_contacts_apporteur_id_fkey"
             columns: ["apporteur_id"]
             isOneToOne: false
@@ -1858,6 +2217,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apporteur_intervention_requests_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "apporteur_intervention_requests_apporteur_id_fkey"
@@ -1972,6 +2338,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "apporteur_managers_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "apporteur_managers_apporteur_id_fkey"
             columns: ["apporteur_id"]
             isOneToOne: false
@@ -2054,6 +2427,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apporteur_project_links_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "apporteur_project_links_apporteur_id_fkey"
@@ -2163,6 +2543,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "apporteur_users_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "apporteur_users_apporteur_id_fkey"
             columns: ["apporteur_id"]
             isOneToOne: false
@@ -2222,6 +2609,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apporteurs_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
         ]
       }
@@ -2285,6 +2679,13 @@ export type Database = {
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "bd_story_batches_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
         ]
       }
       bd_story_character_visuals: {
@@ -2338,6 +2739,13 @@ export type Database = {
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "bd_story_character_visuals_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
         ]
       }
       bd_story_renders: {
@@ -2387,6 +2795,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bd_story_renders_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "bd_story_renders_story_id_fkey"
@@ -2495,6 +2910,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bd_story_stories_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "bd_story_stories_batch_id_fkey"
@@ -2701,6 +3123,67 @@ export type Database = {
           user_pseudo?: string | null
         }
         Relationships: []
+      }
+      clients_mirror: {
+        Row: {
+          agency_id: string
+          apogee_id: string
+          id: string
+          last_sync_run_id: string | null
+          mirror_status: string
+          raw_data: Json
+          source_updated_at: string | null
+          sync_status: string
+          sync_version: number
+          synced_at: string
+        }
+        Insert: {
+          agency_id: string
+          apogee_id: string
+          id?: string
+          last_sync_run_id?: string | null
+          mirror_status?: string
+          raw_data?: Json
+          source_updated_at?: string | null
+          sync_status?: string
+          sync_version?: number
+          synced_at?: string
+        }
+        Update: {
+          agency_id?: string
+          apogee_id?: string
+          id?: string
+          last_sync_run_id?: string | null
+          mirror_status?: string
+          raw_data?: Json
+          source_updated_at?: string | null
+          sync_status?: string
+          sync_version?: number
+          synced_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_mirror_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_mirror_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
+            foreignKeyName: "clients_mirror_last_sync_run_id_fkey"
+            columns: ["last_sync_run_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_runs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       collaborator_sensitive_data: {
         Row: {
@@ -2933,6 +3416,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "agency_collaborators_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "agency_collaborators_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
@@ -2982,11 +3472,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "competence_sub_skills_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "competence_sub_skills_univers_id_fkey"
             columns: ["univers_id"]
             isOneToOne: false
             referencedRelation: "univers_catalog"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      data_source_flags: {
+        Row: {
+          agency_id: string | null
+          freshness_threshold_minutes: number
+          id: string
+          is_enabled: boolean
+          module_key: string
+          source_mode: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          agency_id?: string | null
+          freshness_threshold_minutes?: number
+          id?: string
+          is_enabled?: boolean
+          module_key: string
+          source_mode?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          agency_id?: string | null
+          freshness_threshold_minutes?: number
+          id?: string
+          is_enabled?: boolean
+          module_key?: string
+          source_mode?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_source_flags_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "data_source_flags_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
         ]
       }
@@ -3019,6 +3564,67 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      devis_mirror: {
+        Row: {
+          agency_id: string
+          apogee_id: string
+          id: string
+          last_sync_run_id: string | null
+          mirror_status: string
+          raw_data: Json
+          source_updated_at: string | null
+          sync_status: string
+          sync_version: number
+          synced_at: string
+        }
+        Insert: {
+          agency_id: string
+          apogee_id: string
+          id?: string
+          last_sync_run_id?: string | null
+          mirror_status?: string
+          raw_data?: Json
+          source_updated_at?: string | null
+          sync_status?: string
+          sync_version?: number
+          synced_at?: string
+        }
+        Update: {
+          agency_id?: string
+          apogee_id?: string
+          id?: string
+          last_sync_run_id?: string | null
+          mirror_status?: string
+          raw_data?: Json
+          source_updated_at?: string | null
+          sync_status?: string
+          sync_version?: number
+          synced_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devis_mirror_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "devis_mirror_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
+            foreignKeyName: "devis_mirror_last_sync_run_id_fkey"
+            columns: ["last_sync_run_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_runs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       diffusion_settings: {
         Row: {
@@ -3108,6 +3714,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "doc_instances_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "doc_instances_collaborator_id_fkey"
             columns: ["collaborator_id"]
             isOneToOne: false
@@ -3182,6 +3795,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "doc_templates_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "doc_templates_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
@@ -3249,6 +3869,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_requests_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "document_requests_collaborator_id_fkey"
@@ -3366,6 +3993,13 @@ export type Database = {
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "duration_calibration_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
         ]
       }
       employee_cost_profiles: {
@@ -3441,6 +4075,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "employee_cost_profiles_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "employee_cost_profiles_collaborator_id_fkey"
             columns: ["collaborator_id"]
             isOneToOne: false
@@ -3513,6 +4154,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "employee_salary_documents_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "employee_salary_documents_collaborator_id_fkey"
             columns: ["collaborator_id"]
             isOneToOne: false
@@ -3571,6 +4219,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employment_contracts_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "employment_contracts_collaborator_id_fkey"
@@ -3644,6 +4299,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_assignments_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "epi_assignments_assigned_by_user_id_fkey"
@@ -3722,6 +4384,13 @@ export type Database = {
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "epi_catalog_items_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
         ]
       }
       epi_documents: {
@@ -3772,6 +4441,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_documents_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "epi_documents_user_id_fkey"
@@ -3886,6 +4562,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_incidents_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "epi_incidents_assignment_id_fkey"
@@ -4030,6 +4713,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "epi_monthly_acknowledgements_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "epi_monthly_acknowledgements_n2_signer_id_fkey"
             columns: ["n2_signer_id"]
             isOneToOne: false
@@ -4104,6 +4794,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_notifications_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "epi_notifications_recipient_id_fkey"
@@ -4206,6 +4903,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "epi_requests_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "epi_requests_catalog_item_id_fkey"
             columns: ["catalog_item_id"]
             isOneToOne: false
@@ -4278,6 +4982,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "epi_stock_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "epi_stock_catalog_item_id_fkey"
             columns: ["catalog_item_id"]
             isOneToOne: false
@@ -4347,6 +5058,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "equipment_inventory_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "equipment_inventory_assigned_to_collaborator_id_fkey"
             columns: ["assigned_to_collaborator_id"]
             isOneToOne: false
@@ -4358,6 +5076,67 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      factures_mirror: {
+        Row: {
+          agency_id: string
+          apogee_id: string
+          id: string
+          last_sync_run_id: string | null
+          mirror_status: string
+          raw_data: Json
+          source_updated_at: string | null
+          sync_status: string
+          sync_version: number
+          synced_at: string
+        }
+        Insert: {
+          agency_id: string
+          apogee_id: string
+          id?: string
+          last_sync_run_id?: string | null
+          mirror_status?: string
+          raw_data?: Json
+          source_updated_at?: string | null
+          sync_status?: string
+          sync_version?: number
+          synced_at?: string
+        }
+        Update: {
+          agency_id?: string
+          apogee_id?: string
+          id?: string
+          last_sync_run_id?: string | null
+          mirror_status?: string
+          raw_data?: Json
+          source_updated_at?: string | null
+          sync_status?: string
+          sync_version?: number
+          synced_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "factures_mirror_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "factures_mirror_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
+            foreignKeyName: "factures_mirror_last_sync_run_id_fkey"
+            columns: ["last_sync_run_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_runs"
             referencedColumns: ["id"]
           },
         ]
@@ -4647,6 +5426,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fleet_vehicles_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "fleet_vehicles_assigned_collaborator_id_fkey"
             columns: ["assigned_collaborator_id"]
             isOneToOne: false
@@ -4805,6 +5591,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "flow_submissions_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "flow_submissions_flow_id_fkey"
             columns: ["flow_id"]
             isOneToOne: false
@@ -4884,6 +5677,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "franchiseur_agency_assignments_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
         ]
       }
@@ -5086,6 +5886,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "hr_generated_documents_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "hr_generated_documents_collaborator_id_fkey"
             columns: ["collaborator_id"]
             isOneToOne: false
@@ -5104,6 +5911,67 @@ export type Database = {
             columns: ["request_id"]
             isOneToOne: false
             referencedRelation: "document_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      interventions_mirror: {
+        Row: {
+          agency_id: string
+          apogee_id: string
+          id: string
+          last_sync_run_id: string | null
+          mirror_status: string
+          raw_data: Json
+          source_updated_at: string | null
+          sync_status: string
+          sync_version: number
+          synced_at: string
+        }
+        Insert: {
+          agency_id: string
+          apogee_id: string
+          id?: string
+          last_sync_run_id?: string | null
+          mirror_status?: string
+          raw_data?: Json
+          source_updated_at?: string | null
+          sync_status?: string
+          sync_version?: number
+          synced_at?: string
+        }
+        Update: {
+          agency_id?: string
+          apogee_id?: string
+          id?: string
+          last_sync_run_id?: string | null
+          mirror_status?: string
+          raw_data?: Json
+          source_updated_at?: string | null
+          sync_status?: string
+          sync_version?: number
+          synced_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interventions_mirror_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interventions_mirror_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
+            foreignKeyName: "interventions_mirror_last_sync_run_id_fkey"
+            columns: ["last_sync_run_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_runs"
             referencedColumns: ["id"]
           },
         ]
@@ -5278,6 +6146,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "maintenance_alerts_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "maintenance_alerts_closed_by_fkey"
             columns: ["closed_by"]
             isOneToOne: false
@@ -5352,6 +6227,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_events_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "maintenance_events_completed_by_fkey"
@@ -5472,6 +6354,13 @@ export type Database = {
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "maintenance_plan_templates_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
         ]
       }
       maintenance_settings: {
@@ -5564,6 +6453,13 @@ export type Database = {
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "media_assets_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
         ]
       }
       media_folders: {
@@ -5630,6 +6526,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "media_folders_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "media_folders_parent_id_fkey"
             columns: ["parent_id"]
             isOneToOne: false
@@ -5688,6 +6591,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_links_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "media_links_asset_id_fkey"
@@ -5831,6 +6741,13 @@ export type Database = {
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "metrics_apporteur_daily_agence_id_fkey"
+            columns: ["agence_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
         ]
       }
       metrics_apporteur_univers_daily: {
@@ -5871,6 +6788,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metrics_apporteur_univers_daily_agence_id_fkey"
+            columns: ["agence_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
         ]
       }
@@ -5957,6 +6881,120 @@ export type Database = {
           updated_at?: string
           validation_status?: string
           visibility?: Json | null
+        }
+        Relationships: []
+      }
+      mirror_decision_log: {
+        Row: {
+          agency_id: string | null
+          comparison_result: Json | null
+          created_at: string
+          fallback_reason: string | null
+          freshness_minutes: number | null
+          id: string
+          item_count: number | null
+          mode_requested: string
+          module_key: string
+          quality_check: Json | null
+          source_used: string
+        }
+        Insert: {
+          agency_id?: string | null
+          comparison_result?: Json | null
+          created_at?: string
+          fallback_reason?: string | null
+          freshness_minutes?: number | null
+          id?: string
+          item_count?: number | null
+          mode_requested: string
+          module_key: string
+          quality_check?: Json | null
+          source_used: string
+        }
+        Update: {
+          agency_id?: string | null
+          comparison_result?: Json | null
+          created_at?: string
+          fallback_reason?: string | null
+          freshness_minutes?: number | null
+          id?: string
+          item_count?: number | null
+          mode_requested?: string
+          module_key?: string
+          quality_check?: Json | null
+          source_used?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mirror_decision_log_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mirror_decision_log_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+        ]
+      }
+      mirror_pilot_snapshots: {
+        Row: {
+          agency_id: string
+          comparisons_failed: number
+          comparisons_passed: number
+          comparisons_total: number
+          created_at: string
+          fallback_reasons: Json | null
+          fallback_to_live: number
+          id: string
+          last_freshness_minutes: number | null
+          last_mirror_count: number | null
+          live_reads: number
+          mirror_reads: number
+          module_key: string
+          total_items: number
+          verdict: string | null
+          verdict_reasons: string[] | null
+        }
+        Insert: {
+          agency_id: string
+          comparisons_failed?: number
+          comparisons_passed?: number
+          comparisons_total?: number
+          created_at?: string
+          fallback_reasons?: Json | null
+          fallback_to_live?: number
+          id?: string
+          last_freshness_minutes?: number | null
+          last_mirror_count?: number | null
+          live_reads?: number
+          mirror_reads?: number
+          module_key: string
+          total_items?: number
+          verdict?: string | null
+          verdict_reasons?: string[] | null
+        }
+        Update: {
+          agency_id?: string
+          comparisons_failed?: number
+          comparisons_passed?: number
+          comparisons_total?: number
+          created_at?: string
+          fallback_reasons?: Json | null
+          fallback_to_live?: number
+          id?: string
+          last_freshness_minutes?: number | null
+          last_mirror_count?: number | null
+          live_reads?: number
+          mirror_reads?: number
+          module_key?: string
+          total_items?: number
+          verdict?: string | null
+          verdict_reasons?: string[] | null
         }
         Relationships: []
       }
@@ -6054,6 +7092,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "monthly_reports_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "monthly_reports_generated_by_fkey"
@@ -6195,6 +7240,36 @@ export type Database = {
           menu_label?: string | null
           page_key?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          agency_slug: string | null
+          amount_cents: number
+          created_at: string
+          id: string
+          paid_at: string
+          ref_dossier: string
+          stripe_session_id: string | null
+        }
+        Insert: {
+          agency_slug?: string | null
+          amount_cents: number
+          created_at?: string
+          id?: string
+          paid_at?: string
+          ref_dossier: string
+          stripe_session_id?: string | null
+        }
+        Update: {
+          agency_slug?: string | null
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          paid_at?: string
+          ref_dossier?: string
+          stripe_session_id?: string | null
         }
         Relationships: []
       }
@@ -6383,6 +7458,13 @@ export type Database = {
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "planning_moves_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
         ]
       }
       planning_optimizer_config: {
@@ -6414,6 +7496,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "planning_optimizer_config_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: true
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
         ]
       }
@@ -6495,6 +7584,13 @@ export type Database = {
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "planning_packages_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
         ]
       }
       planning_suggestions: {
@@ -6538,6 +7634,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "planning_suggestions_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
         ]
       }
@@ -6685,6 +7788,13 @@ export type Database = {
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "profiles_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
         ]
       }
       project_cost_documents: {
@@ -6746,6 +7856,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_cost_documents_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "project_cost_documents_linked_cost_id_fkey"
@@ -6824,6 +7941,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_costs_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
         ]
       }
@@ -6927,10 +8051,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "project_profitability_snapshots_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "project_profitability_snapshots_previous_snapshot_id_fkey"
             columns: ["previous_snapshot_id"]
             isOneToOne: false
             referencedRelation: "project_profitability_snapshots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects_mirror: {
+        Row: {
+          agency_id: string
+          apogee_id: string
+          id: string
+          last_sync_run_id: string | null
+          mirror_status: string
+          raw_data: Json
+          ref: string | null
+          source_updated_at: string | null
+          sync_status: string
+          sync_version: number
+          synced_at: string
+        }
+        Insert: {
+          agency_id: string
+          apogee_id: string
+          id?: string
+          last_sync_run_id?: string | null
+          mirror_status?: string
+          raw_data?: Json
+          ref?: string | null
+          source_updated_at?: string | null
+          sync_status?: string
+          sync_version?: number
+          synced_at?: string
+        }
+        Update: {
+          agency_id?: string
+          apogee_id?: string
+          id?: string
+          last_sync_run_id?: string | null
+          mirror_status?: string
+          raw_data?: Json
+          ref?: string | null
+          source_updated_at?: string | null
+          sync_status?: string
+          sync_version?: number
+          synced_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_mirror_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_mirror_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
+            foreignKeyName: "projects_mirror_last_sync_run_id_fkey"
+            columns: ["last_sync_run_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_runs"
             referencedColumns: ["id"]
           },
         ]
@@ -7023,6 +8218,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "prospect_cards_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "prospect_cards_pool_prospect_id_fkey"
             columns: ["pool_prospect_id"]
             isOneToOne: false
@@ -7075,6 +8277,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospect_interactions_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "prospect_interactions_card_id_fkey"
@@ -7181,6 +8390,13 @@ export type Database = {
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "prospect_pool_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
         ]
       }
       prospecting_followups: {
@@ -7233,6 +8449,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospecting_followups_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "prospecting_followups_owner_user_id_fkey"
@@ -7290,6 +8513,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospecting_meetings_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "prospecting_meetings_followup_id_fkey"
@@ -7486,6 +8716,30 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_attempts: {
+        Row: {
+          attempted_at: string
+          id: string
+          ip_address: string
+          ref_dossier: string
+          success: boolean
+        }
+        Insert: {
+          attempted_at?: string
+          id?: string
+          ip_address: string
+          ref_dossier: string
+          success?: boolean
+        }
+        Update: {
+          attempted_at?: string
+          id?: string
+          ip_address?: string
+          ref_dossier?: string
+          success?: boolean
+        }
+        Relationships: []
+      }
       rate_limits: {
         Row: {
           created_at: string
@@ -7545,6 +8799,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "realisation_activity_log_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "realisation_activity_log_realisation_id_fkey"
@@ -7625,6 +8886,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "realisation_media_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "realisation_media_realisation_id_fkey"
             columns: ["realisation_id"]
             isOneToOne: false
@@ -7684,6 +8952,13 @@ export type Database = {
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "realisations_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
         ]
       }
       report_settings: {
@@ -7736,6 +9011,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_settings_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: true
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
         ]
       }
@@ -7862,6 +9144,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "rh_audit_log_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "rh_audit_log_collaborator_id_fkey"
             columns: ["collaborator_id"]
             isOneToOne: false
@@ -7906,6 +9195,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rh_competences_catalogue_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
         ]
       }
@@ -8095,6 +9391,13 @@ export type Database = {
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "rh_letter_templates_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
         ]
       }
       rh_meetings: {
@@ -8141,6 +9444,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rh_meetings_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "rh_meetings_created_by_fkey"
@@ -8227,6 +9537,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "rh_personnel_registry_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "rh_personnel_registry_collaborator_id_fkey"
             columns: ["collaborator_id"]
             isOneToOne: true
@@ -8306,6 +9623,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rh_requests_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "rh_requests_archived_by_fkey"
@@ -8494,6 +9818,13 @@ export type Database = {
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "sav_dossier_overrides_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
         ]
       }
       sav_validations: {
@@ -8537,6 +9868,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sav_validations_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
         ]
       }
@@ -8701,6 +10039,39 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_sent_log: {
+        Row: {
+          agency_slug: string | null
+          error_message: string | null
+          id: string
+          phone_number: string
+          ref_dossier: string
+          sent_at: string
+          status: string | null
+          trigger_type: string
+        }
+        Insert: {
+          agency_slug?: string | null
+          error_message?: string | null
+          id?: string
+          phone_number: string
+          ref_dossier: string
+          sent_at?: string
+          status?: string | null
+          trigger_type?: string
+        }
+        Update: {
+          agency_slug?: string | null
+          error_message?: string | null
+          id?: string
+          phone_number?: string
+          ref_dossier?: string
+          sent_at?: string
+          status?: string | null
+          trigger_type?: string
+        }
+        Relationships: []
+      }
       social_calendar_entries: {
         Row: {
           agency_id: string
@@ -8751,6 +10122,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_calendar_entries_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "social_calendar_entries_suggestion_id_fkey"
@@ -8852,6 +10230,13 @@ export type Database = {
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "social_content_suggestions_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
         ]
       }
       social_post_variants: {
@@ -8907,6 +10292,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_post_variants_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "social_post_variants_suggestion_id_fkey"
@@ -8967,6 +10359,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_visual_assets_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "social_visual_assets_suggestion_id_fkey"
@@ -9256,6 +10655,70 @@ export type Database = {
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "tech_skills_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+        ]
+      }
+      technician_absences: {
+        Row: {
+          absence_type: string
+          agency_id: string
+          created_at: string
+          end_date: string
+          hours: number | null
+          id: string
+          is_full_day: boolean
+          source: string
+          start_date: string
+          technician_apogee_id: string
+          updated_at: string
+        }
+        Insert: {
+          absence_type?: string
+          agency_id: string
+          created_at?: string
+          end_date: string
+          hours?: number | null
+          id?: string
+          is_full_day?: boolean
+          source?: string
+          start_date: string
+          technician_apogee_id: string
+          updated_at?: string
+        }
+        Update: {
+          absence_type?: string
+          agency_id?: string
+          created_at?: string
+          end_date?: string
+          hours?: number | null
+          id?: string
+          is_full_day?: boolean
+          source?: string
+          start_date?: string
+          technician_apogee_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technician_absences_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "technician_absences_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
         ]
       }
       technician_capacity_config: {
@@ -9296,6 +10759,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "technician_capacity_config_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
         ]
       }
@@ -9361,6 +10831,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "technician_performance_daily_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
         ]
       }
@@ -9713,6 +11190,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "tools_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
             foreignKeyName: "tools_assigned_collaborator_id_fkey"
             columns: ["assigned_collaborator_id"]
             isOneToOne: false
@@ -9820,6 +11304,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unified_notifications_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
         ]
       }
@@ -10050,6 +11541,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_agencies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_creation_requests_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
           },
         ]
       }
@@ -10424,6 +11922,67 @@ export type Database = {
           },
         ]
       }
+      users_mirror: {
+        Row: {
+          agency_id: string
+          apogee_id: string
+          id: string
+          last_sync_run_id: string | null
+          mirror_status: string
+          raw_data: Json
+          source_updated_at: string | null
+          sync_status: string
+          sync_version: number
+          synced_at: string
+        }
+        Insert: {
+          agency_id: string
+          apogee_id: string
+          id?: string
+          last_sync_run_id?: string | null
+          mirror_status?: string
+          raw_data?: Json
+          source_updated_at?: string | null
+          sync_status?: string
+          sync_version?: number
+          synced_at?: string
+        }
+        Update: {
+          agency_id?: string
+          apogee_id?: string
+          id?: string
+          last_sync_run_id?: string | null
+          mirror_status?: string
+          raw_data?: Json
+          source_updated_at?: string | null
+          sync_status?: string
+          sync_version?: number
+          synced_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "users_mirror_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "users_mirror_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+          {
+            foreignKeyName: "users_mirror_last_sync_run_id_fkey"
+            columns: ["last_sync_run_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       widget_templates: {
         Row: {
           created_at: string | null
@@ -10483,6 +12042,48 @@ export type Database = {
       }
     }
     Views: {
+      agencies_public: {
+        Row: {
+          created_at: string | null
+          google_reviews_url: string | null
+          id: string | null
+          is_active: boolean | null
+          is_default: boolean | null
+          logo_url: string | null
+          name: string | null
+          primary_color: string | null
+          slug: string | null
+          stripe_enabled: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          google_reviews_url?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          is_default?: boolean | null
+          logo_url?: string | null
+          name?: string | null
+          primary_color?: string | null
+          slug?: string | null
+          stripe_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          google_reviews_url?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          is_default?: boolean | null
+          logo_url?: string | null
+          name?: string | null
+          primary_color?: string | null
+          slug?: string | null
+          stripe_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       agency_financial_summary: {
         Row: {
           achats: number | null
@@ -10537,6 +12138,47 @@ export type Database = {
             columns: ["agency_id"]
             isOneToOne: false
             referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_financial_months_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+        ]
+      }
+      apogee_sync_status: {
+        Row: {
+          agency_id: string | null
+          agency_label: string | null
+          agency_slug: string | null
+          api_key_ref: string | null
+          clients_count: number | null
+          clients_missing: number | null
+          devis_count: number | null
+          devis_missing: number | null
+          factures_count: number | null
+          factures_missing: number | null
+          freshness_minutes: number | null
+          freshness_status: string | null
+          interventions_count: number | null
+          interventions_missing: number | null
+          last_run_id: string | null
+          last_status: string | null
+          last_success_at: string | null
+          projects_count: number | null
+          projects_missing: number | null
+          users_count: number | null
+          users_missing: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apogee_sync_logs_run_id_fkey"
+            columns: ["last_run_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_runs"
             referencedColumns: ["id"]
           },
         ]
@@ -10631,6 +12273,13 @@ export type Database = {
           enabled: boolean
           module_key: string
           options: Json
+        }[]
+      }
+      get_agency_performance_weekly_hours: {
+        Args: { target_agency_id: string }
+        Returns: {
+          apogee_user_id: number
+          weekly_hours: number
         }[]
       }
       get_agency_rh_managers: {
@@ -10900,6 +12549,8 @@ export type Database = {
         Args: { p_retention_months?: number }
         Returns: number
       }
+      purge_old_mirror_decisions: { Args: never; Returns: undefined }
+      purge_old_pilot_snapshots: { Args: never; Returns: undefined }
       purge_old_ticket_history: {
         Args: { p_retention_months?: number }
         Returns: number

@@ -15,11 +15,11 @@ interface ActionsAMenerTableProps {
 }
 
 const ACTION_BADGE_COLORS: Record<ActionType, { bg: string; text: string; label: string }> = {
-  devis_a_faire: { bg: 'bg-blue-100 dark:bg-blue-900/40', text: 'text-blue-700 dark:text-blue-300', label: 'Devis' },
-  a_facturer: { bg: 'bg-amber-100 dark:bg-amber-900/40', text: 'text-amber-700 dark:text-amber-300', label: 'Facture' },
-  relance_technicien: { bg: 'bg-purple-100 dark:bg-purple-900/40', text: 'text-purple-700 dark:text-purple-300', label: 'Relance' },
-  a_planifier_tvx: { bg: 'bg-sky-100 dark:bg-sky-900/40', text: 'text-sky-700 dark:text-sky-300', label: 'Planifier' },
-  a_commander: { bg: 'bg-orange-100 dark:bg-orange-900/40', text: 'text-orange-700 dark:text-orange-300', label: 'Commande' },
+  devis_a_faire: { bg: 'bg-blue-100 dark:bg-blue-900/40', text: 'text-blue-700 dark:text-blue-300', label: 'Devis à faire' },
+  a_facturer: { bg: 'bg-amber-100 dark:bg-amber-900/40', text: 'text-amber-700 dark:text-amber-300', label: 'À facturer' },
+  relance_technicien: { bg: 'bg-purple-100 dark:bg-purple-900/40', text: 'text-purple-700 dark:text-purple-300', label: 'Relance tech.' },
+  a_planifier_tvx: { bg: 'bg-sky-100 dark:bg-sky-900/40', text: 'text-sky-700 dark:text-sky-300', label: 'Planifié travaux' },
+  a_commander: { bg: 'bg-orange-100 dark:bg-orange-900/40', text: 'text-orange-700 dark:text-orange-300', label: 'À commander' },
 };
 
 const ACTION_ICONS: Record<ActionType, typeof FileText> = {

@@ -98,6 +98,7 @@ export function InternalGuideCategoryPanel({ slug }: InternalGuideCategoryPanelP
   const [openAccordions, setOpenAccordions] = useState<string[]>([]);
   const [showTips, setShowTips] = useState(true);
   const [showSections, setShowSections] = useState(true);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   
   // États pour les dialogues d'édition
   const [editingSection, setEditingSection] = useState<Block | null>(null);
@@ -320,6 +321,43 @@ export function InternalGuideCategoryPanel({ slug }: InternalGuideCategoryPanelP
     setEditingSection(null);
   }, [editingSection, updateBlock, toast]);
 
+  const openImagePreview = useCallback((url: string) => {
+    window.setTimeout(() => setPreviewImageUrl(url), 0);
+  }, []);
+
+  const handleRichContentClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
+    const target = event.target;
+    const targetElement = target instanceof HTMLElement
+      ? target
+      : target instanceof SVGElement
+        ? target as unknown as HTMLElement
+        : target instanceof Node
+          ? target.parentElement
+          : null;
+
+    if (!targetElement) return;
+
+    const imageTrigger = targetElement.closest('[data-image-modal], [data-image-button], [data-src], a[href], img') as HTMLElement | null;
+    if (!imageTrigger) return;
+
+    const href = imageTrigger instanceof HTMLAnchorElement ? imageTrigger.getAttribute('href') : null;
+    const url = (href && (href.startsWith('data:image/') || /\.(png|jpe?g|gif|webp|svg)(\?|#|$)/i.test(href)))
+      ? href
+      : imageTrigger instanceof HTMLImageElement
+        ? imageTrigger.currentSrc || imageTrigger.src
+        : imageTrigger.getAttribute('data-image-modal')
+          || imageTrigger.getAttribute('data-src')
+          || imageTrigger.closest('[data-image-button]')?.getAttribute('data-src')
+          || imageTrigger.querySelector('[data-image-modal]')?.getAttribute('data-image-modal');
+
+    if (!url) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.nativeEvent.stopImmediatePropagation?.();
+    openImagePreview(url);
+  }, [openImagePreview]);
+
   if (loading) {
     return (
       <div className="p-6">
@@ -357,6 +395,7 @@ export function InternalGuideCategoryPanel({ slug }: InternalGuideCategoryPanelP
             <Lightbulb className={cn("w-5 h-5 mt-0.5 flex-shrink-0", colors.icon)} />
             <div 
               className="prose prose-sm dark:prose-invert max-w-none flex-1"
+              onClickCapture={handleRichContentClick}
               dangerouslySetInnerHTML={createSanitizedHtml(section.content)}
             />
           </div>
@@ -367,6 +406,7 @@ export function InternalGuideCategoryPanel({ slug }: InternalGuideCategoryPanelP
     return (
       <div 
         className="prose prose-sm dark:prose-invert max-w-none"
+        onClickCapture={handleRichContentClick}
         dangerouslySetInnerHTML={createSanitizedHtml(section.content)}
       />
     );
@@ -704,6 +744,21 @@ export function InternalGuideCategoryPanel({ slug }: InternalGuideCategoryPanelP
           </SortableContext>
         </DndContext>
       )}
+
+      <Dialog open={!!previewImageUrl} onOpenChange={(open) => !open && setPreviewImageUrl(null)}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>Aperçu de l'image</DialogTitle>
+          </DialogHeader>
+          {previewImageUrl && (
+            <img
+              src={previewImageUrl}
+              alt="Aperçu de l'image"
+              className="w-full h-auto rounded-lg"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog d'édition */}
       <Dialog open={!!editingSection} onOpenChange={(open) => !open && setEditingSection(null)}>

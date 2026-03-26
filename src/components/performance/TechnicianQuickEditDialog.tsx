@@ -263,7 +263,7 @@ export function TechnicianQuickEditDialog({ technician, open, onOpenChange }: Pr
             <div className="flex items-center gap-2 text-sm">
               <span className="text-muted-foreground">Source capacité:</span>
               <Badge variant={technician?.weeklyHoursSource === 'contract' ? 'default' : 'secondary'}>
-                {technician?.weeklyHoursSource === 'contract' ? 'Contrat RH' : 'Défaut (35h)'}
+                {technician?.weeklyHoursSource === 'contract' ? 'Fiche collaborateur' : 'Défaut (35h)'}
               </Badge>
             </div>
 

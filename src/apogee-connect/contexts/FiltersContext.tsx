@@ -12,6 +12,7 @@ export type PeriodType =
   | 'year'
   | 'year-1'
   | 'custom'
+  | 'all'
   // Périodes futures / Prévisionnel
   | 'tomorrow'
   | 'week+1'
@@ -43,7 +44,7 @@ interface FiltersContextType {
 
 // Liste complète des périodes valides
 const ALL_VALID_PERIODS: PeriodType[] = [
-  'today', 'yesterday', 'week', 'month', 'month-1', 'year', 'year-1', 'custom',
+  'today', 'yesterday', 'week', 'month', 'month-1', 'year', 'year-1', 'custom', 'all',
   // Périodes futures / Prévisionnel
   'tomorrow', 'week+1', 'month-remaining', 'month+1', 'quarter+1', 'year-full'
 ];
@@ -55,6 +56,8 @@ function computePeriodDates(period: PeriodType, customStart?: Date, customEnd?: 
   const nextMonthName = format(nextMonth, "MMMM", { locale: fr });
   
   switch (period) {
+    case 'all':
+      return { start: new Date(2020, 0, 1), end: endOfYear(now), label: 'Depuis le début' };
     case 'today':
       return { start: startOfToday(), end: endOfToday(), label: "aujourd'hui" };
     case 'yesterday': {

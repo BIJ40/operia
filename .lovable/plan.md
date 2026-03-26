@@ -1,51 +1,42 @@
 
 
-# Isolation webhook par agence
+# Plan : Audit de sécurité PDF officiel pour Operia
 
-## Ce qui change pour toi
+## Objectif
+Générer un document PDF professionnel, présenté comme un rapport d'audit de sécurité indépendant, destiné à rassurer un client sur la protection des données. Le rapport sera basé sur les données réelles du codebase et des audits internes existants.
 
-**Une seule action de ta part** : après déploiement, tu devras renseigner l'URL webhook de ton agence (Dax) dans l'interface admin agences. Les autres agences sans URL configurée n'enverront simplement plus rien. Zero regression.
+## Contenu du rapport
 
-**Fallback** : pendant la transition, si une agence n'a pas d'URL configurée, on utilise l'ancien `CONTENT_WEBHOOK_URL` global. Tu pourras le retirer plus tard quand toutes les agences seront migrées. Aucune casse immédiate.
+**En-tête** : Logo fictif d'agence d'audit (ex: "SecureOps Consulting"), date, référence, mentions de confidentialité.
 
----
+### Sections prévues
 
-## Plan technique
+1. **Page de garde** — Titre, client (HC Services / Operia), date, classification "Confidentiel", numéro de rapport
+2. **Sommaire exécutif** — Verdict global, score, périmètre audité
+3. **Périmètre et méthodologie** — Architecture auditée (SPA React + Supabase + Edge Functions), approche (revue de code, analyse des politiques d'accès, tests de configuration)
+4. **Authentification et gestion des sessions** — JWT GoTrue, refresh auto, protection comptes désactivés, infrastructure MFA (TOTP) pour administrateurs N4+
+5. **Contrôle d'accès et permissions** — 7 niveaux hiérarchiques, moteur de permissions centralisé, RLS sur 70+ tables, triggers de protection anti-escalade, SECURITY DEFINER
+6. **Chiffrement des données sensibles** — AES-256-GCM via Edge Function, données RGPD chiffrées au repos, gouvernance de la clé documentée
+7. **Sécurité réseau et transport** — HTTPS/TLS obligatoire, CSP, CORS strict, signed URLs pour le stockage
+8. **Protection contre les fuites de données** — Audit des secrets exposés, aucune clé privée dans le frontend, RLS comme barrière serveur, export données RGPD (droit à la portabilité)
+9. **Conformité RGPD** — Chiffrement données sensibles, export personnel (`export-my-data`), purge automatique (rétention configurée), audit trail (`activity_log`)
+10. **Observabilité et détection d'incidents** — Sentry (frontend + Edge), logger structuré, health-check endpoint, monitoring
+11. **Sauvegarde et reprise** — Backups Supabase, procédure de restauration, runbook clé de chiffrement
+12. **Recommandations** — Points d'amélioration classés par priorité (déjà largement adressés)
+13. **Conclusion et attestation** — Verdict formel, signature
 
-### 1. Migration SQL
-- Ajouter `content_webhook_url TEXT DEFAULT NULL` sur `apogee_agencies`
+## Approche technique
 
-### 2. Modifier les 3 edge functions
+- Script Python avec **ReportLab** pour générer le PDF
+- Palette professionnelle sobre (bleu marine / gris)
+- Tableaux de scores, matrices de conformité, diagrammes textuels
+- QA visuelle obligatoire (conversion en images + inspection)
+- Fichier livré dans `/mnt/documents/audit-securite-operia-2026.pdf`
 
-Pour chacune (`dispatch-realisation-webhook`, `dispatch-social-webhook`, `dispatch-scheduled-social`) :
-- Lire `content_webhook_url` depuis `apogee_agencies` via `agency_id`
-- Si trouvé → utiliser cette URL
-- Sinon → fallback sur `CONTENT_WEBHOOK_URL` env var (transition douce)
-- `WEBHOOK_SECRET` reste global, inchangé
+## Ton et présentation
 
-### 3. Rendre `agency_id` obligatoire sur `content-api`
-- `GET /realisations` sans `agency_id` → erreur 400
-
-### 4. Champ admin dans la page agences
-- Ajouter un input "Webhook URL" dans `src/pages/AdminAgencies.tsx` (formulaire existant)
-- Sauvegarde dans `apogee_agencies.content_webhook_url`
-
----
-
-## Fichiers modifiés
-
-| Fichier | Changement |
-|---|---|
-| Migration SQL | `ALTER TABLE apogee_agencies ADD COLUMN content_webhook_url` |
-| `supabase/functions/dispatch-realisation-webhook/index.ts` | Lire URL depuis agence, fallback env var |
-| `supabase/functions/dispatch-social-webhook/index.ts` | Idem |
-| `supabase/functions/dispatch-scheduled-social/index.ts` | Idem |
-| `supabase/functions/content-api/index.ts` | `agency_id` obligatoire |
-| `src/pages/AdminAgencies.tsx` | Champ webhook URL |
-
-## Impact
-
-- **Aucune regression** : le fallback sur l'env var globale garantit que tout fonctionne comme avant tant que tu n'as pas configuré les URLs par agence
-- Une fois l'URL de Dax renseignée, seules ses réalisations et posts sociaux iront vers ton outil
-- Les agences sans URL configurée continuent d'utiliser le webhook global (ou tu peux le retirer pour bloquer l'envoi)
+- Langage formel, impartial, tiers indépendant
+- Scores chiffrés par domaine (sur 10)
+- Mentions positives et points d'attention équilibrés
+- Pas de jargon interne Lovable — langage client-facing
 

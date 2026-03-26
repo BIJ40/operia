@@ -1165,6 +1165,17 @@ body[data-read-only] [draggable="true"] {
   cursor: default !important;
 }
 
+/* Interactive content embedded in guides/docs must remain clickable in read-only mode */
+body[data-read-only] .prose a,
+body[data-read-only] .prose button:not([type="submit"]),
+body[data-read-only] .prose [data-image-button],
+body[data-read-only] .prose [data-image-modal],
+body[data-read-only] .prose [data-src] {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  opacity: 1 !important;
+}
+
 
 /* ============================================
    THEME APPORTEUR (depan40) — Scoped

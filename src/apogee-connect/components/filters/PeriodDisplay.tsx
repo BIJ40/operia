@@ -41,6 +41,9 @@ export function PeriodDisplay() {
       case 'year-1':
         return `Année ${format(start, "yyyy", { locale: fr })}`;
       
+      case 'all':
+        return 'Depuis le début';
+      
       case 'custom':
         // Période personnalisée : afficher les dates
         const sameMonth = start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear();

@@ -219,3 +219,9 @@ verify_jwt = true
 
 [functions.dispatch-scheduled-social]
 verify_jwt = false
+
+[functions.apogee-full-sync]
+verify_jwt = false
+
+[functions.apogee-sync-manual]
+verify_jwt = false

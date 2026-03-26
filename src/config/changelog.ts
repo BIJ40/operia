@@ -15,6 +15,53 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.10.5",
+    title: "Refonte Module Performance Terrain — Moteur Analytique V2",
+    date: "2026-03-25",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // MOTEUR ANALYTIQUE DÉCOUPÉ
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Nouveau moteur analytique pur (11 fichiers engine) : types, rules, capacity, duration, allocation, classification, matching, consolidation, confidence, zones, performanceEngine' },
+      { type: 'feature', description: 'Calcul de capacité sur jours ouvrés uniquement (exclut week-ends et jours fériés)' },
+      { type: 'feature', description: 'Résolution hiérarchique des durées : explicite > calculée > planning > défaut métier, avec détection aberrante (>12h)' },
+      { type: 'feature', description: 'Division multi-techniciens : allocation équitable du temps sur les créneaux partagés' },
+      { type: 'feature', description: 'Matching visite ↔ créneau par score de similarité (interventionId, chevauchement horaire, techniciens communs, projectId)' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // TRAÇABILITÉ & CONFIANCE
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'Score de confiance composite (4 sous-scores : durées, capacité, matching, classification) avec pondération configurable' },
+      { type: 'feature', description: 'CalculationTrace structuré : compteurs par source, minutes par source, warnings typés (9 codes), allocation et consolidation tracées' },
+      { type: 'feature', description: 'DataQualityFlags : 7 indicateurs (contrat absent, durées manquantes, couverture planning, absences, fallback, doublons, période partielle)' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // ABSENCES & CONFIGURATION
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'improvement', description: 'Distinction planning_unavailability vs leave_table : les indisponibilités planning ne sont plus déduites par défaut' },
+      { type: 'feature', description: 'Table agency_performance_config en base (Supabase) avec seuils paramétrables par agence et RLS N2+/N3+' },
+      { type: 'improvement', description: 'Politique techniciens inconnus : team_only — comptés en agrégat équipe, exclus des lignes individuelles' },
+      { type: 'improvement', description: 'caGenerated toujours null en V1 : plus de faux zéro trompeur' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // COMPOSANTS UX
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'feature', description: 'ConfidenceBadge : badge 0-100% avec sous-scores au survol' },
+      { type: 'feature', description: 'DataQualityBadge : icône + tooltip des alertes qualité données' },
+      { type: 'feature', description: 'WorkloadBreakdown : décomposition productif/non-productif/SAV avec barre visuelle' },
+      { type: 'feature', description: 'CapacityBreakdown : jours ouvrés − absences = capacité effective, avec source de la base horaire' },
+      { type: 'feature', description: 'ExplainCalculation : panneau drill-down complet avec traçabilité calcul' },
+      { type: 'feature', description: 'DegradedStateAlert : alerte explicite (contrat absent, absences inconnues, fallback excessif)' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // TESTS & ARCHITECTURE
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'audit', description: '51 tests unitaires : capacity, duration, allocation, matching, confidence, consolidation, performanceEngine' },
+      { type: 'audit', description: 'Cas vicieux couverts : période 100% week-end, durée aberrante, tech inconnu, contrat absent, multi-tech, chevauchement ±15min' },
+      { type: 'improvement', description: 'Hook refondu en thin wrapper : fetch → engine → snapshots, avec re-export pour rétrocompatibilité' },
+    ],
+  },
+  {
     version: "V0.10.4",
     title: "Dashboard Layout — Grille 2×4 Univers & Élargissement App",
     date: "2026-03-23",

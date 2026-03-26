@@ -144,6 +144,60 @@ export function useModuleRegistry() {
 }
 
 // ============================================================================
+// Auto-sync plan_tier_modules
+// ============================================================================
+
+/**
+ * Sync plan_tier_modules rows when is_deployed or required_plan changes.
+ *
+ * Rules:
+ * - deployed=false OR plan=NONE → delete all plan_tier_modules for this key
+ * - plan=STARTER → upsert STARTER + PRO (enabled=true)
+ * - plan=PRO → delete STARTER, upsert PRO (enabled=true)
+ */
+async function syncPlanTierModules(
+  moduleKey: string,
+  isDeployed: boolean,
+  requiredPlan: PlanLevel
+): Promise<void> {
+  if (!isDeployed || requiredPlan === 'NONE') {
+    // Remove all tier entries
+    await supabase
+      .from('plan_tier_modules')
+      .delete()
+      .eq('module_key', moduleKey);
+    return;
+  }
+
+  if (requiredPlan === 'STARTER') {
+    // Upsert both STARTER and PRO
+    await supabase
+      .from('plan_tier_modules')
+      .upsert(
+        [
+          { tier_key: 'STARTER', module_key: moduleKey, enabled: true },
+          { tier_key: 'PRO', module_key: moduleKey, enabled: true },
+        ],
+        { onConflict: 'tier_key,module_key' }
+      );
+  } else if (requiredPlan === 'PRO') {
+    // Delete STARTER, upsert PRO
+    await supabase
+      .from('plan_tier_modules')
+      .delete()
+      .eq('module_key', moduleKey)
+      .eq('tier_key', 'STARTER');
+
+    await supabase
+      .from('plan_tier_modules')
+      .upsert(
+        [{ tier_key: 'PRO', module_key: moduleKey, enabled: true }],
+        { onConflict: 'tier_key,module_key' }
+      );
+  }
+}
+
+// ============================================================================
 // Mutations
 // ============================================================================
 
@@ -161,9 +215,25 @@ export function useUpdateModuleNode() {
         .eq('key', params.key);
 
       if (error) throw error;
+
+      // Auto-sync plan_tier_modules when deploy or plan changes
+      if (params.updates.is_deployed !== undefined || params.updates.required_plan !== undefined) {
+        // Fetch current state of the node to get both values
+        const { data: current } = await supabase
+          .from('module_registry' as any)
+          .select('is_deployed, required_plan')
+          .eq('key', params.key)
+          .single();
+
+        if (current) {
+          const row = current as unknown as { is_deployed: boolean; required_plan: PlanLevel };
+          await syncPlanTierModules(params.key, row.is_deployed, row.required_plan);
+        }
+      }
     },
     onSuccess: (_, params) => {
       qc.invalidateQueries({ queryKey: QUERY_KEY });
+      qc.invalidateQueries({ queryKey: ['plan-tiers'] });
       toast.success(`Nœud "${params.key}" mis à jour`);
     },
     onError: (err: Error) => {
@@ -180,16 +250,32 @@ export function usePropagateToChildren() {
       keys: string[];
       updates: { is_deployed?: boolean; required_plan?: PlanLevel; min_role?: number };
     }) => {
-      // Batch update all descendants
+      // Batch update all descendants in module_registry
       const { error } = await supabase
         .from('module_registry' as any)
         .update(params.updates as any)
         .in('key', params.keys);
 
       if (error) throw error;
+
+      // Auto-sync plan_tier_modules for each descendant
+      if (params.updates.is_deployed !== undefined || params.updates.required_plan !== undefined) {
+        // Fetch current state of all affected nodes
+        const { data: rows } = await supabase
+          .from('module_registry' as any)
+          .select('key, is_deployed, required_plan')
+          .in('key', params.keys);
+
+        if (Array.isArray(rows)) {
+          for (const row of rows as unknown as Array<{ key: string; is_deployed: boolean; required_plan: PlanLevel }>) {
+            await syncPlanTierModules(row.key, row.is_deployed, row.required_plan);
+          }
+        }
+      }
     },
     onSuccess: (_, params) => {
       qc.invalidateQueries({ queryKey: QUERY_KEY });
+      qc.invalidateQueries({ queryKey: ['plan-tiers'] });
       toast.success(`${params.keys.length} nœuds mis à jour`);
     },
     onError: (err: Error) => {

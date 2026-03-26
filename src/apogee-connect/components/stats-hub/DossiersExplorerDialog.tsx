@@ -26,9 +26,9 @@ const fmtCurrency = (v: number) => {
 };
 
 const ETAT_LABELS: Record<string, string> = {
-  'to_planify_tvx': 'À planifier TVX',
+  'to_planify_tvx': 'À planifier',
   'devis_to_order': 'À commander',
-  'wait_fourn': 'Att. fournitures',
+  'wait_fourn': 'En attente fournitures',
 };
 
 const ETAT_COLORS: Record<string, string> = {

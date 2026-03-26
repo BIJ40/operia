@@ -75,7 +75,20 @@ export function TeamHeatmap({ technicians, onSelectTechnician, onOpenSavDrawer }
                     {/* Badge absence */}
                     {tech.isAbsent && (
                       <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded-full bg-muted-foreground/80 text-white text-[8px] font-medium whitespace-nowrap z-10">
-                        {tech.absenceLabel || 'Absent'}
+                        Absent
+                      </div>
+                    )}
+
+                    {/* Jauge absence partielle */}
+                    {!tech.isAbsent && (tech.absenceRatio ?? 0) > 0 && (
+                      <div className="absolute -top-2 left-1/2 -translate-x-1/2 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/90 text-white text-[8px] font-medium whitespace-nowrap z-10">
+                        <div className="w-8 h-1.5 bg-white/30 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-white rounded-full"
+                            style={{ width: `${Math.round((tech.absenceRatio ?? 0) * 100)}%` }}
+                          />
+                        </div>
+                        {Math.round((tech.absenceRatio ?? 0) * 100)}%
                       </div>
                     )}
                     

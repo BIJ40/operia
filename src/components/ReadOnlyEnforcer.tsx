@@ -66,9 +66,18 @@ export function ReadOnlyEnforcer() {
 
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
+
+      // Allow rich-content interactions (image/file/link previews inside guides/docs)
+      if (target.closest('[data-image-modal], [data-image-button], [data-src], a[href], a[data-file-button], [data-inline-file] a')) {
+        return;
+      }
+
       const button = target.closest('button, [role="button"], [role="menuitem"]') as HTMLElement | null;
-      
       if (!button) return;
+
+      // Allow buttons inside rendered prose content (documentation navigation, previews)
+      if (button.closest('.prose')) return;
+
       // Allow exempt elements (navigation, tabs, accordions, search, filters, collapsibles)
       if (button.closest('[data-readonly-exempt]')) return;
       if (button.closest('nav')) return;

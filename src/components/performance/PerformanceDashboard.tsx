@@ -1,9 +1,10 @@
 /**
  * PerformanceDashboard - Dashboard principal Performance Terrain
  * Vue équilibée, non punitive, orientée capacité & qualité
+ * Avec switch Historique / Prévision (Lot 6)
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePerformanceTerrain, TechnicianPerformance } from '@/hooks/usePerformanceTerrain';
 import { TeamHeatmap } from './TeamHeatmap';
@@ -11,6 +12,13 @@ import { TechnicianRadarChart } from './TechnicianRadarChart';
 import { SavDetailsDrawer } from './SavDetailsDrawer';
 import { PerformanceLegend } from './PerformanceLegend';
 import { TechnicianQuickEditDialog } from './TechnicianQuickEditDialog';
+import { ConfidenceBadge } from '@/modules/performance/components/ConfidenceBadge';
+import { DataQualityBadge } from '@/modules/performance/components/DataQualityBadge';
+import { DegradedStateAlert } from '@/modules/performance/components/DegradedStateAlert';
+import { WorkloadBreakdown } from '@/modules/performance/components/WorkloadBreakdown';
+import { ExplainCalculation } from '@/modules/performance/components/ExplainCalculation';
+import { CapacityBreakdown } from '@/modules/performance/components/CapacityBreakdown';
+import type { ConfidenceBreakdown, DataQualityFlags, TechnicianSnapshot } from '@/modules/performance/engine/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -36,7 +44,6 @@ function usePerformancePeriod() {
   
   const dateRange = useMemo(() => {
     const start = startOfMonth(currentMonth);
-    // For current month: include future (end of month) for planning visibility
     const end = endOfMonth(currentMonth);
     return { start, end };
   }, [currentMonth]);
@@ -51,15 +58,95 @@ function usePerformancePeriod() {
   return { dateRange, currentMonth, goToPreviousMonth, goToNextMonth, goToCurrentMonth, isCurrentMonth, label };
 }
 
-export function PerformanceDashboard() {
+/**
+ * Aggregate confidence and data quality flags from all snapshots.
+ * Returns null if no engineOutput available (legacy safety).
+ */
+function useAggregatedQuality(data: ReturnType<typeof usePerformanceTerrain>['data']) {
+  return useMemo(() => {
+    if (!data?.engineOutput?.snapshots?.length) return null;
+
+    const snapshots = data.engineOutput.snapshots;
+    
+    // Average confidence across active techs
+    const avgConfidence: ConfidenceBreakdown = {
+      durationConfidence: 0,
+      capacityConfidence: 0,
+      matchingConfidence: 0,
+      classificationConfidence: 0,
+      globalConfidenceScore: 0,
+      confidenceLevel: 'medium',
+      penalties: [],
+    };
+    for (const s of snapshots) {
+      avgConfidence.durationConfidence += s.confidenceBreakdown.durationConfidence;
+      avgConfidence.capacityConfidence += s.confidenceBreakdown.capacityConfidence;
+      avgConfidence.matchingConfidence += s.confidenceBreakdown.matchingConfidence;
+      avgConfidence.classificationConfidence += s.confidenceBreakdown.classificationConfidence;
+      avgConfidence.globalConfidenceScore += s.confidenceBreakdown.globalConfidenceScore;
+    }
+    const n = snapshots.length;
+    avgConfidence.durationConfidence = Math.round((avgConfidence.durationConfidence / n) * 100) / 100;
+    avgConfidence.capacityConfidence = Math.round((avgConfidence.capacityConfidence / n) * 100) / 100;
+    avgConfidence.matchingConfidence = Math.round((avgConfidence.matchingConfidence / n) * 100) / 100;
+    avgConfidence.classificationConfidence = Math.round((avgConfidence.classificationConfidence / n) * 100) / 100;
+    avgConfidence.globalConfidenceScore = Math.round((avgConfidence.globalConfidenceScore / n) * 100) / 100;
+    avgConfidence.confidenceLevel = avgConfidence.globalConfidenceScore > 0.8 ? 'high' : avgConfidence.globalConfidenceScore >= 0.6 ? 'medium' : 'low';
+
+    // OR-aggregate flags
+    const flags: DataQualityFlags = {
+      missingContract: false,
+      missingExplicitDurations: false,
+      missingPlanningCoverage: false,
+      missingAbsenceData: false,
+      absenceReliability: 'reliable',
+      highFallbackUsage: false,
+      duplicateResolutionApplied: false,
+      partialPeriodCoverage: false,
+    };
+    // For absenceReliability, use worst across techs
+    let worstAbsence: 'reliable' | 'partial' | 'none' = 'reliable';
+    for (const s of snapshots) {
+      const f = s.dataQualityFlags;
+      if (f.missingContract) flags.missingContract = true;
+      if (f.missingExplicitDurations) flags.missingExplicitDurations = true;
+      if (f.missingPlanningCoverage) flags.missingPlanningCoverage = true;
+      if (f.missingAbsenceData) flags.missingAbsenceData = true;
+      if (f.highFallbackUsage) flags.highFallbackUsage = true;
+      if (f.duplicateResolutionApplied) flags.duplicateResolutionApplied = true;
+      if (f.partialPeriodCoverage) flags.partialPeriodCoverage = true;
+      // Track worst absence reliability
+      if (f.absenceReliability === 'none') worstAbsence = 'none';
+      else if (f.absenceReliability === 'partial' && worstAbsence !== 'none') worstAbsence = 'partial';
+    }
+    flags.absenceReliability = worstAbsence;
+
+    return { avgConfidence, flags };
+  }, [data]);
+}
+
+function HistoricalPerformanceDashboard() {
   const navigate = useNavigate();
   
-  // Sélecteur de période dédié (mois en cours par défaut + navigation)
   const { dateRange, goToPreviousMonth, goToNextMonth, goToCurrentMonth, isCurrentMonth, label: periodLabel } = usePerformancePeriod();
   const { data, isLoading, error } = usePerformanceTerrain(dateRange);
   const [selectedTech, setSelectedTech] = useState<TechnicianPerformance | null>(null);
   const [savDrawerTech, setSavDrawerTech] = useState<TechnicianPerformance | null>(null);
   const [editDialogTech, setEditDialogTech] = useState<TechnicianPerformance | null>(null);
+
+  const quality = useAggregatedQuality(data);
+
+  // Debug mode via query param
+  const debugMode = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).get('debugPerformance') === 'true';
+  }, []);
+
+  // Get selected tech's snapshot for V2 detail views
+  const selectedSnapshot = useMemo(() => {
+    if (!selectedTech || !data?.engineOutput?.snapshots) return null;
+    return data.engineOutput.snapshots.find(s => s.technicianId === selectedTech.id) || null;
+  }, [selectedTech, data]);
 
   // Stats d'équipe
   const teamInsights = useMemo(() => {
@@ -98,7 +185,6 @@ export function PerformanceDashboard() {
     );
   }
 
-  // État vide - aucun technicien trouvé
   if (data.technicians.length === 0) {
     return (
       <Card className="border-muted">
@@ -131,87 +217,157 @@ export function PerformanceDashboard() {
         </Button>
         
         <div className="grid md:grid-cols-2 gap-4">
-          <TechnicianRadarChart technician={selectedTech} />
+          <div className="space-y-4">
+            <TechnicianRadarChart technician={selectedTech} />
+            {/* V2: WorkloadBreakdown */}
+            {selectedSnapshot && (
+              <WorkloadBreakdown workload={selectedSnapshot.workload} />
+            )}
+            {/* V2: ExplainCalculation */}
+            {selectedSnapshot && (
+              <ExplainCalculation trace={selectedSnapshot.calculationTrace} confidence={selectedSnapshot.confidenceBreakdown} />
+            )}
+            {/* Debug mode: raw data */}
+            {debugMode && selectedSnapshot && (
+              <Card className="border-dashed border-muted-foreground/30">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xs font-mono text-muted-foreground">Debug: Raw Snapshot</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <pre className="text-[10px] font-mono overflow-auto max-h-96 whitespace-pre-wrap text-muted-foreground">
+                    {JSON.stringify({
+                      calculationTrace: selectedSnapshot.calculationTrace,
+                      confidenceBreakdown: selectedSnapshot.confidenceBreakdown,
+                      dataQualityFlags: selectedSnapshot.dataQualityFlags,
+                      consolidationTrace: selectedSnapshot.calculationTrace.consolidationTrace,
+                      absenceSource: selectedSnapshot.calculationTrace.capacityTrace.absenceSource,
+                      absenceDays: selectedSnapshot.calculationTrace.capacityTrace.absenceDays,
+                      penalties: selectedSnapshot.confidenceBreakdown.penalties,
+                    }, null, 2)}
+                  </pre>
+                </CardContent>
+              </Card>
+            )}
+          </div>
           
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-base">Détail activité</CardTitle>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setEditDialogTech(selectedTech)}
-              >
-                Modifier paramètres
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Temps */}
-              <div>
-                <div className="text-sm text-muted-foreground mb-2">Répartition temps</div>
-                <div className="flex h-4 rounded-full overflow-hidden bg-muted">
-                  <div 
-                    className="bg-primary"
-                    style={{ width: `${(selectedTech.timeProductive / Math.max(selectedTech.timeTotal, 1)) * 100}%` }}
-                  />
-                  <div 
-                    className="bg-accent"
-                    style={{ width: `${(selectedTech.timeNonProductive / Math.max(selectedTech.timeTotal, 1)) * 100}%` }}
-                  />
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>Productif: {Math.round(selectedTech.timeProductive / 60)}h</span>
-                  <span>Autre: {Math.round(selectedTech.timeNonProductive / 60)}h</span>
-                </div>
-              </div>
-              
-              {/* Métriques détaillées */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-muted/50 rounded-lg p-3">
-                  <div className="text-xs text-muted-foreground">Interventions</div>
-                  <div className="text-xl font-bold">{selectedTech.interventionsCount}</div>
-                </div>
-                <div className="bg-muted/50 rounded-lg p-3">
-                  <div className="text-xs text-muted-foreground">Dossiers traités</div>
-                  <div className="text-xl font-bold">{selectedTech.dossiersCount}</div>
-                </div>
-                <div className="bg-muted/50 rounded-lg p-3 text-left">
-                  <div className="text-xs text-muted-foreground">Taux SAV</div>
-                  <div className="text-xl font-bold">{formatPercent(selectedTech.savRate * 100)}</div>
-                  {selectedTech.savCount > 0 && (
-                    <div className="flex flex-col gap-1 mt-2">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setSavDrawerTech(selectedTech);
-                        }}
-                        className="text-xs text-primary hover:underline text-left cursor-pointer"
-                      >
-                        Valider/Invalider SAV →
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          navigate(`/?tab=pilotage&subtab=sav&technicien=${encodeURIComponent(selectedTech.id)}`);
-                        }}
-                        className="text-xs text-muted-foreground hover:text-primary hover:underline text-left cursor-pointer"
-                      >
-                        Voir dans Stats SAV →
-                      </button>
-                    </div>
+          <div className="space-y-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-base">Détail activité</CardTitle>
+                <div className="flex items-center gap-2">
+                  {selectedSnapshot && (
+                    <>
+                      <ConfidenceBadge confidence={selectedSnapshot.confidenceBreakdown} />
+                      <DataQualityBadge flags={selectedSnapshot.dataQualityFlags} />
+                    </>
                   )}
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setEditDialogTech(selectedTech)}
+                  >
+                    Modifier paramètres
+                  </Button>
                 </div>
-                <div className="bg-muted/50 rounded-lg p-3">
-                  <div className="text-xs text-muted-foreground">Charge/Capacité</div>
-                  <div className="text-xl font-bold">{formatPercent(selectedTech.loadRatio * 100)}</div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* V2: DegradedStateAlert per tech */}
+                {selectedSnapshot && (selectedSnapshot.dataQualityFlags.highFallbackUsage || selectedSnapshot.dataQualityFlags.missingPlanningCoverage) && (
+                  <DegradedStateAlert 
+                    flags={selectedSnapshot.dataQualityFlags} 
+                    technicianName={selectedTech.name}
+                  />
+                )}
+
+                {/* Temps */}
+                <div>
+                  <div className="text-sm text-muted-foreground mb-2">Répartition temps</div>
+                  <div className="flex h-4 rounded-full overflow-hidden bg-muted">
+                    <div 
+                      className="bg-primary"
+                      style={{ width: `${(selectedTech.timeProductive / Math.max(selectedTech.timeTotal, 1)) * 100}%` }}
+                    />
+                    <div 
+                      className="bg-accent"
+                      style={{ width: `${(selectedTech.timeNonProductive / Math.max(selectedTech.timeTotal, 1)) * 100}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                    <span>Productif: {Math.round(selectedTech.timeProductive / 60)}h</span>
+                    <span>Autre: {Math.round(selectedTech.timeNonProductive / 60)}h</span>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+                
+                {/* Métriques détaillées */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="text-xs text-muted-foreground">Interventions</div>
+                    <div className="text-xl font-bold">{selectedTech.interventionsCount}</div>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="text-xs text-muted-foreground">Dossiers traités</div>
+                    <div className="text-xl font-bold">{selectedTech.dossiersCount}</div>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3 text-left">
+                    <div className="text-xs text-muted-foreground">Taux SAV</div>
+                    <div className="text-xl font-bold">{formatPercent(selectedTech.savRate * 100)}</div>
+                    {selectedTech.savCount > 0 && (
+                      <div className="flex flex-col gap-1 mt-2">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setSavDrawerTech(selectedTech);
+                          }}
+                          className="text-xs text-primary hover:underline text-left cursor-pointer"
+                        >
+                          Valider/Invalider SAV →
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            navigate(`/?tab=pilotage&subtab=sav&technicien=${encodeURIComponent(selectedTech.id)}`);
+                          }}
+                          className="text-xs text-muted-foreground hover:text-primary hover:underline text-left cursor-pointer"
+                        >
+                          Voir dans Stats SAV →
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="text-xs text-muted-foreground">Charge/Capacité</div>
+                    <div className="text-xl font-bold">{formatPercent(selectedTech.loadRatio * 100)}</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            {/* V2: CapacityBreakdown */}
+            {selectedSnapshot && (
+              <CapacityBreakdown 
+                capacity={selectedSnapshot.capacity}
+                weeklyHoursSource={selectedSnapshot.weeklyHoursSource}
+                weeklyHours={selectedSnapshot.weeklyHours}
+              />
+            )}
+          </div>
         </div>
+
+        {/* Drawer SAV (detail view) */}
+        <SavDetailsDrawer
+          technician={savDrawerTech}
+          dateRange={dateRange}
+          open={!!savDrawerTech}
+          onOpenChange={(open) => !open && setSavDrawerTech(null)}
+        />
+        <TechnicianQuickEditDialog
+          technician={editDialogTech}
+          open={!!editDialogTech}
+          onOpenChange={(open) => !open && setEditDialogTech(null)}
+        />
       </div>
     );
   }
@@ -220,14 +376,23 @@ export function PerformanceDashboard() {
     <div className="space-y-6">
       {/* Header with month selector */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Activity className="w-5 h-5 text-primary" />
-            Performance Terrain
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Pilotage équilibré, orienté capacité & qualité
-          </p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Activity className="w-5 h-5 text-primary" />
+              Performance Terrain
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Pilotage équilibré, orienté capacité & qualité
+            </p>
+          </div>
+          {/* V2: Confidence & quality badges */}
+          {quality && (
+            <div className="flex items-center gap-2">
+              <ConfidenceBadge confidence={quality.avgConfidence} />
+              <DataQualityBadge flags={quality.flags} snapshots={data?.engineOutput?.snapshots} />
+            </div>
+          )}
         </div>
         
         {/* Sélecteur de mois */}
@@ -251,17 +416,22 @@ export function PerformanceDashboard() {
         </div>
       </div>
 
+      {/* V2: Degraded state alert if confidence is low OR critical flags active */}
+      {quality && (quality.flags.missingPlanningCoverage || quality.flags.highFallbackUsage) && (
+        <DegradedStateAlert flags={quality.flags} />
+      )}
+
       {/* KPIs équipe */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-              <Users className="w-4 h-4" />
+          <CardContent className="py-2.5 px-3">
+            <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-0.5">
+              <Users className="w-3.5 h-3.5" />
               Techniciens
             </div>
-            <div className="text-2xl font-bold">{data.technicians.length}</div>
+            <div className="text-lg font-bold leading-tight">{data.technicians.length}</div>
             {teamInsights && (
-              <div className="text-xs text-muted-foreground mt-1">
+              <div className="text-[10px] text-muted-foreground">
                 {teamInsights.optimal} en équilibre
               </div>
             )}
@@ -269,22 +439,22 @@ export function PerformanceDashboard() {
         </Card>
 
         <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-              <TrendingUp className="w-4 h-4" />
+          <CardContent className="py-2.5 px-3">
+            <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-0.5">
+              <TrendingUp className="w-3.5 h-3.5" />
               Productivité moy.
             </div>
-            <div className="text-2xl font-bold">
+            <div className="text-lg font-bold leading-tight">
               {formatPercent(data.teamStats.avgProductivityRate * 100)}
             </div>
             <Badge 
               variant="outline" 
               className={
                 data.teamStats.avgProductivityRate >= 0.65 
-                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 mt-1'
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 text-[10px] px-1.5 py-0'
                   : data.teamStats.avgProductivityRate >= 0.5
-                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 mt-1'
-                    : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 mt-1'
+                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 text-[10px] px-1.5 py-0'
+                    : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 text-[10px] px-1.5 py-0'
               }
             >
               {data.teamStats.avgProductivityRate >= 0.65 ? 'Bon niveau' : 'À optimiser'}
@@ -293,16 +463,16 @@ export function PerformanceDashboard() {
         </Card>
 
         <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-              <Clock className="w-4 h-4" />
+          <CardContent className="py-2.5 px-3">
+            <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-0.5">
+              <Clock className="w-3.5 h-3.5" />
               Charge moyenne
             </div>
-            <div className="text-2xl font-bold">
+            <div className="text-lg font-bold leading-tight">
               {formatPercent(data.teamStats.avgLoadRatio * 100)}
             </div>
             {teamInsights && teamInsights.overload > 0 && (
-              <div className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+              <div className="text-[10px] text-amber-600 dark:text-amber-400">
                 {teamInsights.overload} en surcharge
               </div>
             )}
@@ -310,13 +480,13 @@ export function PerformanceDashboard() {
         </Card>
 
         <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-              <AlertTriangle className="w-4 h-4" />
+          <CardContent className="py-2.5 px-3">
+            <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-0.5">
+              <AlertTriangle className="w-3.5 h-3.5" />
               SAV total
             </div>
-            <div className="text-2xl font-bold">{data.teamStats.totalSavCount}</div>
-            <div className="text-xs text-muted-foreground mt-1">
+            <div className="text-lg font-bold leading-tight">{data.teamStats.totalSavCount}</div>
+            <div className="text-[10px] text-muted-foreground">
               sur {data.teamStats.totalInterventions} interventions
             </div>
           </CardContent>
@@ -325,13 +495,13 @@ export function PerformanceDashboard() {
 
       {/* Alertes équipe */}
       {teamInsights && (teamInsights.overload > 0 || teamInsights.underload > 0 || teamInsights.highSav > 0) && (
-        <Card className="border-amber-500/50 bg-amber-500/5">
-          <CardContent className="pt-4">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <div className="font-medium">Points d'attention équipe</div>
-                <ul className="text-sm text-muted-foreground space-y-1">
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardContent className="py-2.5 px-3">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <div className="text-sm font-medium">Points d'attention équipe</div>
+                <ul className="text-xs text-muted-foreground space-y-0.5">
                   {teamInsights.overload > 0 && (
                     <li>{teamInsights.overload} technicien(s) en surcharge - planification à ajuster</li>
                   )}
@@ -369,6 +539,50 @@ export function PerformanceDashboard() {
         open={!!editDialogTech}
         onOpenChange={(open) => !open && setEditDialogTech(null)}
       />
+    </div>
+  );
+}
+
+// ============================================================================
+// WRAPPER — Switch Historique / Prévision
+// ============================================================================
+
+const LazyForecast = lazy(() =>
+  import('./forecast/PerformanceForecastDashboard').then(m => ({ default: m.PerformanceForecastDashboard }))
+);
+
+type PerformanceMode = 'historique' | 'prevision';
+
+export function PerformanceDashboard() {
+  const [mode, setMode] = useState<PerformanceMode>('historique');
+
+  return (
+    <div className="space-y-4">
+      {/* Mode selector */}
+      <div className="flex items-center gap-1 bg-muted rounded-lg p-1 w-fit">
+        <Button
+          variant={mode === 'historique' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => setMode('historique')}
+        >
+          Historique
+        </Button>
+        <Button
+          variant={mode === 'prevision' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => setMode('prevision')}
+        >
+          Prévision
+        </Button>
+      </div>
+
+      {mode === 'historique' ? (
+        <HistoricalPerformanceDashboard />
+      ) : (
+        <Suspense fallback={<div className="space-y-4"><Skeleton className="h-8 w-64" /><Skeleton className="h-48" /></div>}>
+          <LazyForecast />
+        </Suspense>
+      )}
     </div>
   );
 }
