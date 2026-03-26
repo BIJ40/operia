@@ -91,7 +91,7 @@ export default function AccueilTabContent() {
         <>
           {/* Alertes — compact inline chips */}
           {stats.alertes && stats.alertes.length > 0 && (
-            <AlertesBanner alertes={stats.alertes} />
+            <AlertesBanner alertes={stats.alertes} onDossierClick={handleDossierClick} />
           )}
 
           {/* Period selector — just above KPI tiles */}
