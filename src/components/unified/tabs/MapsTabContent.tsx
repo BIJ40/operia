@@ -425,6 +425,42 @@ export default function MapsTabContent() {
     return () => clearInterval(interval);
   }, [seasonPlaying, seasonMonths.length]);
 
+  // Score Global: composite multi-criteria score per postal code
+  interface ScoreZone {
+    postalCode: string; city: string; lat: number; lng: number;
+    scoreGlobal: number; scoreCommercial: number; scoreEconomique: number;
+    scoreOperationnel: number; scoreQualite: number; scoreResilience: number;
+    scoreLabel: string; nbProjects: number; nbClients: number;
+    ca: number; margin: number; panierMoyen: number;
+    devisTotal: number; devisSigned: number; transfoRate: number; savRate: number;
+    mainStrength: string; mainStrengthScore: number;
+    mainWeakness: string; mainWeaknessScore: number;
+    recommendation: string;
+  }
+  interface ScoreInsight { pc: string; city: string; score?: number; margin?: number }
+  interface ScoreMeta { totalZones: number; durationMs: number; insights: { topDevelop: ScoreInsight[]; topTension: ScoreInsight[]; topRentable: ScoreInsight[]; topRisk: ScoreInsight[] } }
+  const [scoreSubView, setScoreSubView] = useState<'global' | 'commercial' | 'economique' | 'operationnel' | 'qualite' | 'resilience'>('global');
+  const { data: scoreRaw, isLoading: scoreLoading } = useQuery({
+    queryKey: ['rdv-score-global', agence],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Non authentifié');
+      const response = await supabase.functions.invoke('get-rdv-map', {
+        body: { mode: 'score_global', agencySlug: agence },
+      });
+      if (response.error) throw new Error(response.error.message);
+      const result = response.data;
+      if (!result.success) throw new Error(result.error || 'Erreur');
+      return { data: result.data as ScoreZone[], meta: result.meta as ScoreMeta };
+    },
+    enabled: mapMode === 'score_global' && !!agence,
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+  const scoreData = scoreRaw?.data;
+  const scoreMeta = scoreRaw?.meta;
+
   const rdvs = viewMode === 'day' ? dayRdvs : weekRdvs;
   const isLoading = viewMode === 'day' ? dayLoading : weekLoading;
   const error = viewMode === 'day' ? dayError : (weekError instanceof Error ? weekError.message : null);
