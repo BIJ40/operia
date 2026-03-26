@@ -628,7 +628,7 @@ export const caMoyenParTechnicienActif: StatDefinition = {
           if (!techId) continue;
           
           const user = usersById.get(techId);
-          if (!user || !isActiveTechnician(user)) continue;
+          if (!user || !isFieldTechnician(user)) continue;
           
           techniciensActifs.add(techId);
           
