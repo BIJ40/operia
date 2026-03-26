@@ -36,7 +36,7 @@ export function sanitizeHtml(html: string): string {
       'class', 'type', 'disabled',
       // Explicit data attributes used by the app (no wildcard)
       'data-callout', 'data-callout-type',
-      'data-image-modal', 'data-src',
+      'data-image-button', 'data-image-modal', 'data-src', 'data-label',
       'colspan', 'rowspan',
     ],
     // Disable wildcard data-* to prevent attribute injection
