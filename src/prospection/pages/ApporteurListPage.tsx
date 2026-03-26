@@ -27,6 +27,7 @@ type PeriodKey = '30j' | '90j' | '6m' | '12m';
 type SortColumn = 'name' | 'dossiers' | 'ca_ht' | 'taux_transfo' | 'panier_moyen' | 'factures';
 type SortDir = 'asc' | 'desc';
 type TransfoFilter = 'all' | 'low' | 'mid' | 'high';
+type PanierFilter = 'all' | 'below' | 'above';
 
 function getPeriodDates(period: PeriodKey): { from: string; to: string } {
   const to = format(new Date(), 'yyyy-MM-dd');
@@ -143,14 +144,16 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
   const [filterDossiersMin, setFilterDossiersMin] = useState('');
   const [filterCaMin, setFilterCaMin] = useState('');
   const [filterTransfo, setFilterTransfo] = useState<TransfoFilter>('all');
+  const [filterPanier, setFilterPanier] = useState<PanierFilter>('all');
   const [filterFacturesMin, setFilterFacturesMin] = useState('');
 
-  const hasFilters = filterDossiersMin !== '' || filterCaMin !== '' || filterTransfo !== 'all' || filterFacturesMin !== '';
+  const hasFilters = filterDossiersMin !== '' || filterCaMin !== '' || filterTransfo !== 'all' || filterPanier !== 'all' || filterFacturesMin !== '';
 
   const resetFilters = useCallback(() => {
     setFilterDossiersMin('');
     setFilterCaMin('');
     setFilterTransfo('all');
+    setFilterPanier('all');
     setFilterFacturesMin('');
   }, []);
 
