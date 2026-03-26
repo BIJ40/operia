@@ -14,6 +14,12 @@ export type InvoicePaymentStatus = 'paid' | 'partial' | 'pending' | 'overdue_30'
 /** Aging bucket keys */
 export type AgingBucket = '0_30' | '31_60' | '61_90' | '90_plus';
 
+/** Avoir rapprochement status */
+export type AvoirMatchStatus = 'matched' | 'ambiguous' | 'unmatched';
+
+/** Bank reconciliation status (future-ready) */
+export type BankMatchStatus = 'matched' | 'partial' | 'unmatched' | 'pending';
+
 /** Single invoice with full financial detail */
 export interface FinancialInvoice {
   id: string;
@@ -27,12 +33,20 @@ export interface FinancialInvoice {
   montantRegle: number;
   resteDu: number;
   isAvoir: boolean;
+  avoirMatchStatus?: AvoirMatchStatus;
   paymentStatus: InvoicePaymentStatus;
   agingDays: number;
   agingBucket: AgingBucket;
   entityType: EntityType;
   entityId: string;
   entityLabel: string;
+  // Bank-ready fields (V2 — future reconciliation)
+  recordedPaidAmount?: number;
+  bankMatchedAmount?: number;
+  bankMatchStatus?: BankMatchStatus;
+  bankMatchConfidence?: number;
+  reconciliationStatus?: 'pending' | 'reconciled' | 'disputed';
+  lastReconciliationAt?: Date | null;
 }
 
 /** Aggregated stats for one entity (apporteur or client) */
@@ -46,7 +60,8 @@ export interface FinancialEntityStats {
   totalEncaisse: number;
   resteDu: number;
   tauxRecouvrement: number;
-  delaiMoyenPaiement: number | null;
+  /** Âge moyen des factures non soldées (jours) — NOT a real payment delay */
+  ageMoyenEncours: number | null;
   partDuGlobal: number;
   riskLevel: DebtRiskLevel;
   aging: AgingBreakdown;
@@ -61,6 +76,9 @@ export interface AgingBreakdown {
   '90_plus': number;
 }
 
+/** Fiability level */
+export type FiabiliteLevel = 'forte' | 'moyenne' | 'fragile';
+
 /** Global financial KPIs */
 export interface FinancialKPIs {
   duTotal: number;
@@ -71,7 +89,8 @@ export interface FinancialKPIs {
   totalFacture: number;
   tauxRecouvrement: number;
   nbFacturesAvecSolde: number;
-  delaiMoyenPaiement: number | null;
+  /** Âge moyen des encours non soldés (jours) — NOT a real payment delay */
+  ageMoyenEncours: number | null;
   montantRetard30: number;
   montantRetard60: number;
   montantRetard90: number;
@@ -94,8 +113,23 @@ export interface DataQualityFlags {
   facturesSansMontant: number;
   facturesSansProject: number;
   projectsSansCommanditaire: number;
+  avoirsNonRapproches: number;
+  montantAvoirsAmbigus: number;
+  reglementsViaDonneeReelle: number;
+  reglementsViaFallbackStatut: number;
   totalFacturesAnalysees: number;
   totalFacturesExclues: number;
+}
+
+/** Fiability score */
+export interface FiabiliteScore {
+  score: number; // 0-100
+  level: FiabiliteLevel;
+  details: {
+    label: string;
+    count: number;
+    severity: 'ok' | 'warn' | 'error';
+  }[];
 }
 
 /** Complete result from financial calculations */
@@ -107,6 +141,7 @@ export interface FinancialAnalysis {
   aging: AgingBreakdown;
   alerts: FinancialAlert[];
   dataQuality: DataQualityFlags;
+  fiabilite: FiabiliteScore;
 }
 
 /** Filter state for the financial tab */
