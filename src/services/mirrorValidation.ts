@@ -40,7 +40,7 @@ export function mapMirrorUserToAppShape(raw: Record<string, unknown>): User | nu
     initiales: raw.initiales != null ? String(raw.initiales) : undefined,
     is_on: raw.is_on,
     isActive: raw.isActive,
-    data: data as User['data'] | undefined,
+    data,
   } as User;
 }
 
