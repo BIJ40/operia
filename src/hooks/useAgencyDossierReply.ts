@@ -25,8 +25,11 @@ export function useAgencyDossierReply() {
 
       return data;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (data, variables) => {
       toast.success('Message envoyé');
+      if (data?.warning) {
+        toast.warning(data.warning);
+      }
       queryClient.invalidateQueries({ queryKey: ['apporteur-exchanges', variables.dossierRef] });
       queryClient.invalidateQueries({ queryKey: ['agency-exchanges'] });
     },
