@@ -332,7 +332,7 @@ Deno.serve(async (req) => {
 
     // In heatmap mode, no date filtering needed (we want all data)
     const interventions = Array.isArray(interventionsAll)
-      ? ((isHeatmap || isProfitability)
+      ? ((isHeatmap || isProfitability || isZones)
         ? interventionsAll
         : interventionsAll.filter((it: any) => {
             const rawDate = typeof it?.date === 'string' ? it.date : '';
