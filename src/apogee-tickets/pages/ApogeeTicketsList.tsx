@@ -185,12 +185,14 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
 
     return tickets
       .filter((ticket) => {
-        if (!ticket.last_modified_by_user_id || !ticket.last_modified_at) {
-          return false;
-        }
+        // Use last_modified_at if available, otherwise fall back to created_at
+        const relevantDate = ticket.last_modified_at || ticket.created_at;
+        const relevantAuthor = ticket.last_modified_by_user_id || ticket.created_by_user_id;
 
-        // Exclude if author of the modification
-        if (ticket.last_modified_by_user_id === user.id) {
+        if (!relevantDate) return false;
+
+        // Exclude if the user is the author of the last modification (or creation)
+        if (relevantAuthor === user.id) {
           return false;
         }
 
@@ -202,9 +204,13 @@ function ApogeeTicketsListContent({ roleInfo, embedded = false }: { roleInfo: No
         const myView = myViews.find((v) => v.ticket_id === ticket.id);
         if (!myView) return true;
 
-        return new Date(ticket.last_modified_at).getTime() > new Date(myView.viewed_at).getTime();
+        return new Date(relevantDate).getTime() > new Date(myView.viewed_at).getTime();
       })
-      .sort((a, b) => new Date(b.last_modified_at!).getTime() - new Date(a.last_modified_at!).getTime());
+      .sort((a, b) => {
+        const dateA = a.last_modified_at || a.created_at;
+        const dateB = b.last_modified_at || b.created_at;
+        return new Date(dateB).getTime() - new Date(dateA).getTime();
+      });
   }, [tickets, myViews, user?.id, repliesTicketIds]);
 
   const newTicketsCount = newTickets.length;
