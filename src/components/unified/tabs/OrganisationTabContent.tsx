@@ -49,6 +49,7 @@ export default function OrganisationTabContent() {
     { id: 'reunions', label: getShortLabel('organisation.reunions', 'Réunions'), icon: Users2, accent: 'orange', requiresModule: 'organisation.reunions' },
     { id: 'parc', label: getShortLabel('organisation.parc', 'Parc'), icon: Car, accent: 'pink', requiresModule: 'organisation.parc' },
     { id: 'conformite', label: getShortLabel('organisation.documents_legaux', 'Documents légaux'), icon: FileText, accent: 'teal', requiresModule: 'organisation.documents_legaux' },
+    { id: 'echanges-apporteurs', label: 'Échanges apporteurs', icon: MessagesSquare, accent: 'purple', requiresModule: 'organisation.apporteurs' },
     ...(globalRole && ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(globalRole)
       ? [{ id: 'droits-equipe', label: 'Droits équipe', icon: Shield, accent: 'blue' as const, requiresModule: 'organisation.salaries' as ModuleKey }]
       : []),
@@ -125,6 +126,12 @@ export default function OrganisationTabContent() {
         <TabsContent value="zones" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
             <ZonesDeplacementTab />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="echanges-apporteurs" className="mt-4">
+          <Suspense fallback={<LoadingFallback />}>
+            <AgencyApporteurExchanges />
           </Suspense>
         </TabsContent>
       </Tabs>
