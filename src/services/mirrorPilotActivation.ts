@@ -84,7 +84,8 @@ function scheduleFlush() {
   flushTimer = setTimeout(flushDecisions, FLUSH_INTERVAL);
 }
 
-async function flushDecisions() {
+/** Flush all buffered decisions to DB immediately. Exported for validation reads. */
+export async function flushDecisions() {
   flushTimer = null;
   if (decisionBuffer.length === 0) return;
 
@@ -205,9 +206,10 @@ const SNAPSHOT_INTERVAL = 5 * 60 * 1000; // 5 minutes
 export async function maybePersistSnapshot(
   moduleKey: ModuleKey,
   agencyId: string,
+  force = false,
 ): Promise<void> {
   const now = Date.now();
-  if (now - lastSnapshotTime < SNAPSHOT_INTERVAL) return;
+  if (!force && now - lastSnapshotTime < SNAPSHOT_INTERVAL) return;
   lastSnapshotTime = now;
 
   const m = metricsStore[moduleKey];
