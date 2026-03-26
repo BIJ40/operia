@@ -30,7 +30,8 @@ const CATEGORY_ICONS: Record<string, typeof FileText> = {
   projects: FolderOpen,
 };
 
-const CATEGORY_ORDER = ['factures', 'devis', 'interventions', 'projects'];
+// Apporteurs ne voient que devis et factures
+const CATEGORY_ORDER = ['factures', 'devis'];
 
 export default function DossierDocumentsPanel({ dossierRef, agencySlug }: Props) {
   const { data, isLoading, isError } = useProjectDetail({
@@ -67,7 +68,8 @@ export default function DossierDocumentsPanel({ dossierRef, agencySlug }: Props)
     );
   }
 
-  const documents = data.data?.documents || [];
+  // Filtrer uniquement devis et factures pour les apporteurs
+  const documents = (data.data?.documents || []).filter(d => d.category === 'factures' || d.category === 'devis');
 
   // Aucun document
   if (documents.length === 0) {
