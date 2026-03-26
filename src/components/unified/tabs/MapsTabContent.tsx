@@ -1588,6 +1588,79 @@ export default function MapsTabContent() {
           </div>
         )}
 
+        {/* Barre info + timeline saisonnalité */}
+        {mapMode === 'saisonnalite' && (
+          <div className="flex-none p-4 space-y-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <CalendarRange className="h-4 w-4" />
+              <span>Saisonnalité géographique</span>
+              <div className="flex items-center gap-1 ml-2">
+                <Button variant={seasonViewMode === 'volume' ? 'default' : 'ghost'} size="sm" className="h-6 text-xs gap-1" onClick={() => setSeasonViewMode('volume')}>
+                  Volume
+                </Button>
+                <Button variant={seasonViewMode === 'variation' ? 'default' : 'ghost'} size="sm" className="h-6 text-xs gap-1" onClick={() => setSeasonViewMode('variation')}>
+                  <TrendingUp className="h-3 w-3" />Variation
+                </Button>
+              </div>
+              <span className="ml-auto">
+                {seasonLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${seasonData?.length || 0} zones · ${seasonMonths.length} mois`}
+              </span>
+            </div>
+            {seasonMonths.length > 0 && (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1">
+                  <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => setSeasonMonth(0)} disabled={seasonMonth === 0}>
+                    <SkipBack className="h-3 w-3" />
+                  </Button>
+                  <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => setSeasonMonth(m2 => Math.max(0, m2 - 1))} disabled={seasonMonth === 0}>
+                    <ChevronLeft className="h-3 w-3" />
+                  </Button>
+                  <Button variant={seasonPlaying ? 'default' : 'outline'} size="icon" className="h-7 w-7" onClick={() => { if (seasonMonth >= seasonMonths.length - 1) setSeasonMonth(0); setSeasonPlaying(p => !p); }}>
+                    {seasonPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                  </Button>
+                  <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => setSeasonMonth(m2 => Math.min(seasonMonths.length - 1, m2 + 1))} disabled={seasonMonth >= seasonMonths.length - 1}>
+                    <ChevronRight className="h-3 w-3" />
+                  </Button>
+                  <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => setSeasonMonth(seasonMonths.length - 1)} disabled={seasonMonth >= seasonMonths.length - 1}>
+                    <SkipForward className="h-3 w-3" />
+                  </Button>
+                </div>
+                <div className="flex-1">
+                  <Slider
+                    value={[seasonMonth]}
+                    onValueChange={([v]) => { setSeasonPlaying(false); setSeasonMonth(v); }}
+                    min={0}
+                    max={Math.max(0, seasonMonths.length - 1)}
+                    step={1}
+                  />
+                </div>
+                <span className="text-sm font-semibold min-w-[90px] text-right">
+                  {currentSeasonMonth ? format(parse(currentSeasonMonth, 'yyyy-MM', new Date()), 'MMM yyyy', { locale: fr }) : ''}
+                </span>
+              </div>
+            )}
+            <div className="flex items-center gap-4 text-xs flex-wrap">
+              {seasonViewMode === 'variation' ? (
+                <>
+                  <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#3b82f6' }} /><span className="text-muted-foreground">Forte baisse</span></div>
+                  <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#fbbf24' }} /><span className="text-muted-foreground">Stable</span></div>
+                  <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#dc2626' }} /><span className="text-muted-foreground">Forte hausse</span></div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#fef3c7' }} /><span className="text-muted-foreground">Faible</span></div>
+                  <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#f97316' }} /><span className="text-muted-foreground">Moyen</span></div>
+                  <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#7f1d1d' }} /><span className="text-muted-foreground">Élevé</span></div>
+                </>
+              )}
+              <div className="flex items-center gap-1.5 ml-2 pl-2 border-l">
+                <span className="w-3 h-3 rounded-full border-2" style={{ borderColor: '#dc2626', backgroundColor: 'transparent' }} />
+                <span className="text-muted-foreground">Bordure = saisonnalité forte</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex-1 min-h-0 flex" style={{ minHeight: '400px' }}>
           <div className="relative h-full w-full overflow-hidden bg-background">
             {!mapboxToken ? (
