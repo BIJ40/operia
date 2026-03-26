@@ -1850,6 +1850,33 @@ export default function MapsTabContent() {
           </div>
         )}
 
+        {/* Barre info + panneau latéral Score Global */}
+        {mapMode === 'score_global' && (
+          <div className="flex-none p-4 space-y-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Trophy className="h-4 w-4" />
+              <span>Score Global — synthèse multi-critères par zone</span>
+              <div className="flex items-center gap-1 ml-2">
+                {([['global', 'Global'], ['commercial', 'Commercial'], ['economique', 'Économique'], ['operationnel', 'Opérationnel'], ['qualite', 'Qualité'], ['resilience', 'Résilience']] as const).map(([key, label]) => (
+                  <Button key={key} variant={scoreSubView === key ? 'default' : 'ghost'} size="sm" className="h-6 text-xs" onClick={() => setScoreSubView(key)}>
+                    {label}
+                  </Button>
+                ))}
+              </div>
+              <span className="ml-auto">
+                {scoreLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${scoreData?.length || 0} zones`}
+              </span>
+            </div>
+            <div className="flex items-center gap-4 text-xs flex-wrap">
+              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#dc2626' }} /><span className="text-muted-foreground">Critique (&lt;40)</span></div>
+              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#f97316' }} /><span className="text-muted-foreground">Fragile (40-54)</span></div>
+              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#fbbf24' }} /><span className="text-muted-foreground">Moyenne (55-69)</span></div>
+              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#22c55e' }} /><span className="text-muted-foreground">Saine (70-84)</span></div>
+              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#3b82f6' }} /><span className="text-muted-foreground">Premium (85+)</span></div>
+            </div>
+          </div>
+        )}
+
         <div className="flex-1 min-h-0 flex" style={{ minHeight: '400px' }}>
           <div className="relative h-full w-full overflow-hidden bg-background">
             {!mapboxToken ? (
@@ -1869,7 +1896,7 @@ export default function MapsTabContent() {
               </div>
             )}
 
-            {((isLoading && mapMode === 'pins') || (heatmapLoading && mapMode === 'heatmap') || (profitLoading && mapMode === 'profitability') || (zonesLoading && mapMode === 'zones') || (apporteursLoading && mapMode === 'apporteurs') || (dispoLoading && mapMode === 'disponibilite') || (seasonLoading && mapMode === 'saisonnalite')) && mapboxToken && !mapInitError && (
+            {((isLoading && mapMode === 'pins') || (heatmapLoading && mapMode === 'heatmap') || (profitLoading && mapMode === 'profitability') || (zonesLoading && mapMode === 'zones') || (apporteursLoading && mapMode === 'apporteurs') || (dispoLoading && mapMode === 'disponibilite') || (seasonLoading && mapMode === 'saisonnalite') || (scoreLoading && mapMode === 'score_global')) && mapboxToken && !mapInitError && (
               <MapLoadingOverlay mode={mapMode} />
             )}
 
