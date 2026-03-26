@@ -40,6 +40,8 @@ const PROFIT_SOURCE = 'profit-source-pilotage';
 const PROFIT_LAYER_POS = 'profit-layer-pos-pilotage';
 const PROFIT_LAYER_NEG = 'profit-layer-neg-pilotage';
 const PROFIT_CIRCLES = 'profit-circles-pilotage';
+const ZONES_SOURCE = 'zones-source-pilotage';
+const ZONES_CIRCLES = 'zones-circles-pilotage';
 
 function enableStyleFallback(m: mapboxgl.Map) {
   let fallbackApplied = false;
