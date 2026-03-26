@@ -1,6 +1,6 @@
 /**
  * useRentabiliteList — Merges Supabase snapshots with Apogée projects.
- * Returns a unified list including projects without snapshots.
+ * v2: Includes projectRef for enrichment via apiGetProjectByRef.
  */
 import { useQuery } from '@tanstack/react-query';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
@@ -12,6 +12,7 @@ import type { ProfitabilitySnapshot } from '@/types/projectProfitability';
 export interface RentabiliteListItem {
   projectId: string;
   projectLabel: string;
+  projectRef: string;
   clientName: string;
   hasSnapshot: boolean;
   snapshot: ProfitabilitySnapshot | null;
@@ -36,8 +37,6 @@ export function useRentabiliteList() {
         services.getClients(agencySlug),
       ]);
 
-      // Build snapshot lookup by projectId
-      // Keep only the latest version per project
       const snapshotMap = new Map<string, ProfitabilitySnapshot>();
       for (const snap of snapshots) {
         const existing = snapshotMap.get(snap.project_id);
@@ -46,7 +45,6 @@ export function useRentabiliteList() {
         }
       }
 
-      // Build client lookup
       const clientMap = new Map<number, string>();
       for (const c of (rawClients || []) as Record<string, unknown>[]) {
         if (c.id != null) {
@@ -54,7 +52,6 @@ export function useRentabiliteList() {
         }
       }
 
-      // Build unified list from Apogée projects
       const items: RentabiliteListItem[] = [];
       const seenProjectIds = new Set<string>();
 
@@ -66,22 +63,29 @@ export function useRentabiliteList() {
         const clientId = Number(proj.clientId ?? proj.client_id ?? 0);
         const clientName = clientMap.get(clientId) || '';
         const snapshot = snapshotMap.get(projectId) || null;
+        const projectRef = String(proj.reference ?? proj.ref ?? proj.projectRef ?? projectId);
+        const projectLabel = clientName
+          ? `${clientName} — ${projectRef}`
+          : projectRef !== projectId
+            ? projectRef
+            : `Dossier ${projectId}`;
 
         items.push({
           projectId,
-          projectLabel: String(proj.reference ?? proj.label ?? proj.name ?? `Dossier ${projectId}`),
+          projectLabel,
+          projectRef,
           clientName,
           hasSnapshot: !!snapshot,
           snapshot,
         });
       }
 
-      // Add any snapshots for projects not in the current Apogée data
       for (const [projectId, snapshot] of snapshotMap) {
         if (!seenProjectIds.has(projectId)) {
           items.push({
             projectId,
             projectLabel: `Dossier ${projectId}`,
+            projectRef: projectId,
             clientName: '',
             hasSnapshot: true,
             snapshot,

@@ -1,19 +1,21 @@
 /**
  * LaborCostSection — Labor cost detail by technician.
- * Allows editing cost profiles when technician is resolved to a collaborator.
+ * v2: Better name resolution, shows default rate indicator (35€/h),
+ * colorful estimated/real badges, clearer unknown tech handling.
  */
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Pencil, AlertTriangle } from 'lucide-react';
+import { Pencil, AlertTriangle, Info } from 'lucide-react';
 import { formatCurrency, formatHours } from '../constants';
+import { DEFAULT_HOURLY_RATE } from '../hooks/useProjectApogeeData';
+import { cn } from '@/lib/utils';
 import type { ProfitabilityResult } from '@/types/projectProfitability';
 import type { CollaboratorMinimal } from '@/repositories/profitabilityRepository';
 
 interface LaborCostSectionProps {
   laborDetail: ProfitabilityResult['laborDetail'];
   totalCostLabor: number;
-  /** Map of apogee_user_id (string) → collaborator info */
   collaboratorMap?: Map<string, CollaboratorMinimal>;
   onEditProfile?: (collaboratorId: string, collaboratorName: string) => void;
 }
@@ -31,11 +33,20 @@ export function LaborCostSection({ laborDetail, totalCostLabor, collaboratorMap,
     if (techId === '__unknown__') return { name: 'Non assigné', collaborator: null };
     const collab = collaboratorMap?.get(techId);
     if (collab) return { name: `${collab.last_name} ${collab.first_name}`, collaborator: collab };
-    return { name: `Tech. ${techId}`, collaborator: null };
+    return { name: `Technicien #${techId}`, collaborator: null };
   };
+
+  const hasEstimated = laborDetail.some(ld => ld.isEstimated);
 
   return (
     <div className="space-y-3">
+      {hasEstimated && (
+        <div className="flex items-center gap-2 p-2.5 rounded-lg bg-amber-50/60 dark:bg-amber-950/20 text-xs text-amber-700 dark:text-amber-400">
+          <Info className="h-3.5 w-3.5 shrink-0" />
+          Taux horaire estimé à {DEFAULT_HOURLY_RATE}€/h (charges comprises) pour les techniciens sans profil coût renseigné.
+        </div>
+      )}
+
       <Table>
         <TableHeader>
           <TableRow>
@@ -43,7 +54,7 @@ export function LaborCostSection({ laborDetail, totalCostLabor, collaboratorMap,
             <TableHead className="text-right">Heures</TableHead>
             <TableHead className="text-right">Taux horaire</TableHead>
             <TableHead className="text-right">Coût</TableHead>
-            <TableHead>Statut</TableHead>
+            <TableHead>Source</TableHead>
             {onEditProfile && <TableHead className="text-right">Actions</TableHead>}
           </TableRow>
         </TableHeader>
@@ -54,28 +65,30 @@ export function LaborCostSection({ laborDetail, totalCostLabor, collaboratorMap,
             const noMatch = ld.technicianId !== '__unknown__' && !collaborator;
 
             return (
-              <TableRow key={ld.technicianId}>
+              <TableRow key={ld.technicianId} className="hover:bg-muted/40 transition-colors">
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-1.5">
                     {name}
                     {noMatch && (
-                      <span title="Collaborateur introuvable — mapping apogee_user_id manquant">
+                      <span title={`Collaborateur introuvable (ID Apogée: ${ld.technicianId}) — mapping manquant`}>
                         <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
                       </span>
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="text-right">{formatHours(ld.hours)}</TableCell>
-                <TableCell className="text-right">{formatCurrency(ld.hourlyRate)}/h</TableCell>
-                <TableCell className="text-right font-medium">{formatCurrency(ld.cost)}</TableCell>
+                <TableCell className="text-right tabular-nums font-medium">{formatHours(ld.hours)}</TableCell>
+                <TableCell className={cn('text-right tabular-nums', ld.isEstimated ? 'text-amber-600 dark:text-amber-400' : '')}>
+                  {formatCurrency(ld.hourlyRate)}/h
+                </TableCell>
+                <TableCell className="text-right font-semibold tabular-nums">{formatCurrency(ld.cost)}</TableCell>
                 <TableCell>
                   {ld.isEstimated ? (
-                    <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200 text-xs">
-                      Estimé
+                    <Badge variant="outline" className="bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 text-xs">
+                      Estimé ({DEFAULT_HOURLY_RATE}€/h)
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200 text-xs">
-                      Réel
+                    <Badge variant="outline" className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 text-xs">
+                      Profil réel
                     </Badge>
                   )}
                 </TableCell>
@@ -92,7 +105,7 @@ export function LaborCostSection({ laborDetail, totalCostLabor, collaboratorMap,
                         {ld.isEstimated ? 'Compléter' : 'Modifier'}
                       </Button>
                     ) : noMatch ? (
-                      <span className="text-xs text-muted-foreground">Introuvable</span>
+                      <span className="text-xs text-muted-foreground">Mapping manquant</span>
                     ) : null}
                   </TableCell>
                 )}
@@ -101,7 +114,7 @@ export function LaborCostSection({ laborDetail, totalCostLabor, collaboratorMap,
           })}
         </TableBody>
       </Table>
-      <div className="flex justify-end text-sm font-medium">
+      <div className="flex justify-end text-sm font-semibold">
         Total MO : {formatCurrency(totalCostLabor)}
       </div>
     </div>
