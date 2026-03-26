@@ -706,6 +706,8 @@ export default function MapsTabContent() {
     };
   }, [zonesData, mapReady, mapMode]);
 
+  // Draw/remove route layer
+  useEffect(() => {
     const m = map.current;
     if (!m || !mapReady) return;
 
