@@ -15,11 +15,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { DocDownloadButton } from '@/apporteur/components/DocDownloadButton';
+import { useApporteurDossierActions } from '@/apporteur/hooks/useApporteurDossierActions';
 import type { AlerteEntry } from '../../types/apporteur-stats-v2';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
 const ALERTE_CONFIG: Record<string, { icon: typeof AlertTriangle; label: string; description: string }> = {
   factures_retard_30j: {
