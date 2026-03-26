@@ -1,92 +1,45 @@
 
 
-# Plan : Carte choroplèthe par communes (polygones)
+# Plan : Tri, filtres et couleurs — Tableau "Suivi client"
 
 ## Objectif
-Remplacer les cercles par de vrais polygones communaux colorés selon la métrique active — comme les images de référence montrant chaque ville surlignée.
+Rendre le tableau des apporteurs (Commercial > Suivi client) interactif (tri/filtre par colonne) et visuellement riche avec des indicateurs colorés.
 
-## Architecture technique
+## Fichier impacté
+- `src/prospection/pages/ApporteurListPage.tsx` (seul fichier à modifier)
 
-### Phase 1 — API geo.api.gouv.fr (rapide, sans stockage)
+## Changements
 
-**Edge Function `get-rdv-map`** : nouveau mode + enrichissement des modes existants
+### 1. Tri par colonne
+- Ajouter un state `sortColumn` / `sortDirection` (asc/desc toggle)
+- Colonnes triables : Dossiers, CA HT, Taux transfo, Panier moyen, Factures
+- Header cliquable avec icône flèche (ArrowUpDown / ArrowUp / ArrowDown)
+- Appliquer `sort()` sur le tableau filtré avant le rendu
 
-1. **Récupérer les codes INSEE via BAN** : L'API BAN retourne déjà un champ `citycode` (code INSEE) dans ses résultats de géocodage. On l'extrait et le stocke dans `geocode_cache` (nouvelle colonne `code_insee`).
+### 2. Filtres par colonne
+- Ajouter des filtres inline sous les headers :
+  - **Dossiers** : seuil min (input number compact)
+  - **CA HT** : seuil min
+  - **Taux transfo** : range (ex: < 30%, 30-60%, > 60%) via petit select
+  - **Factures** : seuil min
+- Bouton "Reset filtres" discret quand un filtre est actif
 
-2. **Récupérer les polygones communaux** : Appeler `https://geo.api.gouv.fr/communes?codeDepartement=40,64&fields=code,nom,contour&format=geojson` pour obtenir les contours des communes Landes + Pyrénées-Atlantiques. Résultat mis en cache mémoire dans l'edge function.
+### 3. Couleurs et indicateurs visuels
+- **CA HT** : couleur du texte selon le montant (vert foncé si élevé, gris si faible)
+- **Taux transfo** : pastille colorée (rouge < 30%, orange 30-60%, vert > 60%)
+- **Panier moyen** : badge coloré (bleu si au-dessus de la médiane, gris sinon)
+- **Dossiers** : barre de progression discrète en fond de cellule (proportionnelle au max)
+- **Ligne "Alerte"** : fond légèrement rouge si taux transfo < 30% ET dossiers ≥ 5
+- **Rang** : ajouter une colonne # avec rang coloré (or/argent/bronze pour top 3)
 
-3. **Joindre métriques ↔ polygones** : Agréger les données métier par `code_insee` (au lieu de code postal), puis injecter les métriques dans les `properties` de chaque Feature du GeoJSON communal.
+### 4. Améliorations UX complémentaires
+- Ligne hover plus marquée avec accent orange (domaine commercial)
+- Header sticky avec fond opaque
+- Afficher le total / moyenne en pied de tableau (ligne récap)
 
-4. **Retourner un GeoJSON complet** avec `geometry: Polygon/MultiPolygon` + propriétés métier.
-
-**Frontend `MapsTabContent.tsx`** :
-
-5. **Remplacer les circle-layers par fill-layer + line-layer** pour les onglets concernés (Densité, Rentabilité, Zones blanches, Score global, Saisonnalité, Apporteurs).
-
-6. **Ajouter un switch "Vue points / Vue communes"** pour garder la possibilité de voir les points individuels quand c'est pertinent (RDV, Disponibilité restent en mode points).
-
-7. **Popups au clic sur polygone** : mêmes infos qu'aujourd'hui, mais déclenchés sur le fill-layer.
-
-## Détails d'implémentation
-
-### Edge Function
-
-```text
-geo.api.gouv.fr/communes?codeDepartement=40,64
-  → ~700 communes avec contours simplifiés (~500 KB)
-  → caché en mémoire (durée de vie du worker)
-
-BAN geocoding enrichi :
-  response.features[0].properties.citycode → code_insee
-  stocké dans geocode_cache.code_insee
-
-Agrégation par code_insee :
-  nb_dossiers, ca_total, marge, taux_transfo, score, etc.
-
-Retour : GeoJSON FeatureCollection avec Polygon geometries
-```
-
-### Frontend Mapbox
-
-```text
-fill-layer :
-  fill-color → interpolation sur la métrique
-  fill-opacity → 0.6-0.75
-  fill-outline-color → blanc
-
-line-layer :
-  line-color → blanc
-  line-width → 1px
-
-symbol-layer (labels) :
-  text-field → nom commune
-  text-size → adapté au zoom
-```
-
-### Onglets concernés
-
-| Onglet | Métrique fill-color | Garde aussi les points ? |
-|--------|-------------------|------------------------|
-| Densité | nb_dossiers | Non (heatmap remplacée) |
-| Rentabilité | marge/CA ratio | Optionnel |
-| Zones blanches | activityIndex | Non |
-| Apporteurs | nb_apporteurs | Non |
-| Saisonnalité | variation mensuelle | Non |
-| Score global | score composite | Non |
-| RDV | — | Oui (reste en pins) |
-| Disponibilité | — | Oui (reste en pins) |
-
-### Migration DB
-
-Ajouter colonne `code_insee TEXT` à la table `geocode_cache` pour stocker le code INSEE retourné par BAN.
-
-## Fichiers modifiés
-- `supabase/functions/get-rdv-map/index.ts` — logique polygones + code INSEE
-- `src/components/unified/tabs/MapsTabContent.tsx` — fill/line layers
-- Migration SQL — colonne `code_insee` sur `geocode_cache`
-
-## Ce qui ne change pas
-- Onglet "RDV" reste en mode pins/markers
-- Onglet "Disponibilité" reste en mode pins temps réel
-- Tour Mode inchangé
+## Détails techniques
+- Tout en local dans le composant, pas de nouvelle dépendance
+- Utiliser `useMemo` pour le tri/filtre combiné
+- Calcul de la médiane du panier moyen pour le seuil de couleur
+- Les couleurs utilisent les classes Tailwind existantes (emerald, amber, red, blue)
 
