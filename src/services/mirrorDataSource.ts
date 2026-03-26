@@ -147,7 +147,7 @@ export async function isMirrorFreshEnough(
     .from(tableName as any)
     .select('id', { count: 'exact', head: true })
     .eq('agency_id', agencyId)
-    .eq('mirror_status', 'synced');
+    .eq('mirror_status', 'synced') as { count: number | null; error: any };
 
   if (countErr || (count ?? 0) === 0) {
     return { fresh: false, freshnessMinutes, reason: 'mirror_table_empty' };
