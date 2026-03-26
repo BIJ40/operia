@@ -87,7 +87,7 @@ const MAP_SUB_TABS: FolderTabConfig[] = [
   { id: 'zones', label: 'Zones blanches', icon: Crosshair, accent: 'orange' },
   { id: 'apporteurs', label: 'Apporteurs', icon: Network, accent: 'purple' },
   { id: 'disponibilite', label: 'Disponibilité', icon: Radio, accent: 'teal' },
-  { id: 'saisonnalite', label: 'Saisonnalité', icon: CalendarRange, accent: 'amber' },
+  { id: 'saisonnalite', label: 'Saisonnalité', icon: CalendarRange, accent: 'orange' },
 ];
 
 const TAB_ACCENT_COLORS: Record<string, string> = {
