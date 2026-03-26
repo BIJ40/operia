@@ -1,8 +1,8 @@
 /**
  * treasury-bridge-webhook — Production-grade Bridge webhook handler
  *
- * Receives Bridge events (item.updated, account.updated, transaction.created/updated)
- * Verifies RSA signature (X-Webhook-Signature) per Bridge docs
+ * Receives Bridge events (item.refreshed, item.account.updated, etc.)
+ * Verifies RSA signature (X-Webhook-Signature: t=<ts>,v0=<base64sig>)
  * Identifies the bank_connection by external_item_id
  * Triggers targeted sync via internal call to treasury-connection
  */
@@ -34,79 +34,144 @@ function fail(message: string, status = 400) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// Bridge Webhook Secret verification (HMAC-based)
-// Bridge sends the webhook secret as a UUID in the payload or
-// uses it as a shared secret for signature validation.
-// For simple webhook secret: compare against stored secret.
+// Bridge RSA Signature Verification
+// Per Bridge docs: https://apidocs.bridge.xyz/platform/additional-information/webhooks/signature
+//
+// Header: X-Webhook-Signature
+// Format: t=<timestamp_ms>,v0=<base64_encoded_signature>
+//
+// 1. Parse t= and v0= from header
+// 2. digest = SHA256(timestamp + "." + rawBody)
+// 3. Verify RSA signature(digest, decoded_v0, public_key)
+// 4. Anti-replay: reject events older than 10 minutes
 // ═══════════════════════════════════════════════════════════
 
-async function verifyWebhookSecret(
-  rawBody: string,
-  req: Request,
-  secret: string
-): Promise<{ valid: boolean; reason?: string }> {
-  // Bridge webhook verification: check the webhook_secret in payload
-  // or use HMAC signature if Bridge sends one
-  const bridgeSignature = req.headers.get("bridge-signature") 
-    ?? req.headers.get("Bridge-Signature")
-    ?? req.headers.get("x-bridge-signature");
+const REPLAY_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
 
-  if (bridgeSignature) {
-    // HMAC-SHA256 verification
-    try {
-      const key = await crypto.subtle.importKey(
-        "raw",
-        new TextEncoder().encode(secret),
-        { name: "HMAC", hash: "SHA-256" },
-        false,
-        ["sign"]
-      );
-      const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(rawBody));
-      const computed = Array.from(new Uint8Array(sig))
-        .map(b => b.toString(16).padStart(2, "0"))
-        .join("");
+function parseSignatureHeader(header: string): { timestamp: string; signature: string } | null {
+  // Format: t=1705854411204,v0=jz/0dmHJ63FA...
+  const parts = header.split(",");
+  let timestamp = "";
+  let signature = "";
 
-      if (computed === bridgeSignature) {
-        return { valid: true };
-      }
-      return { valid: false, reason: "hmac_mismatch" };
-    } catch (err) {
-      console.error("[WEBHOOK_HMAC_ERROR]", err);
-      return { valid: false, reason: "crypto_error" };
+  for (const part of parts) {
+    const trimmed = part.trim();
+    if (trimmed.startsWith("t=")) {
+      timestamp = trimmed.slice(2);
+    } else if (trimmed.startsWith("v0=")) {
+      signature = trimmed.slice(3);
     }
   }
 
-  // Fallback: check if payload contains the webhook secret for basic validation
+  if (!timestamp || !signature) return null;
+  return { timestamp, signature };
+}
+
+function pemToArrayBuffer(pem: string): ArrayBuffer {
+  // Remove PEM header/footer and newlines
+  const b64 = pem
+    .replace(/-----BEGIN PUBLIC KEY-----/g, "")
+    .replace(/-----END PUBLIC KEY-----/g, "")
+    .replace(/[\n\r\s]/g, "");
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
+async function verifyBridgeSignature(
+  rawBody: string,
+  req: Request,
+  publicKeyPem: string
+): Promise<{ valid: boolean; reason?: string }> {
+  const sigHeader = req.headers.get("X-Webhook-Signature")
+    ?? req.headers.get("x-webhook-signature");
+
+  if (!sigHeader) {
+    console.warn("[WEBHOOK_SIG] No X-Webhook-Signature header found");
+    return { valid: false, reason: "no_signature_header" };
+  }
+
+  const parsed = parseSignatureHeader(sigHeader);
+  if (!parsed) {
+    console.error("[WEBHOOK_SIG] Failed to parse signature header:", sigHeader);
+    return { valid: false, reason: "invalid_signature_format" };
+  }
+
+  // Anti-replay check
+  const eventTimestamp = parseInt(parsed.timestamp, 10);
+  const now = Date.now();
+  if (isNaN(eventTimestamp) || Math.abs(now - eventTimestamp) > REPLAY_WINDOW_MS) {
+    console.error("[WEBHOOK_SIG] Replay attack or stale event", {
+      eventTimestamp,
+      now,
+      diff_ms: now - eventTimestamp,
+    });
+    return { valid: false, reason: "replay_or_stale" };
+  }
+
   try {
-    const parsed = JSON.parse(rawBody);
-    if (parsed.webhook_secret === secret) {
+    // Step 2: digest = SHA256(timestamp.rawBody)
+    const dataToVerify = `${parsed.timestamp}.${rawBody}`;
+    const digest = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(dataToVerify)
+    );
+
+    // Step 3: base64-decode the signature
+    const decodedSignature = Uint8Array.from(
+      atob(parsed.signature),
+      (c) => c.charCodeAt(0)
+    );
+
+    // Step 4: Import RSA public key & verify
+    const keyData = pemToArrayBuffer(publicKeyPem);
+    const publicKey = await crypto.subtle.importKey(
+      "spki",
+      keyData,
+      { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+      false,
+      ["verify"]
+    );
+
+    // Bridge uses SHA256withRSA: the signature is over the raw digest bytes
+    // We need to verify signature against the digest
+    const isValid = await crypto.subtle.verify(
+      "RSASSA-PKCS1-v1_5",
+      publicKey,
+      decodedSignature,
+      digest
+    );
+
+    if (isValid) {
+      console.log("[WEBHOOK_SIG] RSA signature verified ✓");
       return { valid: true };
     }
-  } catch { /* ignore */ }
 
-  // If no signature header and no secret in payload, allow with warning
-  // Bridge may not sign every event depending on configuration
-  console.warn("[WEBHOOK_SIG] No signature found, accepting (verify Bridge config)");
-  return { valid: true };
+    console.error("[WEBHOOK_SIG] RSA signature mismatch");
+    return { valid: false, reason: "rsa_signature_mismatch" };
+  } catch (err) {
+    console.error("[WEBHOOK_SIG_ERROR]", err instanceof Error ? err.message : String(err));
+    return { valid: false, reason: "crypto_error" };
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
-// Sync events we care about
+// Bridge event types — exact names from Bridge v3 API
 // ═══════════════════════════════════════════════════════════
 
 const SYNC_TRIGGER_EVENTS = new Set([
-  "item.refreshed",
-  "item.updated",
-  "account.updated",
-  "transaction.created",
-  "transaction.updated",
+  "item.refreshed",           // Item data has been refreshed
+  "item.account.updated",     // An account within an item was updated
+  "item.created",             // New item created (initial sync)
 ]);
 
-// Events we log but don't sync
+// Events we log but don't trigger sync
 const LOG_ONLY_EVENTS = new Set([
-  "item.created",
-  "item.deleted",
-  "item.needs_user_action",
+  "item.deleted",             // Item was deleted
+  "item.needs_user_action",   // Requires user re-authentication
 ]);
 
 // ═══════════════════════════════════════════════════════════
@@ -124,17 +189,18 @@ Deno.serve(async (req) => {
 
   const rawBody = await req.text();
 
-  // ── 1. Signature verification ──
-  const webhookSecret = Deno.env.get("BRIDGE_WEBHOOK_SECRET");
+  // ── 1. RSA Signature verification ──
+  const webhookPublicKey = Deno.env.get("BRIDGE_WEBHOOK_PUBLIC_KEY");
 
-  if (webhookSecret) {
-    const sigResult = await verifyWebhookSecret(rawBody, req, webhookSecret);
+  if (webhookPublicKey) {
+    const sigResult = await verifyBridgeSignature(rawBody, req, webhookPublicKey);
     if (!sigResult.valid) {
       console.error("[WEBHOOK_SIG_REJECTED]", sigResult.reason);
       return fail(`Signature verification failed: ${sigResult.reason}`, 401);
     }
   } else {
-    console.warn("[WEBHOOK_SIG_SKIP] BRIDGE_WEBHOOK_SECRET not set");
+    // In development/transition: accept without verification but warn loudly
+    console.warn("[WEBHOOK_SIG_SKIP] BRIDGE_WEBHOOK_PUBLIC_KEY not set — ACCEPTING WITHOUT VERIFICATION");
   }
 
   // ── 2. Parse payload ──
@@ -175,7 +241,6 @@ Deno.serve(async (req) => {
   // ── 5. Find connection by item_id ──
   let connectionId: string | null = null;
   let connectionAgencyId: string | null = null;
-  let connectionUserId: string | null = null;
 
   if (itemId) {
     const { data: conn } = await supabase
@@ -187,7 +252,6 @@ Deno.serve(async (req) => {
     if (conn) {
       connectionId = conn.id;
       connectionAgencyId = conn.agency_id;
-      connectionUserId = conn.user_id;
     }
   }
 
@@ -202,8 +266,6 @@ Deno.serve(async (req) => {
     console.log("[WEBHOOK_SYNC_TRIGGER]", { connectionId, event: eventType });
 
     try {
-      // Internal call to treasury-connection sync action
-      // Using service role key to bypass auth since this is a server-to-server call
       const syncResp = await fetch(`${supabaseUrl}/functions/v1/treasury-connection`, {
         method: "POST",
         headers: {
@@ -239,12 +301,10 @@ Deno.serve(async (req) => {
         connectionId,
         error: err instanceof Error ? err.message : String(err),
       });
-      // Still return 200 — we don't want Bridge to retry, we'll handle it
     }
   } else if (LOG_ONLY_EVENTS.has(eventType)) {
     console.log("[WEBHOOK_LOG_ONLY]", { connectionId, event: eventType });
 
-    // For item.needs_user_action, update connection status
     if (eventType === "item.needs_user_action") {
       await supabase.from("bank_connections")
         .update({
@@ -255,7 +315,6 @@ Deno.serve(async (req) => {
         .eq("id", connectionId);
     }
 
-    // For item.deleted, mark as disconnected
     if (eventType === "item.deleted") {
       await supabase.from("bank_connections")
         .update({
