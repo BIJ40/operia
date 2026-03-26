@@ -624,121 +624,100 @@ export default function MapsTabContent() {
     }
   }, [heatmapPoints, mapReady, mapMode]);
 
-  // Profitability layer — colored circles: green (profitable) → red (unprofitable)
+  // ── Helper: fit bounds to GeoJSON polygon features ──
+  const fitBoundsToGeoJson = useCallback((m: mapboxgl.Map, geojson: GeoJSON.FeatureCollection) => {
+    if (hasFittedBoundsRef.current || !geojson.features.length) return;
+    let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+    const processCoords = (coords: any) => {
+      if (typeof coords[0] === 'number') {
+        minLng = Math.min(minLng, coords[0]); maxLng = Math.max(maxLng, coords[0]);
+        minLat = Math.min(minLat, coords[1]); maxLat = Math.max(maxLat, coords[1]);
+      } else { coords.forEach(processCoords); }
+    };
+    geojson.features.forEach(f => { if (f.geometry) processCoords((f.geometry as any).coordinates); });
+    if (minLng === Infinity) return;
+    const container = m.getContainer();
+    const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
+    const padY = Math.max(56, Math.round((container.clientHeight || 600) * 0.12));
+    m.fitBounds([[minLng - 0.05, minLat - 0.05], [maxLng + 0.05, maxLat + 0.05]], {
+      padding: { top: padY, bottom: padY + 60, left: padX, right: padX }, maxZoom: 12, duration: 1000,
+    });
+    hasFittedBoundsRef.current = true;
+  }, []);
+
+  // ── Helper: add choropleth layers (fill + line + labels) ──
+  const addChoroplethLayers = useCallback((
+    m: mapboxgl.Map, sourceId: string, fillId: string, lineId: string, labelId: string,
+    geojson: GeoJSON.FeatureCollection, colorExpr: any[], opacityVal = 0.7,
+  ) => {
+    m.addSource(sourceId, { type: 'geojson', data: geojson });
+    m.addLayer({
+      id: fillId, type: 'fill', source: sourceId,
+      paint: { 'fill-color': colorExpr, 'fill-opacity': opacityVal },
+    });
+    m.addLayer({
+      id: lineId, type: 'line', source: sourceId,
+      paint: { 'line-color': '#ffffff', 'line-width': 1, 'line-opacity': 0.8 },
+    });
+    m.addLayer({
+      id: labelId, type: 'symbol', source: sourceId,
+      layout: {
+        'text-field': ['get', 'nom'], 'text-size': ['interpolate', ['linear'], ['zoom'], 8, 9, 12, 12, 16, 14],
+        'text-allow-overlap': false, 'text-optional': true,
+      },
+      paint: { 'text-color': '#1f2937', 'text-halo-color': '#ffffff', 'text-halo-width': 1.5 },
+    });
+  }, []);
+
+  // ── Helper: clean layers ──
+  const cleanLayers = useCallback((m: mapboxgl.Map, layers: string[], source: string) => {
+    layers.forEach(l => { if (m.getLayer(l)) m.removeLayer(l); });
+    if (m.getSource(source)) m.removeSource(source);
+  }, []);
+
+  // Profitability choropleth layer — fill communes by margin
   useEffect(() => {
     const m = map.current;
     if (!m || !mapReady) return;
+    cleanLayers(m, [PROFIT_FILL, PROFIT_LINE, PROFIT_LABELS], PROFIT_SOURCE);
+    if (mapMode !== 'profitability' || !profitGeoJson?.features?.length) return;
 
-    // Clean previous profitability layers
-    [PROFIT_CIRCLES, PROFIT_LAYER_POS, PROFIT_LAYER_NEG].forEach(l => { if (m.getLayer(l)) m.removeLayer(l); });
-    if (m.getSource(PROFIT_SOURCE)) m.removeSource(PROFIT_SOURCE);
+    addChoroplethLayers(m, PROFIT_SOURCE, PROFIT_FILL, PROFIT_LINE, PROFIT_LABELS, profitGeoJson, [
+      'interpolate', ['linear'], ['get', 'marginNorm'],
+      -1, '#dc2626',   // Deep red
+      -0.3, '#ef4444',
+      0, '#fbbf24',    // Yellow — breakeven
+      0.3, '#22c55e',
+      1, '#15803d',    // Deep green
+    ]);
+    fitBoundsToGeoJson(m, profitGeoJson);
 
-    if (mapMode !== 'profitability' || !profitPoints?.length) return;
-
-    // Compute max absolute margin for normalization
-    const maxAbsMargin = Math.max(...profitPoints.map(p => Math.abs(p.margin)), 1);
-
-    const geojson: GeoJSON.FeatureCollection = {
-      type: 'FeatureCollection',
-      features: profitPoints.map(pt => ({
-        type: 'Feature' as const,
-        properties: {
-          margin: pt.margin,
-          ca: pt.ca,
-          hours: pt.hours,
-          // Normalized margin [-1, 1]
-          marginNorm: Math.max(-1, Math.min(1, pt.margin / maxAbsMargin)),
-        },
-        geometry: { type: 'Point' as const, coordinates: [pt.lng, pt.lat] },
-      })),
-    };
-
-    m.addSource(PROFIT_SOURCE, { type: 'geojson', data: geojson });
-
-    // Circle layer: color interpolated from red (negative margin) to green (positive margin)
-    m.addLayer({
-      id: PROFIT_CIRCLES,
-      type: 'circle',
-      source: PROFIT_SOURCE,
-      paint: {
-        'circle-radius': [
-          'interpolate', ['linear'], ['zoom'],
-          4, 6,
-          10, 12,
-          14, 18,
-          18, 24,
-        ],
-        'circle-color': [
-          'interpolate', ['linear'], ['get', 'marginNorm'],
-          -1, '#dc2626',   // Deep red — very unprofitable
-          -0.3, '#ef4444', // Red
-          0, '#fbbf24',    // Yellow — breakeven
-          0.3, '#22c55e',  // Green
-          1, '#15803d',    // Deep green — very profitable
-        ],
-        'circle-opacity': 0.75,
-        'circle-stroke-color': [
-          'interpolate', ['linear'], ['get', 'marginNorm'],
-          -1, '#991b1b',
-          0, '#a16207',
-          1, '#166534',
-        ],
-        'circle-stroke-width': 1.5,
-        'circle-stroke-opacity': 0.9,
-      },
-    });
-
-    // Fit bounds
-    if (!hasFittedBoundsRef.current && profitPoints.length > 0) {
-      let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
-      profitPoints.forEach(p => { minLng = Math.min(minLng, p.lng); maxLng = Math.max(maxLng, p.lng); minLat = Math.min(minLat, p.lat); maxLat = Math.max(maxLat, p.lat); });
-      const pad = 0.1;
-      const bounds: [[number, number], [number, number]] = [[minLng - pad, minLat - pad], [maxLng + pad, maxLat + pad]];
-      const container = m.getContainer();
-      const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
-      const padY = Math.max(56, Math.round((container.clientHeight || 600) * 0.12));
-      m.fitBounds(bounds, {
-        padding: { top: padY, bottom: padY + 60, left: padX, right: padX },
-        maxZoom: 12,
-        duration: 1000,
-      });
-      hasFittedBoundsRef.current = true;
-    }
-
-    // Popup on click
     const handleClick = (e: mapboxgl.MapMouseEvent) => {
-      const features = m.queryRenderedFeatures(e.point, { layers: [PROFIT_CIRCLES] });
+      const features = m.queryRenderedFeatures(e.point, { layers: [PROFIT_FILL] });
       if (!features?.length) return;
-      const props = features[0].properties;
-      if (!props) return;
-      const margin = props.margin as number;
-      const ca = props.ca as number;
-      const hours = props.hours as number;
-      const coords = (features[0].geometry as any).coordinates as [number, number];
-      
-      new mapboxgl.Popup({ closeButton: true, maxWidth: '260px' })
-        .setLngLat(coords)
+      const p = features[0].properties;
+      if (!p) return;
+      new mapboxgl.Popup({ closeButton: true, maxWidth: '300px' })
+        .setLngLat(e.lngLat)
         .setHTML(`
-          <div style="font-family: system-ui; font-size: 13px; line-height: 1.5;">
-            <div style="font-weight: 600; margin-bottom: 4px; color: ${margin >= 0 ? '#15803d' : '#dc2626'}">
-              Marge: ${margin >= 0 ? '+' : ''}${Math.round(margin).toLocaleString('fr-FR')} €
+          <div style="font-family:system-ui;font-size:13px;line-height:1.5;">
+            <div style="font-weight:700;font-size:14px;margin-bottom:4px;">${p.nom || ''} ${p.city || ''}</div>
+            <div style="font-weight:600;color:${(p.margin||0) >= 0 ? '#15803d' : '#dc2626'}">
+              Marge: ${(p.margin||0) >= 0 ? '+' : ''}${Math.round(p.margin||0).toLocaleString('fr-FR')} €
             </div>
-            <div>CA facturé: ${Math.round(ca).toLocaleString('fr-FR')} €</div>
-            <div>Heures estimées: ${hours.toFixed(1)} h</div>
-            <div>Coût estimé: ${Math.round(hours * 35).toLocaleString('fr-FR')} €</div>
+            <div>CA facturé: ${Math.round(p.ca||0).toLocaleString('fr-FR')} €</div>
+            <div>Heures: ${(p.hours||0).toFixed?.(1) || p.hours} h</div>
+            <div>Dossiers: ${p.nbProjects || 0}</div>
+            <div>Taux de marge: ${p.marginRate || 0}%</div>
           </div>
         `)
         .addTo(m);
     };
-
-    m.on('click', PROFIT_CIRCLES, handleClick);
-    m.on('mouseenter', PROFIT_CIRCLES, () => { m.getCanvas().style.cursor = 'pointer'; });
-    m.on('mouseleave', PROFIT_CIRCLES, () => { m.getCanvas().style.cursor = ''; });
-
-    return () => {
-      m.off('click', PROFIT_CIRCLES, handleClick);
-    };
-  }, [profitPoints, mapReady, mapMode]);
+    m.on('click', PROFIT_FILL, handleClick);
+    m.on('mouseenter', PROFIT_FILL, () => { m.getCanvas().style.cursor = 'pointer'; });
+    m.on('mouseleave', PROFIT_FILL, () => { m.getCanvas().style.cursor = ''; });
+    return () => { m.off('click', PROFIT_FILL, handleClick); };
+  }, [profitGeoJson, mapReady, mapMode, cleanLayers, addChoroplethLayers, fitBoundsToGeoJson]);
 
   // Zones blanches layer — colored circles by activity level + opportunity score
   useEffect(() => {
