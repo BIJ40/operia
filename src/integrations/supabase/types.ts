@@ -1033,6 +1033,7 @@ export type Database = {
           allmysms_api_key: string | null
           allmysms_login: string | null
           allmysms_sender: string | null
+          api_key_ref: string | null
           code_postal: string | null
           contact_email: string | null
           contact_phone: string | null
@@ -1058,6 +1059,7 @@ export type Database = {
           allmysms_api_key?: string | null
           allmysms_login?: string | null
           allmysms_sender?: string | null
+          api_key_ref?: string | null
           code_postal?: string | null
           contact_email?: string | null
           contact_phone?: string | null
@@ -1083,6 +1085,7 @@ export type Database = {
           allmysms_api_key?: string | null
           allmysms_login?: string | null
           allmysms_sender?: string | null
+          api_key_ref?: string | null
           code_postal?: string | null
           contact_email?: string | null
           contact_phone?: string | null
@@ -1269,7 +1272,9 @@ export type Database = {
           error_message: string | null
           finished_at: string | null
           id: string
+          key_source: string | null
           records_fetched: number | null
+          records_marked_missing: number | null
           records_upserted: number | null
           run_id: string
           started_at: string
@@ -1282,7 +1287,9 @@ export type Database = {
           error_message?: string | null
           finished_at?: string | null
           id?: string
+          key_source?: string | null
           records_fetched?: number | null
+          records_marked_missing?: number | null
           records_upserted?: number | null
           run_id: string
           started_at?: string
@@ -1295,7 +1302,9 @@ export type Database = {
           error_message?: string | null
           finished_at?: string | null
           id?: string
+          key_source?: string | null
           records_fetched?: number | null
+          records_marked_missing?: number | null
           records_upserted?: number | null
           run_id?: string
           started_at?: string
@@ -3120,6 +3129,8 @@ export type Database = {
           agency_id: string
           apogee_id: string
           id: string
+          last_sync_run_id: string | null
+          mirror_status: string
           raw_data: Json
           source_updated_at: string | null
           sync_status: string
@@ -3130,6 +3141,8 @@ export type Database = {
           agency_id: string
           apogee_id: string
           id?: string
+          last_sync_run_id?: string | null
+          mirror_status?: string
           raw_data?: Json
           source_updated_at?: string | null
           sync_status?: string
@@ -3140,6 +3153,8 @@ export type Database = {
           agency_id?: string
           apogee_id?: string
           id?: string
+          last_sync_run_id?: string | null
+          mirror_status?: string
           raw_data?: Json
           source_updated_at?: string | null
           sync_status?: string
@@ -3160,6 +3175,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_sync_status"
             referencedColumns: ["agency_id"]
+          },
+          {
+            foreignKeyName: "clients_mirror_last_sync_run_id_fkey"
+            columns: ["last_sync_run_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_runs"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -3500,6 +3522,8 @@ export type Database = {
           agency_id: string
           apogee_id: string
           id: string
+          last_sync_run_id: string | null
+          mirror_status: string
           raw_data: Json
           source_updated_at: string | null
           sync_status: string
@@ -3510,6 +3534,8 @@ export type Database = {
           agency_id: string
           apogee_id: string
           id?: string
+          last_sync_run_id?: string | null
+          mirror_status?: string
           raw_data?: Json
           source_updated_at?: string | null
           sync_status?: string
@@ -3520,6 +3546,8 @@ export type Database = {
           agency_id?: string
           apogee_id?: string
           id?: string
+          last_sync_run_id?: string | null
+          mirror_status?: string
           raw_data?: Json
           source_updated_at?: string | null
           sync_status?: string
@@ -3540,6 +3568,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_sync_status"
             referencedColumns: ["agency_id"]
+          },
+          {
+            foreignKeyName: "devis_mirror_last_sync_run_id_fkey"
+            columns: ["last_sync_run_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_runs"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -5002,6 +5037,8 @@ export type Database = {
           agency_id: string
           apogee_id: string
           id: string
+          last_sync_run_id: string | null
+          mirror_status: string
           raw_data: Json
           source_updated_at: string | null
           sync_status: string
@@ -5012,6 +5049,8 @@ export type Database = {
           agency_id: string
           apogee_id: string
           id?: string
+          last_sync_run_id?: string | null
+          mirror_status?: string
           raw_data?: Json
           source_updated_at?: string | null
           sync_status?: string
@@ -5022,6 +5061,8 @@ export type Database = {
           agency_id?: string
           apogee_id?: string
           id?: string
+          last_sync_run_id?: string | null
+          mirror_status?: string
           raw_data?: Json
           source_updated_at?: string | null
           sync_status?: string
@@ -5042,6 +5083,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_sync_status"
             referencedColumns: ["agency_id"]
+          },
+          {
+            foreignKeyName: "factures_mirror_last_sync_run_id_fkey"
+            columns: ["last_sync_run_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_runs"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -5824,6 +5872,8 @@ export type Database = {
           agency_id: string
           apogee_id: string
           id: string
+          last_sync_run_id: string | null
+          mirror_status: string
           raw_data: Json
           source_updated_at: string | null
           sync_status: string
@@ -5834,6 +5884,8 @@ export type Database = {
           agency_id: string
           apogee_id: string
           id?: string
+          last_sync_run_id?: string | null
+          mirror_status?: string
           raw_data?: Json
           source_updated_at?: string | null
           sync_status?: string
@@ -5844,6 +5896,8 @@ export type Database = {
           agency_id?: string
           apogee_id?: string
           id?: string
+          last_sync_run_id?: string | null
+          mirror_status?: string
           raw_data?: Json
           source_updated_at?: string | null
           sync_status?: string
@@ -5864,6 +5918,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_sync_status"
             referencedColumns: ["agency_id"]
+          },
+          {
+            foreignKeyName: "interventions_mirror_last_sync_run_id_fkey"
+            columns: ["last_sync_run_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_runs"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -7848,6 +7909,8 @@ export type Database = {
           agency_id: string
           apogee_id: string
           id: string
+          last_sync_run_id: string | null
+          mirror_status: string
           raw_data: Json
           ref: string | null
           source_updated_at: string | null
@@ -7859,6 +7922,8 @@ export type Database = {
           agency_id: string
           apogee_id: string
           id?: string
+          last_sync_run_id?: string | null
+          mirror_status?: string
           raw_data?: Json
           ref?: string | null
           source_updated_at?: string | null
@@ -7870,6 +7935,8 @@ export type Database = {
           agency_id?: string
           apogee_id?: string
           id?: string
+          last_sync_run_id?: string | null
+          mirror_status?: string
           raw_data?: Json
           ref?: string | null
           source_updated_at?: string | null
@@ -7891,6 +7958,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_sync_status"
             referencedColumns: ["agency_id"]
+          },
+          {
+            foreignKeyName: "projects_mirror_last_sync_run_id_fkey"
+            columns: ["last_sync_run_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_runs"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -11691,6 +11765,8 @@ export type Database = {
           agency_id: string
           apogee_id: string
           id: string
+          last_sync_run_id: string | null
+          mirror_status: string
           raw_data: Json
           source_updated_at: string | null
           sync_status: string
@@ -11701,6 +11777,8 @@ export type Database = {
           agency_id: string
           apogee_id: string
           id?: string
+          last_sync_run_id?: string | null
+          mirror_status?: string
           raw_data?: Json
           source_updated_at?: string | null
           sync_status?: string
@@ -11711,6 +11789,8 @@ export type Database = {
           agency_id?: string
           apogee_id?: string
           id?: string
+          last_sync_run_id?: string | null
+          mirror_status?: string
           raw_data?: Json
           source_updated_at?: string | null
           sync_status?: string
@@ -11731,6 +11811,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "apogee_sync_status"
             referencedColumns: ["agency_id"]
+          },
+          {
+            foreignKeyName: "users_mirror_last_sync_run_id_fkey"
+            columns: ["last_sync_run_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_runs"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -11905,18 +11992,34 @@ export type Database = {
           agency_id: string | null
           agency_label: string | null
           agency_slug: string | null
+          api_key_ref: string | null
           clients_count: number | null
+          clients_missing: number | null
           devis_count: number | null
+          devis_missing: number | null
           factures_count: number | null
+          factures_missing: number | null
           freshness_minutes: number | null
           freshness_status: string | null
           interventions_count: number | null
+          interventions_missing: number | null
+          last_run_id: string | null
           last_status: string | null
           last_success_at: string | null
           projects_count: number | null
+          projects_missing: number | null
           users_count: number | null
+          users_missing: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "apogee_sync_logs_run_id_fkey"
+            columns: ["last_run_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_runs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
