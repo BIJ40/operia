@@ -119,7 +119,7 @@ export function AlertesBanner({ alertes }: AlertesBannerProps) {
 
   const navigateToDossier = (ref: string) => {
     setOpenAlerte(null);
-    navigate(`/apporteur/dashboard?tab=dossiers&search=${ref}`);
+    navigate(`/apporteur/dashboard?tab=dossiers&dossierRef=${encodeURIComponent(ref)}`);
   };
 
   return (
