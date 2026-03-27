@@ -1184,11 +1184,24 @@ export default function MapsTabContent() {
 
   return (
     <div className="flex flex-col" style={{ height: 'calc(100vh - 12rem)' }}>
-      <SimpleFolderTabsList
-        tabs={MAP_SUB_TABS}
-        activeTab={activeSubTab}
-        onTabChange={(v) => { setActiveSubTab(v as MapsSubTab); setSelectedRdv(null); }}
-      />
+      <div className="flex items-center gap-2">
+        <div className="flex-1">
+          <SimpleFolderTabsList
+            tabs={MAP_SUB_TABS}
+            activeTab={activeSubTab}
+            onTabChange={(v) => { setActiveSubTab(v as MapsSubTab); setSelectedRdv(null); }}
+          />
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="shrink-0 gap-1.5 mr-2"
+          onClick={() => setZoneDialogOpen(true)}
+        >
+          <MapPin className="h-3.5 w-3.5" />
+          Zone ({agencyZone.length})
+        </Button>
+      </div>
 
       <DraggableFolderContentContainer accentColor={activeAccentColor} className="flex-1 flex flex-col min-h-0 !p-0">
         {/* Barre de filtres — visible uniquement en mode RDV */}
