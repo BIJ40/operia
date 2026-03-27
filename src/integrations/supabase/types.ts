@@ -8279,6 +8279,7 @@ export type Database = {
           support_level: number | null
           support_role: Database["public"]["Enums"]["support_role"] | null
           updated_at: string
+          username: string | null
         }
         Insert: {
           agence?: string | null
@@ -8308,6 +8309,7 @@ export type Database = {
           support_level?: number | null
           support_role?: Database["public"]["Enums"]["support_role"] | null
           updated_at?: string
+          username?: string | null
         }
         Update: {
           agence?: string | null
@@ -8337,6 +8339,7 @@ export type Database = {
           support_level?: number | null
           support_role?: Database["public"]["Enums"]["support_role"] | null
           updated_at?: string
+          username?: string | null
         }
         Relationships: [
           {
