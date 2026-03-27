@@ -37,6 +37,31 @@ Deno.serve(async (req) => {
   // Cache resolved names by ref_dossier+agency
   const nameCache = new Map<string, string | null>();
 
+  // Cache clients list per agency
+  const clientsCache = new Map<string, any[]>();
+
+  async function getClients(agencySlug: string): Promise<any[]> {
+    if (clientsCache.has(agencySlug)) return clientsCache.get(agencySlug)!;
+    const subdomain = agencyMap.get(agencySlug);
+    if (!subdomain || !APOGEE_API_KEY) return [];
+    try {
+      const resp = await fetch(`https://${subdomain}.hc-apogee.fr/api/apiGetClients`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ API_KEY: APOGEE_API_KEY }),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        const clients = Array.isArray(data) ? data : [];
+        clientsCache.set(agencySlug, clients);
+        return clients;
+      }
+    } catch (e) {
+      console.warn(`Failed to fetch clients for ${agencySlug}:`, e);
+    }
+    return [];
+  }
+
   async function resolveClientName(refDossier: string, agencySlug: string): Promise<string | null> {
     const cacheKey = `${agencySlug}:${refDossier}`;
     if (nameCache.has(cacheKey)) return nameCache.get(cacheKey)!;
