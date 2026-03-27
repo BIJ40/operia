@@ -472,25 +472,23 @@ function PlanningTechniciensSemaineContent() {
                 />
               ))}
             </div>
-          )}
+           )}
+
+          {/* Bloc signature - UNIQUEMENT visible à l'impression */}
+          <div className="hidden print-signature-block" style={{ display: 'none' }}>
+            <div className="flex items-center justify-between border border-foreground/50 rounded px-3 py-2 mt-2 mx-2">
+              <div className="flex items-center gap-4">
+                <p className="text-xs font-semibold">SIGNATURE SALARIÉ</p>
+                <p className="text-[10px] text-muted-foreground italic">
+                  En accord avec les heures de travail présentées
+                </p>
+                <div className="border border-foreground/40 rounded h-10 w-40" />
+              </div>
+              <p className="text-[10px] text-muted-foreground">Date : ____/____/________</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
-      
-      {/* Bloc signature - UNIQUEMENT visible à l'impression */}
-      <div className="hidden print-signature-block mt-4" style={{ display: 'none' }}>
-        <div className="flex items-start justify-between border-2 border-foreground/60 rounded-lg p-4">
-          <div className="flex-1">
-            <p className="text-sm font-semibold mb-1">SIGNATURE SALARIÉ</p>
-            <p className="text-xs text-muted-foreground italic mb-3">
-              En accord avec les heures de travail présentées
-            </p>
-            <div className="border border-foreground/40 rounded h-16 w-56" />
-          </div>
-          <div className="text-right text-xs text-muted-foreground">
-            <p>Date : ____/____/________</p>
-          </div>
-        </div>
-      </div>
 
       {/* Légende */}
       <div className="flex flex-wrap gap-4 text-sm print:hidden">
