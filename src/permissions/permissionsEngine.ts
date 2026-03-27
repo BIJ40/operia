@@ -474,33 +474,7 @@ export function explainAccess(params: HasAccessParams): AccessTrace[] {
     });
     if (!finalResult) return traces;
   }
-  
-  // Step 3: Vérifier agence si nécessaire
-  if (AGENCY_REQUIRED_MODULES.includes(moduleId)) {
-    const hasAgency = !!agencyId;
-    traces.push({
-      step: 'agency_check',
-      result: hasAgency,
-      reason: hasAgency
-        ? `Module ${moduleId} nécessite agence → agence présente (${agencyId})`
-        : `Module ${moduleId} nécessite agence → AUCUNE AGENCE`,
-    });
-    if (!hasAgency) return traces;
-  }
-  
-  // Step 4: Vérifier activation du module
-  const effectiveModules = getEffectiveModules({ globalRole, enabledModules, agencyId });
-  const moduleAccess = effectiveModules.find(m => m.id === moduleId);
-  
-  traces.push({
-    step: 'module_enabled_check',
-    result: !!moduleAccess?.enabled,
-    reason: moduleAccess?.enabled
-      ? `Module ${moduleId} activé (source: ${moduleAccess.source})`
-      : `Module ${moduleId} non activé`,
-  });
-  if (!moduleAccess?.enabled) return traces;
-  
+
   // Step 5: Vérifier option si demandée
   if (optionId) {
     const hasOption = moduleAccess.options?.[optionId] === true;
