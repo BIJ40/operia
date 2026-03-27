@@ -24,6 +24,7 @@ export function AdminRoutes() {
     <>
       {/* Index - redirect to unified interface */}
       <Route path="/admin" element={<Navigate to="/?tab=admin" replace />} />
+      <Route path="/admin/franchiseur" element={<Navigate to="/?tab=admin&adminTab=relations" replace />} />
       
       {/* ===== REDIRECTIONS VERS LE WORKSPACE UNIFIÉ ===== */}
       

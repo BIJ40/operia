@@ -1,6 +1,6 @@
 /**
- * AdminHubContent - Nouveau point d'entrée Admin avec 6 onglets principaux
- * Onglets principaux en style "Pill", sous-onglets en style "DraggableFolder" avec bordures colorées
+ * AdminHubContent - Point d'entrée Admin avec 6 onglets principaux
+ * Onglets principaux en style "Pill", sous-onglets en style "DraggableFolder"
  */
 
 import { useSearchParams } from 'react-router-dom';
@@ -14,22 +14,22 @@ import {
   FolderTabConfig 
 } from '@/components/ui/draggable-folder-tabs';
 import {
+  ReseauView,
   IAView,
   ContenuView,
   OpsView,
   PlateformeView,
   ModulesMasterView,
 } from '@/components/admin/views';
-import { lazy, Suspense, useCallback } from 'react';
+import { lazy, Suspense, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 import { useSessionState } from '@/hooks/useSessionState';
 import { usePersistedTab } from '@/hooks/usePersistedState';
 import { useNavigationMode } from '@/hooks/useNavigationMode';
 import { DomainAccentProvider } from '@/contexts/DomainAccentContext';
-import { ReseauView } from '@/components/admin/views';
 
-// Lazy load des composants directs
+// Lazy load
 const TDRUsersPage = lazy(() => import('@/pages/TDRUsersPage'));
 const AdminUserActivity = lazy(() => import('@/pages/AdminUserActivity'));
 const ApporteurManagersAdminView = lazy(() => import('@/components/admin/views/ApporteurManagersAdminView'));
@@ -56,7 +56,7 @@ const ADMIN_MAIN_TABS: PillTabConfig[] = [
   { id: 'plateforme', label: 'Plateforme', icon: Cpu, accent: 'teal' },
 ];
 
-// Sous-onglets pour Gestion (style Folder) - sans apporteurs/audit
+// Sous-onglets Gestion
 const GESTION_SUB_TABS: FolderTabConfig[] = [
   { id: 'users', label: 'Utilisateurs', icon: Users, accent: 'blue' },
   { id: 'inscriptions', label: 'Inscriptions', icon: UserPlus, accent: 'orange' },
@@ -66,7 +66,7 @@ const GESTION_SUB_TABS: FolderTabConfig[] = [
   { id: 'activity', label: 'Activité', icon: Activity, accent: 'green' },
 ];
 
-// Sous-onglets pour Relations (style Folder)
+// Sous-onglets Relations
 const RELATIONS_SUB_TABS: FolderTabConfig[] = [
   { id: 'apporteurs', label: 'Apporteurs', icon: UserCheck, accent: 'purple' },
   { id: 'audit-apporteurs', label: 'Audit Apporteurs', icon: ScrollText, accent: 'green' },
@@ -89,8 +89,7 @@ export default function AdminHubContent() {
   const [gestionTabOrder, setGestionTabOrder] = useSessionState<string[]>('admin_gestion_tab_order', DEFAULT_GESTION_ORDER);
   const [relationsTabOrder, setRelationsTabOrder] = useSessionState<string[]>('admin_relations_tab_order', DEFAULT_RELATIONS_ORDER);
 
-  // Sync URL params
-  const syncUrlIfNeeded = () => {
+  useEffect(() => {
     if (!isAdminRoute) return;
     if (activeTabParam && ADMIN_MAIN_TAB_IDS.includes(activeTabParam)) {
       if (activeTabParam !== persistedMainTab) {
@@ -102,12 +101,7 @@ export default function AdminHubContent() {
     next.set('tab', 'admin');
     next.set('adminTab', persistedMainTab);
     setSearchParams(next, { replace: true });
-  };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  import { useEffect } from 'react';
-
-  // Actually use useEffect properly
-  // (handled inline below)
+  }, [activeTabParam, isAdminRoute, persistedMainTab, searchParams, setSearchParams, setPersistedMainTab]);
 
   const handleTabChange = (value: string) => {
     setPersistedMainTab(value);
@@ -134,7 +128,6 @@ export default function AdminHubContent() {
     setRelationsTabOrder(newOrder);
   }, [setRelationsTabOrder]);
 
-  // Accent colors lookup
   const accentColors: Record<string, string> = {
     blue: 'hsl(var(--warm-blue))',
     purple: 'hsl(var(--warm-purple))',
@@ -172,38 +165,24 @@ export default function AdminHubContent() {
                 onReorder={handleGestionReorder}
                 isDraggable={true}
               />
-              
               <DraggableFolderContentContainer accentColor={activeGestionAccent}>
                 <TabsContent value="users" className="mt-0 focus-visible:outline-none">
-                  <Suspense fallback={<LoadingFallback />}>
-                    <TDRUsersPage />
-                  </Suspense>
+                  <Suspense fallback={<LoadingFallback />}><TDRUsersPage /></Suspense>
                 </TabsContent>
-
                 <TabsContent value="inscriptions" className="mt-0 focus-visible:outline-none">
-                  <Suspense fallback={<LoadingFallback />}>
-                    <PendingRegistrationsList />
-                  </Suspense>
+                  <Suspense fallback={<LoadingFallback />}><PendingRegistrationsList /></Suspense>
                 </TabsContent>
-
                 <TabsContent value="agences" className="mt-0 focus-visible:outline-none">
                   <ReseauView />
                 </TabsContent>
-
                 <TabsContent value="modules" className="mt-0 focus-visible:outline-none">
                   <ModulesMasterView />
                 </TabsContent>
-
                 <TabsContent value="notes" className="mt-0 focus-visible:outline-none">
-                  <Suspense fallback={<LoadingFallback />}>
-                    <AdminNotesView />
-                  </Suspense>
+                  <Suspense fallback={<LoadingFallback />}><AdminNotesView /></Suspense>
                 </TabsContent>
-
                 <TabsContent value="activity" className="mt-0 focus-visible:outline-none">
-                  <Suspense fallback={<LoadingFallback />}>
-                    <AdminUserActivity />
-                  </Suspense>
+                  <Suspense fallback={<LoadingFallback />}><AdminUserActivity /></Suspense>
                 </TabsContent>
               </DraggableFolderContentContainer>
             </Tabs>
@@ -220,44 +199,24 @@ export default function AdminHubContent() {
                 onReorder={handleRelationsReorder}
                 isDraggable={true}
               />
-              
               <DraggableFolderContentContainer accentColor={activeRelationsAccent}>
                 <TabsContent value="apporteurs" className="mt-0 focus-visible:outline-none">
-                  <Suspense fallback={<LoadingFallback />}>
-                    <ApporteurManagersAdminView />
-                  </Suspense>
+                  <Suspense fallback={<LoadingFallback />}><ApporteurManagersAdminView /></Suspense>
                 </TabsContent>
-
                 <TabsContent value="audit-apporteurs" className="mt-0 focus-visible:outline-none">
-                  <Suspense fallback={<LoadingFallback />}>
-                    <ApporteurAuditLogView />
-                  </Suspense>
+                  <Suspense fallback={<LoadingFallback />}><ApporteurAuditLogView /></Suspense>
                 </TabsContent>
-
                 <TabsContent value="suivi-clients" className="mt-0 focus-visible:outline-none">
-                  <Suspense fallback={<LoadingFallback />}>
-                    <SuiviClientsAdminView />
-                  </Suspense>
+                  <Suspense fallback={<LoadingFallback />}><SuiviClientsAdminView /></Suspense>
                 </TabsContent>
               </DraggableFolderContentContainer>
             </Tabs>
           </TabsContent>
 
-          <TabsContent value="ia" className="mt-0 focus-visible:outline-none">
-            <IAView />
-          </TabsContent>
-
-          <TabsContent value="contenu" className="mt-0 focus-visible:outline-none">
-            <ContenuView />
-          </TabsContent>
-
-          <TabsContent value="ops" className="mt-0 focus-visible:outline-none">
-            <OpsView />
-          </TabsContent>
-
-          <TabsContent value="plateforme" className="mt-0 focus-visible:outline-none">
-            <PlateformeView />
-          </TabsContent>
+          <TabsContent value="ia" className="mt-0 focus-visible:outline-none"><IAView /></TabsContent>
+          <TabsContent value="contenu" className="mt-0 focus-visible:outline-none"><ContenuView /></TabsContent>
+          <TabsContent value="ops" className="mt-0 focus-visible:outline-none"><OpsView /></TabsContent>
+          <TabsContent value="plateforme" className="mt-0 focus-visible:outline-none"><PlateformeView /></TabsContent>
         </motion.div>
       </Tabs>
     </div>

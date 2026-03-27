@@ -9,3 +9,4 @@ export { ContenuView } from './ContenuView';
 export { OpsView } from './OpsView';
 export { PlateformeView } from './PlateformeView';
 export { ModulesMasterView } from './ModulesMasterView';
+export { default as SuiviClientsAdminView } from './SuiviClientsAdminView';
