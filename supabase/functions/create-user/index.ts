@@ -91,6 +91,7 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
     
     const roleAgence = validateOptionalString(bodyRaw.role_agence || bodyRaw.roleAgence, 'roleAgence', 100) || null
     const sendEmail = validateOptionalBoolean(bodyRaw.sendEmail) !== false
+    const collaboratorId = validateOptionalString(bodyRaw.collaborator_id, 'collaborator_id', 100) || null
     
     console.log(`[create-user] Params: email=${email}, sendEmail=${sendEmail}, bodyRaw.sendEmail=${bodyRaw.sendEmail}`)
 
@@ -372,6 +373,26 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
         }
       } catch (emailError) {
         console.error('[create-user] Exception email:', emailError instanceof Error ? emailError.message : String(emailError))
+      }
+    }
+
+    // Lier le collaborateur au nouvel utilisateur si collaborator_id fourni
+    if (collaboratorId) {
+      const { data: linkedCollab, error: linkError } = await supabaseAdmin
+        .from('collaborators')
+        .update({ user_id: newUser.user.id })
+        .eq('id', collaboratorId)
+        .eq('agency_id', targetAgencyId) // Sécurité: même agence obligatoire
+        .select('id')
+        .maybeSingle()
+
+      if (linkError) {
+        console.error('[create-user] Erreur liaison collaborateur:', linkError)
+        // Non-bloquant: l'utilisateur est créé, la liaison peut être faite manuellement
+      } else if (!linkedCollab) {
+        console.warn(`[create-user] Collaborateur ${collaboratorId} non trouvé dans l'agence ${targetAgencyId} - liaison ignorée`)
+      } else {
+        console.log(`[create-user] Collaborateur ${collaboratorId} lié à l'utilisateur ${newUser.user.id}`)
       }
     }
 
