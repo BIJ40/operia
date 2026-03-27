@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Shield, Building2, User, Mail, Briefcase,
-  Loader2, KeyRound, RefreshCw, AlertCircle
+  Loader2, KeyRound, RefreshCw, AlertCircle, LogIn, Copy
 } from 'lucide-react';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { getVisibleRoleLabel, getVisibleRoleColor, VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
