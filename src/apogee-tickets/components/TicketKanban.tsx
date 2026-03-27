@@ -640,7 +640,7 @@ export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusC
   // ============================================
   // COLONNES PROTÉGÉES - Drop manuel interdit
   // ============================================
-  const PROTECTED_DROP_TARGETS = ['USER', 'SUPPORT_RESOLU', 'IA_ESCALADE'];
+  const PROTECTED_DROP_TARGETS = ['USER', 'IA_RESOLU', 'IA_NON_RESOLU'];
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -654,8 +654,7 @@ export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusC
     // Vérifier que c'est un statut valide
     if (!statuses.find((s) => s.id === newStatus)) return;
 
-    // ============================================
-    // RÈGLE: Interdire le drop dans USER et SUPPORT_RESOLU
+    // RÈGLE: Interdire le drop dans USER, IA_RESOLU et IA_NON_RESOLU
     // Ces colonnes sont réservées au système
     // ============================================
     if (PROTECTED_DROP_TARGETS.includes(newStatus)) {

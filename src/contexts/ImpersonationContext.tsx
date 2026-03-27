@@ -15,7 +15,6 @@ export interface ImpersonatedProfile {
   franchiseurRole: 'animateur' | 'directeur' | 'dg' | null;
   agence: string | null;
   hasIndicateursAccess: boolean;
-  hasSupportRole: boolean;
   hasFranchiseurRole: boolean;
 }
 

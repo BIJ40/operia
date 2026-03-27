@@ -36,13 +36,13 @@ export const PAGE_DEFAULTS: PageDefaultConfig[] = [
   // Support
   { pageKey: 'support_index', defaultTitle: 'Support', defaultSubtitle: 'Assistance et demandes', route: ROUTES.support.index },
   { pageKey: 'support_mes_demandes', defaultTitle: 'Mes demandes', defaultSubtitle: 'Créer et suivre vos demandes de support', route: ROUTES.support.userTickets },
-  { pageKey: 'support_console', defaultTitle: 'Console support', defaultSubtitle: 'Traiter les demandes de support', route: ROUTES.support.console },
+  
   
   // Espace Franchiseur
   { pageKey: 'reseau_index', defaultTitle: 'Espace Franchiseur', defaultSubtitle: 'Pilotage du réseau HelpConfort', route: ROUTES.reseau.index },
   { pageKey: 'reseau_dashboard', defaultTitle: 'Dashboard Réseau', defaultSubtitle: 'Vue d\'ensemble du réseau', route: ROUTES.reseau.dashboard },
   { pageKey: 'reseau_agences', defaultTitle: 'Agences du Réseau', defaultSubtitle: 'Gestion des agences franchisées', route: ROUTES.reseau.agences },
-  { pageKey: 'reseau_animateurs', defaultTitle: 'Gestion Animateurs', defaultSubtitle: 'Équipe d\'animation réseau', route: ROUTES.reseau.animateurs },
+  
   { pageKey: 'reseau_stats', defaultTitle: 'Tableaux Réseau', defaultSubtitle: 'KPI consolidés du réseau', route: ROUTES.reseau.tableaux },
   { pageKey: 'reseau_periodes', defaultTitle: 'Périodes', defaultSubtitle: 'Comparaison entre agences', route: ROUTES.reseau.periodes },
   { pageKey: 'reseau_redevances', defaultTitle: 'Redevances', defaultSubtitle: 'Calcul et suivi des redevances', route: ROUTES.reseau.redevances },
@@ -53,8 +53,6 @@ export const PAGE_DEFAULTS: PageDefaultConfig[] = [
   { pageKey: 'admin_agencies', defaultTitle: 'Gestion Agences', defaultSubtitle: 'Configuration des agences', route: ROUTES.admin.agencies },
   { pageKey: 'admin_backup', defaultTitle: 'Sauvegardes', defaultSubtitle: 'Export et import des données', route: ROUTES.admin.backup },
   { pageKey: 'admin_user_activity', defaultTitle: 'Activité Utilisateurs', defaultSubtitle: 'Historique des connexions', route: ROUTES.admin.userActivity },
-  { pageKey: 'admin_support_stats', defaultTitle: 'Statistiques Support', defaultSubtitle: 'Métriques et indicateurs du support', route: ROUTES.admin.supportStats },
-  { pageKey: 'admin_escalation_history', defaultTitle: 'Historique Escalades', defaultSubtitle: 'Suivi des escalades de tickets', route: ROUTES.admin.escalationHistory },
   { pageKey: 'admin_documents', defaultTitle: 'Documents RAG', defaultSubtitle: 'Base documentaire pour Mme MICHU', route: ROUTES.admin.documents },
   { pageKey: 'admin_storage_quota', defaultTitle: 'Stockage', defaultSubtitle: 'Surveillance des quotas de stockage', route: ROUTES.admin.storageQuota },
   { pageKey: 'admin_page_metadata', defaultTitle: 'Métadonnées des pages', defaultSubtitle: 'Gérez les titres, descriptions et labels de menu', route: ROUTES.admin.pageMetadata },
@@ -166,7 +164,7 @@ export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
   { match: (path) => path === '/support', pageKey: 'support_index', defaultTitle: 'Support', defaultSubtitle: 'Chat IA et assistance', icon: 'Headset', parentRoute: '/', parentLabel: 'Accueil' },
   { match: (path) => path === '/support/mes-demandes', pageKey: 'support_mes_demandes', defaultTitle: 'Mes Demandes', defaultSubtitle: 'Créer et suivre vos demandes de support', icon: 'MessageSquare', parentRoute: '/support', parentLabel: 'Support' },
   { match: (path) => path === '/support/faq', pageKey: 'support_faq', defaultTitle: 'FAQ', defaultSubtitle: 'Questions fréquemment posées', icon: 'HelpCircle', parentRoute: '/support', parentLabel: 'Support' },
-  { match: (path) => path === '/support/console', pageKey: 'support_console', defaultTitle: 'Console Support', defaultSubtitle: 'Traiter les demandes de support', icon: 'Headset', parentRoute: '/support', parentLabel: 'Support' },
+  
   
   // ============================================
   // ESPACE FRANCHISEUR
@@ -175,8 +173,6 @@ export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
   { match: (path) => /^\/hc-reseau\/agences\/[^/]+$/.test(path), pageKey: 'reseau_agence_profile', defaultTitle: 'Profil Agence', defaultSubtitle: 'Détails et configuration de l\'agence', icon: 'Building2', parentRoute: '/hc-reseau/agences', parentLabel: 'Agences' },
   { match: (path) => path === '/hc-reseau/agences', pageKey: 'reseau_agences', defaultTitle: 'Agences du Réseau', defaultSubtitle: 'Gestion des agences franchisées', icon: 'Building2', parentRoute: '/hc-reseau', parentLabel: 'Espace Franchiseur' },
   { match: (path) => path === '/hc-reseau/utilisateurs', pageKey: 'reseau_utilisateurs', defaultTitle: 'Utilisateurs Réseau', defaultSubtitle: 'Gestion des utilisateurs des agences', icon: 'Users', parentRoute: '/hc-reseau', parentLabel: 'Espace Franchiseur' },
-  { match: (path) => /^\/hc-reseau\/animateurs\/[^/]+$/.test(path), pageKey: 'reseau_animateur_profile', defaultTitle: 'Profil Animateur', defaultSubtitle: 'Détails et agences assignées', icon: 'UserCog', parentRoute: '/hc-reseau/animateurs', parentLabel: 'Animateurs' },
-  { match: (path) => path === '/hc-reseau/animateurs', pageKey: 'reseau_animateurs', defaultTitle: 'Gestion Animateurs', defaultSubtitle: 'Équipe d\'animation réseau', icon: 'UserCog', parentRoute: '/hc-reseau', parentLabel: 'Espace Franchiseur' },
   { match: (path) => path === '/hc-reseau/tableaux', pageKey: 'reseau_stats', defaultTitle: 'Tableaux Réseau', defaultSubtitle: 'KPI consolidés du réseau', icon: 'PieChart', parentRoute: '/hc-reseau', parentLabel: 'Espace Franchiseur' },
   { match: (path) => path === '/hc-reseau/periodes', pageKey: 'reseau_periodes', defaultTitle: 'Périodes', defaultSubtitle: 'Comparaison entre agences', icon: 'GitCompare', parentRoute: '/hc-reseau', parentLabel: 'Espace Franchiseur' },
   { match: (path) => path === '/hc-reseau/comparatif', pageKey: 'reseau_comparatif', defaultTitle: 'Comparatif Agences', defaultSubtitle: 'Tableau comparatif des KPI par agence', icon: 'BarChart3', parentRoute: '/hc-reseau', parentLabel: 'Espace Franchiseur' },
@@ -211,8 +207,6 @@ export const PAGE_HEADER_MATCHERS: PageHeaderConfig[] = [
   { match: (path) => path === '/admin/helpconfort-backup', pageKey: 'admin_helpconfort_backup', defaultTitle: 'Backup HelpConfort', defaultSubtitle: 'Sauvegarde base documentaire', icon: 'Database', parentRoute: '/admin', parentLabel: 'Admin' },
   { match: (path) => path === '/admin/cache-backup', pageKey: 'admin_cache_backup', defaultTitle: 'Cache Backup', defaultSubtitle: 'Gestion du cache local', icon: 'HardDrive', parentRoute: '/admin', parentLabel: 'Admin' },
   { match: (path) => path === '/admin/user-activity', pageKey: 'admin_user_activity', defaultTitle: 'Activité Utilisateurs', defaultSubtitle: 'Historique des connexions', icon: 'Activity', parentRoute: '/admin', parentLabel: 'Admin' },
-  { match: (path) => path === '/admin/support-stats', pageKey: 'admin_support_stats', defaultTitle: 'Statistiques Support', defaultSubtitle: 'Métriques et performance du support', icon: 'BarChart3', parentRoute: '/admin', parentLabel: 'Admin' },
-  { match: (path) => path === '/admin/escalation-history', pageKey: 'admin_escalation_history', defaultTitle: 'Historique Escalades', defaultSubtitle: 'Suivi des escalades de tickets', icon: 'ArrowUpCircle', parentRoute: '/admin', parentLabel: 'Admin' },
   { match: (path) => path === '/admin/storage-quota', pageKey: 'admin_storage_quota', defaultTitle: 'Stockage', defaultSubtitle: 'Surveillance des quotas', icon: 'HardDrive', parentRoute: '/admin', parentLabel: 'Admin' },
   { match: (path) => path === '/admin/page-metadata', pageKey: 'admin_page_metadata', defaultTitle: 'Métadonnées des pages', defaultSubtitle: 'Gérez les titres, descriptions et labels de menu', icon: 'FileText', parentRoute: '/admin', parentLabel: 'Admin' },
   { match: (path) => path === '/admin/apogee-guides', pageKey: 'admin_apogee_guides', defaultTitle: 'Guides Apogée (RAG)', defaultSubtitle: 'Édition des guides pour le chatbot', icon: 'BookOpen', parentRoute: '/admin', parentLabel: 'Admin' },

@@ -2,12 +2,12 @@ import type { GlobalRole } from '@/types/globalRoles';
 import type { ModuleKey } from '@/types/modules';
 import type { PlanKey } from '@/config/planTiers';
 
-export type GuardType = 'RoleGuard' | 'ModuleGuard' | 'FaqAdminGuard' | 'ApporteurGuard' | 'SupportConsoleGuard';
+export type GuardType = 'RoleGuard' | 'ModuleGuard' | 'FaqAdminGuard' | 'ApporteurGuard';
 
 export interface RouteGuards {
   roleGuard?: { minRole: GlobalRole };
   moduleGuard?: { moduleKey: ModuleKey; requiredOption?: string; requiredOptions?: string[] };
-  specialGuard?: 'FaqAdminGuard' | 'ApporteurGuard' | 'SupportConsoleGuard';
+  specialGuard?: 'FaqAdminGuard' | 'ApporteurGuard';
 }
 
 export interface RouteMetadata {
@@ -578,16 +578,6 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
       moduleGuard: { moduleKey: 'support.aide_en_ligne' },
     },
   },
-  {
-    path: '/support/console',
-    label: 'Console Support',
-    component: 'SupportConsolePage',
-    section: 'support',
-    guards: {
-      roleGuard: { minRole: 'platform_admin' },
-      specialGuard: 'SupportConsoleGuard',
-    },
-  },
 
   // ==================== RESEAU FRANCHISEUR ====================
   // Interface de rôle (N3+) — accès piloté par rôle global, pas par module.
@@ -623,25 +613,6 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     path: '/hc-reseau/agences/:agencyId',
     label: 'Profil Agence',
     component: 'FranchiseurAgencyProfile',
-    section: 'reseau',
-    guards: {
-      roleGuard: { minRole: 'franchisor_user' },
-    },
-    isDynamic: true,
-  },
-  {
-    path: '/hc-reseau/animateurs',
-    label: 'Animateurs',
-    component: 'FranchiseurAnimateurs',
-    section: 'reseau',
-    guards: {
-      roleGuard: { minRole: 'franchisor_user' },
-    },
-  },
-  {
-    path: '/hc-reseau/animateurs/:animatorId',
-    label: 'Profil Animateur',
-    component: 'AnimatorProfile',
     section: 'reseau',
     guards: {
       roleGuard: { minRole: 'franchisor_user' },
@@ -874,16 +845,6 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     section: 'admin',
     guards: {
       specialGuard: 'FaqAdminGuard',
-    },
-  },
-  {
-    path: '/admin/support',
-    label: 'Admin Support',
-    component: 'AdminSupport',
-    section: 'admin',
-    guards: {
-      roleGuard: { minRole: 'platform_admin' },
-      moduleGuard: { moduleKey: 'admin_plateforme' },
     },
   },
   {

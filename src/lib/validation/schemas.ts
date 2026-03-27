@@ -19,7 +19,6 @@ export const userProfileUpdateSchema = z.object({
     'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin',
   ]).optional(),
   apogee_user_id: z.number().int().positive().nullable().optional(),
-  support_level: z.number().int().min(0).max(3).nullable().optional(),
 });
 
 export type UserProfileUpdateInput = z.infer<typeof userProfileUpdateSchema>;

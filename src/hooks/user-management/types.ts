@@ -51,7 +51,6 @@ export interface UpdateUserData {
   last_name?: string;
   agence?: string;
   role_agence?: string;
-  support_level?: number;
   global_role?: GlobalRole;
   apogee_user_id?: number | null;
 }

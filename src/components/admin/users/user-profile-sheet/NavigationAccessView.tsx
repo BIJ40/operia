@@ -20,6 +20,7 @@ import {
   type NavigationEntry,
 } from '@/lib/navigationStructure';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface NavigationAccessViewProps {
   effectiveModules: Record<string, { enabled?: boolean; options?: Record<string, boolean> }>;
@@ -29,6 +30,7 @@ interface NavigationAccessViewProps {
 export function NavigationAccessView({ effectiveModules, globalRole }: NavigationAccessViewProps) {
   const isAdminBypass = !!globalRole && ADMIN_ROLES.includes(globalRole);
   const { getLabel } = useModuleLabels();
+  const { isDeployedModule } = usePermissions();
 
   // Filter domains: role-gated domains only shown if user has the role
   const visibleDomains = NAVIGATION_STRUCTURE.filter(domain => {
@@ -51,6 +53,7 @@ export function NavigationAccessView({ effectiveModules, globalRole }: Navigatio
             globalRole={globalRole}
             isAdminBypass={isAdminBypass}
             getLabel={getLabel}
+            isDeployedModule={isDeployedModule}
           />
         ))}
       </div>
@@ -64,12 +67,11 @@ export function NavigationAccessView({ effectiveModules, globalRole }: Navigatio
  */
 function resolveEntryLabel(
   entry: NavigationEntry,
-  getLabel: (key: string, fallback?: string) => string,
+  _getLabel: (key: string, fallback?: string) => string,
 ): string {
-  // Only resolve via DB for module-gated entries (not role-gated or alwaysVisible)
-  if (entry.guard.moduleKey) {
-    return getLabel(entry.guard.moduleKey, entry.label);
-  }
+  // Always use the static label from NAVIGATION_STRUCTURE.
+  // DB label resolution caused duplicates when multiple entries share
+  // the same moduleKey (e.g. pilotage.agence → 4 entries all renamed "Mon agence").
   return entry.label;
 }
 
@@ -79,19 +81,21 @@ function DomainCard({
   globalRole,
   isAdminBypass,
   getLabel,
+  isDeployedModule,
 }: {
   domain: NavigationDomain;
   effectiveModules: Record<string, { enabled?: boolean; options?: Record<string, boolean> }>;
   globalRole: GlobalRole | null;
   isAdminBypass: boolean;
   getLabel: (key: string, fallback?: string) => string;
+  isDeployedModule: (key: string) => boolean;
 }) {
   const Icon = domain.icon;
 
   const entriesWithAccess = domain.entries.map(entry => ({
     ...entry,
     resolvedLabel: resolveEntryLabel(entry, getLabel),
-    accessible: evaluateGuard(entry.guard, effectiveModules, globalRole, isAdminBypass),
+    accessible: evaluateGuard(entry.guard, effectiveModules, globalRole, isAdminBypass, isDeployedModule),
   }));
 
   const accessibleCount = entriesWithAccess.filter(e => e.accessible).length;

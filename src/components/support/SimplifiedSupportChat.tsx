@@ -7,8 +7,8 @@
  * 2. Question d'orientation (type de demande)
  * 3. Description du problème
  * 4. Réponse IA via RAG
- * 5. Boutons: "Problème résolu" → ticket SUPPORT_RESOLU
- *            "Toujours bloqué" → screenshot optionnel → ticket IA_ESCALADE
+ * 5. Boutons: "Problème résolu" → ticket IA_RESOLU
+ *            "Toujours bloqué" → screenshot optionnel → ticket IA_NON_RESOLU
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -247,8 +247,8 @@ export function SimplifiedSupportChat({
       
       const description = buildCondensedSummary(isResolved);
       
-      // Status: SUPPORT_RESOLU for resolved, IA_ESCALADE for blocked
-      const kanbanStatus = isResolved ? 'SUPPORT_RESOLU' : 'IA_ESCALADE';
+      // Status: IA_RESOLU for resolved, IA_NON_RESOLU for blocked
+      const kanbanStatus = isResolved ? 'IA_RESOLU' : 'IA_NON_RESOLU';
       const heatPriority = isResolved ? 3 : 10;
       
       const initiatorProfile = {

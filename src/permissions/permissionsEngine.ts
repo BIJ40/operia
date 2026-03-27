@@ -325,7 +325,7 @@ export function getEffectiveModules(ctx: PermissionContext): EffectiveModule[] {
  */
 export function validateUserPermissions(ctx: PermissionContext): PermissionIssue[] {
   const issues: PermissionIssue[] = [];
-  const { globalRole, enabledModules, agencyId, supportLevel } = ctx;
+  const { globalRole, enabledModules, agencyId } = ctx;
   
   // Règle 1: N1/N2 sans agence
   if (globalRole && AGENCY_ROLES.includes(globalRole) && !agencyId) {
@@ -364,24 +364,6 @@ export function validateUserPermissions(ctx: PermissionContext): PermissionIssue
           moduleId: moduleKey,
         });
       }
-    }
-  }
-  
-  // Règle 4: Support level sans agent option
-  if (supportLevel && supportLevel > 0) {
-    const aideModule = enabledModules?.['support.aide_en_ligne'] || enabledModules?.aide;
-    const isAgentEnabled = typeof aideModule === 'object' 
-      ? aideModule?.options?.agent === true
-      : false;
-      
-    if (!isAgentEnabled) {
-      issues.push({
-        type: 'error',
-        code: 'SUPPORT_LEVEL_NO_AGENT',
-        message: `Niveau support SA${supportLevel} défini mais option agent non activée`,
-        fix: 'Activer support.aide_en_ligne.options.agent ou retirer support_level',
-        moduleId: 'support.aide_en_ligne' as ModuleKey,
-      });
     }
   }
   
@@ -550,7 +532,7 @@ export function getUserManagementCapabilities(role: GlobalRole | null): UserMana
     case 'franchisor_user':
       return {
         viewScope: 'allAgencies',
-        manageScope: 'assignedAgencies',
+        manageScope: 'allAgencies',
         canCreateRoles: ['base_user', 'franchisee_user', 'franchisee_admin'],
         canEditRoles: ['base_user', 'franchisee_user', 'franchisee_admin'],
         canDeactivateRoles: ['base_user', 'franchisee_user', 'franchisee_admin'],

@@ -117,12 +117,6 @@ export function AgencyInfoCompact() {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <h2 className="text-base font-semibold text-foreground">{agency.label}</h2>
-          {agency.animateurs && agency.animateurs.length > 0 && (
-            <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-              <Users className="w-3 h-3 inline mr-1" />
-              {agency.animateurs.map(a => a.first_name).join(', ')}
-            </span>
-          )}
         </div>
         
         <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground flex-wrap">

@@ -2,8 +2,8 @@
  * Test d'intégration : flux complet Centre d'aide
  * 
  * Scénarios couverts :
- * 1. Création ticket IA résolu → SUPPORT_RESOLU
- * 2. Création ticket IA escaladé → IA_ESCALADE
+ * 1. Création ticket IA résolu → IA_RESOLU
+ * 2. Création ticket IA non résolu → IA_NON_RESOLU
  * 3. Envoi réponse support sur le ticket
  * 4. Vérification réception côté user
  * 5. Réponse user et vérification
@@ -40,14 +40,14 @@ Deno.test({ name: "Setup: authenticate as test-n5", sanitizeOps: false, sanitize
   assert(userId.length > 0, "userId should be set");
 }});
 
-// ─── S1: Ticket IA résolu → SUPPORT_RESOLU ──────────────────────
-Deno.test("S1: Create ticket with status SUPPORT_RESOLU (AI resolved)", async () => {
+// ─── S1: Ticket IA résolu → IA_RESOLU ──────────────────────
+Deno.test("S1: Create ticket with status IA_RESOLU (AI resolved)", async () => {
   const { data, error } = await supabase
     .from("apogee_tickets")
     .insert({
       element_concerne: "[TEST-AUTO] [APOGÉE] [QUESTION] Comment exporter un devis ?",
       description: "📋 Domaine : Apogée\n📝 Type : Question\n💬 Question : Comment exporter ?\n🤖 Réponse IA : Allez dans Devis > Exporter\n📊 Résultat : Résolu par l'IA",
-      kanban_status: "SUPPORT_RESOLU",
+      kanban_status: "IA_RESOLU",
       created_from: "support",
       created_by_user_id: userId,
       support_initiator_user_id: userId,
@@ -62,20 +62,20 @@ Deno.test("S1: Create ticket with status SUPPORT_RESOLU (AI resolved)", async ()
   assertExists(data, `Ticket creation failed: ${error?.message}`);
   createdTicketIds.push(data.id);
 
-  assertEquals(data.kanban_status, "SUPPORT_RESOLU");
+  assertEquals(data.kanban_status, "IA_RESOLU");
   assertEquals(data.reported_by, "AGENCE");
   assertEquals(data.created_from, "support");
   assert(data.ticket_number > 0, "ticket_number should be auto-generated");
 });
 
-// ─── S2: Ticket IA escaladé → IA_ESCALADE ──────────────────────
-Deno.test("S2: Create ticket with status IA_ESCALADE (user still blocked)", async () => {
+// ─── S2: Ticket IA non résolu → IA_NON_RESOLU ──────────────────────
+Deno.test("S2: Create ticket with status IA_NON_RESOLU (user still blocked)", async () => {
   const { data, error } = await supabase
     .from("apogee_tickets")
     .insert({
       element_concerne: "[TEST-AUTO] [APOGÉE] [BUG] Planning écran blanc",
       description: "📋 Domaine : Apogée\n📝 Type : Bug\n💬 Question : Le planning ne charge plus\n🤖 Réponse IA : Videz le cache\n📊 Résultat : Toujours bloqué",
-      kanban_status: "IA_ESCALADE",
+      kanban_status: "IA_NON_RESOLU",
       created_from: "support",
       created_by_user_id: userId,
       support_initiator_user_id: userId,
@@ -91,31 +91,31 @@ Deno.test("S2: Create ticket with status IA_ESCALADE (user still blocked)", asyn
   assertExists(data, `Ticket creation failed: ${error?.message}`);
   createdTicketIds.push(data.id);
 
-  assertEquals(data.kanban_status, "IA_ESCALADE");
+  assertEquals(data.kanban_status, "IA_NON_RESOLU");
   assertEquals(data.heat_priority, 10);
   assertEquals(data.is_urgent_support, true);
 });
 
-// ─── S3: Support voit le ticket escaladé ────────────────────────
-Deno.test("S3: Escalated ticket is visible in query", async () => {
-  const escalatedId = createdTicketIds[1];
-  assertExists(escalatedId, "S2 ticket must exist first");
+// ─── S3: Le ticket non résolu est visible ────────────────────────
+Deno.test("S3: Non-resolved ticket is visible in query", async () => {
+  const ticketId = createdTicketIds[1];
+  assertExists(ticketId, "S2 ticket must exist first");
 
   const { data, error } = await supabase
     .from("apogee_tickets")
     .select("id, kanban_status, element_concerne, support_initiator_user_id")
-    .eq("id", escalatedId)
+    .eq("id", ticketId)
     .single();
 
   assertExists(data, `Query failed: ${error?.message}`);
-  assertEquals(data.kanban_status, "IA_ESCALADE");
+  assertEquals(data.kanban_status, "IA_NON_RESOLU");
   assertEquals(data.support_initiator_user_id, userId);
 });
 
 // ─── S4: Support envoie une réponse ─────────────────────────────
-Deno.test("S4: Support sends a response on escalated ticket", async () => {
+Deno.test("S4: Support sends a response on non-resolved ticket", async () => {
   const ticketId = createdTicketIds[1];
-  assertExists(ticketId, "Escalated ticket must exist");
+  assertExists(ticketId, "Non-resolved ticket must exist");
 
   const { data, error } = await supabase
     .from("apogee_ticket_support_exchanges")

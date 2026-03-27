@@ -123,21 +123,10 @@ export function NavigationCards() {
       ],
     },
     {
-      title: 'Support',
-      description: 'Tickets, statistiques et escalades',
+      title: 'Gestion de Projet',
+      description: 'Tickets et suivi de projet',
       cards: [
-        { 
-          to: ROUTES.support.console, 
-          icon: Headset, 
-          title: 'Console Support', 
-          description: 'Gérer les tickets clients',
-          children: [
-            { to: ROUTES.admin.supportStats, icon: BarChart3, title: 'Statistiques Support' },
-            { to: ROUTES.admin.escalationHistory, icon: History, title: 'Historique Escalades' },
-          ]
-        },
-        { to: ROUTES.admin.supportStats, icon: BarChart3, title: 'Statistiques Support', description: 'Métriques et indicateurs' },
-        { to: ROUTES.admin.escalationHistory, icon: History, title: 'Historique Escalades', description: 'Escalades chatbot' },
+        { to: '/?tab=ticketing', icon: Headset, title: 'Ticketing', description: 'Gérer les tickets' },
       ],
     },
     {

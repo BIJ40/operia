@@ -155,20 +155,6 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
     enabled_modules?: EnabledModules | null;
   }>>({});
 
-  // ✅ Récupérer les agences assignées (pour N3/N4)
-  const { data: assignedAgenciesRaw } = useQuery({
-    queryKey: ['franchiseur-assigned-agencies', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return [];
-      const { data, error } = await supabase
-        .from('franchiseur_agency_assignments')
-        .select('agency_id')
-        .eq('user_id', user.id);
-      if (error) throw error;
-      return data?.map(a => a.agency_id) ?? [];
-    },
-    enabled: !!user?.id && (effectiveUserRole === 'franchisor_user' || effectiveUserRole === 'franchisor_admin'),
-  });
 
   // ✅ Calcul de manageableAgencyIds (liste des agences visibles/gérables)
   const manageableAgencyIds = useMemo<string[] | null>(() => {
@@ -182,14 +168,14 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       case 'ownAgency':
         return currentUserAgencyId ? [currentUserAgencyId] : [];
       case 'assignedAgencies':
-        // Utiliser les agences assignées (UUIDs), ou vide si aucune
-        return assignedAgenciesRaw?.length ? assignedAgenciesRaw : [];
+      case 'allAgencies':
+        return null;
       case 'allAgencies':
         return null; // null = pas de filtre agence
       default:
         return [];
     }
-  }, [effectiveScope, restrictToAgencyId, currentUserAgencyId, assignedAgenciesRaw]);
+  }, [effectiveScope, restrictToAgencyId, currentUserAgencyId]);
 
   // ✅ Fetch users avec sélection explicite de colonnes + modules depuis user_modules
   const { data: users, isLoading: usersLoading } = useQuery({
@@ -266,9 +252,9 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       if (capabilities.viewScope === 'self') {
         return u.id === user?.id;
       }
-      return canViewUser(effectiveUserRole, currentUserAgency, u.agence, assignedAgenciesRaw);
+      return canViewUser(effectiveUserRole, currentUserAgency, u.agence);
     });
-  }, [users, capabilities, effectiveUserRole, currentUserAgency, user?.id, assignedAgenciesRaw]);
+  }, [users, capabilities, effectiveUserRole, currentUserAgency, user?.id]);
 
   // Fetch agencies from apogee_agencies table
   const { data: agencies = [] } = useAdminAgencies();
@@ -503,7 +489,6 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
         agence?: string; 
         agency_id?: string | null;
         role_agence?: string; 
-        support_level?: number; 
         global_role?: GlobalRole;
         apogee_user_id?: number | null;
       } 
@@ -525,32 +510,6 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
         global_role: effectiveGlobalRole,
         apogee_user_id: data.apogee_user_id,
       };
-      
-      // 🛡️ V2: Écrire support_level directement dans profiles.support_level (colonne)
-      if (data.support_level !== undefined) {
-        // C2 - Garde-fou explicite: level=0 n'existe pas conceptuellement
-        if (data.support_level === 0) {
-          throw new Error('Le niveau SA0 n\'existe pas. Utilisez level=null ou désactivez le statut agent.');
-        }
-        
-        // Check agent status from user_modules table
-        const { data: agentModule } = await supabase
-          .from('user_modules')
-          .select('options')
-          .eq('user_id', userId)
-          .eq('module_key', 'aide')
-          .maybeSingle();
-        
-        const isAgent = (agentModule?.options as Record<string, boolean> | null)?.agent === true;
-        
-        // ✅ RÈGLE CRITIQUE: Seuls les agents support (agent=true) peuvent avoir un level > 0
-        if (data.support_level > 0 && !isAgent) {
-          throw new Error('Impossible de définir un niveau support sans activer le statut d\'agent support');
-        }
-        
-        // V2: Écrire dans profiles.support_level (colonne) au lieu de enabled_modules.support.options.level
-        updateData.support_level = isAgent ? data.support_level : null;
-      }
       
       const { error } = await supabase.from('profiles').update(updateData).eq('id', userId);
       if (error) throw error;
@@ -669,21 +628,6 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       newModuleState = { ...moduleState, options: { ...(moduleState.options || {}), [optionKey]: enabled } };
     } else {
       newModuleState = { enabled: !!moduleState, options: { [optionKey]: enabled } };
-    }
-    
-    // 🛡️ P0.2 + P1: GESTION SPÉCIALE support.aide_en_ligne.agent
-    if (moduleKey === 'support.aide_en_ligne' && optionKey === 'agent') {
-      const opts = (newModuleState.options ?? {}) as Record<string, unknown>;
-      if (enabled) {
-        // ✅ ACTIVATION agent support → forcer level: 1 (SA1) si absent
-        if (!opts.level) {
-          opts.level = 1;
-        }
-      } else {
-        // ✅ DÉSACTIVATION agent support → supprimer level
-        delete opts.level;
-      }
-      newModuleState = { ...newModuleState, options: opts as Record<string, boolean> };
     }
     
     setModifiedUsers(prev => ({

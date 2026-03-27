@@ -97,13 +97,6 @@ function AgencyProfilePanelContent({ agencyId, onClose }: { agencyId: string; on
               {!agency.is_active && (
                 <Badge variant="secondary">Inactive</Badge>
               )}
-              {agency.animateurs && agency.animateurs.length > 0 ? (
-                <Badge className="bg-emerald-500 hover:bg-emerald-600">
-                  {agency.animateurs.length} Animateur{agency.animateurs.length > 1 ? 's' : ''}
-                </Badge>
-              ) : (
-                <Badge variant="secondary">Sans animateur</Badge>
-              )}
             </div>
           </div>
           
@@ -164,18 +157,6 @@ function AgencyProfilePanelContent({ agencyId, onClose }: { agencyId: string; on
                   </div>
                 </div>
 
-                {agency.animateurs && agency.animateurs.length > 0 && (
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Animateurs réseau</p>
-                    <div className="flex flex-wrap gap-1">
-                      {agency.animateurs.map(a => (
-                        <Badge key={a.id} variant="secondary" className="text-xs">
-                          {a.first_name} {a.last_name}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
 

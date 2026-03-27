@@ -172,15 +172,6 @@ export function useUserMutations({
 
   const updateUserMutation = useMutation({
     mutationFn: async ({ userId, data }: { userId: string; data: UpdateUserData }) => {
-      if (data.support_level !== undefined) {
-        if (data.support_level > 0 && data.support_level < 1) {
-          throw new Error('Le niveau support doit être au minimum 1 (SA1)');
-        }
-        if (data.support_level === 0) {
-          data.support_level = undefined;
-        }
-      }
-      
       const { error } = await supabase.from('profiles').update(data).eq('id', userId);
       if (error) throw error;
       return { userId, data };

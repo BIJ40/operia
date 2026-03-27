@@ -1,71 +1,72 @@
 
 
-## Plan : Francisation des statuts API bruts affichés en UX
+## Diagnostic : Bugs de la fiche utilisateur (NavigationAccessView)
 
-### Problème
-Plusieurs composants affichent directement les codes d'état bruts de l'API Apogée (`to_planify_tvx`, `wait_fourn`, `order`, `accepted`, `draft`, `sent`, etc.) au lieu de labels français lisibles.
+### Problèmes identifiés (3 bugs d'affichage, pas de bug de droits réels)
+
+**Les droits effectifs (RPC) sont probablement corrects.** Le problème est dans `NavigationAccessView` qui affiche mal la structure de navigation.
 
 ---
 
-### Étape 1 — Créer un mapping centralisé `src/shared/utils/stateLabels.ts`
+### Bug 1 — Labels dupliqués (critique)
 
-Extraire et enrichir le mapping qui existe déjà dans `useAnomaliesDevisDossier.ts` :
+`resolveEntryLabel()` utilise `entry.guard.moduleKey` pour résoudre le label DB. Quand plusieurs entrées partagent le même `moduleKey`, elles obtiennent toutes le même label :
 
 ```text
-new           → Nouveau
-devis_a_faire → Devis à rédiger
-devis_sent    → Devis envoyé
-devis_to_order→ À commander
-wait_fourn    → En attente fournisseur
-to_planify_tvx→ À planifier travaux
-planified_tvx → Planifié travaux
-planifie_rt   → Planifié RT
-rt_fait       → Retour technicien réalisé
-to_be_invoiced→ À facturer
-invoiced/invoice → Facturé
-done          → Réalisé
-canceled      → Annulé
-stand_by      → En attente
-accepted      → Accepté
-order         → Validé (commande)
-refused       → Refusé
-draft         → Brouillon
-sent          → Envoyé
+Pilotage:
+  Performance    → getLabel('pilotage.agence') → "Mon agence"
+  Actions à mener→ getLabel('pilotage.agence') → "Mon agence"  ← doublon
+  Devis acceptés → getLabel('pilotage.agence') → "Mon agence"  ← doublon
+  Incohérences   → getLabel('pilotage.agence') → "Mon agence"  ← doublon
+
+Commercial:
+  Suivi client   → getLabel('prospection') → "Commercial / Prospection"
+  Comparateur    → getLabel('prospection') → "Commercial / Prospection"  ← doublon
+  ...
+
+Documents:
+  Raccourcis     → getLabel('mediatheque.gerer') → "Gérer"
+  Corbeille      → getLabel('mediatheque.gerer') → "Gérer"  ← doublon
 ```
 
-Exporter une fonction `stateLabel(state: string): string` qui retourne le label FR ou le state brut en fallback.
+**Correction** : Dans `resolveEntryLabel`, le label DB ne doit être utilisé que si l'entrée a un `moduleKey` **unique** dans son domaine. Sinon, garder le label statique (`entry.label`). Plus simplement : ne jamais overrider le label statique par le label DB quand `optionKey` est défini ou quand le moduleKey est partagé.
 
 ---
 
-### Étape 2 — Appliquer le mapping dans les composants qui affichent des états bruts
+### Bug 2 — Franchiseur affiché 8/8 alors que c'est en développement
 
-| Fichier | Ce qui est affiché brut | Correction |
-|---|---|---|
-| `DossierDetailDialog.tsx` L145 | `data.project.state` | `stateLabel(...)` |
-| `DossierDetailDialog.tsx` L295 | `devis.state` | `stateLabel(...)` |
-| `DossierDetailDialog.tsx` L359 | `intervention.state` | `stateLabel(...)` |
-| `TechWeeklyPlanningList.tsx` L169 | `slot.state` | `stateLabel(...)` |
-| `ApogeeDocumentsExplorer.tsx` L194 | `doc.state` | `stateLabel(...)` |
-| `DetailDrawer.tsx` L186, L189 | `a.status`, `a.projectState` | `stateLabel(...)` |
-| `CAPlanifieDetailDialog.tsx` L254 | ternaire inline avec `'Att. fourn.'` | `stateLabel(state)` |
-| `ticket.status` fallbacks (AideTabContent L370, RecentTicketsWidget L137) | `ticket.status` quand `statusLabel` est absent | `stateLabel(ticket.status)` |
+La section Franchiseur dans `NAVIGATION_STRUCTURE` a `roleGated: FRANCHISEUR_ROLES` et chaque entrée a `minRoles: FRANCHISEUR_ROLES`. Eric est `franchisor_user` (N3), donc `evaluateGuard` retourne `true` pour toutes les entrées.
+
+Le problème : ces entrées ne vérifient pas `isDeployedModule`. Si le domaine Franchiseur est marqué "en cours de développement", les guards devraient en tenir compte.
+
+**Correction** : Ajouter un champ optionnel `deploymentKey` dans `NavigationGuard` et vérifier `isDeployedModule` dans `evaluateGuard`. Alternativement, filtrer les entrées non-déployées dans `NavigationAccessView`.
 
 ---
 
-### Étape 3 — Réutiliser le mapping centralisé dans le hook anomalies
+### Bug 3 — Modules plan affichés comme accessibles pour un franchiseur sans agence
 
-Remplacer le `STATE_LABELS` local dans `useAnomaliesDevisDossier.ts` par un import de `stateLabel()` depuis le fichier partagé pour éviter la duplication.
+Eric (N3, `agency_id = NULL`) voit Statistiques ✅, Plannings ✅, etc. La RPC `get_user_effective_modules` retourne ces modules parce qu'elle applique un plan par défaut aux N2+, même sans agence.
+
+C'est un **vrai problème de données** dans la RPC — pas juste d'affichage. Un franchiseur sans agence ne devrait pas hériter des modules de plan d'agence.
+
+**Correction RPC** : Conditionner l'héritage plan-tier au fait que l'utilisateur ait un `agency_id` non NULL. Les franchiseurs (N3-N4) sans agence ne devraient recevoir que les modules explicitement dans `user_modules`.
 
 ---
 
-### Fichiers modifiés (8 fichiers)
+### Plan d'implémentation
 
-1. **`src/shared/utils/stateLabels.ts`** — nouveau, mapping + fonction
-2. **`src/apogee-connect/components/DossierDetailDialog.tsx`** — 3 remplacements
-3. **`src/apogee-connect/components/TechWeeklyPlanningList.tsx`** — 1 remplacement
-4. **`src/apogee-connect/components/ApogeeDocumentsExplorer.tsx`** — 1 remplacement
-5. **`src/planning-v2/components/shared/DetailDrawer.tsx`** — 2 remplacements
-6. **`src/apogee-connect/components/stats-hub/CAPlanifieDetailDialog.tsx`** — remplacement ternaire
-7. **`src/apogee-connect/hooks/useAnomaliesDevisDossier.ts`** — réutiliser le mapping partagé
-8. **`src/components/unified/tabs/AideTabContent.tsx`** + **`RecentTicketsWidget.tsx`** — fallback ticket.status
+**Fichier 1 — `src/components/admin/users/user-profile-sheet/NavigationAccessView.tsx`**
+- Modifier `resolveEntryLabel` : utiliser le label statique (`entry.label`) quand l'entrée a un `optionKey` ou quand le `moduleKey` est partagé par plusieurs entrées du même domaine. Ne résoudre via DB que pour les entrées avec un moduleKey unique.
+
+**Fichier 2 — `src/lib/navigationStructure.ts`**
+- Ajouter `deploymentKey?: string` dans `NavigationGuard` pour les entrées du domaine Franchiseur.
+- Modifier `evaluateGuard` pour intégrer un check de déploiement optionnel (passé en paramètre).
+
+**Fichier 3 — Correction RPC (migration SQL)**
+- Modifier la RPC `get_user_effective_modules` : ajouter une condition `AND v_agency_id IS NOT NULL` à l'héritage des `plan_tier_modules`. Cela garantit que les franchiseurs sans agence ne reçoivent que leurs modules explicites.
+
+### Fichiers modifiés
+1. `src/components/admin/users/user-profile-sheet/NavigationAccessView.tsx` — fix labels dupliqués
+2. `src/lib/navigationStructure.ts` — support deploymentKey dans guards
+3. Migration SQL — fix RPC pour franchiseurs sans agence
 

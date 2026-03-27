@@ -28,7 +28,7 @@ const TABLES_PART_1 = [
   "user_consents",
   "user_creation_requests",
   "franchiseur_roles",
-  "franchiseur_agency_assignments",
+  
   "agency_royalty_config",
   "agency_royalty_tiers",
   "agency_royalty_calculations",
@@ -51,7 +51,7 @@ const TABLES_PART_2 = [
   "payslip_data",
   "salary_history",
   "rh_audit_log",
-  "rh_notifications",
+  
   "sensitive_data_access_log",
   "leave_requests",
   "leave_balances",
@@ -124,7 +124,7 @@ const TABLES_PART_5 = [
 
 // Part 6 - Fleet, Maintenance, StatIA & Settings (~17 tables)
 const TABLES_PART_6 = [
-  "animator_visits",
+  
   "expense_requests",
   "fleet_vehicles",
   "maintenance_events",

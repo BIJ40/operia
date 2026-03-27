@@ -1505,12 +1505,10 @@ export const RULES_JSON_CONFIG = {
     /** Accès modules conditionné par: globalRole, scope agence, user_modules + plan_tier_modules */
     moduleAccess: ['globalRole', 'manageScope', 'viewScope', 'user_modules'],
     
-    /** SUPPORT_AGENT_ROLE: Accès console Support */
+    /** SUPPORT_AGENT_ROLE: Accès gestion tickets (via option agent) */
     supportAgent: {
       condition: 'user_modules.aide.options.agent',
       anyRole: true,
-      chatFlottant: ['N3', 'N4'],
-      consoleFull: 'agent_declared',
     },
     
     /** MODULE_GATING_PAR_ROLE: voir ≠ piloter ≠ administrer */

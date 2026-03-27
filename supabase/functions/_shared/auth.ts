@@ -18,7 +18,6 @@ export interface UserContext {
   globalRoleLevel: number;
   agencyId: string | null;
   agencySlug: string | null;
-  supportLevel: number | null;
 }
 
 export interface AuthResult {
@@ -59,7 +58,7 @@ export async function getUserContext(req: Request): Promise<AuthResult | AuthErr
   // Charger le profil avec les champs critiques
   const { data: profile, error: profileErr } = await supabase
     .from('profiles')
-    .select('agence, agency_id, global_role, support_level')
+    .select('agence, agency_id, global_role')
     .eq('id', user.id)
     .single();
 
@@ -78,7 +77,6 @@ export async function getUserContext(req: Request): Promise<AuthResult | AuthErr
       globalRoleLevel,
       agencyId: profile.agency_id,
       agencySlug: profile.agence,
-      supportLevel: profile.support_level,
     },
     supabase,
   };

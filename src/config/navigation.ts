@@ -140,13 +140,6 @@ export const NAV_GROUPS: NavGroup[] = [
         scope: 'mes_demandes', 
         description: 'Chat IA et assistance'
       },
-      { 
-        title: 'Console Support', 
-        url: ROUTES.support.console, 
-        icon: Headset, 
-        scope: 'ticketing', 
-        description: 'Traiter les demandes de support' 
-      },
     ],
   },
   {
@@ -198,7 +191,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { title: 'Dashboard Réseau', url: ROUTES.reseau.dashboard, icon: Network, scope: 'franchiseur_dashboard' },
       { title: 'Agences', url: ROUTES.reseau.agences, icon: Building2, scope: 'franchiseur_agencies' },
       { title: 'Utilisateurs', url: ROUTES.reseau.users, icon: Users, scope: 'franchiseur_agencies' },
-      { title: 'Animateurs', url: ROUTES.reseau.animateurs, icon: Users, scope: 'franchiseur_agencies' },
+      
       { title: 'Tableaux', url: ROUTES.reseau.tableaux, icon: PieChart, scope: 'franchiseur_kpi' },
       { title: 'Périodes', url: ROUTES.reseau.periodes, icon: GitCompare, scope: 'franchiseur_kpi' },
       { title: 'Comparatif', url: ROUTES.reseau.comparatif, icon: BarChart3, scope: 'franchiseur_kpi' },
@@ -303,29 +296,28 @@ export const PAGE_TITLES: Record<string, string> = {
   // Support (V2 routes)
   [ROUTES.support.index]: 'Support',
   [ROUTES.support.userTickets]: 'Mes demandes',
-  [ROUTES.support.console]: 'Console support',
+  
   
   // Réseau Franchiseur (V2 routes)
   [ROUTES.reseau.index]: 'Espace Franchiseur',
   [ROUTES.reseau.dashboard]: 'Dashboard Réseau',
   [ROUTES.reseau.agences]: 'Agences du Réseau',
   [ROUTES.reseau.users]: 'Utilisateurs Réseau',
-  [ROUTES.reseau.animateurs]: 'Gestion Animateurs',
+  
   [ROUTES.reseau.tableaux]: 'Tableaux Réseau',
   [ROUTES.reseau.periodes]: 'Périodes',
   [ROUTES.reseau.redevances]: 'Redevances',
   
   // Admin (V2 routes)
   [ROUTES.admin.index]: 'Administration',
-  [ROUTES.admin.supportTickets]: 'Tickets Support',
-  [ROUTES.admin.supportStats]: 'Statistiques Support',
+  
   [ROUTES.admin.users]: 'Gestion Utilisateurs',
   [ROUTES.admin.agencies]: 'Gestion Agences',
   [ROUTES.admin.backup]: 'Sauvegardes',
   [ROUTES.admin.helpconfortBackup]: 'HelpConfort Backup',
   [ROUTES.admin.cacheBackup]: 'Cache Backup',
   [ROUTES.admin.userActivity]: 'Activité Utilisateurs',
-  [ROUTES.admin.escalationHistory]: 'Historique Escalades',
+  
   [ROUTES.admin.helpi]: 'Helpi - Moteur IA',
   [ROUTES.admin.apogeeGuides]: 'Guides Apogée (RAG)',
   [ROUTES.admin.systemHealth]: 'Santé Système',

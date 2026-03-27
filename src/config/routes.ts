@@ -104,7 +104,7 @@ export const ROUTES = {
   support: {
     index: '/support',                // Redirects to /?tab=support
     userTickets: '/support/mes-demandes', // UserTickets.tsx - Full ticket management
-    console: '/support/console',      // AdminSupportTickets.tsx - SU Console (N1/N2/N5)
+    
     faq: '/support/faq',
   },
 
@@ -116,8 +116,6 @@ export const ROUTES = {
     dashboard: '/hc-reseau/dashboard',
     agences: '/hc-reseau/agences',
     agenceProfile: (agencyId: string) => `/hc-reseau/agences/${agencyId}`,
-    animateurs: '/hc-reseau/animateurs',
-    animateurProfile: (animatorId: string) => `/hc-reseau/animateurs/${animatorId}`,
     users: '/hc-reseau/utilisateurs',
     tableaux: '/hc-reseau/tableaux',
     periodes: '/hc-reseau/periodes',
@@ -144,8 +142,7 @@ export const ROUTES = {
   // ============================================
   admin: {
     index: '/admin',
-    supportTickets: '/admin/support-tickets',
-    supportStats: '/admin/support-stats',
+    
     users: '/admin/users',
     agencies: '/admin/agencies',
     agencyProfile: (agencyId: string) => `/admin/agencies/${agencyId}`,
@@ -153,7 +150,7 @@ export const ROUTES = {
     cacheBackup: '/admin/cache-backup',
     helpconfortBackup: '/admin/helpconfort-backup',
     userActivity: '/admin/user-activity',
-    escalationHistory: '/admin/escalation-history',
+    
     documents: '/admin/documents',
     storageQuota: '/admin/storage-quota',
     pageMetadata: '/admin/page-metadata',
@@ -222,11 +219,11 @@ type StaticRoutes =
   | typeof ROUTES['agency']['rhTech']
   | typeof ROUTES['support']['index']
   | typeof ROUTES['support']['userTickets']
-  | typeof ROUTES['support']['console']
+  
   | typeof ROUTES['reseau']['index']
   | typeof ROUTES['reseau']['dashboard']
   | typeof ROUTES['reseau']['agences']
-  | typeof ROUTES['reseau']['animateurs']
+  
   | typeof ROUTES['reseau']['tableaux']
   | typeof ROUTES['reseau']['periodes']
   | typeof ROUTES['reseau']['redevances']
@@ -235,7 +232,6 @@ type StaticRoutes =
   | typeof ROUTES['admin']['agencies']
   | typeof ROUTES['admin']['backup']
   | typeof ROUTES['admin']['userActivity']
-  | typeof ROUTES['admin']['supportStats']
-  | typeof ROUTES['admin']['escalationHistory'];
+  | typeof ROUTES['admin']['userActivity'];
 
 export type RoutePath = StaticRoutes | string;

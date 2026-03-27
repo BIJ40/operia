@@ -140,17 +140,6 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     group: 'support',
   },
   // Tuile "Ouvrir un ticket" supprimée - redirige vers /support qui intègre déjà la création
-  {
-    id: 'CONSOLE_SUPPORT',
-    title: 'Console support',
-    description: 'Gestion des tickets et demandes utilisateurs',
-    icon: Headphones,
-    route: ROUTES.support.console,
-    scopeSlug: 'apogee_tickets',
-    color: 'accent',
-    group: 'support',
-    // F-NAV-1: requiresSupport supprimé - filtrage via canAccessSupportConsoleUI uniquement
-  },
   // Gestion de Projet
   {
     id: 'PROJET_INDEX',
