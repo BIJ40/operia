@@ -6,6 +6,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { hasMinimumRole } from '@/types/globalRoles';
 import type { AgencyFeatureKey, AgencyFeatureStatus, AgencyFeatureBillingMode } from '@/config/agencyFeatures';
 
 export interface AgencyFeatureRow {
@@ -61,8 +62,8 @@ export function useAgencyFeature(featureKey: AgencyFeatureKey): AgencyFeatureRes
   const { globalRole } = useAuth();
   const { data: features, isLoading } = useAgencyFeatures();
 
-  // N5+ bypass — toujours actif
-  if (globalRole === 'platform_admin') {
+  // N5+ bypass (platform_admin + superadmin) — toujours actif
+  if (hasMinimumRole(globalRole, 'platform_admin')) {
     return {
       isActive: true,
       status: 'active',
