@@ -73,7 +73,7 @@ export function RentabiliteTable({ items, isLoading, onSelectProject, onCalculat
   // Filters
   const [filterUnivers, setFilterUnivers] = useState<string>('__all__');
   const [filterApporteur, setFilterApporteur] = useState<string>('__all__');
-  const [datePreset, setDatePreset] = useState<DatePreset>('current-month');
+  const [datePreset, setDatePreset] = useState<DatePreset>('all');
 
   // Extract unique values for dropdowns
   const { universOptions, apporteurOptions } = useMemo(() => {
