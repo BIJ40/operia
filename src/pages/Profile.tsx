@@ -57,7 +57,7 @@ interface ProfileData {
 
 const ROLE_AGENCE_LABELS: Record<string, string> = {
   'dirigeant': 'Dirigeant(e)',
-  'assistante': 'Assistante',
+  'administratif': 'Administratif',
   'commercial': 'Commercial',
   'technicien': 'Technicien',
   'tete_de_reseau': 'Tête de réseau',

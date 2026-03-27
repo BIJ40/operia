@@ -42,14 +42,14 @@ export interface ApogeeUserFull {
 /**
  * Mapping du type Apogée vers le type Collaborator
  */
-export function mapApogeeTypeToCollaboratorType(apogeeType: string | null | undefined): 'TECHNICIEN' | 'ASSISTANTE' | 'DIRIGEANT' | 'COMMERCIAL' | 'AUTRE' {
+export function mapApogeeTypeToCollaboratorType(apogeeType: string | null | undefined): 'TECHNICIEN' | 'ADMINISTRATIF' | 'DIRIGEANT' | 'COMMERCIAL' | 'AUTRE' {
   switch (apogeeType?.toLowerCase()) {
     case 'technicien':
       return 'TECHNICIEN';
     case 'admin':
       return 'DIRIGEANT';
     case 'utilisateur':
-      return 'ASSISTANTE';
+      return 'ADMINISTRATIF';
     case 'commercial':
       return 'COMMERCIAL';
     default:

@@ -663,8 +663,8 @@ export function RHUnifiedTableRow({
             <ContextMenuItem onClick={() => updateType.mutate({ collaboratorId: collaborator.id, type: 'TECHNICIEN' })} disabled={collaborator.type === 'TECHNICIEN'}>
               <Wrench className="h-4 w-4 mr-2" /> Technicien (terrain)
             </ContextMenuItem>
-            <ContextMenuItem onClick={() => updateType.mutate({ collaboratorId: collaborator.id, type: 'ASSISTANTE' })} disabled={collaborator.type === 'ASSISTANTE'}>
-              <User className="h-4 w-4 mr-2" /> Assistante (admin)
+            <ContextMenuItem onClick={() => updateType.mutate({ collaboratorId: collaborator.id, type: 'ADMINISTRATIF' })} disabled={collaborator.type === 'ADMINISTRATIF'}>
+              <User className="h-4 w-4 mr-2" /> Administratif
             </ContextMenuItem>
             <ContextMenuItem onClick={() => updateType.mutate({ collaboratorId: collaborator.id, type: 'DIRIGEANT' })} disabled={collaborator.type === 'DIRIGEANT'}>
               <User className="h-4 w-4 mr-2" /> Dirigeant (admin)

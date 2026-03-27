@@ -46,7 +46,7 @@ const ORG_CATEGORIES: Record<OrgCategory, {
   administratif: { 
     label: 'Administratif', 
     icon: Headphones, 
-    types: ['ASSISTANTE'],
+    types: ['ADMINISTRATIF'],
     color: 'text-pink-600',
     bgColor: 'bg-pink-100'
   },
@@ -126,7 +126,7 @@ export function CollaboratorList({
     return {
       total: active.length,
       direction: active.filter(c => c.type === 'DIRIGEANT').length,
-      administratif: active.filter(c => c.type === 'ASSISTANTE').length,
+      administratif: active.filter(c => c.type === 'ADMINISTRATIF').length,
       terrain: active.filter(c => ['TECHNICIEN', 'COMMERCIAL', 'AUTRE'].includes(c.type)).length,
     };
   }, [collaborators]);

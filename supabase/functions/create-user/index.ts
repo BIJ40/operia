@@ -100,6 +100,7 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
     }
     
     const roleAgence = validateOptionalString(bodyRaw.role_agence || bodyRaw.roleAgence, 'roleAgence', 100) || null
+    const poste = validateOptionalString(bodyRaw.poste, 'poste', 100) || null
     const sendEmail = validateOptionalBoolean(bodyRaw.sendEmail) !== false
     const collaboratorId = validateOptionalString(bodyRaw.collaborator_id, 'collaborator_id', 100) || null
     
@@ -264,9 +265,12 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
       global_role: globalRole
     }
 
-    // Ajouter role_agence si fourni
+    // Ajouter role_agence et poste si fournis
     if (roleAgence) {
       profileUpdate.role_agence = roleAgence
+    }
+    if (poste) {
+      profileUpdate.poste = poste
     }
 
     // Stocker le username pour les N1

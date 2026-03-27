@@ -210,7 +210,7 @@ export const TAB_CONFIG: { id: RHTabId; label: string; icon: string; shortLabel?
 export const COLLABORATOR_CATEGORIES = {
   ADMINISTRATIF: {
     label: 'Administratif',
-    types: ['ASSISTANTE', 'DIRIGEANT', 'COMMERCIAL'],
+    types: ['ADMINISTRATIF', 'DIRIGEANT', 'COMMERCIAL'],
     icon: '🏢',
     className: 'bg-blue-50/80 dark:bg-blue-900/20',
   },

@@ -181,7 +181,7 @@ export default function DashboardStatic() {
   
   // Sous-types N1
   const isTechnicien = roleAgence === 'technicien';
-  const isAssistante = roleAgence === 'assistante';
+  const isAssistante = roleAgence === 'administratif' || roleAgence === 'assistante';
   
   // N2+ = accès aux KPIs agence
   const hasAgencyAccess = isN2 || isN5orN6;

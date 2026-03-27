@@ -127,7 +127,7 @@ export function usePersonalKpis(options?: UsePersonalKpisOptions) {
 
       if (isAssistante) {
         return {
-          type: 'assistante' as const,
+          type: 'administratif' as const,
           data: calculateAssistanteKpis(apiData, apogeeUserId, dateRange.start, dateRange.end),
         };
       }

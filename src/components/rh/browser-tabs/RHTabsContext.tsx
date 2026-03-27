@@ -15,7 +15,7 @@ import type { RHCollaborator } from '@/types/rh-suivi';
 // Icônes par type de collaborateur
 const TYPE_ICONS: Record<CollaboratorType, LucideIcon> = {
   TECHNICIEN: Wrench,
-  ASSISTANTE: User,
+  ADMINISTRATIF: User,
   DIRIGEANT: Briefcase,
   COMMERCIAL: UserCog,
   AUTRE: User,

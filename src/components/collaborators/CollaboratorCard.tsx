@@ -22,7 +22,7 @@ interface CollaboratorCardProps {
 
 const TYPE_CONFIG: Record<CollaboratorType, { icon: typeof User; color: string; bgColor: string }> = {
   TECHNICIEN: { icon: Wrench, color: 'text-blue-600', bgColor: 'bg-blue-100' },
-  ASSISTANTE: { icon: Headphones, color: 'text-pink-600', bgColor: 'bg-pink-100' },
+  ADMINISTRATIF: { icon: Headphones, color: 'text-pink-600', bgColor: 'bg-pink-100' },
   DIRIGEANT: { icon: Building2, color: 'text-purple-600', bgColor: 'bg-purple-100' },
   COMMERCIAL: { icon: Briefcase, color: 'text-green-600', bgColor: 'bg-green-100' },
   AUTRE: { icon: HelpCircle, color: 'text-gray-600', bgColor: 'bg-gray-100' },

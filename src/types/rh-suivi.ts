@@ -10,7 +10,7 @@ export interface RHCollaborator {
   last_name: string;
   email: string | null;
   phone: string | null;
-  type: 'TECHNICIEN' | 'ASSISTANTE' | 'DIRIGEANT' | 'COMMERCIAL' | 'AUTRE';
+  type: 'TECHNICIEN' | 'ADMINISTRATIF' | 'DIRIGEANT' | 'COMMERCIAL' | 'AUTRE';
   role: string;
   hiring_date: string | null;
   leaving_date: string | null;

@@ -33,7 +33,7 @@ export const collaboratorFormSchema = z.object({
   last_name: z.string().trim().min(1, 'Le nom est requis').max(100),
   email: z.string().email('Email invalide').max(255).nullable().optional(),
   phone: z.string().max(20).nullable().optional(),
-  type: z.enum(['TECHNICIEN', 'ASSISTANTE', 'DIRIGEANT', 'COMMERCIAL', 'AUTRE']),
+  type: z.enum(['TECHNICIEN', 'ADMINISTRATIF', 'DIRIGEANT', 'COMMERCIAL', 'AUTRE']),
   role: z.string().max(100).optional(),
   notes: z.string().max(2000).nullable().optional(),
   hiring_date: z.string().nullable().optional(),

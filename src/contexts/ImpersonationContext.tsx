@@ -53,7 +53,7 @@ const ImpersonationContext = createContext<ImpersonationContextType | undefined>
 
 export const ROLE_AGENCE_OPTIONS = [
   { value: 'dirigeant', label: 'Dirigeant' },
-  { value: 'assistante', label: 'Assistante' },
+  { value: 'administratif', label: 'Administratif' },
   { value: 'commercial', label: 'Commercial' },
   { value: 'technicien', label: 'Technicien' },
   { value: 'tete_de_reseau', label: 'Tête de réseau' },
