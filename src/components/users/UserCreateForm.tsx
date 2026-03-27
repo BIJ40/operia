@@ -10,15 +10,22 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RefreshCw } from 'lucide-react';
 import { generateSecurePassword } from '@/lib/passwordUtils';
 
-// Postes disponibles (N1 supprimé - plus de technicien/assistante comme comptes utilisateurs)
+// Postes disponibles pour la création admin (N3+)
 const ROLE_AGENCE_LABELS: Record<string, string> = {
   'dirigeant': 'Dirigeant(e)',
   'commercial': 'Commercial',
   'tete_de_reseau': 'Tête de réseau',
 };
 
-// Postes disponibles en mode agence (pas tete_de_reseau)
+// Postes disponibles en mode agence pour admin (N3+ créant dans une agence)
 const AGENCY_MODE_ROLES = ['dirigeant', 'commercial'];
+
+// Postes disponibles quand un N2 crée un salarié (N1)
+const EMPLOYEE_MODE_ROLES: Record<string, string> = {
+  'assistante': 'Assistant(e)',
+  'commercial': 'Commercial',
+  'technicien': 'Technicien',
+};
 
 // Validation schema
 const createUserSchema = z.object({
