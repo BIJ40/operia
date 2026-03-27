@@ -10,6 +10,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RefreshCw, Info } from 'lucide-react';
 import { generateSecurePassword } from '@/lib/passwordUtils';
 import { ROLE_AGENCE_LABELS, N1_ASSIGNABLE_ROLES } from '@/components/admin/users/user-full-dialog/constants';
+import {
+  FONCTIONS, FONCTION_LABELS, FONCTION_OPTIONS,
+  getPostesForFonction, getDefaultPoste, validateFonctionPoste,
+  type Fonction, type Poste, POSTE_LABELS,
+} from '@/lib/fonctionPosteMapping';
 
 // Postes disponibles en mode agence pour admin (N3+ créant dans une agence)
 const AGENCY_MODE_ROLES = ['dirigeant', 'administratif', 'commercial', 'technicien'];
@@ -127,8 +132,23 @@ export function UserCreateForm({
     }
   }, [employeeMode, generatedUsername]);
 
+  // Postes filtrés dynamiquement selon la fonction sélectionnée
+  const postesDisponibles = getPostesForFonction(formData.roleAgence);
+
   const handleRoleAgenceChange = (newRoleAgence: string) => {
-    setFormData(prev => ({ ...prev, roleAgence: newRoleAgence }));
+    // Reset poste quand la fonction change (si le poste actuel n'est plus valide)
+    const defaultPoste = getDefaultPoste(newRoleAgence);
+    const currentPoste = (formData as any).poste;
+    const validation = validateFonctionPoste(newRoleAgence, currentPoste);
+    setFormData(prev => ({
+      ...prev,
+      roleAgence: newRoleAgence,
+      poste: validation.valid ? currentPoste : (defaultPoste || ''),
+    }));
+  };
+
+  const handlePosteChange = (newPoste: string) => {
+    setFormData(prev => ({ ...prev, poste: newPoste }));
   };
 
   const handleGeneratePassword = () => {
@@ -286,28 +306,47 @@ export function UserCreateForm({
         </div>
       )}
 
-      {/* Poste occupé - visible pour tous */}
+      {/* Fonction — sélecteur principal */}
       <div className="space-y-2">
-        <Label>Poste occupé</Label>
+        <Label>Fonction *</Label>
         <Select 
           value={formData.roleAgence} 
           onValueChange={handleRoleAgenceChange}
           disabled={isSubmitting}
         >
-          <SelectTrigger><SelectValue placeholder="Sélectionner un poste" /></SelectTrigger>
+          <SelectTrigger><SelectValue placeholder="Sélectionner une fonction" /></SelectTrigger>
           <SelectContent className="bg-background z-50">
             {availableRoleAgence.map((value) => (
               <SelectItem key={value} value={value}>{roleAgenceLabels[value] || value}</SelectItem>
             ))}
           </SelectContent>
         </Select>
-        {employeeMode && formData.roleAgence && (
-          <p className="text-xs text-muted-foreground">
-            Pré-rempli depuis la fiche salarié. Modifiable si besoin.
-          </p>
-        )}
         {errors.roleAgence && <p className="text-xs text-destructive">{errors.roleAgence}</p>}
       </div>
+
+      {/* Poste (spécialité) — filtré selon la fonction */}
+      {formData.roleAgence && postesDisponibles.length > 0 && (
+        <div className="space-y-2">
+          <Label>Poste / Spécialité</Label>
+          <Select 
+            value={(formData as any).poste || ''} 
+            onValueChange={handlePosteChange}
+            disabled={isSubmitting}
+          >
+            <SelectTrigger><SelectValue placeholder="Sélectionner un poste" /></SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              {postesDisponibles.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {employeeMode && formData.roleAgence && (
+            <p className="text-xs text-muted-foreground">
+              Pré-rempli depuis la fiche salarié. Modifiable si besoin.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Rôle système */}
       {!isN2Creator && (

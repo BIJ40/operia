@@ -101,6 +101,25 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
     
     const roleAgence = validateOptionalString(bodyRaw.role_agence || bodyRaw.roleAgence, 'roleAgence', 100) || null
     const poste = validateOptionalString(bodyRaw.poste, 'poste', 100) || null
+
+    // 🛡️ Validation cohérence Fonction / Poste
+    if (roleAgence && poste) {
+      const FONCTIONS_ALLOWED = ['technicien', 'administratif', 'commercial', 'dirigeant']
+      const POSTES_PAR_FONCTION: Record<string, string[]> = {
+        technicien: ['plombier', 'electricien', 'menuisier', 'peintre', 'plaquiste', 'polyvalent'],
+        administratif: ['secretaire', 'assistant_direction'],
+        commercial: ['commercial'],
+        dirigeant: ['gerant', 'president'],
+      }
+      const fonctionKey = roleAgence.toLowerCase()
+      if (FONCTIONS_ALLOWED.includes(fonctionKey)) {
+        const allowed = POSTES_PAR_FONCTION[fonctionKey] || []
+        if (!allowed.includes(poste.toLowerCase())) {
+          console.log(`[create-user] Rejet cohérence: fonction=${roleAgence}, poste=${poste}`)
+          throw new Error(`Le poste "${poste}" n'est pas compatible avec la fonction "${roleAgence}"`)
+        }
+      }
+    }
     const sendEmail = validateOptionalBoolean(bodyRaw.sendEmail) !== false
     const collaboratorId = validateOptionalString(bodyRaw.collaborator_id, 'collaborator_id', 100) || null
     
