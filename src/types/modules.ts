@@ -131,7 +131,6 @@ export const MODULE_OPTIONS = {
   prospection: {
     dashboard: 'prospection.dashboard',
     comparateur: 'prospection.comparateur',
-    veille: 'prospection.veille',
     prospects: 'prospection.prospects',
   },
   planning_augmente: {
@@ -600,9 +599,8 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: [],
     minRole: 'franchisee_user',
     options: [
-      { key: 'dashboard', path: 'prospection.dashboard', label: 'Suivi client', description: 'Fiche apporteur', defaultEnabled: true, routes: ['/?tab=commercial'] },
+      { key: 'dashboard', path: 'prospection.dashboard', label: 'Veille', description: 'Veille et suivi apporteurs', defaultEnabled: true, routes: ['/?tab=commercial'] },
       { key: 'comparateur', path: 'prospection.comparateur', label: 'Comparateur', description: 'Comparer apporteurs', defaultEnabled: true, routes: ['/?tab=commercial'] },
-      { key: 'veille', path: 'prospection.veille', label: 'Veille', description: 'Monitoring apporteurs', defaultEnabled: true, routes: ['/?tab=commercial'] },
       { key: 'prospects', path: 'prospection.prospects', label: 'Prospects', description: 'Gestion prospects', defaultEnabled: true, routes: ['/?tab=commercial'] },
     ],
   },
