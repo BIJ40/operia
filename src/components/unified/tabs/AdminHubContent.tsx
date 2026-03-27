@@ -232,7 +232,24 @@ export default function AdminHubContent() {
           </TabsContent>
 
           <TabsContent value="offres" className="mt-0 focus-visible:outline-none">
-            <Suspense fallback={<LoadingFallback />}><OffresAndOptionsView /></Suspense>
+            <Tabs value={activeSubTab} onValueChange={handleSubTabChange}>
+              <DraggableFolderTabsList 
+                tabs={OFFRES_SUB_TABS} 
+                tabOrder={offresTabOrder}
+                activeTab={activeSubTab}
+                onTabChange={handleSubTabChange}
+                onReorder={handleOffresReorder}
+                isDraggable={true}
+              />
+              <DraggableFolderContentContainer accentColor={activeOffresAccent}>
+                <TabsContent value="overview" className="mt-0 focus-visible:outline-none">
+                  <Suspense fallback={<LoadingFallback />}><OffresAndOptionsView /></Suspense>
+                </TabsContent>
+                <TabsContent value="agency-features" className="mt-0 focus-visible:outline-none">
+                  <Suspense fallback={<LoadingFallback />}><AgencyFeaturesAdminView /></Suspense>
+                </TabsContent>
+              </DraggableFolderContentContainer>
+            </Tabs>
           </TabsContent>
           <TabsContent value="ia" className="mt-0 focus-visible:outline-none"><IAView /></TabsContent>
           <TabsContent value="contenu" className="mt-0 focus-visible:outline-none"><ContenuView /></TabsContent>
