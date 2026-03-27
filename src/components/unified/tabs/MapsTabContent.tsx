@@ -9,6 +9,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { format, addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval, parse } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Loader2, MapPin, AlertCircle, CalendarDays, Flame, PieChart, Crosshair, Network, Radio, Clock, Wrench, Navigation, CalendarRange, Play, Pause, SkipBack, SkipForward, TrendingUp, TrendingDown, Trophy, Shield, Target, BarChart3, Star, AlertTriangle } from 'lucide-react';
+import { GradientLegendBar } from '@/components/map/GradientLegendBar';
 import { Progress } from '@/components/ui/progress';
 import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
