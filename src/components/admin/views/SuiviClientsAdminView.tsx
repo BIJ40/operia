@@ -208,6 +208,7 @@ function PaiementsSection() {
           <TableHeader>
             <TableRow>
               <TableHead>Réf. dossier</TableHead>
+              <TableHead>Client</TableHead>
               <TableHead>Montant</TableHead>
               <TableHead>Date paiement</TableHead>
               <TableHead>Agence</TableHead>
