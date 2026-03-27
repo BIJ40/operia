@@ -200,6 +200,35 @@ export function UserInfoColumn({
           )}
         </div>
 
+        {/* Login identifier for N1 users */}
+        {userEmail?.endsWith('@internal.helpconfort.services') && (() => {
+          const loginId = userEmail.replace('@internal.helpconfort.services', '');
+          return (
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                <LogIn className="h-3 w-3" /> Identifiant de connexion
+              </Label>
+              <div className="flex items-center gap-2">
+                <code className="font-mono text-sm bg-muted px-2.5 py-1.5 rounded-lg select-all">
+                  {loginId}
+                </code>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0"
+                  title="Copier"
+                  onClick={() => {
+                    navigator.clipboard.writeText(loginId);
+                    toast.success('Identifiant copié');
+                  }}
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Agency */}
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground flex items-center gap-1">
