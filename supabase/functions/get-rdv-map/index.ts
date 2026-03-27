@@ -1096,7 +1096,7 @@ Deno.serve(async (req) => {
 
         // Agency coords for proximity (reuse from saisonnalite block above)
         const { data: agencyData2 } = await supabase.from('apogee_agencies').select('adresse, code_postal, ville').eq('slug', targetAgency).maybeSingle();
-        let agencyCoords: { lat: number; lng: number } | null = null;
+        agencyCoords = null;
         if (agencyData2?.code_postal) {
           agencyCoords = coordsByPostalCode.get(agencyData2.code_postal) || await geocodeAddress(agencyData2.adresse || '', agencyData2.code_postal, agencyData2.ville || '');
         }
