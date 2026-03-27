@@ -560,8 +560,6 @@ has_min_global_role(required_role text) → boolean
 -- Récupérer l'agence de l'utilisateur connecté
 get_user_agency_id() → uuid
 
--- Accès console support (agent uniquement)
-has_support_access() → boolean
 
 -- Accès espace franchiseur (N3+)
 has_franchiseur_access() → boolean
@@ -587,7 +585,7 @@ has_module_enabled(module_key text) → boolean`);
     this.addSectionTitle('Guards UI');
     this.addBullet('RoleGuard: Vérifie le niveau de rôle minimum requis');
     this.addBullet('ModuleGuard: Vérifie l\'activation du module pour l\'utilisateur');
-    this.addBullet('SupportConsoleGuard: Accès console support (agent only)');
+    
     
     this.addCode(`// Exemple protection de route dans App.tsx
 <Route path="/admin/*" element={
