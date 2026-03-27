@@ -9,7 +9,7 @@ const FranchiseurComparison = lazy(() => import('@/franchiseur/pages/Franchiseur
 const ComparatifAgencesPage = lazy(() => import('@/franchiseur/pages/ComparatifAgencesPage'));
 const ReseauGraphiquesPage = lazy(() => import('@/franchiseur/pages/ReseauGraphiquesPage'));
 const FranchiseurAgencies = lazy(() => import('@/franchiseur/pages/FranchiseurAgencies'));
-const FranchiseurAnimateurs = lazy(() => import('@/franchiseur/pages/FranchiseurAnimateurs'));
+
 const FranchiseurRoyalties = lazy(() => import('@/franchiseur/pages/FranchiseurRoyalties'));
 const TDRUsersPage = lazy(() => import('@/pages/TDRUsersPage'));
 const AdminAnnouncements = lazy(() => import('@/pages/admin/AdminAnnouncements'));
@@ -22,7 +22,7 @@ const MODULE_COMPONENTS: Record<string, React.LazyExoticComponent<React.Componen
   comparatif: ComparatifAgencesPage,
   graphiques: ReseauGraphiquesPage,
   agences: FranchiseurAgencies,
-  animateurs: FranchiseurAnimateurs,
+  
   redevances: FranchiseurRoyalties,
   users: TDRUsersPage,
   annonces: AdminAnnouncements,

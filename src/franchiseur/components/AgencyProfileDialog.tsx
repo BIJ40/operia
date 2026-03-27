@@ -16,12 +16,10 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePersistedTab } from "@/hooks/usePersistedState";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAgency } from "../hooks/useAgencies";
-import { useAnimators } from "../hooks/useAnimators";
 import { RoyaltyConfigSection } from "./RoyaltyConfigSection";
 import { AgencyStampUpload } from "./AgencyStampUpload";
 
@@ -39,7 +37,6 @@ export function AgencyProfileDialog({
   canManage,
 }: AgencyProfileDialogProps) {
   const { data: agency, isLoading } = useAgency(agencyId);
-  const { data: animators } = useAnimators();
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
   const [dialogTab, setDialogTab] = usePersistedTab(`agency-dialog-${agencyId}-tab`, 'info');
@@ -57,8 +54,6 @@ export function AgencyProfileDialog({
     code_postal: "",
   });
 
-  const [selectedAnimateurs, setSelectedAnimateurs] = useState<string[]>([]);
-
   useEffect(() => {
     if (agency) {
       setFormData({
@@ -73,17 +68,8 @@ export function AgencyProfileDialog({
         ville: agency.ville || "",
         code_postal: agency.code_postal || "",
       });
-      setSelectedAnimateurs(agency.animateurs?.map(a => a.id) || []);
     }
   }, [agency]);
-
-  const toggleAnimateur = (animateurId: string) => {
-    if (selectedAnimateurs.includes(animateurId)) {
-      setSelectedAnimateurs(selectedAnimateurs.filter(id => id !== animateurId));
-    } else {
-      setSelectedAnimateurs([...selectedAnimateurs, animateurId]);
-    }
-  };
 
   const handleSave = async () => {
     if (!canManage) {
@@ -105,10 +91,7 @@ export function AgencyProfileDialog({
         code_postal: formData.code_postal || null,
       };
 
-      let savedAgencyId = agencyId;
-
       if (agencyId) {
-        // Update existing agency
         const { error } = await supabase
           .from('apogee_agencies')
           .update(dataToSave)
@@ -116,45 +99,19 @@ export function AgencyProfileDialog({
 
         if (error) throw error;
       } else {
-        // Create new agency
-        const { data: newAgency, error } = await supabase
+        const { error } = await supabase
           .from('apogee_agencies')
           .insert(dataToSave)
           .select('id')
           .single();
 
         if (error) throw error;
-        savedAgencyId = newAgency.id;
-      }
-
-      // Update animator assignments (only for existing agencies or after creation)
-      if (savedAgencyId) {
-        // Delete existing assignments for this agency
-        await supabase
-          .from('franchiseur_agency_assignments')
-          .delete()
-          .eq('agency_id', savedAgencyId);
-
-        // Insert new assignments
-        if (selectedAnimateurs.length > 0) {
-          const assignments = selectedAnimateurs.map(userId => ({
-            agency_id: savedAgencyId,
-            user_id: userId,
-          }));
-
-          const { error: assignError } = await supabase
-            .from('franchiseur_agency_assignments')
-            .insert(assignments);
-
-          if (assignError) throw assignError;
-        }
       }
 
       toast.success(agencyId ? "Agence mise à jour avec succès" : "Agence créée avec succès");
 
       queryClient.invalidateQueries({ queryKey: ['franchiseur-agencies'] });
       queryClient.invalidateQueries({ queryKey: ['franchiseur-agency', agencyId] });
-      queryClient.invalidateQueries({ queryKey: ['franchiseur-agency-assignments'] });
       onOpenChange(false);
     } catch (error: any) {
       logError('FRANCHISEUR', 'Error saving agency:', error);
@@ -163,9 +120,6 @@ export function AgencyProfileDialog({
       setIsSaving(false);
     }
   };
-
-  // Filter to only show animateurs (not directeurs or DG)
-  const availableAnimators = animators?.filter((a: any) => a.franchiseur_role === 'animateur') || [];
 
   if (isLoading && agencyId) {
     return null;
@@ -323,44 +277,6 @@ export function AgencyProfileDialog({
               </div>
             </div>
 
-            <div className="space-y-4">
-              <h3 className="font-semibold">Animateurs réseau</h3>
-              <p className="text-xs text-muted-foreground">
-                Sélectionnez les animateurs rattachés à cette agence. Une agence peut avoir plusieurs animateurs.
-              </p>
-              
-              <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border rounded p-2">
-                {availableAnimators.length === 0 ? (
-                  <p className="text-xs text-muted-foreground col-span-2 py-2">
-                    Aucun animateur disponible. Créez d'abord des utilisateurs avec le rôle "Animateur réseau".
-                  </p>
-                ) : (
-                  availableAnimators.map((animator: any) => (
-                    <div
-                      key={animator.id}
-                      className="flex items-center space-x-2 p-1.5 rounded hover:bg-muted cursor-pointer"
-                      onClick={() => canManage && toggleAnimateur(animator.id)}
-                    >
-                      <Checkbox
-                        checked={selectedAnimateurs.includes(animator.id)}
-                        onCheckedChange={() => canManage && toggleAnimateur(animator.id)}
-                        disabled={!canManage}
-                      />
-                      <span className="text-sm truncate">
-                        {animator.first_name} {animator.last_name}
-                      </span>
-                    </div>
-                  ))
-                )}
-              </div>
-              {selectedAnimateurs.length > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  {selectedAnimateurs.length} animateur(s) sélectionné(s)
-                </p>
-              )}
-            </div>
-
-            {/* Stamp upload section - only for existing agencies */}
             {agencyId && (
               <>
                 <Separator />

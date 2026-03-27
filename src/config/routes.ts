@@ -116,8 +116,6 @@ export const ROUTES = {
     dashboard: '/hc-reseau/dashboard',
     agences: '/hc-reseau/agences',
     agenceProfile: (agencyId: string) => `/hc-reseau/agences/${agencyId}`,
-    animateurs: '/hc-reseau/animateurs',
-    animateurProfile: (animatorId: string) => `/hc-reseau/animateurs/${animatorId}`,
     users: '/hc-reseau/utilisateurs',
     tableaux: '/hc-reseau/tableaux',
     periodes: '/hc-reseau/periodes',
