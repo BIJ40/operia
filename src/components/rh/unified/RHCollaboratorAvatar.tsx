@@ -15,7 +15,7 @@ const TYPE_COLORS: Record<CollaboratorType, { bg: string; text: string; ring: st
     text: 'text-orange-700 dark:text-orange-300',
     ring: 'ring-orange-500/30',
   },
-  ASSISTANTE: {
+  ADMINISTRATIF: {
     bg: 'bg-pink-100 dark:bg-pink-900/40',
     text: 'text-pink-700 dark:text-pink-300',
     ring: 'ring-pink-500/30',
@@ -40,7 +40,7 @@ const TYPE_COLORS: Record<CollaboratorType, { bg: string; text: string; ring: st
 // Icônes emoji par type
 const TYPE_ICONS: Record<CollaboratorType, string> = {
   TECHNICIEN: '🔧',
-  ASSISTANTE: '📋',
+  ADMINISTRATIF: '📋',
   DIRIGEANT: '👔',
   COMMERCIAL: '💼',
   AUTRE: '👤',

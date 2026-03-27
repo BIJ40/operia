@@ -48,6 +48,7 @@ export function RHSuiviContent() {
     firstName: string;
     lastName: string;
     email: string;
+    roleAgence?: string;
   } | null>(null);
   
   // Sync avec URL (paramètre ?collab=)
@@ -160,11 +161,19 @@ export function RHSuiviContent() {
 
   // Handler pour créer un compte Operia depuis un collaborateur
   const handleCreateAccountFromCollab = useCallback((collaborator: RHCollaborator) => {
+    // Mapper le type collaborateur vers le poste agence
+    const typeToRoleAgence: Record<string, string> = {
+      TECHNICIEN: 'technicien',
+      ADMINISTRATIF: 'administratif',
+      COMMERCIAL: 'commercial',
+      DIRIGEANT: 'dirigeant',
+    };
     setCreateFromCollab({
       collaboratorId: collaborator.id,
       firstName: collaborator.first_name,
       lastName: collaborator.last_name,
       email: collaborator.email || '',
+      roleAgence: typeToRoleAgence[collaborator.type] || '',
     });
   }, []);
 
@@ -277,6 +286,7 @@ export function RHSuiviContent() {
               firstName: createFromCollab.firstName,
               lastName: createFromCollab.lastName,
               email: createFromCollab.email,
+              roleAgence: createFromCollab.roleAgence,
             }}
             collaboratorId={createFromCollab.collaboratorId}
           />

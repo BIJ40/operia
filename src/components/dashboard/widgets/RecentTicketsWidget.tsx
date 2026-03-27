@@ -14,6 +14,7 @@ import { MessageSquare, ChevronRight, MessageCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { stateLabel } from '@/shared/utils/stateLabels';
 
 interface TicketItem {
   id: string;
@@ -134,7 +135,7 @@ export function RecentTicketsWidget() {
             </p>
           </div>
           <Badge style={getStatusColor(ticket)} variant="secondary">
-            {ticket.statusLabel || ticket.status}
+            {ticket.statusLabel || stateLabel(ticket.status)}
           </Badge>
         </Link>
       ))}

@@ -10,15 +10,23 @@ import { Loader2, LogIn, UserPlus } from 'lucide-react';
 import { RegistrationRequestDialog } from '@/components/registration/RegistrationRequestDialog';
 
 const loginSchema = z.object({
-  email: z.string()
+  identifier: z.string()
     .trim()
-    .email({ message: "L'adresse email n'est pas valide" }),
+    .min(1, { message: "Identifiant requis" }),
   password: z.string()
     .min(1, { message: "Le mot de passe est requis" })
 });
 
+/** Si l'identifiant est un pseudo (pas un email), on le convertit en email interne */
+function resolveEmail(identifier: string): string {
+  const trimmed = identifier.trim();
+  if (trimmed.includes('@')) return trimmed;
+  // Pseudo → email interne
+  return `${trimmed}@internal.helpconfort.services`;
+}
+
 export function LoginFormCard() {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -55,11 +63,7 @@ export function LoginFormCard() {
     e.preventDefault();
     setErrors({});
 
-    // Validation
-    const validation = loginSchema.safeParse({
-      email: email.trim(),
-      password
-    });
+    const validation = loginSchema.safeParse({ identifier: identifier.trim(), password });
 
     if (!validation.success) {
       const newErrors: Record<string, string> = {};
@@ -74,17 +78,18 @@ export function LoginFormCard() {
 
     setLoading(true);
     try {
+      const email = resolveEmail(identifier);
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email,
         password,
       });
 
       if (signInError) {
         console.error('[LoginFormCard] Auth error:', signInError.message, signInError.status, signInError);
         
-        let errorMessage = 'Email ou mot de passe incorrect';
+        let errorMessage = 'Identifiant ou mot de passe incorrect';
         if (signInError.message.includes('Invalid login credentials')) {
-          errorMessage = 'Email ou mot de passe incorrect';
+          errorMessage = 'Identifiant ou mot de passe incorrect';
         } else if (signInError.message.includes('Email not confirmed')) {
           errorMessage = 'Veuillez confirmer votre email';
         } else if (signInError.message.includes('Too many requests')) {
@@ -97,8 +102,6 @@ export function LoginFormCard() {
         
         throw new Error(errorMessage);
       }
-
-      // Success - auth state change will handle redirect
     } catch (error: unknown) {
       toast({
         title: 'Erreur de connexion',
@@ -165,27 +168,27 @@ export function LoginFormCard() {
       <CardHeader className="text-center pb-4">
         <CardTitle className="text-xl">Connexion</CardTitle>
         <CardDescription>
-          Connectez-vous avec votre email et votre mot de passe.
+          Connectez-vous avec votre email ou nom d'utilisateur.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="identifier">Email ou nom d'utilisateur</Label>
             <Input
-              id="email"
-              type="email"
-              value={email}
+              id="identifier"
+              type="text"
+              value={identifier}
               onChange={(e) => {
-                setEmail(e.target.value);
-                setErrors(prev => ({ ...prev, email: '' }));
+                setIdentifier(e.target.value);
+                setErrors(prev => ({ ...prev, identifier: '' }));
               }}
-              placeholder="votre.email@exemple.com"
+              placeholder="email@exemple.com ou prenom.nom-agence"
               required
-              className={errors.email ? 'border-destructive' : ''}
-              autoComplete="email"
+              className={errors.identifier ? 'border-destructive' : ''}
+              autoComplete="username"
             />
-            {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+            {errors.identifier && <p className="text-sm text-destructive">{errors.identifier}</p>}
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -193,7 +196,7 @@ export function LoginFormCard() {
               <button
                 type="button"
                 className="text-xs text-primary hover:underline"
-                onClick={() => { setForgotMode(true); setForgotEmail(email); }}
+                onClick={() => { setForgotMode(true); setForgotEmail(identifier.includes('@') ? identifier : ''); }}
               >
                 Mot de passe oublié ?
               </button>

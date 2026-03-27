@@ -21,16 +21,17 @@ export const RIGHTS_CATEGORIES: RightsCategory[] = [
     'pilotage', 'pilotage.statistiques', 'pilotage.actions_a_mener',
     'pilotage.incoherences', 'pilotage.performance',
     'pilotage.rentabilite', 'pilotage.resultat',
-    'pilotage.tresorerie', 'planning_augmente',
+    'pilotage.tresorerie', 'pilotage.maps', 'planning_augmente',
   ]},
   { id: 'commercial', label: 'Commercial', moduleKeys: [
     'commercial', 'prospection', 'commercial.suivi_client', 'commercial.comparateur',
     'commercial.veille', 'commercial.prospects', 'commercial.realisations',
+    'commercial.social', 'commercial.signature',
   ]},
   { id: 'organisation', label: 'Organisation', moduleKeys: [
     'organisation', 'organisation.salaries', 'organisation.apporteurs',
     'organisation.plannings', 'organisation.reunions', 'organisation.parc',
-    'organisation.docgen',
+    'organisation.docgen', 'organisation.documents_legaux', 'organisation.zones',
   ]},
   { id: 'documents', label: 'Documents', moduleKeys: [
     'mediatheque', 'mediatheque.documents',

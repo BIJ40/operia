@@ -7,8 +7,9 @@ import { fr } from "date-fns/locale";
 import { MapPin, Clock, User, Building2, FileText, AlertTriangle, Users, Info, Tag, FolderOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TYPE_LABELS, TYPE_BADGE_COLORS } from "../../constants";
+import { stateLabel } from "@/shared/utils/stateLabels";
 import type { PlanningAppointment, PlanningTechnician } from "../../types";
 
 interface DetailDrawerProps {
@@ -26,11 +27,11 @@ export function DetailDrawer({ appointment: a, technicians, open, onClose }: Det
   const assignedTechs = technicians.filter((t) => a.technicianIds.includes(t.id));
 
   return (
-    <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
-      <SheetContent className="w-[380px] sm:w-[420px] overflow-y-auto">
-        <SheetHeader className="pb-4">
-          <SheetTitle className="text-base font-semibold">{a.client}</SheetTitle>
-        </SheetHeader>
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-[420px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="pb-4">
+          <DialogTitle className="text-base font-semibold">{a.client}</DialogTitle>
+        </DialogHeader>
 
         <div className="space-y-4 text-sm">
           {/* Horaires */}
@@ -183,10 +184,10 @@ export function DetailDrawer({ appointment: a, technicians, open, onClose }: Det
           <Separator />
           <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
             <span>Statut :</span>
-            <Badge variant="outline" className="capitalize">{a.status}</Badge>
+            <Badge variant="outline" className="capitalize">{stateLabel(a.status)}</Badge>
             {a.projectState && a.projectState !== a.status && (
               <Badge variant="outline" className="capitalize text-muted-foreground">
-                Dossier: {a.projectState}
+                Dossier: {stateLabel(a.projectState)}
               </Badge>
             )}
             {!a.confirmed && (
@@ -196,7 +197,7 @@ export function DetailDrawer({ appointment: a, technicians, open, onClose }: Det
             )}
           </div>
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }

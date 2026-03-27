@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -91,14 +91,14 @@ export const DiffusionSettingsPanel = ({
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[600px] sm:max-w-[600px] overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>Paramètres de diffusion</SheetTitle>
-          <SheetDescription>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Paramètres de diffusion</DialogTitle>
+          <DialogDescription>
             Configurez l'affichage du mode TV avec rotation automatique
-          </SheetDescription>
-        </SheetHeader>
+          </DialogDescription>
+        </DialogHeader>
 
         <Tabs defaultValue="display" className="mt-6">
           <TabsList className="grid w-full grid-cols-3">
@@ -277,7 +277,7 @@ export const DiffusionSettingsPanel = ({
             {isSaving ? 'Enregistrement...' : 'Enregistrer'}
           </Button>
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 };

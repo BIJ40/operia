@@ -36,7 +36,7 @@ interface CollaboratorDetailPopupProps {
 // Mapping des types vers labels français
 const TYPE_LABELS: Record<RHCollaborator['type'], string> = {
   TECHNICIEN: 'Technicien',
-  ASSISTANTE: 'Assistante',
+  ADMINISTRATIF: 'Administratif',
   DIRIGEANT: 'Dirigeant',
   COMMERCIAL: 'Commercial',
   AUTRE: 'Autre',

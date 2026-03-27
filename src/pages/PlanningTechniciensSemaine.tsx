@@ -284,12 +284,13 @@ function PlanningTechniciensSemaineContent() {
         {`
           @media print {
             @page {
-              size: landscape;
-              margin: 5mm;
+              size: A4 landscape;
+              margin: 4mm;
             }
             body, html {
               -webkit-print-color-adjust: exact !important;
               print-color-adjust: exact !important;
+              overflow: hidden !important;
             }
             header, nav, aside, footer, .print\\:hidden {
               display: none !important;
@@ -298,19 +299,32 @@ function PlanningTechniciensSemaineContent() {
               display: flex !important;
             }
             .print-only {
-              display: flex !important;
+              display: block !important;
             }
-            /* Compacter tout le planning pour tenir sur 1 page */
+            .print-signature-block {
+              display: block !important;
+            }
+            /* Force tout sur 1 seule page A4 paysage */
             .planning-print-container {
-              transform: scale(0.78);
+              transform: scale(0.68);
               transform-origin: top left;
+              width: 147%;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
             }
             .planning-lunch {
               display: none !important;
             }
             .planning-event {
-              font-size: 10px !important;
-              padding: 1px 3px !important;
+              font-size: 9px !important;
+              padding: 1px 2px !important;
+              line-height: 1.1 !important;
+            }
+            .planning-hour-cell {
+              height: 34px !important;
+            }
+            .planning-grid {
+              height: auto !important;
             }
           }
         `}
@@ -458,10 +472,24 @@ function PlanningTechniciensSemaineContent() {
                 />
               ))}
             </div>
-          )}
+           )}
+
+          {/* Bloc signature - UNIQUEMENT visible à l'impression */}
+          <div className="hidden print-signature-block" style={{ display: 'none' }}>
+            <div className="flex items-center justify-between border border-foreground/50 rounded px-3 py-2 mt-2 mx-2">
+              <div className="flex items-center gap-4">
+                <p className="text-xs font-semibold">SIGNATURE SALARIÉ</p>
+                <p className="text-[10px] text-muted-foreground italic">
+                  En accord avec les heures de travail présentées
+                </p>
+                <div className="border border-foreground/40 rounded h-10 w-40" />
+              </div>
+              <p className="text-[10px] text-muted-foreground">Date : ____/____/________</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
-      
+
       {/* Légende */}
       <div className="flex flex-wrap gap-4 text-sm print:hidden">
         <div className="flex items-center gap-2">
@@ -476,7 +504,7 @@ function PlanningTechniciensSemaineContent() {
             className="w-4 h-4 rounded"
             style={{ backgroundColor: getEventColor("conge") }}
           />
-          <span>Congé</span>
+          <span>Congé / Absence</span>
         </div>
         <div className="flex items-center gap-2">
           <div

@@ -19,7 +19,7 @@ import type { LucideIcon } from 'lucide-react';
 // Icônes par type de collaborateur
 const TYPE_ICONS: Record<CollaboratorType, LucideIcon> = {
   TECHNICIEN: Wrench,
-  ASSISTANTE: User,
+  ADMINISTRATIF: User,
   DIRIGEANT: Briefcase,
   COMMERCIAL: UserCog,
   AUTRE: User,
@@ -27,7 +27,7 @@ const TYPE_ICONS: Record<CollaboratorType, LucideIcon> = {
 
 const TYPE_LABELS: Record<CollaboratorType, string> = {
   TECHNICIEN: 'Terrain',
-  ASSISTANTE: 'Administratif',
+  ADMINISTRATIF: 'Administratif',
   DIRIGEANT: 'Direction',
   COMMERCIAL: 'Commercial',
   AUTRE: 'Autre',
@@ -63,7 +63,7 @@ export function RHCollaboratorPicker({
     }
     
     // Ordre personnalisé
-    const order: CollaboratorType[] = ['TECHNICIEN', 'ASSISTANTE', 'DIRIGEANT', 'COMMERCIAL', 'AUTRE'];
+    const order: CollaboratorType[] = ['TECHNICIEN', 'ADMINISTRATIF', 'DIRIGEANT', 'COMMERCIAL', 'AUTRE'];
     const sortedGroups: Array<{ type: CollaboratorType; items: RHCollaborator[] }> = [];
     
     for (const type of order) {

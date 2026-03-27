@@ -50,7 +50,7 @@ export default function PilotageTabContent() {
     { id: 'anomalies', label: getShortLabel('pilotage.incoherences', 'Incohérences'), icon: AlertTriangle, accent: 'pink', requiresModule: 'pilotage.incoherences' },
     { id: 'resultat', label: getShortLabel('pilotage.resultat', 'Résultat'), icon: TrendingUp, accent: 'green', requiresModule: 'pilotage.resultat' },
     { id: 'rentabilite', label: getShortLabel('pilotage.rentabilite', 'Rentabilité'), icon: PieChart, accent: 'green', requiresModule: 'pilotage.rentabilite' },
-    { id: 'maps', label: 'Maps', icon: Map, accent: 'teal' },
+    { id: 'maps', label: getShortLabel('pilotage.maps', 'Maps'), icon: Map, accent: 'teal', requiresModule: 'pilotage.maps' },
   ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {

@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { usePersistedTab } from "@/hooks/usePersistedState";
 import { useAgency } from "../hooks/useAgencies";
 import { useRoyaltyHistory } from "../hooks/useRoyaltyConfig";
@@ -288,11 +288,8 @@ function AgencyProfilePanelContent({ agencyId, onClose }: { agencyId: string; on
 
 export function AgencyProfilePanel({ agencyId, open, onOpenChange }: AgencyProfilePanelProps) {
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent 
-        side="right" 
-        className="w-full sm:w-[600px] sm:max-w-[600px] p-0 overflow-hidden"
-      >
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-[600px] p-0 overflow-hidden max-h-[90vh]">
         {agencyId && (
           <ApiToggleProvider>
             <AgencyProvider>
@@ -302,7 +299,7 @@ export function AgencyProfilePanel({ agencyId, open, onOpenChange }: AgencyProfi
             </AgencyProvider>
           </ApiToggleProvider>
         )}
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }

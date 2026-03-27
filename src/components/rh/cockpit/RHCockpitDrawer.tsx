@@ -5,7 +5,7 @@
  */
 
 import React, { ReactNode } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { X, Lightbulb, Check, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -108,12 +108,9 @@ export function RHCockpitDrawer({
   );
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent 
-        className="w-full sm:max-w-md overflow-y-auto border-l-4 border-l-warm-blue"
-        side="right"
-      >
-        <SheetHeader className="space-y-3">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="space-y-3">
           {/* Header avec nom du collaborateur - style warm-pastel */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -121,9 +118,9 @@ export function RHCockpitDrawer({
                 <span className="text-xl">{config.icon}</span>
               </div>
               <div>
-                <SheetTitle className="text-lg font-semibold bg-gradient-to-r from-warm-blue to-warm-purple bg-clip-text text-transparent">
+                <DialogTitle className="text-lg font-semibold bg-gradient-to-r from-warm-blue to-warm-purple bg-clip-text text-transparent">
                   {config.title}
-                </SheetTitle>
+                </DialogTitle>
                 {collaborator && (
                   <p className="text-sm text-muted-foreground">
                     {collaborator.first_name} {collaborator.last_name}
@@ -133,9 +130,9 @@ export function RHCockpitDrawer({
             </div>
           </div>
 
-          <SheetDescription className="text-sm text-muted-foreground">
+          <DialogDescription className="text-sm text-muted-foreground">
             {config.description}
-          </SheetDescription>
+          </DialogDescription>
 
           {/* Message pédagogique style warm-pastel */}
           {message && status !== 'na' && (
@@ -164,14 +161,14 @@ export function RHCockpitDrawer({
               </p>
             </div>
           )}
-        </SheetHeader>
+        </DialogHeader>
 
         {/* Contenu du drawer */}
         <div className="mt-6 space-y-4">
           {children}
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
 

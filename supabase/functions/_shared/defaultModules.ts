@@ -3,7 +3,7 @@
  * Used in create-user edge function to assign initial modules
  * 
  * IMPORTANT: franchisee_admin modules are for DIRIGEANTS only.
- * Commercial, assistante, etc. employees use franchisee_employee defaults.
+ * Commercial, administratif, etc. employees use franchisee_employee defaults.
  * 
  * V2: Clés canoniques (guides, aide, agence, ticketing)
  */
@@ -39,7 +39,7 @@ const N1_ROLE_PRESETS: Record<string, string[]> = {
     'commercial.prospects', 'commercial.realisations',
     'support.guides', 'support.aide_en_ligne',
   ],
-  assistante: [
+  administratif: [
     'organisation.salaries', 'organisation.plannings',
     'organisation.documents_legaux',
     'mediatheque.consulter', 'mediatheque.documents',
@@ -62,7 +62,7 @@ function presetToEnabledModules(keys: string[]): EnabledModules {
 }
 
 /**
- * Modules par défaut pour les EMPLOYÉS d'agence (commercial, assistante, etc.)
+ * Modules par défaut pour les EMPLOYÉS d'agence (commercial, administratif, etc.)
  * Accès minimal : uniquement guides et support utilisateur
  */
 const AGENCY_EMPLOYEE_MODULES: EnabledModules = {
@@ -75,10 +75,8 @@ const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
     guides: { enabled: true, options: {} },
     aide: { enabled: true, options: { agent: false } },
   },
-  franchisee_user: {
-    guides: { enabled: true, options: { apogee: true } },
-    aide: { enabled: true, options: { agent: false } },
-  },
+  // N1 = zéro module par défaut. Tout accès piloté par le N2 via droits équipe.
+  franchisee_user: {},
   // ATTENTION: Ces modules sont pour les DIRIGEANTS uniquement
   franchisee_admin: {
     guides: { enabled: true, options: { apogee: true } },

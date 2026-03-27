@@ -79,30 +79,14 @@ import { RHSectionDocuments } from '@/components/rh/sections/RHSectionDocuments'
 import { RHSectionContrat } from '@/components/rh/sections/RHSectionContrat';
 import { RHTaillesPopup } from '@/components/rh/unified/RHTaillesPopup';
 
-const TYPE_OPTIONS = [
-  { value: 'TECHNICIEN', label: 'Technicien' },
-  { value: 'ASSISTANTE', label: 'Assistante' },
-  { value: 'DIRIGEANT', label: 'Dirigeant' },
-  { value: 'COMMERCIAL', label: 'Commercial' },
-  { value: 'APPRENTI', label: 'Apprenti' },
-  { value: 'STAGIAIRE', label: 'Stagiaire' },
-  { value: 'AUTRE', label: 'Autre' },
-];
+import {
+  FONCTION_OPTIONS,
+  getPostesForFonction, getDefaultPoste, validateFonctionPoste,
+  fonctionToDbType, dbTypeToFonction,
+  POSTE_LABELS, type Poste,
+} from '@/lib/fonctionPosteMapping';
 
-const ROLE_OPTIONS = [
-  { value: 'Plombier', label: 'Plombier' },
-  { value: 'Electricien', label: 'Électricien' },
-  { value: 'Menuisier', label: 'Menuisier' },
-  { value: 'Peintre', label: 'Peintre' },
-  { value: 'Plaquiste', label: 'Plaquiste' },
-  { value: 'Polyvalent', label: 'Polyvalent' },
-  { value: 'Secretaire', label: 'Secrétaire' },
-];
-
-// Mapping type → rôle par défaut
-const TYPE_DEFAULT_ROLE: Record<string, string> = {
-  'ASSISTANTE': 'Secretaire',
-};
+// Legacy TYPE_OPTIONS replaced by FONCTION_OPTIONS from central mapping
 
 function getCollaboratorStatus(c: RHCollaborator): 'active' | 'inactive' | 'exited' {
   if (c.leaving_date) {
@@ -283,23 +267,32 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
                 <h2 className="text-base font-semibold">{fullName}</h2>
                 <StatusBadge status={status} />
                 
-                {/* Type sélectionnable */}
+                {/* Fonction sélectionnable */}
                 <Select
-                  value={collaborator.type || ''}
+                  value={dbTypeToFonction(collaborator.type) || ''}
                   onValueChange={async (v) => {
-                    await handleFieldUpdate('type', v);
-                    // Auto-set default role based on type
-                    const defaultRole = TYPE_DEFAULT_ROLE[v];
-                    if (defaultRole) {
-                      await handleFieldUpdate('role', defaultRole);
+                    const dbType = fonctionToDbType(v);
+                    await handleFieldUpdate('type', dbType);
+                    // Auto-set default poste based on fonction
+                    const defaultPoste = getDefaultPoste(v);
+                    if (defaultPoste) {
+                      await handleFieldUpdate('poste', defaultPoste);
+                    }
+                    // Reset old role field if poste now handles it
+                    const currentPoste = (collaborator as any).poste;
+                    if (currentPoste) {
+                      const check = validateFonctionPoste(v, currentPoste);
+                      if (!check.valid && defaultPoste) {
+                        await handleFieldUpdate('poste', defaultPoste);
+                      }
                     }
                   }}
                 >
                   <SelectTrigger className="h-6 w-auto min-w-[90px] text-xs border-dashed px-2 gap-1">
-                    <SelectValue placeholder="Type..." />
+                    <SelectValue placeholder="Fonction..." />
                   </SelectTrigger>
                   <SelectContent className="bg-background z-50">
-                    {TYPE_OPTIONS.map(opt => (
+                    {FONCTION_OPTIONS.map(opt => (
                       <SelectItem key={opt.value} value={opt.value} className="text-xs">
                         {opt.label}
                       </SelectItem>
@@ -307,28 +300,36 @@ export function RHCollaboratorPanel({ collaboratorId }: RHCollaboratorPanelProps
                   </SelectContent>
                 </Select>
                 
-                {/* Rôle/Poste sélectionnable */}
-                <Select
-                  value={collaborator.role || ''}
-                  onValueChange={(v) => handleFieldUpdate('role', v)}
-                >
-                  <SelectTrigger className="h-6 w-auto min-w-[100px] text-xs border-dashed px-2 gap-1">
-                    <Briefcase className="h-3 w-3 shrink-0 text-muted-foreground" />
-                    <span className="truncate">
-                      {collaborator.role 
-                        ? ROLE_OPTIONS.find(r => r.value === collaborator.role)?.label || collaborator.role
-                        : 'Rôle...'
-                      }
-                    </span>
-                  </SelectTrigger>
-                  <SelectContent className="bg-background z-50">
-                    {ROLE_OPTIONS.map(opt => (
-                      <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {/* Poste/Spécialité sélectionnable — filtré par fonction */}
+                {(() => {
+                  const currentFonction = dbTypeToFonction(collaborator.type);
+                  const postesForFonction = currentFonction ? getPostesForFonction(currentFonction) : [];
+                  const currentPoste = (collaborator as any).poste as string | null;
+                  const posteLabel = currentPoste ? (POSTE_LABELS[currentPoste as Poste] || currentPoste) : null;
+                  
+                  if (postesForFonction.length === 0) return null;
+                  
+                  return (
+                    <Select
+                      value={currentPoste || ''}
+                      onValueChange={(v) => handleFieldUpdate('poste', v)}
+                    >
+                      <SelectTrigger className="h-6 w-auto min-w-[100px] text-xs border-dashed px-2 gap-1">
+                        <Briefcase className="h-3 w-3 shrink-0 text-muted-foreground" />
+                        <span className="truncate">
+                          {posteLabel || 'Poste...'}
+                        </span>
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-50">
+                        {postesForFonction.map(opt => (
+                          <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  );
+                })()}
                 
                 {/* Indicateur Tailles compact cliquable */}
                 {(() => {

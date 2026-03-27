@@ -183,9 +183,9 @@ function getEventTitle(refType: string): string {
     case "th": return "TH";
     case "diagnostic": return "Diagnostic";
     // Types du nouveau endpoint apiGetPlanningCreneaux
-    case "conge": return "Congé";
+    case "conge": return "Congé / Absence";
     case "rappel": return "Tâche";
-    case "absence": return "Absence";
+    case "absence": return "Congé / Absence";
     case "tache": return "Tâche";
     case "rdv": return "RDV";
     default: return "";

@@ -76,12 +76,25 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
     // Valider les données d'entrée
     const bodyRaw = await req.json()
     
-    const email = validateString(bodyRaw.email, 'email', { email: true, maxLength: 255 })
     const firstName = validateString(bodyRaw.firstName || bodyRaw.first_name, 'firstName', { minLength: 1, maxLength: 100 })
     const lastName = validateString(bodyRaw.lastName || bodyRaw.last_name, 'lastName', { minLength: 1, maxLength: 100 })
     const password = validateOptionalString(bodyRaw.password, 'password', 100) || generateSecurePassword()
     const agence = validateOptionalString(bodyRaw.agence, 'agence', 100) || null
     const agencyId = validateOptionalString(bodyRaw.agency_id, 'agency_id', 100) || null
+    const username = validateOptionalString(bodyRaw.username, 'username', 100) || null
+    
+    // Email: si username fourni et pas d'email (ou email invalide), générer un email interne
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    let rawEmail = validateOptionalString(bodyRaw.email, 'email', 255) || null
+    // Trim et ignorer les emails vides ou invalides quand un username est disponible
+    let email = (rawEmail && rawEmail.trim()) ? rawEmail.trim() : null
+    if (username && (!email || !emailRegex.test(email))) {
+      email = `${username}@internal.helpconfort.services`
+      console.log(`[create-user] Email interne généré: ${email}`)
+    }
+    if (!email) {
+      throw new Error('Email ou nom d\'utilisateur requis')
+    }
     
     // 🛡️ P0.3: Rôle système OBLIGATOIRE - pas de fallback silencieux
     const globalRole = validateOptionalString(bodyRaw.globalRole || bodyRaw.global_role, 'globalRole', 50)
@@ -90,10 +103,30 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
     }
     
     const roleAgence = validateOptionalString(bodyRaw.role_agence || bodyRaw.roleAgence, 'roleAgence', 100) || null
+    const poste = validateOptionalString(bodyRaw.poste, 'poste', 100) || null
+
+    // 🛡️ Validation cohérence Fonction / Poste
+    if (roleAgence && poste) {
+      const FONCTIONS_ALLOWED = ['technicien', 'administratif', 'commercial', 'dirigeant']
+      const POSTES_PAR_FONCTION: Record<string, string[]> = {
+        technicien: ['plombier', 'electricien', 'menuisier', 'peintre', 'plaquiste', 'polyvalent'],
+        administratif: ['secretaire', 'assistant_direction'],
+        commercial: ['commercial'],
+        dirigeant: ['gerant', 'president'],
+      }
+      const fonctionKey = roleAgence.toLowerCase()
+      if (FONCTIONS_ALLOWED.includes(fonctionKey)) {
+        const allowed = POSTES_PAR_FONCTION[fonctionKey] || []
+        if (!allowed.includes(poste.toLowerCase())) {
+          console.log(`[create-user] Rejet cohérence: fonction=${roleAgence}, poste=${poste}`)
+          throw new Error(`Le poste "${poste}" n'est pas compatible avec la fonction "${roleAgence}"`)
+        }
+      }
+    }
     const sendEmail = validateOptionalBoolean(bodyRaw.sendEmail) !== false
     const collaboratorId = validateOptionalString(bodyRaw.collaborator_id, 'collaborator_id', 100) || null
     
-    console.log(`[create-user] Params: email=${email}, sendEmail=${sendEmail}, bodyRaw.sendEmail=${bodyRaw.sendEmail}`)
+    console.log(`[create-user] Params: email=${email}, username=${username}, sendEmail=${sendEmail}`)
 
     // Déterminer l'agence cible (UUID ou slug)
     let targetAgency = agence
@@ -155,8 +188,7 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
       throw new Error('Le nom est obligatoire')
     }
 
-    // Validation de l'email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    // Validation de l'email (déjà validé/généré plus haut, vérification finale)
     if (!emailRegex.test(email)) {
       throw new Error('L\'adresse email n\'est pas valide')
     }
@@ -250,13 +282,21 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
     const profileUpdate: Record<string, any> = { 
       agence: targetAgency,
       agency_id: targetAgencyId,
-      must_change_password: true,
+      must_change_password: !username, // N1 avec pseudo: pas de changement de mot de passe obligatoire
       global_role: globalRole
     }
 
-    // Ajouter role_agence si fourni
+    // Ajouter role_agence et poste si fournis
     if (roleAgence) {
       profileUpdate.role_agence = roleAgence
+    }
+    if (poste) {
+      profileUpdate.poste = poste
+    }
+
+    // Stocker le username pour les N1
+    if (username) {
+      profileUpdate.username = username
     }
 
     const { error: updateError } = await supabaseAdmin
@@ -314,8 +354,9 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
       // V2: enabled_modules JSONB supprimé - user_modules est la seule source de vérité
     }
 
-    // Envoyer l'email
-    if (sendEmail) {
+    // Envoyer l'email (skip pour les emails internes auto-générés)
+    const isInternalEmail = email.endsWith('@internal.helpconfort.services')
+    if (sendEmail && !isInternalEmail) {
       try {
         const emailHtml = `
           <!DOCTYPE html>

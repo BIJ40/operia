@@ -43,7 +43,7 @@ interface Props {
 
 const COLLABORATOR_TYPES: { value: JobCategory; label: string }[] = [
   { value: 'TECHNICIEN', label: 'Technicien' },
-  { value: 'ASSISTANTE', label: 'Assistante' },
+  { value: 'ADMINISTRATIF', label: 'Administratif' },
   { value: 'DIRIGEANT', label: 'Dirigeant' },
   { value: 'COMMERCIAL', label: 'Commercial' },
   { value: 'AUTRE', label: 'Autre' },

@@ -49,6 +49,8 @@ export {
   getUserManagementCapabilities,
   isModuleEnabled,
   isModuleOptionEnabled,
+  isDelegatableKey,
+  shouldBypassMinRole,
 } from './permissionsEngine';
 
 // Module Registry (Canon unique)

@@ -67,7 +67,7 @@ export function CollaboratorsListWidget() {
   const getTypeColor = (type: string | null) => {
     switch (type?.toUpperCase()) {
       case 'TECHNICIEN': return 'bg-helpconfort-blue text-white';
-      case 'ASSISTANTE': return 'bg-helpconfort-orange text-white';
+      case 'ADMINISTRATIF': return 'bg-helpconfort-orange text-white';
       case 'DIRIGEANT': return 'bg-violet-500 text-white';
       default: return 'bg-muted text-muted-foreground';
     }

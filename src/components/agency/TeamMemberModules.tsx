@@ -2,19 +2,21 @@
  * TeamMemberModules — Toggles de modules pour un N1 individuel
  * 
  * Affiche la liste des modules assignables groupés par domaine.
+ * Les sous-modules (ex: pilotage.statistiques.general) sont
+ * regroupés sous leur parent et indentés visuellement.
  * Chaque domaine a un switch maître (tout cocher / décocher).
  * Le N2 ne peut attribuer que les modules qu'il possède lui-même.
  */
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { useUserModules, useToggleModule } from '@/hooks/useUserModules';
-import { N2_ASSIGNABLE_MODULES, getPresetForRole } from '@/config/roleAgenceModulePresets';
+import { getDelegatableModules, getPresetForRole } from '@/config/roleAgenceModulePresets';
 import { useAgencyHasApporteurs } from '@/hooks/useAgencyHasApporteurs';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, Loader2 } from 'lucide-react';
+import { RotateCcw, Loader2, ChevronDown, ChevronRight } from 'lucide-react';
 import { ModuleKey } from '@/types/modules';
 import { toast } from 'sonner';
 import { deleteAllUserModules, bulkInsertUserModules } from '@/repositories/userModulesRepository';
@@ -37,6 +39,13 @@ const CATEGORY_COLORS: Record<string, string> = {
   Support: 'text-violet-600 dark:text-violet-400',
 };
 
+type DelegatableModule = { key: ModuleKey; fallbackLabel: string; category: string };
+
+interface HierarchicalModule {
+  module: DelegatableModule;
+  children: DelegatableModule[];
+}
+
 export function TeamMemberModules({ userId, roleAgence, n2HasModule, isDeployedModule }: Props) {
   const { data: userModules, isLoading } = useUserModules(userId);
   const toggleModule = useToggleModule();
@@ -44,23 +53,63 @@ export function TeamMemberModules({ userId, roleAgence, n2HasModule, isDeployedM
   const { user } = useAuthCore();
   const { getShortLabel } = useModuleLabels();
   const agencyHasApporteurs = useAgencyHasApporteurs();
+  const [collapsedParents, setCollapsedParents] = useState<Set<string>>(new Set());
+
+  const delegatableModules = useMemo(() => getDelegatableModules(), []);
 
   const assignableModules = useMemo(() => {
-    return N2_ASSIGNABLE_MODULES.filter(m => {
+    return delegatableModules.filter(m => {
       if (m.key === 'organisation.apporteurs' && !agencyHasApporteurs) return false;
       return isDeployedModule(m.key) && n2HasModule(m.key);
     });
-  }, [n2HasModule, isDeployedModule, agencyHasApporteurs]);
+  }, [delegatableModules, n2HasModule, isDeployedModule, agencyHasApporteurs]);
 
+  /** Build hierarchical structure: parent modules with their children */
   const grouped = useMemo(() => {
-    const map = new Map<string, typeof assignableModules>();
+    const categoryMap = new Map<string, HierarchicalModule[]>();
+
+    // Separate parents and children
+    const parentKeys = new Set<string>();
     for (const mod of assignableModules) {
-      const list = map.get(mod.category) ?? [];
-      list.push(mod);
-      map.set(mod.category, list);
+      // A module is a parent if other modules start with its key + '.'
+      const hasChildren = assignableModules.some(
+        other => other.key !== mod.key && other.key.startsWith(mod.key + '.')
+      );
+      if (hasChildren) parentKeys.add(mod.key);
     }
-    return map;
+
+    // Build hierarchy
+    for (const mod of assignableModules) {
+      // Skip if this is a child (will be nested under parent)
+      const parentKey = [...parentKeys].find(pk => mod.key !== pk && mod.key.startsWith(pk + '.'));
+      if (parentKey) continue;
+
+      const children = assignableModules.filter(
+        other => other.key !== mod.key && other.key.startsWith(mod.key + '.')
+      );
+
+      const list = categoryMap.get(mod.category) ?? [];
+      list.push({ module: mod, children });
+      categoryMap.set(mod.category, list);
+    }
+
+    return categoryMap;
   }, [assignableModules]);
+
+  /** Flat list of all leaf module keys for counting */
+  const allLeafKeys = useMemo(() => {
+    const keys: ModuleKey[] = [];
+    for (const [, items] of grouped) {
+      for (const item of items) {
+        if (item.children.length > 0) {
+          keys.push(...item.children.map(c => c.key));
+        } else {
+          keys.push(item.module.key);
+        }
+      }
+    }
+    return keys;
+  }, [grouped]);
 
   const isModuleEnabled = useCallback((key: ModuleKey): boolean => {
     if (!userModules) return false;
@@ -73,22 +122,90 @@ export function TeamMemberModules({ userId, roleAgence, n2HasModule, isDeployedM
     toggleModule.mutate({ userId, moduleKey: key, enabled });
   };
 
-  /** Toggle all modules in a category at once */
-  const handleToggleCategory = (modules: typeof assignableModules, enabled: boolean) => {
-    for (const mod of modules) {
-      const current = isModuleEnabled(mod.key);
-      if (current !== enabled) {
-        toggleModule.mutate({ userId, moduleKey: mod.key, enabled });
+  /** Toggle all modules in a category at once (leaf modules only) */
+  const handleToggleCategory = (items: HierarchicalModule[], enabled: boolean) => {
+    for (const item of items) {
+      if (item.children.length > 0) {
+        // Toggle parent + all children
+        if (isModuleEnabled(item.module.key) !== enabled) {
+          toggleModule.mutate({ userId, moduleKey: item.module.key, enabled });
+        }
+        for (const child of item.children) {
+          if (isModuleEnabled(child.key) !== enabled) {
+            toggleModule.mutate({ userId, moduleKey: child.key, enabled });
+          }
+        }
+      } else {
+        if (isModuleEnabled(item.module.key) !== enabled) {
+          toggleModule.mutate({ userId, moduleKey: item.module.key, enabled });
+        }
+      }
+    }
+  };
+
+  /** Toggle a parent and all its children */
+  const handleToggleParent = (item: HierarchicalModule, enabled: boolean) => {
+    if (isModuleEnabled(item.module.key) !== enabled) {
+      toggleModule.mutate({ userId, moduleKey: item.module.key, enabled });
+    }
+    for (const child of item.children) {
+      if (isModuleEnabled(child.key) !== enabled) {
+        toggleModule.mutate({ userId, moduleKey: child.key, enabled });
       }
     }
   };
 
   /** Category state: all checked, none checked, or partial */
-  const getCategoryState = (modules: typeof assignableModules) => {
-    const enabledCount = modules.filter(m => isModuleEnabled(m.key)).length;
-    if (enabledCount === 0) return 'none';
-    if (enabledCount === modules.length) return 'all';
+  const getCategoryState = (items: HierarchicalModule[]) => {
+    let total = 0;
+    let enabled = 0;
+    for (const item of items) {
+      if (item.children.length > 0) {
+        for (const child of item.children) {
+          total++;
+          if (isModuleEnabled(child.key)) enabled++;
+        }
+      } else {
+        total++;
+        if (isModuleEnabled(item.module.key)) enabled++;
+      }
+    }
+    if (enabled === 0) return 'none';
+    if (enabled === total) return 'all';
     return 'partial';
+  };
+
+  const getCategoryCount = (items: HierarchicalModule[]) => {
+    let total = 0;
+    let enabled = 0;
+    for (const item of items) {
+      if (item.children.length > 0) {
+        for (const child of item.children) {
+          total++;
+          if (isModuleEnabled(child.key)) enabled++;
+        }
+      } else {
+        total++;
+        if (isModuleEnabled(item.module.key)) enabled++;
+      }
+    }
+    return { enabled, total };
+  };
+
+  const getParentState = (item: HierarchicalModule) => {
+    const enabledCount = item.children.filter(c => isModuleEnabled(c.key)).length;
+    if (enabledCount === 0) return 'none';
+    if (enabledCount === item.children.length) return 'all';
+    return 'partial';
+  };
+
+  const toggleCollapse = (parentKey: string) => {
+    setCollapsedParents(prev => {
+      const next = new Set(prev);
+      if (next.has(parentKey)) next.delete(parentKey);
+      else next.add(parentKey);
+      return next;
+    });
   };
 
   const handleResetToPreset = async () => {
@@ -133,8 +250,9 @@ export function TeamMemberModules({ userId, roleAgence, n2HasModule, isDeployedM
 
   return (
     <div className="space-y-5" onClick={(e) => e.stopPropagation()}>
-      {[...grouped.entries()].map(([category, modules]) => {
-        const state = getCategoryState(modules);
+      {[...grouped.entries()].map(([category, items]) => {
+        const state = getCategoryState(items);
+        const { enabled, total } = getCategoryCount(items);
         const colorClass = CATEGORY_COLORS[category] ?? 'text-primary';
 
         return (
@@ -144,9 +262,8 @@ export function TeamMemberModules({ userId, roleAgence, n2HasModule, isDeployedM
               <div className="flex items-center gap-2.5">
                 <Checkbox
                   checked={state === 'all'}
-                  // @ts-ignore — indeterminate is valid on the DOM element
                   data-state={state === 'partial' ? 'indeterminate' : state === 'all' ? 'checked' : 'unchecked'}
-                  onCheckedChange={(checked) => handleToggleCategory(modules, !!checked)}
+                  onCheckedChange={(checked) => handleToggleCategory(items, !!checked)}
                   disabled={toggleModule.isPending}
                   className="h-4.5 w-4.5"
                 />
@@ -155,25 +272,89 @@ export function TeamMemberModules({ userId, roleAgence, n2HasModule, isDeployedM
                 </h4>
               </div>
               <span className="text-xs text-muted-foreground tabular-nums">
-                {modules.filter(m => isModuleEnabled(m.key)).length}/{modules.length}
+                {enabled}/{total}
               </span>
             </div>
 
-            {/* Individual module toggles */}
-            <div className="space-y-1 pl-7">
-              {modules.map(mod => (
-                <div
-                  key={mod.key}
-                  className="flex items-center justify-between py-1.5 px-2 rounded-xl hover:bg-muted/50 transition-colors duration-150"
-                >
-                  <span className="text-sm">{getShortLabel(mod.key, mod.fallbackLabel)}</span>
-                  <Switch
-                    checked={isModuleEnabled(mod.key)}
-                    onCheckedChange={(checked) => handleToggle(mod.key, checked)}
-                    disabled={toggleModule.isPending}
-                  />
-                </div>
-              ))}
+            {/* Module toggles */}
+            <div className="space-y-0.5 pl-7">
+              {items.map(item => {
+                if (item.children.length > 0) {
+                  // Parent with sub-modules
+                  const parentState = getParentState(item);
+                  const isCollapsed = collapsedParents.has(item.module.key);
+                  const childEnabled = item.children.filter(c => isModuleEnabled(c.key)).length;
+
+                  return (
+                    <div key={item.module.key}>
+                      {/* Parent row */}
+                      <div className="flex items-center justify-between py-1.5 px-2 rounded-xl hover:bg-muted/50 transition-colors duration-150">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => toggleCollapse(item.module.key)}
+                            className="p-0.5 rounded hover:bg-muted transition-colors"
+                          >
+                            {isCollapsed
+                              ? <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                              : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                            }
+                          </button>
+                          <span className="text-sm font-medium">
+                            {getShortLabel(item.module.key, item.module.fallbackLabel)}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground tabular-nums">
+                            {childEnabled}/{item.children.length}
+                          </span>
+                        </div>
+                        <Checkbox
+                          checked={parentState === 'all'}
+                          data-state={parentState === 'partial' ? 'indeterminate' : parentState === 'all' ? 'checked' : 'unchecked'}
+                          onCheckedChange={(checked) => handleToggleParent(item, !!checked)}
+                          disabled={toggleModule.isPending}
+                          className="h-4 w-4"
+                        />
+                      </div>
+
+                      {/* Children */}
+                      {!isCollapsed && (
+                        <div className="space-y-0.5 pl-6 border-l border-border/40 ml-3 mt-0.5">
+                          {item.children.map(child => (
+                            <div
+                              key={child.key}
+                              className="flex items-center justify-between py-1 px-2 rounded-xl hover:bg-muted/50 transition-colors duration-150"
+                            >
+                              <span className="text-sm text-muted-foreground">
+                                {getShortLabel(child.key, child.fallbackLabel)}
+                              </span>
+                              <Switch
+                                checked={isModuleEnabled(child.key)}
+                                onCheckedChange={(checked) => handleToggle(child.key, checked)}
+                                disabled={toggleModule.isPending}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                // Simple module (no children)
+                return (
+                  <div
+                    key={item.module.key}
+                    className="flex items-center justify-between py-1.5 px-2 rounded-xl hover:bg-muted/50 transition-colors duration-150"
+                  >
+                    <span className="text-sm">{getShortLabel(item.module.key, item.module.fallbackLabel)}</span>
+                    <Switch
+                      checked={isModuleEnabled(item.module.key)}
+                      onCheckedChange={(checked) => handleToggle(item.module.key, checked)}
+                      disabled={toggleModule.isPending}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </div>
         );

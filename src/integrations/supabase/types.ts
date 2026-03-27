@@ -3801,6 +3801,7 @@ export type Database = {
           permis: string | null
           phone: string | null
           postal_code: string | null
+          poste: string | null
           role: string
           street: string | null
           type: string | null
@@ -3832,6 +3833,7 @@ export type Database = {
           permis?: string | null
           phone?: string | null
           postal_code?: string | null
+          poste?: string | null
           role?: string
           street?: string | null
           type?: string | null
@@ -3863,6 +3865,7 @@ export type Database = {
           permis?: string | null
           phone?: string | null
           postal_code?: string | null
+          poste?: string | null
           role?: string
           street?: string | null
           type?: string | null
@@ -8275,10 +8278,12 @@ export type Database = {
           onboarding_payload: Json
           onboarding_version: number
           phone: string | null
+          poste: string | null
           role_agence: string | null
           support_level: number | null
           support_role: Database["public"]["Enums"]["support_role"] | null
           updated_at: string
+          username: string | null
         }
         Insert: {
           agence?: string | null
@@ -8304,10 +8309,12 @@ export type Database = {
           onboarding_payload?: Json
           onboarding_version?: number
           phone?: string | null
+          poste?: string | null
           role_agence?: string | null
           support_level?: number | null
           support_role?: Database["public"]["Enums"]["support_role"] | null
           updated_at?: string
+          username?: string | null
         }
         Update: {
           agence?: string | null
@@ -8333,10 +8340,12 @@ export type Database = {
           onboarding_payload?: Json
           onboarding_version?: number
           phone?: string | null
+          poste?: string | null
           role_agence?: string | null
           support_level?: number | null
           support_role?: Database["public"]["Enums"]["support_role"] | null
           updated_at?: string
+          username?: string | null
         }
         Relationships: [
           {

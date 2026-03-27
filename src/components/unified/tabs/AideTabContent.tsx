@@ -8,6 +8,7 @@
 
 import { lazy, Suspense, useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { stateLabel } from '@/shared/utils/stateLabels';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -367,7 +368,7 @@ export default function SupportHubTabContent() {
                             variant="secondary"
                             className="rounded-full text-xs"
                           >
-                            {ticket.statusLabel || ticket.status}
+                            {ticket.statusLabel || stateLabel(ticket.status)}
                           </Badge>
                         </div>
                         <div className="flex items-center gap-2">

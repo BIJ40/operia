@@ -12,6 +12,7 @@ import { DataService } from '@/apogee-connect/services/dataService';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useAgency } from '@/apogee-connect/contexts/AgencyContext';
 import type { Project, Client, Devis } from '@/apogee-connect/types';
+import { stateLabel } from '@/shared/utils/stateLabels';
 
 // --- Règles métier ---
 
@@ -29,33 +30,8 @@ const VALID_PROJECT_STATES_FOR_ACCEPTED_DEVIS = new Set([
   'stand_by',         // En attente
 ]);
 
-/** Labels lisibles pour les états */
-const STATE_LABELS: Record<string, string> = {
-  'new': 'Nouveau',
-  'devis_sent': 'Devis envoyé',
-  'devis_to_order': 'À commander',
-  'devis_a_faire': 'Devis à faire',
-  'wait_fourn': 'Attente fourn.',
-  'to_planify_tvx': 'À planifier',
-  'planified_tvx': 'Planifié travaux',
-  'planifie_rt': 'Planifié RT',
-  'rt_fait': 'RT fait',
-  'to_be_invoiced': 'À facturer',
-  'invoiced': 'Facturé',
-  'invoice': 'Facturé',
-  'done': 'Terminé',
-  'canceled': 'Annulé',
-  'stand_by': 'En attente',
-  'accepted': 'Accepté',
-  'order': 'Validé',
-  'refused': 'Refusé',
-  'draft': 'Brouillon',
-  'sent': 'Envoyé',
-};
-
-function label(state: string): string {
-  return STATE_LABELS[state] || state || '—';
-}
+/** Alias local vers le mapping centralisé */
+const label = stateLabel;
 
 /** Matrice de raisons d'anomalie par état dossier */
 function getAnomalyReason(projectState: string, devisState: string): string {
