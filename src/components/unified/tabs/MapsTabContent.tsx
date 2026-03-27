@@ -555,73 +555,54 @@ export default function MapsTabContent() {
     }
   }, [sortedRdvs, selectedRdv, mapReady, isTourMode, mapMode]);
 
-  // Heatmap layer — uses historical data, not date-filtered
+  // Density choropleth layer — commune polygons colored by intervention count
   useEffect(() => {
     const m = map.current;
     if (!m || !mapReady) return;
 
-    // Clean previous heatmap
-    if (m.getLayer(HEATMAP_LAYER)) m.removeLayer(HEATMAP_LAYER);
-    if (m.getSource(HEATMAP_SOURCE)) m.removeSource(HEATMAP_SOURCE);
+    // Clean previous density layers
+    cleanLayers(m, [DENSITY_FILL, DENSITY_LINE, DENSITY_LABELS], DENSITY_SOURCE);
 
-    if (mapMode !== 'heatmap' || !heatmapPoints?.length) return;
+    if (mapMode !== 'heatmap' || !densityGeoJson?.features?.length) return;
 
-    const geojson: GeoJSON.FeatureCollection = {
-      type: 'FeatureCollection',
-      features: heatmapPoints.map(pt => ({
-        type: 'Feature' as const,
-        properties: { weight: 1 },
-        geometry: { type: 'Point' as const, coordinates: [pt.lng, pt.lat] },
-      })),
+    // 8-level color scale: white → dark red/almost black
+    const colorExpr: any[] = [
+      'interpolate', ['linear'], ['get', 'level'],
+      0, '#fff5f5',   // Niveau 0 — presque blanc (très peu)
+      1, '#fee2e2',   // Niveau 1 — rose très pâle
+      2, '#fca5a5',   // Niveau 2 — rose
+      3, '#f87171',   // Niveau 3 — rouge clair
+      4, '#ef4444',   // Niveau 4 — rouge
+      5, '#dc2626',   // Niveau 5 — rouge vif
+      6, '#991b1b',   // Niveau 6 — rouge foncé
+      7, '#450a0a',   // Niveau 7 — quasi noir
+    ];
+
+    addChoroplethLayers(m, DENSITY_SOURCE, DENSITY_FILL, DENSITY_LINE, DENSITY_LABELS, densityGeoJson, colorExpr, 0.8);
+    fitBoundsToGeoJson(m, densityGeoJson);
+
+    // Click popup
+    const handleClick = (e: mapboxgl.MapMouseEvent) => {
+      const features = m.queryRenderedFeatures(e.point, { layers: [DENSITY_FILL] });
+      if (!features?.length) return;
+      const p = features[0].properties;
+      if (!p) return;
+      new mapboxgl.Popup({ closeButton: true, maxWidth: '280px' })
+        .setLngLat(e.lngLat)
+        .setHTML(`
+          <div style="font-family:system-ui;font-size:13px;line-height:1.5;">
+            <div style="font-weight:700;font-size:14px;margin-bottom:4px;">${p.nom || ''} ${p.city || ''}</div>
+            <div style="font-size:20px;font-weight:800;color:#dc2626;">${p.count || 0}</div>
+            <div style="color:#6b7280;">interventions</div>
+          </div>
+        `)
+        .addTo(m);
     };
-
-    m.addSource(HEATMAP_SOURCE, { type: 'geojson', data: geojson });
-
-    m.addLayer({
-      id: HEATMAP_LAYER,
-      type: 'heatmap',
-      source: HEATMAP_SOURCE,
-      paint: {
-        'heatmap-weight': 1,
-        // Moderate intensity — avoids saturating into a single blob
-        'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 0.6, 6, 1, 10, 1.5, 14, 2],
-        // Choropleth-like color ramp: transparent → light pink → coral → crimson → dark burgundy
-        'heatmap-color': [
-          'interpolate', ['linear'], ['heatmap-density'],
-          0,    'rgba(255,245,245,0)',
-          0.08, 'rgba(254,224,224,0.45)',
-          0.18, 'rgba(252,190,190,0.55)',
-          0.3,  'rgba(248,150,150,0.65)',
-          0.42, 'rgba(240,110,110,0.72)',
-          0.55, 'rgba(220,70,70,0.78)',
-          0.68, 'rgba(195,40,40,0.84)',
-          0.8,  'rgba(160,20,20,0.88)',
-          0.9,  'rgba(120,10,10,0.92)',
-          1,    'rgba(80,0,0,0.95)',
-        ],
-        // Tight radius for granular, polygon-like rendering
-        'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 4, 6, 12, 10, 22, 14, 35, 18, 50],
-        'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 0, 0.75, 10, 0.8, 16, 0.7],
-      },
-    });
-
-    // Fit bounds
-    if (!hasFittedBoundsRef.current && heatmapPoints.length > 0) {
-      let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
-      heatmapPoints.forEach(p => { minLng = Math.min(minLng, p.lng); maxLng = Math.max(maxLng, p.lng); minLat = Math.min(minLat, p.lat); maxLat = Math.max(maxLat, p.lat); });
-      const pad = 0.1;
-      const bounds: [[number, number], [number, number]] = [[minLng - pad, minLat - pad], [maxLng + pad, maxLat + pad]];
-      const container = m.getContainer();
-      const padX = Math.max(56, Math.round((container.clientWidth || 800) * 0.12));
-      const padY = Math.max(56, Math.round((container.clientHeight || 600) * 0.12));
-      m.fitBounds(bounds, {
-        padding: { top: padY, bottom: padY + 60, left: padX, right: padX },
-        maxZoom: 12,
-        duration: 1000,
-      });
-      hasFittedBoundsRef.current = true;
-    }
-  }, [heatmapPoints, mapReady, mapMode]);
+    m.on('click', DENSITY_FILL, handleClick);
+    m.on('mouseenter', DENSITY_FILL, () => { m.getCanvas().style.cursor = 'pointer'; });
+    m.on('mouseleave', DENSITY_FILL, () => { m.getCanvas().style.cursor = ''; });
+    return () => { m.off('click', DENSITY_FILL, handleClick); };
+  }, [densityGeoJson, mapReady, mapMode, cleanLayers, addChoroplethLayers, fitBoundsToGeoJson]);
 
   // ── Helper: fit bounds to GeoJSON polygon features ──
   const fitBoundsToGeoJson = useCallback((m: mapboxgl.Map, geojson: GeoJSON.FeatureCollection) => {
