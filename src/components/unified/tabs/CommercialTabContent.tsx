@@ -19,7 +19,6 @@ import { ApporteurTabsBar } from '@/prospection/browser-tabs/ApporteurTabsBar';
 import { ApporteurTabsContent } from '@/prospection/browser-tabs/ApporteurTabsContent';
 import { ApporteurListPage } from '@/prospection/pages/ApporteurListPage';
 import { ApporteurComparisonPage } from '@/prospection/pages/ApporteurComparisonPage';
-import { ProspectsUnifiedPage } from '@/prospection/pages/ProspectsUnifiedPage';
 import { VeilleApporteursTab } from '@/prospection/pages/VeilleApporteursTab';
 
 const RealisationsPage = lazy(() => import('@/realisations/pages/RealisationsPage'));
@@ -30,7 +29,6 @@ const SignatureGeneratorPage = lazy(() => import('@/pages/commercial/SignatureGe
 const TAB_MODULE_MAP: Record<string, ModuleKey> = {
   apporteurs: 'commercial.suivi_client',
   comparateur: 'commercial.comparateur',
-  veille: 'commercial.veille',
   prospects: 'commercial.prospects',
   realisations: 'commercial.realisations',
   social: 'commercial.social',
@@ -71,9 +69,8 @@ function CommercialInner() {
   const { mode: navMode } = useNavigationMode();
 
   const allTabs: PillTabConfig[] = useMemo(() => [
-    { id: 'apporteurs', label: 'Suivi client', icon: Building2 },
+    { id: 'apporteurs', label: 'Veille', icon: Radar },
     { id: 'comparateur', label: 'Comparateur', icon: GitCompare },
-    { id: 'veille', label: 'Veille', icon: Radar },
     { id: 'prospects', label: 'Prospects', icon: UserSearch },
     { id: 'realisations', label: getShortLabel('commercial.realisations', 'Réalisations'), icon: Camera },
     { id: 'social', label: getShortLabel('commercial.social', 'Social'), icon: Share2 },
@@ -102,8 +99,7 @@ function CommercialInner() {
 
   const handleVeilleSelectApporteur = useCallback((id: string, name: string) => {
     openApporteur(id, name);
-    setActiveTab('apporteurs');
-  }, [openApporteur, setActiveTab]);
+  }, [openApporteur]);
 
   if (visibleTabs.every(t => t.disabled)) {
     return <div className="py-6 px-4 text-muted-foreground text-sm">Aucun onglet accessible.</div>;
@@ -120,10 +116,6 @@ function CommercialInner() {
 
         <TabsContent value="comparateur" className="mt-4">
           <ApporteurComparisonPage />
-        </TabsContent>
-
-        <TabsContent value="veille" className="mt-4">
-          <VeilleApporteursTab onSelectApporteur={handleVeilleSelectApporteur} />
         </TabsContent>
 
         <TabsContent value="prospects" className="mt-4">

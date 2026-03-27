@@ -25,7 +25,7 @@ export const RIGHTS_CATEGORIES: RightsCategory[] = [
   ]},
   { id: 'commercial', label: 'Commercial', moduleKeys: [
     'commercial', 'prospection', 'commercial.suivi_client', 'commercial.comparateur',
-    'commercial.veille', 'commercial.prospects', 'commercial.realisations',
+    'commercial.prospects', 'commercial.realisations',
     'commercial.social', 'commercial.signature',
   ]},
   { id: 'organisation', label: 'Organisation', moduleKeys: [

@@ -41,6 +41,7 @@ export const MODULES = {
   // Commercial
   'commercial.suivi_client': 'commercial.suivi_client',
   'commercial.comparateur': 'commercial.comparateur',
+  /** @deprecated Merged into commercial.suivi_client */
   'commercial.veille': 'commercial.veille',
   'commercial.prospects': 'commercial.prospects',
   'commercial.realisations': 'commercial.realisations',
@@ -624,8 +625,8 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
   // Commercial sub-modules (promoted from prospection options)
   {
     key: 'commercial.suivi_client',
-    label: 'Suivi client',
-    description: 'Fiche apporteur et suivi',
+    label: 'Veille',
+    description: 'Suivi et veille apporteurs',
     icon: 'Users',
     category: 'commercial',
     uiSubTab: 'apporteurs',
@@ -648,14 +649,15 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
   },
   {
     key: 'commercial.veille',
-    label: 'Veille',
-    description: 'Monitoring apporteurs',
+    label: 'Veille (legacy)',
+    description: 'Monitoring apporteurs — fusionné dans commercial.suivi_client',
     icon: 'Radar',
     category: 'commercial',
-    uiSubTab: 'veille',
+    uiSubTab: 'apporteurs',
     defaultForRoles: [],
     minRole: 'franchisee_user',
     delegatable: true,
+    deployed: false,
     options: [],
   },
   {
@@ -896,9 +898,9 @@ export const MODULE_SHORT_LABELS: Partial<Record<ModuleKey, string>> = {
   'pilotage.rentabilite': 'Rentabilité',
   'pilotage.tresorerie': 'Trésorerie',
   // Commercial
-  'commercial.suivi_client': 'Suivi client',
+  'commercial.suivi_client': 'Veille',
   'commercial.comparateur': 'Comparateur',
-  'commercial.veille': 'Veille',
+  // commercial.veille — fusionné dans commercial.suivi_client
   'commercial.prospects': 'Prospects',
   'commercial.realisations': 'Réalisations',
   // Organisation

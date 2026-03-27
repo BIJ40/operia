@@ -15,7 +15,6 @@ import { ApporteurTabsContent } from '../browser-tabs/ApporteurTabsContent';
 import { ApporteurListPage } from '../pages/ApporteurListPage';
 import { ApporteurComparisonPage } from '../pages/ApporteurComparisonPage';
 import { ProspectsUnifiedPage } from '../pages/ProspectsUnifiedPage';
-import { VeilleApporteursTab } from '../pages/VeilleApporteursTab';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
 
@@ -25,7 +24,6 @@ const RealisationsPage = lazy(() => import('@/realisations/pages/RealisationsPag
 const TAB_MODULE_MAP: Record<string, ModuleKey> = {
   apporteurs: 'commercial.suivi_client',
   comparateur: 'commercial.comparateur',
-  veille: 'commercial.veille',
   prospects: 'commercial.prospects',
   realisations: 'commercial.realisations',
 };
@@ -57,9 +55,8 @@ function ProspectionInner() {
   // A: 'Réalisations' maps to module commercial.realisations → dynamic label
   // B: 'Suivi client', 'Comparateur', 'Veille', 'Prospects' are prospection options, not standalone modules → static
   const allTabs: PillTabConfig[] = useMemo(() => [
-    { id: 'apporteurs', label: 'Suivi client', icon: Building2 },
+    { id: 'apporteurs', label: 'Veille', icon: Radar },
     { id: 'comparateur', label: 'Comparateur', icon: GitCompare },
-    { id: 'veille', label: 'Veille', icon: Radar },
     { id: 'prospects', label: 'Prospects', icon: UserSearch },
     { id: 'realisations', label: getShortLabel('commercial.realisations', 'Réalisations'), icon: Camera },
   ], [getShortLabel]);
@@ -76,7 +73,6 @@ function ProspectionInner() {
 
   const handleVeilleSelectApporteur = useCallback((id: string, name: string) => {
     openApporteur(id, name);
-    setActiveTab('apporteurs');
   }, [openApporteur]);
 
   if (visibleTabs.length === 0) {
@@ -94,10 +90,6 @@ function ProspectionInner() {
 
         <TabsContent value="comparateur" className="mt-4">
           <ApporteurComparisonPage />
-        </TabsContent>
-
-        <TabsContent value="veille" className="mt-4">
-          <VeilleApporteursTab onSelectApporteur={handleVeilleSelectApporteur} />
         </TabsContent>
 
         <TabsContent value="prospects" className="mt-4">

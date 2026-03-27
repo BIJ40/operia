@@ -131,10 +131,9 @@ export const MODULE_OPTION_MIN_ROLES: Record<string, GlobalRole> = {
   'ticketing.manage': 'base_user',
   'ticketing.import': 'platform_admin',
   
-  // Prospection — unchanged
+  // Prospection — veille merged into suivi_client
   'prospection.dashboard': 'franchisee_user',
   'prospection.comparateur': 'franchisee_user',
-  'prospection.veille': 'franchisee_user',
   'prospection.prospects': 'franchisee_user',
   
   // Planification Augmentée — unchanged

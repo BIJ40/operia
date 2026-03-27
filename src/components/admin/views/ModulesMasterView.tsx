@@ -420,7 +420,6 @@ const MODULE_ROUTES: Record<string, ModuleRouteEntry> = {
   prospection: { route: '/?tab=commercial' },
   'commercial.suivi_client': { route: '/?tab=commercial', subTabKey: 'commercial_sub_tab', subTabValue: 'apporteurs' },
   'commercial.comparateur': { route: '/?tab=commercial', subTabKey: 'commercial_sub_tab', subTabValue: 'comparateur' },
-  'commercial.veille': { route: '/?tab=commercial', subTabKey: 'commercial_sub_tab', subTabValue: 'veille' },
   'commercial.prospects': { route: '/?tab=commercial', subTabKey: 'commercial_sub_tab', subTabValue: 'prospects' },
   'commercial.realisations': { route: '/?tab=commercial', subTabKey: 'commercial_sub_tab', subTabValue: 'realisations' },
 
