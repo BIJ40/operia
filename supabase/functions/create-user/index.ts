@@ -329,8 +329,9 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
       // V2: enabled_modules JSONB supprimé - user_modules est la seule source de vérité
     }
 
-    // Envoyer l'email
-    if (sendEmail) {
+    // Envoyer l'email (skip pour les emails internes auto-générés)
+    const isInternalEmail = email.endsWith('@internal.helpconfort.services')
+    if (sendEmail && !isInternalEmail) {
       try {
         const emailHtml = `
           <!DOCTYPE html>
