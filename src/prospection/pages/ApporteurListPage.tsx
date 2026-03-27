@@ -390,37 +390,7 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
   return (
     <TooltipProvider delayDuration={200}>
     <div className="space-y-4">
-      {/* Veille filter pills */}
-      <div className="flex flex-wrap gap-1.5">
-        {VEILLE_FILTER_PILLS.map(pill => {
-          const Icon = pill.icon;
-          const count = veilleKpis[pill.countKey];
-          const isActive = veilleFilter === pill.key;
-          return (
-            <Tooltip key={pill.key}>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={isActive ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setVeilleFilter(pill.key)}
-                  className={cn('gap-1.5 text-xs', !isActive && pill.colorClass)}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  {pill.label}
-                  <Badge variant="secondary" className="ml-0.5 text-[10px] h-4 px-1.5">
-                    {count}
-                  </Badge>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="max-w-xs text-xs">
-                {pill.tooltip}
-              </TooltipContent>
-            </Tooltip>
-          );
-        })}
-      </div>
-
-      {/* Filters bar */}
+      {/* Filters bar + Veille pills on same line */}
       <div className="flex flex-wrap items-center gap-3 relative z-30">
         <div className="relative flex-1 min-w-[200px] max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -508,6 +478,36 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
             Réinitialiser
           </Button>
         )}
+
+        {/* Veille filter pills – right-aligned */}
+        <div className="flex flex-wrap gap-1.5 ml-auto">
+          {VEILLE_FILTER_PILLS.map(pill => {
+            const Icon = pill.icon;
+            const count = veilleKpis[pill.countKey];
+            const isActive = veilleFilter === pill.key;
+            return (
+              <Tooltip key={pill.key}>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={isActive ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setVeilleFilter(pill.key)}
+                    className={cn('gap-1.5 text-xs', !isActive && pill.colorClass)}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    {pill.label}
+                    <Badge variant="secondary" className="ml-0.5 text-[10px] h-4 px-1.5">
+                      {count}
+                    </Badge>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs text-xs">
+                  {pill.tooltip}
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </div>
       </div>
 
       {/* Table */}
