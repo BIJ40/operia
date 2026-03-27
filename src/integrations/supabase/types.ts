@@ -12759,6 +12759,7 @@ export type Database = {
           id: string | null
           paid_at: string | null
           ref_dossier: string | null
+          resolved_client_name: string | null
           stripe_session_id: string | null
         }
         Relationships: []
