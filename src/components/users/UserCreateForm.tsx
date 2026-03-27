@@ -9,23 +9,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { RefreshCw } from 'lucide-react';
 import { generateSecurePassword } from '@/lib/passwordUtils';
-
-// Postes disponibles pour la création admin (N3+)
-const ROLE_AGENCE_LABELS: Record<string, string> = {
-  'dirigeant': 'Dirigeant(e)',
-  'commercial': 'Commercial',
-  'tete_de_reseau': 'Tête de réseau',
-};
+import { ROLE_AGENCE_LABELS, N1_ASSIGNABLE_ROLES } from '@/components/admin/users/user-full-dialog/constants';
 
 // Postes disponibles en mode agence pour admin (N3+ créant dans une agence)
-const AGENCY_MODE_ROLES = ['dirigeant', 'commercial'];
+// Inclut tous les postes sauf tete_de_reseau et externe (qui ne nécessitent pas d'agence)
+const AGENCY_MODE_ROLES = ['dirigeant', 'assistante', 'commercial', 'technicien'];
 
-// Postes disponibles quand un N2 crée un salarié (N1)
-const EMPLOYEE_MODE_ROLES: Record<string, string> = {
-  'assistante': 'Assistant(e)',
-  'commercial': 'Commercial',
-  'technicien': 'Technicien',
-};
+// Labels pour mode salarié (N2 crée un N1) — filtrés depuis la source unique
+const EMPLOYEE_MODE_LABELS: Record<string, string> = Object.fromEntries(
+  Object.entries(ROLE_AGENCE_LABELS).filter(([key]) => (N1_ASSIGNABLE_ROLES as readonly string[]).includes(key))
+);
 
 // Validation schema
 const createUserSchema = z.object({
