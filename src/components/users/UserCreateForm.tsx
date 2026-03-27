@@ -58,6 +58,8 @@ export interface UserCreateFormProps {
   creatorRoleLevel?: number;
   agencyMode?: boolean;
   defaultValues?: Partial<CreateUserPayload>;
+  /** Mode salarié: N2 crée un N1 — postes limités, rôle système forcé */
+  employeeMode?: boolean;
 }
 
 export function UserCreateForm({
@@ -70,13 +72,20 @@ export function UserCreateForm({
   creatorRoleLevel = 0,
   agencyMode = false,
   defaultValues,
+  employeeMode = false,
 }: UserCreateFormProps) {
   // Postes disponibles selon le mode
-  const availableRoleAgence = agencyMode 
-    ? AGENCY_MODE_ROLES 
-    : Object.keys(ROLE_AGENCE_LABELS);
+  const availableRoleAgence = employeeMode
+    ? Object.keys(EMPLOYEE_MODE_ROLES)
+    : agencyMode 
+      ? AGENCY_MODE_ROLES 
+      : Object.keys(ROLE_AGENCE_LABELS);
+  
+  // Labels de postes selon le mode
+  const roleAgenceLabels = employeeMode ? EMPLOYEE_MODE_ROLES : ROLE_AGENCE_LABELS;
+  
   // N2 créé obligatoirement des utilisateurs agence (N1)
-  const isN2Creator = creatorRoleLevel === 2;
+  const isN2Creator = creatorRoleLevel === 2 || employeeMode;
   
   // Valeur par défaut intelligente : le rôle assignable le plus bas
   const defaultRole = assignableRoles.length > 0 ? assignableRoles[0] : 'base_user';
