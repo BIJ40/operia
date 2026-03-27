@@ -8,6 +8,7 @@ import { EmploymentContract, SalaryHistory } from '@/types/collaborator';
 import { toast } from 'sonner';
 import { useHasMinLevel } from '@/hooks/useHasGlobalRole';
 import { useProfile } from '@/contexts/ProfileContext';
+import { syncSalaryHistoryToCostProfile } from '@/services/salaryCostSync';
 
 export function useEmploymentContracts(collaboratorId: string | undefined) {
   const queryClient = useQueryClient();
@@ -118,9 +119,10 @@ export function useEmploymentContracts(collaboratorId: string | undefined) {
   };
 }
 
-export function useSalaryHistory(contractId: string | undefined) {
+export function useSalaryHistory(contractId: string | undefined, collaboratorId?: string) {
   const queryClient = useQueryClient();
   const canManage = useHasMinLevel(2);
+  const { agencyId } = useProfile();
 
   const { data: history = [], isLoading, error } = useQuery({
     queryKey: ['salary-history', contractId],
@@ -155,7 +157,19 @@ export function useSalaryHistory(contractId: string | undefined) {
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['salary-history', variables.contract_id] });
+      queryClient.invalidateQueries({ queryKey: ['project-profitability'] });
       toast.success('Entrée de salaire ajoutée');
+
+      // Sync to cost profile (fire-and-forget)
+      if (collaboratorId && agencyId) {
+        syncSalaryHistoryToCostProfile({
+          collaboratorId,
+          agencyId,
+          monthlySalary: variables.monthly_salary ?? null,
+          hourlyRate: variables.hourly_rate ?? null,
+          effectiveDate: variables.effective_date,
+        });
+      }
     },
     onError: (error: Error) => {
       toast.error(`Erreur salaire: ${error.message}`);
@@ -176,6 +190,7 @@ export function useSalaryHistory(contractId: string | undefined) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['salary-history', contractId] });
+      queryClient.invalidateQueries({ queryKey: ['project-profitability'] });
       toast.success('Entrée de salaire mise à jour');
     },
     onError: (error: Error) => {
