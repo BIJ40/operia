@@ -630,25 +630,6 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     isDynamic: true,
   },
   {
-    path: '/hc-reseau/animateurs',
-    label: 'Animateurs',
-    component: 'FranchiseurAnimateurs',
-    section: 'reseau',
-    guards: {
-      roleGuard: { minRole: 'franchisor_user' },
-    },
-  },
-  {
-    path: '/hc-reseau/animateurs/:animatorId',
-    label: 'Profil Animateur',
-    component: 'AnimatorProfile',
-    section: 'reseau',
-    guards: {
-      roleGuard: { minRole: 'franchisor_user' },
-    },
-    isDynamic: true,
-  },
-  {
     path: '/hc-reseau/tableaux',
     label: 'Tableaux Stats',
     component: 'FranchiseurStats',

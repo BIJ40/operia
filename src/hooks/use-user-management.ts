@@ -155,20 +155,6 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
     enabled_modules?: EnabledModules | null;
   }>>({});
 
-  // ✅ Récupérer les agences assignées (pour N3/N4)
-  const { data: assignedAgenciesRaw } = useQuery({
-    queryKey: ['franchiseur-assigned-agencies', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return [];
-      const { data, error } = await supabase
-        .from('franchiseur_agency_assignments')
-        .select('agency_id')
-        .eq('user_id', user.id);
-      if (error) throw error;
-      return data?.map(a => a.agency_id) ?? [];
-    },
-    enabled: !!user?.id && (effectiveUserRole === 'franchisor_user' || effectiveUserRole === 'franchisor_admin'),
-  });
 
   // ✅ Calcul de manageableAgencyIds (liste des agences visibles/gérables)
   const manageableAgencyIds = useMemo<string[] | null>(() => {
@@ -182,8 +168,8 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       case 'ownAgency':
         return currentUserAgencyId ? [currentUserAgencyId] : [];
       case 'assignedAgencies':
-        // Utiliser les agences assignées (UUIDs), ou vide si aucune
-        return assignedAgenciesRaw?.length ? assignedAgenciesRaw : [];
+      case 'allAgencies':
+        return null;
       case 'allAgencies':
         return null; // null = pas de filtre agence
       default:

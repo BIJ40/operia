@@ -1254,7 +1254,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     date: '2025-12-01',
     title: 'Sprints 1-3: Fondations Sécurité, Permissions & Data Model',
     changes: [
-      { type: 'security', description: 'P1.1 - RLS Franchiseur: can_access_agency() et get_user_assigned_agencies(). Policies réécrites sur animator_visits, expense_requests, royalty_*.' },
+      { type: 'security', description: 'P1.1 - RLS Franchiseur: can_access_agency(). Policies réécrites sur expense_requests, royalty_*.' },
       { type: 'security', description: 'P1.2 - RLS Support Console (Option B): Console accessible aux support.agent=true + N5+. Fonction is_support_agent(). Policies support_tickets réécrites.' },
       { type: 'security', description: 'P1.3 - Migration agency_id: profiles.agency_id (UUID) comme source unique. Fonction get_user_agency_id(). Policies réécrites sur apogee_agencies.' },
       { type: 'improvement', description: 'P2.1 - Sémantique Support clarifiée: isSupportAgent→hasSupportAgentRole, canAccessSupportConsole→canAccessSupportConsoleUI (8 fichiers)' },

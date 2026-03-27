@@ -130,9 +130,6 @@ serve(async (req) => {
     // 5. collaborator_document_folders (created_by → profiles, NO ACTION)
     await supabaseAdmin.from('collaborator_document_folders').update({ created_by: null }).eq('created_by', userId)
     
-    // 6. rh_notifications (recipient_id CASCADE, sender_id SET NULL)
-    await supabaseAdmin.from('rh_notifications').delete().eq('recipient_id', userId)
-    await supabaseAdmin.from('rh_notifications').update({ sender_id: null }).eq('sender_id', userId)
     
     // 7. user_presence (user_id → auth.users)
     await supabaseAdmin.from('user_presence').delete().eq('user_id', userId)
@@ -153,8 +150,6 @@ serve(async (req) => {
     await supabaseAdmin.from('agency_rh_roles').update({ granted_by: null }).eq('granted_by', userId)
     await supabaseAdmin.from('agency_rh_roles').delete().eq('user_id', userId)
     
-    // 13. Supprimer les assignments d'agences
-    await supabaseAdmin.from('franchiseur_agency_assignments').delete().eq('user_id', userId)
     
     // 14. Supprimer les rôles franchiseur
     await supabaseAdmin.from('franchiseur_roles').delete().eq('user_id', userId)
@@ -219,7 +214,7 @@ serve(async (req) => {
     await supabaseAdmin.from('chatbot_queries').delete().eq('user_id', userId)
     await supabaseAdmin.from('favorites').delete().eq('user_id', userId)
     await supabaseAdmin.from('announcement_reads').delete().eq('user_id', userId)
-    await supabaseAdmin.from('animator_visits').update({ animator_id: null }).eq('animator_id', userId)
+    
     await supabaseAdmin.from('expense_requests').update({ 
       requester_id: null,
       approver_id: null 

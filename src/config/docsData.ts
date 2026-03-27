@@ -89,7 +89,7 @@ export const MODULES_DOCS: ModuleDoc[] = [
     routes: ['/hc-reseau', '/hc-reseau/agences', '/hc-reseau/tableaux'],
     permissions: 'N3+ (franchisor_user)',
     icon: 'Building2',
-    tables: ['apogee_agencies', 'animator_visits', 'franchiseur_roles'],
+    tables: ['apogee_agencies', 'franchiseur_roles'],
     edgeFunctions: ['network-kpis', 'proxy-apogee'],
   },
   {
@@ -166,8 +166,8 @@ export const TABLE_CATEGORIES = [
   { id: 'rh', name: 'Ressources Humaines', tables: ['collaborators', 'collaborator_documents', 'employment_contracts', 'document_requests', 'leave_requests'] },
   { id: 'parc', name: 'Parc & Maintenance', tables: ['fleet_vehicles', 'maintenance_events', 'maintenance_alerts'] },
   
-  { id: 'notifications', name: 'Notifications', tables: ['priority_announcements', 'announcement_reads', 'rh_notifications'] },
-  { id: 'network', name: 'Réseau Franchiseur', tables: ['animator_visits', 'franchiseur_agency_assignments', 'expense_requests'] },
+  { id: 'notifications', name: 'Notifications', tables: ['priority_announcements', 'announcement_reads'] },
+  { id: 'network', name: 'Réseau Franchiseur', tables: ['expense_requests'] },
   { id: 'system', name: 'Système', tables: ['app_notification_settings', 'formation_content'] },
 ];
 
