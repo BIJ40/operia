@@ -182,7 +182,6 @@ export const ROLE_TO_POSTE_WHITELIST: Record<string, Poste> = {
   polyvalent: 'polyvalent',
   secretaire: 'secretaire',
   secrétaire: 'secretaire',
-  'secrétaire': 'secretaire',
   commercial: 'commercial',
   gerant: 'gerant',
   gérant: 'gerant',
