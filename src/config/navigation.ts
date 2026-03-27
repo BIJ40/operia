@@ -310,7 +310,6 @@ export const PAGE_TITLES: Record<string, string> = {
   
   // Admin (V2 routes)
   [ROUTES.admin.index]: 'Administration',
-  [ROUTES.admin.supportTickets]: 'Tickets Support',
   
   [ROUTES.admin.users]: 'Gestion Utilisateurs',
   [ROUTES.admin.agencies]: 'Gestion Agences',

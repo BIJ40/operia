@@ -492,8 +492,7 @@ export function canAccessFeature(
     case 'mes_demandes':
       return caps.canAccessSupport;
       
-    case 'CONSOLE_SUPPORT':
-      return caps.canAccessAdmin; // Console support supprimée, redirige vers ticketing - seuls admins
+    // CONSOLE_SUPPORT supprimée — plus de case nécessaire
     
     // Gestion de Projet
     case 'PROJET_KANBAN':
@@ -621,8 +620,7 @@ export function canAccessTile(
   const caps = getRoleCapabilities(role);
   
   switch (tileId) {
-    case 'CONSOLE_SUPPORT':
-      return caps.canAccessAdmin;
+    // CONSOLE_SUPPORT supprimée
     case 'ADMIN_USERS':
       return caps.canManageUsers;
     case 'ADMIN_ROLES':

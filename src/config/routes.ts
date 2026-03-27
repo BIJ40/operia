@@ -142,7 +142,7 @@ export const ROUTES = {
   // ============================================
   admin: {
     index: '/admin',
-    supportTickets: '/admin/support-tickets',
+    
     users: '/admin/users',
     agencies: '/admin/agencies',
     agencyProfile: (agencyId: string) => `/admin/agencies/${agencyId}`,

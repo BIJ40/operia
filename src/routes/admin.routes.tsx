@@ -84,10 +84,9 @@ export function AdminRoutes() {
       <Route path="/admin/documents" element={<Navigate to="/?tab=admin" replace />} />
       <Route path="/admin/chatbot-rag" element={<Navigate to="/?tab=admin&adminTab=ia&adminView=helpi" replace />} />
       
-      {/* Support - All redirected to projects (V3) */}
-      <Route path="/admin/support-tickets" element={<Navigate to="/projects/kanban" replace />} />
-      <Route path="/admin/support-stats" element={<Navigate to="/projects/kanban" replace />} />
-      <Route path="/admin/escalation-history" element={<Navigate to="/projects/kanban" replace />} />
+      {/* Legacy support admin routes - redirect to ticketing */}
+      <Route path="/admin/support-tickets" element={<Navigate to="/?tab=ticketing" replace />} />
+      <Route path="/admin/support-stats" element={<Navigate to="/?tab=ticketing" replace />} />
       
       {/* Legacy apogee-tickets redirects */}
       <Route path="/admin/apogee-tickets" element={<Navigate to="/projects/kanban" replace />} />
