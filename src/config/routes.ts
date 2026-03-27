@@ -224,7 +224,7 @@ type StaticRoutes =
   | typeof ROUTES['reseau']['index']
   | typeof ROUTES['reseau']['dashboard']
   | typeof ROUTES['reseau']['agences']
-  | typeof ROUTES['reseau']['animateurs']
+  
   | typeof ROUTES['reseau']['tableaux']
   | typeof ROUTES['reseau']['periodes']
   | typeof ROUTES['reseau']['redevances']

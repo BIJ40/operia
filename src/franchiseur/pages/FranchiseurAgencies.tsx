@@ -139,14 +139,8 @@ export default function FranchiseurAgencies() {
                     {!agency.is_active && (
                       <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Inactive</Badge>
                     )}
-                    {agency.animateurs && agency.animateurs.length > 0 ? (
-                      <Badge className="bg-warm-teal/80 hover:bg-warm-teal text-[10px] px-1.5 py-0">
-                        {agency.animateurs.length} Anim.
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                        Sans anim.
-                      </Badge>
+                    {!agency.is_active && (
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Inactive</Badge>
                     )}
                   </div>
                 </div>
@@ -174,14 +168,6 @@ export default function FranchiseurAgencies() {
                   </div>
                 )}
                 
-                {agency.animateurs && agency.animateurs.length > 0 && (
-                  <div className="flex items-center gap-1.5 text-xs pt-1 border-t border-border/50">
-                    <Users className="h-3 w-3 text-warm-orange shrink-0" />
-                    <span className="font-medium truncate text-warm-orange">
-                      {agency.animateurs.map(a => `${a.first_name} ${a.last_name}`).join(', ')}
-                    </span>
-                  </div>
-                )}
               </CardContent>
             </Card>
           </motion.div>
