@@ -149,7 +149,6 @@ export function UserEditForm({
       role_agence: formData.roleAgence,
       global_role: formData.globalRole as GlobalRole,
       apogee_user_id: formData.apogeeUserId ?? null,
-      apogee_user_id: formData.apogeeUserId ?? null,
     });
   };
 
