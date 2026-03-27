@@ -431,24 +431,48 @@ export function explainAccess(params: HasAccessParams): AccessTrace[] {
     reason: `Rôle ${globalRole || 'null'} n'a pas de bypass`,
   });
   
-  // Step 2: Vérifier rôle minimum
+  // Step 2: Vérifier agence si nécessaire
+  if (AGENCY_REQUIRED_MODULES.includes(moduleId)) {
+    const hasAgency = !!agencyId;
+    traces.push({
+      step: 'agency_check',
+      result: hasAgency,
+      reason: hasAgency
+        ? `Module ${moduleId} nécessite agence → agence présente (${agencyId})`
+        : `Module ${moduleId} nécessite agence → AUCUNE AGENCE`,
+    });
+    if (!hasAgency) return traces;
+  }
+  
+  // Step 3: Vérifier activation du module
+  const effectiveModules = getEffectiveModules({ globalRole, enabledModules, agencyId });
+  const moduleAccess = effectiveModules.find(m => m.id === moduleId);
+  
+  traces.push({
+    step: 'module_enabled_check',
+    result: !!moduleAccess?.enabled,
+    reason: moduleAccess?.enabled
+      ? `Module ${moduleId} activé (source: ${moduleAccess.source})`
+      : `Module ${moduleId} non activé`,
+  });
+  if (!moduleAccess?.enabled) return traces;
+
+  // Step 4: Vérifier rôle minimum APRÈS résolution (bypass delegatable)
   const minRole = MODULE_MIN_ROLES[moduleId];
   if (minRole) {
     const hasMin = hasMinRole(globalRole, minRole);
+    const bypassed = !hasMin && shouldBypassMinRole(moduleId, moduleAccess.source);
+    const finalResult = hasMin || bypassed;
     traces.push({
       step: 'min_role_check',
-      result: hasMin,
-      reason: hasMin 
-        ? `Rôle ${globalRole} >= ${minRole} (minimum requis)`
-        : `Rôle ${globalRole || 'null'} < ${minRole} (minimum requis)`,
+      result: finalResult,
+      reason: bypassed
+        ? `Rôle ${globalRole || 'null'} < ${minRole} mais module delegatable + source explicit → bypass`
+        : hasMin
+          ? `Rôle ${globalRole} >= ${minRole} (minimum requis)`
+          : `Rôle ${globalRole || 'null'} < ${minRole} (minimum requis)`,
     });
-    if (!hasMin) return traces;
-  } else {
-    traces.push({
-      step: 'min_role_check',
-      result: true,
-      reason: `Pas de rôle minimum défini pour le module ${moduleId}`,
-    });
+    if (!finalResult) return traces;
   }
   
   // Step 3: Vérifier agence si nécessaire
