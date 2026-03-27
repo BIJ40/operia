@@ -18,8 +18,10 @@ import {
   DocsHoverCard, 
   CompetencesHoverCard 
 } from './RHCockpitHoverCards';
-import { Car } from 'lucide-react';
+import { Car, UserPlus } from 'lucide-react';
 import { DrawerDomain } from './RHCockpitDrawer';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface RHCockpitRowProps {
   collaborator: RHCollaborator;
@@ -27,6 +29,8 @@ interface RHCockpitRowProps {
   onOpenDrawer: (domain: DrawerDomain) => void;
   onOpenProfile: () => void;
   onDoubleClick: () => void;
+  onCreateAccount?: (collaborator: RHCollaborator) => void;
+  canCreateAccount?: boolean;
   className?: string;
 }
 
@@ -36,6 +40,8 @@ export function RHCockpitRow({
   onOpenDrawer,
   onOpenProfile,
   onDoubleClick,
+  onCreateAccount,
+  canCreateAccount = false,
   className,
 }: RHCockpitRowProps) {
   const isFormer = !!collaborator.leaving_date;
@@ -66,6 +72,24 @@ export function RHCockpitRow({
               <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
                 Parti
               </span>
+            )}
+            {canCreateAccount && !collaborator.user_id && !isFormer && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0 h-6 w-6 text-primary hover:text-primary/80"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCreateAccount?.(collaborator);
+                    }}
+                  >
+                    <UserPlus className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Créer un compte Operia</TooltipContent>
+              </Tooltip>
             )}
           </div>
         </CollaboratorHoverPreview>
