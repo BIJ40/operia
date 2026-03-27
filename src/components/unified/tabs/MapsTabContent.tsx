@@ -1292,7 +1292,7 @@ export default function MapsTabContent() {
             <Flame className="h-4 w-4 text-destructive" />
             <span>Densité sur l'historique complet</span>
             <span className="ml-auto">
-              {heatmapLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${heatmapPoints?.length || 0} interventions`}
+              {heatmapLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${densityGeoJson?.features?.length || 0} communes`}
             </span>
           </div>
         )}
