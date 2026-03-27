@@ -352,6 +352,42 @@ export function usePerformanceTerrain(dateRange: DateRange) {
           }
         }
 
+        // === FIRST PASS: Collect absence dates per tech (for consecutive-day detection) ===
+        for (const item of planningCreneaux) {
+          const rec = item as Record<string, unknown>;
+          const refType = String(rec.refType || '').toLowerCase();
+          const type = String(rec.type || (rec.data as Record<string, unknown>)?.type || '').toLowerCase();
+          const isAbsenceType = PLANNING_ABSENCE_TYPES.some(t => refType === t || type === t);
+          if (!isAbsenceType) continue;
+
+          const rawStart = rec.dateStart || rec.start || rec.date || (rec.data as Record<string, unknown>)?.dateStart || (rec.data as Record<string, unknown>)?.date;
+          if (!rawStart) continue;
+          const eventStart = new Date(String(rawStart));
+          if (Number.isNaN(eventStart.getTime())) continue;
+          const dateKey = eventStart.toISOString().slice(0, 10);
+
+          const usersRaw = (rec.usersIds || (rec.data as Record<string, unknown>)?.usersIds || []) as unknown[];
+          const userId = rec.userId != null ? String(rec.userId) : undefined;
+          const ids = Array.isArray(usersRaw) ? usersRaw.map(x => String(x)) : [];
+          if (userId) ids.push(userId);
+
+          for (const id of ids) {
+            if (!absenceDaysByTech.has(id)) absenceDaysByTech.set(id, new Set());
+            absenceDaysByTech.get(id)!.add(dateKey);
+          }
+        }
+
+        // Helper: check if a tech has consecutive absence days (multi-day leave split into daily slots)
+        function hasConsecutiveAbsenceDays(techId: string, currentDateKey: string): boolean {
+          const dates = absenceDaysByTech.get(techId);
+          if (!dates || dates.size < 2) return false;
+          const current = new Date(currentDateKey + 'T00:00:00');
+          const prevDay = new Date(current); prevDay.setDate(prevDay.getDate() - 1);
+          const nextDay = new Date(current); nextDay.setDate(nextDay.getDate() + 1);
+          return dates.has(prevDay.toISOString().slice(0, 10)) || dates.has(nextDay.toISOString().slice(0, 10));
+        }
+
+        // === SECOND PASS: Process absences with rest-day detection ===
         for (const item of planningCreneaux) {
           const rec = item as Record<string, unknown>;
           const refType = String(rec.refType || '').toLowerCase();
@@ -386,8 +422,6 @@ export function usePerformanceTerrain(dateRange: DateRange) {
           if (!hasDateInPeriod) continue;
 
           // === REST DAY DETECTION ===
-          // If a conge spans only 1 calendar day AND the tech has work activity
-          // on other days of the same week, it's a weekly rest day — not a real absence.
           const spansDays = eventStart && eventEnd
             ? Math.ceil((eventEnd.getTime() - eventStart.getTime()) / (1000 * 60 * 60 * 24))
             : dureeRaw > 0 ? Math.ceil(dureeRaw / (60 * 24)) : 1;
@@ -398,14 +432,9 @@ export function usePerformanceTerrain(dateRange: DateRange) {
           const ids = Array.isArray(usersRaw) ? usersRaw.map(x => String(x)) : [];
           if (userId) ids.push(userId);
 
-          // Compute duration in hours from créneau — duree is in MINUTES
-          let absHours = 0;
+          // Compute duration in hours
+          let absHours = overlapHours > 0 ? overlapHours : 0;
 
-          if (overlapHours > 0) {
-            absHours = overlapHours;
-          }
-
-          // If no duree, try start/end
           if (absHours === 0) {
             const dateStart = rec.dateStart || rec.start || (rec.data as Record<string, unknown>)?.dateStart;
             const dateEnd = rec.dateEnd || rec.end || (rec.data as Record<string, unknown>)?.dateEnd;
@@ -415,11 +444,11 @@ export function usePerformanceTerrain(dateRange: DateRange) {
             }
           }
 
-          // Fallback: 7h if still 0
           if (absHours <= 0) absHours = 7;
 
           const isSingleDayConge = spansDays <= 1 && isAbsenceType;
           const isLikelyRealLeave = absHours > 16.5 || spansDays > 1;
+          const currentDateKey = eventStart ? eventStart.toISOString().slice(0, 10) : '';
 
           const absLabel = combined.includes('maladie') ? 'Arrêt maladie'
             : combined.includes('arret') || combined.includes('arrêt') ? 'En arrêt'
@@ -428,21 +457,23 @@ export function usePerformanceTerrain(dateRange: DateRange) {
             : 'Absent';
 
           for (const id of ids) {
-            // Only accumulate if no RH data for this tech
             if (absences.has(id)) continue;
 
-            // Check if this is a rest day (tech works other days of the same week)
+            // Rest-day filter: skip single-day conge if tech has ≥3 active days in week
+            // BUT: never skip if there are consecutive absence days (real multi-day leave)
             if (isSingleDayConge && eventStart && !isLikelyRealLeave) {
-              const weekKey = getISOWeekKey(eventStart);
-              const k = `${id}:${weekKey}`;
-              const activeDays = activityByTechWeek.get(k);
-              if (activeDays && activeDays.size >= 3) {
-                // Tech has activity on the rest of the week → likely weekly rest day, skip
-                logDebug('PERF_TERRAIN_V2', `Repos hebdo ignoré pour tech ${id}`, {
-                  date: eventStart.toISOString().slice(0, 10),
-                  activeDaysInWeek: activeDays.size,
-                });
-                continue;
+              const isPartOfMultiDayLeave = hasConsecutiveAbsenceDays(id, currentDateKey);
+              if (!isPartOfMultiDayLeave) {
+                const weekKey = getISOWeekKey(eventStart);
+                const k = `${id}:${weekKey}`;
+                const activeDays = activityByTechWeek.get(k);
+                if (activeDays && activeDays.size >= 3) {
+                  logDebug('PERF_TERRAIN_V2', `Repos hebdo ignoré pour tech ${id}`, {
+                    date: eventStart.toISOString().slice(0, 10),
+                    activeDaysInWeek: activeDays.size,
+                  });
+                  continue;
+                }
               }
             }
 
