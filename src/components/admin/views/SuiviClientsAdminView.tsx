@@ -227,7 +227,7 @@ function PaiementsSection() {
               </TableRow>
             ))}
             {(!data?.rows || data.rows.length === 0) && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Aucun paiement trouvé</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Aucun paiement trouvé</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
@@ -254,8 +254,8 @@ function JournalSection() {
   const { data, isLoading } = useQuery({
     queryKey: ['admin-suivi-sms-log', filterAgency, filterStatus, page],
     queryFn: async () => {
-      let query = supabase
-        .from('sms_sent_log')
+      let query = (supabase as any)
+        .from('sms_sent_log_with_client')
         .select('*', { count: 'exact' })
         .order('sent_at', { ascending: false })
         .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
