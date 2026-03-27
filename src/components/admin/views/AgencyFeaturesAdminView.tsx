@@ -310,7 +310,8 @@ function ExtensionManager({
   const extra = (meta.extra_spaces as number) ?? 0;
 
   const handleExtensionChange = (packKey: string) => {
-    const pack = EXTENSION_PACKS.find(p => (p.key ?? '') === (packKey === '' ? '' : packKey));
+    const actualKey = packKey === 'none' ? null : packKey;
+    const pack = EXTENSION_PACKS.find(p => p.key === actualKey);
     if (!pack) return;
 
     updateMeta.mutate({
@@ -352,7 +353,7 @@ function ExtensionManager({
 
           <div className="ml-auto">
             <Select
-              value={currentPack ?? ''}
+              value={currentPack ?? 'none'}
               onValueChange={handleExtensionChange}
               disabled={updateMeta.isPending}
             >
@@ -361,7 +362,7 @@ function ExtensionManager({
               </SelectTrigger>
               <SelectContent>
                 {EXTENSION_PACKS.map((p) => (
-                  <SelectItem key={p.key ?? 'none'} value={p.key ?? ''}>
+                  <SelectItem key={p.key ?? 'none'} value={p.key ?? 'none'}>
                     {p.label}
                   </SelectItem>
                 ))}
