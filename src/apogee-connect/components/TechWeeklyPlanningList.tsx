@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { stateLabel } from "@/shared/utils/stateLabels";
 import { cn } from "@/lib/utils";
 
 interface TechWeeklyPlanningListProps {
@@ -166,7 +167,7 @@ export const TechWeeklyPlanningList: React.FC<TechWeeklyPlanningListProps> = ({
                                   variant="secondary" 
                                   className="text-[10px] px-1.5 py-0 h-4"
                                 >
-                                  {slot.state}
+                                  {stateLabel(slot.state)}
                                 </Badge>
                               )}
                             </div>

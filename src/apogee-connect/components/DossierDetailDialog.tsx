@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, Calendar, Euro, FileText, User, Wrench, Eye, EyeOff, Loader2, Shield } from 'lucide-react';
 import { DataService } from '../services/dataService';
+import { stateLabel } from '@/shared/utils/stateLabels';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -142,7 +143,7 @@ export function DossierDetailDialog({ open, onOpenChange, projectId }: DossierDe
                   <div>
                     <p className="text-sm text-muted-foreground">Statut</p>
                     <Badge variant="secondary">
-                      {data.project.state || data.project.data?.etape || 'Non défini'}
+                      {stateLabel(data.project.state || data.project.data?.etape) || 'Non défini'}
                     </Badge>
                   </div>
                   {data.project.created_at && (
@@ -292,7 +293,7 @@ export function DossierDetailDialog({ open, onOpenChange, projectId }: DossierDe
                         </div>
                         <div className="text-right">
                           <Badge variant={devis.state === 'order' ? 'default' : 'secondary'}>
-                            {devis.state || 'Non défini'}
+                            {stateLabel(devis.state) || 'Non défini'}
                           </Badge>
                           {devis.totalHT && (
                             <p className="text-sm font-medium mt-1">{devis.totalHT.toLocaleString('fr-FR')} € HT</p>
@@ -356,7 +357,7 @@ export function DossierDetailDialog({ open, onOpenChange, projectId }: DossierDe
                           </p>
                         </div>
                         <Badge variant="secondary">
-                          {intervention.state || 'Programmée'}
+                          {stateLabel(intervention.state) || 'Programmée'}
                         </Badge>
                       </div>
                     ))}
