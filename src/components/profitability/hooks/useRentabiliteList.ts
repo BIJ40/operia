@@ -18,6 +18,8 @@ export interface RentabiliteListItem {
   univers: string;
   apporteurName: string;
   dateCreation: string | null;
+  /** Date de la dernière facture (pour filtrage par date) */
+  lastFactureDate: string | null;
   hasSnapshot: boolean;
   snapshot: ProfitabilitySnapshot | null;
 }
