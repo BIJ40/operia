@@ -234,7 +234,7 @@ export function extractPermissionContext(profile: any): PermissionContext {
   return {
     globalRole: profile?.global_role || null,
     agencyId: profile?.agency_id || null,
-    supportLevel: profile?.support_level || null,
+    supportLevel: null,
   };
 }
 

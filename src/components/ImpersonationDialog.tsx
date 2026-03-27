@@ -22,7 +22,6 @@ export function ImpersonationDialog({ open, onOpenChange }: ImpersonationDialogP
   const [franchiseurRole, setFranchiseurRole] = useState<string>('animateur');
   const [agence, setAgence] = useState<string>('');
   const [hasIndicateursAccess, setHasIndicateursAccess] = useState(true);
-  const [hasSupportRole, setHasSupportRole] = useState(false);
 
   // Déterminer si c'est un rôle "Tête de réseau" (franchiseur)
   const isTeteDeReseau = roleAgence === 'tete_de_reseau';
@@ -30,19 +29,14 @@ export function ImpersonationDialog({ open, onOpenChange }: ImpersonationDialogP
   // Appliquer les règles automatiques quand le rôle change
   useEffect(() => {
     if (isTeteDeReseau) {
-      // Tête de réseau = franchiseur + support automatiquement, MAIS pas d'indicateurs (pas d'agence)
-      setHasSupportRole(true);
-      setHasIndicateursAccess(false); // Pas d'agence = pas d'indicateurs
-      setAgence(''); // Pas d'agence de rattachement
+      setHasIndicateursAccess(false);
+      setAgence('');
       if (franchiseurRole === 'none') {
-        setFranchiseurRole('animateur'); // Par défaut animateur
+        setFranchiseurRole('animateur');
       }
     } else {
-      // Autres rôles
       setFranchiseurRole('none');
-      // Dirigeant a accès indicateurs par défaut, pas les autres
       setHasIndicateursAccess(roleAgence === 'dirigeant');
-      setHasSupportRole(false);
     }
   }, [roleAgence, isTeteDeReseau]);
 
@@ -67,7 +61,6 @@ export function ImpersonationDialog({ open, onOpenChange }: ImpersonationDialogP
         : null,
       agence: isTeteDeReseau ? null : (agence || null),
       hasIndicateursAccess,
-      hasSupportRole: isTeteDeReseau ? true : hasSupportRole,
       hasFranchiseurRole: isTeteDeReseau,
     };
     startImpersonation(profile);
@@ -171,19 +164,6 @@ export function ImpersonationDialog({ open, onOpenChange }: ImpersonationDialogP
             />
           </div>
 
-          {/* Rôle support - seulement si pas Tête de réseau */}
-          {!isTeteDeReseau && (
-            <div className="flex items-center justify-between">
-              <Label htmlFor="support-role" className="cursor-pointer">
-                Rôle Support
-              </Label>
-              <Switch
-                id="support-role"
-                checked={hasSupportRole}
-                onCheckedChange={setHasSupportRole}
-              />
-            </div>
-          )}
         </div>
 
         <DialogFooter>

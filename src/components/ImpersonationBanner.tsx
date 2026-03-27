@@ -68,12 +68,6 @@ export function ImpersonationBanner() {
                 <strong>{franchiseurRoleLabel}</strong>
               </span>
             )}
-            {impersonatedProfile.hasSupportRole && (
-              <span className="inline-flex items-center gap-1 bg-amber-600/30 px-2 py-0.5 rounded">
-                <Headset className="h-3 w-3" />
-                Support
-              </span>
-            )}
             {impersonatedProfile.hasIndicateursAccess && (
               <span className="inline-flex items-center gap-1 bg-amber-600/30 px-2 py-0.5 rounded">
                 <BarChart3 className="h-3 w-3" />
