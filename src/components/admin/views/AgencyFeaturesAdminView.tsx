@@ -353,7 +353,7 @@ function ExtensionManager({
 
           <div className="ml-auto">
             <Select
-              value={currentPack ?? ''}
+              value={currentPack ?? 'none'}
               onValueChange={handleExtensionChange}
               disabled={updateMeta.isPending}
             >
@@ -362,7 +362,7 @@ function ExtensionManager({
               </SelectTrigger>
               <SelectContent>
                 {EXTENSION_PACKS.map((p) => (
-                  <SelectItem key={p.key ?? 'none'} value={p.key ?? ''}>
+                  <SelectItem key={p.key ?? 'none'} value={p.key ?? 'none'}>
                     {p.label}
                   </SelectItem>
                 ))}
