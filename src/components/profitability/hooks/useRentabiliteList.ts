@@ -44,11 +44,20 @@ export function useRentabiliteList() {
         services.getFactures(agencySlug, dateRange),
       ]);
 
-      // Build set of project IDs that have at least one facture
+      // Build set of project IDs that have at least one facture + latest facture date per project
       const projectsWithFacture = new Set<string>();
+      const projectLastFactureDate = new Map<string, string>();
       for (const f of (rawFactures || []) as Record<string, unknown>[]) {
         const pid = f.dossierId ?? f.dossier_id ?? f.projectId ?? f.project_id;
-        if (pid != null) projectsWithFacture.add(String(pid));
+        if (pid != null) {
+          const pidStr = String(pid);
+          projectsWithFacture.add(pidStr);
+          const fDate = String(f.date ?? f.dateFacture ?? f.date_facture ?? f.createdAt ?? '');
+          if (fDate) {
+            const existing = projectLastFactureDate.get(pidStr);
+            if (!existing || fDate > existing) projectLastFactureDate.set(pidStr, fDate);
+          }
+        }
       }
 
       const snapshotMap = new Map<string, ProfitabilitySnapshot>();
