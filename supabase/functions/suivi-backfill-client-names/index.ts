@@ -55,12 +55,22 @@ Deno.serve(async (req) => {
       });
       if (resp.ok) {
         const data = await resp.json();
-        const client = data?.client;
+        console.log(`API response keys for ${refDossier}:`, Object.keys(data || {}));
+        // Try multiple possible structures
+        const client = data?.client || data?.data?.client;
+        const clientId = data?.clientId || data?.data?.clientId;
         if (client) {
           const name = [client.prenom, client.nom].filter(Boolean).join(' ') || null;
+          console.log(`Resolved ${refDossier} -> ${name}`);
           nameCache.set(cacheKey, name);
           return name;
+        } else if (clientId) {
+          console.log(`Found clientId ${clientId} but no client object for ${refDossier}`);
+        } else {
+          console.log(`No client data for ${refDossier}, top keys:`, JSON.stringify(data).substring(0, 200));
         }
+      } else {
+        console.warn(`API ${resp.status} for ${refDossier}`);
       }
     } catch (e) {
       console.warn(`Failed for ${refDossier}:`, e);
