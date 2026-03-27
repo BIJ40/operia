@@ -139,6 +139,10 @@ export default function AdminHubContent() {
     setRelationsTabOrder(newOrder);
   }, [setRelationsTabOrder]);
 
+  const handleOffresReorder = useCallback((newOrder: string[]) => {
+    setOffresTabOrder(newOrder);
+  }, [setOffresTabOrder]);
+
   const accentColors: Record<string, string> = {
     blue: 'hsl(var(--warm-blue))',
     purple: 'hsl(var(--warm-purple))',
@@ -151,6 +155,9 @@ export default function AdminHubContent() {
 
   const activeRelationsTab = RELATIONS_SUB_TABS.find(t => t.id === activeSubTab);
   const activeRelationsAccent = activeRelationsTab?.accent ? accentColors[activeRelationsTab.accent] : undefined;
+
+  const activeOffresTab = OFFRES_SUB_TABS.find(t => t.id === activeSubTab);
+  const activeOffresAccent = activeOffresTab?.accent ? accentColors[activeOffresTab.accent] : undefined;
 
   return (
     <DomainAccentProvider accent="red">
