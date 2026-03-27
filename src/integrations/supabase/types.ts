@@ -254,6 +254,60 @@ export type Database = {
           },
         ]
       }
+      agency_features: {
+        Row: {
+          activated_at: string | null
+          agency_id: string
+          billing_mode: string
+          created_at: string
+          feature_key: string
+          id: string
+          metadata: Json
+          status: string
+          suspended_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          agency_id: string
+          billing_mode?: string
+          created_at?: string
+          feature_key: string
+          id?: string
+          metadata?: Json
+          status?: string
+          suspended_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          agency_id?: string
+          billing_mode?: string
+          created_at?: string
+          feature_key?: string
+          id?: string
+          metadata?: Json
+          status?: string
+          suspended_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_features_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_features_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+        ]
+      }
       agency_financial_charges: {
         Row: {
           agency_id: string

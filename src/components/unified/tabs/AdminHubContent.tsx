@@ -6,7 +6,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Shield, UserPlus, StickyNote, Handshake, UserCheck, ScrollText, Eye } from 'lucide-react';
+import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Shield, UserPlus, StickyNote, Handshake, UserCheck, ScrollText, Eye, Crown } from 'lucide-react';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { 
   DraggableFolderTabsList, 
@@ -37,6 +37,7 @@ const PendingRegistrationsList = lazy(() => import('@/components/admin/registrat
 const ApporteurAuditLogView = lazy(() => import('@/components/admin/views/ApporteurAuditLogView'));
 const AdminNotesView = lazy(() => import('@/components/admin/views/AdminNotesView'));
 const SuiviClientsAdminView = lazy(() => import('@/components/admin/views/SuiviClientsAdminView'));
+const OffresAndOptionsView = lazy(() => import('@/components/admin/views/OffresAndOptionsView'));
 
 function LoadingFallback() {
   return (
@@ -50,6 +51,7 @@ function LoadingFallback() {
 const ADMIN_MAIN_TABS: PillTabConfig[] = [
   { id: 'gestion', label: 'Gestion', icon: Settings, accent: 'blue' },
   { id: 'relations', label: 'Relations', icon: Handshake, accent: 'purple' },
+  { id: 'offres', label: 'Offres', icon: Crown, accent: 'orange' },
   { id: 'ia', label: 'IA', icon: Brain, accent: 'green' },
   { id: 'contenu', label: 'Contenu', icon: FileText, accent: 'orange' },
   { id: 'ops', label: 'Ops', icon: Database, accent: 'pink' },
@@ -213,6 +215,9 @@ export default function AdminHubContent() {
             </Tabs>
           </TabsContent>
 
+          <TabsContent value="offres" className="mt-0 focus-visible:outline-none">
+            <Suspense fallback={<LoadingFallback />}><OffresAndOptionsView /></Suspense>
+          </TabsContent>
           <TabsContent value="ia" className="mt-0 focus-visible:outline-none"><IAView /></TabsContent>
           <TabsContent value="contenu" className="mt-0 focus-visible:outline-none"><ContenuView /></TabsContent>
           <TabsContent value="ops" className="mt-0 focus-visible:outline-none"><OpsView /></TabsContent>
