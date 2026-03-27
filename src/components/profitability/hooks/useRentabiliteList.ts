@@ -70,6 +70,8 @@ export function useRentabiliteList() {
       for (const proj of (rawProjects || []) as Record<string, unknown>[]) {
         const projectId = String(proj.id ?? '');
         if (!projectId || seenProjectIds.has(projectId)) continue;
+        // Only include projects that have at least one facture (dossiers terminés)
+        if (!projectsWithFacture.has(projectId)) continue;
         seenProjectIds.add(projectId);
 
         const clientId = Number(proj.clientId ?? proj.client_id ?? 0);
