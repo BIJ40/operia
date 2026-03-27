@@ -35,6 +35,7 @@ export const MODULES = {
   'pilotage.incoherences': 'pilotage.incoherences',
   'pilotage.resultat': 'pilotage.resultat',
   'pilotage.rentabilite': 'pilotage.rentabilite',
+  'pilotage.maps': 'pilotage.maps',
   // (pilotage.dashboard removed — merged into pilotage.statistiques)
   'pilotage.agence': 'pilotage.agence',
   // Commercial
@@ -297,6 +298,17 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Rentabilité',
     description: 'Analyse de rentabilité',
     icon: 'Coins',
+    category: 'pilotage',
+    defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
+    minRole: 'franchisee_admin',
+    delegatable: true,
+    options: [],
+  },
+  {
+    key: 'pilotage.maps',
+    label: 'Maps',
+    description: 'Cartes analytiques et géographiques',
+    icon: 'Map',
     category: 'pilotage',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
