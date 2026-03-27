@@ -64,12 +64,11 @@ export function NavigationAccessView({ effectiveModules, globalRole }: Navigatio
  */
 function resolveEntryLabel(
   entry: NavigationEntry,
-  getLabel: (key: string, fallback?: string) => string,
+  _getLabel: (key: string, fallback?: string) => string,
 ): string {
-  // Only resolve via DB for module-gated entries (not role-gated or alwaysVisible)
-  if (entry.guard.moduleKey) {
-    return getLabel(entry.guard.moduleKey, entry.label);
-  }
+  // Always use the static label from NAVIGATION_STRUCTURE.
+  // DB label resolution caused duplicates when multiple entries share
+  // the same moduleKey (e.g. pilotage.agence → 4 entries all renamed "Mon agence").
   return entry.label;
 }
 
