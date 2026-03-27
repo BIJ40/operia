@@ -158,6 +158,16 @@ export function RHSuiviContent() {
     handleSelectCollaborator(collaborator.id);
   };
 
+  // Handler pour créer un compte Operia depuis un collaborateur
+  const handleCreateAccountFromCollab = useCallback((collaborator: RHCollaborator) => {
+    setCreateFromCollab({
+      collaboratorId: collaborator.id,
+      firstName: collaborator.first_name,
+      lastName: collaborator.last_name,
+      email: collaborator.email || '',
+    });
+  }, []);
+
   // Vérifier si l'onglet actif est valide
   const activeCollaborator = useMemo(() => {
     if (!activeCollaboratorId) return null;
@@ -212,6 +222,7 @@ export function RHSuiviContent() {
               isLoading={isLoading}
               onRefresh={refetch}
               onOpenProfile={handleOpenProfile}
+              onCreateAccount={canCreateAccount ? handleCreateAccountFromCollab : undefined}
               className="flex-1"
             />
           </div>
