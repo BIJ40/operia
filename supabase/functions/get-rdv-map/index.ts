@@ -557,7 +557,6 @@ Deno.serve(async (req) => {
           let totalCA = 0, totalHours = 0, nbProjects = 0;
           for (const pid of pids) {
             const ca = caByProject.get(pid) || 0;
-            if (ca <= 0) continue;
             totalCA += ca;
             totalHours += hoursByProject.get(pid) || 0;
             nbProjects++;
@@ -565,7 +564,7 @@ Deno.serve(async (req) => {
           if (nbProjects === 0) continue;
           
           const margin = totalCA - totalHours * HOURLY_COST;
-          const marginRate = totalCA > 0 ? margin / totalCA : 0;
+          const marginRate = totalCA > 0 ? margin / totalCA : (totalHours > 0 ? -1 : 0);
           
           metricsByInsee.set(insee, {
             ca: Math.round(totalCA),
