@@ -30,7 +30,7 @@ async function getAgencySubdomain(agencySlug: string | undefined): Promise<strin
     const supabase = createClient(supabaseUrl, supabaseKey);
     
     const { data, error } = await supabase
-      .from("agencies")
+      .from("agency_suivi_settings")
       .select("api_subdomain")
       .eq("slug", agencySlug)
       .eq("is_active", true)
@@ -123,7 +123,7 @@ const handler = async (req: Request): Promise<Response> => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { data: payments, error } = await supabase
-      .from("payments")
+      .from("payments_clients_suivi")
       .select("id, paid_at, amount_cents")
       .eq("ref_dossier", refDossier)
       .order("paid_at", { ascending: false });

@@ -301,7 +301,7 @@ serve(async (req) => {
     
     if (agencySlug) {
       const { data: agency, error: agencyError } = await supabase
-        .from('agencies')
+        .from('agency_suivi_settings')
         .select('api_subdomain')
         .eq('slug', agencySlug)
         .eq('is_active', true)
