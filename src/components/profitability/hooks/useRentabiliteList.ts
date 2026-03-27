@@ -35,11 +35,19 @@ export function useRentabiliteList() {
       const services = getGlobalApogeeDataServices();
       const dateRange = { start: new Date('2020-01-01'), end: new Date() };
 
-      const [snapshots, rawProjects, rawClients] = await Promise.all([
+      const [snapshots, rawProjects, rawClients, rawFactures] = await Promise.all([
         listSnapshots(agencyId!),
         services.getProjects(agencySlug, dateRange),
         services.getClients(agencySlug),
+        services.getFactures(agencySlug, dateRange),
       ]);
+
+      // Build set of project IDs that have at least one facture
+      const projectsWithFacture = new Set<string>();
+      for (const f of (rawFactures || []) as Record<string, unknown>[]) {
+        const pid = f.dossierId ?? f.dossier_id ?? f.projectId ?? f.project_id;
+        if (pid != null) projectsWithFacture.add(String(pid));
+      }
 
       const snapshotMap = new Map<string, ProfitabilitySnapshot>();
       for (const snap of snapshots) {
