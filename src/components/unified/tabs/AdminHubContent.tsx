@@ -215,6 +215,9 @@ export default function AdminHubContent() {
             </Tabs>
           </TabsContent>
 
+          <TabsContent value="offres" className="mt-0 focus-visible:outline-none">
+            <Suspense fallback={<LoadingFallback />}><OffresAndOptionsView /></Suspense>
+          </TabsContent>
           <TabsContent value="ia" className="mt-0 focus-visible:outline-none"><IAView /></TabsContent>
           <TabsContent value="contenu" className="mt-0 focus-visible:outline-none"><ContenuView /></TabsContent>
           <TabsContent value="ops" className="mt-0 focus-visible:outline-none"><OpsView /></TabsContent>

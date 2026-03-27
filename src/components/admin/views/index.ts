@@ -10,3 +10,4 @@ export { OpsView } from './OpsView';
 export { PlateformeView } from './PlateformeView';
 export { ModulesMasterView } from './ModulesMasterView';
 export { default as SuiviClientsAdminView } from './SuiviClientsAdminView';
+export { default as OffresAndOptionsView } from './OffresAndOptionsView';
