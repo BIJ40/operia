@@ -1537,13 +1537,17 @@ export default function MapsTabContent() {
                 {scoreLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${scoreGeoJson?.features?.length || 0} communes`}
               </span>
             </div>
-            <div className="flex items-center gap-4 text-xs flex-wrap">
-              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#dc2626' }} /><span className="text-muted-foreground">Critique (&lt;40)</span></div>
-              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#f97316' }} /><span className="text-muted-foreground">Fragile (40-54)</span></div>
-              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#fbbf24' }} /><span className="text-muted-foreground">Moyenne (55-69)</span></div>
-              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#22c55e' }} /><span className="text-muted-foreground">Saine (70-84)</span></div>
-              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#3b82f6' }} /><span className="text-muted-foreground">Premium (85+)</span></div>
-            </div>
+            <GradientLegendBar
+              stops={[
+                { color: '#dc2626', label: '0' },
+                { color: '#f97316', label: '40' },
+                { color: '#fbbf24', label: '55' },
+                { color: '#22c55e', label: '70' },
+                { color: '#3b82f6', label: '100' },
+              ]}
+              minLabel="Critique (0)"
+              maxLabel="Premium (100)"
+            />
           </div>
         )}
 
