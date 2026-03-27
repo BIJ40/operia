@@ -1356,12 +1356,18 @@ export default function MapsTabContent() {
                 {zonesLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${zonesGeoJson?.features?.length || 0} communes`}
               </span>
             </div>
-            <div className="flex items-center gap-4 text-xs flex-wrap">
-              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#d1d5db' }} /><span className="text-muted-foreground">Zone blanche</span></div>
-              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#fbbf24' }} /><span className="text-muted-foreground">Faible</span></div>
-              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#22c55e' }} /><span className="text-muted-foreground">Correcte</span></div>
-              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#1e40af' }} /><span className="text-muted-foreground">Forte</span></div>
-              <div className="flex items-center gap-1.5 ml-2 pl-2 border-l"><span className="w-3 h-3 rounded-full border-2" style={{ borderColor: '#dc2626', backgroundColor: 'transparent' }} /><span className="text-muted-foreground">Bordure = opportunité</span></div>
+            <div className="flex items-center gap-4 flex-wrap">
+              <GradientLegendBar
+                stops={[
+                  { color: '#d1d5db', label: '0' },
+                  { color: '#fbbf24', label: '' },
+                  { color: '#22c55e', label: '' },
+                  { color: '#1e40af', label: '100' },
+                ]}
+                minLabel="Zone blanche"
+                maxLabel="Forte activité"
+              />
+              <div className="flex items-center gap-1.5 text-xs"><span className="w-3 h-3 rounded-full border-2 shrink-0" style={{ borderColor: '#dc2626', backgroundColor: 'transparent' }} /><span className="text-muted-foreground">Opportunité</span></div>
             </div>
             {zonesGeoJson && zonesGeoJson.features.length > 0 && (() => {
               const top = zonesGeoJson.features[0].properties;
