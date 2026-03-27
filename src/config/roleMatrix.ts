@@ -21,13 +21,6 @@ export interface RoleCapabilities {
    * Doit être TRUE pour tous les rôles N0-N6.
    */
   canAccessSupport: boolean;
-  /**
-   * canAccessSupportConsoleUI: Accès au back-office support (/support/console)
-   * P1.2 - Option B, P2.1 - Sémantique clarifiée
-   * Accessible aux support.agent=true OU N5+ (platform_admin, superadmin)
-   * Note: Renommé de canAccessSupportConsole pour clarté sémantique UI vs backend
-   */
-  canAccessSupportConsoleUI: boolean;
   canAccessFranchiseur: boolean;
   canAccessAdmin: boolean;
   
@@ -281,8 +274,8 @@ export const LEGACY_FIELDS_REMOVED = [
   'system_role',      // Supprimé de profiles
   'group_id',         // Supprimé de profiles  
   'role_id',          // Supprimé de profiles
-  'support_level',    // À supprimer
-  'service_competencies', // À supprimer
+  'support_level',    // Supprimé de profiles
+  'service_competencies', // Supprimé de profiles
 ] as const;
 
 // ============================================================================
@@ -295,7 +288,6 @@ export const ROLE_MATRIX: Record<GlobalRole, RoleCapabilities> = {
     canAccessHelpAcademy: false,
     canAccessPilotageAgence: false,
     canAccessSupport: true,
-    canAccessSupportConsoleUI: false,
     canAccessFranchiseur: false,
     canAccessAdmin: false,
     canManageUsers: false,
@@ -308,7 +300,6 @@ export const ROLE_MATRIX: Record<GlobalRole, RoleCapabilities> = {
     canAccessHelpAcademy: true,
     canAccessPilotageAgence: false,
     canAccessSupport: true,
-    canAccessSupportConsoleUI: false,
     canAccessFranchiseur: false,
     canAccessAdmin: false,
     canManageUsers: false,
@@ -321,7 +312,6 @@ export const ROLE_MATRIX: Record<GlobalRole, RoleCapabilities> = {
     canAccessHelpAcademy: true,
     canAccessPilotageAgence: true,
     canAccessSupport: true,
-    canAccessSupportConsoleUI: false,
     canAccessFranchiseur: false,
     canAccessAdmin: false,
     canManageUsers: true,
@@ -334,7 +324,6 @@ export const ROLE_MATRIX: Record<GlobalRole, RoleCapabilities> = {
     canAccessHelpAcademy: true,
     canAccessPilotageAgence: true,
     canAccessSupport: true,
-    canAccessSupportConsoleUI: false,
     canAccessFranchiseur: true,
     canAccessAdmin: false,
     canManageUsers: true,
@@ -347,7 +336,7 @@ export const ROLE_MATRIX: Record<GlobalRole, RoleCapabilities> = {
     canAccessHelpAcademy: true,
     canAccessPilotageAgence: true,
     canAccessSupport: true,
-    canAccessSupportConsoleUI: false,
+    
     canAccessFranchiseur: true,
     canAccessAdmin: true,
     canManageUsers: true,
@@ -360,7 +349,6 @@ export const ROLE_MATRIX: Record<GlobalRole, RoleCapabilities> = {
     canAccessHelpAcademy: true,
     canAccessPilotageAgence: true,
     canAccessSupport: true,
-    canAccessSupportConsoleUI: true,
     canAccessFranchiseur: true,
     canAccessAdmin: true,
     canManageUsers: true,
@@ -373,7 +361,7 @@ export const ROLE_MATRIX: Record<GlobalRole, RoleCapabilities> = {
     canAccessHelpAcademy: true,
     canAccessPilotageAgence: true,
     canAccessSupport: true,
-    canAccessSupportConsoleUI: true,
+    
     canAccessFranchiseur: true,
     canAccessAdmin: true,
     canManageUsers: true,
@@ -422,7 +410,7 @@ export interface FeatureAccessContext {
   globalRole: GlobalRole | null;
   agence?: string | null;
   enabledModules?: Record<string, any> | null;
-  canAccessSupportConsoleUI?: boolean;
+  
 }
 
 /**
@@ -437,7 +425,7 @@ export function canAccessFeature(
   featureId: string,
   context: FeatureAccessContext
 ): boolean {
-  const { globalRole, agence, enabledModules, canAccessSupportConsoleUI } = context;
+  const { globalRole, agence, enabledModules } = context;
   const caps = getRoleCapabilities(globalRole);
   
   // Helper: vérifie si un module est activé
@@ -505,8 +493,7 @@ export function canAccessFeature(
       return caps.canAccessSupport;
       
     case 'CONSOLE_SUPPORT':
-      // P2.1 - Utiliser canAccessSupportConsoleUI (support.agent OU N5+)
-      return canAccessSupportConsoleUI ?? caps.canAccessSupportConsoleUI;
+      return caps.canAccessAdmin; // Console support supprimée, redirige vers ticketing - seuls admins
     
     // Gestion de Projet
     case 'PROJET_KANBAN':
@@ -625,20 +612,17 @@ export function canAccessTileGroup(
 
 /**
  * Vérifie si une tuile spécifique est visible
- * Note: Pour CONSOLE_SUPPORT, utiliser canAccessSupportConsoleUI de AuthContext
  */
 export function canAccessTile(
   role: GlobalRole | null,
   tileId: string,
-  options?: { agence?: string | null; canAccessSupportConsoleUI?: boolean }
+  options?: { agence?: string | null }
 ): boolean {
   const caps = getRoleCapabilities(role);
   
-  // Tuiles spéciales
   switch (tileId) {
     case 'CONSOLE_SUPPORT':
-      // Utiliser la valeur combinée si fournie, sinon fallback sur ROLE_MATRIX
-      return options?.canAccessSupportConsoleUI ?? caps.canAccessSupportConsoleUI;
+      return caps.canAccessAdmin;
     case 'ADMIN_USERS':
       return caps.canManageUsers;
     case 'ADMIN_ROLES':

@@ -8280,8 +8280,6 @@ export type Database = {
           phone: string | null
           poste: string | null
           role_agence: string | null
-          support_level: number | null
-          support_role: Database["public"]["Enums"]["support_role"] | null
           updated_at: string
           username: string | null
         }
@@ -8311,8 +8309,6 @@ export type Database = {
           phone?: string | null
           poste?: string | null
           role_agence?: string | null
-          support_level?: number | null
-          support_role?: Database["public"]["Enums"]["support_role"] | null
           updated_at?: string
           username?: string | null
         }
@@ -8342,8 +8338,6 @@ export type Database = {
           phone?: string | null
           poste?: string | null
           role_agence?: string | null
-          support_level?: number | null
-          support_role?: Database["public"]["Enums"]["support_role"] | null
           updated_at?: string
           username?: string | null
         }
@@ -12937,7 +12931,6 @@ export type Database = {
         Args: { _user_id: string }
         Returns: number
       }
-      get_user_support_level: { Args: { _user_id: string }; Returns: number }
       get_user_ticket_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["apogee_ticket_role"]
@@ -12983,10 +12976,6 @@ export type Database = {
       }
       has_franchiseur_access: { Args: { _user_id: string }; Returns: boolean }
       has_min_global_role: {
-        Args: { _min_level: number; _user_id: string }
-        Returns: boolean
-      }
-      has_min_support_level: {
         Args: { _min_level: number; _user_id: string }
         Returns: boolean
       }
@@ -13237,7 +13226,6 @@ export type Database = {
         | "medium"
         | "good"
         | "excellent"
-      support_role: "none" | "agent" | "admin"
       system_role: "visiteur" | "utilisateur" | "support" | "admin"
       validation_status_type: "pending" | "validated" | "rejected"
     }
@@ -13445,7 +13433,6 @@ export const Constants = {
         "good",
         "excellent",
       ],
-      support_role: ["none", "agent", "admin"],
       system_role: ["visiteur", "utilisateur", "support", "admin"],
       validation_status_type: ["pending", "validated", "rejected"],
     },

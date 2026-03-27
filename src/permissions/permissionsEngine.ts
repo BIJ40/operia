@@ -367,24 +367,6 @@ export function validateUserPermissions(ctx: PermissionContext): PermissionIssue
     }
   }
   
-  // Règle 4: Support level sans agent option
-  if (supportLevel && supportLevel > 0) {
-    const aideModule = enabledModules?.['support.aide_en_ligne'] || enabledModules?.aide;
-    const isAgentEnabled = typeof aideModule === 'object' 
-      ? aideModule?.options?.agent === true
-      : false;
-      
-    if (!isAgentEnabled) {
-      issues.push({
-        type: 'error',
-        code: 'SUPPORT_LEVEL_NO_AGENT',
-        message: `Niveau support SA${supportLevel} défini mais option agent non activée`,
-        fix: 'Activer support.aide_en_ligne.options.agent ou retirer support_level',
-        moduleId: 'support.aide_en_ligne' as ModuleKey,
-      });
-    }
-  }
-  
   // Règle 5: Vérifier modules activés vs rôle minimum
   if (enabledModules && globalRole) {
     for (const [key, value] of Object.entries(enabledModules)) {

@@ -199,7 +199,7 @@ export function useAccessRightsUsers() {
         role_agence?: string;
         global_role?: GlobalRole;
         apogee_user_id?: number | null;
-        support_level?: number;
+        
       };
       enabledModules?: EnabledModules | null;
     }) => {

@@ -151,7 +151,7 @@ export const UserProfileSheet = memo(function UserProfileSheet({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('phone, avatar_url, support_level, created_at, onboarding_completed_at')
+        .select('phone, avatar_url, created_at, onboarding_completed_at')
         .eq('id', user.id)
         .single();
       if (error) throw error;
@@ -346,9 +346,6 @@ export const UserProfileSheet = memo(function UserProfileSheet({
                 <p className="text-xs text-muted-foreground">
                   {VISIBLE_ROLE_DESCRIPTIONS[effectiveRole]}
                 </p>
-              )}
-              {profileExtra?.support_level && profileExtra.support_level > 0 && (
-                <InfoRow label="Niveau support" value={`N${profileExtra.support_level}`} />
               )}
             </Section>
 
