@@ -77,63 +77,6 @@ export type Database = {
           },
         ]
       }
-      agencies: {
-        Row: {
-          allmysms_api_key: string | null
-          allmysms_login: string | null
-          allmysms_sender: string | null
-          api_subdomain: string
-          contact_email: string
-          created_at: string
-          google_reviews_url: string | null
-          id: string
-          is_active: boolean | null
-          is_default: boolean | null
-          logo_url: string | null
-          name: string
-          primary_color: string | null
-          slug: string
-          stripe_enabled: boolean | null
-          updated_at: string
-        }
-        Insert: {
-          allmysms_api_key?: string | null
-          allmysms_login?: string | null
-          allmysms_sender?: string | null
-          api_subdomain: string
-          contact_email: string
-          created_at?: string
-          google_reviews_url?: string | null
-          id?: string
-          is_active?: boolean | null
-          is_default?: boolean | null
-          logo_url?: string | null
-          name: string
-          primary_color?: string | null
-          slug: string
-          stripe_enabled?: boolean | null
-          updated_at?: string
-        }
-        Update: {
-          allmysms_api_key?: string | null
-          allmysms_login?: string | null
-          allmysms_sender?: string | null
-          api_subdomain?: string
-          contact_email?: string
-          created_at?: string
-          google_reviews_url?: string | null
-          id?: string
-          is_active?: boolean | null
-          is_default?: boolean | null
-          logo_url?: string | null
-          name?: string
-          primary_color?: string | null
-          slug?: string
-          stripe_enabled?: boolean | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
       agency_admin_documents: {
         Row: {
           agency_id: string
@@ -948,6 +891,63 @@ export type Database = {
             referencedColumns: ["key"]
           },
         ]
+      }
+      agency_suivi_settings: {
+        Row: {
+          allmysms_api_key: string | null
+          allmysms_login: string | null
+          allmysms_sender: string | null
+          api_subdomain: string
+          contact_email: string
+          created_at: string
+          google_reviews_url: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          logo_url: string | null
+          name: string
+          primary_color: string | null
+          slug: string
+          stripe_enabled: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          allmysms_api_key?: string | null
+          allmysms_login?: string | null
+          allmysms_sender?: string | null
+          api_subdomain: string
+          contact_email: string
+          created_at?: string
+          google_reviews_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          logo_url?: string | null
+          name: string
+          primary_color?: string | null
+          slug: string
+          stripe_enabled?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          allmysms_api_key?: string | null
+          allmysms_login?: string | null
+          allmysms_sender?: string | null
+          api_subdomain?: string
+          contact_email?: string
+          created_at?: string
+          google_reviews_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          logo_url?: string | null
+          name?: string
+          primary_color?: string | null
+          slug?: string
+          stripe_enabled?: boolean | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       ai_search_cache: {
         Row: {
@@ -7804,7 +7804,7 @@ export type Database = {
         }
         Relationships: []
       }
-      payments: {
+      payments_clients_suivi: {
         Row: {
           agency_slug: string | null
           amount_cents: number
