@@ -38,6 +38,44 @@ import {
 } from './constants';
 
 // ============================================================================
+// DELEGATABLE HELPERS
+// ============================================================================
+
+/** Cache for delegatable lookup — built once from MODULE_DEFINITIONS */
+const _delegatableKeys = new Set<string>(
+  MODULE_DEFINITIONS.filter(m => m.delegatable).map(m => m.key)
+);
+
+/**
+ * Checks if a module key is delegatable, including inheritance from ancestors.
+ * A module is delegatable if:
+ * - it has `delegatable: true` directly in MODULE_DEFINITIONS, OR
+ * - one of its ancestors (by dot-separated path) has `delegatable: true`
+ *   (e.g. 'organisation.salaries.rh_viewer' inherits from 'organisation.salaries')
+ */
+export function isDelegatableKey(key: string): boolean {
+  if (_delegatableKeys.has(key)) return true;
+  // Check ancestors: 'a.b.c' → check 'a.b', then 'a'
+  const parts = key.split('.');
+  for (let i = parts.length - 1; i > 0; i--) {
+    const ancestor = parts.slice(0, i).join('.');
+    if (_delegatableKeys.has(ancestor)) return true;
+  }
+  return false;
+}
+
+/**
+ * Single source of truth: should the minRole check be bypassed for this module?
+ * Only when the module was explicitly assigned (user_modules) AND is delegatable.
+ */
+export function shouldBypassMinRole(
+  moduleKey: string,
+  source: 'explicit' | 'default' | 'bypass',
+): boolean {
+  return source === 'explicit' && isDelegatableKey(moduleKey);
+}
+
+// ============================================================================
 // FONCTIONS PRINCIPALES
 // ============================================================================
 
