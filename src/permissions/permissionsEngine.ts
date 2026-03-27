@@ -325,7 +325,7 @@ export function getEffectiveModules(ctx: PermissionContext): EffectiveModule[] {
  */
 export function validateUserPermissions(ctx: PermissionContext): PermissionIssue[] {
   const issues: PermissionIssue[] = [];
-  const { globalRole, enabledModules, agencyId, supportLevel } = ctx;
+  const { globalRole, enabledModules, agencyId } = ctx;
   
   // Règle 1: N1/N2 sans agence
   if (globalRole && AGENCY_ROLES.includes(globalRole) && !agencyId) {

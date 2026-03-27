@@ -17,8 +17,6 @@ export interface PermissionContext {
   enabledModules: EnabledModules | null;
   /** ID de l'agence de l'utilisateur */
   agencyId: string | null;
-  /** Niveau support (SA1=1, SA2=2, SA3=3) */
-  supportLevel?: number | null;
 }
 
 export interface HasAccessParams extends PermissionContext {

@@ -18,7 +18,6 @@ export interface UserContext {
   globalRoleLevel: number;
   agencyId: string | null;
   agencySlug: string | null;
-  supportLevel: number | null;
 }
 
 export interface AuthResult {
@@ -78,7 +77,6 @@ export async function getUserContext(req: Request): Promise<AuthResult | AuthErr
       globalRoleLevel,
       agencyId: profile.agency_id,
       agencySlug: profile.agence,
-      supportLevel: null,
     },
     supabase,
   };
