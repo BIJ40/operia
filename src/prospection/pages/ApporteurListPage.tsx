@@ -478,6 +478,36 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
             Réinitialiser
           </Button>
         )}
+
+        {/* Veille filter pills – right-aligned */}
+        <div className="flex flex-wrap gap-1.5 ml-auto">
+          {VEILLE_FILTER_PILLS.map(pill => {
+            const Icon = pill.icon;
+            const count = veilleKpis[pill.countKey];
+            const isActive = veilleFilter === pill.key;
+            return (
+              <Tooltip key={pill.key}>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={isActive ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setVeilleFilter(pill.key)}
+                    className={cn('gap-1.5 text-xs', !isActive && pill.colorClass)}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    {pill.label}
+                    <Badge variant="secondary" className="ml-0.5 text-[10px] h-4 px-1.5">
+                      {count}
+                    </Badge>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs text-xs">
+                  {pill.tooltip}
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </div>
       </div>
 
       {/* Table */}
