@@ -38,7 +38,7 @@ export function AssistantePersonnelKPIs() {
   }
 
   // Extraire les stats assistante
-  const stats = data?.type === 'assistante' ? data.data : null;
+  const stats = data?.type === 'administratif' ? data.data : null;
 
   if (!stats) {
     return (
