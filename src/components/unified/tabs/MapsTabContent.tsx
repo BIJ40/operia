@@ -205,6 +205,9 @@ export default function MapsTabContent() {
   const [mapInitError, setMapInitError] = useState<string | null>(null);
   const [mapReady, setMapReady] = useState(false);
 
+  const [zoneDialogOpen, setZoneDialogOpen] = useState(false);
+  const { zone: agencyZone, zoneSet: agencyZoneSet } = useAgencyZone();
+
   // Day mode: single date query
   const { rdvs: dayRdvs, isLoading: dayLoading, error: dayError, technicians } = useRdvMap({
     date: selectedDate,
