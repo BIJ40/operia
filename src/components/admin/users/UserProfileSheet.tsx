@@ -34,7 +34,7 @@ interface UserProfileSheetProps {
   agencyLabel?: string;
 }
 
-import { ROLE_AGENCE_LABELS } from './user-full-dialog/constants';
+
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return '—';
