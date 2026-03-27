@@ -199,6 +199,13 @@ export interface ModuleDefinition {
   /** Si true, ce "module" est en réalité une interface de rôle, pas un module standard administrable.
    *  L'accès est piloté par le rôle global, pas par plan/overwrite. */
   roleInterface?: boolean;
+  /**
+   * Si true, un N2 peut déléguer ce module à un N1 via droits équipe (user_modules).
+   * Le check minRole est bypassé quand source === 'explicit' et delegatable === true.
+   * Le flag hérite aux descendants (options du module).
+   * Source de vérité canonique pour ce qu'un N2 peut attribuer à un N1.
+   */
+  delegatable?: boolean;
 }
 
 export interface ModuleOptionDefinition {
@@ -221,6 +228,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     uiSubTab: 'actions',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
+    delegatable: true,
     options: [
       { key: 'indicateurs', path: 'pilotage.agence.indicateurs', label: 'Indicateurs', description: 'KPIs principaux', defaultEnabled: true, routes: ['/'] },
       { key: 'actions_a_mener', path: 'pilotage.agence.actions_a_mener', label: 'Actions à mener', description: 'Liste des actions', defaultEnabled: true, routes: ['/'] },
@@ -237,6 +245,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     category: 'organisation',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
+    delegatable: true,
     options: [
       { key: 'rh_viewer', path: 'organisation.salaries.rh_viewer', label: 'Gestionnaire', description: 'Vue équipe', defaultEnabled: true, routes: ['/?tab=organisation'] },
       { key: 'rh_admin', path: 'organisation.salaries.rh_admin', label: 'Admin RH', description: 'Gestion complète', defaultEnabled: false, routes: ['/?tab=organisation'] },
@@ -250,6 +259,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     category: 'organisation',
     uiSubTab: 'parc',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
+    delegatable: true,
     minRole: 'franchisee_admin',
     options: [
       { key: 'vehicules', path: 'organisation.parc.vehicules', label: 'Véhicules', description: 'Flotte véhicules', defaultEnabled: true, routes: ['/?tab=organisation'] },
@@ -265,6 +275,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     category: 'organisation',
     uiSubTab: 'apporteurs',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
+    delegatable: true,
     minRole: 'franchisee_admin',
     options: [
       { key: 'consulter', path: 'organisation.apporteurs.consulter', label: 'Consulter', description: 'Voir les apporteurs', defaultEnabled: true, routes: ['/?tab=organisation'] },
@@ -280,6 +291,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     uiSubTab: 'administratif',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
+    delegatable: true,
     options: [],
   },
   {
@@ -291,6 +303,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     uiSubTab: 'administratif',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
+    delegatable: true,
     options: [],
   },
   {
@@ -302,6 +315,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     uiSubTab: 'administratif',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
+    delegatable: true,
     options: [],
   },
   {
@@ -312,6 +326,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     category: 'documents',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
+    delegatable: true,
     options: [
       { key: 'consulter', path: 'mediatheque.documents.consulter', label: 'Consulter', description: 'Voir les documents', defaultEnabled: true, routes: ['/?tab=documents'] },
       { key: 'gerer', path: 'mediatheque.documents.gerer', label: 'Gérer', description: 'Créer, modifier, déplacer', defaultEnabled: true, routes: ['/?tab=documents'] },
@@ -326,6 +341,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     category: 'support',
     defaultForRoles: ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'],
     minRole: 'franchisee_admin',
+    delegatable: true,
     options: [
       { key: 'apogee', path: 'support.guides.apogee', label: 'Apogée', description: 'Guide Apogée', defaultEnabled: true, routes: ['/?tab=support'] },
       { key: 'apporteurs', path: 'support.guides.apporteurs', label: 'Apporteurs', description: 'Guide apporteurs', defaultEnabled: true, routes: ['/?tab=support'] },
@@ -470,6 +486,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     uiSubTab: 'social',
     defaultForRoles: [],
     minRole: 'franchisee_admin',
+    delegatable: true,
     options: [
       { key: 'view', path: 'commercial.social.view', label: 'Consulter', description: 'Voir les suggestions', defaultEnabled: true, routes: [] },
       { key: 'generate', path: 'commercial.social.generate', label: 'Générer', description: 'Générer des suggestions IA', defaultEnabled: true, routes: [] },
