@@ -106,9 +106,21 @@ Deno.serve(async (req) => {
         if (apiResp.ok) {
           const rawData = await apiResp.json();
           const projectData = Array.isArray(rawData) ? rawData[0] : rawData;
-          const client = projectData?.client;
-          if (client) {
-            clientName = [client.prenom, client.nom].filter(Boolean).join(' ') || null;
+          const clientId = projectData?.clientId;
+          if (clientId) {
+            // Fetch clients list to resolve name
+            const clientsResp = await fetch(`https://${agency.api_subdomain}.hc-apogee.fr/api/apiGetClients`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ API_KEY: APOGEE_API_KEY }),
+            });
+            if (clientsResp.ok) {
+              const clients = await clientsResp.json();
+              const client = Array.isArray(clients) ? clients.find((c: any) => c.id === clientId) : null;
+              if (client) {
+                clientName = [client.prenom, client.nom].filter(Boolean).join(' ') || null;
+              }
+            }
           }
         }
       }
