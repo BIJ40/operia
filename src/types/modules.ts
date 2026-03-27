@@ -543,6 +543,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     uiSubTab: 'apporteurs',
     defaultForRoles: [],
     minRole: 'franchisee_user',
+    delegatable: true,
     options: [],
   },
   {
@@ -554,6 +555,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     uiSubTab: 'comparateur',
     defaultForRoles: [],
     minRole: 'franchisee_user',
+    delegatable: true,
     options: [],
   },
   {
@@ -565,6 +567,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     uiSubTab: 'veille',
     defaultForRoles: [],
     minRole: 'franchisee_user',
+    delegatable: true,
     options: [],
   },
   {
@@ -576,6 +579,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     uiSubTab: 'prospects',
     defaultForRoles: [],
     minRole: 'franchisee_user',
+    delegatable: true,
     options: [],
   },
   // Module premium Réalisations
