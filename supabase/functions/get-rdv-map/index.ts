@@ -717,7 +717,7 @@ Deno.serve(async (req) => {
           });
         }
 
-        const choropleth = buildChoroplethGeoJSON(communePolygons, metricsByInsee);
+        const choropleth = buildChoroplethGeoJSON(communePolygons, metricsByInsee, zoneCodes, { activityIndex: 0, nbProjects: 0, opportunityScore: 0, city: '' });
 
         console.log(`[GET-RDV-MAP] Zones choropleth: ${choropleth.features.length} communes in ${Date.now() - t0}ms total`);
         return withCors(req, new Response(JSON.stringify({
@@ -807,7 +807,7 @@ Deno.serve(async (req) => {
           });
         }
 
-        const choropleth = buildChoroplethGeoJSON(communePolygons, metricsByInsee);
+        const choropleth = buildChoroplethGeoJSON(communePolygons, metricsByInsee, zoneCodes, { dominantType: 'inconnu', dominantPct: 0, nbProjects: 0, city: '' });
 
         console.log(`[GET-RDV-MAP] Apporteurs choropleth: ${choropleth.features.length} communes in ${Date.now() - t0}ms total`);
         return withCors(req, new Response(JSON.stringify({
@@ -1255,7 +1255,7 @@ Deno.serve(async (req) => {
           insightsList.push({ insee: z.insee, city, scoreGlobal, margin: Math.round(z.margin), scoreCommercial, scoreOperationnel });
         }
 
-        const choropleth = buildChoroplethGeoJSON(communePolygons, metricsByInsee);
+        const choropleth = buildChoroplethGeoJSON(communePolygons, metricsByInsee, zoneCodes, { scoreGlobal: 0, scoreNorm: 0, nbProjects: 0, city: '' });
 
         // Build top insights from the computed data
         const sortedInsights = [...insightsList].sort((a, b) => b.scoreGlobal - a.scoreGlobal);
