@@ -1,72 +1,114 @@
 
 
-## Diagnostic : Bugs de la fiche utilisateur (NavigationAccessView)
+## Plan : Fusion Veille + Suivi client → "Veille" & Renommage origin-box → "Suivi Client"
 
-### Problèmes identifiés (3 bugs d'affichage, pas de bug de droits réels)
+### Contexte
 
-**Les droits effectifs (RPC) sont probablement corrects.** Le problème est dans `NavigationAccessView` qui affiche mal la structure de navigation.
+Deux éléments portent le nom "Suivi client" :
+1. **L'onglet interne Commercial** (`commercial.suivi_client`) — liste des apporteurs avec fiches
+2. **Le portail client externe** (origin-box, routes `/suivi/*`) — lien envoyé au client final
+
+**Décision utilisateur** : Fusionner l'onglet "Veille" et "Suivi client" en un seul onglet **"Veille"**, qui conserve la présentation actuelle de Suivi client (liste + browser tabs) mais intègre les filtres Veille (Dormants, En baisse, Stables, En hausse). Le nom "Suivi Client" est alors libéré pour désigner exclusivement le portail client externe.
 
 ---
 
-### Bug 1 — Labels dupliqués (critique)
+### Étape 1 — Fusion de l'onglet Veille dans Suivi client
 
-`resolveEntryLabel()` utilise `entry.guard.moduleKey` pour résoudre le label DB. Quand plusieurs entrées partagent le même `moduleKey`, elles obtiennent toutes le même label :
+**Fichier principal : `src/prospection/pages/ApporteurListPage.tsx`**
+- Ajouter les **filter pills** de Veille (Dormants, En baisse, Stables, En hausse) au-dessus de la liste existante
+- Importer le hook `useVeilleAdaptive` pour obtenir les KPIs et le scoring adaptatif par apporteur
+- Enrichir chaque ligne du tableau avec le **badge de statut Veille** (dormant, en baisse, stable, en hausse)
+- Ajouter un filtre actif qui restreint la liste aux apporteurs correspondant au pill sélectionné
+- La logique existante (recherche, tri par colonne, périodes, browser tabs) reste inchangée
 
-```text
-Pilotage:
-  Performance    → getLabel('pilotage.agence') → "Mon agence"
-  Actions à mener→ getLabel('pilotage.agence') → "Mon agence"  ← doublon
-  Devis acceptés → getLabel('pilotage.agence') → "Mon agence"  ← doublon
-  Incohérences   → getLabel('pilotage.agence') → "Mon agence"  ← doublon
+**Fichier : `src/components/unified/tabs/CommercialTabContent.tsx`**
+- Supprimer le tab `veille` de `allTabs` et de `TAB_MODULE_MAP`
+- Supprimer le `<TabsContent value="veille">` et l'import de `VeilleApporteursTab`
+- Renommer le tab `apporteurs` de "Suivi client" → **"Veille"** avec l'icône `Radar`
+- Conserver le module key `commercial.suivi_client` pour le guard (la clé `commercial.veille` sera fusionnée côté permissions)
 
-Commercial:
-  Suivi client   → getLabel('prospection') → "Commercial / Prospection"
-  Comparateur    → getLabel('prospection') → "Commercial / Prospection"  ← doublon
-  ...
+**Fichier : `src/prospection/pages/ProspectionTabContent.tsx`**
+- Même refactoring miroir (supprimer tab veille, renommer)
 
-Documents:
-  Raccourcis     → getLabel('mediatheque.gerer') → "Gérer"
-  Corbeille      → getLabel('mediatheque.gerer') → "Gérer"  ← doublon
+### Étape 2 — Renommage des labels et modules
+
+**Fichier : `src/types/modules.ts`**
+- `commercial.suivi_client` → label change de "Suivi client" à **"Veille"**
+- `commercial.veille` → marquer comme déprécié ou fusionner dans `commercial.suivi_client`
+- Mettre à jour `MODULE_LABELS` : `'commercial.suivi_client': 'Veille'`
+
+**Fichier : `src/components/admin/views/rightsTaxonomy.ts`**
+- Retirer `commercial.veille` de la liste `moduleKeys` de la catégorie Commercial (fusionné dans `commercial.suivi_client`)
+
+**Fichier : `src/config/roleAgenceModulePresets.ts`**
+- Retirer `commercial.veille` du preset `commercial` (déjà couvert par `commercial.suivi_client`)
+
+**Fichier : `src/permissions/constants.ts`**
+- Retirer `prospection.veille` (legacy, plus de tab dédié)
+
+**Fichier : `src/config/navigation.ts` / `sitemapData.ts`**
+- Mettre à jour les labels/scopes qui référencent "Suivi client" dans Commercial
+
+### Étape 3 — Renommage origin-box → "Suivi Client" (label officiel)
+
+**Fichier : `src/components/layout/PublicLanding.tsx`**
+- La feature card "Suivi Client" est déjà correctement nommée — pas de changement
+
+**Fichier : `src/components/landing/DemoCarousel.tsx`**
+- L'entrée `suivi-client` reste "Suivi Client" — pas de changement
+
+**Fichier : `src/types/modules.ts`**
+- Ajouter/confirmer un module `portail_client` ou utiliser la clé existante origin-box si elle existe, avec le label **"Suivi Client"** pour l'admin
+
+### Étape 4 — Page admin de gestion du module Suivi Client (origin-box)
+
+Cette étape sera traitée dans un **second lot** une fois la fusion Veille validée, car elle nécessite de définir :
+- Les paramètres configurables du portail (activation par agence, personnalisation des sections visibles, branding)
+- Le lien avec le nouveau plan APPORTEUR
+
+### Étape 5 — Migration SQL
+
+**Nouvelle migration** pour fusionner les droits :
+```sql
+-- Pour chaque agence ayant commercial.veille activé, s'assurer que commercial.suivi_client est aussi activé
+-- Puis supprimer les entrées commercial.veille de plan_tier_modules et user_modules
+UPDATE plan_tier_modules 
+SET module_key = 'commercial.suivi_client' 
+WHERE module_key = 'commercial.veille' 
+  AND NOT EXISTS (
+    SELECT 1 FROM plan_tier_modules p2 
+    WHERE p2.tier_key = plan_tier_modules.tier_key 
+      AND p2.module_key = 'commercial.suivi_client'
+  );
+
+DELETE FROM plan_tier_modules WHERE module_key = 'commercial.veille';
+
+-- Idem pour user_modules
+UPDATE user_modules 
+SET module_key = 'commercial.suivi_client' 
+WHERE module_key = 'commercial.veille'
+  AND NOT EXISTS (
+    SELECT 1 FROM user_modules u2 
+    WHERE u2.user_id = user_modules.user_id 
+      AND u2.module_key = 'commercial.suivi_client'
+  );
+
+DELETE FROM user_modules WHERE module_key = 'commercial.veille';
 ```
 
-**Correction** : Dans `resolveEntryLabel`, le label DB ne doit être utilisé que si l'entrée a un `moduleKey` **unique** dans son domaine. Sinon, garder le label statique (`entry.label`). Plus simplement : ne jamais overrider le label statique par le label DB quand `optionKey` est défini ou quand le moduleKey est partagé.
-
 ---
 
-### Bug 2 — Franchiseur affiché 8/8 alors que c'est en développement
+### Résumé des fichiers impactés
 
-La section Franchiseur dans `NAVIGATION_STRUCTURE` a `roleGated: FRANCHISEUR_ROLES` et chaque entrée a `minRoles: FRANCHISEUR_ROLES`. Eric est `franchisor_user` (N3), donc `evaluateGuard` retourne `true` pour toutes les entrées.
-
-Le problème : ces entrées ne vérifient pas `isDeployedModule`. Si le domaine Franchiseur est marqué "en cours de développement", les guards devraient en tenir compte.
-
-**Correction** : Ajouter un champ optionnel `deploymentKey` dans `NavigationGuard` et vérifier `isDeployedModule` dans `evaluateGuard`. Alternativement, filtrer les entrées non-déployées dans `NavigationAccessView`.
-
----
-
-### Bug 3 — Modules plan affichés comme accessibles pour un franchiseur sans agence
-
-Eric (N3, `agency_id = NULL`) voit Statistiques ✅, Plannings ✅, etc. La RPC `get_user_effective_modules` retourne ces modules parce qu'elle applique un plan par défaut aux N2+, même sans agence.
-
-C'est un **vrai problème de données** dans la RPC — pas juste d'affichage. Un franchiseur sans agence ne devrait pas hériter des modules de plan d'agence.
-
-**Correction RPC** : Conditionner l'héritage plan-tier au fait que l'utilisateur ait un `agency_id` non NULL. Les franchiseurs (N3-N4) sans agence ne devraient recevoir que les modules explicitement dans `user_modules`.
-
----
-
-### Plan d'implémentation
-
-**Fichier 1 — `src/components/admin/users/user-profile-sheet/NavigationAccessView.tsx`**
-- Modifier `resolveEntryLabel` : utiliser le label statique (`entry.label`) quand l'entrée a un `optionKey` ou quand le `moduleKey` est partagé par plusieurs entrées du même domaine. Ne résoudre via DB que pour les entrées avec un moduleKey unique.
-
-**Fichier 2 — `src/lib/navigationStructure.ts`**
-- Ajouter `deploymentKey?: string` dans `NavigationGuard` pour les entrées du domaine Franchiseur.
-- Modifier `evaluateGuard` pour intégrer un check de déploiement optionnel (passé en paramètre).
-
-**Fichier 3 — Correction RPC (migration SQL)**
-- Modifier la RPC `get_user_effective_modules` : ajouter une condition `AND v_agency_id IS NOT NULL` à l'héritage des `plan_tier_modules`. Cela garantit que les franchiseurs sans agence ne reçoivent que leurs modules explicites.
-
-### Fichiers modifiés
-1. `src/components/admin/users/user-profile-sheet/NavigationAccessView.tsx` — fix labels dupliqués
-2. `src/lib/navigationStructure.ts` — support deploymentKey dans guards
-3. Migration SQL — fix RPC pour franchiseurs sans agence
+| Fichier | Action |
+|---|---|
+| `ApporteurListPage.tsx` | Ajouter filter pills Veille + badges |
+| `CommercialTabContent.tsx` | Supprimer tab veille, renommer tab → "Veille" |
+| `ProspectionTabContent.tsx` | Idem |
+| `types/modules.ts` | Renommer label, déprécier `commercial.veille` |
+| `rightsTaxonomy.ts` | Retirer `commercial.veille` |
+| `roleAgenceModulePresets.ts` | Retirer `commercial.veille` |
+| `permissions/constants.ts` | Retirer `prospection.veille` |
+| `ModulesMasterView.tsx` | Retirer entrée `commercial.veille` |
+| Migration SQL | Fusionner droits `commercial.veille` → `commercial.suivi_client` |
 
