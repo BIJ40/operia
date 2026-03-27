@@ -6,7 +6,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Shield, UserPlus, StickyNote, Handshake, UserCheck, ScrollText, Eye, Crown } from 'lucide-react';
+import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Shield, UserPlus, StickyNote, Handshake, UserCheck, ScrollText, Eye, Crown, LayoutGrid } from 'lucide-react';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { 
   DraggableFolderTabsList, 
@@ -38,6 +38,7 @@ const ApporteurAuditLogView = lazy(() => import('@/components/admin/views/Apport
 const AdminNotesView = lazy(() => import('@/components/admin/views/AdminNotesView'));
 const SuiviClientsAdminView = lazy(() => import('@/components/admin/views/SuiviClientsAdminView'));
 const OffresAndOptionsView = lazy(() => import('@/components/admin/views/OffresAndOptionsView'));
+const AgencyFeaturesAdminView = lazy(() => import('@/components/admin/views/AgencyFeaturesAdminView'));
 
 function LoadingFallback() {
   return (
@@ -75,9 +76,16 @@ const RELATIONS_SUB_TABS: FolderTabConfig[] = [
   { id: 'suivi-clients', label: 'Suivi Clients', icon: Eye, accent: 'orange' },
 ];
 
+// Sous-onglets Offres
+const OFFRES_SUB_TABS: FolderTabConfig[] = [
+  { id: 'overview', label: "Vue d'ensemble", icon: LayoutGrid, accent: 'orange' },
+  { id: 'agency-features', label: 'Gestion agences', icon: Building2, accent: 'blue' },
+];
+
 const ADMIN_MAIN_TAB_IDS = ADMIN_MAIN_TABS.map(tab => tab.id);
 const DEFAULT_GESTION_ORDER = ['users', 'inscriptions', 'agences', 'modules', 'notes', 'activity'];
 const DEFAULT_RELATIONS_ORDER = ['apporteurs', 'audit-apporteurs', 'suivi-clients'];
+const DEFAULT_OFFRES_ORDER = ['overview', 'agency-features'];
 
 export default function AdminHubContent() {
   const { mode: navMode } = useNavigationMode();
@@ -90,6 +98,7 @@ export default function AdminHubContent() {
   const activeSubTab = searchParams.get('adminView') || 'users';
   const [gestionTabOrder, setGestionTabOrder] = useSessionState<string[]>('admin_gestion_tab_order', DEFAULT_GESTION_ORDER);
   const [relationsTabOrder, setRelationsTabOrder] = useSessionState<string[]>('admin_relations_tab_order', DEFAULT_RELATIONS_ORDER);
+  const [offresTabOrder, setOffresTabOrder] = useSessionState<string[]>('admin_offres_tab_order', DEFAULT_OFFRES_ORDER);
 
   useEffect(() => {
     if (!isAdminRoute) return;
@@ -130,6 +139,10 @@ export default function AdminHubContent() {
     setRelationsTabOrder(newOrder);
   }, [setRelationsTabOrder]);
 
+  const handleOffresReorder = useCallback((newOrder: string[]) => {
+    setOffresTabOrder(newOrder);
+  }, [setOffresTabOrder]);
+
   const accentColors: Record<string, string> = {
     blue: 'hsl(var(--warm-blue))',
     purple: 'hsl(var(--warm-purple))',
@@ -142,6 +155,9 @@ export default function AdminHubContent() {
 
   const activeRelationsTab = RELATIONS_SUB_TABS.find(t => t.id === activeSubTab);
   const activeRelationsAccent = activeRelationsTab?.accent ? accentColors[activeRelationsTab.accent] : undefined;
+
+  const activeOffresTab = OFFRES_SUB_TABS.find(t => t.id === activeSubTab);
+  const activeOffresAccent = activeOffresTab?.accent ? accentColors[activeOffresTab.accent] : undefined;
 
   return (
     <DomainAccentProvider accent="red">
@@ -216,7 +232,24 @@ export default function AdminHubContent() {
           </TabsContent>
 
           <TabsContent value="offres" className="mt-0 focus-visible:outline-none">
-            <Suspense fallback={<LoadingFallback />}><OffresAndOptionsView /></Suspense>
+            <Tabs value={activeSubTab} onValueChange={handleSubTabChange}>
+              <DraggableFolderTabsList 
+                tabs={OFFRES_SUB_TABS} 
+                tabOrder={offresTabOrder}
+                activeTab={activeSubTab}
+                onTabChange={handleSubTabChange}
+                onReorder={handleOffresReorder}
+                isDraggable={true}
+              />
+              <DraggableFolderContentContainer accentColor={activeOffresAccent}>
+                <TabsContent value="overview" className="mt-0 focus-visible:outline-none">
+                  <Suspense fallback={<LoadingFallback />}><OffresAndOptionsView /></Suspense>
+                </TabsContent>
+                <TabsContent value="agency-features" className="mt-0 focus-visible:outline-none">
+                  <Suspense fallback={<LoadingFallback />}><AgencyFeaturesAdminView /></Suspense>
+                </TabsContent>
+              </DraggableFolderContentContainer>
+            </Tabs>
           </TabsContent>
           <TabsContent value="ia" className="mt-0 focus-visible:outline-none"><IAView /></TabsContent>
           <TabsContent value="contenu" className="mt-0 focus-visible:outline-none"><ContenuView /></TabsContent>
