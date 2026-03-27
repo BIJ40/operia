@@ -98,6 +98,7 @@ export default function AdminHubContent() {
   const activeSubTab = searchParams.get('adminView') || 'users';
   const [gestionTabOrder, setGestionTabOrder] = useSessionState<string[]>('admin_gestion_tab_order', DEFAULT_GESTION_ORDER);
   const [relationsTabOrder, setRelationsTabOrder] = useSessionState<string[]>('admin_relations_tab_order', DEFAULT_RELATIONS_ORDER);
+  const [offresTabOrder, setOffresTabOrder] = useSessionState<string[]>('admin_offres_tab_order', DEFAULT_OFFRES_ORDER);
 
   useEffect(() => {
     if (!isAdminRoute) return;
