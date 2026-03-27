@@ -89,14 +89,31 @@ export function RentabiliteTable({ items, isLoading, onSelectProject, onCalculat
     };
   }, [items]);
 
+  // Apply date filter first (shared between counts and results)
+  const dateFiltered = useMemo(() => {
+    const dateRange = getDateRange(datePreset);
+    if (!dateRange) return items;
+    return items.filter(i => {
+      const dateStr = i.lastFactureDate || i.dateCreation;
+      if (!dateStr) return false;
+      try {
+        const d = parseISO(dateStr);
+        return isWithinInterval(d, dateRange);
+      } catch {
+        return false;
+      }
+    });
+  }, [items, datePreset]);
+
+  // Segment counts computed on date-filtered items
   const counts = useMemo(() => {
-    const c: Record<RentabiliteSegment, number> = { all: items.length, reliable: 0, to_complete: 0, deficit: 0, not_calculated: 0 };
-    for (const item of items) c[getSegment(item)]++;
+    const c: Record<RentabiliteSegment, number> = { all: dateFiltered.length, reliable: 0, to_complete: 0, deficit: 0, not_calculated: 0 };
+    for (const item of dateFiltered) c[getSegment(item)]++;
     return c;
-  }, [items]);
+  }, [dateFiltered]);
 
   const filtered = useMemo(() => {
-    let result = items;
+    let result = dateFiltered;
 
     // Text search
     if (search) {
@@ -124,20 +141,6 @@ export function RentabiliteTable({ items, isLoading, onSelectProject, onCalculat
       result = result.filter(i => i.apporteurName === filterApporteur);
     }
 
-    // Date filter
-    const dateRange = getDateRange(datePreset);
-    if (dateRange) {
-      result = result.filter(i => {
-        if (!i.dateCreation) return false;
-        try {
-          const d = parseISO(i.dateCreation);
-          return isWithinInterval(d, dateRange);
-        } catch {
-          return false;
-        }
-      });
-    }
-
     // Sort
     return [...result].sort((a, b) => {
       let cmp = 0;
@@ -153,7 +156,7 @@ export function RentabiliteTable({ items, isLoading, onSelectProject, onCalculat
       }
       return sortDir === 'asc' ? cmp : -cmp;
     });
-  }, [items, search, segment, sortKey, sortDir, filterUnivers, filterApporteur, datePreset]);
+  }, [dateFiltered, search, segment, sortKey, sortDir, filterUnivers, filterApporteur]);
 
   // Pagination
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
