@@ -69,13 +69,13 @@ export function UserCreateForm({
 }: UserCreateFormProps) {
   // Postes disponibles selon le mode
   const availableRoleAgence = employeeMode
-    ? Object.keys(EMPLOYEE_MODE_ROLES)
+    ? Object.keys(EMPLOYEE_MODE_LABELS)
     : agencyMode 
       ? AGENCY_MODE_ROLES 
       : Object.keys(ROLE_AGENCE_LABELS);
   
   // Labels de postes selon le mode
-  const roleAgenceLabels = employeeMode ? EMPLOYEE_MODE_ROLES : ROLE_AGENCE_LABELS;
+  const roleAgenceLabels = employeeMode ? EMPLOYEE_MODE_LABELS : ROLE_AGENCE_LABELS;
   
   // N2 créé obligatoirement des utilisateurs agence (N1)
   const isN2Creator = creatorRoleLevel === 2 || employeeMode;
