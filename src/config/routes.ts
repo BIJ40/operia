@@ -142,7 +142,7 @@ export const ROUTES = {
   // ============================================
   admin: {
     index: '/admin',
-    supportTickets: '/admin/support-tickets',
+    /** @deprecated Legacy route — redirects to /?tab=ticketing */
     users: '/admin/users',
     agencies: '/admin/agencies',
     agencyProfile: (agencyId: string) => `/admin/agencies/${agencyId}`,

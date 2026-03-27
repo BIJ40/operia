@@ -848,16 +848,6 @@ export const SITEMAP_ROUTES: RouteMetadata[] = [
     },
   },
   {
-    path: '/admin/support',
-    label: 'Admin Support',
-    component: 'AdminSupport',
-    section: 'admin',
-    guards: {
-      roleGuard: { minRole: 'platform_admin' },
-      moduleGuard: { moduleKey: 'admin_plateforme' },
-    },
-  },
-  {
     path: '/admin/priorities',
     label: 'Gestion Annonces',
     component: 'PriorityManagement',
