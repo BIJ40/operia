@@ -161,8 +161,8 @@ function PaiementsSection() {
   const { data, isLoading } = useQuery({
     queryKey: ['admin-suivi-payments', filterAgency, page],
     queryFn: async () => {
-      let query = supabase
-        .from('payments_clients_suivi')
+      let query = (supabase as any)
+        .from('payments_clients_suivi_with_client')
         .select('*', { count: 'exact' })
         .order('paid_at', { ascending: false })
         .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
