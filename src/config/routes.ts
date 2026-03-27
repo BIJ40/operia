@@ -219,7 +219,7 @@ type StaticRoutes =
   | typeof ROUTES['agency']['rhTech']
   | typeof ROUTES['support']['index']
   | typeof ROUTES['support']['userTickets']
-  | typeof ROUTES['support']['console']
+  
   | typeof ROUTES['reseau']['index']
   | typeof ROUTES['reseau']['dashboard']
   | typeof ROUTES['reseau']['agences']
@@ -232,7 +232,6 @@ type StaticRoutes =
   | typeof ROUTES['admin']['agencies']
   | typeof ROUTES['admin']['backup']
   | typeof ROUTES['admin']['userActivity']
-  | typeof ROUTES['admin']['supportStats']
-  | typeof ROUTES['admin']['escalationHistory'];
+  | typeof ROUTES['admin']['userActivity'];
 
 export type RoutePath = StaticRoutes | string;

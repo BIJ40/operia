@@ -53,8 +53,6 @@ export const PAGE_DEFAULTS: PageDefaultConfig[] = [
   { pageKey: 'admin_agencies', defaultTitle: 'Gestion Agences', defaultSubtitle: 'Configuration des agences', route: ROUTES.admin.agencies },
   { pageKey: 'admin_backup', defaultTitle: 'Sauvegardes', defaultSubtitle: 'Export et import des données', route: ROUTES.admin.backup },
   { pageKey: 'admin_user_activity', defaultTitle: 'Activité Utilisateurs', defaultSubtitle: 'Historique des connexions', route: ROUTES.admin.userActivity },
-  { pageKey: 'admin_support_stats', defaultTitle: 'Statistiques Support', defaultSubtitle: 'Métriques et indicateurs du support', route: ROUTES.admin.supportStats },
-  { pageKey: 'admin_escalation_history', defaultTitle: 'Historique Escalades', defaultSubtitle: 'Suivi des escalades de tickets', route: ROUTES.admin.escalationHistory },
   { pageKey: 'admin_documents', defaultTitle: 'Documents RAG', defaultSubtitle: 'Base documentaire pour Mme MICHU', route: ROUTES.admin.documents },
   { pageKey: 'admin_storage_quota', defaultTitle: 'Stockage', defaultSubtitle: 'Surveillance des quotas de stockage', route: ROUTES.admin.storageQuota },
   { pageKey: 'admin_page_metadata', defaultTitle: 'Métadonnées des pages', defaultSubtitle: 'Gérez les titres, descriptions et labels de menu', route: ROUTES.admin.pageMetadata },

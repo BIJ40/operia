@@ -140,13 +140,6 @@ export const NAV_GROUPS: NavGroup[] = [
         scope: 'mes_demandes', 
         description: 'Chat IA et assistance'
       },
-      { 
-        title: 'Console Support', 
-        url: ROUTES.support.console, 
-        icon: Headset, 
-        scope: 'ticketing', 
-        description: 'Traiter les demandes de support' 
-      },
     ],
   },
   {
@@ -303,7 +296,7 @@ export const PAGE_TITLES: Record<string, string> = {
   // Support (V2 routes)
   [ROUTES.support.index]: 'Support',
   [ROUTES.support.userTickets]: 'Mes demandes',
-  [ROUTES.support.console]: 'Console support',
+  
   
   // Réseau Franchiseur (V2 routes)
   [ROUTES.reseau.index]: 'Espace Franchiseur',
@@ -318,14 +311,14 @@ export const PAGE_TITLES: Record<string, string> = {
   // Admin (V2 routes)
   [ROUTES.admin.index]: 'Administration',
   [ROUTES.admin.supportTickets]: 'Tickets Support',
-  [ROUTES.admin.supportStats]: 'Statistiques Support',
+  
   [ROUTES.admin.users]: 'Gestion Utilisateurs',
   [ROUTES.admin.agencies]: 'Gestion Agences',
   [ROUTES.admin.backup]: 'Sauvegardes',
   [ROUTES.admin.helpconfortBackup]: 'HelpConfort Backup',
   [ROUTES.admin.cacheBackup]: 'Cache Backup',
   [ROUTES.admin.userActivity]: 'Activité Utilisateurs',
-  [ROUTES.admin.escalationHistory]: 'Historique Escalades',
+  
   [ROUTES.admin.helpi]: 'Helpi - Moteur IA',
   [ROUTES.admin.apogeeGuides]: 'Guides Apogée (RAG)',
   [ROUTES.admin.systemHealth]: 'Santé Système',
