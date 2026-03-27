@@ -81,7 +81,7 @@ import { RHTaillesPopup } from '@/components/rh/unified/RHTaillesPopup';
 
 const TYPE_OPTIONS = [
   { value: 'TECHNICIEN', label: 'Technicien' },
-  { value: 'ASSISTANTE', label: 'Assistante' },
+  { value: 'ADMINISTRATIF', label: 'Administratif' },
   { value: 'DIRIGEANT', label: 'Dirigeant' },
   { value: 'COMMERCIAL', label: 'Commercial' },
   { value: 'APPRENTI', label: 'Apprenti' },
@@ -101,7 +101,7 @@ const ROLE_OPTIONS = [
 
 // Mapping type → rôle par défaut
 const TYPE_DEFAULT_ROLE: Record<string, string> = {
-  'ASSISTANTE': 'Secretaire',
+  'ADMINISTRATIF': 'Secretaire',
 };
 
 function getCollaboratorStatus(c: RHCollaborator): 'active' | 'inactive' | 'exited' {

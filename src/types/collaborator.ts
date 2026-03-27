@@ -5,14 +5,14 @@
 
 export type CollaboratorType = 
   | 'TECHNICIEN' 
-  | 'ASSISTANTE' 
+  | 'ADMINISTRATIF' 
   | 'DIRIGEANT' 
   | 'COMMERCIAL' 
   | 'AUTRE';
 
 export const COLLABORATOR_TYPES: { value: CollaboratorType; label: string }[] = [
   { value: 'TECHNICIEN', label: 'Technicien' },
-  { value: 'ASSISTANTE', label: 'Assistante' },
+  { value: 'ADMINISTRATIF', label: 'Administratif' },
   { value: 'DIRIGEANT', label: 'Dirigeant' },
   { value: 'COMMERCIAL', label: 'Commercial' },
   { value: 'AUTRE', label: 'Autre' },

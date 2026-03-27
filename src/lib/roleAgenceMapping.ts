@@ -20,10 +20,12 @@ import { GlobalRole } from '@/types/globalRoles';
 export const ROLE_AGENCE_TO_GLOBAL_ROLE: Record<string, GlobalRole> = {
   dirigeant: 'franchisee_admin',
   tete_de_reseau: 'franchisor_user',
-  assistante: 'franchisee_user',
+  administratif: 'franchisee_user',
   commercial: 'franchisee_user',
   technicien: 'franchisee_user',
   externe: 'base_user',
+  // Legacy fallback
+  assistante: 'franchisee_user',
 };
 
 /**
@@ -60,7 +62,7 @@ export function validateRoleAgenceCoherence(
 /**
  * Postes qui nécessitent obligatoirement une agence.
  */
-export const AGENCY_REQUIRED_POSTES = ['dirigeant', 'assistante', 'commercial', 'technicien'];
+export const AGENCY_REQUIRED_POSTES = ['dirigeant', 'administratif', 'commercial', 'technicien'];
 
 /**
  * Postes compatibles avec l'absence d'agence.

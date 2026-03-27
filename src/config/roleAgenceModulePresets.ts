@@ -23,7 +23,7 @@ export const ROLE_AGENCE_MODULE_PRESETS: Record<string, ModuleKey[]> = {
     'support.guides',
     'support.aide_en_ligne',
   ],
-  assistante: [
+  administratif: [
     'organisation.salaries',
     'organisation.plannings',
     'organisation.documents_legaux',
