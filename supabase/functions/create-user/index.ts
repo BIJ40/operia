@@ -260,13 +260,18 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
     const profileUpdate: Record<string, any> = { 
       agence: targetAgency,
       agency_id: targetAgencyId,
-      must_change_password: true,
+      must_change_password: !username, // N1 avec pseudo: pas de changement de mot de passe obligatoire
       global_role: globalRole
     }
 
     // Ajouter role_agence si fourni
     if (roleAgence) {
       profileUpdate.role_agence = roleAgence
+    }
+
+    // Stocker le username pour les N1
+    if (username) {
+      profileUpdate.username = username
     }
 
     const { error: updateError } = await supabaseAdmin
