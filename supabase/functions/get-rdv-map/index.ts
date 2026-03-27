@@ -123,16 +123,27 @@ async function batchGeocodePostalCodes(
     .in('cache_key', cacheKeys);
 
   const cachedSet = new Set<string>();
+  const staleSet = new Set<string>();
   if (cached) {
     for (const row of cached) {
-      result.set(row.postal_code, { lat: row.lat, lng: row.lng, code_insee: row.code_insee || undefined });
-      cachedSet.add(row.postal_code);
+      const codeInsee = typeof row.code_insee === 'string' && row.code_insee.length > 0
+        ? row.code_insee
+        : undefined;
+
+      // Keep cached coords as a fallback, but force a refresh when INSEE is missing.
+      result.set(row.postal_code, { lat: row.lat, lng: row.lng, code_insee: codeInsee });
+
+      if (codeInsee) {
+        cachedSet.add(row.postal_code);
+      } else {
+        staleSet.add(row.postal_code);
+      }
     }
   }
   
-  console.log(`[GET-RDV-MAP] Geocode cache: ${cachedSet.size}/${keys.length} hits`);
+  console.log(`[GET-RDV-MAP] Geocode cache: ${cachedSet.size}/${keys.length} hits, ${staleSet.size} stale rows without INSEE`);
 
-  // 2. Geocode misses via BAN (only uncached ones)
+  // 2. Geocode misses + stale cache rows via BAN
   const misses = keys.filter(pc => !cachedSet.has(pc));
   const toInsert: any[] = [];
 
@@ -159,12 +170,12 @@ async function batchGeocodePostalCodes(
     await Promise.all(promises);
   }
 
-  // 3. Store new results in DB cache
+  // 3. Store new/refreshed results in DB cache (must update stale rows)
   if (toInsert.length > 0) {
     await supabaseAdmin
       .from('geocode_cache')
-      .upsert(toInsert, { onConflict: 'cache_key', ignoreDuplicates: true })
-      .then(() => console.log(`[GET-RDV-MAP] Cached ${toInsert.length} new geocode results`));
+      .upsert(toInsert, { onConflict: 'cache_key' })
+      .then(() => console.log(`[GET-RDV-MAP] Cached/refreshed ${toInsert.length} geocode results`));
   }
 
   return result;
