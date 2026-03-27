@@ -21,13 +21,6 @@ export interface RoleCapabilities {
    * Doit être TRUE pour tous les rôles N0-N6.
    */
   canAccessSupport: boolean;
-  /**
-   * canAccessSupportConsoleUI: Accès au back-office support (/support/console)
-   * P1.2 - Option B, P2.1 - Sémantique clarifiée
-   * Accessible aux support.agent=true OU N5+ (platform_admin, superadmin)
-   * Note: Renommé de canAccessSupportConsole pour clarté sémantique UI vs backend
-   */
-  canAccessSupportConsoleUI: boolean;
   canAccessFranchiseur: boolean;
   canAccessAdmin: boolean;
   
@@ -281,8 +274,8 @@ export const LEGACY_FIELDS_REMOVED = [
   'system_role',      // Supprimé de profiles
   'group_id',         // Supprimé de profiles  
   'role_id',          // Supprimé de profiles
-  'support_level',    // À supprimer
-  'service_competencies', // À supprimer
+  'support_level',    // Supprimé de profiles
+  'service_competencies', // Supprimé de profiles
 ] as const;
 
 // ============================================================================
