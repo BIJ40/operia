@@ -10,6 +10,8 @@ import { format, addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval, pa
 import { fr } from 'date-fns/locale';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Loader2, MapPin, AlertCircle, CalendarDays, Flame, PieChart, Crosshair, Network, Radio, Clock, Wrench, Navigation, CalendarRange, Play, Pause, SkipBack, SkipForward, TrendingUp, TrendingDown, Trophy, Shield, Target, BarChart3, Star, AlertTriangle } from 'lucide-react';
 import { GradientLegendBar } from '@/components/map/GradientLegendBar';
+import { ZoneConfigDialog } from '@/components/map/ZoneConfigDialog';
+import { useAgencyZone } from '@/hooks/useAgencyZone';
 import { Progress } from '@/components/ui/progress';
 import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -202,6 +204,9 @@ export default function MapsTabContent() {
   const [tokenError, setTokenError] = useState<string | null>(null);
   const [mapInitError, setMapInitError] = useState<string | null>(null);
   const [mapReady, setMapReady] = useState(false);
+
+  const [zoneDialogOpen, setZoneDialogOpen] = useState(false);
+  const { zone: agencyZone, zoneSet: agencyZoneSet } = useAgencyZone();
 
   // Day mode: single date query
   const { rdvs: dayRdvs, isLoading: dayLoading, error: dayError, technicians } = useRdvMap({
@@ -1179,11 +1184,24 @@ export default function MapsTabContent() {
 
   return (
     <div className="flex flex-col" style={{ height: 'calc(100vh - 12rem)' }}>
-      <SimpleFolderTabsList
-        tabs={MAP_SUB_TABS}
-        activeTab={activeSubTab}
-        onTabChange={(v) => { setActiveSubTab(v as MapsSubTab); setSelectedRdv(null); }}
-      />
+      <div className="flex items-center gap-2">
+        <div className="flex-1">
+          <SimpleFolderTabsList
+            tabs={MAP_SUB_TABS}
+            activeTab={activeSubTab}
+            onTabChange={(v) => { setActiveSubTab(v as MapsSubTab); setSelectedRdv(null); }}
+          />
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="shrink-0 gap-1.5 mr-2"
+          onClick={() => setZoneDialogOpen(true)}
+        >
+          <MapPin className="h-3.5 w-3.5" />
+          Zone ({agencyZone.length})
+        </Button>
+      </div>
 
       <DraggableFolderContentContainer accentColor={activeAccentColor} className="flex-1 flex flex-col min-h-0 !p-0">
         {/* Barre de filtres — visible uniquement en mode RDV */}
@@ -1773,6 +1791,7 @@ export default function MapsTabContent() {
           )}
         </div>
       </DraggableFolderContentContainer>
+      <ZoneConfigDialog open={zoneDialogOpen} onOpenChange={setZoneDialogOpen} />
     </div>
   );
 }
