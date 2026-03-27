@@ -19,7 +19,7 @@ import { ApporteurTabsBar } from '@/prospection/browser-tabs/ApporteurTabsBar';
 import { ApporteurTabsContent } from '@/prospection/browser-tabs/ApporteurTabsContent';
 import { ApporteurListPage } from '@/prospection/pages/ApporteurListPage';
 import { ApporteurComparisonPage } from '@/prospection/pages/ApporteurComparisonPage';
-import { VeilleApporteursTab } from '@/prospection/pages/VeilleApporteursTab';
+import { ProspectsUnifiedPage } from '@/prospection/pages/ProspectsUnifiedPage';
 
 const RealisationsPage = lazy(() => import('@/realisations/pages/RealisationsPage'));
 const SocialHubPage = lazy(() => import('@/pages/commercial/SocialHubPage'));
