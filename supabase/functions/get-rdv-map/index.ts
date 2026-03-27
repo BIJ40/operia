@@ -80,7 +80,7 @@ async function fetchCommunePolygons(): Promise<any> {
     const allFeatures: any[] = [];
     
     for (const dept of depts) {
-      const url = `https://geo.api.gouv.fr/departements/${dept}/communes?fields=code,nom,contour&format=geojson`;
+      const url = `https://geo.api.gouv.fr/departements/${dept}/communes?fields=code,nom&format=geojson&geometry=contour`;
       const resp = await fetch(url, { signal: AbortSignal.timeout(30000) });
       if (!resp.ok) {
         console.warn(`[GET-RDV-MAP] geo.api.gouv.fr error for dept ${dept}: ${resp.status}`);
@@ -88,7 +88,19 @@ async function fetchCommunePolygons(): Promise<any> {
       }
       const geojson = await resp.json();
       if (geojson?.features) {
-        allFeatures.push(...geojson.features);
+        for (const feature of geojson.features) {
+          const geometry = feature?.geometry;
+          if (!geometry || (geometry.type !== 'Polygon' && geometry.type !== 'MultiPolygon')) continue;
+
+          allFeatures.push({
+            type: 'Feature',
+            properties: {
+              code: feature?.properties?.code,
+              nom: feature?.properties?.nom,
+            },
+            geometry,
+          });
+        }
       }
     }
     
