@@ -24,6 +24,11 @@ import { RHCollaboratorPanel } from '@/components/rh/browser-tabs/RHCollaborator
 import { RHTabsProvider } from '@/components/rh/browser-tabs/RHTabsContext';
 import { RHCollaborator } from '@/types/rh-suivi';
 import { cn } from '@/lib/utils';
+import { CreateUserDialog } from '@/components/admin/users/UserDialogs';
+import { useUserManagement } from '@/hooks/use-user-management';
+import { useHasMinLevel } from '@/hooks/useHasGlobalRole';
+import { usePermissions } from '@/contexts/PermissionsContext';
+import { getRoleLevel } from '@/types/globalRoles';
 
 export function RHSuiviContent() {
   const queryClient = useQueryClient();
