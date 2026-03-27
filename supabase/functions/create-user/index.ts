@@ -76,12 +76,22 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
     // Valider les données d'entrée
     const bodyRaw = await req.json()
     
-    const email = validateString(bodyRaw.email, 'email', { email: true, maxLength: 255 })
     const firstName = validateString(bodyRaw.firstName || bodyRaw.first_name, 'firstName', { minLength: 1, maxLength: 100 })
     const lastName = validateString(bodyRaw.lastName || bodyRaw.last_name, 'lastName', { minLength: 1, maxLength: 100 })
     const password = validateOptionalString(bodyRaw.password, 'password', 100) || generateSecurePassword()
     const agence = validateOptionalString(bodyRaw.agence, 'agence', 100) || null
     const agencyId = validateOptionalString(bodyRaw.agency_id, 'agency_id', 100) || null
+    const username = validateOptionalString(bodyRaw.username, 'username', 100) || null
+    
+    // Email: si username fourni et pas d'email, générer un email interne
+    let email = validateOptionalString(bodyRaw.email, 'email', 255) || null
+    if (!email && username) {
+      email = `${username}@internal.helpconfort.services`
+      console.log(`[create-user] Email interne généré: ${email}`)
+    }
+    if (!email) {
+      throw new Error('Email ou nom d\'utilisateur requis')
+    }
     
     // 🛡️ P0.3: Rôle système OBLIGATOIRE - pas de fallback silencieux
     const globalRole = validateOptionalString(bodyRaw.globalRole || bodyRaw.global_role, 'globalRole', 50)
@@ -93,7 +103,7 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
     const sendEmail = validateOptionalBoolean(bodyRaw.sendEmail) !== false
     const collaboratorId = validateOptionalString(bodyRaw.collaborator_id, 'collaborator_id', 100) || null
     
-    console.log(`[create-user] Params: email=${email}, sendEmail=${sendEmail}, bodyRaw.sendEmail=${bodyRaw.sendEmail}`)
+    console.log(`[create-user] Params: email=${email}, username=${username}, sendEmail=${sendEmail}`)
 
     // Déterminer l'agence cible (UUID ou slug)
     let targetAgency = agence
