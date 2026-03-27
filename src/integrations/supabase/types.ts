@@ -10603,6 +10603,7 @@ export type Database = {
       sms_sent_log: {
         Row: {
           agency_slug: string | null
+          client_name: string | null
           error_message: string | null
           id: string
           phone_number: string
@@ -10613,6 +10614,7 @@ export type Database = {
         }
         Insert: {
           agency_slug?: string | null
+          client_name?: string | null
           error_message?: string | null
           id?: string
           phone_number: string
@@ -10623,6 +10625,7 @@ export type Database = {
         }
         Update: {
           agency_slug?: string | null
+          client_name?: string | null
           error_message?: string | null
           id?: string
           phone_number?: string
