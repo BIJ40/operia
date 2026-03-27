@@ -329,7 +329,7 @@ function JournalSection() {
             {data?.rows?.map(r => (
               <TableRow key={r.id}>
                 <TableCell className="font-mono text-sm">{r.ref_dossier}</TableCell>
-                <TableCell className="text-sm font-medium">{r.client_name || '—'}</TableCell>
+                <TableCell className="text-sm font-medium">{r.resolved_client_name || '—'}</TableCell>
                 <TableCell className="text-sm">{r.phone_number}</TableCell>
                 <TableCell><Badge variant="outline" className="text-xs">{r.trigger_type}</Badge></TableCell>
                 <TableCell><Badge variant={statusColor(r.status)} className="text-xs">{r.status}</Badge></TableCell>
