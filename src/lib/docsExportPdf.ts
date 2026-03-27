@@ -43,12 +43,6 @@ const ROLE_HIERARCHY = [
   { level: 'N6', enum: 'superadmin', description: 'Super administrateur', example: 'CTO', capabilities: 'DROITS ABSOLUS - Aucune restriction' },
 ];
 
-const SUPPORT_LEVELS = [
-  { level: 'SA0', code: 'Non-agent', permissions: 'Création tickets uniquement' },
-  { level: 'SA1', code: 'Agent N1', permissions: 'Traitement tickets basique, réponses' },
-  { level: 'SA2', code: 'Agent N2', permissions: 'Escalade, réassignation, priorité' },
-  { level: 'SA3', code: 'Superviseur', permissions: 'Tous droits support, stats, config' },
-];
 
 const RLS_PATTERNS = [
   { name: 'Accès personnel', code: 'USING (auth.uid() = user_id)', usage: 'Données propres à l\'utilisateur' },
@@ -640,15 +634,6 @@ has_module_enabled(module_key text) → boolean`);
       this.addSpace(5);
     });
     
-    // Support Levels
-    this.addChapterTitle('Niveaux Support (Module Support V2)');
-    this.addTable(
-      ['Niveau', 'Code', 'Permissions'],
-      SUPPORT_LEVELS.map(s => [s.level, s.code, s.permissions]),
-      [25, 40, 95]
-    );
-    
-    this.addInfoBox('Info', 'Les niveaux SA sont exclusifs aux agents support (user_modules.aide.options.agent = true). Un utilisateur non-agent est implicitement SA0.', 'info');
   }
 
   addStatiaSection(): void {

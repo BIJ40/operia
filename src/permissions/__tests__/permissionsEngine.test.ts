@@ -330,17 +330,6 @@ describe('validateUserPermissions', () => {
     expect(errors.length).toBe(0);
   });
 
-  it('detects support level without agent option', () => {
-    const issues = validateUserPermissions({
-      globalRole: 'franchisee_admin',
-      enabledModules: {
-        'support.aide_en_ligne': { enabled: true, options: { user: true, agent: false } },
-      },
-      agencyId: 'agency-1',
-      supportLevel: 2,
-    });
-    expect(issues.some(i => i.code === 'SUPPORT_LEVEL_NO_AGENT')).toBe(true);
-  });
 });
 
 // ============================================================================
