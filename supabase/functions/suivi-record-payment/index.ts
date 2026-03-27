@@ -86,6 +86,35 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Resolve client name from Apogée API
+    let clientName: string | null = null;
+    try {
+      const resolvedSlug = agencySlug || session.metadata?.agencySlug || 'dax';
+      const { data: agency } = await supabase
+        .from('agency_suivi_settings')
+        .select('api_subdomain')
+        .eq('slug', resolvedSlug)
+        .maybeSingle();
+
+      if (agency?.api_subdomain && APOGEE_API_KEY && refDossier) {
+        const apiUrl = `https://${agency.api_subdomain}.hc-apogee.fr/api/getProjectByRef`;
+        const apiResp = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ API_KEY: APOGEE_API_KEY, ref: refDossier }),
+        });
+        if (apiResp.ok) {
+          const projectData = await apiResp.json();
+          const client = projectData?.client;
+          if (client) {
+            clientName = [client.prenom, client.nom].filter(Boolean).join(' ') || null;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to resolve client name:', e);
+    }
+
     // Record the payment
     const amountCents = session.amount_total || 0;
     const { data: payment, error } = await supabase
@@ -96,6 +125,7 @@ Deno.serve(async (req) => {
         amount_cents: amountCents,
         stripe_session_id: sessionId,
         paid_at: new Date().toISOString(),
+        client_name: clientName,
       })
       .select()
       .single();
