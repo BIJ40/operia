@@ -99,6 +99,7 @@ export interface UserFormData {
   email: string;
   agence: string;
   roleAgence: string;
+  poste: string;
   globalRole: GlobalRole;
   apogeeUserId: number | undefined;
 }

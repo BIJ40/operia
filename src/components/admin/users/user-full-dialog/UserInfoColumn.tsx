@@ -22,6 +22,10 @@ import { toast } from 'sonner';
 import { ApogeeUserSelect } from '@/components/collaborators/ApogeeUserSelect';
 import { Agency, ROLE_AGENCE_LABELS, getEditableRoleAgenceEntries, UserFormData } from './constants';
 import { getSuggestedGlobalRole, validateRoleAgenceCoherence } from '@/lib/roleAgenceMapping';
+import {
+  getPostesForFonction, getDefaultPoste, validateFonctionPoste,
+  POSTE_LABELS, type Poste,
+} from '@/lib/fonctionPosteMapping';
 
 interface UserInfoColumnProps {
   editMode: boolean;
@@ -219,19 +223,23 @@ export function UserInfoColumn({
           )}
         </div>
 
-        {/* Role agence */}
+        {/* Fonction */}
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground flex items-center gap-1">
-            <Briefcase className="h-3 w-3" /> Poste
+            <Briefcase className="h-3 w-3" /> Fonction
           </Label>
           {editMode ? (
             <Select
               value={formData.roleAgence || ""}
               onValueChange={v => {
                 const suggested = getSuggestedGlobalRole(v);
+                const defaultPoste = getDefaultPoste(v);
+                const currentPoste = (formData as any).poste;
+                const validation = validateFonctionPoste(v, currentPoste);
                 setFormData(p => ({
                   ...p,
                   roleAgence: v,
+                  poste: validation.valid ? currentPoste : (defaultPoste || ''),
                   ...(suggested ? { globalRole: suggested } : {}),
                 }));
               }}
@@ -247,6 +255,39 @@ export function UserInfoColumn({
             <p className="font-medium">{ROLE_AGENCE_LABELS[roleAgence || ''] || roleAgence || '—'}</p>
           )}
         </div>
+
+        {/* Poste / Spécialité */}
+        {(() => {
+          const postesDisponibles = getPostesForFonction(editMode ? formData.roleAgence : (roleAgence || ''));
+          if (postesDisponibles.length === 0) return null;
+          const currentPoste = editMode ? (formData as any).poste : null;
+          const displayPoste = currentPoste || (roleAgence ? null : null);
+
+          return (
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                <Briefcase className="h-3 w-3" /> Poste / Spécialité
+              </Label>
+              {editMode ? (
+                <Select
+                  value={currentPoste || ""}
+                  onValueChange={v => setFormData(p => ({ ...p, poste: v }))}
+                >
+                  <SelectTrigger className="rounded-lg"><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                  <SelectContent>
+                    {postesDisponibles.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <p className="font-medium">
+                  {POSTE_LABELS[(roleAgence ? '' : '') as Poste] || '—'}
+                </p>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Global role */}
         <div className="space-y-1.5">
