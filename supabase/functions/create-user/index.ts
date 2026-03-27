@@ -188,8 +188,7 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
       throw new Error('Le nom est obligatoire')
     }
 
-    // Validation de l'email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    // Validation de l'email (déjà validé/généré plus haut, vérification finale)
     if (!emailRegex.test(email)) {
       throw new Error('L\'adresse email n\'est pas valide')
     }
