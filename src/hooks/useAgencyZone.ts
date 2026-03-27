@@ -64,7 +64,7 @@ export function useAgencyZone() {
       qc.invalidateQueries({ queryKey: ['rdv-apporteurs'] });
       qc.invalidateQueries({ queryKey: ['rdv-saisonnalite'] });
       qc.invalidateQueries({ queryKey: ['rdv-score'] });
-      toast.success(`Zone enregistrée (${communes.length} communes)`);
+      toast.success(`Zone enregistrée`);
     },
     onError: (err: Error) => {
       toast.error(`Erreur : ${err.message}`);
