@@ -604,7 +604,7 @@ Deno.serve(async (req) => {
             ((metrics.marginRate - minMarginRate) / (maxMarginRate - minMarginRate)) * 2 - 1; // -1 to 1
         }
 
-        const choropleth = buildChoroplethGeoJSON(communePolygons, metricsByInsee);
+        const choropleth = buildChoroplethGeoJSON(communePolygons, metricsByInsee, zoneCodes, { ca: 0, hours: 0, margin: 0, marginRate: 0, marginNorm: -1, nbProjects: 0, city: '' });
         
         console.log(`[GET-RDV-MAP] Profitability choropleth: ${choropleth.features.length} communes in ${Date.now() - t0}ms total`);
         return withCors(req, new Response(JSON.stringify({
