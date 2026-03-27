@@ -9,6 +9,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { format, addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval, parse } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, Loader2, MapPin, AlertCircle, CalendarDays, Flame, PieChart, Crosshair, Network, Radio, Clock, Wrench, Navigation, CalendarRange, Play, Pause, SkipBack, SkipForward, TrendingUp, TrendingDown, Trophy, Shield, Target, BarChart3, Star, AlertTriangle } from 'lucide-react';
+import { GradientLegendBar } from '@/components/map/GradientLegendBar';
 import { Progress } from '@/components/ui/progress';
 import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -1284,12 +1285,32 @@ export default function MapsTabContent() {
 
         {/* Barre info densité */}
         {mapMode === 'heatmap' && (
-          <div className="flex-none p-4 flex items-center gap-2 text-sm text-muted-foreground">
-            <Flame className="h-4 w-4 text-destructive" />
-            <span>Densité sur l'historique complet</span>
-            <span className="ml-auto">
-              {heatmapLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${densityGeoJson?.features?.length || 0} communes`}
-            </span>
+          <div className="flex-none p-4 space-y-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Flame className="h-4 w-4 text-destructive" />
+              <span>Densité d'interventions — historique complet</span>
+              <span className="ml-auto">
+                {heatmapLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${densityGeoJson?.features?.length || 0} communes`}
+              </span>
+            </div>
+            <GradientLegendBar
+              stops={[
+                { color: '#fff5f5', label: '0' },
+                { color: '#feb2b2', label: '' },
+                { color: '#fc8181', label: '' },
+                { color: '#f56565', label: '' },
+                { color: '#e53e3e', label: '' },
+                { color: '#c53030', label: '' },
+                { color: '#9b2c2c', label: '' },
+                { color: '#742a2a', label: 'Max' },
+              ]}
+              minLabel="Aucune"
+              maxLabel={(() => {
+                if (!densityGeoJson?.features?.length) return 'Max';
+                const maxC = Math.max(...densityGeoJson.features.map((f: any) => f.properties?.count || 0));
+                return `${maxC} inter.`;
+              })()}
+            />
           </div>
         )}
 
@@ -1303,20 +1324,25 @@ export default function MapsTabContent() {
                 {profitLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${profitGeoJson?.features?.length || 0} communes`}
               </span>
             </div>
-            <div className="flex items-center gap-4 text-xs">
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#dc2626' }} />
-                <span className="text-muted-foreground">Zone déficitaire</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#fbbf24' }} />
-                <span className="text-muted-foreground">Équilibre</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#15803d' }} />
-                <span className="text-muted-foreground">Zone rentable</span>
-              </div>
-            </div>
+            <GradientLegendBar
+              stops={[
+                { color: '#dc2626', label: '' },
+                { color: '#ef4444', label: '' },
+                { color: '#fbbf24', label: '0 €' },
+                { color: '#22c55e', label: '' },
+                { color: '#15803d', label: '' },
+              ]}
+              minLabel={(() => {
+                if (!profitGeoJson?.features?.length) return 'Déficit';
+                const minM = Math.min(...profitGeoJson.features.map((f: any) => f.properties?.margin || 0));
+                return `${Math.round(minM).toLocaleString('fr-FR')} €`;
+              })()}
+              maxLabel={(() => {
+                if (!profitGeoJson?.features?.length) return 'Bénéfice';
+                const maxM = Math.max(...profitGeoJson.features.map((f: any) => f.properties?.margin || 0));
+                return `+${Math.round(maxM).toLocaleString('fr-FR')} €`;
+              })()}
+            />
           </div>
         )}
 
@@ -1330,12 +1356,18 @@ export default function MapsTabContent() {
                 {zonesLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${zonesGeoJson?.features?.length || 0} communes`}
               </span>
             </div>
-            <div className="flex items-center gap-4 text-xs flex-wrap">
-              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#d1d5db' }} /><span className="text-muted-foreground">Zone blanche</span></div>
-              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#fbbf24' }} /><span className="text-muted-foreground">Faible</span></div>
-              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#22c55e' }} /><span className="text-muted-foreground">Correcte</span></div>
-              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#1e40af' }} /><span className="text-muted-foreground">Forte</span></div>
-              <div className="flex items-center gap-1.5 ml-2 pl-2 border-l"><span className="w-3 h-3 rounded-full border-2" style={{ borderColor: '#dc2626', backgroundColor: 'transparent' }} /><span className="text-muted-foreground">Bordure = opportunité</span></div>
+            <div className="flex items-center gap-4 flex-wrap">
+              <GradientLegendBar
+                stops={[
+                  { color: '#d1d5db', label: '0' },
+                  { color: '#fbbf24', label: '' },
+                  { color: '#22c55e', label: '' },
+                  { color: '#1e40af', label: '100' },
+                ]}
+                minLabel="Zone blanche"
+                maxLabel="Forte activité"
+              />
+              <div className="flex items-center gap-1.5 text-xs"><span className="w-3 h-3 rounded-full border-2 shrink-0" style={{ borderColor: '#dc2626', backgroundColor: 'transparent' }} /><span className="text-muted-foreground">Opportunité</span></div>
             </div>
             {zonesGeoJson && zonesGeoJson.features.length > 0 && (() => {
               const top = zonesGeoJson.features[0].properties;
@@ -1466,24 +1498,29 @@ export default function MapsTabContent() {
                 </span>
               </div>
             )}
-            <div className="flex items-center gap-4 text-xs flex-wrap">
+            <div className="flex items-center gap-4 flex-wrap">
               {seasonViewMode === 'variation' ? (
-                <>
-                  <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#3b82f6' }} /><span className="text-muted-foreground">Forte baisse</span></div>
-                  <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#fbbf24' }} /><span className="text-muted-foreground">Stable</span></div>
-                  <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#dc2626' }} /><span className="text-muted-foreground">Forte hausse</span></div>
-                </>
+                <GradientLegendBar
+                  stops={[
+                    { color: '#3b82f6', label: '-50%' },
+                    { color: '#fbbf24', label: '0%' },
+                    { color: '#dc2626', label: '+50%' },
+                  ]}
+                  minLabel="Forte baisse"
+                  maxLabel="Forte hausse"
+                />
               ) : (
-                <>
-                  <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#fef3c7' }} /><span className="text-muted-foreground">Faible</span></div>
-                  <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#f97316' }} /><span className="text-muted-foreground">Moyen</span></div>
-                  <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#7f1d1d' }} /><span className="text-muted-foreground">Élevé</span></div>
-                </>
+                <GradientLegendBar
+                  stops={[
+                    { color: '#fef3c7', label: '0' },
+                    { color: '#f97316', label: '' },
+                    { color: '#7f1d1d', label: 'Max' },
+                  ]}
+                  minLabel="Faible"
+                  maxLabel="Élevé"
+                />
               )}
-              <div className="flex items-center gap-1.5 ml-2 pl-2 border-l">
-                <span className="w-3 h-3 rounded-full border-2" style={{ borderColor: '#dc2626', backgroundColor: 'transparent' }} />
-                <span className="text-muted-foreground">Bordure = saisonnalité forte</span>
-              </div>
+              <div className="flex items-center gap-1.5 text-xs"><span className="w-3 h-3 rounded-full border-2 shrink-0" style={{ borderColor: '#dc2626', backgroundColor: 'transparent' }} /><span className="text-muted-foreground">Saisonnalité forte</span></div>
             </div>
           </div>
         )}
@@ -1505,13 +1542,17 @@ export default function MapsTabContent() {
                 {scoreLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${scoreGeoJson?.features?.length || 0} communes`}
               </span>
             </div>
-            <div className="flex items-center gap-4 text-xs flex-wrap">
-              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#dc2626' }} /><span className="text-muted-foreground">Critique (&lt;40)</span></div>
-              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#f97316' }} /><span className="text-muted-foreground">Fragile (40-54)</span></div>
-              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#fbbf24' }} /><span className="text-muted-foreground">Moyenne (55-69)</span></div>
-              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#22c55e' }} /><span className="text-muted-foreground">Saine (70-84)</span></div>
-              <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#3b82f6' }} /><span className="text-muted-foreground">Premium (85+)</span></div>
-            </div>
+            <GradientLegendBar
+              stops={[
+                { color: '#dc2626', label: '0' },
+                { color: '#f97316', label: '40' },
+                { color: '#fbbf24', label: '55' },
+                { color: '#22c55e', label: '70' },
+                { color: '#3b82f6', label: '100' },
+              ]}
+              minLabel="Critique (0)"
+              maxLabel="Premium (100)"
+            />
           </div>
         )}
 
