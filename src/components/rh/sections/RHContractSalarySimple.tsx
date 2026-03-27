@@ -90,7 +90,7 @@ export function RHContractSalarySimple({ collaborator }: RHContractSalarySimpleP
     createSalaryEntry,
     updateSalaryEntry,
     deleteSalaryEntry,
-  } = useSalaryHistory(currentContract?.id);
+  } = useSalaryHistory(currentContract?.id, collaborator.id);
 
   // Local state
   const [weeklyHours, setWeeklyHours] = useState<string>('');
