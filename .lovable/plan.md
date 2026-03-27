@@ -1,22 +1,18 @@
 
 
-## ✅ Fusion Veille + Suivi client → "Veille" (TERMINÉ)
+## Plan : Fusionner la barre de filtres Veille avec la barre de recherche sur une seule ligne
 
-L'onglet "Veille" et "Suivi client" ont été fusionnés en un seul onglet **"Veille"** dans Commercial.
+### Modification unique : `src/prospection/pages/ApporteurListPage.tsx`
 
-### Changements effectués
+**Avant** (2 blocs séparés) :
+- Ligne 1 : Pills Veille (Tous, Dormants, En baisse, Stables, En hausse)
+- Ligne 2 : Barre de recherche + Sélecteur de période
 
-- **ApporteurListPage.tsx** : Ajout des filter pills Veille (Dormants, En baisse, Stables, En hausse) + badge score Veille par ligne
-- **CommercialTabContent.tsx** : Tab "Suivi client" renommé → "Veille" (icône Radar), tab "veille" supprimé
-- **ProspectionTabContent.tsx** : Idem
-- **types/modules.ts** : Label `commercial.suivi_client` → "Veille", `commercial.veille` marqué `deployed: false`
-- **rightsTaxonomy.ts** : `commercial.veille` retiré des moduleKeys Commercial
-- **headerNavigation.ts** : Entrée "Suivi client" → "Veille", entrée veille supprimée
-- **ModulesMasterView.tsx** : Route `commercial.veille` supprimée
-- **permissions/constants.ts** : `prospection.veille` retiré
-- **Migration SQL** : Droits `commercial.veille` fusionnés dans `commercial.suivi_client`, label module_registry mis à jour
+**Après** (1 seul bloc flex) :
+- Gauche : Barre de recherche + Sélecteur de période (inchangés)
+- Droite : Pills Veille alignées à droite avec `ml-auto`
 
-### Prochaines étapes
+Supprimer le `<div className="flex flex-wrap gap-1.5">` dédié aux pills (lignes 394-421) et déplacer les pills à l'intérieur du `<div className="flex flex-wrap items-center gap-3">` (ligne 424), après le sélecteur de période, avec un `ml-auto` pour les pousser à droite.
 
-- Page admin de gestion du module **Suivi Client** (portail client externe / origin-box)
-- Création du plan d'agence **APPORTEUR** (Suivi + Espace Apporteurs + Échanges)
+Les pills garderont leur taille `size="sm"` actuelle. Sur petits écrans, le `flex-wrap` permettra le retour à la ligne naturel.
+
