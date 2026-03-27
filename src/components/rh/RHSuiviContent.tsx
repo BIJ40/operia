@@ -276,6 +276,7 @@ export function RHSuiviContent() {
             currentUserAgency={agence}
             forceOwnAgency
             agencyMode
+            employeeMode
             defaultValues={{
               firstName: createFromCollab.firstName,
               lastName: createFromCollab.lastName,
