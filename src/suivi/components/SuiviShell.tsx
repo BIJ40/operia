@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import bannerImage from '@/assets/helpconfort-banner.jpg';
-import { Agency } from '@/contexts/AgencyContext';
+import { Agency } from '@/suivi/contexts/AgencyContext';
 
 interface SuiviShellProps {
   children: ReactNode;

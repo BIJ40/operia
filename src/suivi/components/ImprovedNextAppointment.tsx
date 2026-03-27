@@ -1,6 +1,6 @@
 import React from 'react';
 import { Calendar, Clock, MapPin, User, Phone, CalendarCheck } from 'lucide-react';
-import { NextAppointmentInfo } from '@/lib/dataProcessing/suiviDataProcessor';
+import { NextAppointmentInfo } from '@/suivi/lib/dataProcessing/suiviDataProcessor';
 import { EmpechementDialog } from './EmpechementDialog';
 
 interface ImprovedNextAppointmentProps {

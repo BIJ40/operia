@@ -1,11 +1,11 @@
 import React from 'react';
 import { MapPin, User, Building2, Phone, Mail, FolderOpen, Euro, CheckCircle2 } from 'lucide-react';
-import { SuiviSummary } from '@/lib/dataProcessing/suiviDataProcessor';
+import { SuiviSummary } from '@/suivi/lib/dataProcessing/suiviDataProcessor';
 import { ContactUpdateDialog } from './ContactUpdateDialog';
 import { PhotoUploadDialog } from './PhotoUploadDialog';
 import { HumidityWizardDialog } from './HumidityWizardDialog';
 import { StripeButton } from './StripeButton';
-import { usePaymentStatus } from '@/hooks/suivi/usePaymentStatus';
+import { usePaymentStatus } from '@/suivi/hooks/usePaymentStatus';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 

@@ -9,6 +9,7 @@ const ALLOWED_ORIGINS = [
   'https://www.helpconfort.services',
   'https://operia.vision',
   'https://www.operia.vision',
+  'https://suivi.helpconfort.services',
   'http://localhost:5173',
   'http://localhost:8080',
 ];

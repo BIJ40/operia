@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CreditCard, Loader2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { usePaymentStatus } from '@/hooks/suivi/usePaymentStatus';
+import { usePaymentStatus } from '@/suivi/hooks/usePaymentStatus';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 

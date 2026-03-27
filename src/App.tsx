@@ -29,6 +29,13 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 // Dev pages
 const UnifiedSearchAnimationPlayground = lazy(() => import("./pages/dev/UnifiedSearchAnimationPlayground"));
 const PermissionsProofPage = lazy(() => import("./pages/dev/PermissionsProofPage"));
+// Suivi pages (origin-box)
+const SuiviIndex = lazy(() => import("./suivi/pages/Index"));
+const SuiviAgencyPage = lazy(() => import("./suivi/pages/SuiviAgencyPage"));
+const SuiviPaymentSuccess = lazy(() => import("./suivi/pages/PaymentSuccessPage"));
+const SuiviPaymentCancel = lazy(() => import("./suivi/pages/PaymentCancelPage"));
+const SuiviSecurityReport = lazy(() => import("./suivi/pages/SecurityReportPage"));
+import { AgencyProvider } from "./suivi/contexts/AgencyContext";
 
 // Providers
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
@@ -97,6 +104,31 @@ import { useMaintenanceMode } from "./hooks/useMaintenanceMode";
 import { MaintenanceBlock } from "./components/maintenance/MaintenanceBlock";
 import { PWAInstallPrompt } from "./components/pwa/PWAInstallPrompt";
 import { useVersionCheck } from "./hooks/useVersionCheck";
+
+
+// Detect if we are on suivi.helpconfort.services subdomain
+const isSuiviDomain = typeof window !== "undefined" && window.location.hostname === "suivi.helpconfort.services";
+
+function SuiviApp() {
+  return (
+    <div className="suivi-theme min-h-screen">
+    <AgencyProvider>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/" element={<SuiviIndex />} />
+          <Route path="/rapport-securite" element={<SuiviSecurityReport />} />
+          <Route path="/:agencySlug/paiement/success" element={<SuiviPaymentSuccess />} />
+          <Route path="/:agencySlug/paiement/cancel" element={<SuiviPaymentCancel />} />
+          <Route path="/paiement/success" element={<SuiviPaymentSuccess />} />
+          <Route path="/paiement/cancel" element={<SuiviPaymentCancel />} />
+          <Route path="/:agencySlug/:ref/:hash" element={<SuiviAgencyPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </AgencyProvider>
+    </div>
+  );
+}
 
 function AppContent() {
   const { user, isAuthLoading } = useAuth();
@@ -183,6 +215,18 @@ function AppContent() {
             <Route path="/403" element={<Error403 />} />
             <Route path="/500" element={<Error500 />} />
             
+
+            {/* ============================================ */}
+            {/* SUIVI ROUTES (origin-box) */}
+            {/* ============================================ */}
+            <Route path="/suivi" element={<AgencyProvider><SuiviIndex /></AgencyProvider>} />
+            <Route path="/suivi/rapport-securite" element={<AgencyProvider><SuiviSecurityReport /></AgencyProvider>} />
+            <Route path="/suivi/:agencySlug/paiement/success" element={<AgencyProvider><SuiviPaymentSuccess /></AgencyProvider>} />
+            <Route path="/suivi/:agencySlug/paiement/cancel" element={<AgencyProvider><SuiviPaymentCancel /></AgencyProvider>} />
+            <Route path="/suivi/paiement/success" element={<AgencyProvider><SuiviPaymentSuccess /></AgencyProvider>} />
+            <Route path="/suivi/paiement/cancel" element={<AgencyProvider><SuiviPaymentCancel /></AgencyProvider>} />
+            <Route path="/suivi/:agencySlug/:ref/:hash" element={<AgencyProvider><SuiviAgencyPage /></AgencyProvider>} />
+            
             {/* 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
@@ -209,7 +253,7 @@ function App() {
                   <EditorProvider>
                     <ApporteurEditorProvider>
                       <GlobalErrorBoundary>
-                        <AppContent />
+                        {isSuiviDomain ? <SuiviApp /> : <AppContent />}
                       </GlobalErrorBoundary>
                       <Toaster />
                       <Sonner />

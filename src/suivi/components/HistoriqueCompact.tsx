@@ -4,7 +4,7 @@ import {
   ClipboardCheck, CheckCircle2, Package, Wrench, FileCheck,
   DollarSign, User, Clock
 } from 'lucide-react';
-import { SuiviEvent } from '@/lib/dataProcessing/suiviDataProcessor';
+import { SuiviEvent } from '@/suivi/lib/dataProcessing/suiviDataProcessor';
 
 interface HistoriqueCompactProps {
   events: SuiviEvent[];

@@ -121,7 +121,7 @@ export function HumidityWizardDialog({
     setIsSubmitting(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke("send-humidity-report", {
+      const { data, error } = await supabase.functions.invoke("suivi-send-humidity-report", {
         body: {
           refDossier,
           clientName,

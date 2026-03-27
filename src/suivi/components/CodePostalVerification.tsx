@@ -37,7 +37,7 @@ export function CodePostalVerification({ refDossier, agencySlug, hash, onVerifie
     setIsVerifying(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke('api-proxy', {
+      const { data, error } = await supabase.functions.invoke('suivi-api-proxy', {
         body: { 
           refDossier,
           agencySlug: agencySlug || 'dax',

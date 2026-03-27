@@ -23,7 +23,7 @@ export function usePaymentStatus(
         return { isPaid: false, paidDate: null, totalPaidCents: 0 };
       }
 
-      const { data, error } = await supabase.functions.invoke('check-payment-status', {
+      const { data, error } = await supabase.functions.invoke('suivi-check-payment-status', {
         body: {
           refDossier,
           codePostal,

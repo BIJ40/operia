@@ -1,4 +1,4 @@
-import { useAgencyContext, DAX_DEFAULTS, Agency } from '@/contexts/AgencyContext';
+import { useAgencyContext, DAX_DEFAULTS, Agency } from '@/suivi/contexts/AgencyContext';
 
 /**
  * Hook to access the current agency data with Dax fallback

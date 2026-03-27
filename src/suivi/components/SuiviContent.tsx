@@ -4,10 +4,10 @@ import { ImprovedNextAppointment } from './ImprovedNextAppointment';
 import { HistoriqueAccordion } from './HistoriqueAccordion';
 import { ScrollIndicator } from './ScrollIndicator';
 import { GoogleReviewsBanner } from './GoogleReviewsBanner';
-import { SuiviDataProcessor } from '@/lib/dataProcessing/suiviDataProcessor';
+import { SuiviDataProcessor } from '@/suivi/lib/dataProcessing/suiviDataProcessor';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
-import { useAgencyContext } from '@/contexts/AgencyContext';
+import { useAgencyContext } from '@/suivi/contexts/AgencyContext';
 
 export interface SuiviContentProps {
   project: any;

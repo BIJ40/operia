@@ -18,6 +18,8 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Montserrat', 'sans-serif'],
+        body: ['Open Sans', 'sans-serif'],
       },
       fontSize: {
         // Typography scale
@@ -47,6 +49,8 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          light: "hsl(var(--primary-light))",
+          dark: "hsl(var(--primary-dark))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -114,6 +118,16 @@ export default {
           teal: "hsl(var(--warm-teal))",
           cyan: "hsl(var(--warm-cyan))",
           red: "hsl(var(--warm-red))",
+        },
+        service: {
+          plomberie: "hsl(var(--service-plomberie))",
+          electricite: "hsl(var(--service-electricite))",
+          serrurerie: "hsl(var(--service-serrurerie))",
+          menuiserie: "hsl(var(--service-menuiserie))",
+          vitrerie: "hsl(var(--service-vitrerie))",
+          volets: "hsl(var(--service-volets))",
+          adaptation: "hsl(var(--service-adaptation))",
+          renovation: "hsl(var(--service-renovation))",
         },
       },
       borderRadius: {
@@ -190,6 +204,14 @@ export default {
             transform: "translateY(-3px)",
           },
         },
+        "fade-in-up": {
+          from: { opacity: "0", transform: "translateY(20px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "pulse-soft": {
+          "0%, 100%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.05)" },
+        },
         "heartbeat": {
           "0%, 100%": {
             transform: "scale(1)",
@@ -219,6 +241,8 @@ export default {
         "pulse-progress": "pulse-progress 1s ease-in-out",
         "bounce-subtle": "bounce-subtle 0.4s ease-in-out",
         "heartbeat": "heartbeat 1.5s ease-in-out infinite",
+        "fade-in-up": "fade-in-up 0.6s ease-out forwards",
+        "pulse-soft": "pulse-soft 2s ease-in-out infinite",
       },
     },
   },

@@ -26,7 +26,7 @@ export function useSecureProjectData(
     queryFn: async () => {
       if (!refDossier || !codePostal || !hash) return null;
 
-      const { data, error } = await supabase.functions.invoke('api-proxy', {
+      const { data, error } = await supabase.functions.invoke('suivi-api-proxy', {
         body: { 
           refDossier,
           agencySlug: agencySlug || undefined,

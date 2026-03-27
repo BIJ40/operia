@@ -126,7 +126,7 @@ export function PhotoUploadDialog({ refDossier, clientName, agencySlug, verified
         }))
       );
 
-      const { data, error: functionError } = await supabase.functions.invoke("send-client-photos", {
+      const { data, error: functionError } = await supabase.functions.invoke("suivi-send-client-photos", {
         body: {
           refDossier,
           clientName,

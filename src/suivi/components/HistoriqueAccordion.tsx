@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/accordion';
 import { History } from 'lucide-react';
 import { HistoriqueCompact } from './HistoriqueCompact';
-import { SuiviEvent } from '@/lib/dataProcessing/suiviDataProcessor';
+import { SuiviEvent } from '@/suivi/lib/dataProcessing/suiviDataProcessor';
 
 interface HistoriqueAccordionProps {
   events: SuiviEvent[];

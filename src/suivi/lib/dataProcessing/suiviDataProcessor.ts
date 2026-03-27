@@ -3,7 +3,7 @@
  * Croise toutes les données API pour reconstituer la chronologie complète
  */
 
-import { getUniverseLabel, getUniverseLabels } from '@/lib/constants/universes';
+import { getUniverseLabel, getUniverseLabels } from '@/suivi/lib/constants/universes';
 
 export interface SuiviEvent {
   id: string;

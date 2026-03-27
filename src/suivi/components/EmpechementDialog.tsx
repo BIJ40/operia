@@ -51,7 +51,7 @@ const [isSubmitting, setIsSubmitting] = useState(false);
 
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('signaler-empechement', {
+      const { data, error } = await supabase.functions.invoke('suivi-signaler-empechement', {
         body: {
           refDossier,
           clientFirstName,

@@ -46,7 +46,7 @@ export const ContactUpdateDialog: React.FC<ContactUpdateDialogProps> = ({
 
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('update-client-contact', {
+      const { data, error } = await supabase.functions.invoke('suivi-update-client-contact', {
         body: {
           refDossier,
           clientName,

@@ -1,14 +1,14 @@
 import React, { useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { SuiviShell } from "@/components/SuiviShell";
-import { SuiviLoadingState } from "@/components/suivi/SuiviLoadingState";
-import { SuiviErrorState } from "@/components/suivi/SuiviErrorState";
-import { useSecureProjectData } from "@/hooks/suivi/useSecureProjectData";
-import { useVerificationState } from "@/hooks/suivi/useVerificationState";
-import { CodePostalVerification } from "@/components/suivi/CodePostalVerification";
-import { SuiviContent } from "@/components/suivi/SuiviContent";
-import { useAgency } from "@/hooks/useAgency";
-import { usePaymentCallback } from "@/hooks/suivi/usePaymentCallback";
+import { SuiviShell } from "@/suivi/components/SuiviShell";
+import { SuiviLoadingState } from "@/suivi/components/SuiviLoadingState";
+import { SuiviErrorState } from "@/suivi/components/SuiviErrorState";
+import { useSecureProjectData } from "@/suivi/hooks/useSecureProjectData";
+import { useVerificationState } from "@/suivi/hooks/useVerificationState";
+import { CodePostalVerification } from "@/suivi/components/CodePostalVerification";
+import { SuiviContent } from "@/suivi/components/SuiviContent";
+import { useAgency } from "@/suivi/hooks/useAgency";
+import { usePaymentCallback } from "@/suivi/hooks/usePaymentCallback";
 
 /**
  * Suivi page with agency slug and hash-based secure access
