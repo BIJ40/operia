@@ -118,8 +118,37 @@ export function TeamMemberModules({ userId, roleAgence, n2HasModule, isDeployedM
     return state?.enabled ?? false;
   }, [userModules]);
 
+  /** Find the parent HierarchicalModule for a given child key */
+  const findParentOf = useCallback((childKey: ModuleKey): HierarchicalModule | null => {
+    for (const [, items] of grouped) {
+      for (const item of items) {
+        if (item.children.some(c => c.key === childKey)) return item;
+      }
+    }
+    return null;
+  }, [grouped]);
+
   const handleToggle = (key: ModuleKey, enabled: boolean) => {
     toggleModule.mutate({ userId, moduleKey: key, enabled });
+
+    // Sync parent: if disabling last child → disable parent; if enabling a child → enable parent
+    const parent = findParentOf(key);
+    if (parent) {
+      if (enabled) {
+        // Ensure parent is on
+        if (!isModuleEnabled(parent.module.key)) {
+          toggleModule.mutate({ userId, moduleKey: parent.module.key, enabled: true });
+        }
+      } else {
+        // If all siblings (except this one being disabled) are already off → disable parent
+        const otherChildrenAllOff = parent.children.every(c =>
+          c.key === key ? true : !isModuleEnabled(c.key)
+        );
+        if (otherChildrenAllOff && isModuleEnabled(parent.module.key)) {
+          toggleModule.mutate({ userId, moduleKey: parent.module.key, enabled: false });
+        }
+      }
+    }
   };
 
   /** Toggle all modules in a category at once (leaf modules only) */
