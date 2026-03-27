@@ -535,7 +535,7 @@ Deno.serve(async (req) => {
           });
         }
 
-        const choropleth = buildChoroplethGeoJSON(communePolygons, metricsByInsee);
+        const choropleth = buildChoroplethGeoJSON(communePolygons, metricsByInsee, zoneCodes, { count: 0, norm: 0, level: 0, city: '' });
         
         console.log(`[GET-RDV-MAP] Density choropleth: ${choropleth.features.length} communes, max=${maxCount} interventions in ${Date.now() - t0}ms`);
         return withCors(req, new Response(JSON.stringify({
