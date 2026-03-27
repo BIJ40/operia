@@ -30,6 +30,7 @@ export function canReplyToApporteur(
     const poste = (roleAgence ?? '').toLowerCase();
     return (
       poste.includes('dirigeant') ||
+      poste.includes('administratif') ||
       poste.includes('assistante') ||
       poste.includes('secretaire')
     );

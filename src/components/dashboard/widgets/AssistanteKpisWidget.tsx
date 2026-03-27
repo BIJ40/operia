@@ -95,10 +95,10 @@ export function AssistanteKpisWidget() {
     );
   }
 
-  if (data.type !== 'assistante') {
+  if (data.type !== 'assistante' && data.type !== 'administratif') {
     return (
       <div className="flex items-center justify-center h-full min-h-[60px] text-muted-foreground text-sm">
-        Ce widget est réservé aux assistantes
+        Ce widget est réservé au personnel administratif
       </div>
     );
   }

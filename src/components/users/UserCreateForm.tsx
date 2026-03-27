@@ -12,7 +12,7 @@ import { generateSecurePassword } from '@/lib/passwordUtils';
 import { ROLE_AGENCE_LABELS, N1_ASSIGNABLE_ROLES } from '@/components/admin/users/user-full-dialog/constants';
 
 // Postes disponibles en mode agence pour admin (N3+ créant dans une agence)
-const AGENCY_MODE_ROLES = ['dirigeant', 'assistante', 'commercial', 'technicien'];
+const AGENCY_MODE_ROLES = ['dirigeant', 'administratif', 'commercial', 'technicien'];
 
 // Labels pour mode salarié (N2 crée un N1) — filtrés depuis la source unique
 const EMPLOYEE_MODE_LABELS: Record<string, string> = Object.fromEntries(
