@@ -324,6 +324,8 @@ export function usePerformanceTerrain(dateRange: DateRange) {
         // Detect type "conge", "absence" or keyword matches, with real duration
         const PLANNING_ABSENCE_TYPES = ['conge', 'congé', 'absence'];
         const absenceAccum = new Map<string, { hours: number; label: string }>();
+        // Track consecutive absence days per tech to detect multi-day leaves split into daily slots
+        const absenceDaysByTech = new Map<string, Set<string>>();
 
         // === BUILD ACTIVITY INDEX per tech per ISO week ===
         // Used to distinguish rest days (4-day week) from real absences
