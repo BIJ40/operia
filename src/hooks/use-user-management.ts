@@ -175,7 +175,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       default:
         return [];
     }
-  }, [effectiveScope, restrictToAgencyId, currentUserAgencyId, assignedAgenciesRaw]);
+  }, [effectiveScope, restrictToAgencyId, currentUserAgencyId]);
 
   // ✅ Fetch users avec sélection explicite de colonnes + modules depuis user_modules
   const { data: users, isLoading: usersLoading } = useQuery({
@@ -252,9 +252,9 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       if (capabilities.viewScope === 'self') {
         return u.id === user?.id;
       }
-      return canViewUser(effectiveUserRole, currentUserAgency, u.agence, assignedAgenciesRaw);
+      return canViewUser(effectiveUserRole, currentUserAgency, u.agence);
     });
-  }, [users, capabilities, effectiveUserRole, currentUserAgency, user?.id, assignedAgenciesRaw]);
+  }, [users, capabilities, effectiveUserRole, currentUserAgency, user?.id]);
 
   // Fetch agencies from apogee_agencies table
   const { data: agencies = [] } = useAdminAgencies();
