@@ -34,7 +34,6 @@ export default function TDRUsersPage() {
   // N4+ → allAgencies, N3 → assignedAgencies, N2 → ownAgency
   const scope = useMemo(() => {
     if (capabilities.viewScope === 'allAgencies') return 'allAgencies';
-    if (capabilities.viewScope === 'assignedAgencies') return 'assignedAgencies';
     return 'ownAgency';
   }, [capabilities.viewScope]);
   
@@ -92,22 +91,6 @@ export default function TDRUsersPage() {
     handleModuleOptionToggle,
   } = useUserManagement({ scope });
 
-  // Récupérer les agences assignées pour filtrage
-  const { data: assignedAgenciesData } = useQuery({
-    queryKey: ['user-assigned-agencies', currentUser?.id],
-    queryFn: async () => {
-      if (!currentUser?.id) return [];
-      const { data, error } = await supabase
-        .from('franchiseur_agency_assignments')
-        .select('agency_id')
-        .eq('user_id', currentUser.id);
-      if (error) throw error;
-      return data.map(a => a.agency_id);
-    },
-    enabled: !!currentUser?.id && scope === 'assignedAgencies',
-  });
-
-  // Filtrer les agences selon le scope
   const manageableAgencies = useMemo(() => {
     if (scope === 'allAgencies') {
       return agencies;
@@ -117,16 +100,8 @@ export default function TDRUsersPage() {
       return agencies.filter(a => a.slug === currentUserAgency);
     }
     
-    if (scope === 'assignedAgencies') {
-      const assignedAgencies = assignedAgenciesData || [];
-      if (assignedAgencies.length > 0) {
-        return agencies.filter(a => assignedAgencies.includes(a.id));
-      }
-      return agencies; // Fallback si pas d'assignation spécifique
-    }
-    
     return [];
-  }, [agencies, scope, currentUserAgency, assignedAgenciesData]);
+  }, [agencies, scope, currentUserAgency]);
 
   // Dialog states
   const [showCreateDialog, setShowCreateDialog] = useState(false);

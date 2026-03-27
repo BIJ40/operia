@@ -203,17 +203,6 @@ export function AgencyInfoTile({ hideHeader = false }: AgencyInfoTileProps) {
             <p className="font-medium text-lg">{agency.label}</p>
           </div>
 
-          {agency.animateurs && agency.animateurs.length > 0 && (
-            <div className="flex items-start gap-3 pt-2">
-              <Users className="h-5 w-5 text-helpconfort-blue mt-0.5" />
-              <div>
-                <Label className="text-xs text-muted-foreground">Mon animateur référent</Label>
-                <p className="font-medium">
-                  {agency.animateurs.map(a => `${a.first_name} ${a.last_name}`).join(', ')}
-                </p>
-              </div>
-            </div>
-          )}
         </div>
 
         <div className="border-t pt-4 space-y-4">

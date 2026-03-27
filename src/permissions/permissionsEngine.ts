@@ -550,7 +550,7 @@ export function getUserManagementCapabilities(role: GlobalRole | null): UserMana
     case 'franchisor_user':
       return {
         viewScope: 'allAgencies',
-        manageScope: 'assignedAgencies',
+        manageScope: 'allAgencies',
         canCreateRoles: ['base_user', 'franchisee_user', 'franchisee_admin'],
         canEditRoles: ['base_user', 'franchisee_user', 'franchisee_admin'],
         canDeactivateRoles: ['base_user', 'franchisee_user', 'franchisee_admin'],

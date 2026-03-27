@@ -1,4 +1,4 @@
-import { ChevronsUpDown } from "lucide-react";
+import { ChevronsUpDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,28 +12,22 @@ import { useFranchiseur } from "@/franchiseur/contexts/FranchiseurContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
-
 
 export function AgencySelector() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const { selectedAgencies, setSelectedAgencies, assignedAgencies, franchiseurRole } = useFranchiseur();
+  const { selectedAgencies, setSelectedAgencies } = useFranchiseur();
   
-  // Local state pour les sélections en cours (appliquées seulement à la fermeture)
   const [localSelection, setLocalSelection] = useState<string[]>(selectedAgencies);
   
-  // Sync local state when popover opens
   useEffect(() => {
     if (open) {
       setLocalSelection(selectedAgencies);
     }
   }, [open, selectedAgencies]);
   
-  // Appliquer les changements uniquement à la fermeture du popover
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen && open) {
-      // Fermeture: appliquer la sélection
       setSelectedAgencies(localSelection);
     }
     setOpen(newOpen);
@@ -53,13 +47,7 @@ export function AgencySelector() {
     },
   });
 
-  // Filter agencies based on role
-  const availableAgencies = franchiseurRole === 'animateur' && assignedAgencies.length > 0
-    ? allAgencies.filter(a => assignedAgencies.includes(a.id))
-    : allAgencies;
-
-  // Filter by search
-  const filteredAgencies = availableAgencies.filter(a =>
+  const filteredAgencies = allAgencies.filter(a =>
     a.label.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -81,7 +69,7 @@ export function AgencySelector() {
 
   const getDisplayText = () => {
     if (selectedAgencies.length === 0) {
-      return `Toutes les agences (${availableAgencies.length})`;
+      return `Toutes les agences (${allAgencies.length})`;
     }
     if (selectedAgencies.length === 1) {
       const agency = allAgencies.find(a => a.id === selectedAgencies[0]);
@@ -116,7 +104,6 @@ export function AgencySelector() {
           </div>
         </div>
         <div className="max-h-[300px] overflow-y-auto p-1">
-          {/* Select All Option */}
           <div
             onClick={handleSelectAll}
             className={cn(
@@ -130,10 +117,9 @@ export function AgencySelector() {
               checked={localSelection.length === 0}
               className="pointer-events-none border-helpconfort-blue data-[state=checked]:bg-helpconfort-blue data-[state=checked]:text-white"
             />
-            <span className="text-sm font-medium">Toutes les agences ({availableAgencies.length})</span>
+            <span className="text-sm font-medium">Toutes les agences ({allAgencies.length})</span>
           </div>
 
-          {/* Agency List */}
           {filteredAgencies.length === 0 ? (
             <p className="text-sm text-muted-foreground p-2 text-center">Aucune agence trouvée</p>
           ) : (

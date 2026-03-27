@@ -91,15 +91,6 @@ function FranchiseurAgencyProfileContent() {
             {!agency.is_active && (
               <Badge variant="secondary">Inactive</Badge>
             )}
-            {agency.animateurs && agency.animateurs.length > 0 ? (
-              <Badge variant="default" className="bg-green-600 hover:bg-green-700">
-                {agency.animateurs.length} Animateur{agency.animateurs.length > 1 ? 's' : ''}
-              </Badge>
-            ) : (
-              <Badge variant="secondary">
-                Sans animateur
-              </Badge>
-            )}
           </div>
           <p className="text-muted-foreground mt-1 font-mono text-sm">
             {agency.slug}
@@ -157,19 +148,6 @@ function FranchiseurAgencyProfileContent() {
                     <p className="text-sm text-muted-foreground">Date de clôture bilan</p>
                     <p className="font-medium">
                       {agency.date_cloture_bilan || <span className="text-muted-foreground italic">Non renseignée</span>}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <Users className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Animateurs réseau</p>
-                    <p className="font-medium">
-                      {agency.animateurs && agency.animateurs.length > 0
-                        ? agency.animateurs.map(a => `${a.first_name} ${a.last_name}`).join(', ')
-                        : <span className="text-muted-foreground italic">Non renseigné</span>
-                      }
                     </p>
                   </div>
                 </div>

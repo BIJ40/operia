@@ -104,8 +104,8 @@ export function getUserManagementCapabilities(role: GlobalRole | null): UserMana
     case 'franchisor_user': // N3 - Animateur réseau
       return {
         viewScope: 'allAgencies',
-        manageScope: 'assignedAgencies',
-        canCreateRoles: ['franchisee_user', 'franchisee_admin'], // Max N2 - base_user exclu
+        manageScope: 'allAgencies',
+        canCreateRoles: ['franchisee_user', 'franchisee_admin'],
         canEditRoles: ['franchisee_user', 'franchisee_admin'],
         canDeactivateRoles: ['franchisee_user', 'franchisee_admin'],
         canDeleteUsers: false,
