@@ -251,24 +251,21 @@ export default function MapsTabContent() {
   const weekError = viewMode === 'week' ? weekQueries.find(q => q.error)?.error : null;
 
   // Heatmap: fetch ALL historical coordinates (independent of date)
-  const { data: heatmapPoints, isLoading: heatmapLoading } = useQuery({
-    queryKey: ['rdv-heatmap', agence],
+  const { data: densityGeoJson, isLoading: heatmapLoading } = useQuery({
+    queryKey: ['rdv-density-choropleth', agence],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error('Non authentifié');
       const response = await supabase.functions.invoke('get-rdv-map', {
-        body: {
-          mode: 'heatmap',
-          agencySlug: agence,
-        },
+        body: { mode: 'heatmap', agencySlug: agence },
       });
       if (response.error) throw new Error(response.error.message);
       const result = response.data;
       if (!result.success) throw new Error(result.error || 'Erreur');
-      return result.data as { lat: number; lng: number }[];
+      return result.data as GeoJSON.FeatureCollection;
     },
     enabled: mapMode === 'heatmap' && !!agence,
-    staleTime: 30 * 60 * 1000, // 30 min cache
+    staleTime: 30 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
