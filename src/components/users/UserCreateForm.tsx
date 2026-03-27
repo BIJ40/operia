@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { z } from 'zod';
 import { GlobalRole } from '@/types/globalRoles';
 import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
@@ -7,12 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Info } from 'lucide-react';
 import { generateSecurePassword } from '@/lib/passwordUtils';
 import { ROLE_AGENCE_LABELS, N1_ASSIGNABLE_ROLES } from '@/components/admin/users/user-full-dialog/constants';
 
 // Postes disponibles en mode agence pour admin (N3+ créant dans une agence)
-// Inclut tous les postes sauf tete_de_reseau et externe (qui ne nécessitent pas d'agence)
 const AGENCY_MODE_ROLES = ['dirigeant', 'assistante', 'commercial', 'technicien'];
 
 // Labels pour mode salarié (N2 crée un N1) — filtrés depuis la source unique
@@ -20,9 +19,23 @@ const EMPLOYEE_MODE_LABELS: Record<string, string> = Object.fromEntries(
   Object.entries(ROLE_AGENCE_LABELS).filter(([key]) => (N1_ASSIGNABLE_ROLES as readonly string[]).includes(key))
 );
 
-// Validation schema
+/** Génère un pseudo normalisé : prenom.nom-slug_agence */
+function generateUsername(firstName: string, lastName: string, agencySlug: string): string {
+  const normalize = (s: string) =>
+    s.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // supprime accents
+      .replace(/[^a-z0-9]/g, '');
+  const fn = normalize(firstName);
+  const ln = normalize(lastName);
+  const slug = agencySlug?.toLowerCase().replace(/[^a-z0-9-]/g, '') || 'agence';
+  if (!fn || !ln) return '';
+  return `${fn}.${ln}-${slug}`;
+}
+
+// Validation schema — email optionnel en mode employé
 const createUserSchema = z.object({
-  email: z.string().trim().email({ message: "Email invalide" }).max(255, { message: "Email trop long (max 255 caractères)" }),
+  email: z.string().trim().max(255).optional(),
+  username: z.string().trim().max(100).optional(),
   password: z.string().min(8, { message: "Minimum 8 caractères requis" }).max(100, { message: "Mot de passe trop long" }),
   firstName: z.string().trim().min(1, { message: "Prénom requis" }).max(100, { message: "Prénom trop long" }),
   lastName: z.string().trim().min(1, { message: "Nom requis" }).max(100, { message: "Nom trop long" }),
@@ -53,6 +66,8 @@ export interface UserCreateFormProps {
   defaultValues?: Partial<CreateUserPayload>;
   /** Mode salarié: N2 crée un N1 — postes limités, rôle système forcé */
   employeeMode?: boolean;
+  /** Slug agence du créateur (pour générer le pseudo) */
+  creatorAgencySlug?: string;
 }
 
 export function UserCreateForm({
@@ -66,6 +81,7 @@ export function UserCreateForm({
   agencyMode = false,
   defaultValues,
   employeeMode = false,
+  creatorAgencySlug,
 }: UserCreateFormProps) {
   // Postes disponibles selon le mode
   const availableRoleAgence = employeeMode
@@ -87,15 +103,29 @@ export function UserCreateForm({
   
   const [formData, setFormData] = useState<CreateUserPayload>({
     email: defaultValues?.email || '',
+    username: '',
     password: '',
     firstName: defaultValues?.firstName || '',
     lastName: defaultValues?.lastName || '',
     agence: defaultAgency || defaultValues?.agence || '',
     roleAgence: defaultValues?.roleAgence || '',
     globalRole: employeeMode ? 'franchisee_user' : (defaultValues?.globalRole || defaultRole),
-    sendEmail: defaultValues?.sendEmail ?? true,
+    sendEmail: defaultValues?.sendEmail ?? !employeeMode, // Pas d'email par défaut en mode salarié (email interne)
   });
   const [errors, setErrors] = useState<Partial<Record<keyof CreateUserPayload, string>>>({});
+
+  // Auto-générer le pseudo en mode employé quand prénom/nom changent
+  const agencySlug = creatorAgencySlug || defaultAgency || formData.agence || '';
+  const generatedUsername = useMemo(
+    () => employeeMode ? generateUsername(formData.firstName, formData.lastName, agencySlug) : '',
+    [employeeMode, formData.firstName, formData.lastName, agencySlug]
+  );
+
+  useEffect(() => {
+    if (employeeMode && generatedUsername) {
+      setFormData(prev => ({ ...prev, username: generatedUsername }));
+    }
+  }, [employeeMode, generatedUsername]);
 
   const handleRoleAgenceChange = (newRoleAgence: string) => {
     setFormData(prev => ({ ...prev, roleAgence: newRoleAgence }));
@@ -106,8 +136,17 @@ export function UserCreateForm({
   };
 
   const handleSubmit = () => {
+    // En mode employé, l'email est auto-généré côté backend
+    const dataToValidate = { ...formData };
+    if (employeeMode) {
+      // Générer email interne si pas d'email saisi
+      if (!dataToValidate.email) {
+        dataToValidate.email = `${generatedUsername}@internal.helpconfort.services`;
+      }
+    }
+
     // Validation
-    const result = createUserSchema.safeParse(formData);
+    const result = createUserSchema.safeParse(dataToValidate);
     if (!result.success) {
       const newErrors: Partial<Record<keyof CreateUserPayload, string>> = {};
       result.error.issues.forEach((issue) => {
@@ -117,12 +156,24 @@ export function UserCreateForm({
       setErrors(newErrors);
       return;
     }
+
+    // Validation personnalisée
+    if (!employeeMode && (!dataToValidate.email || !dataToValidate.email.includes('@'))) {
+      setErrors(prev => ({ ...prev, email: 'Email requis' }));
+      return;
+    }
+    if (employeeMode && !generatedUsername) {
+      setErrors(prev => ({ ...prev, firstName: 'Prénom requis pour générer le pseudo' }));
+      return;
+    }
     
     setErrors({});
     onSubmit(result.data);
   };
 
-  const isValid = formData.email && formData.password && formData.firstName && formData.lastName;
+  const isValid = employeeMode
+    ? formData.password && formData.firstName && formData.lastName
+    : formData.email && formData.password && formData.firstName && formData.lastName;
 
   return (
     <div className="space-y-4 py-4">
@@ -147,19 +198,50 @@ export function UserCreateForm({
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label>Email *</Label>
-        <Input 
-          type="email" 
-          value={formData.email} 
-          onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))} 
-          disabled={isSubmitting}
-        />
-        {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
-      </div>
+      {/* Mode employé : pseudo auto-généré + email optionnel */}
+      {employeeMode ? (
+        <>
+          <div className="space-y-2">
+            <Label>Nom d'utilisateur (auto-généré)</Label>
+            <Input 
+              value={generatedUsername}
+              readOnly
+              className="bg-muted font-mono text-sm"
+            />
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <Info className="w-3 h-3" />
+              Ce pseudo sera l'identifiant de connexion du salarié
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label>Email (optionnel)</Label>
+            <Input 
+              type="email" 
+              value={formData.email} 
+              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))} 
+              disabled={isSubmitting}
+              placeholder="Si vide, un email interne sera généré"
+            />
+            <p className="text-xs text-muted-foreground">
+              Laissez vide si le salarié n'a pas d'email. Un email interne sera créé automatiquement.
+            </p>
+          </div>
+        </>
+      ) : (
+        <div className="space-y-2">
+          <Label>Email *</Label>
+          <Input 
+            type="email" 
+            value={formData.email} 
+            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))} 
+            disabled={isSubmitting}
+          />
+          {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+        </div>
+      )}
 
       <div className="space-y-2">
-        <Label>Mot de passe provisoire *</Label>
+        <Label>Mot de passe *</Label>
         <div className="flex gap-2">
           <Input 
             type="text" 
@@ -173,7 +255,11 @@ export function UserCreateForm({
             Générer
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground">18 caractères avec majuscules, minuscules, chiffres et symboles</p>
+        <p className="text-xs text-muted-foreground">
+          {employeeMode 
+            ? 'Ce mot de passe sera communiqué au salarié par le responsable d\'agence' 
+            : '18 caractères avec majuscules, minuscules, chiffres et symboles'}
+        </p>
         {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
       </div>
 
@@ -215,6 +301,11 @@ export function UserCreateForm({
             ))}
           </SelectContent>
         </Select>
+        {employeeMode && formData.roleAgence && (
+          <p className="text-xs text-muted-foreground">
+            Pré-rempli depuis la fiche salarié. Modifiable si besoin.
+          </p>
+        )}
         {errors.roleAgence && <p className="text-xs text-destructive">{errors.roleAgence}</p>}
       </div>
 
@@ -238,17 +329,19 @@ export function UserCreateForm({
         </div>
       )}
 
-      <div className="flex items-center space-x-2 pt-2">
-        <Checkbox 
-          id="sendEmail" 
-          checked={formData.sendEmail}
-          onCheckedChange={(checked) => setFormData(prev => ({ ...prev, sendEmail: checked === true }))}
-          disabled={isSubmitting}
-        />
-        <Label htmlFor="sendEmail" className="text-sm font-normal cursor-pointer">
-          Envoyer l'email de bienvenue avec mot de passe provisoire
-        </Label>
-      </div>
+      {!employeeMode && (
+        <div className="flex items-center space-x-2 pt-2">
+          <Checkbox 
+            id="sendEmail" 
+            checked={formData.sendEmail}
+            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, sendEmail: checked === true }))}
+            disabled={isSubmitting}
+          />
+          <Label htmlFor="sendEmail" className="text-sm font-normal cursor-pointer">
+            Envoyer l'email de bienvenue avec mot de passe
+          </Label>
+        </div>
+      )}
 
       <div className="pt-4">
         <Button 
