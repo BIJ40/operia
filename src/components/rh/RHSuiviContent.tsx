@@ -164,7 +164,7 @@ export function RHSuiviContent() {
     // Mapper le type collaborateur vers le poste agence
     const typeToRoleAgence: Record<string, string> = {
       TECHNICIEN: 'technicien',
-      ASSISTANTE: 'assistante',
+      ADMINISTRATIF: 'administratif',
       COMMERCIAL: 'commercial',
       DIRIGEANT: 'dirigeant',
     };
