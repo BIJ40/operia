@@ -75,10 +75,8 @@ const DEFAULT_MODULES_BY_ROLE: Record<GlobalRole, EnabledModules> = {
     guides: { enabled: true, options: {} },
     aide: { enabled: true, options: { agent: false } },
   },
-  franchisee_user: {
-    guides: { enabled: true, options: { apogee: true } },
-    aide: { enabled: true, options: { agent: false } },
-  },
+  // N1 = zéro module par défaut. Tout accès piloté par le N2 via droits équipe.
+  franchisee_user: {},
   // ATTENTION: Ces modules sont pour les DIRIGEANTS uniquement
   franchisee_admin: {
     guides: { enabled: true, options: { apogee: true } },

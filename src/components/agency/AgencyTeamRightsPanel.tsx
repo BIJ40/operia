@@ -71,7 +71,7 @@ export function AgencyTeamRightsPanel() {
 
   const roleLabels: Record<string, string> = {
     commercial: 'Commercial(e)',
-    assistante: 'Assistant(e)',
+    administratif: 'Administratif(ve)',
     technicien: 'Technicien(ne)',
     dirigeant: 'Dirigeant(e)',
     externe: 'Externe',
