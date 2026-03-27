@@ -35,6 +35,7 @@ interface RHCockpitTableProps {
   isLoading?: boolean;
   onRefresh: () => void;
   onOpenProfile: (collaborator: RHCollaborator) => void;
+  onCreateAccount?: (collaborator: RHCollaborator) => void;
   className?: string;
 }
 
@@ -44,6 +45,7 @@ export function RHCockpitTable({
   isLoading,
   onRefresh,
   onOpenProfile,
+  onCreateAccount,
   className,
 }: RHCockpitTableProps) {
   
@@ -196,6 +198,8 @@ export function RHCockpitTable({
                       onOpenDrawer={(domain) => handleOpenDrawer(collab, domain)}
                       onOpenProfile={() => onOpenProfile(collab)}
                       onDoubleClick={() => onOpenProfile(collab)}
+                      onCreateAccount={onCreateAccount}
+                      canCreateAccount={canManage}
                     />
                   );
                 })
