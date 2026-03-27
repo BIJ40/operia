@@ -1094,11 +1094,11 @@ Deno.serve(async (req) => {
         const minMargin = Math.min(...allZoneData.map(z => z.margin), 0);
         const maxMonths = Math.max(...allZoneData.map(z => z.monthSpread), 1);
 
-        // Agency coords for proximity
-        const { data: agencyData } = await supabase.from('apogee_agencies').select('adresse, code_postal, ville').eq('slug', targetAgency).maybeSingle();
-        let agencyCoords: { lat: number; lng: number } | null = null;
-        if (agencyData?.code_postal) {
-          agencyCoords = coordsByPostalCode.get(agencyData.code_postal) || await geocodeAddress(agencyData.adresse || '', agencyData.code_postal, agencyData.ville || '');
+        // Agency coords for proximity (reuse from saisonnalite block above)
+        const { data: agencyData2 } = await supabase.from('apogee_agencies').select('adresse, code_postal, ville').eq('slug', targetAgency).maybeSingle();
+        agencyCoords = null;
+        if (agencyData2?.code_postal) {
+          agencyCoords = coordsByPostalCode.get(agencyData2.code_postal) || await geocodeAddress(agencyData2.adresse || '', agencyData2.code_postal, agencyData2.ville || '');
         }
 
         const metricsByInsee = new Map<string, Record<string, any>>();
