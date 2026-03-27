@@ -87,8 +87,10 @@ export function UserCreateForm({
   // N2 créé obligatoirement des utilisateurs agence (N1)
   const isN2Creator = creatorRoleLevel === 2 || employeeMode;
   
-  // Valeur par défaut intelligente : le rôle assignable le plus bas
-  const defaultRole = assignableRoles.length > 0 ? assignableRoles[0] : 'base_user';
+  // En mode salarié, forcer franchisee_user (N1)
+  const defaultRole = employeeMode 
+    ? 'franchisee_user' as GlobalRole 
+    : (assignableRoles.length > 0 ? assignableRoles[0] : 'base_user');
   
   const [formData, setFormData] = useState<CreateUserPayload>({
     email: defaultValues?.email || '',
@@ -97,7 +99,7 @@ export function UserCreateForm({
     lastName: defaultValues?.lastName || '',
     agence: defaultAgency || defaultValues?.agence || '',
     roleAgence: defaultValues?.roleAgence || '',
-    globalRole: defaultValues?.globalRole || defaultRole,
+    globalRole: employeeMode ? 'franchisee_user' : (defaultValues?.globalRole || defaultRole),
     sendEmail: defaultValues?.sendEmail ?? true,
   });
   const [errors, setErrors] = useState<Partial<Record<keyof CreateUserPayload, string>>>({});
@@ -216,7 +218,7 @@ export function UserCreateForm({
           <SelectTrigger><SelectValue placeholder="Sélectionner un poste" /></SelectTrigger>
           <SelectContent className="bg-background z-50">
             {availableRoleAgence.map((value) => (
-              <SelectItem key={value} value={value}>{ROLE_AGENCE_LABELS[value]}</SelectItem>
+              <SelectItem key={value} value={value}>{roleAgenceLabels[value] || value}</SelectItem>
             ))}
           </SelectContent>
         </Select>
