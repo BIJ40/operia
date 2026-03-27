@@ -115,8 +115,9 @@ export function UserCreateForm({
     lastName: defaultValues?.lastName || '',
     agence: defaultAgency || defaultValues?.agence || '',
     roleAgence: defaultValues?.roleAgence || '',
+    poste: defaultValues?.poste || '',
     globalRole: employeeMode ? 'franchisee_user' : (defaultValues?.globalRole || defaultRole),
-    sendEmail: defaultValues?.sendEmail ?? !employeeMode, // Pas d'email par défaut en mode salarié (email interne)
+    sendEmail: defaultValues?.sendEmail ?? !employeeMode,
   });
   const [errors, setErrors] = useState<Partial<Record<keyof CreateUserPayload, string>>>({});
 
