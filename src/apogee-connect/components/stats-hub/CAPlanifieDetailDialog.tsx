@@ -7,6 +7,7 @@ import { useMemo, useState, useCallback } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { stateLabel } from '@/shared/utils/stateLabels';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Euro, FolderOpen, Clock, TrendingUp, PieChart as PieChartIcon, BarChart3, Calendar, ArrowLeft, ChevronRight } from 'lucide-react';
@@ -251,7 +252,7 @@ function usePlanifiedProjects(props: Omit<Props, 'open' | 'onOpenChange'>): Plan
         ville,
         univers: normalizeUnivers(universes[0]),
         etatWorkflow: state,
-        etatWorkflowLabel: state === 'to_planify_tvx' ? 'À planifier' : state === 'devis_to_order' ? 'À commander' : state === 'wait_fourn' ? 'Att. fourn.' : state,
+        etatWorkflowLabel: stateLabel(state),
         devisHT,
         planningDate: bestDate,
         heuresTech: totalHours,

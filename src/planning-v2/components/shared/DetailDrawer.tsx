@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TYPE_LABELS, TYPE_BADGE_COLORS } from "../../constants";
+import { stateLabel } from "@/shared/utils/stateLabels";
 import type { PlanningAppointment, PlanningTechnician } from "../../types";
 
 interface DetailDrawerProps {
@@ -183,10 +184,10 @@ export function DetailDrawer({ appointment: a, technicians, open, onClose }: Det
           <Separator />
           <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
             <span>Statut :</span>
-            <Badge variant="outline" className="capitalize">{a.status}</Badge>
+            <Badge variant="outline" className="capitalize">{stateLabel(a.status)}</Badge>
             {a.projectState && a.projectState !== a.status && (
               <Badge variant="outline" className="capitalize text-muted-foreground">
-                Dossier: {a.projectState}
+                Dossier: {stateLabel(a.projectState)}
               </Badge>
             )}
             {!a.confirmed && (

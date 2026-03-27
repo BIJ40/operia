@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { apogeeProxy } from '@/services/apogeeProxy';
+import { stateLabel } from '@/shared/utils/stateLabels';
 import { useAgency } from '@/apogee-connect/contexts/AgencyContext';
 import {
   FileText, FolderOpen,
@@ -191,7 +192,7 @@ export default function ApogeeDocumentsExplorer({
                         <div className="flex flex-wrap items-center gap-2">
                           <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-mono">{path}</Badge>
                           {doc.kind && <Badge variant="outline" className="text-[10px] px-1.5 py-0">{doc.kind as string}</Badge>}
-                          {doc.state && <Badge variant="outline" className="text-[10px] px-1.5 py-0">{doc.state as string}</Badge>}
+                          {doc.state && <Badge variant="outline" className="text-[10px] px-1.5 py-0">{stateLabel(doc.state as string)}</Badge>}
                           {doc.data && typeof doc.data === 'object' && (doc.data as Record<string, unknown>).isSignature && (
                             <Badge variant="default" className="gap-1 text-[10px] px-1.5 py-0">
                               <ShieldCheck className="h-3 w-3" /> Signé
