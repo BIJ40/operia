@@ -310,7 +310,8 @@ function ExtensionManager({
   const extra = (meta.extra_spaces as number) ?? 0;
 
   const handleExtensionChange = (packKey: string) => {
-    const pack = EXTENSION_PACKS.find(p => (p.key ?? '') === (packKey === '' ? '' : packKey));
+    const actualKey = packKey === 'none' ? null : packKey;
+    const pack = EXTENSION_PACKS.find(p => p.key === actualKey);
     if (!pack) return;
 
     updateMeta.mutate({
