@@ -18,6 +18,8 @@ export interface RentabiliteListItem {
   univers: string;
   apporteurName: string;
   dateCreation: string | null;
+  /** Date de la dernière facture (pour filtrage par date) */
+  lastFactureDate: string | null;
   hasSnapshot: boolean;
   snapshot: ProfitabilitySnapshot | null;
 }
@@ -42,11 +44,20 @@ export function useRentabiliteList() {
         services.getFactures(agencySlug, dateRange),
       ]);
 
-      // Build set of project IDs that have at least one facture
+      // Build set of project IDs that have at least one facture + latest facture date per project
       const projectsWithFacture = new Set<string>();
+      const projectLastFactureDate = new Map<string, string>();
       for (const f of (rawFactures || []) as Record<string, unknown>[]) {
         const pid = f.dossierId ?? f.dossier_id ?? f.projectId ?? f.project_id;
-        if (pid != null) projectsWithFacture.add(String(pid));
+        if (pid != null) {
+          const pidStr = String(pid);
+          projectsWithFacture.add(pidStr);
+          const fDate = String(f.date ?? f.dateFacture ?? f.date_facture ?? f.createdAt ?? '');
+          if (fDate) {
+            const existing = projectLastFactureDate.get(pidStr);
+            if (!existing || fDate > existing) projectLastFactureDate.set(pidStr, fDate);
+          }
+        }
       }
 
       const snapshotMap = new Map<string, ProfitabilitySnapshot>();
@@ -111,6 +122,7 @@ export function useRentabiliteList() {
           univers,
           apporteurName,
           dateCreation,
+          lastFactureDate: projectLastFactureDate.get(projectId) || dateCreation,
           hasSnapshot: !!snapshot,
           snapshot,
         });
@@ -127,6 +139,7 @@ export function useRentabiliteList() {
             univers: '',
             apporteurName: '',
             dateCreation: null,
+            lastFactureDate: projectLastFactureDate.get(projectId) || null,
             hasSnapshot: true,
             snapshot,
           });
