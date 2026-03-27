@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
     let stripeEnabled = true; // Default for Dax
     
     const { data: agency } = await supabase
-      .from('agencies')
+      .from('agency_suivi_settings')
       .select('api_subdomain, stripe_enabled')
       .eq('slug', agencySlug)
       .eq('is_active', true)

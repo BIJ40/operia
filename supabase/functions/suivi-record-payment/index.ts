@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
 
     // Check if payment already recorded (idempotency)
     const { data: existingPayment } = await supabase
-      .from('payments')
+      .from('payments_clients_suivi')
       .select('id')
       .eq('stripe_session_id', sessionId)
       .single();
@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
     // Record the payment
     const amountCents = session.amount_total || 0;
     const { data: payment, error } = await supabase
-      .from('payments')
+      .from('payments_clients_suivi')
       .insert({
         ref_dossier: refDossier,
         agency_slug: agencySlug || session.metadata?.agencySlug || 'dax',

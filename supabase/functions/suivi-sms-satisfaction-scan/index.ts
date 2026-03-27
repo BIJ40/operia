@@ -241,7 +241,7 @@ serve(async (req) => {
 
     // 1. Get all active agencies
     const { data: agencies, error: agencyError } = await supabase
-      .from('agencies')
+      .from('agency_suivi_settings')
       .select('slug, api_subdomain, name, google_reviews_url, allmysms_api_key, allmysms_login, allmysms_sender')
       .eq('is_active', true);
 
