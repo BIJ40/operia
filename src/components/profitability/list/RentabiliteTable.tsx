@@ -306,7 +306,7 @@ export function RentabiliteTable({ items, isLoading, onSelectProject, onCalculat
                       'cursor-pointer transition-colors hover:bg-orange-50/60 dark:hover:bg-orange-950/20',
                       snap && snap.net_margin < 0 && 'bg-red-50/30 dark:bg-red-950/10',
                     )}
-                    onClick={() => notCalc ? onCalculate(item.projectId) : onSelectProject(item.projectId, item.projectRef)}
+                    onClick={() => onSelectProject(item.projectId, item.projectRef)}
                   >
                     <TableCell className="font-medium whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
