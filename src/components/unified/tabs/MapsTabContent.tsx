@@ -1791,6 +1791,7 @@ export default function MapsTabContent() {
           )}
         </div>
       </DraggableFolderContentContainer>
+      <ZoneConfigDialog open={zoneDialogOpen} onOpenChange={setZoneDialogOpen} />
     </div>
   );
 }
