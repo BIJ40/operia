@@ -7808,6 +7808,7 @@ export type Database = {
         Row: {
           agency_slug: string | null
           amount_cents: number
+          client_name: string | null
           created_at: string
           id: string
           paid_at: string
@@ -7817,6 +7818,7 @@ export type Database = {
         Insert: {
           agency_slug?: string | null
           amount_cents: number
+          client_name?: string | null
           created_at?: string
           id?: string
           paid_at?: string
@@ -7826,6 +7828,7 @@ export type Database = {
         Update: {
           agency_slug?: string | null
           amount_cents?: number
+          client_name?: string | null
           created_at?: string
           id?: string
           paid_at?: string
