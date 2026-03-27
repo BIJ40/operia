@@ -24,6 +24,11 @@ import { RHCollaboratorPanel } from '@/components/rh/browser-tabs/RHCollaborator
 import { RHTabsProvider } from '@/components/rh/browser-tabs/RHTabsContext';
 import { RHCollaborator } from '@/types/rh-suivi';
 import { cn } from '@/lib/utils';
+import { CreateUserDialog } from '@/components/admin/users/UserDialogs';
+import { useUserManagement } from '@/hooks/use-user-management';
+import { useHasMinLevel } from '@/hooks/useHasGlobalRole';
+import { usePermissions } from '@/contexts/PermissionsContext';
+import { getRoleLevel } from '@/types/globalRoles';
 
 export function RHSuiviContent() {
   const queryClient = useQueryClient();
@@ -32,6 +37,18 @@ export function RHSuiviContent() {
   
   const { data: collaborators = [], isLoading, refetch } = useRHCollaborators({ includeFormer: false });
   const { data: epiSummaries = [] } = useCollaboratorsEpiSummary(agencyId || undefined);
+  
+  // Création de compte Operia depuis collaborateur
+  const canCreateAccount = useHasMinLevel(2);
+  const { globalRole } = usePermissions();
+  const currentUserLevel = getRoleLevel(globalRole || 'base_user');
+  const { createUserMutation, assignableRoles, agencies } = useUserManagement({ scope: 'ownAgency' });
+  const [createFromCollab, setCreateFromCollab] = useState<{
+    collaboratorId: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  } | null>(null);
   
   // Sync avec URL (paramètre ?collab=)
   const urlCollab = searchParams.get('collab');
@@ -141,6 +158,16 @@ export function RHSuiviContent() {
     handleSelectCollaborator(collaborator.id);
   };
 
+  // Handler pour créer un compte Operia depuis un collaborateur
+  const handleCreateAccountFromCollab = useCallback((collaborator: RHCollaborator) => {
+    setCreateFromCollab({
+      collaboratorId: collaborator.id,
+      firstName: collaborator.first_name,
+      lastName: collaborator.last_name,
+      email: collaborator.email || '',
+    });
+  }, []);
+
   // Vérifier si l'onglet actif est valide
   const activeCollaborator = useMemo(() => {
     if (!activeCollaboratorId) return null;
@@ -195,6 +222,7 @@ export function RHSuiviContent() {
               isLoading={isLoading}
               onRefresh={refetch}
               onOpenProfile={handleOpenProfile}
+              onCreateAccount={canCreateAccount ? handleCreateAccountFromCollab : undefined}
               className="flex-1"
             />
           </div>
@@ -227,6 +255,35 @@ export function RHSuiviContent() {
           mode={wizardMode}
           initialData={wizardInitialData}
         />
+
+        {/* Dialog création compte Operia depuis collaborateur */}
+        {createFromCollab && (
+          <CreateUserDialog
+            open={!!createFromCollab}
+            onOpenChange={(open) => { if (!open) setCreateFromCollab(null); }}
+            onSubmit={(data) => {
+              createUserMutation.mutate(data, {
+                onSuccess: () => {
+                  setCreateFromCollab(null);
+                  refetch();
+                },
+              });
+            }}
+            isPending={createUserMutation.isPending}
+            assignableRoles={assignableRoles}
+            agencies={agencies}
+            currentUserLevel={currentUserLevel}
+            currentUserAgency={agence}
+            forceOwnAgency
+            agencyMode
+            defaultValues={{
+              firstName: createFromCollab.firstName,
+              lastName: createFromCollab.lastName,
+              email: createFromCollab.email,
+            }}
+            collaboratorId={createFromCollab.collaboratorId}
+          />
+        )}
       </div>
     </RHTabsProvider>
   );
