@@ -44,7 +44,7 @@ export function CreateUserDialog({ open, onOpenChange, onSubmit, isPending, assi
       lastName: payload.lastName,
       agence: finalAgence,
       roleAgence: payload.roleAgence,
-      globalRole: payload.globalRole as GlobalRole,
+      globalRole: employeeMode ? 'franchisee_user' as GlobalRole : payload.globalRole as GlobalRole,
       sendEmail: payload.sendEmail,
       collaboratorId,
     });
