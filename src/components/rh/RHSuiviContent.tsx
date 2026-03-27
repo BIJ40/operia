@@ -38,6 +38,18 @@ export function RHSuiviContent() {
   const { data: collaborators = [], isLoading, refetch } = useRHCollaborators({ includeFormer: false });
   const { data: epiSummaries = [] } = useCollaboratorsEpiSummary(agencyId || undefined);
   
+  // Création de compte Operia depuis collaborateur
+  const canCreateAccount = useHasMinLevel(2);
+  const { globalRole } = usePermissions();
+  const currentUserLevel = getRoleLevel(globalRole || 'base_user');
+  const { createUserMutation, assignableRoles, agencies } = useUserManagement({ scope: 'ownAgency' });
+  const [createFromCollab, setCreateFromCollab] = useState<{
+    collaboratorId: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  } | null>(null);
+  
   // Sync avec URL (paramètre ?collab=)
   const urlCollab = searchParams.get('collab');
   const activeCollaboratorId = urlCollab || null;
