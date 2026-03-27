@@ -247,8 +247,8 @@ export function SimplifiedSupportChat({
       
       const description = buildCondensedSummary(isResolved);
       
-      // Status: SUPPORT_RESOLU for resolved, IA_ESCALADE for blocked
-      const kanbanStatus = isResolved ? 'SUPPORT_RESOLU' : 'IA_ESCALADE';
+      // Status: IA_RESOLU for resolved, IA_NON_RESOLU for blocked
+      const kanbanStatus = isResolved ? 'IA_RESOLU' : 'IA_NON_RESOLU';
       const heatPriority = isResolved ? 3 : 10;
       
       const initiatorProfile = {
