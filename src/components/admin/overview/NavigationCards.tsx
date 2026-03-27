@@ -123,10 +123,10 @@ export function NavigationCards() {
       ],
     },
     {
-      title: 'Support',
-      description: 'Tickets et gestion de projet',
+      title: 'Gestion de Projet',
+      description: 'Tickets et suivi de projet',
       cards: [
-        { to: ROUTES.admin.supportTickets, icon: Headset, title: 'Tickets Support', description: 'Gérer les tickets clients' },
+        { to: '/?tab=ticketing', icon: Headset, title: 'Ticketing', description: 'Gérer les tickets' },
       ],
     },
     {

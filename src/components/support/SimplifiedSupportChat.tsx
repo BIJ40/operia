@@ -7,8 +7,8 @@
  * 2. Question d'orientation (type de demande)
  * 3. Description du problème
  * 4. Réponse IA via RAG
- * 5. Boutons: "Problème résolu" → ticket SUPPORT_RESOLU
- *            "Toujours bloqué" → screenshot optionnel → ticket IA_ESCALADE
+ * 5. Boutons: "Problème résolu" → ticket IA_RESOLU
+ *            "Toujours bloqué" → screenshot optionnel → ticket IA_NON_RESOLU
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';

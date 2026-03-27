@@ -620,8 +620,7 @@ export function canAccessTile(
   const caps = getRoleCapabilities(role);
   
   switch (tileId) {
-    case 'CONSOLE_SUPPORT':
-      return caps.canAccessAdmin;
+    // CONSOLE_SUPPORT supprimée
     case 'ADMIN_USERS':
       return caps.canManageUsers;
     case 'ADMIN_ROLES':
