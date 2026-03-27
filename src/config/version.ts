@@ -1,3 +1,3 @@
-export const APP_VERSION = "2026.03.26-144432";
-export const APP_BUILD_TIME = "2026-03-26T14:44:32.571Z";
-export const APP_CODENAME = "Centre d'aide — Refonte UX & Permissions";
+export const APP_VERSION = "2026.03.27-220200";
+export const APP_BUILD_TIME = "2026-03-27T22:02:00.000Z";
+export const APP_CODENAME = "Suivi Clients — Noms clients & Sécurité RLS";
