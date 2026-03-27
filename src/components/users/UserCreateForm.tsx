@@ -10,15 +10,22 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RefreshCw } from 'lucide-react';
 import { generateSecurePassword } from '@/lib/passwordUtils';
 
-// Postes disponibles (N1 supprimé - plus de technicien/assistante comme comptes utilisateurs)
+// Postes disponibles pour la création admin (N3+)
 const ROLE_AGENCE_LABELS: Record<string, string> = {
   'dirigeant': 'Dirigeant(e)',
   'commercial': 'Commercial',
   'tete_de_reseau': 'Tête de réseau',
 };
 
-// Postes disponibles en mode agence (pas tete_de_reseau)
+// Postes disponibles en mode agence pour admin (N3+ créant dans une agence)
 const AGENCY_MODE_ROLES = ['dirigeant', 'commercial'];
+
+// Postes disponibles quand un N2 crée un salarié (N1)
+const EMPLOYEE_MODE_ROLES: Record<string, string> = {
+  'assistante': 'Assistant(e)',
+  'commercial': 'Commercial',
+  'technicien': 'Technicien',
+};
 
 // Validation schema
 const createUserSchema = z.object({
@@ -51,6 +58,8 @@ export interface UserCreateFormProps {
   creatorRoleLevel?: number;
   agencyMode?: boolean;
   defaultValues?: Partial<CreateUserPayload>;
+  /** Mode salarié: N2 crée un N1 — postes limités, rôle système forcé */
+  employeeMode?: boolean;
 }
 
 export function UserCreateForm({
@@ -63,16 +72,25 @@ export function UserCreateForm({
   creatorRoleLevel = 0,
   agencyMode = false,
   defaultValues,
+  employeeMode = false,
 }: UserCreateFormProps) {
   // Postes disponibles selon le mode
-  const availableRoleAgence = agencyMode 
-    ? AGENCY_MODE_ROLES 
-    : Object.keys(ROLE_AGENCE_LABELS);
-  // N2 créé obligatoirement des utilisateurs agence (N1)
-  const isN2Creator = creatorRoleLevel === 2;
+  const availableRoleAgence = employeeMode
+    ? Object.keys(EMPLOYEE_MODE_ROLES)
+    : agencyMode 
+      ? AGENCY_MODE_ROLES 
+      : Object.keys(ROLE_AGENCE_LABELS);
   
-  // Valeur par défaut intelligente : le rôle assignable le plus bas
-  const defaultRole = assignableRoles.length > 0 ? assignableRoles[0] : 'base_user';
+  // Labels de postes selon le mode
+  const roleAgenceLabels = employeeMode ? EMPLOYEE_MODE_ROLES : ROLE_AGENCE_LABELS;
+  
+  // N2 créé obligatoirement des utilisateurs agence (N1)
+  const isN2Creator = creatorRoleLevel === 2 || employeeMode;
+  
+  // En mode salarié, forcer franchisee_user (N1)
+  const defaultRole = employeeMode 
+    ? 'franchisee_user' as GlobalRole 
+    : (assignableRoles.length > 0 ? assignableRoles[0] : 'base_user');
   
   const [formData, setFormData] = useState<CreateUserPayload>({
     email: defaultValues?.email || '',
@@ -81,7 +99,7 @@ export function UserCreateForm({
     lastName: defaultValues?.lastName || '',
     agence: defaultAgency || defaultValues?.agence || '',
     roleAgence: defaultValues?.roleAgence || '',
-    globalRole: defaultValues?.globalRole || defaultRole,
+    globalRole: employeeMode ? 'franchisee_user' : (defaultValues?.globalRole || defaultRole),
     sendEmail: defaultValues?.sendEmail ?? true,
   });
   const [errors, setErrors] = useState<Partial<Record<keyof CreateUserPayload, string>>>({});
@@ -200,7 +218,7 @@ export function UserCreateForm({
           <SelectTrigger><SelectValue placeholder="Sélectionner un poste" /></SelectTrigger>
           <SelectContent className="bg-background z-50">
             {availableRoleAgence.map((value) => (
-              <SelectItem key={value} value={value}>{ROLE_AGENCE_LABELS[value]}</SelectItem>
+              <SelectItem key={value} value={value}>{roleAgenceLabels[value] || value}</SelectItem>
             ))}
           </SelectContent>
         </Select>

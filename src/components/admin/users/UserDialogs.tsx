@@ -27,9 +27,11 @@ interface CreateUserDialogProps {
   agencyMode?: boolean;
   defaultValues?: Partial<import('@/components/users/UserCreateForm').CreateUserPayload>;
   collaboratorId?: string;
+  /** Mode salarié: postes limités (assistant/commercial/technicien), rôle forcé N1 */
+  employeeMode?: boolean;
 }
 
-export function CreateUserDialog({ open, onOpenChange, onSubmit, isPending, assignableRoles, agencies, currentUserLevel, currentUserAgency, forceOwnAgency = false, agencyMode = false, defaultValues, collaboratorId }: CreateUserDialogProps) {
+export function CreateUserDialog({ open, onOpenChange, onSubmit, isPending, assignableRoles, agencies, currentUserLevel, currentUserAgency, forceOwnAgency = false, agencyMode = false, defaultValues, collaboratorId, employeeMode = false }: CreateUserDialogProps) {
   const handleSubmit = (payload: CreateUserPayload) => {
     // Si forceOwnAgency ou N2, forcer l'agence courante
     const shouldForceAgency = forceOwnAgency || currentUserLevel === 2;
@@ -42,7 +44,7 @@ export function CreateUserDialog({ open, onOpenChange, onSubmit, isPending, assi
       lastName: payload.lastName,
       agence: finalAgence,
       roleAgence: payload.roleAgence,
-      globalRole: payload.globalRole as GlobalRole,
+      globalRole: employeeMode ? 'franchisee_user' as GlobalRole : payload.globalRole as GlobalRole,
       sendEmail: payload.sendEmail,
       collaboratorId,
     });
@@ -57,10 +59,12 @@ export function CreateUserDialog({ open, onOpenChange, onSubmit, isPending, assi
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <UserPlus className="w-5 h-5" />
-            Créer un utilisateur
+            {employeeMode ? 'Créer un compte salarié' : 'Créer un utilisateur'}
           </DialogTitle>
           <DialogDescription>
-            Remplissez les informations pour créer un nouvel utilisateur.
+            {employeeMode 
+              ? 'Créer un compte Operia pour ce collaborateur.'
+              : 'Remplissez les informations pour créer un nouvel utilisateur.'}
           </DialogDescription>
         </DialogHeader>
         
@@ -74,6 +78,7 @@ export function CreateUserDialog({ open, onOpenChange, onSubmit, isPending, assi
           creatorRoleLevel={currentUserLevel}
           agencyMode={agencyMode}
           defaultValues={defaultValues}
+          employeeMode={employeeMode}
         />
 
         <DialogFooter>
