@@ -20,7 +20,7 @@ import { generateSecurePassword } from '@/lib/passwordUtils';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ApogeeUserSelect } from '@/components/collaborators/ApogeeUserSelect';
-import { Agency, ROLE_AGENCE_LABELS, UserFormData } from './constants';
+import { Agency, ROLE_AGENCE_LABELS, getEditableRoleAgenceEntries, UserFormData } from './constants';
 import { getSuggestedGlobalRole, validateRoleAgenceCoherence } from '@/lib/roleAgenceMapping';
 
 interface UserInfoColumnProps {
@@ -238,7 +238,7 @@ export function UserInfoColumn({
             >
               <SelectTrigger className="rounded-lg"><SelectValue placeholder="Sélectionner" /></SelectTrigger>
               <SelectContent>
-                {Object.entries(ROLE_AGENCE_LABELS).map(([value, label]) => (
+                {getEditableRoleAgenceEntries(formData.globalRole).map(([value, label]) => (
                   <SelectItem key={value} value={value}>{label}</SelectItem>
                 ))}
               </SelectContent>

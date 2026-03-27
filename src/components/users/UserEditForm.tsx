@@ -14,14 +14,7 @@ import { Loader2, Mail, KeyRound, AlertCircle, UserX, RefreshCw } from 'lucide-r
 import { generateSecurePassword } from '@/lib/passwordUtils';
 import { ApogeeUserSelect } from '@/components/collaborators/ApogeeUserSelect';
 
-// Postes disponibles (N1 supprimé - technicien legacy conservé pour édition mais pas création)
-const ROLE_AGENCE_LABELS: Record<string, string> = {
-  'dirigeant': 'Dirigeant(e)',
-  'assistante': 'Assistante',
-  'commercial': 'Commercial',
-  'tete_de_reseau': 'Tête de réseau',
-  'externe': 'Externe',
-};
+import { ROLE_AGENCE_LABELS, getEditableRoleAgenceEntries } from '@/components/admin/users/user-full-dialog/constants';
 
 // Validation schema
 const editUserSchema = z.object({
@@ -270,7 +263,7 @@ export function UserEditForm({
         >
           <SelectTrigger><SelectValue placeholder="Sélectionner un poste" /></SelectTrigger>
           <SelectContent className="bg-background z-50">
-            {Object.entries(ROLE_AGENCE_LABELS).map(([value, label]) => (
+            {getEditableRoleAgenceEntries(formData.globalRole).map(([value, label]) => (
               <SelectItem key={value} value={value}>{label}</SelectItem>
             ))}
           </SelectContent>
