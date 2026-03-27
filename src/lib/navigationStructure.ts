@@ -25,6 +25,8 @@ export interface NavigationGuard {
   alwaysVisible?: boolean;
   /** Role-gated: only visible for specific roles */
   minRoles?: GlobalRole[];
+  /** If set, entry is only accessible when this module is deployed */
+  deploymentKey?: string;
 }
 
 export interface NavigationEntry {
@@ -117,14 +119,14 @@ export const NAVIGATION_STRUCTURE: NavigationDomain[] = [
     icon: Network,
     roleGated: FRANCHISEUR_ROLES,
     entries: [
-      { label: 'Accueil', guard: { minRoles: FRANCHISEUR_ROLES } },
-      { label: 'Période', guard: { minRoles: FRANCHISEUR_ROLES } },
-      { label: 'Agences', guard: { minRoles: FRANCHISEUR_ROLES } },
-      { label: 'Redevances', guard: { minRoles: FRANCHISEUR_ROLES } },
-      { label: 'Statistiques', guard: { minRoles: FRANCHISEUR_ROLES } },
-      { label: 'Divers', guard: { minRoles: FRANCHISEUR_ROLES } },
-      { label: 'Guides', guard: { minRoles: FRANCHISEUR_ROLES } },
-      { label: 'Support', guard: { minRoles: FRANCHISEUR_ROLES } },
+      { label: 'Accueil', guard: { minRoles: FRANCHISEUR_ROLES, deploymentKey: 'reseau_franchiseur' } },
+      { label: 'Période', guard: { minRoles: FRANCHISEUR_ROLES, deploymentKey: 'reseau_franchiseur' } },
+      { label: 'Agences', guard: { minRoles: FRANCHISEUR_ROLES, deploymentKey: 'reseau_franchiseur' } },
+      { label: 'Redevances', guard: { minRoles: FRANCHISEUR_ROLES, deploymentKey: 'reseau_franchiseur' } },
+      { label: 'Statistiques', guard: { minRoles: FRANCHISEUR_ROLES, deploymentKey: 'reseau_franchiseur' } },
+      { label: 'Divers', guard: { minRoles: FRANCHISEUR_ROLES, deploymentKey: 'reseau_franchiseur' } },
+      { label: 'Guides', guard: { minRoles: FRANCHISEUR_ROLES, deploymentKey: 'reseau_franchiseur' } },
+      { label: 'Support', guard: { minRoles: FRANCHISEUR_ROLES, deploymentKey: 'reseau_franchiseur' } },
     ],
   },
   {
@@ -160,7 +162,13 @@ export function evaluateGuard(
   effectiveModules: Record<string, { enabled?: boolean; options?: Record<string, boolean> }>,
   globalRole: GlobalRole | null,
   isAdminBypass: boolean,
+  isDeployedModule?: (key: string) => boolean,
 ): boolean {
+  // Deployment check — if deploymentKey is set and module is not deployed, block access
+  if (guard.deploymentKey && isDeployedModule) {
+    if (!isDeployedModule(guard.deploymentKey)) return false;
+  }
+
   // Always visible entries
   if (guard.alwaysVisible) return true;
 
