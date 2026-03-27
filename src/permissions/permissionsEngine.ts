@@ -123,23 +123,18 @@ export function hasAccess(params: HasAccessParams): boolean {
     return true;
   }
   
-  // 2. Vérifier rôle minimum du module
-  const minRole = MODULE_MIN_ROLES[moduleId];
-  if (minRole && globalRole && !hasMinRole(globalRole, minRole)) {
-    return false;
-  }
-  
-  // 3. Vérifier si module nécessite agence
+  // 2. Vérifier si module nécessite agence
   if (AGENCY_REQUIRED_MODULES.includes(moduleId) && !agencyId) {
     return false;
   }
   
-  // 4. Vérifier modules réseau (N3+ seulement)
+  // 3. Vérifier modules réseau (N3+ seulement)
   if (NETWORK_MODULES.includes(moduleId) && !hasMinRole(globalRole, NETWORK_MIN_ROLE)) {
     return false;
   }
   
-  // 5. Obtenir les modules effectifs (explicites ou par défaut)
+  // 4. Obtenir les modules effectifs (explicites ou par défaut)
+  //    getEffectiveModules already applies minRole + delegatable bypass internally
   const effectiveModules = getEffectiveModules({ globalRole, enabledModules, agencyId });
   const moduleAccess = effectiveModules.find(m => m.id === moduleId);
   
@@ -147,13 +142,24 @@ export function hasAccess(params: HasAccessParams): boolean {
     return false;
   }
   
+  // 5. Vérifier rôle minimum du module APRÈS résolution de la source
+  //    Bypass si le module est delegatable ET source === 'explicit' (user_modules)
+  const minRole = MODULE_MIN_ROLES[moduleId];
+  if (minRole && globalRole && !hasMinRole(globalRole, minRole)) {
+    if (!shouldBypassMinRole(moduleId, moduleAccess.source)) {
+      return false;
+    }
+  }
+  
   // 6. Vérifier option spécifique si demandée
   if (optionId) {
-    // Vérifier le rôle minimum de l'option
+    // Vérifier le rôle minimum de l'option (bypass si delegatable + explicit)
     const optionMinRoleKey = `${moduleId}.${optionId}`;
     const optionMinRole = MODULE_OPTION_MIN_ROLES[optionMinRoleKey];
     if (optionMinRole && !hasMinRole(globalRole, optionMinRole)) {
-      return false;
+      if (!shouldBypassMinRole(optionMinRoleKey, moduleAccess.source)) {
+        return false;
+      }
     }
     
     // Vérifier si l'option est activée
