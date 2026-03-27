@@ -115,14 +115,14 @@ export const CONTRACT_TYPES: { value: ContractType; label: string }[] = [
 
 export type JobCategory =
   | 'TECHNICIEN'
-  | 'ASSISTANTE'
+  | 'ADMINISTRATIF'
   | 'DIRIGEANT'
   | 'COMMERCIAL'
   | 'AUTRE';
 
 export const JOB_CATEGORIES: { value: JobCategory; label: string }[] = [
   { value: 'TECHNICIEN', label: 'Technicien' },
-  { value: 'ASSISTANTE', label: 'Assistante' },
+  { value: 'ADMINISTRATIF', label: 'Administratif' },
   { value: 'DIRIGEANT', label: 'Dirigeant' },
   { value: 'COMMERCIAL', label: 'Commercial' },
   { value: 'AUTRE', label: 'Autre' },
