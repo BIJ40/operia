@@ -239,12 +239,14 @@ export function getEffectiveModules(ctx: PermissionContext): EffectiveModule[] {
       return;
     }
 
-    // Min role constraint (only if known in MODULE_MIN_ROLES)
+    // Min role constraint — bypassed if delegatable + explicit (user_modules)
     const minRole = MODULE_MIN_ROLES[moduleKey];
     if (minRole && globalRole && !hasMinRole(globalRole, minRole)) {
-      result.push({ id: moduleKey, enabled: false, source, options: {} });
-      processedKeys.add(key);
-      return;
+      if (!shouldBypassMinRole(moduleKey, source)) {
+        result.push({ id: moduleKey, enabled: false, source, options: {} });
+        processedKeys.add(key);
+        return;
+      }
     }
 
     result.push({
