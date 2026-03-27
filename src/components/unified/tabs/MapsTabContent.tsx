@@ -555,54 +555,6 @@ export default function MapsTabContent() {
     }
   }, [sortedRdvs, selectedRdv, mapReady, isTourMode, mapMode]);
 
-  // Density choropleth layer — commune polygons colored by intervention count
-  useEffect(() => {
-    const m = map.current;
-    if (!m || !mapReady) return;
-
-    // Clean previous density layers
-    cleanLayers(m, [DENSITY_FILL, DENSITY_LINE, DENSITY_LABELS], DENSITY_SOURCE);
-
-    if (mapMode !== 'heatmap' || !densityGeoJson?.features?.length) return;
-
-    // 8-level color scale: white → dark red/almost black
-    const colorExpr: any[] = [
-      'interpolate', ['linear'], ['get', 'level'],
-      0, '#fff5f5',   // Niveau 0 — presque blanc (très peu)
-      1, '#fee2e2',   // Niveau 1 — rose très pâle
-      2, '#fca5a5',   // Niveau 2 — rose
-      3, '#f87171',   // Niveau 3 — rouge clair
-      4, '#ef4444',   // Niveau 4 — rouge
-      5, '#dc2626',   // Niveau 5 — rouge vif
-      6, '#991b1b',   // Niveau 6 — rouge foncé
-      7, '#450a0a',   // Niveau 7 — quasi noir
-    ];
-
-    addChoroplethLayers(m, DENSITY_SOURCE, DENSITY_FILL, DENSITY_LINE, DENSITY_LABELS, densityGeoJson, colorExpr, 0.8);
-    fitBoundsToGeoJson(m, densityGeoJson);
-
-    // Click popup
-    const handleClick = (e: mapboxgl.MapMouseEvent) => {
-      const features = m.queryRenderedFeatures(e.point, { layers: [DENSITY_FILL] });
-      if (!features?.length) return;
-      const p = features[0].properties;
-      if (!p) return;
-      new mapboxgl.Popup({ closeButton: true, maxWidth: '280px' })
-        .setLngLat(e.lngLat)
-        .setHTML(`
-          <div style="font-family:system-ui;font-size:13px;line-height:1.5;">
-            <div style="font-weight:700;font-size:14px;margin-bottom:4px;">${p.nom || ''} ${p.city || ''}</div>
-            <div style="font-size:20px;font-weight:800;color:#dc2626;">${p.count || 0}</div>
-            <div style="color:#6b7280;">interventions</div>
-          </div>
-        `)
-        .addTo(m);
-    };
-    m.on('click', DENSITY_FILL, handleClick);
-    m.on('mouseenter', DENSITY_FILL, () => { m.getCanvas().style.cursor = 'pointer'; });
-    m.on('mouseleave', DENSITY_FILL, () => { m.getCanvas().style.cursor = ''; });
-    return () => { m.off('click', DENSITY_FILL, handleClick); };
-  }, [densityGeoJson, mapReady, mapMode, cleanLayers, addChoroplethLayers, fitBoundsToGeoJson]);
 
   // ── Helper: fit bounds to GeoJSON polygon features ──
   const fitBoundsToGeoJson = useCallback((m: mapboxgl.Map, geojson: GeoJSON.FeatureCollection) => {
