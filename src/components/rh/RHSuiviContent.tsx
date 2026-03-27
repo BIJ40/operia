@@ -255,6 +255,35 @@ export function RHSuiviContent() {
           mode={wizardMode}
           initialData={wizardInitialData}
         />
+
+        {/* Dialog création compte Operia depuis collaborateur */}
+        {createFromCollab && (
+          <CreateUserDialog
+            open={!!createFromCollab}
+            onOpenChange={(open) => { if (!open) setCreateFromCollab(null); }}
+            onSubmit={(data) => {
+              createUserMutation.mutate(data, {
+                onSuccess: () => {
+                  setCreateFromCollab(null);
+                  refetch();
+                },
+              });
+            }}
+            isPending={createUserMutation.isPending}
+            assignableRoles={assignableRoles}
+            agencies={agencies}
+            currentUserLevel={currentUserLevel}
+            currentUserAgency={agence}
+            forceOwnAgency
+            agencyMode
+            defaultValues={{
+              firstName: createFromCollab.firstName,
+              lastName: createFromCollab.lastName,
+              email: createFromCollab.email,
+            }}
+            collaboratorId={createFromCollab.collaboratorId}
+          />
+        )}
       </div>
     </RHTabsProvider>
   );
