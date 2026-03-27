@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Building2, Euro, Calendar, Phone, Mail, MapPin, Users, Edit, Loader2 } from "lucide-react";
+import { Building2, Euro, Calendar, Phone, Mail, MapPin, Users, Edit, Loader2, ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -72,6 +72,15 @@ function FranchiseurAgencyProfileContent() {
 
   return (
     <div className="container mx-auto max-w-app p-6 space-y-6">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => navigate(-1)}
+        className="gap-1.5 -ml-2 mb-2 text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Retour
+      </Button>
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-3">
