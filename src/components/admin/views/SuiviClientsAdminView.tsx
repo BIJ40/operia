@@ -219,7 +219,7 @@ function PaiementsSection() {
             {data?.rows?.map(p => (
               <TableRow key={p.id}>
                 <TableCell className="font-mono text-sm">{p.ref_dossier}</TableCell>
-                <TableCell className="text-sm font-medium">{p.client_name || '—'}</TableCell>
+                <TableCell className="text-sm font-medium">{p.resolved_client_name || p.client_name || '—'}</TableCell>
                 <TableCell>{p.amount_cents != null ? `${(p.amount_cents / 100).toFixed(2)} €` : '—'}</TableCell>
                 <TableCell className="text-sm">{p.paid_at ? new Date(p.paid_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}</TableCell>
                 <TableCell><code className="text-xs bg-muted px-1.5 py-0.5 rounded">{p.agency_slug}</code></TableCell>
