@@ -80,19 +80,17 @@ Deno.serve(async (req) => {
       });
       if (resp.ok) {
         const data = await resp.json();
-        console.log(`API response for ${refDossier}: type=${typeof data}, isArray=${Array.isArray(data)}`);
         const projectData = Array.isArray(data) ? data[0] : data;
-        const client = projectData?.client || projectData?.data?.client;
-        const clientId = projectData?.clientId || projectData?.data?.clientId;
-        if (client) {
-          const name = [client.prenom, client.nom].filter(Boolean).join(' ') || null;
-          console.log(`Resolved ${refDossier} -> ${name}`);
-          nameCache.set(cacheKey, name);
-          return name;
-        } else if (clientId) {
-          console.log(`Found clientId ${clientId} but no client object for ${refDossier}`);
-        } else {
-          console.log(`No client data for ${refDossier}, keys:`, Object.keys(projectData || {}));
+        const clientId = projectData?.clientId;
+        if (clientId) {
+          const clients = await getClients(agencySlug);
+          const client = clients.find((c: any) => c.id === clientId);
+          if (client) {
+            const name = [client.prenom, client.nom].filter(Boolean).join(' ') || null;
+            console.log(`Resolved ${refDossier} -> ${name}`);
+            nameCache.set(cacheKey, name);
+            return name;
+          }
         }
       } else {
         console.warn(`API ${resp.status} for ${refDossier}`);
