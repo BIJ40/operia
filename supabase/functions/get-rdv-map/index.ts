@@ -88,7 +88,25 @@ async function fetchCommunePolygons(): Promise<any> {
       }
       const geojson = await resp.json();
       if (geojson?.features) {
-        allFeatures.push(...geojson.features);
+        for (const feature of geojson.features) {
+          const contour = feature?.properties?.contour;
+          const geometry = contour?.type === 'Polygon' || contour?.type === 'MultiPolygon'
+            ? contour
+            : feature?.geometry;
+
+          if (!geometry || (geometry.type !== 'Polygon' && geometry.type !== 'MultiPolygon')) {
+            continue;
+          }
+
+          allFeatures.push({
+            type: 'Feature',
+            properties: {
+              code: feature?.properties?.code,
+              nom: feature?.properties?.nom,
+            },
+            geometry,
+          });
+        }
       }
     }
     
