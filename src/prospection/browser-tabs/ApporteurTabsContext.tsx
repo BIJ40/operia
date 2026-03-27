@@ -9,7 +9,7 @@ import { LayoutGrid, Building2 } from 'lucide-react';
 import type { ApporteurStoredTabData, ApporteurTabData, ApporteurTabsState } from './types';
 
 const DEFAULT_STATE: ApporteurTabsState = {
-  tabs: [{ id: 'overview', label: 'Recherche', closable: false }],
+  tabs: [{ id: 'overview', label: 'Liste', closable: false }],
   activeTabId: 'overview',
 };
 
