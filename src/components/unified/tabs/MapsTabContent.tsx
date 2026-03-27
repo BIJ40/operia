@@ -1324,20 +1324,25 @@ export default function MapsTabContent() {
                 {profitLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${profitGeoJson?.features?.length || 0} communes`}
               </span>
             </div>
-            <div className="flex items-center gap-4 text-xs">
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#dc2626' }} />
-                <span className="text-muted-foreground">Zone déficitaire</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#fbbf24' }} />
-                <span className="text-muted-foreground">Équilibre</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#15803d' }} />
-                <span className="text-muted-foreground">Zone rentable</span>
-              </div>
-            </div>
+            <GradientLegendBar
+              stops={[
+                { color: '#dc2626', label: '' },
+                { color: '#ef4444', label: '' },
+                { color: '#fbbf24', label: '0 €' },
+                { color: '#22c55e', label: '' },
+                { color: '#15803d', label: '' },
+              ]}
+              minLabel={(() => {
+                if (!profitGeoJson?.features?.length) return 'Déficit';
+                const minM = Math.min(...profitGeoJson.features.map((f: any) => f.properties?.margin || 0));
+                return `${Math.round(minM).toLocaleString('fr-FR')} €`;
+              })()}
+              maxLabel={(() => {
+                if (!profitGeoJson?.features?.length) return 'Bénéfice';
+                const maxM = Math.max(...profitGeoJson.features.map((f: any) => f.properties?.margin || 0));
+                return `+${Math.round(maxM).toLocaleString('fr-FR')} €`;
+              })()}
+            />
           </div>
         )}
 
