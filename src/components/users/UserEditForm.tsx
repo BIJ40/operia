@@ -263,7 +263,7 @@ export function UserEditForm({
         >
           <SelectTrigger><SelectValue placeholder="Sélectionner un poste" /></SelectTrigger>
           <SelectContent className="bg-background z-50">
-            {Object.entries(ROLE_AGENCE_LABELS).map(([value, label]) => (
+            {getEditableRoleAgenceEntries(formData.globalRole).map(([value, label]) => (
               <SelectItem key={value} value={value}>{label}</SelectItem>
             ))}
           </SelectContent>
