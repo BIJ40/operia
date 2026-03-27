@@ -195,10 +195,6 @@ export function RHSuiviContent() {
               agencySlug={agence || undefined}
               collaborators={collaborators}
             />
-            <Button onClick={handleOpenCreate} size="sm">
-              <UserPlus className="h-4 w-4 mr-2" />
-              Nouveau salarié
-            </Button>
           </div>
         </div>
 
