@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Menu, ChevronDown } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import type { HeaderNavGroup } from '@/config/headerNavigation';
 import type { UnifiedTab } from '@/components/unified/workspace/types';
@@ -15,16 +15,16 @@ export function MobileNavMenu({ groups, activeTab, onSelect }: MobileNavMenuProp
   const [open, setOpen] = useState(false);
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
         <button type="button" className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors md:hidden">
           <Menu className="w-5 h-5" />
         </button>
-      </SheetTrigger>
-      <SheetContent side="left" className="w-72 p-0">
-        <SheetHeader className="px-4 pt-4 pb-2">
-          <SheetTitle className="text-lg font-bold text-primary">Navigation</SheetTitle>
-        </SheetHeader>
+      </DialogTrigger>
+      <DialogContent className="max-w-[300px] p-0">
+        <DialogHeader className="px-4 pt-4 pb-2">
+          <DialogTitle className="text-lg font-bold text-primary">Navigation</DialogTitle>
+        </DialogHeader>
         <nav className="flex flex-col gap-0.5 px-2 pb-4">
           {groups.map((group) => {
             const Icon = group.icon;
@@ -77,7 +77,7 @@ export function MobileNavMenu({ groups, activeTab, onSelect }: MobileNavMenuProp
             );
           })}
         </nav>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }

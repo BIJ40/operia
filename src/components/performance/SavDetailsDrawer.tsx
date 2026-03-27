@@ -6,12 +6,12 @@ import { useState } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
-  SheetTitle,
-  SheetDescription 
-} from '@/components/ui/sheet';
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle,
+  DialogDescription 
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -171,10 +171,10 @@ export function SavDetailsDrawer({ technician, dateRange, open, onOpenChange }: 
   };
   
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-lg">
-        <SheetHeader className="pb-4">
-          <SheetTitle className="flex items-center gap-2">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader className="pb-4">
+          <DialogTitle className="flex items-center gap-2">
             <div 
               className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold"
               style={{ backgroundColor: technician?.color || 'hsl(var(--primary))' }}
@@ -182,11 +182,11 @@ export function SavDetailsDrawer({ technician, dateRange, open, onOpenChange }: 
               <User className="w-4 h-4" />
             </div>
             <span>SAV - {technician?.name}</span>
-          </SheetTitle>
-          <SheetDescription>
+          </DialogTitle>
+          <DialogDescription>
             Vérifiez et validez les interventions SAV détectées
-          </SheetDescription>
-        </SheetHeader>
+          </DialogDescription>
+        </DialogHeader>
         
         {/* Stats */}
         <div className="grid grid-cols-4 gap-2 mb-4">
@@ -208,7 +208,7 @@ export function SavDetailsDrawer({ technician, dateRange, open, onOpenChange }: 
           </div>
         </div>
         
-        <ScrollArea className="h-[calc(100vh-280px)]">
+        <ScrollArea className="flex-1">
           {isLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map(i => (
@@ -233,7 +233,7 @@ export function SavDetailsDrawer({ technician, dateRange, open, onOpenChange }: 
             </div>
           )}
         </ScrollArea>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }

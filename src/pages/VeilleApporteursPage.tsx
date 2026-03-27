@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -57,14 +57,14 @@ function ApporteurDrawer({ apporteur, onClose }: { apporteur: VeilleApporteurCon
   if (!apporteur) return null;
   
   return (
-    <Sheet open={!!apporteur} onOpenChange={() => onClose()}>
-      <SheetContent className="w-[400px] sm:w-[540px]">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
+    <Dialog open={!!apporteur} onOpenChange={() => onClose()}>
+      <DialogContent className="max-w-[540px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
             <Building2 className="h-5 w-5" />
             {apporteur.apporteurNom}
-          </SheetTitle>
-        </SheetHeader>
+          </DialogTitle>
+        </DialogHeader>
         <div className="mt-6 space-y-6">
           <div className="flex gap-2"><ApporteurBadges apporteur={apporteur} /></div>
           
@@ -99,8 +99,8 @@ function ApporteurDrawer({ apporteur, onClose }: { apporteur: VeilleApporteurCon
             </CardContent></Card>
           )}
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
 

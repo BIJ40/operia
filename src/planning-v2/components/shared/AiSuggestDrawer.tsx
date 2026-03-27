@@ -20,7 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { SuggestPlanningGrid } from "./SuggestPlanningGrid";
 import type { PlanningUnscheduled, PlanningTechnician, PlanningAppointment, PlanningBlock } from "../../types";
@@ -84,20 +84,20 @@ export function AiSuggestDrawer({
   const allSuggestions = [...suggestions, ...(showAlternatives ? alternatives : [])];
 
   return (
-    <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent side="bottom" className="h-[85vh] max-h-[85vh] flex flex-col p-0">
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-[95vw] w-full h-[85vh] max-h-[85vh] flex flex-col p-0">
         {/* Header */}
-        <SheetHeader className="px-4 py-3 border-b border-border shrink-0">
+        <DialogHeader className="px-4 py-3 border-b border-border shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Sparkles className="h-4 w-4 text-primary" />
               </div>
               <div>
-                <SheetTitle className="text-base">Suggestions IA</SheetTitle>
-                <SheetDescription className="text-xs">
+                <DialogTitle className="text-base">Suggestions IA</DialogTitle>
+                <DialogDescription className="text-xs">
                   {item ? `${item.client} — Dossier #${item.dossierId}` : ""}
-                </SheetDescription>
+                </DialogDescription>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -122,7 +122,7 @@ export function AiSuggestDrawer({
               </Button>
             </div>
           </div>
-        </SheetHeader>
+        </DialogHeader>
 
         {/* Content */}
         <div className="flex-1 min-h-0 overflow-hidden">
@@ -228,8 +228,8 @@ export function AiSuggestDrawer({
             </div>
           )}
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
 
