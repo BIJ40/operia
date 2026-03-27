@@ -18,7 +18,7 @@ function mapRoleToType(roleAgence: string | null, globalRole: string | null): Co
   if (roleAgence) {
     const role = roleAgence.toLowerCase();
     if (role.includes("technicien") || role === "technicien") return "TECHNICIEN";
-    if (role.includes("assistant") || role === "assistante") return "ASSISTANTE";
+    if (role.includes("assistant") || role === "administratif") return "ADMINISTRATIF";
     if (role.includes("dirigeant") || role === "directeur" || role === "gérant") return "DIRIGEANT";
     if (role.includes("commercial")) return "COMMERCIAL";
   }

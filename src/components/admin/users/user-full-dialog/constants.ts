@@ -13,7 +13,7 @@ import { GlobalRole } from '@/types/globalRoles';
  */
 export const ROLE_AGENCE_LABELS: Record<string, string> = {
   'dirigeant': 'Dirigeant(e)',
-  'assistante': 'Assistant(e)',
+  'administratif': 'Administratif',
   'commercial': 'Commercial',
   'technicien': 'Technicien',
   'tete_de_reseau': 'Tête de réseau',
@@ -24,7 +24,7 @@ export const ROLE_AGENCE_LABELS: Record<string, string> = {
  * Postes assignables à un N1 (franchisee_user / salarié).
  * Un N2 qui crée ou édite un N1 ne voit que ces postes.
  */
-export const N1_ASSIGNABLE_ROLES = ['assistante', 'commercial', 'technicien'] as const;
+export const N1_ASSIGNABLE_ROLES = ['administratif', 'commercial', 'technicien'] as const;
 
 /**
  * Filtre les postes visibles selon le global_role de l'utilisateur édité.
