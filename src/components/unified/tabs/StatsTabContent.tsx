@@ -107,16 +107,18 @@ export default function StatsTabContent() {
       />
 
       <DraggableFolderContentContainer accentColor={activeAccentColor}>
-        <div className="flex items-center justify-between mb-4 gap-3">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleOpenDiffusion}
-            className="gap-2"
-          >
-            <Tv className="h-4 w-4" />
-            Diffusion TV
-          </Button>
+        <div className={cn("flex items-center mb-4 gap-3", effectiveTab === 'general' ? 'justify-between' : 'justify-end')}>
+          {effectiveTab === 'general' && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleOpenDiffusion}
+              className="gap-2"
+            >
+              <Tv className="h-4 w-4" />
+              Diffusion TV
+            </Button>
+          )}
           
           <div className="flex items-center gap-3">
             <PeriodDisplay />

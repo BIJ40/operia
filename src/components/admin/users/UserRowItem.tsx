@@ -10,14 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Pencil, UserX, UserCheck, Trash2, AlertCircle, Eye, ChevronDown } from 'lucide-react';
 import { UserProfileSheet } from './UserProfileSheet';
 
-// Postes disponibles
-const ROLE_AGENCE_LABELS: Record<string, string> = {
-  'dirigeant': 'Dirigeant(e)',
-  'assistante': 'Assistante',
-  'commercial': 'Commercial',
-  'tete_de_reseau': 'Tête de réseau',
-  'externe': 'Externe',
-};
+import { ROLE_AGENCE_LABELS } from './user-full-dialog/constants';
 
 interface UserRowItemProps {
   user: UserProfile;

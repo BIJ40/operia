@@ -95,16 +95,18 @@ function StatsHubContent() {
           ))}
         </TabsList>
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-          onClick={handleOpenDiffusion}
-        >
-          <Tv className="h-4 w-4" />
-          <span>Diffusion TV</span>
-        </Button>
+      <div className={`flex flex-col sm:flex-row sm:items-center gap-3 pt-2 ${effectiveTab === 'general' ? 'justify-between' : 'justify-end'}`}>
+        {effectiveTab === 'general' && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+            onClick={handleOpenDiffusion}
+          >
+            <Tv className="h-4 w-4" />
+            <span>Diffusion TV</span>
+          </Button>
+        )}
         <div className="flex items-center gap-3 shrink-0">
           <PeriodDisplay />
           {periodSelector}

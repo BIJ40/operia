@@ -395,6 +395,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       roleAgence: string;
       globalRole: GlobalRole; 
       sendEmail: boolean;
+      collaboratorId?: string;
     }) => {
       // Le rôle global est celui choisi par l'admin, pas de forçage automatique
       const effectiveGlobalRole = userData.globalRole;
@@ -404,9 +405,13 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
         throw new Error('Vous ne pouvez pas créer un utilisateur avec ce rôle');
       }
       
-      const { data, error } = await supabase.functions.invoke('create-user', { 
-        body: { ...userData, globalRole: effectiveGlobalRole } 
-      });
+      const { collaboratorId, ...rest } = userData;
+      const body: Record<string, unknown> = { ...rest, globalRole: effectiveGlobalRole };
+      if (collaboratorId) {
+        body.collaborator_id = collaboratorId;
+      }
+      
+      const { data, error } = await supabase.functions.invoke('create-user', { body });
       // Check body error first (contains the explicit message from edge function)
       if (data?.error) throw new Error(data.error);
       if (error) throw error;
@@ -415,6 +420,9 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
     onSuccess: () => {
       toast.success('Utilisateur créé avec succès');
       invalidateAllUserQueries(queryClient);
+      // Invalider aussi les queries collaborateurs pour refresh du bouton
+      queryClient.invalidateQueries({ queryKey: ['rh-collaborators'] });
+      queryClient.invalidateQueries({ queryKey: ['collaborators'] });
     },
     onError: (error: Error) => toast.error(`Erreur: ${error.message}`),
   });

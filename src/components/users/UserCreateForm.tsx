@@ -9,16 +9,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { RefreshCw } from 'lucide-react';
 import { generateSecurePassword } from '@/lib/passwordUtils';
+import { ROLE_AGENCE_LABELS, N1_ASSIGNABLE_ROLES } from '@/components/admin/users/user-full-dialog/constants';
 
-// Postes disponibles (N1 supprimé - plus de technicien/assistante comme comptes utilisateurs)
-const ROLE_AGENCE_LABELS: Record<string, string> = {
-  'dirigeant': 'Dirigeant(e)',
-  'commercial': 'Commercial',
-  'tete_de_reseau': 'Tête de réseau',
-};
+// Postes disponibles en mode agence pour admin (N3+ créant dans une agence)
+// Inclut tous les postes sauf tete_de_reseau et externe (qui ne nécessitent pas d'agence)
+const AGENCY_MODE_ROLES = ['dirigeant', 'assistante', 'commercial', 'technicien'];
 
-// Postes disponibles en mode agence (pas tete_de_reseau)
-const AGENCY_MODE_ROLES = ['dirigeant', 'commercial'];
+// Labels pour mode salarié (N2 crée un N1) — filtrés depuis la source unique
+const EMPLOYEE_MODE_LABELS: Record<string, string> = Object.fromEntries(
+  Object.entries(ROLE_AGENCE_LABELS).filter(([key]) => (N1_ASSIGNABLE_ROLES as readonly string[]).includes(key))
+);
 
 // Validation schema
 const createUserSchema = z.object({
@@ -48,9 +48,11 @@ export interface UserCreateFormProps {
   assignableRoles: GlobalRole[];
   showAgencySelector?: boolean;
   defaultAgency?: string;
-  creatorRoleLevel?: number; // Niveau du créateur pour filtrer les postes
-  /** Si true, restreint les postes à ceux valides pour une agence (exclut tete_de_reseau, externe) */
+  creatorRoleLevel?: number;
   agencyMode?: boolean;
+  defaultValues?: Partial<CreateUserPayload>;
+  /** Mode salarié: N2 crée un N1 — postes limités, rôle système forcé */
+  employeeMode?: boolean;
 }
 
 export function UserCreateForm({
@@ -62,26 +64,36 @@ export function UserCreateForm({
   defaultAgency,
   creatorRoleLevel = 0,
   agencyMode = false,
+  defaultValues,
+  employeeMode = false,
 }: UserCreateFormProps) {
   // Postes disponibles selon le mode
-  const availableRoleAgence = agencyMode 
-    ? AGENCY_MODE_ROLES 
-    : Object.keys(ROLE_AGENCE_LABELS);
-  // N2 créé obligatoirement des utilisateurs agence (N1)
-  const isN2Creator = creatorRoleLevel === 2;
+  const availableRoleAgence = employeeMode
+    ? Object.keys(EMPLOYEE_MODE_LABELS)
+    : agencyMode 
+      ? AGENCY_MODE_ROLES 
+      : Object.keys(ROLE_AGENCE_LABELS);
   
-  // Valeur par défaut intelligente : le rôle assignable le plus bas
-  const defaultRole = assignableRoles.length > 0 ? assignableRoles[0] : 'base_user';
+  // Labels de postes selon le mode
+  const roleAgenceLabels = employeeMode ? EMPLOYEE_MODE_LABELS : ROLE_AGENCE_LABELS;
+  
+  // N2 créé obligatoirement des utilisateurs agence (N1)
+  const isN2Creator = creatorRoleLevel === 2 || employeeMode;
+  
+  // En mode salarié, forcer franchisee_user (N1)
+  const defaultRole = employeeMode 
+    ? 'franchisee_user' as GlobalRole 
+    : (assignableRoles.length > 0 ? assignableRoles[0] : 'base_user');
   
   const [formData, setFormData] = useState<CreateUserPayload>({
-    email: '',
+    email: defaultValues?.email || '',
     password: '',
-    firstName: '',
-    lastName: '',
-    agence: defaultAgency || '',
-    roleAgence: '',
-    globalRole: defaultRole,
-    sendEmail: true,
+    firstName: defaultValues?.firstName || '',
+    lastName: defaultValues?.lastName || '',
+    agence: defaultAgency || defaultValues?.agence || '',
+    roleAgence: defaultValues?.roleAgence || '',
+    globalRole: employeeMode ? 'franchisee_user' : (defaultValues?.globalRole || defaultRole),
+    sendEmail: defaultValues?.sendEmail ?? true,
   });
   const [errors, setErrors] = useState<Partial<Record<keyof CreateUserPayload, string>>>({});
 
@@ -199,7 +211,7 @@ export function UserCreateForm({
           <SelectTrigger><SelectValue placeholder="Sélectionner un poste" /></SelectTrigger>
           <SelectContent className="bg-background z-50">
             {availableRoleAgence.map((value) => (
-              <SelectItem key={value} value={value}>{ROLE_AGENCE_LABELS[value]}</SelectItem>
+              <SelectItem key={value} value={value}>{roleAgenceLabels[value] || value}</SelectItem>
             ))}
           </SelectContent>
         </Select>

@@ -482,6 +482,45 @@ export type Database = {
           },
         ]
       }
+      agency_map_zone_communes: {
+        Row: {
+          agency_id: string
+          code_insee: string
+          created_at: string
+          id: string
+          nom: string
+        }
+        Insert: {
+          agency_id: string
+          code_insee: string
+          created_at?: string
+          id?: string
+          nom?: string
+        }
+        Update: {
+          agency_id?: string
+          code_insee?: string
+          created_at?: string
+          id?: string
+          nom?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_map_zone_communes_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_map_zone_communes_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "apogee_sync_status"
+            referencedColumns: ["agency_id"]
+          },
+        ]
+      }
       agency_overhead_rules: {
         Row: {
           agency_id: string
@@ -6215,6 +6254,45 @@ export type Database = {
           id?: string
           name?: string
           year?: number | null
+        }
+        Relationships: []
+      }
+      geocode_cache: {
+        Row: {
+          cache_key: string
+          city: string
+          code_insee: string | null
+          created_at: string | null
+          id: string
+          lat: number
+          lng: number
+          postal_code: string
+          source: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          cache_key: string
+          city: string
+          code_insee?: string | null
+          created_at?: string | null
+          id?: string
+          lat: number
+          lng: number
+          postal_code: string
+          source?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          cache_key?: string
+          city?: string
+          code_insee?: string | null
+          created_at?: string | null
+          id?: string
+          lat?: number
+          lng?: number
+          postal_code?: string
+          source?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }

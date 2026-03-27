@@ -2,15 +2,16 @@
  * VeilleApporteursTab - Onglet Veille dans le module Commercial
  * Vue consolidée de tous les apporteurs avec scoring adaptatif unifié
  * Utilise exactement le même moteur que les fiches individuelles
+ * v2: Indicateurs visuels colorés, rang, hover orange, footer récap
  */
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Search, ArrowUpDown, Loader2, TrendingDown, TrendingUp,
@@ -48,25 +49,37 @@ const FILTER_PILLS: FilterPill[] = [
 
 // ==================== Sub-components ====================
 
+function RankBadge({ rank }: { rank: number }) {
+  if (rank === 1) return <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 font-bold text-xs">🥇</span>;
+  if (rank === 2) return <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300 font-bold text-xs">🥈</span>;
+  if (rank === 3) return <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 font-bold text-xs">🥉</span>;
+  return <span className="inline-flex items-center justify-center w-6 h-6 text-muted-foreground text-xs font-medium">{rank}</span>;
+}
+
 function ScoreGauge({ score }: { score: number }) {
   if (score < 0) {
-    return (
-      <span className="text-xs text-muted-foreground italic">N/A</span>
-    );
+    return <span className="text-xs text-muted-foreground italic">N/A</span>;
   }
   const color =
-    score > 72 ? 'bg-green-500' :
+    score > 72 ? 'bg-emerald-500' :
     score > 58 ? 'bg-emerald-400' :
     score > 42 ? 'bg-blue-500' :
     score > 30 ? 'bg-amber-500' :
-    'bg-destructive';
+    'bg-red-500';
+
+  const textColor =
+    score > 72 ? 'text-emerald-600 dark:text-emerald-400' :
+    score > 58 ? 'text-emerald-500 dark:text-emerald-400' :
+    score > 42 ? 'text-blue-600 dark:text-blue-400' :
+    score > 30 ? 'text-amber-600 dark:text-amber-400' :
+    'text-red-600 dark:text-red-400';
 
   return (
     <div className="flex items-center gap-2">
-      <div className="w-16 h-2 rounded-full bg-muted overflow-hidden">
-        <div className={cn('h-full rounded-full transition-all', color)} style={{ width: `${Math.max(score, 2)}%` }} />
+      <div className="w-20 h-2.5 rounded-full bg-muted overflow-hidden">
+        <div className={cn('h-full rounded-full transition-all duration-500', color)} style={{ width: `${Math.max(score, 3)}%` }} />
       </div>
-      <span className="text-xs font-semibold w-6 text-right tabular-nums">{score}</span>
+      <span className={cn('text-xs font-bold w-7 text-right tabular-nums', textColor)}>{score}</span>
     </div>
   );
 }
@@ -74,16 +87,18 @@ function ScoreGauge({ score }: { score: number }) {
 function TrendLabel({ row }: { row: VeilleApporteurRow }) {
   if (row.score < 0) return <span className="text-xs text-muted-foreground">—</span>;
 
-  const colorMap: Record<string, string> = {
-    danger: 'text-destructive',
-    warning: 'text-amber-600',
-    stable: 'text-blue-600',
-    positive: 'text-emerald-600',
-    excellent: 'text-green-600',
+  const config: Record<string, { color: string; bg: string }> = {
+    danger: { color: 'text-red-700 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/30' },
+    warning: { color: 'text-amber-700 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-900/30' },
+    stable: { color: 'text-blue-700 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30' },
+    positive: { color: 'text-emerald-700 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
+    excellent: { color: 'text-green-700 dark:text-green-400', bg: 'bg-green-100 dark:bg-green-900/30' },
   };
 
+  const c = config[row.level] || { color: 'text-muted-foreground', bg: 'bg-muted' };
+
   return (
-    <span className={cn('text-xs font-medium', colorMap[row.level] || 'text-muted-foreground')}>
+    <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold', c.color, c.bg)}>
       {row.label}
     </span>
   );
@@ -92,22 +107,54 @@ function TrendLabel({ row }: { row: VeilleApporteurRow }) {
 function VariationCell({ pct }: { pct: number }) {
   if (Math.abs(pct) < 3) {
     return (
-      <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
+      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs text-muted-foreground bg-muted">
         <Minus className="w-3 h-3" /> {pct > 0 ? '+' : ''}{pct.toFixed(0)}%
       </span>
     );
   }
   if (pct > 0) {
     return (
-      <span className="inline-flex items-center gap-0.5 text-xs text-green-600 font-medium">
+      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30">
         <TrendingUp className="w-3 h-3" /> +{pct.toFixed(0)}%
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-0.5 text-xs text-destructive font-medium">
+    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-semibold text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/30">
       <TrendingDown className="w-3 h-3" /> {pct.toFixed(0)}%
     </span>
+  );
+}
+
+/** CA cell with color intensity relative to max */
+function CaCell({ avg, recent, maxCa }: { avg: number; recent: number; maxCa: number }) {
+  const ratio = maxCa > 0 ? recent / maxCa : 0;
+  const recentColor = ratio >= 0.7
+    ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+    : ratio >= 0.3
+    ? 'text-foreground font-semibold'
+    : 'text-muted-foreground font-medium';
+
+  return (
+    <div className="flex flex-col items-end text-xs tabular-nums">
+      <span className="text-muted-foreground">{euroFmt(avg)}</span>
+      <span className={recentColor}>{euroFmt(recent)}</span>
+    </div>
+  );
+}
+
+/** Dossiers cell with mini progress bar */
+function DossiersCell({ avg, recent, maxDossiers }: { avg: number; recent: number; maxDossiers: number }) {
+  const pct = maxDossiers > 0 ? Math.round((recent / maxDossiers) * 100) : 0;
+  return (
+    <div className="relative flex flex-col items-end text-xs tabular-nums">
+      <div
+        className="absolute inset-y-0 right-0 bg-primary/8 rounded-sm transition-all"
+        style={{ width: `${pct}%` }}
+      />
+      <span className="relative text-muted-foreground">{avg.toFixed(1)}</span>
+      <span className="relative font-semibold">{recent.toFixed(1)}</span>
+    </div>
   );
 }
 
@@ -126,7 +173,7 @@ function SortableHeader({ label, sortKey: key, currentKey, direction, onToggle, 
       <button
         onClick={() => onToggle(key)}
         className={cn(
-          'inline-flex items-center gap-1 text-xs hover:text-foreground transition-colors whitespace-nowrap',
+          'inline-flex items-center gap-1 text-xs hover:text-foreground transition-colors whitespace-nowrap group',
           isActive ? 'text-foreground font-semibold' : 'text-muted-foreground'
         )}
       >
@@ -141,7 +188,7 @@ function SortableHeader({ label, sortKey: key, currentKey, direction, onToggle, 
             </Tooltip>
           </TooltipProvider>
         )}
-        <ArrowUpDown className={cn('w-3 h-3', isActive && 'text-primary')} />
+        <ArrowUpDown className={cn('w-3 h-3 transition-opacity', isActive ? 'text-primary opacity-100' : 'opacity-30 group-hover:opacity-60')} />
       </button>
     </TableHead>
   );
@@ -149,13 +196,17 @@ function SortableHeader({ label, sortKey: key, currentKey, direction, onToggle, 
 
 function InactivityCell({ jours, isDormant }: { jours: number; isDormant: boolean }) {
   if (jours >= 9999) return <span className="text-xs text-muted-foreground">—</span>;
+
+  const config = isDormant
+    ? 'text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/30 font-bold'
+    : jours > 60
+    ? 'text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 font-semibold'
+    : jours > 30
+    ? 'text-muted-foreground bg-muted'
+    : 'text-muted-foreground';
+
   return (
-    <span className={cn(
-      'text-xs tabular-nums',
-      isDormant ? 'text-destructive font-semibold' :
-      jours > 60 ? 'text-amber-600 font-medium' :
-      'text-muted-foreground'
-    )}>
+    <span className={cn('inline-flex items-center px-1.5 py-0.5 rounded text-xs tabular-nums', config)}>
       {jours}j
     </span>
   );
@@ -176,6 +227,20 @@ export function VeilleApporteursTab({ onSelectApporteur }: Props) {
   const handleRowClick = useCallback((r: VeilleApporteurRow) => {
     onSelectApporteur(r.apporteurId, r.apporteurNom);
   }, [onSelectApporteur]);
+
+  // Compute max values for relative coloring
+  const stats = useMemo(() => {
+    const maxCa = Math.max(1, ...rows.map(r => r.caRecentMensuel));
+    const maxDossiers = Math.max(0.1, ...rows.map(r => r.dossiersRecent));
+    const avgScore = rows.length > 0 ? Math.round(rows.reduce((s, r) => s + (r.score >= 0 ? r.score : 0), 0) / rows.filter(r => r.score >= 0).length) : 0;
+    const totalCaRecent = rows.reduce((s, r) => s + r.caRecentMensuel, 0);
+    const totalDossiersRecent = rows.reduce((s, r) => s + r.dossiersRecent, 0);
+    return { maxCa, maxDossiers, avgScore, totalCaRecent, totalDossiersRecent };
+  }, [rows]);
+
+  // Row-level alert detection
+  const isAlertRow = (row: VeilleApporteurRow) =>
+    row.isDormant || (row.level === 'danger' && row.dossiersRecent >= 1);
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -250,7 +315,7 @@ export function VeilleApporteursTab({ onSelectApporteur }: Props) {
         </div>
 
         {/* Table */}
-        <Card>
+        <Card className="overflow-hidden">
           <CardContent className="p-0">
             {isLoading ? (
               <div className="flex items-center justify-center py-16">
@@ -263,8 +328,9 @@ export function VeilleApporteursTab({ onSelectApporteur }: Props) {
             ) : (
               <div className="overflow-x-auto">
                 <Table>
-                  <TableHeader>
-                    <TableRow>
+                  <TableHeader className="sticky top-0 z-10 bg-card">
+                    <TableRow className="border-b-2 border-border">
+                      <TableHead className="w-10 text-center text-xs text-muted-foreground">#</TableHead>
                       <SortableHeader label="Apporteur" sortKey="nom" currentKey={sortKey} direction={sortDirection} onToggle={toggleSort} className="text-left" />
                       <SortableHeader
                         label="Score"
@@ -315,75 +381,113 @@ export function VeilleApporteursTab({ onSelectApporteur }: Props) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {rows.map(row => (
-                      <TableRow
-                        key={row.apporteurId}
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => handleRowClick(row)}
-                      >
-                        {/* Nom */}
-                        <TableCell className="font-medium max-w-[200px] truncate">
-                          {row.apporteurNom}
-                        </TableCell>
-
-                        {/* Score gauge */}
-                        <TableCell className="text-right">
-                          <ScoreGauge score={row.score} />
-                        </TableCell>
-
-                        {/* Tendance label */}
-                        <TableCell className="text-center">
-                          <TrendLabel row={row} />
-                        </TableCell>
-
-                        {/* CA historique → récent */}
-                        <TableCell className="text-right">
-                          <div className="flex flex-col items-end text-xs tabular-nums">
-                            <span className="text-muted-foreground">{euroFmt(row.caAvgMensuel)}</span>
-                            <span className="font-medium">{euroFmt(row.caRecentMensuel)}</span>
-                          </div>
-                        </TableCell>
-
-                        {/* Variation CA */}
-                        <TableCell className="text-right">
-                          <VariationCell pct={row.caVariationPct} />
-                        </TableCell>
-
-                        {/* Dossiers */}
-                        <TableCell className="text-right">
-                          <div className="flex flex-col items-end text-xs tabular-nums">
-                            <span className="text-muted-foreground">{row.dossiersAvg.toFixed(1)}</span>
-                            <span className="font-medium">{row.dossiersRecent.toFixed(1)}</span>
-                          </div>
-                        </TableCell>
-
-                        {/* Inactivité */}
-                        <TableCell className="text-right">
-                          <InactivityCell jours={row.joursInactivite} isDormant={row.isDormant} />
-                        </TableCell>
-
-                        {/* Alertes */}
-                        <TableCell className="text-center">
-                          {row.alerts.length > 0 ? (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-400/50 cursor-help">
-                                  {row.alerts.length}
-                                </Badge>
-                              </TooltipTrigger>
-                              <TooltipContent side="left" className="max-w-sm text-xs space-y-1">
-                                {row.alerts.map((a, i) => (
-                                  <p key={i}>• {a}</p>
-                                ))}
-                              </TooltipContent>
-                            </Tooltip>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">—</span>
+                    {rows.map((row, idx) => {
+                      const rank = idx + 1;
+                      const alert = isAlertRow(row);
+                      return (
+                        <TableRow
+                          key={row.apporteurId}
+                          className={cn(
+                            'cursor-pointer transition-colors',
+                            'hover:bg-orange-50/60 dark:hover:bg-orange-950/20',
+                            alert && 'bg-red-50/40 dark:bg-red-950/15',
+                            row.isDormant && 'opacity-75'
                           )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                          onClick={() => handleRowClick(row)}
+                        >
+                          {/* Rang */}
+                          <TableCell className="text-center">
+                            <RankBadge rank={rank} />
+                          </TableCell>
+
+                          {/* Nom */}
+                          <TableCell className="font-medium max-w-[200px] truncate">
+                            <div className="flex items-center gap-2">
+                              {row.apporteurNom}
+                              {row.isDormant && (
+                                <Badge variant="outline" className="text-[10px] border-red-300 text-red-600 dark:text-red-400 gap-0.5">
+                                  <Moon className="w-3 h-3" /> Dormant
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+
+                          {/* Score gauge */}
+                          <TableCell className="text-right">
+                            <ScoreGauge score={row.score} />
+                          </TableCell>
+
+                          {/* Tendance label */}
+                          <TableCell className="text-center">
+                            <TrendLabel row={row} />
+                          </TableCell>
+
+                          {/* CA historique → récent */}
+                          <TableCell className="text-right">
+                            <CaCell avg={row.caAvgMensuel} recent={row.caRecentMensuel} maxCa={stats.maxCa} />
+                          </TableCell>
+
+                          {/* Variation CA */}
+                          <TableCell className="text-right">
+                            <VariationCell pct={row.caVariationPct} />
+                          </TableCell>
+
+                          {/* Dossiers */}
+                          <TableCell className="text-right p-0 pr-4">
+                            <DossiersCell avg={row.dossiersAvg} recent={row.dossiersRecent} maxDossiers={stats.maxDossiers} />
+                          </TableCell>
+
+                          {/* Inactivité */}
+                          <TableCell className="text-right">
+                            <InactivityCell jours={row.joursInactivite} isDormant={row.isDormant} />
+                          </TableCell>
+
+                          {/* Alertes */}
+                          <TableCell className="text-center">
+                            {row.alerts.length > 0 ? (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge variant="outline" className="text-[10px] text-amber-600 dark:text-amber-400 border-amber-400/50 cursor-help">
+                                    {row.alerts.length}
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent side="left" className="max-w-sm text-xs space-y-1">
+                                  {row.alerts.map((a, i) => (
+                                    <p key={i}>• {a}</p>
+                                  ))}
+                                </TooltipContent>
+                              </Tooltip>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
+                  {rows.length > 0 && (
+                    <TableFooter>
+                      <TableRow className="bg-muted/50 font-semibold text-sm">
+                        <TableCell />
+                        <TableCell className="text-right text-muted-foreground text-xs">
+                          {rows.length} apporteurs
+                        </TableCell>
+                        <TableCell className="text-right text-xs">
+                          <span className="text-muted-foreground">Moy.</span> <span className="font-bold">{stats.avgScore}</span>
+                        </TableCell>
+                        <TableCell />
+                        <TableCell className="text-right text-xs font-semibold">
+                          {euroFmt(stats.totalCaRecent)}/mois
+                        </TableCell>
+                        <TableCell />
+                        <TableCell className="text-right text-xs font-semibold">
+                          {stats.totalDossiersRecent.toFixed(1)}/mois
+                        </TableCell>
+                        <TableCell />
+                        <TableCell />
+                      </TableRow>
+                    </TableFooter>
+                  )}
                 </Table>
               </div>
             )}

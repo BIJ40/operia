@@ -44,17 +44,17 @@ export function ApogeeSyncButton({ agencySlug, collaborators }: ApogeeSyncButton
   return (
     <>
       <Button
-        variant="ghost"
+        variant="outline"
         size="sm"
         onClick={handleOpenDialog}
         disabled={loading || !agencySlug}
-        className="text-muted-foreground hover:text-foreground"
       >
         {loading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
         ) : (
-          <RefreshCw className="h-4 w-4" />
+          <RefreshCw className="h-4 w-4 mr-2" />
         )}
+        Importer depuis Apogée
       </Button>
       
       <ApogeeSyncDialog

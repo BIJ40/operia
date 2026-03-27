@@ -82,7 +82,7 @@ export function ContractSalaryTab({ collaboratorId, canManage }: ContractSalaryT
     createSalaryEntry,
     updateSalaryEntry,
     deleteSalaryEntry,
-  } = useSalaryHistory(currentContract?.id);
+  } = useSalaryHistory(currentContract?.id, collaboratorId);
 
   const [showContractDialog, setShowContractDialog] = useState(false);
   const [showSalaryDialog, setShowSalaryDialog] = useState(false);

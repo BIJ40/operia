@@ -1,10 +1,10 @@
 /**
  * RentabiliteTabContent — Orchestrator for the profitability module.
- * Replaces RentabilitePlaceholder.
+ * v2: Uses Dialog instead of Sheet, passes projectRef for enrichment.
  */
 import { useState, useCallback } from 'react';
 import { RentabiliteTable } from './list/RentabiliteTable';
-import { RentabiliteDetailSheet } from './detail/RentabiliteDetailSheet';
+import { RentabiliteDetailDialog } from './detail/RentabiliteDetailDialog';
 import { useRentabiliteList } from './hooks/useRentabiliteList';
 import { useProjectApogeeData } from './hooks/useProjectApogeeData';
 import { useProjectProfitability } from '@/hooks/useProjectProfitability';
@@ -13,13 +13,13 @@ import { toast } from 'sonner';
 export default function RentabiliteTabContent() {
   const { data: items = [], isLoading } = useRentabiliteList();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const [selectedProjectRef, setSelectedProjectRef] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   // For on-demand calculation of uncalculated projects
   const [calcProjectId, setCalcProjectId] = useState<string | null>(null);
   const { data: calcApogeeData } = useProjectApogeeData(calcProjectId);
 
-  // Trigger computation + snapshot persistence for uncalculated projects
   useProjectProfitability({
     projectId: calcProjectId ?? '',
     factures: calcApogeeData?.factures ?? [],
@@ -29,9 +29,10 @@ export default function RentabiliteTabContent() {
     enabled: !!calcProjectId && !!calcApogeeData,
   });
 
-  const handleSelectProject = useCallback((projectId: string) => {
+  const handleSelectProject = useCallback((projectId: string, projectRef?: string) => {
     setSelectedProjectId(projectId);
-    setSheetOpen(true);
+    setSelectedProjectRef(projectRef || projectId);
+    setDialogOpen(true);
   }, []);
 
   const handleCalculate = useCallback((projectId: string) => {
@@ -47,10 +48,11 @@ export default function RentabiliteTabContent() {
         onSelectProject={handleSelectProject}
         onCalculate={handleCalculate}
       />
-      <RentabiliteDetailSheet
+      <RentabiliteDetailDialog
         projectId={selectedProjectId}
-        open={sheetOpen}
-        onOpenChange={setSheetOpen}
+        projectRef={selectedProjectRef}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
       />
     </div>
   );

@@ -20,7 +20,8 @@ export const RIGHTS_CATEGORIES: RightsCategory[] = [
   { id: 'pilotage', label: 'Pilotage', moduleKeys: [
     'pilotage', 'pilotage.statistiques', 'pilotage.actions_a_mener',
     'pilotage.incoherences', 'pilotage.performance',
-    'pilotage.rentabilite', 'planning_augmente',
+    'pilotage.rentabilite', 'pilotage.resultat',
+    'pilotage.tresorerie', 'planning_augmente',
   ]},
   { id: 'commercial', label: 'Commercial', moduleKeys: [
     'commercial', 'prospection', 'commercial.suivi_client', 'commercial.comparateur',

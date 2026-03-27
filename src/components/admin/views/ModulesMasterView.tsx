@@ -464,7 +464,7 @@ const MODULE_ROUTES: Record<string, ModuleRouteEntry> = {
   reseau_franchiseur: { route: '/?tab=franchiseur' },
 
   // Planning augmenté
-  planning_augmente: { route: '/?tab=organisation', subTabKey: 'organisation_sub_tab', subTabValue: 'plannings' },
+  planning_augmente: { route: '/planning-v2' },
 
   // Legacy keys (backward compat)
   agence: { route: '/?tab=pilotage' },

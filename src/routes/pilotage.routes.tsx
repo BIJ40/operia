@@ -118,7 +118,7 @@ export function PilotageRoutes() {
       <Route path="/agency/commercial/support-pptx" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage.agence"><CommercialSupportPptx /></ModuleGuard></RoleGuard></AgencyLayout>} />
       
       {/* Planning V2 Dispatch Board */}
-      <Route path="/planning-v2" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="pilotage.agence"><Suspense fallback={<PageLoader />}><PlanningV2Shell /></Suspense></ModuleGuard></RoleGuard></AgencyLayout>} />
+      <Route path="/planning-v2" element={<AgencyLayout><RoleGuard minRole="franchisee_admin"><ModuleGuard moduleKey="planning_augmente"><Suspense fallback={<PageLoader />}><PlanningV2Shell /></Suspense></ModuleGuard></RoleGuard></AgencyLayout>} />
       {/* Legacy /hc-agency redirects */}
       <Route path="/hc-agency" element={<Navigate to="/?tab=pilotage" replace />} />
       <Route path="/hc-agency/*" element={<Navigate to="/?tab=pilotage" replace />} />
