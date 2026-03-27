@@ -38,6 +38,44 @@ import {
 } from './constants';
 
 // ============================================================================
+// DELEGATABLE HELPERS
+// ============================================================================
+
+/** Cache for delegatable lookup — built once from MODULE_DEFINITIONS */
+const _delegatableKeys = new Set<string>(
+  MODULE_DEFINITIONS.filter(m => m.delegatable).map(m => m.key)
+);
+
+/**
+ * Checks if a module key is delegatable, including inheritance from ancestors.
+ * A module is delegatable if:
+ * - it has `delegatable: true` directly in MODULE_DEFINITIONS, OR
+ * - one of its ancestors (by dot-separated path) has `delegatable: true`
+ *   (e.g. 'organisation.salaries.rh_viewer' inherits from 'organisation.salaries')
+ */
+export function isDelegatableKey(key: string): boolean {
+  if (_delegatableKeys.has(key)) return true;
+  // Check ancestors: 'a.b.c' → check 'a.b', then 'a'
+  const parts = key.split('.');
+  for (let i = parts.length - 1; i > 0; i--) {
+    const ancestor = parts.slice(0, i).join('.');
+    if (_delegatableKeys.has(ancestor)) return true;
+  }
+  return false;
+}
+
+/**
+ * Single source of truth: should the minRole check be bypassed for this module?
+ * Only when the module was explicitly assigned (user_modules) AND is delegatable.
+ */
+export function shouldBypassMinRole(
+  moduleKey: string,
+  source: 'explicit' | 'default' | 'bypass',
+): boolean {
+  return source === 'explicit' && isDelegatableKey(moduleKey);
+}
+
+// ============================================================================
 // FONCTIONS PRINCIPALES
 // ============================================================================
 
@@ -85,23 +123,18 @@ export function hasAccess(params: HasAccessParams): boolean {
     return true;
   }
   
-  // 2. Vérifier rôle minimum du module
-  const minRole = MODULE_MIN_ROLES[moduleId];
-  if (minRole && globalRole && !hasMinRole(globalRole, minRole)) {
-    return false;
-  }
-  
-  // 3. Vérifier si module nécessite agence
+  // 2. Vérifier si module nécessite agence
   if (AGENCY_REQUIRED_MODULES.includes(moduleId) && !agencyId) {
     return false;
   }
   
-  // 4. Vérifier modules réseau (N3+ seulement)
+  // 3. Vérifier modules réseau (N3+ seulement)
   if (NETWORK_MODULES.includes(moduleId) && !hasMinRole(globalRole, NETWORK_MIN_ROLE)) {
     return false;
   }
   
-  // 5. Obtenir les modules effectifs (explicites ou par défaut)
+  // 4. Obtenir les modules effectifs (explicites ou par défaut)
+  //    getEffectiveModules already applies minRole + delegatable bypass internally
   const effectiveModules = getEffectiveModules({ globalRole, enabledModules, agencyId });
   const moduleAccess = effectiveModules.find(m => m.id === moduleId);
   
@@ -109,13 +142,24 @@ export function hasAccess(params: HasAccessParams): boolean {
     return false;
   }
   
+  // 5. Vérifier rôle minimum du module APRÈS résolution de la source
+  //    Bypass si le module est delegatable ET source === 'explicit' (user_modules)
+  const minRole = MODULE_MIN_ROLES[moduleId];
+  if (minRole && globalRole && !hasMinRole(globalRole, minRole)) {
+    if (!shouldBypassMinRole(moduleId, moduleAccess.source)) {
+      return false;
+    }
+  }
+  
   // 6. Vérifier option spécifique si demandée
   if (optionId) {
-    // Vérifier le rôle minimum de l'option
+    // Vérifier le rôle minimum de l'option (bypass si delegatable + explicit)
     const optionMinRoleKey = `${moduleId}.${optionId}`;
     const optionMinRole = MODULE_OPTION_MIN_ROLES[optionMinRoleKey];
     if (optionMinRole && !hasMinRole(globalRole, optionMinRole)) {
-      return false;
+      if (!shouldBypassMinRole(optionMinRoleKey, moduleAccess.source)) {
+        return false;
+      }
     }
     
     // Vérifier si l'option est activée
@@ -195,12 +239,14 @@ export function getEffectiveModules(ctx: PermissionContext): EffectiveModule[] {
       return;
     }
 
-    // Min role constraint (only if known in MODULE_MIN_ROLES)
+    // Min role constraint — bypassed if delegatable + explicit (user_modules)
     const minRole = MODULE_MIN_ROLES[moduleKey];
     if (minRole && globalRole && !hasMinRole(globalRole, minRole)) {
-      result.push({ id: moduleKey, enabled: false, source, options: {} });
-      processedKeys.add(key);
-      return;
+      if (!shouldBypassMinRole(moduleKey, source)) {
+        result.push({ id: moduleKey, enabled: false, source, options: {} });
+        processedKeys.add(key);
+        return;
+      }
     }
 
     result.push({
@@ -348,13 +394,16 @@ export function validateUserPermissions(ctx: PermissionContext): PermissionIssue
       if (isEnabled) {
         const minRole = MODULE_MIN_ROLES[moduleKey];
         if (minRole && !hasMinRole(globalRole, minRole)) {
-          issues.push({
-            type: 'warning',
-            code: 'ROLE_BELOW_MODULE_MIN',
-            message: `Module ${moduleKey} activé mais rôle insuffisant (min: ${minRole})`,
-            fix: `Monter le rôle à ${minRole} minimum ou désactiver le module`,
-            moduleId: moduleKey,
-          });
+          // Don't warn for delegatable modules — N2 can legitimately assign them to N1
+          if (!isDelegatableKey(moduleKey)) {
+            issues.push({
+              type: 'warning',
+              code: 'ROLE_BELOW_MODULE_MIN',
+              message: `Module ${moduleKey} activé mais rôle insuffisant (min: ${minRole})`,
+              fix: `Monter le rôle à ${minRole} minimum ou désactiver le module`,
+              moduleId: moduleKey,
+            });
+          }
         }
       }
     }
@@ -385,27 +434,7 @@ export function explainAccess(params: HasAccessParams): AccessTrace[] {
     reason: `Rôle ${globalRole || 'null'} n'a pas de bypass`,
   });
   
-  // Step 2: Vérifier rôle minimum
-  const minRole = MODULE_MIN_ROLES[moduleId];
-  if (minRole) {
-    const hasMin = hasMinRole(globalRole, minRole);
-    traces.push({
-      step: 'min_role_check',
-      result: hasMin,
-      reason: hasMin 
-        ? `Rôle ${globalRole} >= ${minRole} (minimum requis)`
-        : `Rôle ${globalRole || 'null'} < ${minRole} (minimum requis)`,
-    });
-    if (!hasMin) return traces;
-  } else {
-    traces.push({
-      step: 'min_role_check',
-      result: true,
-      reason: `Pas de rôle minimum défini pour le module ${moduleId}`,
-    });
-  }
-  
-  // Step 3: Vérifier agence si nécessaire
+  // Step 2: Vérifier agence si nécessaire
   if (AGENCY_REQUIRED_MODULES.includes(moduleId)) {
     const hasAgency = !!agencyId;
     traces.push({
@@ -418,7 +447,7 @@ export function explainAccess(params: HasAccessParams): AccessTrace[] {
     if (!hasAgency) return traces;
   }
   
-  // Step 4: Vérifier activation du module
+  // Step 3: Vérifier activation du module
   const effectiveModules = getEffectiveModules({ globalRole, enabledModules, agencyId });
   const moduleAccess = effectiveModules.find(m => m.id === moduleId);
   
@@ -430,7 +459,25 @@ export function explainAccess(params: HasAccessParams): AccessTrace[] {
       : `Module ${moduleId} non activé`,
   });
   if (!moduleAccess?.enabled) return traces;
-  
+
+  // Step 4: Vérifier rôle minimum APRÈS résolution (bypass delegatable)
+  const minRole = MODULE_MIN_ROLES[moduleId];
+  if (minRole) {
+    const hasMin = hasMinRole(globalRole, minRole);
+    const bypassed = !hasMin && shouldBypassMinRole(moduleId, moduleAccess.source);
+    const finalResult = hasMin || bypassed;
+    traces.push({
+      step: 'min_role_check',
+      result: finalResult,
+      reason: bypassed
+        ? `Rôle ${globalRole || 'null'} < ${minRole} mais module delegatable + source explicit → bypass`
+        : hasMin
+          ? `Rôle ${globalRole} >= ${minRole} (minimum requis)`
+          : `Rôle ${globalRole || 'null'} < ${minRole} (minimum requis)`,
+    });
+    if (!finalResult) return traces;
+  }
+
   // Step 5: Vérifier option si demandée
   if (optionId) {
     const hasOption = moduleAccess.options?.[optionId] === true;
