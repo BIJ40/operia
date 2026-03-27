@@ -396,6 +396,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       globalRole: GlobalRole; 
       sendEmail: boolean;
       collaboratorId?: string;
+      username?: string;
     }) => {
       // Le rôle global est celui choisi par l'admin, pas de forçage automatique
       const effectiveGlobalRole = userData.globalRole;
@@ -405,10 +406,13 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
         throw new Error('Vous ne pouvez pas créer un utilisateur avec ce rôle');
       }
       
-      const { collaboratorId, ...rest } = userData;
+      const { collaboratorId, username, ...rest } = userData;
       const body: Record<string, unknown> = { ...rest, globalRole: effectiveGlobalRole };
       if (collaboratorId) {
         body.collaborator_id = collaboratorId;
+      }
+      if (username) {
+        body.username = username;
       }
       
       const { data, error } = await supabase.functions.invoke('create-user', { body });
