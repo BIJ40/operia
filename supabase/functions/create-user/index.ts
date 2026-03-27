@@ -83,9 +83,12 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
     const agencyId = validateOptionalString(bodyRaw.agency_id, 'agency_id', 100) || null
     const username = validateOptionalString(bodyRaw.username, 'username', 100) || null
     
-    // Email: si username fourni et pas d'email, générer un email interne
-    let email = validateOptionalString(bodyRaw.email, 'email', 255) || null
-    if (!email && username) {
+    // Email: si username fourni et pas d'email (ou email invalide), générer un email interne
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    let rawEmail = validateOptionalString(bodyRaw.email, 'email', 255) || null
+    // Trim et ignorer les emails vides ou invalides quand un username est disponible
+    let email = (rawEmail && rawEmail.trim()) ? rawEmail.trim() : null
+    if (username && (!email || !emailRegex.test(email))) {
       email = `${username}@internal.helpconfort.services`
       console.log(`[create-user] Email interne généré: ${email}`)
     }
