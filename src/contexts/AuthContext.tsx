@@ -85,8 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const canAccessSupportUser = true;
   const hasSupportAgentRole = supportOptions.agent === true;
   const isSupportAdmin = supportOptions.admin === true;
-  const canAccessSupportConsoleUI = hasSupportAgentRole || isAdmin;
-  const canManageTickets = canAccessSupportConsoleUI;
+  const canManageTickets = hasSupportAgentRole || isAdmin;
 
   // FAQ Admin module
   const adminModuleConfig = enabledModules?.admin_plateforme;
@@ -486,7 +485,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     canAccessSupportUser,
     hasSupportAgentRole,
     isSupportAdmin,
-    canAccessSupportConsoleUI,
     canManageTickets,
     hasFaqAdminRole,
     canAccessFaqAdmin,
@@ -497,7 +495,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     hasGlobalRoleGuard, hasModuleGuard, hasModuleOptionGuard, isDeployedModuleGuard,
     isAdmin, isSupport, isFranchiseur,
     canAccessSupportUser, hasSupportAgentRole, isSupportAdmin,
-    canAccessSupportConsoleUI, canManageTickets,
+    canManageTickets,
     hasFaqAdminRole, canAccessFaqAdmin, hasAccessToScope,
   ]);
 

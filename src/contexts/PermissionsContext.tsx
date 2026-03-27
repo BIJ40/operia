@@ -29,7 +29,6 @@ export interface PermissionsContextType {
   canAccessSupportUser: boolean;
   hasSupportAgentRole: boolean;
   isSupportAdmin: boolean;
-  canAccessSupportConsoleUI: boolean;
   canManageTickets: boolean;
 
   // FAQ admin flags
