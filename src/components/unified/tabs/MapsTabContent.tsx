@@ -1285,12 +1285,32 @@ export default function MapsTabContent() {
 
         {/* Barre info densité */}
         {mapMode === 'heatmap' && (
-          <div className="flex-none p-4 flex items-center gap-2 text-sm text-muted-foreground">
-            <Flame className="h-4 w-4 text-destructive" />
-            <span>Densité sur l'historique complet</span>
-            <span className="ml-auto">
-              {heatmapLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${densityGeoJson?.features?.length || 0} communes`}
-            </span>
+          <div className="flex-none p-4 space-y-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Flame className="h-4 w-4 text-destructive" />
+              <span>Densité d'interventions — historique complet</span>
+              <span className="ml-auto">
+                {heatmapLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${densityGeoJson?.features?.length || 0} communes`}
+              </span>
+            </div>
+            <GradientLegendBar
+              stops={[
+                { color: '#fff5f5', label: '0' },
+                { color: '#feb2b2', label: '' },
+                { color: '#fc8181', label: '' },
+                { color: '#f56565', label: '' },
+                { color: '#e53e3e', label: '' },
+                { color: '#c53030', label: '' },
+                { color: '#9b2c2c', label: '' },
+                { color: '#742a2a', label: 'Max' },
+              ]}
+              minLabel="Aucune"
+              maxLabel={(() => {
+                if (!densityGeoJson?.features?.length) return 'Max';
+                const maxC = Math.max(...densityGeoJson.features.map((f: any) => f.properties?.count || 0));
+                return `${maxC} inter.`;
+              })()}
+            />
           </div>
         )}
 
