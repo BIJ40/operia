@@ -221,7 +221,9 @@ function buildPostalToInseeMap(
  */
 function buildChoroplethGeoJSON(
   communePolygons: any,
-  metricsByInsee: Map<string, Record<string, any>>
+  metricsByInsee: Map<string, Record<string, any>>,
+  zoneCodes?: Set<string>,
+  defaultMetrics?: Record<string, any>
 ): any {
   const features: any[] = [];
   
@@ -230,14 +232,17 @@ function buildChoroplethGeoJSON(
     if (!code) continue;
     
     const metrics = metricsByInsee.get(code);
-    if (!metrics) continue; // Only include communes with data
+    const isInZone = zoneCodes ? zoneCodes.has(code) : false;
+    
+    // Include commune if it has data OR is in the configured zone
+    if (!metrics && !isInZone) continue;
     
     features.push({
       type: 'Feature',
       properties: {
         code_insee: code,
         nom: feature.properties?.nom || '',
-        ...metrics,
+        ...(metrics || defaultMetrics || {}),
       },
       geometry: feature.geometry,
     });
