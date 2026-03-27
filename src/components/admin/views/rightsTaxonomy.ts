@@ -38,7 +38,7 @@ export const RIGHTS_CATEGORIES: RightsCategory[] = [
   ]},
   { id: 'support', label: 'Support', moduleKeys: [
     'support', 'support.aide_en_ligne', 'support.guides', 'support.faq',
-    'support.ticketing', 'ticketing',
+    'ticketing',
   ]},
   { id: 'admin', label: 'Admin', moduleKeys: [
     'admin', 'admin_plateforme',
