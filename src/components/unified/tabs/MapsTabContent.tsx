@@ -1498,24 +1498,29 @@ export default function MapsTabContent() {
                 </span>
               </div>
             )}
-            <div className="flex items-center gap-4 text-xs flex-wrap">
+            <div className="flex items-center gap-4 flex-wrap">
               {seasonViewMode === 'variation' ? (
-                <>
-                  <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#3b82f6' }} /><span className="text-muted-foreground">Forte baisse</span></div>
-                  <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#fbbf24' }} /><span className="text-muted-foreground">Stable</span></div>
-                  <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#dc2626' }} /><span className="text-muted-foreground">Forte hausse</span></div>
-                </>
+                <GradientLegendBar
+                  stops={[
+                    { color: '#3b82f6', label: '-50%' },
+                    { color: '#fbbf24', label: '0%' },
+                    { color: '#dc2626', label: '+50%' },
+                  ]}
+                  minLabel="Forte baisse"
+                  maxLabel="Forte hausse"
+                />
               ) : (
-                <>
-                  <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#fef3c7' }} /><span className="text-muted-foreground">Faible</span></div>
-                  <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#f97316' }} /><span className="text-muted-foreground">Moyen</span></div>
-                  <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#7f1d1d' }} /><span className="text-muted-foreground">Élevé</span></div>
-                </>
+                <GradientLegendBar
+                  stops={[
+                    { color: '#fef3c7', label: '0' },
+                    { color: '#f97316', label: '' },
+                    { color: '#7f1d1d', label: 'Max' },
+                  ]}
+                  minLabel="Faible"
+                  maxLabel="Élevé"
+                />
               )}
-              <div className="flex items-center gap-1.5 ml-2 pl-2 border-l">
-                <span className="w-3 h-3 rounded-full border-2" style={{ borderColor: '#dc2626', backgroundColor: 'transparent' }} />
-                <span className="text-muted-foreground">Bordure = saisonnalité forte</span>
-              </div>
+              <div className="flex items-center gap-1.5 text-xs"><span className="w-3 h-3 rounded-full border-2 shrink-0" style={{ borderColor: '#dc2626', backgroundColor: 'transparent' }} /><span className="text-muted-foreground">Saisonnalité forte</span></div>
             </div>
           </div>
         )}
