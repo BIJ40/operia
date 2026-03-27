@@ -24,7 +24,6 @@ const editUserSchema = z.object({
   agence: z.string(),
   roleAgence: z.string(),
   globalRole: z.string(),
-  supportLevel: z.number().min(1).max(3).optional(),
 });
 
 export type UpdateUserPayload = {
@@ -37,7 +36,6 @@ export type UpdateUserPayload = {
   agency_id?: string | null;
   role_agence?: string;
   global_role?: GlobalRole;
-  support_level?: number;
   apogee_user_id?: number | null;
 };
 
@@ -59,7 +57,7 @@ export interface UserProfile {
   is_active: boolean | null;
   must_change_password: boolean | null;
   apogee_user_id?: number | null;
-  support_level?: number | null;
+  
 }
 
 export interface UserEditFormProps {
@@ -96,7 +94,6 @@ export function UserEditForm({
     email: '',
     agence: '',
     roleAgence: '',
-    supportLevel: 1,
     globalRole: 'base_user' as GlobalRole,
     apogeeUserId: undefined as number | undefined,
   });
@@ -113,16 +110,11 @@ export function UserEditForm({
         email: user.email || '',
         agence: user.agence || '',
         roleAgence: user.role_agence || '',
-        supportLevel: user.support_level || 1,
         globalRole: user.global_role || 'base_user',
         apogeeUserId: user.apogee_user_id ?? undefined,
       });
     }
   }, [user]);
-
-  const isSupportAgentEnabled = () => {
-    return !!user?.support_level && user.support_level > 0;
-  };
 
   const isFieldReadOnly = (field: string) => readOnlyFields.includes(field);
 
@@ -156,7 +148,7 @@ export function UserEditForm({
       agency_id: resolvedAgencyId,
       role_agence: formData.roleAgence,
       global_role: formData.globalRole as GlobalRole,
-      support_level: isSupportAgentEnabled() ? formData.supportLevel : undefined,
+      apogee_user_id: formData.apogeeUserId ?? null,
       apogee_user_id: formData.apogeeUserId ?? null,
     });
   };
@@ -318,24 +310,6 @@ export function UserEditForm({
         {errors.globalRole && <p className="text-xs text-destructive">{errors.globalRole}</p>}
       </div>
 
-      {isSupportAgentEnabled() && (
-        <div className="space-y-2">
-          <Label>Niveau Support (SA)</Label>
-          <Select 
-            value={formData.supportLevel.toString()} 
-            onValueChange={(v) => setFormData(prev => ({ ...prev, supportLevel: parseInt(v) }))}
-            disabled={isSubmitting}
-          >
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent className="bg-background z-50">
-              <SelectItem value="1">SA1 - Support de base</SelectItem>
-              <SelectItem value="2">SA2 - Support technique</SelectItem>
-              <SelectItem value="3">SA3 - Support expert</SelectItem>
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground">Visible uniquement pour les agents support (option "Agent support" activée)</p>
-        </div>
-      )}
 
       <div className="border rounded-lg p-3 space-y-3 bg-muted/30">
         <Label className="flex items-center gap-2">
