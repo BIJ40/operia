@@ -46,6 +46,7 @@ const createUserSchema = z.object({
   lastName: z.string().trim().min(1, { message: "Nom requis" }).max(100, { message: "Nom trop long" }),
   agence: z.string(),
   roleAgence: z.string(),
+  poste: z.string().optional(),
   globalRole: z.string(),
   sendEmail: z.boolean(),
 });
