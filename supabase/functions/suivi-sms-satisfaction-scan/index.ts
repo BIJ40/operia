@@ -359,6 +359,8 @@ serve(async (req) => {
         // Extract common data
         const technicienPrenom = extractFirstName(avisEntry?.data?.userStr || avisEntry?.userStr || '');
         const prenom = client.prenom || '';
+        const nom = client.nom || '';
+        const clientName = [prenom, nom].filter(Boolean).join(' ') || null;
         const googleUrl = agency.google_reviews_url || '';
 
         // --- SMS ---
@@ -377,6 +379,7 @@ serve(async (req) => {
               phone_number: rawPhone || 'unknown',
               status: 'no_phone',
               error_message: 'No valid phone number found',
+              client_name: clientName,
             });
             totalErrors++;
           } else {
@@ -404,6 +407,7 @@ serve(async (req) => {
                 phone_number: phone,
                 status: 'error',
                 error_message: 'No AllMySMS credentials configured',
+                client_name: clientName,
               });
               totalErrors++;
             } else {
@@ -415,6 +419,7 @@ serve(async (req) => {
                 phone_number: phone,
                 status: result.success ? 'sent' : 'error',
                 error_message: result.error || null,
+                client_name: clientName,
               });
               if (result.success) {
                 console.log(`SMS Scan: SMS sent to ${phone} for project ${project.ref}`);
@@ -445,6 +450,7 @@ serve(async (req) => {
               phone_number: clientEmail,
               status: emailResult.success ? 'sent' : 'error',
               error_message: emailResult.error || null,
+              client_name: clientName,
             });
             if (emailResult.success) {
               console.log(`SMS Scan: Email sent to ${clientEmail} for project ${project.ref}`);
@@ -462,6 +468,7 @@ serve(async (req) => {
               phone_number: clientEmail || 'no_email',
               status: 'no_email',
               error_message: clientEmail ? 'No Google Reviews URL configured' : 'No client email found',
+              client_name: clientName,
             });
           }
         }
