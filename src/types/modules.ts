@@ -592,6 +592,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     uiSubTab: 'realisations',
     defaultForRoles: [],
     minRole: 'franchisee_user',
+    delegatable: true,
     options: [
       { key: 'view', path: 'commercial.realisations.view', label: 'Consulter', description: 'Voir les réalisations', defaultEnabled: true, routes: ['/realisations'] },
       { key: 'create', path: 'commercial.realisations.create', label: 'Créer', description: 'Créer des réalisations', defaultEnabled: true, routes: ['/realisations/new'] },
