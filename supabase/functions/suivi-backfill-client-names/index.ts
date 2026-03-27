@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     }
 
     try {
-      const resp = await fetch(`https://${subdomain}.hc-apogee.fr/api/getProjectByRef`, {
+      const resp = await fetch(`https://${subdomain}.hc-apogee.fr/api/apiGetProjectByRef`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ API_KEY: APOGEE_API_KEY, ref: refDossier }),

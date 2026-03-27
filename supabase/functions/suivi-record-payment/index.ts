@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (agency?.api_subdomain && APOGEE_API_KEY && refDossier) {
-        const apiUrl = `https://${agency.api_subdomain}.hc-apogee.fr/api/getProjectByRef`;
+        const apiUrl = `https://${agency.api_subdomain}.hc-apogee.fr/api/apiGetProjectByRef`;
         const apiResp = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
