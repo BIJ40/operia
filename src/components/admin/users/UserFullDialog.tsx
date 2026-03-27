@@ -59,6 +59,7 @@ export function UserFullDialog({
     email: '',
     agence: '',
     roleAgence: '',
+    poste: '',
     globalRole: 'base_user' as GlobalRole,
     apogeeUserId: undefined,
   });
@@ -72,6 +73,7 @@ export function UserFullDialog({
         email: userEmail || '',
         agence: agencySlug || '',
         roleAgence: roleAgence || '',
+        poste: '',
         globalRole: globalRole || 'base_user',
         apogeeUserId: apogeeUserId ?? undefined,
       });
