@@ -61,7 +61,6 @@ export const MODULE_COMPAT_MAP: Record<string, ModuleKey> = {
 export interface PermissionContext {
   globalRole: GlobalRole | null;
   agencyId: string | null;
-  supportLevel?: number | null;
 }
 
 export interface HasAccessParams extends PermissionContext {
@@ -208,7 +207,7 @@ export function hasAccess(params: HasAccessParams): boolean {
  */
 export function validateUserPermissions(ctx: PermissionContext): PermissionIssue[] {
   const issues: PermissionIssue[] = [];
-  const { globalRole, agencyId, supportLevel } = ctx;
+  const { globalRole, agencyId } = ctx;
   
   // Règle 1: N1/N2 sans agence
   if (globalRole && AGENCY_ROLES.includes(globalRole) && !agencyId) {
@@ -234,7 +233,6 @@ export function extractPermissionContext(profile: any): PermissionContext {
   return {
     globalRole: profile?.global_role || null,
     agencyId: profile?.agency_id || null,
-    supportLevel: null,
   };
 }
 

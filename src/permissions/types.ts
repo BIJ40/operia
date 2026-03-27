@@ -17,8 +17,6 @@ export interface PermissionContext {
   enabledModules: EnabledModules | null;
   /** ID de l'agence de l'utilisateur */
   agencyId: string | null;
-  /** Niveau support (SA1=1, SA2=2, SA3=3) */
-  supportLevel?: number | null;
 }
 
 export interface HasAccessParams extends PermissionContext {
@@ -37,7 +35,6 @@ export type PermissionIssueCode =
   | 'AGENCY_REQUIRED'
   | 'NO_EXPLICIT_MODULES'
   | 'AGENCY_MODULE_NO_AGENCY'
-  | 'SUPPORT_LEVEL_NO_AGENT'
   | 'NETWORK_ROLE_WITH_AGENCY_MODULES'
   | 'AGENCY_ROLE_NO_AGENCY'
   | 'ROLE_BELOW_MODULE_MIN';

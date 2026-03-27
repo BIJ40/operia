@@ -18,7 +18,7 @@ function makeContext(overrides: Partial<UserContext> = {}): UserContext {
     globalRoleLevel: GLOBAL_ROLES.agency_user ?? 0,
     agencyId: 'uuid-agency-A',
     agencySlug: 'agence-a',
-    supportLevel: null,
+    
     ...overrides,
   };
 }
