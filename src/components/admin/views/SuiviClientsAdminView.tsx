@@ -161,8 +161,8 @@ function PaiementsSection() {
   const { data, isLoading } = useQuery({
     queryKey: ['admin-suivi-payments', filterAgency, page],
     queryFn: async () => {
-      let query = supabase
-        .from('payments_clients_suivi')
+      let query = (supabase as any)
+        .from('payments_clients_suivi_with_client')
         .select('*', { count: 'exact' })
         .order('paid_at', { ascending: false })
         .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
@@ -208,6 +208,7 @@ function PaiementsSection() {
           <TableHeader>
             <TableRow>
               <TableHead>Réf. dossier</TableHead>
+              <TableHead>Client</TableHead>
               <TableHead>Montant</TableHead>
               <TableHead>Date paiement</TableHead>
               <TableHead>Agence</TableHead>
@@ -218,6 +219,7 @@ function PaiementsSection() {
             {data?.rows?.map(p => (
               <TableRow key={p.id}>
                 <TableCell className="font-mono text-sm">{p.ref_dossier}</TableCell>
+                <TableCell className="text-sm font-medium">{p.client_name || '—'}</TableCell>
                 <TableCell>{p.amount_cents != null ? `${(p.amount_cents / 100).toFixed(2)} €` : '—'}</TableCell>
                 <TableCell className="text-sm">{p.paid_at ? new Date(p.paid_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}</TableCell>
                 <TableCell><code className="text-xs bg-muted px-1.5 py-0.5 rounded">{p.agency_slug}</code></TableCell>
@@ -225,7 +227,7 @@ function PaiementsSection() {
               </TableRow>
             ))}
             {(!data?.rows || data.rows.length === 0) && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Aucun paiement trouvé</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Aucun paiement trouvé</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
@@ -252,8 +254,8 @@ function JournalSection() {
   const { data, isLoading } = useQuery({
     queryKey: ['admin-suivi-sms-log', filterAgency, filterStatus, page],
     queryFn: async () => {
-      let query = supabase
-        .from('sms_sent_log')
+      let query = (supabase as any)
+        .from('sms_sent_log_with_client')
         .select('*', { count: 'exact' })
         .order('sent_at', { ascending: false })
         .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
@@ -327,7 +329,7 @@ function JournalSection() {
             {data?.rows?.map(r => (
               <TableRow key={r.id}>
                 <TableCell className="font-mono text-sm">{r.ref_dossier}</TableCell>
-                <TableCell className="text-sm font-medium">{r.client_name || '—'}</TableCell>
+                <TableCell className="text-sm font-medium">{r.resolved_client_name || '—'}</TableCell>
                 <TableCell className="text-sm">{r.phone_number}</TableCell>
                 <TableCell><Badge variant="outline" className="text-xs">{r.trigger_type}</Badge></TableCell>
                 <TableCell><Badge variant={statusColor(r.status)} className="text-xs">{r.status}</Badge></TableCell>

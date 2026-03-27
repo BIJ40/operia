@@ -12747,6 +12747,34 @@ export type Database = {
           },
         ]
       }
+      payments_clients_suivi_with_client: {
+        Row: {
+          agency_slug: string | null
+          amount_cents: number | null
+          client_name: string | null
+          created_at: string | null
+          id: string | null
+          paid_at: string | null
+          ref_dossier: string | null
+          stripe_session_id: string | null
+        }
+        Relationships: []
+      }
+      sms_sent_log_with_client: {
+        Row: {
+          agency_slug: string | null
+          client_name: string | null
+          error_message: string | null
+          id: string | null
+          phone_number: string | null
+          ref_dossier: string | null
+          resolved_client_name: string | null
+          sent_at: string | null
+          status: string | null
+          trigger_type: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       auto_generate_monthly_epi_acks: { Args: never; Returns: number }
