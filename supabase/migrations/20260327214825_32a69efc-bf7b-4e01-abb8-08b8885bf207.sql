@@ -1,0 +1,1 @@
+ALTER TABLE public.sms_sent_log ADD COLUMN client_name text;
