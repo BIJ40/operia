@@ -51,7 +51,7 @@ function LoadingFallback() {
 const ADMIN_MAIN_TABS: PillTabConfig[] = [
   { id: 'gestion', label: 'Gestion', icon: Settings, accent: 'blue' },
   { id: 'relations', label: 'Relations', icon: Handshake, accent: 'purple' },
-  { id: 'offres', label: 'Offres', icon: Crown, accent: 'amber' },
+  { id: 'offres', label: 'Offres', icon: Crown, accent: 'orange' },
   { id: 'ia', label: 'IA', icon: Brain, accent: 'green' },
   { id: 'contenu', label: 'Contenu', icon: FileText, accent: 'orange' },
   { id: 'ops', label: 'Ops', icon: Database, accent: 'pink' },
