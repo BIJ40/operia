@@ -6,7 +6,7 @@ import React from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Clock, MapPin, Users, ExternalLink, FolderOpen } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
@@ -60,13 +60,13 @@ export function RdvDetailDrawer({ rdv, open, onOpenChange, agencySlug }: RdvDeta
     : null;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-[400px] sm:w-[450px]">
-        <SheetHeader>
-          <SheetTitle className="text-xl font-semibold text-foreground">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-[450px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-semibold text-foreground">
             {rdv.univers}
-          </SheetTitle>
-        </SheetHeader>
+          </DialogTitle>
+        </DialogHeader>
         
         <div className="mt-6 space-y-6">
           {/* Heure et durée */}
@@ -149,8 +149,8 @@ export function RdvDetailDrawer({ rdv, open, onOpenChange, agencySlug }: RdvDeta
             </p>
           </div>
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
 

@@ -1,6 +1,6 @@
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
-} from '@/components/ui/sheet';
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -46,14 +46,14 @@ export function ForecastTechnicianDrawer({ open, onOpenChange, snapshot, tension
   const tensionStyle = TENSION_LABEL[tension.predictedTensionLevel];
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>{snapshot.name}</SheetTitle>
-          <SheetDescription>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{snapshot.name}</DialogTitle>
+          <DialogDescription>
             Prévision {snapshot.horizon} — {CONF_LABEL[snapshot.forecastConfidenceLevel]}
-          </SheetDescription>
-        </SheetHeader>
+          </DialogDescription>
+        </DialogHeader>
 
         <div className="mt-4 space-y-4">
           {/* Synthèse */}
@@ -173,8 +173,8 @@ export function ForecastTechnicianDrawer({ open, onOpenChange, snapshot, tension
             </Card>
           )}
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
 

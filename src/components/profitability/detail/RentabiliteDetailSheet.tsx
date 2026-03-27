@@ -7,7 +7,7 @@
  * - "Valider" = marks snapshot as 'validated'
  */
 import { useState, useMemo, useCallback } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -235,13 +235,13 @@ export function RentabiliteDetailSheet({ projectId, open, onOpenChange }: Rentab
 
   return (
     <>
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
-          <SheetHeader className="pb-4">
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="pb-4">
             <div className="flex items-center justify-between gap-2">
-              <SheetTitle className="text-lg">
+              <DialogTitle className="text-lg">
                 Rentabilité — Dossier {projectId}
-              </SheetTitle>
+              </DialogTitle>
               <div className="flex gap-2">
                 <Button
                   size="sm"
@@ -267,7 +267,7 @@ export function RentabiliteDetailSheet({ projectId, open, onOpenChange }: Rentab
                 )}
               </div>
             </div>
-          </SheetHeader>
+          </DialogHeader>
 
           {isLoading && !result ? (
             <div className="flex items-center justify-center h-64">
@@ -341,8 +341,8 @@ export function RentabiliteDetailSheet({ projectId, open, onOpenChange }: Rentab
               </TabsContent>
             </Tabs>
           )}
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Dialogs ── */}
       {projectId && agencyId && (

@@ -6,7 +6,7 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
-import { Sheet, SheetContent, SheetHeader } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -200,13 +200,12 @@ export function TicketDetailDrawer({
   };
 
   return (
-    <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent 
-        className={`w-full overflow-hidden flex flex-col p-0 transition-all duration-300 ${isExpanded ? 'sm:max-w-6xl' : 'sm:max-w-3xl'}`}
-        hideCloseButton
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent 
+        className={`overflow-hidden flex flex-col p-0 transition-all duration-300 max-h-[90vh] ${isExpanded ? 'max-w-6xl' : 'max-w-3xl'}`}
       >
         {/* Header */}
-        <SheetHeader className="p-6 pb-4 border-b">
+        <DialogHeader className="p-6 pb-4 border-b">
           <TicketDrawerHeader
             ticket={ticket}
             statuses={statuses}
@@ -223,7 +222,7 @@ export function TicketDetailDrawer({
             hasPrevious={hasPrevious}
             hasNext={hasNext}
           />
-        </SheetHeader>
+        </DialogHeader>
 
         <Tabs defaultValue="main" className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="mx-6 mt-2 w-auto justify-start">
@@ -619,7 +618,7 @@ export function TicketDetailDrawer({
             </TabsContent>
           )}
         </Tabs>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }

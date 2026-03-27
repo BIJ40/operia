@@ -7,11 +7,11 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
@@ -97,13 +97,13 @@ export function ApporteurDemandeDetailDrawer({
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-lg overflow-y-auto">
-        <SheetHeader className="space-y-4 pb-4">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="space-y-4 pb-4">
           <div className="flex items-start justify-between gap-4">
-            <SheetTitle className="text-xl font-bold text-left">
+            <DialogTitle className="text-xl font-bold text-left">
               {REQUEST_TYPE_LABELS[demande.request_type] || demande.request_type}
-            </SheetTitle>
+            </DialogTitle>
           </div>
           <div className="flex flex-wrap gap-2">
             <Badge variant="outline" className={cn('text-xs', statusInfo.color)}>
@@ -116,7 +116,7 @@ export function ApporteurDemandeDetailDrawer({
               </Badge>
             )}
           </div>
-        </SheetHeader>
+        </DialogHeader>
 
         <div className="space-y-6 pt-2">
           {/* Dates */}
@@ -242,8 +242,8 @@ export function ApporteurDemandeDetailDrawer({
             </>
           )}
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
 
