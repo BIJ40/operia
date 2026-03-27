@@ -7,14 +7,35 @@ import { ModuleKey } from '@/types/modules';
 import { SitemapSection } from '@/config/sitemapData';
 import { GlobalRole } from '@/types/globalRoles';
 
-// Postes disponibles (N1 supprimé - technicien legacy conservé pour édition)
+/**
+ * Tous les postes occupés connus.
+ * Source de vérité unique — tous les composants importent depuis ici.
+ */
 export const ROLE_AGENCE_LABELS: Record<string, string> = {
   'dirigeant': 'Dirigeant(e)',
-  'assistante': 'Assistante',
+  'assistante': 'Assistant(e)',
   'commercial': 'Commercial',
+  'technicien': 'Technicien',
   'tete_de_reseau': 'Tête de réseau',
   'externe': 'Externe',
 };
+
+/**
+ * Postes assignables à un N1 (franchisee_user / salarié).
+ * Un N2 qui crée ou édite un N1 ne voit que ces postes.
+ */
+export const N1_ASSIGNABLE_ROLES = ['assistante', 'commercial', 'technicien'] as const;
+
+/**
+ * Filtre les postes visibles selon le global_role de l'utilisateur édité.
+ */
+export function getEditableRoleAgenceEntries(userGlobalRole?: string): [string, string][] {
+  const all = Object.entries(ROLE_AGENCE_LABELS);
+  if (userGlobalRole === 'franchisee_user') {
+    return all.filter(([key]) => (N1_ASSIGNABLE_ROLES as readonly string[]).includes(key));
+  }
+  return all;
+}
 
 export const SPECIAL_ACCESS_KEYS: { moduleKey: ModuleKey; optionKey?: string; label: string }[] = [
   { moduleKey: 'ticketing', label: 'Gestion de Projet' },

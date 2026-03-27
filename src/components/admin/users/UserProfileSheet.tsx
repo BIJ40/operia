@@ -34,13 +34,7 @@ interface UserProfileSheetProps {
   agencyLabel?: string;
 }
 
-const ROLE_AGENCE_LABELS: Record<string, string> = {
-  dirigeant: 'Dirigeant(e)',
-  assistante: 'Assistante',
-  commercial: 'Commercial',
-  tete_de_reseau: 'Tête de réseau',
-  externe: 'Externe',
-};
+import { ROLE_AGENCE_LABELS } from './user-full-dialog/constants';
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return '—';
