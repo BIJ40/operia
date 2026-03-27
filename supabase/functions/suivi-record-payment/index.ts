@@ -104,7 +104,8 @@ Deno.serve(async (req) => {
           body: JSON.stringify({ API_KEY: APOGEE_API_KEY, ref: refDossier }),
         });
         if (apiResp.ok) {
-          const projectData = await apiResp.json();
+          const rawData = await apiResp.json();
+          const projectData = Array.isArray(rawData) ? rawData[0] : rawData;
           const client = projectData?.client;
           if (client) {
             clientName = [client.prenom, client.nom].filter(Boolean).join(' ') || null;
