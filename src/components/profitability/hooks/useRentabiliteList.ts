@@ -122,6 +122,7 @@ export function useRentabiliteList() {
           univers,
           apporteurName,
           dateCreation,
+          lastFactureDate: projectLastFactureDate.get(projectId) || dateCreation,
           hasSnapshot: !!snapshot,
           snapshot,
         });
@@ -138,6 +139,7 @@ export function useRentabiliteList() {
             univers: '',
             apporteurName: '',
             dateCreation: null,
+            lastFactureDate: projectLastFactureDate.get(projectId) || null,
             hasSnapshot: true,
             snapshot,
           });
