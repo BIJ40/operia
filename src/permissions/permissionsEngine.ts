@@ -394,13 +394,16 @@ export function validateUserPermissions(ctx: PermissionContext): PermissionIssue
       if (isEnabled) {
         const minRole = MODULE_MIN_ROLES[moduleKey];
         if (minRole && !hasMinRole(globalRole, minRole)) {
-          issues.push({
-            type: 'warning',
-            code: 'ROLE_BELOW_MODULE_MIN',
-            message: `Module ${moduleKey} activé mais rôle insuffisant (min: ${minRole})`,
-            fix: `Monter le rôle à ${minRole} minimum ou désactiver le module`,
-            moduleId: moduleKey,
-          });
+          // Don't warn for delegatable modules — N2 can legitimately assign them to N1
+          if (!isDelegatableKey(moduleKey)) {
+            issues.push({
+              type: 'warning',
+              code: 'ROLE_BELOW_MODULE_MIN',
+              message: `Module ${moduleKey} activé mais rôle insuffisant (min: ${minRole})`,
+              fix: `Monter le rôle à ${minRole} minimum ou désactiver le module`,
+              moduleId: moduleKey,
+            });
+          }
         }
       }
     }
