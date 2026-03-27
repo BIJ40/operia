@@ -387,6 +387,20 @@ Deno.serve(async (req) => {
     const t0 = Date.now();
 
     if (isAnalyticsMode) {
+      // ── Load agency zone (selected communes) ──
+      let zoneCodes: Set<string> | undefined;
+      {
+        // Look up agency ID from slug
+        const { data: agencyRow } = await supabaseAdmin.from('apogee_agencies').select('id').eq('slug', targetAgency).maybeSingle();
+        if (agencyRow?.id) {
+          const { data: zoneRows } = await supabaseAdmin.from('agency_map_zone_communes').select('code_insee').eq('agency_id', agencyRow.id);
+          if (zoneRows && zoneRows.length > 0) {
+            zoneCodes = new Set(zoneRows.map((r: any) => r.code_insee));
+            console.log(`[GET-RDV-MAP] Agency zone loaded: ${zoneCodes.size} communes`);
+          }
+        }
+      }
+
       // ── ANALYTICS MODES (heatmap, profitability, zones) ──
       // Strategy: aggregate by postal code, batch geocode ~100 postal codes instead of ~5000 addresses
       
