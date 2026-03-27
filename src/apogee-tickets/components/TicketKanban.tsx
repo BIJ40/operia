@@ -654,8 +654,7 @@ export function TicketKanban({ tickets, statuses, modules, ownerSides, onStatusC
     // Vérifier que c'est un statut valide
     if (!statuses.find((s) => s.id === newStatus)) return;
 
-    // ============================================
-    // RÈGLE: Interdire le drop dans USER et SUPPORT_RESOLU
+    // RÈGLE: Interdire le drop dans USER, IA_RESOLU et IA_NON_RESOLU
     // Ces colonnes sont réservées au système
     // ============================================
     if (PROTECTED_DROP_TARGETS.includes(newStatus)) {
