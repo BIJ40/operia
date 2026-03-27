@@ -97,7 +97,7 @@ export function AiSuggestDrawer({
                 <DialogTitle className="text-base">Suggestions IA</DialogTitle>
                 <DialogDescription className="text-xs">
                   {item ? `${item.client} — Dossier #${item.dossierId}` : ""}
-                </SheetDescription>
+                </DialogDescription>
               </div>
             </div>
             <div className="flex items-center gap-2">
