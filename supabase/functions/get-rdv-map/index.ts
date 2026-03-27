@@ -458,38 +458,48 @@ Deno.serve(async (req) => {
         }
       }
 
-      // ── FETCH COMMUNE POLYGONS (for choropleth modes) ──
-      let communePolygons: any = null;
-      if (!isHeatmap) {
-        communePolygons = await fetchCommunePolygons();
-        console.log(`[GET-RDV-MAP] Commune polygons: ${communePolygons?.features?.length || 0} communes loaded`);
-      }
+      // ── FETCH COMMUNE POLYGONS (for all choropleth modes including heatmap/density) ──
+      const communePolygons = await fetchCommunePolygons();
+      console.log(`[GET-RDV-MAP] Commune polygons: ${communePolygons?.features?.length || 0} communes loaded`);
 
-      // ── HEATMAP MODE ──
+      // ── HEATMAP / DENSITY MODE — Choropleth by commune with intervention count ──
       if (isHeatmap) {
-        const heatPoints: { lat: number; lng: number }[] = [];
         const interventionArray = Array.isArray(interventions) ? interventions : [];
         
+        // Count interventions per code_insee
+        const countByInsee = new Map<string, number>();
         for (const intervention of interventionArray) {
-          const project = projectsById.get(intervention.projectId);
-          if (!project) continue;
-          const pc = projectToPostalCode.get(intervention.projectId);
-          if (!pc) continue;
-          const coords = coordsByPostalCode.get(pc);
-          if (!coords) continue;
-          
-          // Add slight random jitter so points don't stack on exact same spot
-          heatPoints.push({
-            lat: coords.lat + (Math.random() - 0.5) * 0.008,
-            lng: coords.lng + (Math.random() - 0.5) * 0.008,
+          const pid = intervention.projectId;
+          if (typeof pid !== 'number') continue;
+          const insee = projectToInsee.get(pid);
+          if (!insee) continue;
+          countByInsee.set(insee, (countByInsee.get(insee) || 0) + 1);
+        }
+
+        // Build metrics for choropleth
+        const metricsByInsee = new Map<string, Record<string, any>>();
+        const allCounts = Array.from(countByInsee.values());
+        const maxCount = Math.max(...allCounts, 1);
+        
+        for (const [insee, count] of countByInsee.entries()) {
+          // Normalize to 0-7 scale for 8 color levels
+          const norm = count / maxCount; // 0 to 1
+          const level = Math.min(7, Math.floor(norm * 8)); // 0-7
+          metricsByInsee.set(insee, {
+            count,
+            norm: Math.round(norm * 1000) / 1000,
+            level,
+            city: inseeCities.get(insee) || '',
           });
         }
 
-        console.log(`[GET-RDV-MAP] Heatmap: ${heatPoints.length} points in ${Date.now() - t0}ms total`);
+        const choropleth = buildChoroplethGeoJSON(communePolygons, metricsByInsee);
+        
+        console.log(`[GET-RDV-MAP] Density choropleth: ${choropleth.features.length} communes, max=${maxCount} interventions in ${Date.now() - t0}ms`);
         return withCors(req, new Response(JSON.stringify({
           success: true,
-          data: heatPoints,
-          meta: { mode: 'heatmap', from: effectiveFrom, to: effectiveTo, agencySlug: targetAgency, totalPoints: heatPoints.length, durationMs: Date.now() - t0 },
+          data: choropleth,
+          meta: { mode: 'heatmap', format: 'choropleth', from: effectiveFrom, to: effectiveTo, agencySlug: targetAgency, totalCommunes: choropleth.features.length, maxCount, durationMs: Date.now() - t0 },
         }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
       }
 
