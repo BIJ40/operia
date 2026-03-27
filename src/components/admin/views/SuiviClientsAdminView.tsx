@@ -312,8 +312,9 @@ function JournalSection() {
       <div className="rounded-md border overflow-auto">
         <Table>
           <TableHeader>
-            <TableRow>
+             <TableRow>
               <TableHead>Réf. dossier</TableHead>
+              <TableHead>Client</TableHead>
               <TableHead>Destinataire</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Statut</TableHead>
@@ -326,6 +327,7 @@ function JournalSection() {
             {data?.rows?.map(r => (
               <TableRow key={r.id}>
                 <TableCell className="font-mono text-sm">{r.ref_dossier}</TableCell>
+                <TableCell className="text-sm font-medium">{r.client_name || '—'}</TableCell>
                 <TableCell className="text-sm">{r.phone_number}</TableCell>
                 <TableCell><Badge variant="outline" className="text-xs">{r.trigger_type}</Badge></TableCell>
                 <TableCell><Badge variant={statusColor(r.status)} className="text-xs">{r.status}</Badge></TableCell>
@@ -335,7 +337,7 @@ function JournalSection() {
               </TableRow>
             ))}
             {(!data?.rows || data.rows.length === 0) && (
-              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Aucune entrée trouvée</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Aucune entrée trouvée</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
