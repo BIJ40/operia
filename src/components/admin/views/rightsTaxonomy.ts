@@ -3,6 +3,7 @@ export type RightsCategoryId =
   | 'pilotage'
   | 'commercial'
   | 'organisation'
+  | 'options'
   | 'documents'
   | 'support'
   | 'admin';
