@@ -6,9 +6,52 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { toast } from 'sonner';
 import type { AgencyFeatureRow } from './useAgencyFeature';
 import type { AgencyFeatureStatus, AgencyFeatureBillingMode } from '@/config/agencyFeatures';
+
+/**
+ * Bridge: sync organisation.apporteurs in user_modules for all agency users
+ * when Relations pack is activated or deactivated.
+ */
+async function syncApporteursModuleForAgency(
+  agencyId: string,
+  activate: boolean,
+  enabledBy: string | null,
+) {
+  // Get all users belonging to this agency
+  const { data: profiles, error: profilesError } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('agency_id', agencyId);
+
+  if (profilesError || !profiles?.length) return;
+
+  const now = new Date().toISOString();
+
+  if (activate) {
+    // Upsert organisation.apporteurs for each user
+    const rows = profiles.map((p) => ({
+      user_id: p.id,
+      module_key: 'organisation.apporteurs',
+      options: null,
+      enabled_at: now,
+      enabled_by: enabledBy,
+    }));
+
+    await supabase
+      .from('user_modules')
+      .upsert(rows, { onConflict: 'user_id,module_key' });
+  } else {
+    // Remove organisation.apporteurs for each user
+    await supabase
+      .from('user_modules')
+      .delete()
+      .in('user_id', profiles.map((p) => p.id))
+      .eq('module_key', 'organisation.apporteurs');
+  }
+}
 
 /**
  * Charge les features d'une agence spécifique (admin)
@@ -119,6 +162,7 @@ export function useUpdateFeatureMetadata() {
  */
 export function useActivateRelationsPack() {
   const qc = useQueryClient();
+  const { user } = useAuthCore();
 
   return useMutation({
     mutationFn: async (agencyId: string) => {
@@ -157,9 +201,13 @@ export function useActivateRelationsPack() {
         .upsert(features as any[], { onConflict: 'agency_id,feature_key' });
 
       if (error) throw error;
+
+      // Bridge: activate organisation.apporteurs for all agency users
+      await syncApporteursModuleForAgency(agencyId, true, user?.id ?? null);
     },
     onSuccess: (_, agencyId) => {
       qc.invalidateQueries({ queryKey: ['agency-features', agencyId] });
+      qc.invalidateQueries({ queryKey: ['user-modules'] });
       toast.success('Pack Relations activé');
     },
     onError: (err: Error) => {
@@ -185,9 +233,13 @@ export function useDeactivateRelationsPack() {
         .in('feature_key', keys);
 
       if (error) throw error;
+
+      // Bridge: remove organisation.apporteurs for all agency users
+      await syncApporteursModuleForAgency(agencyId, false, null);
     },
     onSuccess: (_, agencyId) => {
       qc.invalidateQueries({ queryKey: ['agency-features', agencyId] });
+      qc.invalidateQueries({ queryKey: ['user-modules'] });
       toast.success('Pack Relations désactivé');
     },
     onError: (err: Error) => {

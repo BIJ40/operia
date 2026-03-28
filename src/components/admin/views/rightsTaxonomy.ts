@@ -3,6 +3,7 @@ export type RightsCategoryId =
   | 'pilotage'
   | 'commercial'
   | 'organisation'
+  | 'options'
   | 'documents'
   | 'support'
   | 'admin';
@@ -29,9 +30,12 @@ export const RIGHTS_CATEGORIES: RightsCategory[] = [
     'commercial.social', 'commercial.signature',
   ]},
   { id: 'organisation', label: 'Organisation', moduleKeys: [
-    'organisation', 'organisation.salaries', 'organisation.apporteurs',
+    'organisation', 'organisation.salaries',
     'organisation.plannings', 'organisation.reunions', 'organisation.parc',
     'organisation.docgen', 'organisation.documents_legaux', 'organisation.zones',
+  ]},
+  { id: 'options', label: 'Options / Pack Relations', moduleKeys: [
+    'organisation.apporteurs',
   ]},
   { id: 'documents', label: 'Documents', moduleKeys: [
     'mediatheque', 'mediatheque.documents',
