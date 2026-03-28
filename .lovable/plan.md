@@ -1,55 +1,76 @@
 
 
-## Plan : Franchiseur → Relations + Renommage tables suivi
+## Analyse des problèmes identifiés
 
-Le plan ChatGPT est cohérent avec le projet. Voici la synthèse d'exécution :
+### 1. Données réelles dans `plan_tier_modules` pour STARTER
 
-### Phase 1 — Migration SQL
-- `ALTER TABLE public.agencies RENAME TO agency_suivi_settings`
-- `ALTER TABLE public.payments RENAME TO payments_clients_suivi`
-- Recréer `agencies_public` view sur `agency_suivi_settings`
-- Mettre à jour les RLS policies si nécessaire
+| Module | STARTER enabled | PRO enabled | Statut |
+|--------|:---:|:---:|--------|
+| `organisation.salaries` | **false** | true | **BUG** — devrait être true |
+| `organisation.plannings` | true | true | OK |
+| `organisation.reunions` | **false** | true | **BUG** — devrait être true |
+| `organisation.documents_legaux` | true | true | OK |
+| `organisation.zones` | true | true | OK |
+| `organisation.apporteurs` | false | true | Correct (Relations pack) |
 
-### Phase 2 — Edge Functions (5 fichiers)
-Remplacement texte simple des noms de tables :
-- `suivi-stripe-checkout` : `agencies` → `agency_suivi_settings`
-- `suivi-api-proxy` : `agencies` → `agency_suivi_settings`
-- `suivi-sms-satisfaction-scan` : `agencies` → `agency_suivi_settings`
-- `suivi-record-payment` : `payments` → `payments_clients_suivi`
-- `suivi-check-payment-status` : `payments` → `payments_clients_suivi`
+**Donc** : un N2 en STARTER n'a pas accès à **Salariés** ni **Réunions** parce que `plan_tier_modules` les a à `enabled = false`. Ce n'est pas un choix produit voulu — c'est une erreur de configuration dans la migration initiale.
 
-### Phase 3 — AdminHubContent refactor
-- Remplacer pill `franchiseur` → `relations` (icône `Handshake`, accent `purple`)
-- Retirer `apporteurs` et `audit-apporteurs` de `GESTION_SUB_TABS`
-- Créer `RELATIONS_SUB_TABS` avec : Apporteurs, Audit Apporteurs, Suivi Clients
-- Ajouter `DEFAULT_RELATIONS_ORDER`, `admin_relations_tab_order`, `activeRelationsTab`
-- Nouveau `<TabsContent value="relations">` avec structure folder draggable identique à Gestion
-- Supprimer `<TabsContent value="franchiseur">` et l'import de `FranchiseurView`
+### 2. `organisation.reunions` — j'avais tort
 
-**Important** : `FranchiseurView` dans `UnifiedWorkspace.tsx` (vue standalone N3+) reste inchangée.
+`is_deployed = true` pour Réunions. Ce n'est pas un module en développement. Il est juste mal configuré dans le tier STARTER (`enabled = false`).
 
-### Phase 4 — SuiviClientsAdminView (nouveau composant)
-3 sections internes (onglets) :
-- **Agences** (`agency_suivi_settings`) : tableau éditable, modal d'édition
-- **Paiements** (`payments_clients_suivi`) : tableau paginé lecture seule, filtres agence/période
-- **Journal d'envois** (`sms_sent_log`) : tableau paginé lecture seule, filtres agence/statut/période
+### 3. `organisation.apporteurs` — double système
 
-Export depuis `admin/views/index.ts`.
+Actuellement, Apporteurs est :
+- Un module standard dans `module_registry` (PRO only)
+- ET une feature du pack Relations dans `agency_features`
 
-### Phase 5 — Routes legacy
-- Ajouter `/admin/franchiseur` → `/?tab=admin&adminTab=relations` dans `admin.routes.tsx`
+Ces deux systèmes ne communiquent pas. Activer le pack Relations dans `agency_features` n'active pas `organisation.apporteurs` dans le moteur de modules. Donc un STARTER avec Relations activé n'aura toujours pas accès à l'onglet Apporteurs côté navigation.
 
-### Fichiers impactés
-| Fichier | Action |
-|---|---|
-| Migration SQL | Renommage tables + vue |
-| `suivi-stripe-checkout/index.ts` | `agencies` → `agency_suivi_settings` |
-| `suivi-api-proxy/index.ts` | `agencies` → `agency_suivi_settings` |
-| `suivi-sms-satisfaction-scan/index.ts` | `agencies` → `agency_suivi_settings` |
-| `suivi-record-payment/index.ts` | `payments` → `payments_clients_suivi` |
-| `suivi-check-payment-status/index.ts` | `payments` → `payments_clients_suivi` |
-| `AdminHubContent.tsx` | Refactor tabs |
-| `SuiviClientsAdminView.tsx` | **Nouveau** |
-| `admin/views/index.ts` | Export |
-| `admin.routes.tsx` | Redirect legacy |
+### 4. Page Droits admin — Apporteurs mal catégorisé
+
+Dans `rightsTaxonomy.ts`, `organisation.apporteurs` est listé comme un module Organisation classique. Le user demande qu'il soit déplacé dans une section "Options" (ou "Relations") distincte, pour refléter qu'il est désormais une option payante du pack et non un module standard désactivable.
+
+---
+
+## Plan de correction
+
+### Étape 1 — Migration SQL : corriger plan_tier_modules STARTER
+
+```sql
+UPDATE plan_tier_modules SET enabled = true 
+WHERE tier_key = 'STARTER' AND module_key = 'organisation.salaries';
+
+UPDATE plan_tier_modules SET enabled = true 
+WHERE tier_key = 'STARTER' AND module_key = 'organisation.reunions';
+```
+
+Résultat : un N2 STARTER aura accès à Salariés et Réunions immédiatement.
+
+### Étape 2 — Taxonomie droits : déplacer Apporteurs dans une section "Options"
+
+Dans `rightsTaxonomy.ts` :
+- Retirer `organisation.apporteurs` de la catégorie `organisation`
+- Créer une nouvelle catégorie `options` (ou `relations`) contenant `organisation.apporteurs`
+- Label affiché : "Options / Pack Relations"
+
+### Étape 3 — Pont agency_features → modules (question ouverte)
+
+Quand le pack Relations est activé pour une agence via `agency_features`, faut-il automatiquement injecter `organisation.apporteurs` dans `user_modules` pour les utilisateurs de cette agence ? Sinon l'activation du pack Relations n'ouvre pas réellement l'onglet Apporteurs dans la navigation.
+
+**Deux options :**
+- **A)** Créer un trigger/hook qui, à l'activation du pack, insère un override `user_modules` pour les users de l'agence
+- **B)** Modifier la RPC `get_user_effective_modules` pour consulter aussi `agency_features` (interdit par contrainte)
+
+Option A est la seule viable vu les contraintes.
+
+---
+
+## Résumé des actions
+
+| # | Action | Impact |
+|---|--------|--------|
+| 1 | Fix `plan_tier_modules` STARTER : Salariés + Réunions = true | N2 STARTER retrouve accès |
+| 2 | Nouvelle catégorie "Options" dans `rightsTaxonomy.ts` | Admin voit Apporteurs séparé |
+| 3 | Pont activation pack → user_modules (si validé) | Pack Relations ouvre réellement l'onglet |
 
