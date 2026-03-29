@@ -18,7 +18,7 @@ import { Home, BarChart3, ShoppingCart, Users, Headphones, Shield, FolderOpen } 
 
 const ALL_TABS: TabConfig[] = [
   { id: 'accueil', label: 'Accueil', icon: Home },
-  { id: 'pilotage', label: 'Pilotage', icon: BarChart3, requiresOption: { module: 'pilotage.statistiques' } },
+  { id: 'pilotage', label: 'Pilotage', icon: BarChart3, requiresOption: { module: 'pilotage.statistiques' }, altModules: ['pilotage.agence'] },
   { id: 'commercial', label: 'Commercial', icon: ShoppingCart, requiresOption: { module: 'commercial' }, altModules: ['commercial.realisations'] },
   { id: 'organisation', label: 'Organisation', icon: Users, requiresOption: { module: 'organisation.salaries' }, altModules: ['organisation.parc'] },
   { id: 'documents', label: 'Documents', icon: FolderOpen, requiresOption: { module: 'mediatheque.documents' } },

@@ -47,7 +47,7 @@ export function WorkspaceNavLinks({ activeTab }: WorkspaceNavLinksProps) {
     { id: 'pilotage', label: getShortLabel('pilotage', 'Pilotage'), icon: BarChart3, requiresOption: { module: 'pilotage.statistiques' } },
     { id: 'commercial', label: getShortLabel('commercial', 'Commercial'), icon: ShoppingCart, requiresOption: { module: 'commercial.prospects' }, altModules: ['commercial.realisations', 'commercial.social'] },
     { id: 'organisation', label: getShortLabel('organisation', 'Organisation'), icon: Users, requiresOption: { module: 'organisation.salaries' }, altModules: ['organisation.parc', 'organisation.plannings', 'organisation.reunions'] },
-    { id: 'relations', label: getShortLabel('relations', 'Relations'), icon: Handshake, requiresOption: { module: 'relations' }, altModules: ['relations.suivi_client', 'relations.apporteurs', 'relations.echanges'] },
+    { id: 'relations', label: getShortLabel('relations', 'Relations'), icon: Handshake, altModules: ['relations.suivi_client', 'relations.apporteurs', 'relations.echanges'] },
     { id: 'documents', label: getShortLabel('mediatheque', 'Documents'), icon: FolderOpen, requiresOption: { module: 'mediatheque.documents' } },
     { id: 'support', label: getShortLabel('support', 'Support'), icon: Headphones },
     { id: 'ticketing', label: 'Ticketing', icon: Kanban, requiresOption: { module: 'ticketing' } },

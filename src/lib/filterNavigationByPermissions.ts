@@ -31,7 +31,7 @@ export function isWorkspaceTabVisible(
   perms: PermissionCheckers,
 ): boolean {
   // No guard = always visible (accueil, support)
-  if (!tab.requiresOption) return true;
+  if (!tab.requiresOption && !tab.altModules) return true;
 
   // Platform admin bypass
   if (perms.isPlatformAdmin) return true;
@@ -42,12 +42,14 @@ export function isWorkspaceTabVisible(
   // Ticketing: overwrite-only module — check via hasModule directly
   if (tab.id === 'ticketing') return perms.hasModule('ticketing' as ModuleKey);
 
-  // Check primary module
-  const { module, option } = tab.requiresOption;
-  if (option) {
-    if (perms.hasModuleOption(module as ModuleKey, option)) return true;
-  } else {
-    if (perms.hasModule(module as ModuleKey)) return true;
+  // Check primary module (if defined)
+  if (tab.requiresOption) {
+    const { module, option } = tab.requiresOption;
+    if (option) {
+      if (perms.hasModuleOption(module as ModuleKey, option)) return true;
+    } else {
+      if (perms.hasModule(module as ModuleKey)) return true;
+    }
   }
 
   // Check alternative modules
