@@ -37,6 +37,10 @@ export function UserPermissionsColumnV2({ userId, userRole, editMode }: Props) {
   const { tree, isLoading: modLoad } = useModuleCatalog();
   const upsert = useUpsertUserAccess();
   const remove = useRemoveUserAccess();
+
+  // Optimistic local overrides: key → desired granted state
+  const [optimistic, setOptimistic] = useState<Record<string, boolean>>({});
+
   // Sections racines dépliées par défaut
   const [expanded, setExpanded] = useState<Set<string>>(() => {
     return new Set(tree.filter(n => n.is_deployed).map(n => n.key));
@@ -51,8 +55,12 @@ export function UserPermissionsColumnV2({ userId, userRole, editMode }: Props) {
     return p && ['manual_exception', 'platform_assignment', 'agency_delegation'].includes(p.source_summary);
   };
 
-  const isGranted = (key: string) => permMap.get(key)?.granted ?? false;
+  const isGranted = (key: string) => {
+    if (key in optimistic) return optimistic[key];
+    return permMap.get(key)?.granted ?? false;
+  };
   const isDenied = (key: string) => {
+    if (key in optimistic) return !optimistic[key];
     const p = permMap.get(key);
     return p != null && !p.granted && p.source_summary === 'manual_exception';
   };
@@ -62,17 +70,30 @@ export function UserPermissionsColumnV2({ userId, userRole, editMode }: Props) {
     return (permMap.get(key)?.source_summary as PermissionSource) ?? null;
   };
 
-  const toggleModule = (key: string, currentlyGranted: boolean) => {
+  const toggleModule = useCallback((key: string, currentlyGranted: boolean) => {
+    const newState = !currentlyGranted;
+    // Optimistic update
+    setOptimistic(prev => ({ ...prev, [key]: newState }));
+
+    const onSettled = () => {
+      // Clear optimistic state after mutation settles (success or error)
+      setOptimistic(prev => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+    };
+
     if (currentlyGranted) {
       if (hasIndividualOverwrite(key)) {
-        remove.mutate({ user_id: userId, module_key: key });
+        remove.mutate({ user_id: userId, module_key: key }, { onSettled });
       } else {
-        upsert.mutate({ user_id: userId, module_key: key, granted: false, access_level: 'none' });
+        upsert.mutate({ user_id: userId, module_key: key, granted: false, access_level: 'none' }, { onSettled });
       }
     } else {
-      upsert.mutate({ user_id: userId, module_key: key, granted: true, access_level: 'full' });
+      upsert.mutate({ user_id: userId, module_key: key, granted: true, access_level: 'full' }, { onSettled });
     }
-  };
+  }, [userId, upsert, remove, permMap]);
 
   const toggleExpanded = (key: string) => {
     setExpanded(prev => {
