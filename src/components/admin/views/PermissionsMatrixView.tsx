@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Shield, ShieldCheck, ShieldX, Sparkles } from 'lucide-react';
+import { AdminViewHeader } from '@/components/admin/shared/AdminViewHeader';
 import { SOURCE_LABELS, PermissionSource } from '@/types/permissions-v2';
 
 const CATEGORY_ORDER = ['accueil', 'pilotage', 'commercial', 'organisation', 'mediatheque', 'support', 'ticketing', 'admin'];
@@ -116,13 +117,10 @@ export function PermissionsMatrixView() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">Matrice des droits</h2>
-          <p className="text-sm text-muted-foreground">Droits résolus par utilisateur sur tous les modules.</p>
-        </div>
-        <Badge variant="outline" className="text-xs">V2</Badge>
-      </div>
+      <AdminViewHeader
+        title="Matrice des droits"
+        subtitle="Droits résolus par utilisateur sur tous les modules."
+      />
 
       {/* Sélecteurs */}
       <div className="flex items-center gap-3">

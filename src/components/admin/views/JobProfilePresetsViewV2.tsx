@@ -5,6 +5,7 @@ import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, ChevronDown, ChevronRight } from 'lucide-react';
+import { AdminViewHeader } from '@/components/admin/shared/AdminViewHeader';
 
 const CATEGORY_ORDER = ['accueil', 'pilotage', 'commercial', 'organisation', 'mediatheque', 'support', 'ticketing', 'admin'];
 
@@ -62,15 +63,10 @@ export function JobProfilePresetsViewV2() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">Presets par poste</h2>
-          <p className="text-sm text-muted-foreground">
-            Modules attribués par défaut à la création d'un utilisateur selon son poste.
-          </p>
-        </div>
-        <Badge variant="outline" className="text-xs">V2</Badge>
-      </div>
+      <AdminViewHeader
+        title="Presets par poste"
+        subtitle="Modules attribués par défaut à la création d'un utilisateur selon son poste."
+      />
 
       <div className="space-y-3">
         {presets.map(preset => {

@@ -14,6 +14,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { GlobalRole } from '@/types/globalRoles';
 import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
+import { AdminViewHeader } from '@/components/admin/shared/AdminViewHeader';
 
 interface PendingRegistration {
   id: string;
@@ -189,19 +190,14 @@ export default function PendingRegistrationsList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div className="min-w-0">
-          <h2 className="text-lg font-semibold text-foreground">Demandes d'inscription</h2>
-          <p className="text-sm text-muted-foreground">Validation des nouvelles demandes d'accès au réseau.</p>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {pendingCount > 0 && (
-            <Badge className="bg-amber-500 text-white text-xs">{pendingCount} en attente</Badge>
-          )}
-          <Button size="sm" variant={filter === 'pending' ? 'default' : 'outline'} onClick={() => setFilter('pending')}>En attente</Button>
-          <Button size="sm" variant={filter === 'all' ? 'default' : 'outline'} onClick={() => setFilter('all')}>Toutes</Button>
-        </div>
-      </div>
+      <AdminViewHeader
+        title="Demandes d'inscription"
+        subtitle="Validation des nouvelles demandes d'accès au réseau."
+        badge={pendingCount > 0 ? `${pendingCount} en attente` : undefined}
+      >
+        <Button size="sm" variant={filter === 'pending' ? 'default' : 'outline'} onClick={() => setFilter('pending')}>En attente</Button>
+        <Button size="sm" variant={filter === 'all' ? 'default' : 'outline'} onClick={() => setFilter('all')}>Toutes</Button>
+      </AdminViewHeader>
 
       {isLoading ? (
         <div className="flex justify-center py-12">

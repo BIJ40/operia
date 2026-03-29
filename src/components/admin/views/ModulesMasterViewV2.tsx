@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Loader2, ChevronRight, ChevronDown } from 'lucide-react';
+import { AdminViewHeader } from '@/components/admin/shared/AdminViewHeader';
 
 const ROLE_LABELS: Record<number, string> = {
   0: 'Partenaire externe',
@@ -274,17 +275,10 @@ export function ModulesMasterViewV2() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">Gestion des Droits</h2>
-          <p className="text-sm text-muted-foreground">
-            Source de vérité unique. Déploiement, plans, rôles et privilèges individuels sur chaque nœud.
-          </p>
-        </div>
-        <Badge className="bg-primary/15 text-primary border-primary/30" variant="outline">
-          V2
-        </Badge>
-      </div>
+      <AdminViewHeader
+        title="Gestion des Droits"
+        subtitle="Source de vérité unique. Déploiement, plans, rôles et privilèges individuels sur chaque nœud."
+      />
 
       <div className="border border-border rounded-lg overflow-x-auto bg-card">
         <table className="w-full text-left">
