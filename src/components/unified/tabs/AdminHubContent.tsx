@@ -20,7 +20,9 @@ import {
   OpsView,
   PlateformeView,
   ModulesMasterView,
+  ModulesMasterViewV2,
 } from '@/components/admin/views';
+import { useAppFeatureFlag } from '@/hooks/useAppFeatureFlag';
 import { lazy, Suspense, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
@@ -88,6 +90,7 @@ const DEFAULT_RELATIONS_ORDER = ['apporteurs', 'audit-apporteurs', 'suivi-client
 const DEFAULT_OFFRES_ORDER = ['overview', 'agency-features'];
 
 export default function AdminHubContent() {
+  const useV2 = useAppFeatureFlag('USE_PERMISSIONS_V2');
   const { mode: navMode } = useNavigationMode();
   const [searchParams, setSearchParams] = useSearchParams();
   const [persistedMainTab, setPersistedMainTab] = usePersistedTab('admin_main_tab', 'gestion', ADMIN_MAIN_TAB_IDS);
@@ -194,7 +197,7 @@ export default function AdminHubContent() {
                   <ReseauView />
                 </TabsContent>
                 <TabsContent value="modules" className="mt-0 focus-visible:outline-none">
-                  <ModulesMasterView />
+                  {useV2 ? <ModulesMasterViewV2 /> : <ModulesMasterView />}
                 </TabsContent>
                 <TabsContent value="notes" className="mt-0 focus-visible:outline-none">
                   <Suspense fallback={<LoadingFallback />}><AdminNotesView /></Suspense>
