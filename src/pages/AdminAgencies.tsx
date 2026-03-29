@@ -442,108 +442,104 @@ export default function AdminAgencies() {
                   </div>
                 </button>
 
-                    <Collapsible open={isExpanded}>
-                      <CollapsibleContent>
-                        {totalCount === 0 ? (
-                          <div className="p-4 text-center text-muted-foreground">
-                            Aucun membre dans cette agence
-                          </div>
-                        ) : (
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Nom</TableHead>
-                                <TableHead>Email</TableHead>
-                                <TableHead>Rôle</TableHead>
-                                <TableHead>Statut</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {/* Registered users */}
-                              {agencyUsers.map((user) => (
-                                <TableRow key={user.id}>
-                                  <TableCell className="font-medium">
-                                    {user.first_name} {user.last_name}
-                                  </TableCell>
-                                  <TableCell className="text-sm text-muted-foreground">
-                                    {user.email}
-                                  </TableCell>
-                                  <TableCell>
-                                    {user.role_agence && (
-                                      <Badge variant="outline">{user.role_agence}</Badge>
-                                    )}
-                                  </TableCell>
-                                  <TableCell>
-                                    <Badge className="bg-emerald-600 hover:bg-emerald-700 text-xs">
-                                      Inscrit
-                                    </Badge>
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    <div className="flex gap-2 justify-end">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => navigate(ROUTES.admin.users)}
-                                        title="Voir dans gestion utilisateurs"
-                                      >
-                                        <User className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleAssignUser(user.id, null)}
-                                      >
-                                        Retirer
-                                      </Button>
-                                    </div>
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                              {/* Non-registered collaborators */}
-                              {unregistered.map((collab) => (
-                                <TableRow key={`collab-${collab.id}`} className="bg-muted/30">
-                                  <TableCell className="font-medium">
-                                    {collab.first_name} {collab.last_name}
-                                  </TableCell>
-                                  <TableCell className="text-sm text-muted-foreground">
-                                    {collab.email || '—'}
-                                  </TableCell>
-                                  <TableCell>
-                                    {(collab.role || collab.type) && (
-                                      <Badge variant="outline">{collab.role || collab.type}</Badge>
-                                    )}
-                                  </TableCell>
-                                  <TableCell>
-                                    <Badge variant="secondary" className="text-xs text-amber-700 bg-amber-100">
-                                      Non inscrit
-                                    </Badge>
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="gap-1 text-primary"
-                                      onClick={() => handleCreateUserFromCollab(collab, agency.slug)}
-                                    >
-                                      <UserPlus className="h-4 w-4" />
-                                      Créer le compte
-                                    </Button>
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        )}
-                      </CollapsibleContent>
-                    </Collapsible>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                {isExpanded && (
+                  <div className="p-4">
+                    {totalCount === 0 ? (
+                      <div className="text-center text-muted-foreground">
+                        Aucun membre dans cette agence
+                      </div>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Nom</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Rôle</TableHead>
+                            <TableHead>Statut</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {agencyUsers.map((user) => (
+                            <TableRow key={user.id}>
+                              <TableCell className="font-medium">
+                                {user.first_name} {user.last_name}
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {user.email}
+                              </TableCell>
+                              <TableCell>
+                                {user.role_agence && (
+                                  <Badge variant="outline">{user.role_agence}</Badge>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <Badge className="bg-emerald-600 hover:bg-emerald-700 text-xs">
+                                  Inscrit
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex gap-2 justify-end">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => navigate(ROUTES.admin.users)}
+                                    title="Voir dans gestion utilisateurs"
+                                  >
+                                    <User className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleAssignUser(user.id, null)}
+                                  >
+                                    Retirer
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                          {unregistered.map((collab) => (
+                            <TableRow key={`collab-${collab.id}`} className="bg-muted/30">
+                              <TableCell className="font-medium">
+                                {collab.first_name} {collab.last_name}
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {collab.email || '—'}
+                              </TableCell>
+                              <TableCell>
+                                {(collab.role || collab.type) && (
+                                  <Badge variant="outline">{collab.role || collab.type}</Badge>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="secondary" className="text-xs text-amber-700 bg-amber-100">
+                                  Non inscrit
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="gap-1 text-primary"
+                                  onClick={() => handleCreateUserFromCollab(collab, agency.slug)}
+                                >
+                                  <UserPlus className="h-4 w-4" />
+                                  Créer le compte
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
