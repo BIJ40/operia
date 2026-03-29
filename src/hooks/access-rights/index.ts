@@ -1,10 +1,8 @@
 /**
- * Access Rights Hooks - Barrel Export
+ * Access Rights Hooks - Barrel Export (V2 cleaned)
  */
 
 export * from './useAccessRightsUsers';
-export * from './useAgencySubscription';
-export * from './usePlanTiers';
 export * from './usePermissionAudit';
 export * from './usePlanAccess';
 export * from './useUserPageOverrides';
