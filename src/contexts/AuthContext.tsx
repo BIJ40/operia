@@ -144,9 +144,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .select('first_name, last_name, agency_id, role_agence, must_change_password, global_role, is_active, is_read_only, phone, poste')
             .eq('id', userId)
             .single(),
-          (supabase.rpc as any)('get_user_effective_modules', { p_user_id: userId }),
-          (supabase
-            .from('module_registry' as any) as any)
+          supabase.rpc('get_user_permissions', { p_user_id: userId }),
+          supabase
+            .from('module_catalog')
             .select('key')
             .eq('is_deployed', true),
         ]),
@@ -171,7 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       if (modulesError) {
-        logAuth.warn('[AUTH] Erreur requête get_user_effective_modules:', modulesError);
+        logAuth.warn('[AUTH] Erreur requête get_user_permissions:', modulesError);
       }
       
       setFirstName(profile?.first_name || null);
@@ -210,37 +210,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       let resolvedModules: EnabledModules = {};
       if (effectiveModules && Array.isArray(effectiveModules) && effectiveModules.length > 0) {
-        for (const row of effectiveModules) {
-          const moduleKey = row.module_key;
-          resolvedModules[moduleKey] = {
-            enabled: row.granted === true,
+        const grantedModules = effectiveModules.filter((m: any) => m.granted && m.access_level !== 'none');
+        for (const row of grantedModules) {
+          resolvedModules[row.module_key] = {
+            enabled: true,
             options: (typeof row.options === 'object' && row.options !== null) 
               ? row.options as Record<string, boolean>
               : {},
           };
         }
 
-        // PRO plan auto-enrichment (check hierarchical + legacy keys for safety)
-        // reseau_franchiseur retiré — interface de rôle, pas un indicateur de plan PRO
-        const parcModule = (resolvedModules['organisation.parc'] || resolvedModules.parc) as any;
-        const isProAgency = !!(
-          (parcModule && typeof parcModule === 'object' && parcModule.enabled)
-        );
-
-        const agenceModule = (resolvedModules['pilotage.agence'] || resolvedModules.agence) as any;
-        if (isProAgency && agenceModule && typeof agenceModule === 'object' && agenceModule.enabled) {
-          const agenceOptions = (agenceModule.options && typeof agenceModule.options === 'object')
-            ? agenceModule.options as Record<string, boolean>
-            : {};
-
-          resolvedModules['pilotage.agence'] = {
-            enabled: true,
-            options: { ...agenceOptions, stats_hub: true },
-          } as any;
-        }
-
         if (import.meta.env.DEV) {
-          logAuth.info('[AUTH] Modules loaded from RPC:', effectiveModules.length);
+          logAuth.info('[AUTH] Modules loaded from get_user_permissions:', grantedModules.length, '/', effectiveModules.length);
         }
       } else {
         resolvedModules = {};
