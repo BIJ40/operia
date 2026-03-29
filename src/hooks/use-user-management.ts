@@ -188,7 +188,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
           email, 
           first_name, 
           last_name, 
-          agence,
+          agency_id,
           agency_id,
           global_role, 
           role_agence, 

@@ -18,7 +18,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 interface ProfileData {
-  agence: string | null;
+  agence: string | null; // resolved from agency_id
 }
 
 export default function Agency() {
@@ -42,13 +42,19 @@ export default function Agency() {
       setIsLoading(true);
       const { data, error } = await supabase
         .from('profiles')
-        .select('agence')
+        .select('agency_id')
         .eq('id', user.id)
         .maybeSingle();
 
       if (error) throw error;
       if (data) {
-        setProfile(data as ProfileData);
+        // Resolve slug from agency_id
+        let slug: string | null = null;
+        if (data.agency_id) {
+          const { data: ag } = await supabase.from('apogee_agencies').select('slug').eq('id', data.agency_id).single();
+          slug = ag?.slug || null;
+        }
+        setProfile({ agence: slug });
       }
     } catch (error) {
       logError('Error loading profile:', error);
