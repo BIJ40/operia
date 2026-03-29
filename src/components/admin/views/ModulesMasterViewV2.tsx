@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useModuleCatalog, ModuleCatalogTree, filterDeployedOnly } from '@/hooks/access-rights/useModuleCatalog';
+import { usePlanCatalog, PlanWithGrants } from '@/hooks/access-rights/usePlanCatalog';
 import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -84,6 +85,9 @@ function ModuleRow({
   onToggleCore,
   onUpdateMinRole,
   onToggleDistribution,
+  plans,
+  getPlanGrant,
+  onUpdatePlanGrant,
 }: {
   module: ModuleCatalogTree;
   isN6: boolean;
@@ -91,6 +95,9 @@ function ModuleRow({
   onToggleCore: (key: string, value: boolean) => void;
   onUpdateMinRole: (key: string, value: number) => void;
   onToggleDistribution: (key: string, field: 'via_plan' | 'via_agency_option' | 'via_user_assignment', value: boolean) => void;
+  plans: PlanWithGrants[];
+  getPlanGrant: (planId: string, moduleKey: string) => 'none' | 'read' | 'full';
+  onUpdatePlanGrant: (planId: string, moduleKey: string, level: 'none' | 'read' | 'full') => void;
 }) {
   const [expanded, setExpanded] = useState(true);
   const indent = module.depth * 20;
