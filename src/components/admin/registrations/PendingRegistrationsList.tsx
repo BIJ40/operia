@@ -188,15 +188,16 @@ export default function PendingRegistrationsList() {
   const needsAgency = ['franchisee_admin', 'franchisee_user'].includes(selectedRole);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold">Demandes d'inscription</h2>
-          {pendingCount > 0 && (
-            <Badge className="bg-amber-500 text-white">{pendingCount} en attente</Badge>
-          )}
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <h2 className="text-lg font-semibold text-foreground">Demandes d'inscription</h2>
+          <p className="text-sm text-muted-foreground">Validation des nouvelles demandes d'accès au réseau.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {pendingCount > 0 && (
+            <Badge className="bg-amber-500 text-white text-xs">{pendingCount} en attente</Badge>
+          )}
           <Button size="sm" variant={filter === 'pending' ? 'default' : 'outline'} onClick={() => setFilter('pending')}>En attente</Button>
           <Button size="sm" variant={filter === 'all' ? 'default' : 'outline'} onClick={() => setFilter('all')}>Toutes</Button>
         </div>

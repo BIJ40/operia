@@ -273,7 +273,7 @@ export function ModulesMasterViewV2() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-foreground">Gestion des Droits</h2>

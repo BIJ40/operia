@@ -293,18 +293,21 @@ export default function AdminAgencies() {
   };
 
   return (
-    <div className="container mx-auto max-w-app p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Gestion des Agences</h1>
-          <p className="text-muted-foreground mt-1">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <h2 className="text-lg font-semibold text-foreground">Gestion des Agences</h2>
+          <p className="text-sm text-muted-foreground">
             Configuration des agences et attribution des utilisateurs
           </p>
         </div>
-        <Button onClick={() => openDialog()}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nouvelle agence
-        </Button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Button size="sm" onClick={() => openDialog()}>
+            <Plus className="h-4 w-4 mr-1.5" />
+            Nouvelle agence
+          </Button>
+          <Badge variant="outline" className="text-xs">V2</Badge>
+        </div>
       </div>
 
       {/* Utilisateurs sans agence */}
