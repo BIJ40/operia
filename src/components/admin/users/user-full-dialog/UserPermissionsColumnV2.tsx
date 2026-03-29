@@ -85,13 +85,25 @@ export function UserPermissionsColumnV2({ userId, userRole, editMode }: Props) {
     };
 
     if (currentlyGranted) {
-      if (hasIndividualOverwrite(key)) {
+      const source = getSource(key);
+      const isManualException = source === 'manual_exception';
+      if (isManualException) {
+        // It was manually granted → just remove the row to revert to plan/platform state
         remove.mutate({ user_id: userId, module_key: key }, { onSettled });
       } else {
+        // Granted via plan/platform/delegation → create explicit deny
         upsert.mutate({ user_id: userId, module_key: key, granted: false, access_level: 'none' }, { onSettled });
       }
     } else {
-      upsert.mutate({ user_id: userId, module_key: key, granted: true, access_level: 'full' }, { onSettled });
+      const source = getSource(key);
+      const isDenyException = source === 'manual_exception';
+      if (isDenyException) {
+        // It was manually denied → remove the deny to revert to plan/platform state
+        remove.mutate({ user_id: userId, module_key: key }, { onSettled });
+      } else {
+        // Not granted at all → create explicit grant
+        upsert.mutate({ user_id: userId, module_key: key, granted: true, access_level: 'full' }, { onSettled });
+      }
     }
   }, [userId, upsert, remove, permMap]);
 
