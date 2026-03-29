@@ -66,12 +66,12 @@ serve(async (req) => {
     // Récupérer le profil de l'appelant
     const { data: callerProfile } = await supabaseAdmin
       .from('profiles')
-      .select('global_role, agence')
+      .select('global_role, agency_id')
       .eq('id', user.id)
       .single()
 
     const callerLevel = getRoleLevel(callerProfile?.global_role)
-    const callerAgency = callerProfile?.agence || null
+    const callerAgency = callerProfile?.agency_id || null
 
     console.log(`[delete-user] Appelant: ${user.id}, N${callerLevel}`)
 
@@ -90,7 +90,7 @@ serve(async (req) => {
     // Récupérer le profil de la cible
     const { data: targetProfile } = await supabaseAdmin
       .from('profiles')
-      .select('global_role, agence, email')
+      .select('global_role, agency_id, email')
       .eq('id', userId)
       .single()
 

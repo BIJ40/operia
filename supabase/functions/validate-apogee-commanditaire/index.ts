@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
     // 7. Optionnel: récupérer le nom du commanditaire
     let commanditaireName: string | undefined;
     try {
-      const clientsUrl = `https://${profile.agence}.hc-apogee.fr/api/apiGetClients`;
+      const clientsUrl = `https://${agencySlug}.hc-apogee.fr/api/apiGetClients`;
       const clientsResponse = await fetch(clientsUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

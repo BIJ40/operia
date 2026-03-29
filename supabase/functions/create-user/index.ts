@@ -50,12 +50,12 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
     // Récupérer le profil de l'appelant
     const { data: callerProfile } = await supabaseAdmin
       .from('profiles')
-      .select('global_role, agence, agency_id')
+      .select('global_role, agency_id')
       .eq('id', user.id)
       .single()
 
     const callerLevel = getRoleLevel(callerProfile?.global_role)
-    const callerAgency = callerProfile?.agence || null
+    const callerAgency = callerProfile?.agency_id || null
     const callerAgencyId = callerProfile?.agency_id || null
 
     console.log(`[create-user] Appelant: N${callerLevel}`)

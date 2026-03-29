@@ -516,11 +516,14 @@ Deno.serve(async (req) => {
           userId = user.id;
           const { data: profile } = await supabaseClient
             .from('profiles')
-            .select('global_role, agence')
+            .select('global_role, agency_id')
             .eq('id', user.id)
             .maybeSingle();
           globalRole = profile?.global_role ?? undefined;
-          agencySlug = profile?.agence ?? undefined;
+          if (profile?.agency_id) {
+            const { data: agRow } = await supabaseClient.from('apogee_agencies').select('slug').eq('id', profile.agency_id).maybeSingle();
+            agencySlug = agRow?.slug ?? undefined;
+          }
         }
       }
     } catch (_) {
