@@ -10,7 +10,7 @@ import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBr
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { EnabledModules, ModuleKey } from '@/types/modules';
 import { getUserManagementCapabilities, UserManagementCapabilities } from '@/config/roleMatrix';
-import { enabledModulesToRows, userModulesToEnabledModules } from '@/lib/userModulesUtils';
+
 import { logAuth } from '@/lib/logger';
 import { toast } from 'sonner';
 import { USER_QUERY_KEYS, ALL_USER_QUERY_PATTERNS } from '@/lib/queryKeys';
@@ -80,37 +80,10 @@ export function useAccessRightsUsers() {
       
       if (profilesError) throw profilesError;
       
-      // Fetch user_modules for all users (source of truth for modules)
-      const userIds = profilesData?.map(p => p.id) ?? [];
-      const { data: modulesData } = await (supabase
-        .from('user_modules' as any) as any)
-        .select('user_id, module_key, options')
-        .in('user_id', userIds);
-      
-      // Group modules by user_id
-      const modulesByUser = new Map<string, { module_key: string; options: unknown }[]>();
-      modulesData?.forEach(row => {
-        const existing = modulesByUser.get(row.user_id) || [];
-        existing.push({ module_key: row.module_key, options: row.options });
-        modulesByUser.set(row.user_id, existing);
-      });
-      
-      // Fetch all agencies to resolve by slug when agency_id is null
-      const { data: allAgencies } = await supabase
-        .from('apogee_agencies')
-        .select('id, label, slug');
-      
-      const agencyBySlug = new Map(allAgencies?.map(a => [a.slug?.toLowerCase(), a]) ?? []);
-      
-      // Enrich users with modules from user_modules table
       const enrichedUsers = profilesData?.map(user => {
-        const userModules = modulesByUser.get(user.id);
-        const enabled_modules = userModulesToEnabledModules(userModules ?? []);
-        
-        let enrichedUser = { ...user, enabled_modules };
+        let enrichedUser = { ...user, enabled_modules: null as EnabledModules | null };
         
         if (!user.agency && user.agency_id) {
-          // agency join should have resolved this, but fallback
           const resolvedAgency = allAgencies?.find(a => a.id === user.agency_id);
           if (resolvedAgency) {
             enrichedUser = { ...enrichedUser, agency: resolvedAgency };
@@ -208,18 +181,7 @@ export function useAccessRightsUsers() {
       const { error } = await supabase.from('profiles').update(data).eq('id', userId);
       if (error) throw error;
       
-      // 2. Sauvegarder les modules si fournis
-      if (enabledModules !== undefined) {
-        await (supabase.from('user_modules' as any) as any).delete().eq('user_id', userId);
-        
-        if (enabledModules) {
-          const moduleRows = enabledModulesToRows(userId, enabledModules, user?.id);
-          if (moduleRows.length > 0) {
-            const { error: insertError } = await (supabase.from('user_modules' as any) as any).insert(moduleRows);
-            if (insertError) throw insertError;
-          }
-        }
-      }
+      // Modules are managed via V2 permissions system, no user_modules writes needed
       
       return { userId, data, enabledModules };
     },
@@ -354,16 +316,7 @@ export function useAccessRightsUsers() {
       userId: string; 
       enabledModules: EnabledModules | null;
     }) => {
-      await (supabase.from('user_modules' as any) as any).delete().eq('user_id', userId);
-      
-      if (enabledModules) {
-        const moduleRows = enabledModulesToRows(userId, enabledModules, user?.id);
-        if (moduleRows.length > 0) {
-          const { error: insertError } = await (supabase.from('user_modules' as any) as any).insert(moduleRows);
-          if (insertError) throw insertError;
-        }
-      }
-      
+      // Modules are managed via V2 permissions system
       return { userId, enabledModules };
     },
     onSuccess: async () => {
