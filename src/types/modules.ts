@@ -18,7 +18,8 @@ export const MODULES = {
   unified_search: 'unified_search',
 
   // ── Phase 3 — Nouvelles clés fonctionnelles (sans racines) ──
-  // Pilotage
+  // Pilotage (racine + feuilles)
+  'pilotage': 'pilotage',
   'pilotage.statistiques': 'pilotage.statistiques',
   'pilotage.statistiques.general': 'pilotage.statistiques.general',
   'pilotage.statistiques.apporteurs': 'pilotage.statistiques.apporteurs',
