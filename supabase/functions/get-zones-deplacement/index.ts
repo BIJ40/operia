@@ -242,7 +242,7 @@ Deno.serve(async (req) => {
     // Get user profile for agency access
     const { data: profile } = await supabase
       .from('profiles')
-      .select('agence, global_role')
+      .select('agency_id, global_role')
       .eq('id', user.id)
       .single();
 
@@ -255,9 +255,17 @@ Deno.serve(async (req) => {
 
     const globalRole = profile.global_role || '';
     const isFranchiseur = ['franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(globalRole);
-    let targetAgency = agencySlug || profile.agence;
+    
+    // Resolve slug from agency_id
+    let profileAgencySlug: string | null = null;
+    if (profile.agency_id) {
+      const { data: agRow } = await supabase.from('apogee_agencies').select('slug').eq('id', profile.agency_id).eq('is_active', true).maybeSingle();
+      profileAgencySlug = agRow?.slug ?? null;
+    }
+    
+    let targetAgency = agencySlug || profileAgencySlug;
 
-    if (agencySlug && agencySlug !== profile.agence && !isFranchiseur) {
+    if (agencySlug && agencySlug !== profileAgencySlug && !isFranchiseur) {
       return withCors(req, new Response(
         JSON.stringify({ success: false, error: 'Access denied' }),
         { status: 403, headers: { 'Content-Type': 'application/json' } }

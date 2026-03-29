@@ -50,12 +50,12 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
     // Récupérer le profil de l'appelant
     const { data: callerProfile } = await supabaseAdmin
       .from('profiles')
-      .select('global_role, agence, agency_id')
+      .select('global_role, agency_id')
       .eq('id', user.id)
       .single()
 
     const callerLevel = getRoleLevel(callerProfile?.global_role)
-    const callerAgency = callerProfile?.agence || null
+    const callerAgency = callerProfile?.agency_id || null
     const callerAgencyId = callerProfile?.agency_id || null
 
     console.log(`[create-user] Appelant: N${callerLevel}`)
@@ -162,11 +162,10 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
 
     // N2 ne peut créer que dans sa propre agence
     if (callerLevel === GLOBAL_ROLES.franchisee_admin) {
-      const sameAgencyBySlug = targetAgency && callerAgency && targetAgency === callerAgency
       const sameAgencyById = targetAgencyId && callerAgencyId && targetAgencyId === callerAgencyId
       
-      if (!sameAgencyBySlug && !sameAgencyById) {
-        console.log(`[create-user] N2 tente de créer hors agence: ${targetAgency} != ${callerAgency}`)
+      if (!sameAgencyById) {
+        console.log(`[create-user] N2 tente de créer hors agence: ${targetAgencyId} != ${callerAgencyId}`)
         throw new Error('Vous ne pouvez créer des utilisateurs que dans votre propre agence')
       }
     }
@@ -280,7 +279,6 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
 
     // Mettre à jour le profil
     const profileUpdate: Record<string, any> = { 
-      agence: targetAgency,
       agency_id: targetAgencyId,
       must_change_password: !username, // N1 avec pseudo: pas de changement de mot de passe obligatoire
       global_role: globalRole

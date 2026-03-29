@@ -98,7 +98,7 @@ serve(async (req) => {
     // Get caller profile to check role
     const { data: callerProfile, error: profileError } = await userClient
       .from('profiles')
-      .select('global_role, agence')
+      .select('global_role, agency_id')
       .eq('id', caller.id)
       .single();
 

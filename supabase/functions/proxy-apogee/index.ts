@@ -325,7 +325,7 @@ Deno.serve(async (req) => {
     // 2. Récupérer le profil utilisateur (déplacé avant rate limit pour adapter la limite)
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('agence, global_role')
+      .select('agency_id, global_role')
       .eq('id', user.id)
       .single();
 
@@ -384,28 +384,17 @@ Deno.serve(async (req) => {
     }
 
     // 6. Déterminer l'agence cible avec contrôle d'accès
-    let targetAgency = profile?.agence || null;
-    
-    // FALLBACK: Si agence slug est null mais agency_id existe dans le profil, résoudre le slug
-    if (!targetAgency && profile) {
-      const { data: profileWithAgency } = await supabase
-        .from('profiles')
-        .select('agency_id')
-        .eq('id', user.id)
-        .single();
-      
-      if (profileWithAgency?.agency_id) {
-        const { data: resolvedAgency } = await supabase
-          .from('apogee_agencies')
-          .select('slug')
-          .eq('id', profileWithAgency.agency_id)
-          .eq('is_active', true)
-          .maybeSingle();
-        
-        if (resolvedAgency?.slug) {
-          console.log(`[PROXY-APOGEE] Resolved agency slug from agency_id: ${resolvedAgency.slug} for user ${user.id.substring(0, 8)}...`);
-          targetAgency = resolvedAgency.slug;
-        }
+    // Résoudre le slug depuis agency_id (source de vérité UUID)
+    let targetAgency: string | null = null;
+    if (profile?.agency_id) {
+      const { data: resolvedAgency } = await supabase
+        .from('apogee_agencies')
+        .select('slug')
+        .eq('id', profile.agency_id)
+        .eq('is_active', true)
+        .maybeSingle();
+      if (resolvedAgency?.slug) {
+        targetAgency = resolvedAgency.slug;
       }
     }
     
@@ -426,7 +415,7 @@ Deno.serve(async (req) => {
     }
     
     // MODE DÉMO: Les utilisateurs N0 (base_user sans agence) peuvent accéder à DAX en lecture seule
-    const isN0DemoUser = !profile?.agence && profile?.global_role === 'base_user';
+    const isN0DemoUser = !targetAgency && profile?.global_role === 'base_user';
     const DEMO_AGENCY_SLUG = 'dax';
     
     // Si une agence spécifique est demandée (pour franchiseur ou mode démo)

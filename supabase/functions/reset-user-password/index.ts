@@ -51,12 +51,12 @@ serve(async (req) => {
     // Récupérer le profil de l'appelant
     const { data: callerProfile } = await supabaseAdmin
       .from('profiles')
-      .select('global_role, agence')
+      .select('global_role, agency_id')
       .eq('id', userId)
       .single()
 
     const callerLevel = getRoleLevel(callerProfile?.global_role)
-    const callerAgency = callerProfile?.agence || null
+    const callerAgency = callerProfile?.agency_id || null
 
     console.log(`[reset-user-password] Appelant: ${userId}, N${callerLevel}`)
 
@@ -78,14 +78,14 @@ serve(async (req) => {
     // Récupérer le profil de la cible
     const { data: targetProfile } = await supabaseAdmin
       .from('profiles')
-      .select('global_role, agence, email, first_name, last_name')
+      .select('global_role, agency_id, email, first_name, last_name')
       .eq('id', targetUserId)
       .single()
 
     const targetLevel = getRoleLevel(targetProfile?.global_role)
-    const targetAgency = targetProfile?.agence || null
+    const targetAgency = targetProfile?.agency_id || null
 
-    console.log(`[reset-user-password] Cible: ${targetUserId}, N${targetLevel}, agence: ${targetAgency}`)
+    console.log(`[reset-user-password] Cible: ${targetUserId}, N${targetLevel}, agency_id: ${targetAgency}`)
 
     // Vérifier les droits
     const resetCheck = canResetPassword(callerLevel, targetLevel, callerAgency, targetAgency)

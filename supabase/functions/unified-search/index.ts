@@ -909,12 +909,12 @@ serve(async (req) => {
     const rateLimitResult = await checkRateLimit(`unified-search:${user.id}`, { limit: 30, windowMs: 60000 });
     if (!rateLimitResult.allowed) return rateLimitResponse(rateLimitResult.retryAfter || 60, corsHeaders);
 
-    const { data: profile } = await supabase.from('profiles').select('agence, global_role, first_name, last_name').eq('id', user.id).maybeSingle();
+    const { data: profile } = await supabase.from('profiles').select('agency_id, global_role, first_name, last_name').eq('id', user.id).maybeSingle();
     const globalRole = profile?.global_role || 'base_user';
     const roleLevel = getRoleLevel(globalRole);
     
     // Déterminer les types de blocs autorisés pour la recherche documentaire
-    // Source de vérité : user_modules (pas enabled_modules legacy)
+    // Source de vérité : user_access (V2)
     // N5+ (platform_admin/superadmin) ont accès à tout inconditionnellement
     const allowedBlockTypes: string[] = ['faq']; // FAQ toujours accessible
     
@@ -922,26 +922,31 @@ serve(async (req) => {
       // Superadmin/platform_admin : accès total
       allowedBlockTypes.push('apogee', 'helpconfort', 'document');
     } else {
-      // Vérifier les modules via user_modules (source de vérité)
-      const { data: userModules } = await supabase
-        .from('user_modules')
+      // Vérifier les modules via user_access (V2 source de vérité)
+      const { data: userAccess } = await supabase
+        .from('user_access')
         .select('module_key')
         .eq('user_id', user.id)
-        // legacy compat — 'help_academy' à supprimer après migration DB des user_modules/plan_tier_modules
         .in('module_key', ['guides', 'help_academy']);
       
-      const moduleKeys = (userModules || []).map((m: any) => m.module_key);
+      const moduleKeys = (userAccess || []).map((m: any) => m.module_key);
       const hasGuidesAccess = moduleKeys.includes('guides') || moduleKeys.includes('help_academy');
       
       if (hasGuidesAccess) {
         allowedBlockTypes.push('apogee', 'helpconfort', 'document');
       }
-      console.log(`[unified-search] user_modules check: modules=[${moduleKeys.join(', ')}], hasGuidesAccess=${hasGuidesAccess}`);
+      console.log(`[unified-search] user_access check: modules=[${moduleKeys.join(', ')}], hasGuidesAccess=${hasGuidesAccess}`);
     }
     console.log(`[unified-search] Doc permissions: roleLevel=N${roleLevel}, allowedBlockTypes=[${allowedBlockTypes.join(', ')}]`);
-    const agencySlug = profile?.agence || '';
     
-    const context: AiSearchContext = { userId: user.id, role: globalRole, roleLevel, agencyId: null, agencySlug: agencySlug || null, allowedAgencyIds: roleLevel >= 3 ? [] : undefined };
+    // Resolve agency slug from agency_id
+    let agencySlug = '';
+    if (profile?.agency_id) {
+      const { data: agRow } = await supabase.from('apogee_agencies').select('slug').eq('id', profile.agency_id).eq('is_active', true).maybeSingle();
+      agencySlug = agRow?.slug || '';
+    }
+    
+    const context: AiSearchContext = { userId: user.id, role: globalRole, roleLevel, agencyId: profile?.agency_id || null, agencySlug: agencySlug || null, allowedAgencyIds: roleLevel >= 3 ? [] : undefined };
     console.log(`[unified-search] User id=${user.id}, role=${globalRole} (N${roleLevel}), agence=${agencySlug}`);
 
     const body: UnifiedSearchRequestBody = await req.json();

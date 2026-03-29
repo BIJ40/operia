@@ -199,6 +199,5 @@ function sanitizeForExport(obj: Record<string, unknown>): Record<string, unknown
   const sanitized = { ...obj };
   // Remove internal/technical fields that shouldn't be exported
   delete sanitized.search_vector;
-  delete sanitized.agency_id; // Keep agency info via profile.agence instead
   return sanitized;
 }
