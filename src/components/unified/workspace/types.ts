@@ -7,6 +7,7 @@ export type UnifiedTab =
   | 'pilotage' 
   | 'commercial' 
   | 'organisation' 
+  | 'relations'
   | 'documents'
   | 'support' 
   | 'ticketing'
@@ -20,4 +21,4 @@ export interface TabConfig {
   altModules?: string[];
 }
 
-export const DEFAULT_TAB_ORDER: UnifiedTab[] = ['pilotage', 'commercial', 'organisation', 'documents', 'support', 'ticketing', 'admin'];
+export const DEFAULT_TAB_ORDER: UnifiedTab[] = ['pilotage', 'commercial', 'organisation', 'relations', 'documents', 'support', 'ticketing', 'admin'];

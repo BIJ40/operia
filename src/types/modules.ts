@@ -171,8 +171,9 @@ export type ModuleOptionPath = typeof MODULE_OPTIONS[LegacyModuleKey][keyof type
 // Les catégories correspondent EXACTEMENT aux onglets de niveau 1 du workspace
 export type ModuleCategory = 
   | 'pilotage'      // Onglet "Pilotage" (Stats, Performance, Actions)
-  | 'commercial'    // Onglet "Commercial" (Prospection, Devis acceptés, Incohérences)
-  | 'organisation'  // Onglet "Organisation" (Collaborateurs, Apporteurs, Plannings, Réunions, Parc, Conformité)
+  | 'commercial'    // Onglet "Commercial" (Veille, Comparateur, Prospects, Réalisations)
+  | 'organisation'  // Onglet "Organisation" (Collaborateurs, Plannings, Réunions, Parc, Conformité)
+  | 'relations'     // Onglet "Relations" (Apporteurs)
   | 'documents'     // Onglet "Documents" (Médiathèque)
   | 'support'       // Onglet "Support" (Aide en ligne, Guides, FAQ, Ticketing)
   | 'reseau'        // Onglet "Franchiseur" (visible N3+)
