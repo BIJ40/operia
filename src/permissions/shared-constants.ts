@@ -27,6 +27,31 @@ export const SHARED_ROLE_HIERARCHY = {
 
 export type SharedGlobalRole = keyof typeof SHARED_ROLE_HIERARCHY;
 
+/**
+ * Vérifie si un rôle atteint le niveau minimum requis.
+ * Fonction pure sans dépendance externe — utilisable partout.
+ */
+export function hasMinRole(role: SharedGlobalRole | null, minRole: SharedGlobalRole): boolean {
+  if (!role) return false;
+  return (SHARED_ROLE_HIERARCHY[role] ?? 0) >= (SHARED_ROLE_HIERARCHY[minRole] ?? 0);
+}
+
+/**
+ * Retourne le niveau numérique d'un rôle.
+ */
+export function getRoleLevel(role: SharedGlobalRole | null): number {
+  if (!role) return 0;
+  return SHARED_ROLE_HIERARCHY[role] ?? 0;
+}
+
+/**
+ * Vérifie si un rôle est un bypass (N5+)
+ */
+export function isBypassRole(role: SharedGlobalRole | null): boolean {
+  if (!role) return false;
+  return SHARED_BYPASS_ROLES.includes(role);
+}
+
 // ============================================================================
 // MODULE KEYS V3
 // ============================================================================
