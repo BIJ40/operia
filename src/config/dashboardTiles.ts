@@ -72,7 +72,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: 'mes_indicateurs',
     color: 'accent',
     group: 'pilotage',
-    requiresModule: 'pilotage.agence',
+    requiresModule: 'pilotage.statistiques',
   },
   {
     id: 'ACTIONS_A_MENER',
@@ -83,7 +83,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: 'actions_a_mener',
     color: 'accent',
     group: 'pilotage',
-    requiresModule: 'pilotage.agence',
+    requiresModule: 'pilotage.actions_a_mener',
     featureFlagKey: 'pilotage.actions-mener',
   },
   // HIDDEN: Veille Apporteurs - temporairement désactivé (voir /admin/hidden-features)
@@ -107,7 +107,7 @@ export const DASHBOARD_TILES: DashboardTile[] = [
     scopeSlug: 'diffusion',
     color: 'accent',
     group: 'pilotage',
-    requiresModule: 'pilotage.agence',
+    requiresModule: 'pilotage',
     featureFlagKey: 'pilotage.diffusion',
     badge: 'En cours',
   },

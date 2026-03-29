@@ -121,7 +121,7 @@ function UnifiedWorkspaceContent() {
     { id: 'pilotage', label: getShortLabel('pilotage', 'Pilotage'), icon: BarChart3, requiresOption: { module: 'pilotage.statistiques' }, altModules: ['pilotage.agence'] },
     { id: 'commercial', label: getShortLabel('commercial', 'Commercial'), icon: ShoppingCart, requiresOption: { module: 'commercial' }, altModules: ['pilotage.agence', 'commercial.realisations', 'commercial.prospects', 'commercial.social'] },
     { id: 'organisation', label: getShortLabel('organisation', 'Organisation'), icon: Users, requiresOption: { module: 'organisation.salaries' }, altModules: ['organisation.parc', 'organisation.plannings', 'organisation.reunions', 'pilotage.agence'] },
-    { id: 'relations', label: getShortLabel('relations', 'Relations'), icon: Handshake, requiresOption: { module: 'relations.apporteurs' } },
+    { id: 'relations', label: getShortLabel('relations', 'Relations'), icon: Handshake, requiresOption: { module: 'relations' } },
     { id: 'documents', label: getShortLabel('mediatheque', 'Documents'), icon: FolderOpen, requiresOption: { module: 'mediatheque.documents' } },
     { id: 'support', label: getShortLabel('support', 'Support'), icon: Headphones },
     { id: 'ticketing', label: 'Ticketing', icon: Kanban, requiresOption: { module: 'ticketing' } },
