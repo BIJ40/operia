@@ -140,7 +140,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         Promise.all([
           supabase
             .from('profiles')
-            .select('first_name, last_name, agency_id, role_agence, must_change_password, global_role, is_active, is_read_only')
             // @ts-ignore — phone & poste may not be in generated types yet
             .select('first_name, last_name, agency_id, role_agence, must_change_password, global_role, is_active, is_read_only, phone, poste')
             .eq('id', userId)
