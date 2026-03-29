@@ -181,23 +181,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAgencyId(profile?.agency_id || null);
       setRoleAgence(profile?.role_agence || null);
       
-      // Resolve agence slug from apogee_agencies via agency_id
-      let resolvedAgence: string | null = null;
       if (profile?.agency_id) {
-        try {
-          const { data: agency } = await supabase
-            .from('apogee_agencies')
-            .select('slug')
-            .eq('id', profile.agency_id)
-            .single();
-          if (agency?.slug) {
-            resolvedAgence = agency.slug;
-          }
-        } catch (e) {
-          logAuth.warn('[AUTH] Failed to resolve agence slug from agency_id', e);
-        }
+        // Non-blocking slug resolution
+        Promise.resolve(
+          supabase.from('apogee_agencies').select('slug').eq('id', profile.agency_id).single()
+        ).then(({ data }) => setAgence(data?.slug || null))
+          .catch(() => setAgence(null));
+      } else {
+        setAgence(null);
       }
-      setAgence(resolvedAgence);
       setRoleAgence(profile?.role_agence || null);
       setMustChangePassword(profile?.must_change_password || false);
       setIsReadOnly(profile?.is_read_only === true);
@@ -267,7 +259,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: userId,
           email: userData.user.email,
           globalRole: dbGlobalRole || 'base_user',
-          agencySlug: resolvedAgence || null,
+          agencySlug: null,
         });
       }
 
