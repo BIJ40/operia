@@ -105,25 +105,26 @@ export function useMyTicketRole() {
       
       try {
         // Récupérer le profil (pour N5+ bypass) et les options granulaires
-        const [profileResult, userModulesResult] = await Promise.all([
+        const [profileResult, userAccessResult] = await Promise.all([
           supabase
             .from('profiles')
             .select('global_role')
             .eq('id', user.id)
             .maybeSingle(),
-          (supabase
-            .from('user_modules' as any) as any)
+          supabase
+            .from('user_access')
             .select('module_key, options')
             .eq('user_id', user.id)
             .eq('module_key', 'ticketing')
+            .eq('granted', true)
         ]);
 
         if (profileResult.error) {
           logError('[MY-TICKET-ROLE] Error fetching profile', profileResult.error);
         }
 
-        if (userModulesResult.error) {
-          logError('[MY-TICKET-ROLE] Error fetching user_modules for ticketing options', userModulesResult.error);
+        if (userAccessResult.error) {
+          logError('[MY-TICKET-ROLE] Error fetching user_access for ticketing options', userAccessResult.error);
         }
 
         const profile = profileResult.data;
@@ -132,9 +133,9 @@ export function useMyTicketRole() {
         const effectiveGlobalRole = profile?.global_role || globalRole || null;
         const isN5Plus = ['platform_admin', 'superadmin'].includes(effectiveGlobalRole || '');
 
-        // Options granulaires depuis user_modules (kanban, create, import, manage)
-        const userModuleRows = (userModulesResult.data || []) as Array<{ module_key: string; options: Record<string, boolean> | null }>;
-        const userModuleOptions = userModuleRows.reduce<Record<string, boolean>>((acc, row) => {
+        // Options granulaires depuis user_access (kanban, create, import, manage)
+        const userAccessRows = (userAccessResult.data || []) as Array<{ module_key: string; options: Record<string, boolean> | null }>;
+        const userModuleOptions = userAccessRows.reduce<Record<string, boolean>>((acc, row) => {
           if (row?.options && typeof row.options === 'object') {
             Object.assign(acc, row.options);
           }
