@@ -140,3 +140,70 @@ export const SHARED_MODULE_MIN_ROLES: Partial<Record<SharedModuleKey, SharedGlob
   'pilotage.rentabilite': 'franchisee_admin',
   'commercial.realisations': 'franchisee_user',
 };
+
+// ============================================================================
+// MODULE OPTION MIN ROLES
+// ============================================================================
+
+export const SHARED_MODULE_OPTION_MIN_ROLES: Record<string, SharedGlobalRole> = {
+  'organisation.salaries.rh_viewer': 'franchisee_admin',
+  'organisation.salaries.rh_admin': 'franchisee_admin',
+  'support.aide_en_ligne.agent': 'base_user',
+  'support.aide_en_ligne.user': 'base_user',
+  'organisation.parc.vehicules': 'franchisee_user',
+  'organisation.parc.epi': 'franchisee_user',
+  'organisation.parc.equipements': 'franchisee_user',
+  'pilotage.agence.indicateurs': 'franchisee_admin',
+  'pilotage.agence.actions_a_mener': 'franchisee_admin',
+  'pilotage.agence.diffusion': 'franchisee_admin',
+  'pilotage.statistiques.general': 'franchisee_admin',
+  'pilotage.statistiques.exports': 'franchisee_admin',
+  'mediatheque.documents.consulter': 'franchisee_admin',
+  'mediatheque.documents.gerer': 'franchisee_admin',
+  'mediatheque.documents.corbeille_vider': 'franchisee_admin',
+  'relations.apporteurs.consulter': 'franchisee_admin',
+  'relations.apporteurs.gerer': 'franchisee_admin',
+  'support.guides.apogee': 'base_user',
+  'support.guides.apporteurs': 'base_user',
+  'support.guides.helpconfort': 'base_user',
+  'support.guides.faq': 'base_user',
+  'ticketing.kanban': 'base_user',
+  'ticketing.create': 'base_user',
+  'ticketing.manage': 'base_user',
+  'ticketing.import': 'platform_admin',
+  'prospection.dashboard': 'franchisee_user',
+  'prospection.comparateur': 'franchisee_user',
+  'prospection.prospects': 'franchisee_user',
+  'planning_augmente.suggest': 'franchisee_admin',
+  'planning_augmente.optimize': 'franchisee_admin',
+  'planning_augmente.admin': 'platform_admin',
+  'admin_plateforme.users': 'platform_admin',
+  'admin_plateforme.agencies': 'platform_admin',
+  'admin_plateforme.permissions': 'platform_admin',
+  'admin_plateforme.faq_admin': 'platform_admin',
+  'reseau_franchiseur.dashboard': 'franchisor_user',
+  'reseau_franchiseur.stats': 'franchisor_user',
+  'reseau_franchiseur.agences': 'franchisor_user',
+  'reseau_franchiseur.redevances': 'franchisor_admin',
+  'reseau_franchiseur.comparatifs': 'franchisor_user',
+};
+
+// ============================================================================
+// PLAN LABELS (V2 — CORE / PILOT / INTELLIGENCE)
+// ============================================================================
+
+export const PLAN_LABELS: Record<string, string> = {
+  CORE: 'Core',
+  PILOT: 'Pilot',
+  INTELLIGENCE: 'Intelligence',
+};
+
+export function getPlanLabel(key: string): string {
+  return PLAN_LABELS[key] || key;
+}
+
+export const PLAN_HIERARCHY: Record<string, number> = {
+  CORE: 0,
+  PILOT: 1,
+  INTELLIGENCE: 2,
+};
