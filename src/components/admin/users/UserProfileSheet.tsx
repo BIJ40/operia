@@ -18,7 +18,6 @@ import {
   Hash, KeyRound, FileText,
 } from 'lucide-react';
 import { GlobalRole } from '@/types/globalRoles';
-import { GlobalRole } from '@/types/globalRoles';
 import { EnabledModules, MODULE_DEFINITIONS, ModuleKey } from '@/types/modules';
 import { getVisibleRoleLabel, getVisibleRoleColor, VISIBLE_ROLE_DESCRIPTIONS } from '@/lib/visibleRoleLabels';
 import { UserPermissionsColumnV2 } from './user-full-dialog/UserPermissionsColumnV2';
