@@ -13,3 +13,4 @@ export { ModulesMasterViewV2 } from './ModulesMasterViewV2';
 export { default as SuiviClientsAdminView } from './SuiviClientsAdminView';
 export { default as OffresAndOptionsView } from './OffresAndOptionsView';
 export { default as AgencyFeaturesAdminView } from './AgencyFeaturesAdminView';
+export { PlanCatalogViewV2 } from './PlanCatalogViewV2';
