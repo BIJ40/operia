@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
     }
 
     // 5a. Récupérer les projets
-    const projectsUrl = `https://${profile.agence}.hc-apogee.fr/api/apiGetProjects`;
+    const projectsUrl = `https://${agencySlug}.hc-apogee.fr/api/apiGetProjects`;
     const projectsResponse = await fetch(projectsUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

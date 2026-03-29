@@ -80,11 +80,18 @@ Deno.serve(async (req) => {
     // 3. Récupérer l'agence de l'utilisateur
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('agence, agency_id')
+      .select('agency_id')
       .eq('id', user.id)
       .single();
 
-    if (profileError || !profile?.agence) {
+    // Resolve agency slug from agency_id
+    let agencySlug: string | null = null;
+    if (profile?.agency_id) {
+      const { data: agRow } = await supabase.from('apogee_agencies').select('slug').eq('id', profile.agency_id).eq('is_active', true).maybeSingle();
+      agencySlug = agRow?.slug ?? null;
+    }
+
+    if (profileError || !agencySlug) {
       return withCors(req, new Response(
         JSON.stringify({ success: false, error: 'Agence non configurée' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -100,7 +107,7 @@ Deno.serve(async (req) => {
       ));
     }
 
-    const baseUrl = `https://${profile.agence}.hc-apogee.fr/api`;
+    const baseUrl = `https://${agencySlug}.hc-apogee.fr/api`;
     console.log(`[LIST-COMMANDITAIRES] Using base URL: ${baseUrl}`);
 
     // 4. Récupérer les projets pour identifier les commanditaireIds utilisés
