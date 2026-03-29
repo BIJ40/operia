@@ -22,6 +22,8 @@ import { NavigationAccessView } from './user-profile-sheet/NavigationAccessView'
 import { GlobalRole } from '@/types/globalRoles';
 import { EnabledModules, MODULE_DEFINITIONS, ModuleKey } from '@/types/modules';
 import { getVisibleRoleLabel, getVisibleRoleColor, VISIBLE_ROLE_DESCRIPTIONS } from '@/lib/visibleRoleLabels';
+import { useAppFeatureFlag } from '@/hooks/useAppFeatureFlag';
+import { UserPermissionsColumnV2 } from './user-full-dialog/UserPermissionsColumnV2';
 import { UserProfile } from '@/hooks/use-user-management';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -81,6 +83,7 @@ export const UserProfileSheet = memo(function UserProfileSheet({
   effectiveModules: _legacyModules,
   agencyLabel,
 }: UserProfileSheetProps) {
+  const useV2 = useAppFeatureFlag('USE_PERMISSIONS_V2');
   // ═══ TRUTH: Fetch real effective modules via the SAME RPC that controls runtime access ═══
   const { data: rpcModules, isLoading: rpcModulesLoading } = useQuery({
     queryKey: ['user-profile-sheet-effective-modules', user.id],
@@ -350,6 +353,16 @@ export const UserProfileSheet = memo(function UserProfileSheet({
             </Section>
 
             <Separator />
+
+            {/* ═══ PERMISSIONS V2 — édition directe ═══ */}
+            {useV2 && user.id && (
+              <>
+                <Section icon={Shield} title="Permissions V2">
+                  <UserPermissionsColumnV2 userId={user.id} editMode={true} />
+                </Section>
+                <Separator />
+              </>
+            )}
 
             {/* ═══ VUE A — NAVIGATION / ACCÈS VISIBLES ═══ */}
             <Section icon={Navigation} title="Navigation utilisateur">
