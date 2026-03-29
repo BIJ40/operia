@@ -1,0 +1,1 @@
+UPDATE module_catalog SET node_type = 'screen' WHERE key IN ('accueil', 'support.guides', 'support.aide_en_ligne') AND is_core = true;
