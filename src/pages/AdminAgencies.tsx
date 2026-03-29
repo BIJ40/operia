@@ -607,11 +607,11 @@ export default function AdminAgencies() {
                       </Table>
                     )}
                   </div>
-                )}
+                </div>
               </div>
             );
           })}
-        </div>
+        </>
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
