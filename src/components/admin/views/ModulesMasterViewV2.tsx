@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useModuleCatalog, ModuleCatalogTree } from '@/hooks/access-rights/useModuleCatalog';
+import { useModuleCatalog, ModuleCatalogTree, filterDeployedOnly } from '@/hooks/access-rights/useModuleCatalog';
 import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
