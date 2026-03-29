@@ -8,7 +8,7 @@
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { Loader2, Lock } from 'lucide-react';
 
 interface FaqAdminGuardProps {
@@ -18,7 +18,7 @@ interface FaqAdminGuardProps {
 
 export function FaqAdminGuard({ children, redirectTo = '/' }: FaqAdminGuardProps) {
   const { isAuthLoading, isAuthenticated } = useAuthCore();
-  const { canAccessFaqAdmin } = usePermissions();
+  const { canAccessFaqAdmin } = usePermissionsBridge();
 
   // Loading state
   if (isAuthLoading) {

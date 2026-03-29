@@ -1,7 +1,7 @@
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { ROUTES } from '@/config/routes';
 import { Button } from '@/components/ui/button';
 import { Plus, ChevronsDownUp, ChevronsUpDown, Lightbulb, ArrowLeft, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
@@ -68,7 +68,7 @@ export default function CategoryPage({ scope }: CategoryPageProps) {
 
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks, reloadBlocks, loading } = useEditor();
   const { isAuthenticated } = useAuthCore();
-  const { hasGlobalRole, hasModuleOption, hasAccessToScope } = usePermissions();
+  const { hasGlobalRole, hasModuleOption, hasAccessToScope } = usePermissionsBridge();
   
   // V2: Vérification par rôle global + option module
   const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('support.guides', 'edition');

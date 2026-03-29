@@ -16,6 +16,7 @@ import { usePermissions } from '@/contexts/PermissionsContext';
 import { usePermissionsV2Safe } from '@/contexts/PermissionsContextV2';
 import { useAppFeatureFlag } from '@/hooks/useAppFeatureFlag';
 import { PermissionEntry } from '@/types/permissions-v2';
+import type { GlobalRole } from '@/types/globalRoles';
 
 interface PermissionsBridgeResult {
   hasGlobalRole: (requiredRole: string) => boolean;
@@ -23,7 +24,7 @@ interface PermissionsBridgeResult {
   hasModuleOption: (moduleKey: string, optionKey: string) => boolean;
   hasAccessToScope: (scope: string) => boolean;
   isDeployedModule: (moduleKey: string) => boolean;
-  globalRole: string | null;
+  globalRole: GlobalRole | null;
   isAdmin: boolean;
   isSupport: boolean;
   isFranchiseur: boolean;

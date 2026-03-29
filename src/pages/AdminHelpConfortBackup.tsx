@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,7 +13,7 @@ import { Navigate } from 'react-router-dom';
 import { logError } from '@/lib/logger';
 
 export default function AdminHelpConfortBackup() {
-  const { hasGlobalRole } = usePermissions();
+  const { hasGlobalRole } = usePermissionsBridge();
   const canAccess = hasGlobalRole('platform_admin');
   const { toast } = useToast();
   const [categories, setCategories] = useState<Block[]>([]);

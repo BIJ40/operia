@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { logDebug } from '@/lib/logger';
 
 const STORAGE_KEY = 'franchiseur_selected_agencies';
@@ -78,7 +78,7 @@ function getPersistedAgencies(searchParams: URLSearchParams): string[] {
 
 export function FranchiseurProvider({ children }: { children: ReactNode }) {
   const { user, isAuthLoading } = useAuthCore();
-  const { isFranchiseur, isAdmin, globalRole } = usePermissions();
+  const { isFranchiseur, isAdmin, globalRole } = usePermissionsBridge();
   const [searchParams, setSearchParams] = useSearchParams();
   const [franchiseurRole, setFranchiseurRole] = useState<FranchiseurRole>(null);
   const [selectedAgencies, setSelectedAgenciesState] = useState<string[]>(() => 

@@ -1,6 +1,6 @@
 import { useOperiaEditor, OperiaBlock } from '@/contexts/HcServicesEditorContext';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { useState, useMemo } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { ROUTES } from '@/config/routes';
@@ -248,7 +248,7 @@ const SortableCategory = ({
 export default function OperiaGuide() {
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, loading } = useOperiaEditor();
   const { isAuthenticated } = useAuthCore();
-  const { hasGlobalRole, hasModuleOption } = usePermissions();
+  const { hasGlobalRole, hasModuleOption } = usePermissionsBridge();
   
   const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('support.guides', 'edition');
   const canDelete = hasGlobalRole('platform_admin');

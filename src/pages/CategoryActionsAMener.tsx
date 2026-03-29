@@ -1,7 +1,7 @@
 import { useParams, useLocation, Navigate } from 'react-router-dom';
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit2, Trash2, GripVertical, ChevronDown } from 'lucide-react';
@@ -138,7 +138,7 @@ export default function CategoryActionsAMener() {
   const location = useLocation();
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks } = useEditor();
   const { isAuthenticated } = useAuthCore();
-  const { hasGlobalRole, hasModuleOption } = usePermissions();
+  const { hasGlobalRole, hasModuleOption } = usePermissionsBridge();
   // P0: Utiliser V2 pour permissions d'édition
   const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('support.guides', 'edition');
   const { toast } = useToast();

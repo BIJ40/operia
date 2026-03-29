@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useUserManagement, UserProfile } from '@/hooks/use-user-management';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { getUserManagementCapabilities } from '@/config/roleMatrix';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,7 +25,7 @@ import {
 } from '@/components/admin/users';
 
 export default function TDRUsersPage() {
-  const { globalRole } = usePermissions();
+  const { globalRole } = usePermissionsBridge();
   const { user: currentUser } = useAuthCore();
   
   const capabilities = useMemo(() => getUserManagementCapabilities(globalRole), [globalRole]);
