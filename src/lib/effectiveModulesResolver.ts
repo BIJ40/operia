@@ -2,8 +2,8 @@
  * Resolve effective modules for a user.
  *
  * Strategy:
- * 1) Try RPC get_user_effective_modules(user)
- * 2) Fallback: user_modules table
+ * 1) Try RPC get_user_permissions(user)
+ * 2) Fallback: user_access table
  */
 
 import { supabase } from '@/integrations/supabase/client';
@@ -13,6 +13,7 @@ import type { EnabledModules, ModuleKey, ModuleOptionsState } from '@/types/modu
 type RpcRow = {
   module_key: string;
   granted: boolean;
+  access_level: string;
   options: unknown;
 };
 
@@ -39,7 +40,7 @@ function upsertModule(
 }
 
 export type EffectiveModulesSource =
-  | 'rpc_get_user_effective_modules'
+  | 'rpc_get_user_permissions'
   | 'fallback_user_access'
   | 'empty';
 
@@ -53,28 +54,30 @@ export async function resolveEffectiveModulesFromBackend(params: {
 
   // 1) Primary: RPC
   try {
-    const { data, error } = await (supabase.rpc as any)('get_user_effective_modules', {
+    const { data, error } = await supabase.rpc('get_user_permissions', {
       p_user_id: userId,
     });
 
     if (!error && Array.isArray(data) && data.length > 0) {
       const modules: EnabledModules = {};
       for (const row of data as RpcRow[]) {
-        upsertModule(modules, row.module_key, row.granted, row.options);
+        if (row.granted && row.access_level !== 'none') {
+          upsertModule(modules, row.module_key, true, row.options);
+        }
       }
-      return { modules, source: 'rpc_get_user_effective_modules' };
+      return { modules, source: 'rpc_get_user_permissions' };
     }
 
     if (error) {
       logWarn(
-        '[effectiveModulesResolver] RPC get_user_effective_modules failed',
+        '[effectiveModulesResolver] RPC get_user_permissions failed',
         debugLabel ? { debugLabel } : undefined,
         error
       );
     }
   } catch (e) {
     logWarn(
-      '[effectiveModulesResolver] RPC get_user_effective_modules threw',
+      '[effectiveModulesResolver] RPC get_user_permissions threw',
       debugLabel ? { debugLabel } : undefined,
       e
     );
