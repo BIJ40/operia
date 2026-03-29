@@ -10,10 +10,7 @@ import { setSentryUser, clearSentryUser } from '@/lib/sentry';
 // ============================================================================
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { EnabledModules, ModuleKey, MODULE_DEFINITIONS, isModuleEnabled as checkModuleEnabled } from '@/types/modules';
-import { 
-  hasMinRole,
-  type PermissionContext,
-} from '@/permissions';
+import { hasMinRole } from '@/permissions/shared-constants';
 
 
 // Sub-contexts (Phase 1 split)
