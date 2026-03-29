@@ -98,7 +98,7 @@ export const UserProfileSheet = memo(function UserProfileSheet({
               opts[k] = v === true;
             }
           }
-          result[row.module_key] = { enabled: row.enabled === true, options: opts };
+          result[row.module_key] = { enabled: row.granted === true, options: opts };
         }
       }
       return result;
