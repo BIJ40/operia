@@ -6,7 +6,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Shield, UserPlus, Handshake, UserCheck, ScrollText, Eye, Crown, LayoutGrid, UserCog, Grid3X3, ShieldCheck, GitCompare } from 'lucide-react';
+import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Shield, UserPlus, Handshake, UserCheck, ScrollText, Eye, Crown, LayoutGrid, UserCog, Grid3X3, ShieldCheck, Layers, FileKey } from 'lucide-react';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { 
   DraggableFolderTabsList, 
@@ -43,7 +43,6 @@ const JobProfilePresetsViewV2 = lazy(() => import('@/components/admin/views/JobP
 const PermissionsAuditLogView = lazy(() => import('@/components/admin/views/PermissionsAuditLogView'));
 const PermissionsMatrixView = lazy(() => import('@/components/admin/views/PermissionsMatrixView'));
 const PermissionsQualityView = lazy(() => import('@/components/admin/views/PermissionsQualityView'));
-const PermissionsParityTestView = lazy(() => import('@/components/admin/views/PermissionsParityTestView'));
 
 function LoadingFallback() {
   return (
@@ -53,29 +52,27 @@ function LoadingFallback() {
   );
 }
 
-// Configuration des onglets principaux (style Pill)
+// Configuration des onglets principaux (style Pill) — Offres supprimé
 const ADMIN_MAIN_TABS: PillTabConfig[] = [
   { id: 'gestion', label: 'Gestion', icon: Settings, accent: 'blue' },
   { id: 'relations', label: 'Relations', icon: Handshake, accent: 'purple' },
-  { id: 'offres', label: 'Offres', icon: Crown, accent: 'orange' },
   { id: 'ia', label: 'IA', icon: Brain, accent: 'green' },
   { id: 'contenu', label: 'Contenu', icon: FileText, accent: 'orange' },
   { id: 'ops', label: 'Ops', icon: Database, accent: 'pink' },
   { id: 'plateforme', label: 'Plateforme', icon: Cpu, accent: 'teal' },
 ];
 
-// Sous-onglets Gestion
+// Sous-onglets Gestion — restructurés : Parité supprimé, Droits scindé en 3, Agences enrichi
 const GESTION_SUB_TABS: FolderTabConfig[] = [
   { id: 'users', label: 'Utilisateurs', icon: Users, accent: 'blue' },
   { id: 'inscriptions', label: 'Inscriptions', icon: UserPlus, accent: 'orange' },
   { id: 'agences', label: 'Agences', icon: Building2, accent: 'purple' },
-  { id: 'modules', label: 'Droits', icon: Shield, accent: 'orange' },
-  { id: 'presets', label: 'Presets', icon: UserCog, accent: 'blue' },
-  { id: 'journal', label: 'Journal', icon: ScrollText, accent: 'green' },
+  { id: 'modules', label: 'Modules', icon: Layers, accent: 'orange' },
+  { id: 'plans', label: 'Plans', icon: Crown, accent: 'green' },
+  { id: 'presets', label: 'Droits', icon: FileKey, accent: 'blue' },
   { id: 'matrice', label: 'Matrice', icon: Grid3X3, accent: 'purple' },
   { id: 'qualite', label: 'Qualité', icon: ShieldCheck, accent: 'orange' },
-  { id: 'parite', label: 'Parité V1/V2', icon: GitCompare, accent: 'green' },
-  
+  { id: 'journal', label: 'Journal', icon: ScrollText, accent: 'green' },
   { id: 'activity', label: 'Activité', icon: Activity, accent: 'green' },
 ];
 
@@ -86,16 +83,9 @@ const RELATIONS_SUB_TABS: FolderTabConfig[] = [
   { id: 'suivi-clients', label: 'Suivi Clients', icon: Eye, accent: 'orange' },
 ];
 
-// Sous-onglets Offres
-const OFFRES_SUB_TABS: FolderTabConfig[] = [
-  { id: 'overview', label: "Vue d'ensemble", icon: LayoutGrid, accent: 'orange' },
-  { id: 'agency-features', label: 'Gestion agences', icon: Building2, accent: 'blue' },
-];
-
 const ADMIN_MAIN_TAB_IDS = ADMIN_MAIN_TABS.map(tab => tab.id);
-const DEFAULT_GESTION_ORDER = ['users', 'inscriptions', 'agences', 'modules', 'presets', 'journal', 'matrice', 'qualite', 'parite', 'activity'];
+const DEFAULT_GESTION_ORDER = ['users', 'inscriptions', 'agences', 'modules', 'plans', 'presets', 'matrice', 'qualite', 'journal', 'activity'];
 const DEFAULT_RELATIONS_ORDER = ['apporteurs', 'audit-apporteurs', 'suivi-clients'];
-const DEFAULT_OFFRES_ORDER = ['overview', 'agency-features'];
 
 export default function AdminHubContent() {
   
@@ -105,17 +95,28 @@ export default function AdminHubContent() {
   const workspaceTabParam = searchParams.get('tab');
   const isAdminRoute = workspaceTabParam === 'admin';
   const activeTabParam = searchParams.get('adminTab');
-  const activeTab = activeTabParam && ADMIN_MAIN_TAB_IDS.includes(activeTabParam) ? activeTabParam : persistedMainTab;
+  // Redirect legacy 'offres' to 'gestion'
+  const resolvedTabParam = activeTabParam === 'offres' ? 'gestion' : activeTabParam;
+  const activeTab = resolvedTabParam && ADMIN_MAIN_TAB_IDS.includes(resolvedTabParam) ? resolvedTabParam : persistedMainTab;
   const activeSubTab = searchParams.get('adminView') || 'users';
   const [gestionTabOrder, setGestionTabOrder] = useSessionState<string[]>('admin_gestion_tab_order', DEFAULT_GESTION_ORDER);
   const [relationsTabOrder, setRelationsTabOrder] = useSessionState<string[]>('admin_relations_tab_order', DEFAULT_RELATIONS_ORDER);
-  const [offresTabOrder, setOffresTabOrder] = useSessionState<string[]>('admin_offres_tab_order', DEFAULT_OFFRES_ORDER);
 
   useEffect(() => {
     if (!isAdminRoute) return;
-    if (activeTabParam && ADMIN_MAIN_TAB_IDS.includes(activeTabParam)) {
-      if (activeTabParam !== persistedMainTab) {
-        setPersistedMainTab(activeTabParam);
+    if (resolvedTabParam && ADMIN_MAIN_TAB_IDS.includes(resolvedTabParam)) {
+      if (resolvedTabParam !== persistedMainTab) {
+        setPersistedMainTab(resolvedTabParam);
+      }
+      // If the URL had 'offres', rewrite it
+      if (activeTabParam === 'offres') {
+        const next = new URLSearchParams(searchParams);
+        next.set('adminTab', 'gestion');
+        // Map offres sub-views to gestion sub-views
+        const view = next.get('adminView');
+        if (view === 'overview') next.set('adminView', 'plans');
+        if (view === 'agency-features') next.set('adminView', 'agences');
+        setSearchParams(next, { replace: true });
       }
       return;
     }
@@ -123,7 +124,7 @@ export default function AdminHubContent() {
     next.set('tab', 'admin');
     next.set('adminTab', persistedMainTab);
     setSearchParams(next, { replace: true });
-  }, [activeTabParam, isAdminRoute, persistedMainTab, searchParams, setSearchParams, setPersistedMainTab]);
+  }, [activeTabParam, resolvedTabParam, isAdminRoute, persistedMainTab, searchParams, setSearchParams, setPersistedMainTab]);
 
   const handleTabChange = (value: string) => {
     setPersistedMainTab(value);
@@ -150,10 +151,6 @@ export default function AdminHubContent() {
     setRelationsTabOrder(newOrder);
   }, [setRelationsTabOrder]);
 
-  const handleOffresReorder = useCallback((newOrder: string[]) => {
-    setOffresTabOrder(newOrder);
-  }, [setOffresTabOrder]);
-
   const accentColors: Record<string, string> = {
     blue: 'hsl(var(--warm-blue))',
     purple: 'hsl(var(--warm-purple))',
@@ -166,9 +163,6 @@ export default function AdminHubContent() {
 
   const activeRelationsTab = RELATIONS_SUB_TABS.find(t => t.id === activeSubTab);
   const activeRelationsAccent = activeRelationsTab?.accent ? accentColors[activeRelationsTab.accent] : undefined;
-
-  const activeOffresTab = OFFRES_SUB_TABS.find(t => t.id === activeSubTab);
-  const activeOffresAccent = activeOffresTab?.accent ? accentColors[activeOffresTab.accent] : undefined;
 
   return (
     <DomainAccentProvider accent="red">
@@ -203,15 +197,18 @@ export default function AdminHubContent() {
                 </TabsContent>
                 <TabsContent value="agences" className="mt-0 focus-visible:outline-none">
                   <ReseauView />
+                  <div className="mt-6">
+                    <Suspense fallback={<LoadingFallback />}><AgencyEntitlementsViewV2 /></Suspense>
+                  </div>
                 </TabsContent>
                 <TabsContent value="modules" className="mt-0 focus-visible:outline-none">
                   <ModulesMasterViewV2 />
                 </TabsContent>
+                <TabsContent value="plans" className="mt-0 focus-visible:outline-none">
+                  <Suspense fallback={<LoadingFallback />}><PlanCatalogViewV2 /></Suspense>
+                </TabsContent>
                 <TabsContent value="presets" className="mt-0 focus-visible:outline-none">
                   <Suspense fallback={<LoadingFallback />}><JobProfilePresetsViewV2 /></Suspense>
-                </TabsContent>
-                <TabsContent value="journal" className="mt-0 focus-visible:outline-none">
-                  <Suspense fallback={<LoadingFallback />}><PermissionsAuditLogView /></Suspense>
                 </TabsContent>
                 <TabsContent value="matrice" className="mt-0 focus-visible:outline-none">
                   <Suspense fallback={<LoadingFallback />}><PermissionsMatrixView /></Suspense>
@@ -219,8 +216,8 @@ export default function AdminHubContent() {
                 <TabsContent value="qualite" className="mt-0 focus-visible:outline-none">
                   <Suspense fallback={<LoadingFallback />}><PermissionsQualityView /></Suspense>
                 </TabsContent>
-                <TabsContent value="parite" className="mt-0 focus-visible:outline-none">
-                  <Suspense fallback={<LoadingFallback />}><PermissionsParityTestView /></Suspense>
+                <TabsContent value="journal" className="mt-0 focus-visible:outline-none">
+                  <Suspense fallback={<LoadingFallback />}><PermissionsAuditLogView /></Suspense>
                 </TabsContent>
                 <TabsContent value="activity" className="mt-0 focus-visible:outline-none">
                   <Suspense fallback={<LoadingFallback />}><AdminUserActivity /></Suspense>
@@ -254,30 +251,6 @@ export default function AdminHubContent() {
             </Tabs>
           </TabsContent>
 
-          <TabsContent value="offres" className="mt-0 focus-visible:outline-none">
-            <Tabs value={activeSubTab} onValueChange={handleSubTabChange}>
-              <DraggableFolderTabsList 
-                tabs={OFFRES_SUB_TABS} 
-                tabOrder={offresTabOrder}
-                activeTab={activeSubTab}
-                onTabChange={handleSubTabChange}
-                onReorder={handleOffresReorder}
-                isDraggable={true}
-              />
-              <DraggableFolderContentContainer accentColor={activeOffresAccent}>
-                <TabsContent value="overview" className="mt-0 focus-visible:outline-none">
-                  <Suspense fallback={<LoadingFallback />}>
-                    <PlanCatalogViewV2 />
-                  </Suspense>
-                </TabsContent>
-                <TabsContent value="agency-features" className="mt-0 focus-visible:outline-none">
-                  <Suspense fallback={<LoadingFallback />}>
-                    <AgencyEntitlementsViewV2 />
-                  </Suspense>
-                </TabsContent>
-              </DraggableFolderContentContainer>
-            </Tabs>
-          </TabsContent>
           <TabsContent value="ia" className="mt-0 focus-visible:outline-none"><IAView /></TabsContent>
           <TabsContent value="contenu" className="mt-0 focus-visible:outline-none"><ContenuView /></TabsContent>
           <TabsContent value="ops" className="mt-0 focus-visible:outline-none"><OpsView /></TabsContent>
