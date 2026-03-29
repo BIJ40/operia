@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useModuleCatalog, ModuleCatalogTree, filterDeployedOnly } from '@/hooks/access-rights/useModuleCatalog';
 import { usePlanCatalog, PlanWithGrants } from '@/hooks/access-rights/usePlanCatalog';
+import { useJobProfilePresets, JobProfilePreset } from '@/hooks/access-rights/useJobProfilePresets';
 import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -88,6 +89,8 @@ function ModuleRow({
   plans,
   getPlanGrant,
   onUpdatePlanGrant,
+  isInPreset,
+  onTogglePreset,
 }: {
   module: ModuleCatalogTree;
   isN6: boolean;
@@ -98,6 +101,8 @@ function ModuleRow({
   plans: PlanWithGrants[];
   getPlanGrant: (planId: string, moduleKey: string) => 'none' | 'read' | 'full';
   onUpdatePlanGrant: (planId: string, moduleKey: string, level: 'none' | 'read' | 'full') => void;
+  isInPreset: (presetKey: string, moduleKey: string) => boolean;
+  onTogglePreset: (presetKey: string, moduleKey: string) => void;
 }) {
   const [expanded, setExpanded] = useState(true);
   const indent = module.depth * 20;
@@ -204,6 +209,34 @@ function ModuleRow({
             </Select>
           </td>
         ))}
+
+        {/* Presets */}
+        <td className="px-3 py-2">
+          <div className="flex items-center gap-1 justify-center">
+            {[
+              { key: 'technicien', label: 'T' },
+              { key: 'administratif', label: 'A' },
+              { key: 'commercial', label: 'C' },
+            ].map(({ key, label }) => {
+              const active = isInPreset(key, module.key);
+              return (
+                <button
+                  key={key}
+                  onClick={() => isN6 && onTogglePreset(key, module.key)}
+                  disabled={!isN6}
+                  className={`w-5 h-5 rounded text-[10px] font-bold transition-colors ${
+                    active
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  }`}
+                  title={key}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </td>
       </tr>
 
       {/* Enfants */}
@@ -219,6 +252,8 @@ function ModuleRow({
           plans={plans}
           getPlanGrant={getPlanGrant}
           onUpdatePlanGrant={onUpdatePlanGrant}
+          isInPreset={isInPreset}
+          onTogglePreset={onTogglePreset}
         />
       ))}
     </>
@@ -247,8 +282,23 @@ export function ModulesMasterViewV2() {
     toggleDeployed, toggleCore, updateMinRole, toggleDistribution,
   } = useModuleCatalog();
   const { plans, updatePlanModuleGrant } = usePlanCatalog();
+  const { presets, updatePreset } = useJobProfilePresets();
 
   const [showDev, setShowDev] = useState(false);
+
+  const isInPreset = (presetKey: string, moduleKey: string): boolean => {
+    const preset = presets.find(p => p.role_agence === presetKey);
+    return preset?.default_modules.includes(moduleKey) ?? false;
+  };
+
+  const togglePreset = (presetKey: string, moduleKey: string) => {
+    const preset = presets.find(p => p.role_agence === presetKey);
+    if (!preset) return;
+    const current = new Set(preset.default_modules);
+    if (current.has(moduleKey)) current.delete(moduleKey);
+    else current.add(moduleKey);
+    updatePreset.mutate({ role_agence: presetKey, default_modules: Array.from(current) });
+  };
 
   const getPlanGrant = (planId: string, moduleKey: string): 'none' | 'read' | 'full' => {
     const plan = plans.find(p => p.id === planId);
@@ -328,6 +378,7 @@ export function ModulesMasterViewV2() {
                   {plan.label}
                 </th>
               ))}
+              <th className="px-3 py-2 text-xs font-medium text-muted-foreground text-center">Presets</th>
             </tr>
           </thead>
           <tbody>
@@ -343,6 +394,8 @@ export function ModulesMasterViewV2() {
                 plans={plans}
                 getPlanGrant={getPlanGrant}
                 onUpdatePlanGrant={handleUpdatePlanGrant}
+                isInPreset={isInPreset}
+                onTogglePreset={togglePreset}
               />
             ))}
           </tbody>
@@ -375,6 +428,8 @@ export function ModulesMasterViewV2() {
                       plans={plans}
                       getPlanGrant={getPlanGrant}
                       onUpdatePlanGrant={handleUpdatePlanGrant}
+                      isInPreset={isInPreset}
+                      onTogglePreset={togglePreset}
                     />
                   ))}
                 </tbody>
