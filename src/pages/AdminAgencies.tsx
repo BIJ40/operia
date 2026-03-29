@@ -412,29 +412,48 @@ export default function AdminAgencies() {
             const unregistered = getUnregisteredCollaborators(agency.id);
             const totalCount = agencyUsers.length + unregistered.length;
             const planId = getAgencyPlanId(agency.id);
+            const plan = plans.find(p => p.id === planId);
+            const planKey = plan?.key?.toUpperCase() ?? '';
+
+            // Color mapping by plan
+            const planColors: Record<string, { top: string; badge: string; crown: string }> = {
+              CORE: { top: 'from-sky-500/10 to-sky-500/5 border-sky-200', badge: 'bg-sky-100 text-sky-700 border-sky-200', crown: 'text-sky-500' },
+              PILOT: { top: 'from-violet-500/10 to-violet-500/5 border-violet-200', badge: 'bg-violet-100 text-violet-700 border-violet-200', crown: 'text-violet-500' },
+              INTELLIGENCE: { top: 'from-amber-500/10 to-amber-500/5 border-amber-200', badge: 'bg-amber-100 text-amber-700 border-amber-200', crown: 'text-amber-500' },
+            };
+            const colors = planColors[planKey] ?? { top: 'from-muted/40 to-muted/20 border-border', badge: 'bg-muted text-muted-foreground border-border', crown: 'text-muted-foreground' };
 
             return (
-              <div key={agency.id} className="border border-border rounded-lg overflow-hidden bg-card">
-                <div className="px-3 py-2.5 space-y-2">
+              <div key={agency.id} className="border border-border rounded-xl overflow-hidden bg-card shadow-sm hover:shadow-md transition-shadow">
+                {/* Colored top band */}
+                <div className={`bg-gradient-to-r ${colors.top} px-3 py-2.5 space-y-2 border-b`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="font-semibold text-sm text-foreground truncate">{agency.label}</span>
-                      <Badge variant={agency.is_active ? 'outline' : 'secondary'} className="text-[10px] shrink-0">
-                        {agency.is_active ? 'Active' : 'Inactive'}
+                      <span className="font-bold text-sm text-foreground truncate">{agency.label}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {agency.is_active ? (
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Active" />
+                      ) : (
+                        <Badge variant="secondary" className="text-[10px]">Inactive</Badge>
+                      )}
+                      <Badge variant="outline" className="text-[10px]">
+                        <Users className="h-3 w-3 mr-0.5" />
+                        {totalCount}
                       </Badge>
                     </div>
-                    <Badge variant="outline" className="text-[10px] shrink-0">
-                      <Users className="h-3 w-3 mr-0.5" />
-                      {totalCount}
-                    </Badge>
                   </div>
                   <div className="text-[11px] text-muted-foreground font-mono">{agency.slug}</div>
+                </div>
+
+                {/* Plan selector */}
+                <div className="px-3 py-2.5">
                   <Select
                     value={planId || ''}
                     onValueChange={(value) => handlePlanChange(agency.id, value)}
                   >
-                    <SelectTrigger className="w-full h-7 text-xs">
-                      <Crown className="h-3 w-3 mr-1 text-muted-foreground shrink-0" />
+                    <SelectTrigger className="w-full h-8 text-xs font-medium">
+                      <Crown className={`h-3.5 w-3.5 mr-1.5 shrink-0 ${colors.crown}`} />
                       <SelectValue placeholder="Plan…" />
                     </SelectTrigger>
                     <SelectContent>
@@ -444,17 +463,19 @@ export default function AdminAgencies() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex items-center justify-end gap-0.5 px-2 py-1.5 border-t bg-muted/20">
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => toggleAgencyExpanded(agency.id)} title="Membres">
+
+                {/* Card actions */}
+                <div className="flex items-center justify-end gap-0.5 px-2 py-1.5 border-t bg-muted/10">
+                  <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-primary" onClick={() => toggleAgencyExpanded(agency.id)} title="Membres">
                     {expandedAgencies.has(agency.id) ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(ROUTES.admin.agencyProfile(agency.id))} title="Profil">
+                  <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-primary" onClick={() => navigate(ROUTES.admin.agencyProfile(agency.id))} title="Profil">
                     <Eye className="h-3.5 w-3.5" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openDialog(agency)} title="Modifier">
+                  <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-primary" onClick={() => openDialog(agency)} title="Modifier">
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(agency.id)} title="Supprimer">
+                  <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={() => handleDelete(agency.id)} title="Supprimer">
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
