@@ -4008,6 +4008,8 @@ export type Database = {
           address: string | null
           agency_id: string
           apogee_user_id: number | null
+          archived_at: string | null
+          archived_reason: string | null
           birth_place: string | null
           city: string | null
           cni: string | null
@@ -4015,11 +4017,13 @@ export type Database = {
           created_by: string | null
           email: string | null
           first_name: string
+          fonction: string
           hiring_date: string | null
           id: string
           is_registered_user: boolean
           last_name: string
           leaving_date: string | null
+          left_at: string | null
           lunch_end: string | null
           lunch_start: string | null
           notes: string | null
@@ -4028,6 +4032,7 @@ export type Database = {
           postal_code: string | null
           poste: string | null
           role: string
+          status: string
           street: string | null
           type: string | null
           updated_at: string
@@ -4040,6 +4045,8 @@ export type Database = {
           address?: string | null
           agency_id: string
           apogee_user_id?: number | null
+          archived_at?: string | null
+          archived_reason?: string | null
           birth_place?: string | null
           city?: string | null
           cni?: string | null
@@ -4047,11 +4054,13 @@ export type Database = {
           created_by?: string | null
           email?: string | null
           first_name: string
+          fonction?: string
           hiring_date?: string | null
           id?: string
           is_registered_user?: boolean
           last_name: string
           leaving_date?: string | null
+          left_at?: string | null
           lunch_end?: string | null
           lunch_start?: string | null
           notes?: string | null
@@ -4060,6 +4069,7 @@ export type Database = {
           postal_code?: string | null
           poste?: string | null
           role?: string
+          status?: string
           street?: string | null
           type?: string | null
           updated_at?: string
@@ -4072,6 +4082,8 @@ export type Database = {
           address?: string | null
           agency_id?: string
           apogee_user_id?: number | null
+          archived_at?: string | null
+          archived_reason?: string | null
           birth_place?: string | null
           city?: string | null
           cni?: string | null
@@ -4079,11 +4091,13 @@ export type Database = {
           created_by?: string | null
           email?: string | null
           first_name?: string
+          fonction?: string
           hiring_date?: string | null
           id?: string
           is_registered_user?: boolean
           last_name?: string
           leaving_date?: string | null
+          left_at?: string | null
           lunch_end?: string | null
           lunch_start?: string | null
           notes?: string | null
@@ -4092,6 +4106,7 @@ export type Database = {
           postal_code?: string | null
           poste?: string | null
           role?: string
+          status?: string
           street?: string | null
           type?: string | null
           updated_at?: string
