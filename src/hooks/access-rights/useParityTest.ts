@@ -75,7 +75,7 @@ export function useParityTest() {
             .select('module_key')
             .eq('user_id', user.id);
 
-          const remappedV1 = (v1Modules ?? []).map(m => LEGACY_REMAP[m.module_key] ?? m.module_key);
+          const remappedV1 = ((v1Modules ?? []) as any[]).map((m: any) => LEGACY_REMAP[m.module_key] ?? m.module_key) as string[];
 
           const { data: catalogEntries } = await supabase
             .from('module_catalog')
