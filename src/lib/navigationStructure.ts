@@ -61,10 +61,8 @@ export const NAVIGATION_STRUCTURE: NavigationDomain[] = [
     icon: BarChart3,
     entries: [
       { label: 'Statistiques', guard: { moduleKey: 'pilotage.statistiques' } },
-      { label: 'Performance', guard: { moduleKey: 'pilotage.agence' } },
-      { label: 'Actions à mener', guard: { moduleKey: 'pilotage.agence' } },
-      { label: 'Devis acceptés', guard: { moduleKey: 'pilotage.agence' } },
-      { label: 'Incohérences', guard: { moduleKey: 'pilotage.agence' } },
+      { label: 'Actions à mener', guard: { moduleKey: 'pilotage.actions_a_mener' } },
+      { label: 'Incohérences', guard: { moduleKey: 'pilotage.incoherences' } },
     ],
   },
   {
@@ -72,7 +70,7 @@ export const NAVIGATION_STRUCTURE: NavigationDomain[] = [
     label: 'Commercial',
     icon: TrendingUp,
     entries: [
-      { label: 'Suivi client', guard: { moduleKey: 'commercial.suivi_client' } },
+      { label: 'Veille', guard: { moduleKey: 'commercial.veille' } },
       { label: 'Comparateur', guard: { moduleKey: 'commercial.comparateur' } },
       { label: 'Veille', guard: { moduleKey: 'commercial.veille' } },
       { label: 'Prospects', guard: { moduleKey: 'commercial.prospects' } },
@@ -88,7 +86,7 @@ export const NAVIGATION_STRUCTURE: NavigationDomain[] = [
       { label: 'Plannings', guard: { moduleKey: 'organisation.plannings' } },
       { label: 'Réunions', guard: { moduleKey: 'organisation.reunions' } },
       { label: 'Parc', guard: { moduleKey: 'organisation.parc' } },
-      { label: 'Documents légaux', guard: { moduleKey: 'pilotage.agence' } },
+      { label: 'Documents légaux', guard: { moduleKey: 'organisation.documents_legaux' } },
     ],
   },
   {
