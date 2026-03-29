@@ -46,8 +46,6 @@ interface HierarchicalModule {
 export function TeamMemberModules({ userId, roleAgence, n2HasModule, isDeployedModule }: Props) {
   const { data: userModules, isLoading } = useUserModules(userId);
   const toggleModule = useToggleModule();
-  const queryClient = useQueryClient();
-  const { user } = useAuthCore();
   const { getShortLabel } = useModuleLabels();
   const agencyHasApporteurs = useAgencyHasApporteurs();
   const [collapsedParents, setCollapsedParents] = useState<Set<string>>(new Set());
