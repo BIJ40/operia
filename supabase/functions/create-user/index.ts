@@ -279,7 +279,6 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
 
     // Mettre à jour le profil
     const profileUpdate: Record<string, any> = { 
-      agence: targetAgency,
       agency_id: targetAgencyId,
       must_change_password: !username, // N1 avec pseudo: pas de changement de mot de passe obligatoire
       global_role: globalRole
