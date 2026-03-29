@@ -17,7 +17,8 @@ interface UserProfile {
   first_name: string | null;
   last_name: string | null;
   email: string | null;
-  agence?: string | null;
+  agency_id?: string | null;
+  apogee_agencies?: { slug: string } | null;
 }
 
 const CATEGORIES = [
@@ -53,7 +54,7 @@ export default function AdminNotificationSender() {
       try {
         const [agenciesRes, usersRes] = await Promise.all([
           supabase.from('apogee_agencies').select('id, label, slug').order('label'),
-          supabase.from('profiles').select('id, first_name, last_name, email, agency_id').order('last_name')
+          supabase.from('profiles').select('id, first_name, last_name, email, agency_id, apogee_agencies(slug)').order('last_name')
         ]);
         
         if (agenciesRes.data) setAgencies(agenciesRes.data);
@@ -81,7 +82,7 @@ export default function AdminNotificationSender() {
       u.first_name?.toLowerCase().includes(search) ||
       u.last_name?.toLowerCase().includes(search) ||
       u.email?.toLowerCase().includes(search) ||
-      u.agence?.toLowerCase().includes(search)
+      u.apogee_agencies?.slug?.toLowerCase().includes(search)
     ));
   }, [userSearch, users]);
 
@@ -288,9 +289,9 @@ export default function AdminNotificationSender() {
                           <span className="text-sm flex-1 truncate">
                             {user.first_name} {user.last_name}
                           </span>
-                          {user.agence && (
+                          {user.apogee_agencies?.slug && (
                             <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                              {user.agence}
+                              {user.apogee_agencies.slug}
                             </span>
                           )}
                         </div>
