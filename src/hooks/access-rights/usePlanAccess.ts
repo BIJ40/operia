@@ -4,7 +4,7 @@
  */
 
 import { useProfile } from '@/contexts/ProfileContext';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBridge';
 import { useAgencySubscription } from './useAgencySubscription';
 import { PlanKey, PLAN_LABELS } from '@/config/planTiers';
 

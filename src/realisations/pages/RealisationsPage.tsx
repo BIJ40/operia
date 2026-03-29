@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useRealisations } from '../hooks/useRealisations';
 import { useGeneratedVisuals } from '../hooks/useGeneratedVisuals';
 import { VisualsGallery } from '../components/VisualsGallery';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBridge';
 import { SYNC_STATUS_LABELS, SYNC_STATUS_COLORS, type ExternalSyncStatus } from '../types';
 
 type Tab = 'realisations' | 'avant-apres';

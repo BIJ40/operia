@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBridge';
 import { useProfile } from '@/contexts/ProfileContext';
 import helpConfortServicesImg from '@/assets/help-confort-services.png';
 import { MesIndicateursCard } from '@/components/landing/MesIndicateursCard';
