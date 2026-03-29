@@ -56,7 +56,7 @@ const DOC_SECTIONS = [
     emoji: '📘',
     accentClass: 'border-l-primary',
     bgClass: 'bg-primary/5 hover:bg-primary/10',
-    permissionOption: 'apogee' as const,
+    moduleKey: 'support.guides.apogee',
   },
   {
     id: 'apporteurs',
@@ -66,7 +66,7 @@ const DOC_SECTIONS = [
     emoji: '🤝',
     accentClass: 'border-l-amber-500',
     bgClass: 'bg-amber-500/5 hover:bg-amber-500/10',
-    permissionOption: 'apporteurs' as const,
+    moduleKey: 'support.guides.apporteurs',
   },
   {
     id: 'hc-services',
@@ -76,7 +76,7 @@ const DOC_SECTIONS = [
     emoji: '🏠',
     accentClass: 'border-l-teal-500',
     bgClass: 'bg-teal-500/5 hover:bg-teal-500/10',
-    permissionOption: 'helpconfort' as const,
+    moduleKey: 'support.guides.helpconfort',
     disabled: true,
   },
   {
@@ -87,7 +87,7 @@ const DOC_SECTIONS = [
     emoji: '📂',
     accentClass: 'border-l-purple-500',
     bgClass: 'bg-purple-500/5 hover:bg-purple-500/10',
-    permissionOption: null,
+    moduleKey: null,
   },
 ];
 
@@ -264,9 +264,9 @@ export default function SupportHubTabContent() {
           </CardHeader>
           <CardContent className="space-y-2">
             {DOC_SECTIONS.map((section) => {
-              const hasAccess = section.permissionOption === null
+              const hasAccess = section.moduleKey === null
                 ? true
-                : hasModuleOption('support.guides', section.permissionOption);
+                : hasModule(section.moduleKey);
 
               if (hasAccess) {
                 return (
