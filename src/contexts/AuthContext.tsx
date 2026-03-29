@@ -183,8 +183,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (profile?.agency_id) {
         // Non-blocking slug resolution
-        supabase.from('apogee_agencies').select('slug').eq('id', profile.agency_id).single()
-          .then(({ data }) => setAgence(data?.slug || null))
+        Promise.resolve(
+          supabase.from('apogee_agencies').select('slug').eq('id', profile.agency_id).single()
+        ).then(({ data }) => setAgence(data?.slug || null))
           .catch(() => setAgence(null));
       } else {
         setAgence(null);
@@ -258,7 +259,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: userId,
           email: userData.user.email,
           globalRole: dbGlobalRole || 'base_user',
-          agencySlug: resolvedAgence || null,
+          agencySlug: null,
         });
       }
 
