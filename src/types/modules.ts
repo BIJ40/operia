@@ -41,8 +41,6 @@ export const MODULES = {
   // Commercial
   'commercial.veille': 'commercial.veille',
   'commercial.comparateur': 'commercial.comparateur',
-  /** @deprecated Merged into commercial.veille */
-  'commercial.veille': 'commercial.veille',
   'commercial.prospects': 'commercial.prospects',
   'commercial.realisations': 'commercial.realisations',
   'commercial.social': 'commercial.social',
@@ -54,6 +52,7 @@ export const MODULES = {
   'commercial.realisations.valider_envoyer': 'commercial.realisations.valider_envoyer',
   // Organisation
   'organisation.salaries': 'organisation.salaries',
+  // Relations
   'relations.apporteurs': 'relations.apporteurs',
   'organisation.plannings': 'organisation.plannings',
   'organisation.reunions': 'organisation.reunions',
@@ -645,19 +644,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     delegatable: true,
     options: [],
   },
-  {
-    key: 'commercial.veille',
-    label: 'Veille (legacy)',
-    description: 'Monitoring apporteurs — fusionné dans commercial.veille',
-    icon: 'Radar',
-    category: 'commercial',
-    uiSubTab: 'apporteurs',
-    defaultForRoles: [],
-    minRole: 'franchisee_user',
-    delegatable: true,
-    deployed: false,
-    options: [],
-  },
+  // commercial.veille legacy entry removed — merged into commercial.veille (canonical)
   {
     key: 'commercial.prospects',
     label: 'Prospects',
