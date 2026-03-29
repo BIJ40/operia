@@ -185,6 +185,25 @@ function ModuleRow({
             onToggle={(field, value) => onToggleDistribution(module.key, field, value)}
           />
         </td>
+
+        {/* Plan grants */}
+        {plans.map(plan => (
+          <td key={plan.id} className="px-3 py-2 text-center">
+            <Select
+              value={getPlanGrant(plan.id, module.key)}
+              onValueChange={(v) => onUpdatePlanGrant(plan.id, module.key, v as 'none' | 'read' | 'full')}
+            >
+              <SelectTrigger className="h-6 text-xs w-20 mx-auto">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none" className="text-xs"><span className="text-muted-foreground">—</span></SelectItem>
+                <SelectItem value="read" className="text-xs"><span className="text-amber-600">Lecture</span></SelectItem>
+                <SelectItem value="full" className="text-xs"><span className="text-green-600">Complet</span></SelectItem>
+              </SelectContent>
+            </Select>
+          </td>
+        ))}
       </tr>
 
       {/* Enfants */}
@@ -197,6 +216,9 @@ function ModuleRow({
           onToggleCore={onToggleCore}
           onUpdateMinRole={onUpdateMinRole}
           onToggleDistribution={onToggleDistribution}
+          plans={plans}
+          getPlanGrant={getPlanGrant}
+          onUpdatePlanGrant={onUpdatePlanGrant}
         />
       ))}
     </>
@@ -224,8 +246,18 @@ export function ModulesMasterViewV2() {
     tree, isLoading, error,
     toggleDeployed, toggleCore, updateMinRole, toggleDistribution,
   } = useModuleCatalog();
+  const { plans, updatePlanModuleGrant } = usePlanCatalog();
 
   const [showDev, setShowDev] = useState(false);
+
+  const getPlanGrant = (planId: string, moduleKey: string): 'none' | 'read' | 'full' => {
+    const plan = plans.find(p => p.id === planId);
+    return plan?.grants.find(g => g.module_key === moduleKey)?.access_level ?? 'none';
+  };
+
+  const handleUpdatePlanGrant = (planId: string, moduleKey: string, level: 'none' | 'read' | 'full') => {
+    updatePlanModuleGrant.mutate({ plan_id: planId, module_key: moduleKey, access_level: level });
+  };
 
   const deployed = filterDeployedOnly(tree);
   const dev = extractNonDeployed(tree);
@@ -291,6 +323,11 @@ export function ModulesMasterViewV2() {
               <th className="px-3 py-2 text-xs font-medium text-muted-foreground text-center">Core</th>
               <th className="px-3 py-2 text-xs font-medium text-muted-foreground text-center">Rôle min.</th>
               <th className="px-3 py-2 text-xs font-medium text-muted-foreground">Distribution</th>
+              {plans.map(plan => (
+                <th key={plan.id} className="py-2 px-3 text-center text-xs font-medium uppercase" style={{ color: plan.color ?? undefined }}>
+                  {plan.label}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -303,6 +340,9 @@ export function ModulesMasterViewV2() {
                 onToggleCore={handleToggleCore}
                 onUpdateMinRole={handleUpdateMinRole}
                 onToggleDistribution={handleToggleDistribution}
+                plans={plans}
+                getPlanGrant={getPlanGrant}
+                onUpdatePlanGrant={handleUpdatePlanGrant}
               />
             ))}
           </tbody>
@@ -332,6 +372,9 @@ export function ModulesMasterViewV2() {
                       onToggleCore={handleToggleCore}
                       onUpdateMinRole={handleUpdateMinRole}
                       onToggleDistribution={handleToggleDistribution}
+                      plans={plans}
+                      getPlanGrant={getPlanGrant}
+                      onUpdatePlanGrant={handleUpdatePlanGrant}
                     />
                   ))}
                 </tbody>
