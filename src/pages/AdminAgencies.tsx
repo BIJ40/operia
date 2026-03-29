@@ -34,8 +34,8 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { usePlanTiers } from '@/hooks/access-rights/usePlanTiers';
-import { useAllAgencySubscriptions, useUpdateAgencySubscription } from '@/hooks/access-rights/useAgencySubscription';
+import { usePlanCatalog } from '@/hooks/access-rights/usePlanCatalog';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AdminViewHeader } from '@/components/admin/shared/AdminViewHeader';
 import { AdminPanel } from '@/components/admin/shared/AdminPanel';
 
@@ -95,10 +95,52 @@ export default function AdminAgencies() {
     content_webhook_url: '',
   });
 
-  // Plan management hooks
-  const { data: planTiers } = usePlanTiers();
-  const { data: allSubscriptions } = useAllAgencySubscriptions();
-  const updateSubscription = useUpdateAgencySubscription();
+  // Plan management hooks (V2)
+  const { plans } = usePlanCatalog();
+  const queryClient = useQueryClient();
+
+  const { data: agencyPlans } = useQuery({
+    queryKey: ['agency_plans_all'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('agency_plan')
+        .select('agency_id, plan_id, status')
+        .eq('status', 'active');
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const updatePlanMutation = useMutation({
+    mutationFn: async ({ agencyId, planId }: { agencyId: string; planId: string }) => {
+      const existing = agencyPlans?.find(p => p.agency_id === agencyId);
+      if (existing) {
+        const { error } = await supabase
+          .from('agency_plan')
+          .update({ plan_id: planId, updated_at: new Date().toISOString() })
+          .eq('agency_id', agencyId)
+          .eq('status', 'active');
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('agency_plan')
+          .insert({
+            agency_id: agencyId,
+            plan_id: planId,
+            status: 'active',
+            assigned_by: (await supabase.auth.getUser()).data.user?.id ?? null,
+          });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agency_plans_all'] });
+      toast({ title: 'Plan mis à jour' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+    },
+  });
 
   useEffect(() => {
     loadData();
@@ -171,21 +213,13 @@ export default function AdminAgencies() {
     return users.filter((user) => !user.agency_id && user.role_agence === 'dirigeant');
   };
 
-  // Get current plan for an agency
-  const getAgencyPlan = (agencyId: string) => {
-    const subscription = allSubscriptions?.find(s => s.agency_id === agencyId);
-    return subscription?.tier_key || null;
+  // Get current plan for an agency (V2)
+  const getAgencyPlanId = (agencyId: string) => {
+    return agencyPlans?.find(p => p.agency_id === agencyId)?.plan_id ?? null;
   };
 
-  const getAgencyPlanLabel = (agencyId: string) => {
-    const tierKey = getAgencyPlan(agencyId);
-    if (!tierKey) return 'Aucun';
-    const tier = planTiers?.find(t => t.key === tierKey);
-    return tier?.label || tierKey;
-  };
-
-  const handlePlanChange = (agencyId: string, tierKey: string) => {
-    updateSubscription.mutate({ agencyId, tierKey });
+  const handlePlanChange = (agencyId: string, planId: string) => {
+    updatePlanMutation.mutate({ agencyId, planId });
   };
 
   const openDialog = (agency?: Agency) => {
@@ -403,17 +437,17 @@ export default function AdminAgencies() {
                   </div>
                   <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
                     <Select
-                      value={getAgencyPlan(agency.id) || ''}
+                      value={getAgencyPlanId(agency.id) || ''}
                       onValueChange={(value) => handlePlanChange(agency.id, value)}
                     >
-                      <SelectTrigger className="w-[120px] h-8">
+                      <SelectTrigger className="w-[140px] h-8">
                         <Crown className="h-3 w-3 mr-1 text-muted-foreground" />
                         <SelectValue placeholder="Plan" />
                       </SelectTrigger>
                       <SelectContent>
-                        {planTiers?.map((tier) => (
-                          <SelectItem key={tier.key} value={tier.key}>
-                            {tier.label}
+                        {plans.map((plan) => (
+                          <SelectItem key={plan.id} value={plan.id}>
+                            {plan.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
