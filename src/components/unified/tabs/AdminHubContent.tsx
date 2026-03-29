@@ -19,10 +19,8 @@ import {
   ContenuView,
   OpsView,
   PlateformeView,
-  ModulesMasterView,
   ModulesMasterViewV2,
 } from '@/components/admin/views';
-import { useAppFeatureFlag } from '@/hooks/useAppFeatureFlag';
 import { lazy, Suspense, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
@@ -39,9 +37,7 @@ const PendingRegistrationsList = lazy(() => import('@/components/admin/registrat
 const ApporteurAuditLogView = lazy(() => import('@/components/admin/views/ApporteurAuditLogView'));
 
 const SuiviClientsAdminView = lazy(() => import('@/components/admin/views/SuiviClientsAdminView'));
-const OffresAndOptionsView = lazy(() => import('@/components/admin/views/OffresAndOptionsView'));
 const PlanCatalogViewV2 = lazy(() => import('@/components/admin/views/PlanCatalogViewV2'));
-const AgencyFeaturesAdminView = lazy(() => import('@/components/admin/views/AgencyFeaturesAdminView'));
 const AgencyEntitlementsViewV2 = lazy(() => import('@/components/admin/views/AgencyEntitlementsViewV2'));
 const JobProfilePresetsViewV2 = lazy(() => import('@/components/admin/views/JobProfilePresetsViewV2'));
 const PermissionsAuditLogView = lazy(() => import('@/components/admin/views/PermissionsAuditLogView'));
@@ -102,7 +98,7 @@ const DEFAULT_RELATIONS_ORDER = ['apporteurs', 'audit-apporteurs', 'suivi-client
 const DEFAULT_OFFRES_ORDER = ['overview', 'agency-features'];
 
 export default function AdminHubContent() {
-  const useV2 = useAppFeatureFlag('USE_PERMISSIONS_V2');
+  
   const { mode: navMode } = useNavigationMode();
   const [searchParams, setSearchParams] = useSearchParams();
   const [persistedMainTab, setPersistedMainTab] = usePersistedTab('admin_main_tab', 'gestion', ADMIN_MAIN_TAB_IDS);
@@ -209,7 +205,7 @@ export default function AdminHubContent() {
                   <ReseauView />
                 </TabsContent>
                 <TabsContent value="modules" className="mt-0 focus-visible:outline-none">
-                  {useV2 ? <ModulesMasterViewV2 /> : <ModulesMasterView />}
+                  <ModulesMasterViewV2 />
                 </TabsContent>
                 <TabsContent value="presets" className="mt-0 focus-visible:outline-none">
                   <Suspense fallback={<LoadingFallback />}><JobProfilePresetsViewV2 /></Suspense>
@@ -271,12 +267,12 @@ export default function AdminHubContent() {
               <DraggableFolderContentContainer accentColor={activeOffresAccent}>
                 <TabsContent value="overview" className="mt-0 focus-visible:outline-none">
                   <Suspense fallback={<LoadingFallback />}>
-                    {useV2 ? <PlanCatalogViewV2 /> : <OffresAndOptionsView />}
+                    <PlanCatalogViewV2 />
                   </Suspense>
                 </TabsContent>
                 <TabsContent value="agency-features" className="mt-0 focus-visible:outline-none">
                   <Suspense fallback={<LoadingFallback />}>
-                    {useV2 ? <AgencyEntitlementsViewV2 /> : <AgencyFeaturesAdminView />}
+                    <AgencyEntitlementsViewV2 />
                   </Suspense>
                 </TabsContent>
               </DraggableFolderContentContainer>
