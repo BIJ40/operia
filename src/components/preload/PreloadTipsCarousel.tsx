@@ -64,7 +64,7 @@ export function PreloadTipsCarousel({
       contextualTips.push(...(TIPS_BY_MODULE['organisation.salaries'] || []));
     }
     
-    if (hasModuleOption('support.guides', 'apogee')) {
+    if (hasModule('support.guides.apogee')) {
       contextualTips.push(...(TIPS_BY_MODULE['support.guides'] || []));
     }
     
