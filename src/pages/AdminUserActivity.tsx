@@ -128,12 +128,13 @@ export default function AdminUserActivity() {
   };
 
   return (
-    <div className="container max-w-app mx-auto p-8 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Activity className="w-8 h-8" />
-          Activité utilisateurs
-        </h1>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <h2 className="text-lg font-semibold text-foreground">Activité utilisateurs</h2>
+          <p className="text-sm text-muted-foreground">Connexions, durée et répartition par agence.</p>
+        </div>
+        <Badge variant="outline" className="text-xs">V2</Badge>
       </div>
 
       {/* Utilisateurs connectés */}
