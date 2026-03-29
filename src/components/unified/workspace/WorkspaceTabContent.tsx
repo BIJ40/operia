@@ -64,6 +64,7 @@ export function WorkspaceTabContent({ isN0User }: WorkspaceTabContentProps) {
             <RelationsTabContent />
           </LocalErrorBoundary>
         </TabsContent>
+        <TabsContent value="documents" className="mt-0">
           <LocalErrorBoundary componentName="Documents">
             <DocumentsTabContent />
           </LocalErrorBoundary>
