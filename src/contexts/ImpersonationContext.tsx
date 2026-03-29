@@ -120,7 +120,7 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
       }
       
       // Charger les modules effectifs via RPC
-      const { data: effectiveModules, error: modulesError } = await supabase.rpc(
+      const { data: effectiveModules, error: modulesError } = await (supabase.rpc as any)(
         'get_user_effective_modules',
         { p_user_id: userId }
       );
@@ -131,7 +131,7 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
         for (const row of effectiveModules) {
           const moduleKey = row.module_key as ModuleKey;
           resolvedModules[moduleKey] = {
-            enabled: row.enabled === true,
+            enabled: row.granted === true,
             options: (typeof row.options === 'object' && row.options !== null) 
               ? row.options as Record<string, boolean>
               : {},

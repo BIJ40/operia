@@ -141,7 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .select('first_name, last_name, agence, agency_id, role_agence, must_change_password, global_role, is_active, is_read_only')
             .eq('id', userId)
             .single(),
-          supabase.rpc('get_user_effective_modules', { p_user_id: userId }),
+          (supabase.rpc as any)('get_user_effective_modules', { p_user_id: userId }),
           (supabase
             .from('module_registry' as any) as any)
             .select('key')
@@ -217,7 +217,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         for (const row of effectiveModules) {
           const moduleKey = row.module_key;
           resolvedModules[moduleKey] = {
-            enabled: row.enabled === true,
+            enabled: row.granted === true,
             options: (typeof row.options === 'object' && row.options !== null) 
               ? row.options as Record<string, boolean>
               : {},
