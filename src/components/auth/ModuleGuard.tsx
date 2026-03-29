@@ -1,23 +1,22 @@
 /**
- * ModuleGuard V2.1 - Utilise le Permissions Engine centralisé
+ * ModuleGuard V3.0 — Utilise usePermissionsBridge (transition V1→V2)
  * Protection de routes basée sur les modules activés
  */
 
-import { ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuthCore } from '@/contexts/AuthCoreContext';
-import { usePermissions } from '@/contexts/PermissionsContext';
-import { hasAccess, isBypassRole } from '@/permissions';
-import { ModuleKey } from '@/types/modules';
-import { useModuleLabels } from '@/hooks/useModuleLabels';
 import { Loader2, Lock } from 'lucide-react';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { useModuleLabels } from '@/hooks/useModuleLabels';
+import type { ModuleKey } from '@/types/modules';
 
 interface ModuleGuardProps {
   /** Module requis pour accéder */
   moduleKey: ModuleKey;
   /** Option spécifique du module requise (ex: 'coffre' pour rh.coffre) */
   requiredOption?: string;
-  /** Liste d'options acceptées (logique OR) - ex: ['rh_viewer', 'rh_admin'] */
+  /** Liste d'options acceptées (logique OR) — ex: ['rh_viewer', 'rh_admin'] */
   requiredOptions?: string[];
   /** Contenu à afficher si autorisé */
   children: ReactNode;
@@ -30,95 +29,12 @@ interface ModuleGuardProps {
 }
 
 /**
- * Guard de route basé sur les modules V2.1
- * Utilise le Permissions Engine centralisé
- * 
- * Autorise l'accès si:
- * - L'utilisateur a le module activé (explicite ou par défaut du rôle)
- * - ET l'option spécifique si requiredOption est défini
- * - OU au moins une des options dans requiredOptions (logique OR)
- * - OU l'utilisateur est platform_admin/superadmin (N5+ bypass)
- */
-export function ModuleGuard({ 
-  moduleKey, 
-  requiredOption,
-  requiredOptions,
-  children, 
-  redirectTo = '/',
-  showError = false,
-  errorMessage
-}: ModuleGuardProps) {
-  const { user, isAuthLoading } = useAuthCore();
-  const { enabledModules, globalRole, accessContext: { agencyId } } = usePermissions();
-
-  // Afficher un loader pendant le chargement
-  if (isAuthLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <span className="ml-2 text-muted-foreground">Chargement...</span>
-      </div>
-    );
-  }
-
-  // Rediriger vers login si non authentifié
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
-
-  // Construire le contexte de permissions
-  const permissionContext = {
-    globalRole,
-    enabledModules,
-    agencyId,
-  };
-
-  // Vérifier l'accès au module via le Permissions Engine + COMPAT_MAP fallback
-  const isBypass = isBypassRole(globalRole);
-  let canAccessModule = false;
-
-  if (requiredOptions && requiredOptions.length > 0) {
-    // Logique OR : au moins une des options doit être accessible
-    canAccessModule = requiredOptions.some(opt => 
-      hasAccess({ ...permissionContext, moduleId: moduleKey, optionId: opt })
-    ) || isBypass;
-  } else if (requiredOption) {
-    // Option unique requise
-    canAccessModule = hasAccess({ 
-      ...permissionContext, 
-      moduleId: moduleKey, 
-      optionId: requiredOption 
-    }) || isBypass;
-  } else {
-    // Vérification module
-    canAccessModule = hasAccess({ 
-      ...permissionContext, 
-      moduleId: moduleKey 
-    }) || isBypass;
-  }
-
-  if (!canAccessModule) {
-    if (showError) {
-      return (
-        <ModuleAccessDeniedPage 
-          moduleKey={moduleKey}
-          message={errorMessage}
-        />
-      );
-    }
-    return <Navigate to={redirectTo} replace />;
-  }
-
-  return <>{children}</>;
-}
-
-/**
  * Page d'accès refusé pour module
  */
-function ModuleAccessDeniedPage({ 
-  moduleKey, 
-  message 
-}: { 
+function ModuleAccessDeniedPage({
+  moduleKey,
+  message,
+}: {
   moduleKey: ModuleKey;
   message?: string;
 }) {
@@ -141,6 +57,73 @@ function ModuleAccessDeniedPage({
       </p>
     </div>
   );
+}
+
+/**
+ * Guard de route basé sur les modules V3.0
+ * Utilise usePermissionsBridge (transition V1→V2)
+ *
+ * Autorise l'accès si :
+ * - L'utilisateur est admin (N5+ bypass) — équivalent isBypassRole() V1
+ * - OU le module est activé ET l'option requise est présente
+ * - OU au moins une des options dans requiredOptions (logique OR)
+ */
+export function ModuleGuard({
+  moduleKey,
+  requiredOption,
+  requiredOptions,
+  children,
+  redirectTo = '/',
+  showError = false,
+  errorMessage,
+}: ModuleGuardProps) {
+  const { hasModule, hasModuleOption, isAdmin } = usePermissionsBridge();
+  const { user, isAuthLoading } = useAuthCore();
+
+  // Chargement en cours
+  if (isAuthLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Chargement...</span>
+      </div>
+    );
+  }
+
+  // Non authentifié
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
+
+  // Vérification des droits
+  // isAdmin (N5+) bypass total — identique à isBypassRole() V1
+  let canAccess = false;
+
+  if (isAdmin) {
+    canAccess = true;
+  } else if (requiredOptions && requiredOptions.length > 0) {
+    canAccess = requiredOptions.some(opt =>
+      hasModuleOption(moduleKey, opt)
+    );
+  } else if (requiredOption) {
+    canAccess = hasModuleOption(moduleKey, requiredOption);
+  } else {
+    canAccess = hasModule(moduleKey);
+  }
+
+  if (!canAccess) {
+    if (showError) {
+      return (
+        <ModuleAccessDeniedPage
+          moduleKey={moduleKey}
+          message={errorMessage}
+        />
+      );
+    }
+    return <Navigate to={redirectTo} replace />;
+  }
+
+  return <>{children}</>;
 }
 
 export default ModuleGuard;
