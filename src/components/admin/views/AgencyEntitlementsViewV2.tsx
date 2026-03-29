@@ -206,11 +206,30 @@ export function AgencyEntitlementsViewV2() {
         <AgencySelector selected={selectedAgency} onSelect={setSelectedAgency} />
         {selectedAgency && (
           <div className="flex items-center gap-2">
-            {selectedAgency.plan_key && (
-              <Badge variant="secondary">
-                Plan {selectedAgency.plan_key}
-              </Badge>
-            )}
+            {canEdit ? (
+              <Select
+                value={selectedAgency.plan_id ?? ''}
+                onValueChange={async (planId) => {
+                  await supabase
+                    .from('agency_plan')
+                    .update({ plan_id: planId, updated_at: new Date().toISOString() })
+                    .eq('agency_id', selectedAgency.id);
+                  const plan = plans.find(p => p.id === planId);
+                  setSelectedAgency({ ...selectedAgency, plan_id: planId, plan_key: plan?.key });
+                }}
+              >
+                <SelectTrigger className="w-40 h-8 text-xs">
+                  <SelectValue placeholder="Plan..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {plans.map(p => (
+                    <SelectItem key={p.id} value={p.id} className="text-xs">{p.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : selectedAgency.plan_key ? (
+              <Badge variant="secondary">Plan {selectedAgency.plan_key}</Badge>
+            ) : null}
             <Badge variant="outline">
               {activeCount} option{activeCount !== 1 ? 's' : ''} active{activeCount !== 1 ? 's' : ''}
             </Badge>
