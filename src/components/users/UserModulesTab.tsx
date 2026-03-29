@@ -5,7 +5,7 @@ import {
   MODULE_DEFINITIONS, DEPLOYED_MODULES, EnabledModules, ModuleKey, 
   ModuleDefinition, ModuleCategory, canAccessModule 
 } from '@/types/modules';
-import { MODULE_OPTION_MIN_ROLES } from '@/permissions/constants';
+import { SHARED_MODULE_OPTION_MIN_ROLES as MODULE_OPTION_MIN_ROLES } from '@/permissions/shared-constants';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { 

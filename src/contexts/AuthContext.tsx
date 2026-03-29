@@ -10,11 +10,8 @@ import { setSentryUser, clearSentryUser } from '@/lib/sentry';
 // ============================================================================
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { EnabledModules, ModuleKey, MODULE_DEFINITIONS, isModuleEnabled as checkModuleEnabled } from '@/types/modules';
-import { 
-  hasAccess, hasMinRole,
-  type PermissionContext,
-} from '@/permissions';
-import { userModulesToEnabledModules } from '@/lib/userModulesUtils';
+import { hasMinRole } from '@/permissions/shared-constants';
+
 
 // Sub-contexts (Phase 1 split)
 import { AuthCoreContext, type AuthCoreContextType } from './AuthCoreContext';
@@ -97,9 +94,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const hasFaqAdminRole = adminOptions.faq_admin === true;
   const canAccessFaqAdmin = hasFaqAdminRole || isAdmin;
 
-  // Permission context
-  const accessContext: PermissionContext = useMemo(() => ({
-    globalRole: globalRole ?? 'base_user',
+  // Permission context (kept for PermissionsContextType compat)
+  const accessContext = useMemo(() => ({
+    globalRole: globalRole ?? 'base_user' as const,
     enabledModules: enabledModules ?? {},
     agencyId,
   }), [globalRole, enabledModules, agencyId]);
@@ -110,12 +107,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [globalRole]);
 
   const hasModuleGuard = useCallback((moduleKey: ModuleKey): boolean => {
-    return hasAccess({ ...accessContext, moduleId: moduleKey });
-  }, [accessContext]);
+    if (!enabledModules) return false;
+    const isBypassed = globalRole === 'platform_admin' || globalRole === 'superadmin';
+    if (isBypassed) return true;
+    return checkModuleEnabled(enabledModules, moduleKey);
+  }, [enabledModules, globalRole]);
 
   const hasModuleOptionGuard = useCallback((moduleKey: ModuleKey, optionKey: string): boolean => {
-    return hasAccess({ ...accessContext, moduleId: moduleKey, optionId: optionKey });
-  }, [accessContext]);
+    if (!enabledModules) return false;
+    const isBypassed = globalRole === 'platform_admin' || globalRole === 'superadmin';
+    if (isBypassed) return true;
+    const moduleConfig = enabledModules[moduleKey];
+    if (!moduleConfig) return false;
+    if (typeof moduleConfig === 'boolean') return moduleConfig;
+    if (!moduleConfig.enabled) return false;
+    return moduleConfig.options?.[optionKey] === true;
+  }, [enabledModules, globalRole]);
 
   const isDeployedModuleGuard = useCallback((moduleKey: ModuleKey): boolean => {
     return deployedModuleKeys.has(moduleKey);

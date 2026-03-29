@@ -15,7 +15,8 @@ import { type GlobalRole } from "@/types/globalRoles";
 import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 import { MODULE_DEFINITIONS, type ModuleKey } from "@/types/modules";
 import { useModuleLabels } from "@/hooks/useModuleLabels";
-import { PlanKey, PLAN_LABELS } from "@/config/planTiers";
+import { PLAN_LABELS } from "@/permissions/shared-constants";
+type PlanKey = string;
 import {
   Popover,
   PopoverContent,

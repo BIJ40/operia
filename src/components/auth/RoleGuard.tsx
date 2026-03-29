@@ -7,7 +7,7 @@ import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
-import { hasMinRole } from '@/permissions';
+import { hasMinRole } from '@/permissions/shared-constants';
 import { GlobalRole } from '@/types/globalRoles';
 import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 import { Loader2, ShieldX } from 'lucide-react';

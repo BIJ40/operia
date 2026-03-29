@@ -1,6 +1,6 @@
 import type { GlobalRole } from '@/types/globalRoles';
 import type { ModuleKey } from '@/types/modules';
-import type { PlanKey } from '@/config/planTiers';
+export type PlanKey = string;
 
 export type GuardType = 'RoleGuard' | 'ModuleGuard' | 'FaqAdminGuard' | 'ApporteurGuard';
 

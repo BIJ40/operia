@@ -10,7 +10,7 @@
 
 import { useMemo, useCallback, useState } from 'react';
 import { useUserModules, useToggleModule } from '@/hooks/useUserModules';
-import { getDelegatableModules, getPresetForRole } from '@/config/roleAgenceModulePresets';
+import { getDelegatableModules } from '@/lib/delegatableModules';
 import { useAgencyHasApporteurs } from '@/hooks/useAgencyHasApporteurs';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
 import { Switch } from '@/components/ui/switch';
@@ -19,9 +19,6 @@ import { Button } from '@/components/ui/button';
 import { RotateCcw, Loader2, ChevronDown, ChevronRight } from 'lucide-react';
 import { ModuleKey } from '@/types/modules';
 import { toast } from 'sonner';
-import { deleteAllUserModules, bulkInsertUserModules } from '@/repositories/userModulesRepository';
-import { useQueryClient } from '@tanstack/react-query';
-import { useAuthCore } from '@/contexts/AuthCoreContext';
 
 interface Props {
   userId: string;
@@ -49,8 +46,6 @@ interface HierarchicalModule {
 export function TeamMemberModules({ userId, roleAgence, n2HasModule, isDeployedModule }: Props) {
   const { data: userModules, isLoading } = useUserModules(userId);
   const toggleModule = useToggleModule();
-  const queryClient = useQueryClient();
-  const { user } = useAuthCore();
   const { getShortLabel } = useModuleLabels();
   const agencyHasApporteurs = useAgencyHasApporteurs();
   const [collapsedParents, setCollapsedParents] = useState<Set<string>>(new Set());
@@ -239,25 +234,8 @@ export function TeamMemberModules({ userId, roleAgence, n2HasModule, isDeployedM
 
   const handleResetToPreset = async () => {
     if (!roleAgence) return;
-    const preset = getPresetForRole(roleAgence);
-    try {
-      await deleteAllUserModules(userId);
-      if (preset.length > 0) {
-        await bulkInsertUserModules(
-          preset.map(key => ({
-            user_id: userId,
-            module_key: key,
-            options: null,
-            enabled_at: new Date().toISOString(),
-            enabled_by: user?.id || null,
-          }))
-        );
-      }
-      queryClient.invalidateQueries({ queryKey: ['user-modules', userId] });
-      toast.success('Droits réinitialisés au profil par défaut');
-    } catch {
-      toast.error('Erreur lors de la réinitialisation');
-    }
+    // V2: job_profile_presets are now in DB — reset via bulk-reset-job-preset edge function
+    toast.info('Réinitialisation via les profils métier V2 — contactez un administrateur');
   };
 
   if (isLoading) {

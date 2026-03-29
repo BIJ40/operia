@@ -1,11 +1,8 @@
 /**
- * PERMISSIONS ENGINE V1.0 - Barrel Export
+ * PERMISSIONS V2.0 - Barrel Export
  * 
- * Point d'entrée unique pour le système de permissions.
- * Tout le code applicatif doit importer depuis ce fichier.
- * 
- * @example
- * import { hasAccess, validateUserPermissions, explainAccess } from '@/permissions';
+ * Post-cleanup: V1 engine removed. Only types, shared constants,
+ * and franchisor access rules remain.
  */
 
 // Types
@@ -22,53 +19,25 @@ export type {
   UserManagementCapabilities,
 } from './types';
 
-// Constants
+// Shared constants & utility functions
 export {
-  BYPASS_ROLES,
-  BYPASS_MIN_LEVEL,
-  AGENCY_REQUIRED_MODULES,
-  AGENCY_ROLES,
-  NETWORK_MODULES,
-  NETWORK_MIN_ROLE,
-  ROLE_HIERARCHY,
-  MODULE_MIN_ROLES,
-  MODULE_OPTION_MIN_ROLES,
-  MODULE_LABELS,
-} from './constants';
-
-// Engine functions
-export {
-  hasAccess,
+  SHARED_ROLE_HIERARCHY as ROLE_HIERARCHY,
+  SHARED_BYPASS_ROLES as BYPASS_ROLES,
+  SHARED_AGENCY_REQUIRED_MODULES as AGENCY_REQUIRED_MODULES,
+  SHARED_AGENCY_ROLES as AGENCY_ROLES,
+  SHARED_NETWORK_MODULES as NETWORK_MODULES,
+  SHARED_NETWORK_MIN_ROLE as NETWORK_MIN_ROLE,
+  SHARED_MODULE_MIN_ROLES as MODULE_MIN_ROLES,
+  SHARED_MODULE_OPTION_MIN_ROLES as MODULE_OPTION_MIN_ROLES,
+  SHARED_MODULE_KEYS,
+  PLAN_LABELS as MODULE_LABELS,
   hasMinRole,
   getRoleLevel,
   isBypassRole,
-  getEffectiveModules,
-  validateUserPermissions,
-  explainAccess,
-  getDefaultModulesForRole,
-  getUserManagementCapabilities,
-  isModuleEnabled,
-  isModuleOptionEnabled,
-  isDelegatableKey,
-  shouldBypassMinRole,
-} from './permissionsEngine';
-
-// Module Registry (Canon unique)
-export {
-  getAllModules,
-  getModule,
-  getModuleOptions,
-  isValidOptionPath,
-  isValidModuleKey,
-  getValidModuleKeys,
-  getValidOptionKeys,
-  validateModuleDefinitions,
-  logValidationIssues,
-  PROTECTED_MODULES,
-  isProtectedModule,
-  ROLE_INTERFACE_MODULES,
-  isRoleInterfaceModule,
-} from './moduleRegistry';
+  getPlanLabel,
+  PLAN_HIERARCHY,
+  PLAN_LABELS,
+} from './shared-constants';
 
 // Franchisor Interface Access (role-based, not module-based)
 export {
@@ -78,6 +47,3 @@ export {
   isNativeFranchisorRole,
 } from './franchisorAccess';
 export type { FranchisorSection } from './franchisorAccess';
-
-// Dev Validator (COMMIT 2)
-export { runDevValidation } from './devValidator';
