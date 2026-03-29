@@ -6,7 +6,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Shield, UserPlus, Handshake, UserCheck, ScrollText, Eye, LayoutGrid, UserCog, Grid3X3, ShieldCheck, Layers, FileKey } from 'lucide-react';
+import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Shield, UserPlus, Handshake, UserCheck, ScrollText, Eye, LayoutGrid, UserCog, Grid3X3, ShieldCheck, Layers } from 'lucide-react';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { 
   DraggableFolderTabsList, 
