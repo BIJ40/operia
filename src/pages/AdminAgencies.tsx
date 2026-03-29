@@ -38,6 +38,7 @@ import { usePlanCatalog } from '@/hooks/access-rights/usePlanCatalog';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AdminViewHeader } from '@/components/admin/shared/AdminViewHeader';
 import { AdminPanel } from '@/components/admin/shared/AdminPanel';
+import { AgencyModuleOptions } from '@/components/admin/agency/AgencyModuleOptions';
 
 interface Agency {
   id: string;
@@ -497,7 +498,8 @@ export default function AdminAgencies() {
                   <ChevronUp className="h-4 w-4" />
                 </Button>
               </div>
-              <div className="p-4">
+              <div className="p-4 space-y-6">
+                {/* Membres */}
                 {totalCount === 0 ? (
                   <div className="text-center text-muted-foreground">Aucun membre dans cette agence</div>
                 ) : (
@@ -544,6 +546,11 @@ export default function AdminAgencies() {
                     </TableBody>
                   </Table>
                 )}
+
+                {/* Options modules */}
+                <div className="border-t pt-4">
+                  <AgencyModuleOptions agencyId={agency.id} />
+                </div>
               </div>
             </div>
           );
