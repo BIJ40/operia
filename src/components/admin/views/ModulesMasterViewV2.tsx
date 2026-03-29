@@ -298,14 +298,14 @@ export function ModulesMasterViewV2() {
         <div className="space-y-2">
           <button
             onClick={() => setShowDev(!showDev)}
-            className="flex items-center gap-2 text-sm text-amber-600 hover:text-amber-700 font-medium"
+            className="flex items-center gap-2 text-sm text-destructive/70 hover:text-destructive font-medium"
           >
             {showDev ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             🚧 En cours de développement ({dev.length})
           </button>
 
           {showDev && (
-            <div className="border border-dashed border-amber-300 rounded-lg overflow-x-auto bg-amber-50/30">
+            <div className="border border-dashed border-border rounded-lg overflow-x-auto bg-muted/30">
               <table className="w-full text-left">
                 <tbody>
                   {dev.map(m => (
