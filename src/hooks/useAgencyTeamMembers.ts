@@ -63,7 +63,6 @@ export function useAgencyTeamMembers(agencyId?: string) {
           avatar_url,
           created_at,
           updated_at,
-          agence,
           agency_id
         `)
         .order("last_name", { ascending: true });
@@ -71,8 +70,6 @@ export function useAgencyTeamMembers(agencyId?: string) {
       // Filter by agency
       if (effectiveAgencyId) {
         profilesQuery = profilesQuery.eq("agency_id", effectiveAgencyId);
-      } else if (agence) {
-        profilesQuery = profilesQuery.eq("agence", agence);
       }
 
       const { data: profiles, error } = await profilesQuery;

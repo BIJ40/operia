@@ -37,7 +37,7 @@ export interface UserProfile {
   email: string | null;
   first_name: string | null;
   last_name: string | null;
-  agence: string | null;
+  agence: string | null; // kept for compat, resolved from agency_id
   agency_id: string | null;
   global_role: GlobalRole | null;
   enabled_modules: EnabledModules | null;
@@ -188,7 +188,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
           email, 
           first_name, 
           last_name, 
-          agence,
+          agency_id,
           agency_id,
           global_role, 
           role_agence, 

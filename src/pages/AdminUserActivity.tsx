@@ -64,7 +64,7 @@ export default function AdminUserActivity() {
       const userIds = [...new Set(logs?.map(log => log.user_id) || [])];
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, agence')
+        .select('id, agency_id')
         .in('id', userIds);
 
       if (profilesError) throw profilesError;
@@ -103,7 +103,7 @@ export default function AdminUserActivity() {
 
       logs?.forEach(log => {
         const profile = profilesMap.get(log.user_id);
-        const agency = profile?.agence || 'Non spécifiée';
+        const agency = profile?.agency_id || 'Non spécifiée';
         
         const existing = agencyMap.get(agency) || { connections: 0, totalSeconds: 0, users: new Set() };
         existing.connections += 1;

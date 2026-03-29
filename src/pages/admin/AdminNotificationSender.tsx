@@ -17,7 +17,7 @@ interface UserProfile {
   first_name: string | null;
   last_name: string | null;
   email: string | null;
-  agence: string | null;
+  agence?: string | null;
 }
 
 const CATEGORIES = [
@@ -53,7 +53,7 @@ export default function AdminNotificationSender() {
       try {
         const [agenciesRes, usersRes] = await Promise.all([
           supabase.from('apogee_agencies').select('id, label, slug').order('label'),
-          supabase.from('profiles').select('id, first_name, last_name, email, agence').order('last_name')
+          supabase.from('profiles').select('id, first_name, last_name, email, agency_id').order('last_name')
         ]);
         
         if (agenciesRes.data) setAgencies(agenciesRes.data);

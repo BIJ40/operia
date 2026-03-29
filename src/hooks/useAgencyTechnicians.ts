@@ -44,14 +44,16 @@ export function useAgencyTechnicians(options: UseAgencyTechniciansOptions) {
           role_agence,
           global_role,
           is_active,
-          agence,
           agency_id
         `)
         .order("last_name", { ascending: true });
 
       // Filter by agency (slug or id)
       if (agencySlug) {
-        query = query.eq("agence", agencySlug);
+        // Resolve slug to id first
+        const { data: ag } = await supabase.from('apogee_agencies').select('id').eq('slug', agencySlug).single();
+        if (ag) query = query.eq("agency_id", ag.id);
+        else return [];
       } else if (agencyId) {
         query = query.eq("agency_id", agencyId);
       } else {

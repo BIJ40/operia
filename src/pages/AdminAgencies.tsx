@@ -59,7 +59,7 @@ interface UserProfile {
   first_name: string | null;
   last_name: string | null;
   email: string | null;
-  agence: string | null;
+  agence?: string | null; // resolved from agency join
   agency_id: string | null;
   role_agence: string | null;
 }
@@ -151,7 +151,7 @@ export default function AdminAgencies() {
     try {
       const [agenciesResult, usersResult, collabsResult] = await Promise.all([
         supabase.from('apogee_agencies').select('*').order('label').limit(500),
-        supabase.from('profiles').select('id, first_name, last_name, email, agence, agency_id, role_agence').order('first_name').limit(1000),
+        supabase.from('profiles').select('id, first_name, last_name, email, agency_id, role_agence').order('first_name').limit(1000),
         supabase.from('collaborators').select('id, user_id, first_name, last_name, email, role, type, agency_id, leaving_date, is_registered_user').order('last_name').limit(2000),
       ]);
 

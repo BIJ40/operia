@@ -71,7 +71,7 @@ export function useAccessRightsUsers() {
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select(`
-          id, email, first_name, last_name, global_role, agency_id, agence, role_agence,
+          id, email, first_name, last_name, global_role, agency_id, role_agence,
           is_active, created_at, deactivated_at, deactivated_by,
           must_change_password, apogee_user_id,
           agency:apogee_agencies(id, label, slug)
@@ -109,8 +109,9 @@ export function useAccessRightsUsers() {
         
         let enrichedUser = { ...user, enabled_modules };
         
-        if (!user.agency && user.agence) {
-          const resolvedAgency = agencyBySlug.get(user.agence.toLowerCase());
+        if (!user.agency && user.agency_id) {
+          // agency join should have resolved this, but fallback
+          const resolvedAgency = allAgencies?.find(a => a.id === user.agency_id);
           if (resolvedAgency) {
             enrichedUser = { ...enrichedUser, agency: resolvedAgency };
           }

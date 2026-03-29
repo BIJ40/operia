@@ -8538,7 +8538,6 @@ export type Database = {
       }
       profiles: {
         Row: {
-          agence: string | null
           agency_id: string | null
           apogee_user_id: number | null
           avatar_url: string | null
@@ -8547,7 +8546,6 @@ export type Database = {
           deactivated_by: string | null
           email: string | null
           email_notifications_enabled: boolean | null
-          enabled_modules: Json | null
           first_name: string | null
           global_role: Database["public"]["Enums"]["global_role"] | null
           id: string
@@ -8567,7 +8565,6 @@ export type Database = {
           username: string | null
         }
         Insert: {
-          agence?: string | null
           agency_id?: string | null
           apogee_user_id?: number | null
           avatar_url?: string | null
@@ -8576,7 +8573,6 @@ export type Database = {
           deactivated_by?: string | null
           email?: string | null
           email_notifications_enabled?: boolean | null
-          enabled_modules?: Json | null
           first_name?: string | null
           global_role?: Database["public"]["Enums"]["global_role"] | null
           id: string
@@ -8596,7 +8592,6 @@ export type Database = {
           username?: string | null
         }
         Update: {
-          agence?: string | null
           agency_id?: string | null
           apogee_user_id?: number | null
           avatar_url?: string | null
@@ -8605,7 +8600,6 @@ export type Database = {
           deactivated_by?: string | null
           email?: string | null
           email_notifications_enabled?: boolean | null
-          enabled_modules?: Json | null
           first_name?: string | null
           global_role?: Database["public"]["Enums"]["global_role"] | null
           id?: string
