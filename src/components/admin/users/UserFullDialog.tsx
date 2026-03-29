@@ -146,7 +146,7 @@ export function UserFullDialog({
           />
 
           {useV2 ? (
-            <UserPermissionsColumnV2 userId={userId} editMode={editMode} />
+            <UserPermissionsColumnV2 userId={userId} userRole={globalRole ?? 'base_user'} editMode={editMode} />
           ) : (
             <UserPermissionsColumn
               editMode={editMode}
