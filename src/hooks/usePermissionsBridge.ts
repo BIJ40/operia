@@ -13,56 +13,38 @@
  */
 
 import { usePermissions } from '@/contexts/PermissionsContext';
-import { usePermissionsV2 } from '@/contexts/PermissionsContextV2';
+import { usePermissionsV2Safe } from '@/contexts/PermissionsContextV2';
 import { useAppFeatureFlag } from '@/hooks/useAppFeatureFlag';
 import { PermissionEntry } from '@/types/permissions-v2';
 
-// Interface identique à PermissionsContextType V1
-// pour garantir la compatibilité avec les 67 consommateurs
 interface PermissionsBridgeResult {
-  // Fonctions
   hasGlobalRole: (requiredRole: string) => boolean;
   hasModule: (moduleKey: string) => boolean;
   hasModuleOption: (moduleKey: string, optionKey: string) => boolean;
   hasAccessToScope: (scope: string) => boolean;
   isDeployedModule: (moduleKey: string) => boolean;
-
-  // Données brutes
   globalRole: string | null;
-
-  // Flags dérivés
   isAdmin: boolean;
   isSupport: boolean;
   isFranchiseur: boolean;
-
-  // Flags support
   canAccessSupportUser: boolean;
   hasSupportAgentRole: boolean;
   isSupportAdmin: boolean;
   canManageTickets: boolean;
-
-  // Flags FAQ
   hasFaqAdminRole: boolean;
   canAccessFaqAdmin: boolean;
 }
 
 export function usePermissionsBridge(): PermissionsBridgeResult {
-  const useV2 = useAppFeatureFlag('USE_PERMISSIONS_V2');
-
-  // Toujours appeler les deux hooks — les règles des hooks l'exigent
-  // Le contexte V2 peut ne pas être disponible si le flag est false
-  // On gère ça via try/catch dans le hook V2
+  // Appels inconditionnels — règles des hooks respectées
+  const useV2Flag = useAppFeatureFlag('USE_PERMISSIONS_V2');
   const v1 = usePermissions();
-  const v2Available = useV2 ? (() => {
-    try {
-      return usePermissionsV2();
-    } catch {
-      return null;
-    }
-  })() : null;
+  const v2 = usePermissionsV2Safe(); // null si PermissionsProviderV2 absent
 
-  // Si V2 non disponible ou flag désactivé — retourner V1 directement
-  if (!useV2 || !v2Available) {
+  // V2 actif uniquement si flag=true ET contexte V2 disponible
+  const useV2 = useV2Flag && v2 !== null;
+
+  if (!useV2 || !v2) {
     return {
       hasGlobalRole:        v1.hasGlobalRole,
       hasModule:            v1.hasModule,
@@ -83,37 +65,29 @@ export function usePermissionsBridge(): PermissionsBridgeResult {
   }
 
   // V2 actif — construire l'interface V1 depuis les données V2
-  const entries: PermissionEntry[] = v2Available.entries;
+  const entries: PermissionEntry[] = v2.entries;
 
-  // Map pour accès O(1)
   const entryMap = new Map<string, PermissionEntry>();
   for (const entry of entries) {
     entryMap.set(entry.module_key, entry);
   }
 
-  // Dériver globalRole depuis les entries V2
-  // bypass = N5+, sinon lire depuis V1 (V1 reste chargé en parallèle)
   const hasBypass = entries.some(e => e.source_summary === 'bypass');
-  const globalRole = v1.globalRole; // V1 reste la source pour globalRole
 
-  // isAdmin : N5+ (platform_admin ou superadmin)
-  const isAdmin = hasBypass;
-
-  // isFranchiseur : N3+ — utiliser V1 comme source de vérité pour le rôle
   const isFranchiseur = (() => {
     const role = v1.globalRole;
-    return role === 'franchisor_user' ||
-           role === 'franchisor_admin' ||
-           role === 'platform_admin' ||
-           role === 'superadmin';
+    return (
+      role === 'franchisor_user' ||
+      role === 'franchisor_admin' ||
+      role === 'platform_admin' ||
+      role === 'superadmin'
+    );
   })();
 
-  // isSupport : accès à support.aide_en_ligne
   const supportEntry = entryMap.get('support.aide_en_ligne');
   const isSupport = supportEntry?.granted === true;
 
   return {
-    // hasModule V2 : granted=true ET access_level != 'none'
     hasModule: (moduleKey: string) => {
       const entry = entryMap.get(moduleKey);
       if (!entry) return false;
@@ -126,31 +100,24 @@ export function usePermissionsBridge(): PermissionsBridgeResult {
       return entry.options?.[optionKey] === true;
     },
 
-    // isDeployedModule V2 : le module est dans les entries (déployé)
-    // qu'il soit accordé ou non (not_granted = déployé mais non accordé)
+    // not_granted = déployé mais non accordé → isDeployedModule = true
     isDeployedModule: (moduleKey: string) => {
       return entryMap.has(moduleKey);
     },
 
-    // hasGlobalRole : déléguer à V1 — le rôle global n'est pas dans V2
-    hasGlobalRole: v1.hasGlobalRole,
-
-    // hasAccessToScope : déléguer à V1 — hors scope V2
+    // Déléguer à V1 — hors scope V2
+    hasGlobalRole:    v1.hasGlobalRole,
     hasAccessToScope: v1.hasAccessToScope,
 
-    globalRole,
-    isAdmin,
+    globalRole:           v1.globalRole,
+    isAdmin:              hasBypass,
     isSupport,
     isFranchiseur,
-
-    // Flags support : déléguer à V1
     canAccessSupportUser: v1.canAccessSupportUser,
     hasSupportAgentRole:  v1.hasSupportAgentRole,
     isSupportAdmin:       v1.isSupportAdmin,
     canManageTickets:     v1.canManageTickets,
-
-    // Flags FAQ : déléguer à V1
-    hasFaqAdminRole:   v1.hasFaqAdminRole,
-    canAccessFaqAdmin: v1.canAccessFaqAdmin,
+    hasFaqAdminRole:      v1.hasFaqAdminRole,
+    canAccessFaqAdmin:    v1.canAccessFaqAdmin,
   };
 }
