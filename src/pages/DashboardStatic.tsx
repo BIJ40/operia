@@ -25,7 +25,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { ChevronDown, BarChart3, Trophy, PieChart, TrendingUp, Users, Building2, Network, MapPin, AlertTriangle, Clock } from 'lucide-react';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { useProfile } from '@/contexts/ProfileContext';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { Button } from '@/components/ui/button';
 
 // Widgets existants

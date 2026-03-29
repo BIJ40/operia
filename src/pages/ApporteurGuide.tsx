@@ -1,7 +1,7 @@
 // Page Guide Apporteurs (clone d'ApogeeGuide avec données séparées)
 import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { useState, useMemo } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { ROUTES } from '@/config/routes';
