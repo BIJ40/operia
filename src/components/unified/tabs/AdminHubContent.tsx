@@ -42,6 +42,7 @@ const SuiviClientsAdminView = lazy(() => import('@/components/admin/views/SuiviC
 const OffresAndOptionsView = lazy(() => import('@/components/admin/views/OffresAndOptionsView'));
 const PlanCatalogViewV2 = lazy(() => import('@/components/admin/views/PlanCatalogViewV2'));
 const AgencyFeaturesAdminView = lazy(() => import('@/components/admin/views/AgencyFeaturesAdminView'));
+const AgencyEntitlementsViewV2 = lazy(() => import('@/components/admin/views/AgencyEntitlementsViewV2'));
 
 function LoadingFallback() {
   return (
@@ -252,7 +253,9 @@ export default function AdminHubContent() {
                   </Suspense>
                 </TabsContent>
                 <TabsContent value="agency-features" className="mt-0 focus-visible:outline-none">
-                  <Suspense fallback={<LoadingFallback />}><AgencyFeaturesAdminView /></Suspense>
+                  <Suspense fallback={<LoadingFallback />}>
+                    {useV2 ? <AgencyEntitlementsViewV2 /> : <AgencyFeaturesAdminView />}
+                  </Suspense>
                 </TabsContent>
               </DraggableFolderContentContainer>
             </Tabs>
