@@ -13240,6 +13240,14 @@ export type Database = {
           agency_id: string
         }[]
       }
+      get_user_effective_modules: {
+        Args: { p_user_id: string }
+        Returns: {
+          enabled: boolean
+          module_key: string
+          options: Json
+        }[]
+      }
       get_user_global_role_level: {
         Args: { _user_id: string }
         Returns: number
