@@ -31,6 +31,7 @@ import { ALL_USER_QUERY_PATTERNS } from '@/lib/queryKeys';
 import { WarmPageContainer } from '@/components/ui/warm-page-container';
 import { WarmCard } from '@/components/ui/warm-card';
 import { AppearanceSection } from '@/components/profile/AppearanceSection';
+import { ROLE_AGENCE_LABELS } from '@/components/admin/users/user-full-dialog/constants';
 
 // ✅ SYNCHRONISATION COMPLÈTE: fonction pour invalider TOUTES les query keys utilisateurs
 function invalidateAllUserQueries(queryClient: ReturnType<typeof useQueryClient>) {
@@ -54,15 +55,6 @@ interface ProfileData {
   global_role: GlobalRole | null;
   phone: string | null;
 }
-
-const ROLE_AGENCE_LABELS: Record<string, string> = {
-  'dirigeant': 'Dirigeant(e)',
-  'administratif': 'Administratif',
-  'commercial': 'Commercial',
-  'technicien': 'Technicien',
-  'tete_de_reseau': 'Tête de réseau',
-  'externe': 'Externe',
-};
 
 export default function Profile() {
   const { user, isAuthenticated } = useAuthCore();
