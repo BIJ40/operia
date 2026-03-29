@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Shield, ShieldCheck, ShieldX, Sparkles } from 'lucide-react';
 import { AdminViewHeader } from '@/components/admin/shared/AdminViewHeader';
+import { AdminPanel } from '@/components/admin/shared/AdminPanel';
 import { SOURCE_LABELS, PermissionSource } from '@/types/permissions-v2';
 
 const CATEGORY_ORDER = ['accueil', 'pilotage', 'commercial', 'organisation', 'mediatheque', 'support', 'ticketing', 'admin'];
@@ -123,33 +124,34 @@ export function PermissionsMatrixView() {
         subtitle="Droits résolus par utilisateur sur tous les modules."
       />
 
-      {/* Sélecteurs */}
-      <div className="flex items-center gap-3">
-        <Select
-          value={selectedAgencyId ?? 'none'}
-          onValueChange={v => {
-            setSelectedAgencyId(v === 'none' ? null : v);
-            setSelectedUserId(null);
-          }}
-        >
-          <SelectTrigger className="w-[250px]">
-            <SelectValue placeholder="Sélectionner une agence..." />
-          </SelectTrigger>
-          <SelectContent className="bg-background z-50">
-            <SelectItem value="none">Sélectionner une agence...</SelectItem>
-            {agencies.map(a => (
-              <SelectItem key={a.id} value={a.id}>{a.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <AdminPanel>
+        <div className="space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Select
+              value={selectedAgencyId ?? 'none'}
+              onValueChange={v => {
+                setSelectedAgencyId(v === 'none' ? null : v);
+                setSelectedUserId(null);
+              }}
+            >
+              <SelectTrigger className="w-full sm:w-[250px]">
+                <SelectValue placeholder="Sélectionner une agence..." />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-50">
+                <SelectItem value="none">Sélectionner une agence...</SelectItem>
+                {agencies.map(a => (
+                  <SelectItem key={a.id} value={a.id}>{a.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-        {selectedAgencyId && (
+            {selectedAgencyId && (
           <Select
             value={selectedUserId ?? 'none'}
             onValueChange={v => setSelectedUserId(v === 'none' ? null : v)}
             disabled={usersLoading}
           >
-            <SelectTrigger className="w-[250px]">
+            <SelectTrigger className="w-full sm:w-[250px]">
               <SelectValue placeholder="Sélectionner un utilisateur..." />
             </SelectTrigger>
             <SelectContent className="bg-background z-50">
@@ -162,21 +164,22 @@ export function PermissionsMatrixView() {
               })}
             </SelectContent>
           </Select>
-        )}
-      </div>
+            )}
+          </div>
 
-      {/* Légende */}
-      <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground bg-muted/30 rounded-lg px-4 py-2.5">
-        <span className="flex items-center gap-1"><ShieldCheck className="w-4 h-4 text-primary" /> Plan / Socle</span>
-        <span className="flex items-center gap-1"><ShieldCheck className="w-4 h-4 text-amber-500" /> Option agence</span>
-        <span className="flex items-center gap-1"><Sparkles className="w-4 h-4 text-emerald-500" /> Individuel / Exception</span>
-        <span className="flex items-center gap-1"><ShieldX className="w-4 h-4 text-destructive/30" /> Non accordé</span>
-      </div>
+          <div className="flex flex-wrap items-center gap-4 rounded-lg bg-muted/30 px-4 py-2.5 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1"><ShieldCheck className="w-4 h-4 text-primary" /> Plan / Socle</span>
+            <span className="flex items-center gap-1"><ShieldCheck className="w-4 h-4 text-amber-500" /> Option agence</span>
+            <span className="flex items-center gap-1"><Sparkles className="w-4 h-4 text-emerald-500" /> Individuel / Exception</span>
+            <span className="flex items-center gap-1"><ShieldX className="w-4 h-4 text-destructive/30" /> Non accordé</span>
+          </div>
+        </div>
+      </AdminPanel>
 
       {!selectedUserId && (
-        <div className="text-center py-12 text-muted-foreground text-sm">
+        <AdminPanel className="flex min-h-[180px] items-center justify-center text-center text-sm text-muted-foreground">
           Sélectionnez une agence puis un utilisateur.
-        </div>
+        </AdminPanel>
       )}
 
       {selectedUserId && permsLoading && (
@@ -186,7 +189,7 @@ export function PermissionsMatrixView() {
       )}
 
       {selectedUserId && !permsLoading && (
-        <div className="border border-border rounded-lg overflow-hidden">
+        <AdminPanel padding="none" className="overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>
@@ -281,7 +284,7 @@ export function PermissionsMatrixView() {
               })()}
             </tbody>
           </table>
-        </div>
+        </AdminPanel>
       )}
     </div>
   );
