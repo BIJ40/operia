@@ -6,7 +6,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Shield, UserPlus, StickyNote, Handshake, UserCheck, ScrollText, Eye, Crown, LayoutGrid, UserCog, Grid3X3, ShieldCheck } from 'lucide-react';
+import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Shield, UserPlus, StickyNote, Handshake, UserCheck, ScrollText, Eye, Crown, LayoutGrid, UserCog, Grid3X3, ShieldCheck, GitCompare } from 'lucide-react';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { 
   DraggableFolderTabsList, 
@@ -47,6 +47,7 @@ const JobProfilePresetsViewV2 = lazy(() => import('@/components/admin/views/JobP
 const PermissionsAuditLogView = lazy(() => import('@/components/admin/views/PermissionsAuditLogView'));
 const PermissionsMatrixView = lazy(() => import('@/components/admin/views/PermissionsMatrixView'));
 const PermissionsQualityView = lazy(() => import('@/components/admin/views/PermissionsQualityView'));
+const PermissionsParityTestView = lazy(() => import('@/components/admin/views/PermissionsParityTestView'));
 
 function LoadingFallback() {
   return (
@@ -77,6 +78,7 @@ const GESTION_SUB_TABS: FolderTabConfig[] = [
   { id: 'journal', label: 'Journal', icon: ScrollText, accent: 'green' },
   { id: 'matrice', label: 'Matrice', icon: Grid3X3, accent: 'purple' },
   { id: 'qualite', label: 'Qualité', icon: ShieldCheck, accent: 'orange' },
+  { id: 'parite', label: 'Parité V1/V2', icon: GitCompare, accent: 'green' },
   { id: 'notes', label: 'Notes', icon: StickyNote, accent: 'orange' },
   { id: 'activity', label: 'Activité', icon: Activity, accent: 'green' },
 ];
@@ -95,7 +97,7 @@ const OFFRES_SUB_TABS: FolderTabConfig[] = [
 ];
 
 const ADMIN_MAIN_TAB_IDS = ADMIN_MAIN_TABS.map(tab => tab.id);
-const DEFAULT_GESTION_ORDER = ['users', 'inscriptions', 'agences', 'modules', 'presets', 'journal', 'matrice', 'qualite', 'notes', 'activity'];
+const DEFAULT_GESTION_ORDER = ['users', 'inscriptions', 'agences', 'modules', 'presets', 'journal', 'matrice', 'qualite', 'parite', 'notes', 'activity'];
 const DEFAULT_RELATIONS_ORDER = ['apporteurs', 'audit-apporteurs', 'suivi-clients'];
 const DEFAULT_OFFRES_ORDER = ['overview', 'agency-features'];
 
@@ -220,6 +222,9 @@ export default function AdminHubContent() {
                 </TabsContent>
                 <TabsContent value="qualite" className="mt-0 focus-visible:outline-none">
                   <Suspense fallback={<LoadingFallback />}><PermissionsQualityView /></Suspense>
+                </TabsContent>
+                <TabsContent value="parite" className="mt-0 focus-visible:outline-none">
+                  <Suspense fallback={<LoadingFallback />}><PermissionsParityTestView /></Suspense>
                 </TabsContent>
                 <TabsContent value="notes" className="mt-0 focus-visible:outline-none">
                   <Suspense fallback={<LoadingFallback />}><AdminNotesView /></Suspense>
