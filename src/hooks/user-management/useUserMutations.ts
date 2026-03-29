@@ -7,7 +7,7 @@ import { monitorEdgeCall } from '@/lib/edge-monitor';
 import { GlobalRole } from '@/types/globalRoles';
 import { EnabledModules } from '@/types/modules';
 import { UserManagementCapabilities } from '@/config/roleMatrix';
-import { enabledModulesToRows } from '@/lib/userModulesUtils';
+
 import { logAuth } from '@/lib/logger';
 import { toast } from 'sonner';
 import { UserProfile, CreateUserData, UpdateUserData } from './types';
@@ -57,16 +57,6 @@ export function useUserMutations({
         .update({ global_role: globalRole })
         .eq('id', userId);
       if (error) throw error;
-      
-      await (supabase.from('user_modules' as any) as any).delete().eq('user_id', userId);
-      
-      if (enabledModules) {
-        const moduleRows = enabledModulesToRows(userId, enabledModules, currentUserId);
-        if (moduleRows.length > 0) {
-          const { error: insertError } = await (supabase.from('user_modules' as any) as any).insert(moduleRows);
-          if (insertError) throw insertError;
-        }
-      }
       
       return { userId, globalRole, enabledModules };
     },

@@ -17,7 +17,7 @@ import { EnabledModules, ModuleOptionsState, ModuleKey, MODULE_DEFINITIONS } fro
 import { logAuth } from '@/lib/logger';
 import { toast } from 'sonner';
 import { useAdminAgencies } from './use-admin-agencies';
-import { enabledModulesToRows, userModulesToEnabledModules } from '@/lib/userModulesUtils';
+
 import { ALL_USER_QUERY_PATTERNS } from '@/lib/queryKeys';
 
 // ✅ SYNCHRONISATION COMPLÈTE: fonction centralisée pour invalider TOUTES les query keys utilisateurs
@@ -213,31 +213,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       const { data: profilesData, error: profilesError } = await query.order('created_at', { ascending: false });
       if (profilesError) throw profilesError;
       
-      // ✅ Fetch user_modules pour tous les users (SOURCE DE VÉRITÉ pour les modules)
-      const userIds = profilesData?.map(p => p.id) ?? [];
-      const { data: modulesData } = await (supabase
-        .from('user_modules' as any) as any)
-        .select('user_id, module_key, options')
-        .in('user_id', userIds);
-      
-      // Group modules by user_id
-      const modulesByUser = new Map<string, { module_key: string; options: unknown }[]>();
-      modulesData?.forEach(row => {
-        const existing = modulesByUser.get(row.user_id) || [];
-        existing.push({ module_key: row.module_key, options: row.options });
-        modulesByUser.set(row.user_id, existing);
-      });
-      
-      // Enrichir les utilisateurs avec les modules de user_modules table
-      // ✅ Exclure explicitement le JSONB legacy pour éviter toute pollution
-      const enrichedUsers = profilesData?.map(profile => {
-        const userModules = modulesByUser.get(profile.id);
-        const enabled_modules = userModulesToEnabledModules(userModules ?? []);
-        // Supprimer le champ legacy enabled_modules du profil avant merge
-        // Cast nécessaire : le select() ne renvoie pas enabled_modules mais le type Row l'inclut
-        const { enabled_modules: _legacyIgnored, ...cleanProfile } = profile as Record<string, unknown>;
-        return { ...cleanProfile, enabled_modules };
-      }) ?? [];
+      const enrichedUsers = (profilesData ?? []) as UserProfile[];
       
       return enrichedUsers as UserProfile[];
     },
@@ -328,34 +304,15 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       globalRole: GlobalRole | null; 
       enabledModules: EnabledModules | null;
     }) => {
-      // ✅ VÉRIFICATION CRITIQUE : Le rôle cible est-il éditable ?
       if (globalRole && !capabilities.canEditRoles.includes(globalRole)) {
         throw new Error('Vous ne pouvez pas attribuer ce rôle');
       }
       
-      // 1. Mise à jour du profil (global_role uniquement - JSONB supprimé P3.2)
       const { error } = await supabase
         .from('profiles')
         .update({ global_role: globalRole })
         .eq('id', userId);
       if (error) throw error;
-      
-      // 2. Écriture UNIQUE vers user_modules table (source de vérité P3.2)
-      // Supprimer les anciens modules
-      await (supabase
-        .from('user_modules' as any) as any)
-        .delete()
-        .eq('user_id', userId);
-      
-      // Insérer les nouveaux modules via utilitaire centralisé
-      if (enabledModules) {
-        const moduleRows = enabledModulesToRows(userId, enabledModules, user?.id);
-        
-        if (moduleRows.length > 0) {
-          const { error: insertError } = await (supabase.from('user_modules' as any) as any).insert(moduleRows);
-          if (insertError) throw insertError;
-        }
-      }
       
       return { userId, globalRole, enabledModules };
     },
