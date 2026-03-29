@@ -15,6 +15,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { notifyNewTicket } from '@/utils/notifyNewTicket';
 import { useNavigate } from 'react-router-dom';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { supabase } from '@/integrations/supabase/client';
 import { safeQuery } from '@/lib/safeQuery';
 import { logError, logDebug } from '@/lib/logger';
@@ -92,6 +93,7 @@ export function SimplifiedSupportChat({
   className = '',
 }: SimplifiedSupportChatProps) {
   const { user } = useAuthCore();
+  const { firstName } = useProfile();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -381,14 +383,8 @@ export function SimplifiedSupportChat({
       }
 
       let userName = 'Utilisateur';
-      if (user) {
-        const profileResult = await safeQuery<{ first_name: string | null }>(
-          supabase.from('profiles').select('first_name').eq('id', user.id).maybeSingle(),
-          'SIMPLIFIED_CHAT_PROFILE'
-        );
-        if (profileResult.success && profileResult.data?.first_name) {
-          userName = profileResult.data.first_name;
-        }
+      if (firstName) {
+        userName = firstName;
       }
 
       const domain = DOMAIN_OPTIONS.find(d => d.value === selectedDomain);
