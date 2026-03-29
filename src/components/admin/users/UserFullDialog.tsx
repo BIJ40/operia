@@ -145,18 +145,22 @@ export function UserFullDialog({
             isPasswordPending={isPasswordPending}
           />
 
-          <UserPermissionsColumn
-            editMode={editMode}
-            globalRole={globalRole}
-            enabledModules={enabledModules}
-            planKey={planKey}
-            planLabel={planLabel}
-            agencyId={agencyId}
-            pageOverrides={pageOverrides}
-            onPlanChange={onPlanChange}
-            onModuleToggle={onModuleToggle}
-            onPageOverrideToggle={onPageOverrideToggle}
-          />
+          {useV2 ? (
+            <UserPermissionsColumnV2 userId={userId} editMode={editMode} />
+          ) : (
+            <UserPermissionsColumn
+              editMode={editMode}
+              globalRole={globalRole}
+              enabledModules={enabledModules}
+              planKey={planKey}
+              planLabel={planLabel}
+              agencyId={agencyId}
+              pageOverrides={pageOverrides}
+              onPlanChange={onPlanChange}
+              onModuleToggle={onModuleToggle}
+              onPageOverrideToggle={onPageOverrideToggle}
+            />
+          )}
         </div>
       </DialogContent>
     </Dialog>
