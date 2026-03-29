@@ -177,38 +177,57 @@ export function PermissionsMatrixView() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {deployedModules.map(mod => {
-                const perm = permMap.get(mod.key);
-                const granted = perm?.granted ?? false;
-                const source = perm?.source_summary ?? 'not_granted';
-                const level = perm?.access_level ?? 'none';
-
-                return (
-                  <tr key={mod.key} className="hover:bg-muted/20">
-                    <td className="px-3 py-2">
-                      <div>
-                        <span className="text-foreground text-xs font-medium">{mod.label}</span>
-                        <span className="text-muted-foreground text-xs ml-1.5 font-mono">{mod.key}</span>
-                      </div>
-                    </td>
-                    <td className="px-3 py-2 text-center">
-                      <CellIcon granted={granted} source={source} />
-                    </td>
-                    <td className="px-3 py-2 text-xs text-muted-foreground">
-                      {granted && source !== 'not_granted'
-                        ? SOURCE_LABELS[source as PermissionSource] ?? source
-                        : '—'}
-                    </td>
-                    <td className="px-3 py-2">
-                      {granted && level !== 'none' ? (
-                        <Badge variant="outline" className="text-xs">
-                          {level === 'full' ? 'Complet' : level === 'read' ? 'Lecture' : '—'}
-                        </Badge>
-                      ) : '—'}
+              {Object.entries(
+                deployedModules.reduce<Record<string, typeof deployedModules>>(
+                  (acc, m) => {
+                    const cat = m.category ?? 'Autre';
+                    if (!acc[cat]) acc[cat] = [];
+                    acc[cat].push(m);
+                    return acc;
+                  },
+                  {}
+                )
+              ).map(([category, mods]) => (
+                <React.Fragment key={category}>
+                  <tr className="bg-muted/30 border-b border-t">
+                    <td colSpan={4} className="py-1 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      {category}
                     </td>
                   </tr>
-                );
-              })}
+                  {mods.map(mod => {
+                    const perm = permMap.get(mod.key);
+                    const granted = perm?.granted ?? false;
+                    const source = perm?.source_summary ?? 'not_granted';
+                    const level = perm?.access_level ?? 'none';
+
+                    return (
+                      <tr key={mod.key} className="hover:bg-muted/20">
+                        <td className="px-3 py-2">
+                          <div>
+                            <span className="text-foreground text-xs font-medium">{mod.label}</span>
+                            <span className="text-muted-foreground text-xs ml-1.5 font-mono">{mod.key}</span>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 text-center">
+                          <CellIcon granted={granted} source={source} />
+                        </td>
+                        <td className="px-3 py-2 text-xs text-muted-foreground">
+                          {granted && source !== 'not_granted'
+                            ? SOURCE_LABELS[source as PermissionSource] ?? source
+                            : '—'}
+                        </td>
+                        <td className="px-3 py-2">
+                          {granted && level !== 'none' ? (
+                            <Badge variant="outline" className="text-xs">
+                              {level === 'full' ? 'Complet' : level === 'read' ? 'Lecture' : '—'}
+                            </Badge>
+                          ) : '—'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </React.Fragment>
+              ))}
             </tbody>
           </table>
         </div>
