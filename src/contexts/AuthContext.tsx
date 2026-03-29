@@ -94,9 +94,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const hasFaqAdminRole = adminOptions.faq_admin === true;
   const canAccessFaqAdmin = hasFaqAdminRole || isAdmin;
 
-  // Permission context
-  const accessContext: PermissionContext = useMemo(() => ({
-    globalRole: globalRole ?? 'base_user',
+  // Permission context (kept for PermissionsContextType compat)
+  const accessContext = useMemo(() => ({
+    globalRole: globalRole ?? 'base_user' as const,
     enabledModules: enabledModules ?? {},
     agencyId,
   }), [globalRole, enabledModules, agencyId]);
