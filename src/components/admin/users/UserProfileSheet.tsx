@@ -364,55 +364,59 @@ export const UserProfileSheet = memo(function UserProfileSheet({
               </>
             )}
 
-            {/* ═══ VUE A — NAVIGATION / ACCÈS VISIBLES ═══ */}
-            <Section icon={Navigation} title="Navigation utilisateur">
-              {rpcModulesLoading ? (
-                <p className="text-sm text-muted-foreground italic">Chargement des accès…</p>
-              ) : (
-                <NavigationAccessView
-                  effectiveModules={effectiveModules as Record<string, { enabled?: boolean; options?: Record<string, boolean> }>}
-                  globalRole={effectiveRole}
-                />
-              )}
-            </Section>
+            {!useV2 && (
+              <>
+                {/* ═══ VUE A — NAVIGATION / ACCÈS VISIBLES ═══ */}
+                <Section icon={Navigation} title="Navigation utilisateur">
+                  {rpcModulesLoading ? (
+                    <p className="text-sm text-muted-foreground italic">Chargement des accès…</p>
+                  ) : (
+                    <NavigationAccessView
+                      effectiveModules={effectiveModules as Record<string, { enabled?: boolean; options?: Record<string, boolean> }>}
+                      globalRole={effectiveRole}
+                    />
+                  )}
+                </Section>
 
-            {/* ═══ VUE B — DROITS EFFECTIFS TECHNIQUES (repliée) ═══ */}
-            <Collapsible>
-              <CollapsibleTrigger className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full py-1">
-                <ChevronRight className="h-3 w-3 transition-transform [[data-state=open]>&]:rotate-90" />
-                Afficher les droits effectifs techniques ({rpcModulesLoading ? '…' : activeModules.length} modules)
-              </CollapsibleTrigger>
-              <CollapsibleContent className="pt-3">
-                {activeModules.length > 0 ? (
-                  <div className="space-y-2">
-                    {activeModules.map(mod => {
-                      const optLabels = getModuleOptionsLabels(mod.key);
-                      return (
-                        <div key={mod.key} className="rounded-lg border bg-card p-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">{mod.label}</span>
-                            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                          </div>
-                          {optLabels.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1.5">
-                              {optLabels.map(label => (
-                                <Badge key={label} variant="secondary" className="text-[10px] px-1.5 py-0">
-                                  {label}
-                                </Badge>
-                              ))}
+                {/* ═══ VUE B — DROITS EFFECTIFS TECHNIQUES (repliée) ═══ */}
+                <Collapsible>
+                  <CollapsibleTrigger className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full py-1">
+                    <ChevronRight className="h-3 w-3 transition-transform [[data-state=open]>&]:rotate-90" />
+                    Afficher les droits effectifs techniques ({rpcModulesLoading ? '…' : activeModules.length} modules)
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pt-3">
+                    {activeModules.length > 0 ? (
+                      <div className="space-y-2">
+                        {activeModules.map(mod => {
+                          const optLabels = getModuleOptionsLabels(mod.key);
+                          return (
+                            <div key={mod.key} className="rounded-lg border bg-card p-3">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium">{mod.label}</span>
+                                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                              </div>
+                              {optLabels.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-1.5">
+                                  {optLabels.map(label => (
+                                    <Badge key={label} variant="secondary" className="text-[10px] px-1.5 py-0">
+                                      {label}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground italic">
-                    Aucun module accessible pour cet utilisateur
-                  </p>
-                )}
-              </CollapsibleContent>
-            </Collapsible>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground italic">
+                        Aucun module accessible pour cet utilisateur
+                      </p>
+                    )}
+                  </CollapsibleContent>
+                </Collapsible>
+              </>
+            )}
 
             {/* ═══ STATUT COMPTE ═══ */}
             <Separator />

@@ -76,6 +76,7 @@ export function UserPermissionsColumnV2({ userId, editMode }: Props) {
   const available = modules.filter(
     m => m.is_deployed &&
       m.node_type !== 'section' &&
+      m.min_role < 5 &&
       !granted.find(g => g.module_key === m.key)
   );
 
