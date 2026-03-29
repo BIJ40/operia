@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useUserPermissionsV2 } from '@/hooks/useUserPermissionsV2';
-import { useUpsertUserAccess, useRemoveUserAccess } from '@/hooks/access-rights/useUserAccess';
+import { useUpsertUserAccess, useRemoveUserAccess, useUserAccessEntries } from '@/hooks/access-rights/useUserAccess';
 import { useModuleCatalog, ModuleCatalogTree, filterDeployedOnly } from '@/hooks/access-rights/useModuleCatalog';
 import { SOURCE_LABELS, PermissionSource } from '@/types/permissions-v2';
 import { Badge } from '@/components/ui/badge';
@@ -31,9 +31,14 @@ interface Props {
   editMode: boolean;
 }
 
+function flattenTree(nodes: ModuleCatalogTree[]): ModuleCatalogTree[] {
+  return nodes.flatMap((node) => [node, ...flattenTree(node.children)]);
+}
+
 export function UserPermissionsColumnV2({ userId, userRole, editMode }: Props) {
   const userLevel = ROLE_LEVELS[userRole] ?? 0;
   const { data: permissions = [], isLoading: permLoad } = useUserPermissionsV2(userId);
+  const { data: userAccessEntries = [], isLoading: accessLoad } = useUserAccessEntries(userId);
   const { tree, isLoading: modLoad } = useModuleCatalog();
   const upsert = useUpsertUserAccess();
   const remove = useRemoveUserAccess();
@@ -46,28 +51,38 @@ export function UserPermissionsColumnV2({ userId, userRole, editMode }: Props) {
     return new Set(tree.filter(n => n.is_deployed).map(n => n.key));
   });
 
-  const isLoading = permLoad || modLoad;
+  const isLoading = permLoad || modLoad || accessLoad;
 
   const permMap = new Map(permissions.map(p => [p.module_key, p]));
+  const accessMap = new Map(userAccessEntries.map(entry => [entry.module_key, entry]));
 
   const hasIndividualOverwrite = (key: string) => {
     const p = permMap.get(key);
-    return p && ['manual_exception', 'platform_assignment', 'agency_delegation'].includes(p.source_summary);
+    if (p) {
+      return ['manual_exception', 'platform_assignment', 'agency_delegation'].includes(p.source_summary);
+    }
+    return ['manual_exception', 'platform_assignment', 'agency_delegation'].includes(accessMap.get(key)?.source ?? '');
   };
 
   const isGranted = (key: string) => {
     if (key in optimistic) return optimistic[key];
-    return permMap.get(key)?.granted ?? false;
+    if (permMap.has(key)) return permMap.get(key)?.granted ?? false;
+    return accessMap.get(key)?.granted ?? false;
   };
+
   const isDenied = (key: string) => {
     if (key in optimistic) return !optimistic[key];
     const p = permMap.get(key);
-    return p != null && !p.granted && p.source_summary === 'manual_exception';
+    if (p != null) return !p.granted && p.source_summary === 'manual_exception';
+    const access = accessMap.get(key);
+    return access != null && !access.granted && access.source === 'manual_exception';
   };
 
 
   const getSource = (key: string): PermissionSource | null => {
-    return (permMap.get(key)?.source_summary as PermissionSource) ?? null;
+    return (permMap.get(key)?.source_summary as PermissionSource)
+      ?? (accessMap.get(key)?.source as PermissionSource)
+      ?? null;
   };
 
   const toggleModule = useCallback((key: string, currentlyGranted: boolean) => {
@@ -105,7 +120,7 @@ export function UserPermissionsColumnV2({ userId, userRole, editMode }: Props) {
         upsert.mutate({ user_id: userId, module_key: key, granted: true, access_level: 'full' }, { onSettled });
       }
     }
-  }, [userId, upsert, remove, permMap]);
+  }, [userId, upsert, remove, permMap, accessMap]);
 
   const toggleExpanded = (key: string) => {
     setExpanded(prev => {
@@ -213,6 +228,50 @@ export function UserPermissionsColumnV2({ userId, userRole, editMode }: Props) {
   };
 
   const deployedTree = filterDeployedOnly(tree);
+  const flatTree = flattenTree(tree);
+  const deployedKeys = new Set(flattenTree(deployedTree).map(node => node.key));
+  const nodeMap = new Map(flatTree.map(node => [node.key, node]));
+
+  const getNodePath = (key: string) => {
+    const parts: string[] = [];
+    let current = nodeMap.get(key);
+
+    while (current) {
+      parts.unshift(current.label);
+      if (!current.parent_key) break;
+      current = nodeMap.get(current.parent_key);
+    }
+
+    return parts.join(' / ');
+  };
+
+  const hiddenAssignedModules = Array.from(new Set([
+    ...permissions.map(permission => permission.module_key),
+    ...userAccessEntries.map(entry => entry.module_key),
+  ]))
+    .map((key) => {
+      const node = nodeMap.get(key);
+      const active = isGranted(key) && !isDenied(key);
+      const denied = isDenied(key);
+      const hasRawOverride = accessMap.has(key);
+
+      if (node && deployedKeys.has(key)) return null;
+      if (node?.is_deployed) return null;
+      if (!active && !denied && !hasRawOverride) return null;
+
+      return {
+        key,
+        label: node?.label ?? key,
+        path: node ? getNodePath(key) : key,
+        existsInCatalog: Boolean(node),
+        active,
+        denied,
+        hasRawOverride,
+        source: getSource(key),
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null)
+    .sort((a, b) => a.path.localeCompare(b.path, 'fr'));
 
   // Compteurs
   const totalGranted = permissions.filter(p => p.granted && p.node_type !== 'section').length;
@@ -231,6 +290,9 @@ export function UserPermissionsColumnV2({ userId, userRole, editMode }: Props) {
           {totalDenied > 0 && (
             <span className="text-destructive font-medium">{totalDenied} bloqués</span>
           )}
+          {hiddenAssignedModules.length > 0 && (
+            <span className="font-medium">{hiddenAssignedModules.length} masqués</span>
+          )}
         </div>
       </div>
 
@@ -245,6 +307,71 @@ export function UserPermissionsColumnV2({ userId, userRole, editMode }: Props) {
       <div className="space-y-0">
         {deployedTree.map(node => renderNode(node))}
       </div>
+
+      {hiddenAssignedModules.length > 0 && (
+        <div className="mt-4 rounded-lg border border-border bg-muted/20 p-3">
+          <div className="mb-3 space-y-1">
+            <div className="flex items-center gap-2">
+              <h4 className="text-xs font-semibold text-foreground">Modules désactivés encore liés à cet utilisateur</h4>
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0">{hiddenAssignedModules.length}</Badge>
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              Ces modules sont masqués de l’arbre principal car ils sont en développement ou désactivés dans le catalogue.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            {hiddenAssignedModules.map((module) => (
+              <div
+                key={module.key}
+                className="flex items-center justify-between gap-3 rounded-md border border-border/60 bg-background/80 px-3 py-2"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-xs font-medium text-foreground">{module.label}</span>
+                    <Badge variant="outline" className="text-[9px] px-1 py-0">désactivé</Badge>
+                    {module.active && (
+                      <Badge variant="outline" className="text-[9px] px-1 py-0">actif</Badge>
+                    )}
+                    {module.denied && (
+                      <Badge variant="outline" className="text-[9px] px-1 py-0">bloqué</Badge>
+                    )}
+                    {module.hasRawOverride && (
+                      <Badge variant="outline" className="text-[9px] px-1 py-0">override</Badge>
+                    )}
+                  </div>
+
+                  <p className="mt-1 truncate text-[10px] text-muted-foreground">{module.path}</p>
+                  {module.source && (
+                    <p className="text-[10px] text-muted-foreground">Source : {SOURCE_LABELS[module.source] ?? module.source}</p>
+                  )}
+                  {!module.existsInCatalog && (
+                    <p className="text-[10px] text-muted-foreground">Clé absente du catalogue : {module.key}</p>
+                  )}
+                </div>
+
+                {editMode && (module.active || module.hasRawOverride) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (module.active) {
+                        toggleModule(module.key, true);
+                        return;
+                      }
+
+                      remove.mutate({ user_id: userId, module_key: module.key });
+                    }}
+                    disabled={upsert.isPending || remove.isPending}
+                    className="inline-flex shrink-0 items-center rounded-md border border-border bg-background px-2 py-1 text-[10px] font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {module.active ? 'Bloquer' : 'Nettoyer'}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
