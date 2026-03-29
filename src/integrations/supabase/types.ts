@@ -644,6 +644,60 @@ export type Database = {
           },
         ]
       }
+      agency_plan: {
+        Row: {
+          agency_id: string
+          assigned_by: string | null
+          created_at: string
+          metadata: Json
+          plan_id: string
+          status: string
+          stripe_subscription_id: string | null
+          updated_at: string
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          agency_id: string
+          assigned_by?: string | null
+          created_at?: string
+          metadata?: Json
+          plan_id: string
+          status?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          agency_id?: string
+          assigned_by?: string | null
+          created_at?: string
+          metadata?: Json
+          plan_id?: string
+          status?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_plan_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_plan_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plan_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agency_rh_roles: {
         Row: {
           agency_id: string
