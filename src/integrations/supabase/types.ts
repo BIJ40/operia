@@ -6726,6 +6726,27 @@ export type Database = {
           },
         ]
       }
+      job_profile_presets: {
+        Row: {
+          default_modules: string[]
+          label: string
+          role_agence: string
+          sort_order: number
+        }
+        Insert: {
+          default_modules?: string[]
+          label: string
+          role_agence: string
+          sort_order?: number
+        }
+        Update: {
+          default_modules?: string[]
+          label?: string
+          role_agence?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       knowledge_base: {
         Row: {
           category: string
