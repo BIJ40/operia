@@ -440,11 +440,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       case 'mes_indicateurs':
         return hasModuleGuard('pilotage.agence');
       case 'apporteurs':
-        return hasModuleOptionGuard('support.guides', 'apporteurs');
+        return hasModuleGuard('support.guides.apporteurs');
       case 'helpconfort':
-        return hasModuleOptionGuard('support.guides', 'helpconfort');
+        return hasModuleGuard('support.guides.helpconfort');
       case 'apogee':
-        return hasModuleOptionGuard('support.guides', 'apogee');
+        return hasModuleGuard('support.guides.apogee');
       case 'ticketing':
       case 'apogee_tickets':
         return hasModuleGuard('ticketing');
