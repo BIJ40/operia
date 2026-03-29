@@ -57,15 +57,6 @@ export function UserPermissionsColumnV2({ userId, userRole, editMode }: Props) {
     return p != null && !p.granted && p.source_summary === 'manual_exception';
   };
 
-  // Check if granted via an ancestor module (e.g. ticketing → ticketing.kanban)
-  const isGrantedViaParent = (key: string): boolean => {
-    const parts = key.split('.');
-    for (let i = parts.length - 1; i > 0; i--) {
-      const parentKey = parts.slice(0, i).join('.');
-      if (permMap.get(parentKey)?.granted) return true;
-    }
-    return false;
-  };
 
   const getSource = (key: string): PermissionSource | null => {
     return (permMap.get(key)?.source_summary as PermissionSource) ?? null;
@@ -99,7 +90,7 @@ export function UserPermissionsColumnV2({ userId, userRole, editMode }: Props) {
   );
 
   const renderNode = (node: ModuleCatalogTree): React.ReactNode => {
-    const granted = isGranted(node.key) || isGrantedViaParent(node.key);
+    const granted = permMap.get(node.key)?.granted === true;
     const denied = isDenied(node.key);
     const belowMinRole = node.min_role > userLevel;
     const isExp = expanded.has(node.key);
