@@ -59,7 +59,7 @@ interface UserProfile {
   first_name: string | null;
   last_name: string | null;
   email: string | null;
-  agence: string | null; // resolved from agency join
+  agence?: string | null; // resolved from agency join
   agency_id: string | null;
   role_agence: string | null;
 }
