@@ -8093,6 +8093,78 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_catalog: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          is_system: boolean
+          key: string
+          label: string
+          sort_order: number
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          key: string
+          label: string
+          sort_order?: number
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          key?: string
+          label?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      plan_module_grants: {
+        Row: {
+          access_level: string
+          module_key: string
+          options_default: Json
+          plan_id: string
+        }
+        Insert: {
+          access_level?: string
+          module_key: string
+          options_default?: Json
+          plan_id: string
+        }
+        Update: {
+          access_level?: string
+          module_key?: string
+          options_default?: Json
+          plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_module_grants_module_key_fkey"
+            columns: ["module_key"]
+            isOneToOne: false
+            referencedRelation: "module_catalog"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "plan_module_grants_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plan_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plan_tier_modules: {
         Row: {
           created_at: string | null
