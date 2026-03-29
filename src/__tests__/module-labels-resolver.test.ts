@@ -65,45 +65,16 @@ describe('resolveModuleShortLabel', () => {
 });
 
 // ============================================================================
-// 3. Guards depend on keys, NOT labels
+// 3. Guards depend on keys, NOT labels (V1 hasAccess removed — principle validated by V2 RPC)
 // ============================================================================
 
 describe('Guards independence from labels', () => {
-  it('hasAccess uses moduleId (key), never label text', () => {
-    // Even with a renamed label, the permission check uses the key
-    const context = {
-      globalRole: 'franchisee_admin' as const,
-      enabledModules: {
-        'organisation.salaries': { enabled: true, options: {} },
-      },
-      agencyId: 'test-agency',
-    };
-
-    // Access check uses the key, label is irrelevant
-    const result = hasAccess({
-      ...context,
-      moduleId: 'organisation.salaries',
-    });
-    expect(result).toBe(true);
-  });
-
-  it('renaming a label does not affect permission check', () => {
-    // Simulate: label was "Salariés", now "Équipe RH" in DB
-    // The key 'organisation.salaries' hasn't changed
+  it('permission keys are distinct from display labels', () => {
+    // A label rename in DB doesn't change the module key
     const dbLabels = { 'organisation.salaries': 'Équipe RH' };
-    
-    // Label resolves to new name
     expect(resolveModuleLabel('organisation.salaries', dbLabels)).toBe('Équipe RH');
-    
-    // But permissions still work on the key
-    const context = {
-      globalRole: 'franchisee_admin' as const,
-      enabledModules: {
-        'organisation.salaries': { enabled: true, options: {} },
-      },
-      agencyId: 'test-agency',
-    };
-    expect(hasAccess({ ...context, moduleId: 'organisation.salaries' })).toBe(true);
+    // The key 'organisation.salaries' remains the permission identifier
+    expect(MODULE_DEFINITIONS.find(m => m.key === 'organisation.salaries')).toBeTruthy();
   });
 });
 

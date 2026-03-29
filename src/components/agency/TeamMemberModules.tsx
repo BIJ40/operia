@@ -10,7 +10,7 @@
 
 import { useMemo, useCallback, useState } from 'react';
 import { useUserModules, useToggleModule } from '@/hooks/useUserModules';
-import { getDelegatableModules, getPresetForRole } from '@/config/roleAgenceModulePresets';
+import { MODULE_DEFINITIONS } from '@/types/modules';
 import { useAgencyHasApporteurs } from '@/hooks/useAgencyHasApporteurs';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
 import { Switch } from '@/components/ui/switch';

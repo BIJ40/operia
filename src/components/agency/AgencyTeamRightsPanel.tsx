@@ -13,7 +13,7 @@ import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBridge';
 import { useUserModules } from '@/hooks/useUserModules';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
-import { getDelegatableModules } from '@/config/roleAgenceModulePresets';
+import { MODULE_DEFINITIONS, type ModuleKey } from '@/types/modules';
 import { TeamMemberModules } from './TeamMemberModules';
 import { Users, Shield, Settings2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
