@@ -153,13 +153,15 @@ function AgencesSection() {
 
 // ==================== SECTION PAIEMENTS ====================
 
-function PaiementsSection() {
-  const [filterAgency, setFilterAgency] = useState<string>('all');
+export function PaiementsSection({ agencySlug: fixedAgencySlug }: { agencySlug?: string } = {}) {
+  const [filterAgency, setFilterAgency] = useState<string>(fixedAgencySlug || 'all');
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 20;
 
+  const effectiveAgency = fixedAgencySlug || filterAgency;
+
   const { data, isLoading } = useQuery({
-    queryKey: ['admin-suivi-payments', filterAgency, page],
+    queryKey: ['admin-suivi-payments', effectiveAgency, page],
     queryFn: async () => {
       let query = (supabase as any)
         .from('payments_clients_suivi_with_client')
@@ -167,8 +169,8 @@ function PaiementsSection() {
         .order('paid_at', { ascending: false })
         .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
-      if (filterAgency !== 'all') {
-        query = query.eq('agency_slug', filterAgency);
+      if (effectiveAgency !== 'all') {
+        query = query.eq('agency_slug', effectiveAgency);
       }
 
       const { data, error, count } = await query;
@@ -183,6 +185,7 @@ function PaiementsSection() {
       const { data } = await supabase.from('agency_suivi_settings').select('slug').order('slug');
       return data?.map(a => a.slug) ?? [];
     },
+    enabled: !fixedAgencySlug,
   });
 
   if (isLoading) {
@@ -194,13 +197,15 @@ function PaiementsSection() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <Select value={filterAgency} onValueChange={v => { setFilterAgency(v); setPage(0); }}>
-          <SelectTrigger className="w-48"><SelectValue placeholder="Filtrer par agence" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Toutes les agences</SelectItem>
-            {agencySlugs?.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        {!fixedAgencySlug && (
+          <Select value={filterAgency} onValueChange={v => { setFilterAgency(v); setPage(0); }}>
+            <SelectTrigger className="w-48"><SelectValue placeholder="Filtrer par agence" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes les agences</SelectItem>
+              {agencySlugs?.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
         <span className="text-sm text-muted-foreground">{data?.total ?? 0} paiement(s)</span>
       </div>
       <div className="rounded-md border overflow-auto">
@@ -245,14 +250,16 @@ function PaiementsSection() {
 
 // ==================== SECTION JOURNAL D'ENVOIS ====================
 
-function JournalSection() {
-  const [filterAgency, setFilterAgency] = useState<string>('all');
+export function JournalSection({ agencySlug: fixedAgencySlug }: { agencySlug?: string } = {}) {
+  const [filterAgency, setFilterAgency] = useState<string>(fixedAgencySlug || 'all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 20;
 
+  const effectiveAgency = fixedAgencySlug || filterAgency;
+
   const { data, isLoading } = useQuery({
-    queryKey: ['admin-suivi-sms-log', filterAgency, filterStatus, page],
+    queryKey: ['admin-suivi-sms-log', effectiveAgency, filterStatus, page],
     queryFn: async () => {
       let query = (supabase as any)
         .from('sms_sent_log_with_client')
@@ -260,7 +267,7 @@ function JournalSection() {
         .order('sent_at', { ascending: false })
         .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
-      if (filterAgency !== 'all') query = query.eq('agency_slug', filterAgency);
+      if (effectiveAgency !== 'all') query = query.eq('agency_slug', effectiveAgency);
       if (filterStatus !== 'all') query = query.eq('status', filterStatus);
 
       const { data, error, count } = await query;
@@ -275,6 +282,7 @@ function JournalSection() {
       const { data } = await supabase.from('agency_suivi_settings').select('slug').order('slug');
       return data?.map(a => a.slug) ?? [];
     },
+    enabled: !fixedAgencySlug,
   });
 
   if (isLoading) {
@@ -292,13 +300,15 @@ function JournalSection() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
-        <Select value={filterAgency} onValueChange={v => { setFilterAgency(v); setPage(0); }}>
-          <SelectTrigger className="w-48"><SelectValue placeholder="Agence" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Toutes les agences</SelectItem>
-            {agencySlugs?.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        {!fixedAgencySlug && (
+          <Select value={filterAgency} onValueChange={v => { setFilterAgency(v); setPage(0); }}>
+            <SelectTrigger className="w-48"><SelectValue placeholder="Agence" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes les agences</SelectItem>
+              {agencySlugs?.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
         <Select value={filterStatus} onValueChange={v => { setFilterStatus(v); setPage(0); }}>
           <SelectTrigger className="w-40"><SelectValue placeholder="Statut" /></SelectTrigger>
           <SelectContent>
