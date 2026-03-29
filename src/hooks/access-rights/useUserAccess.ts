@@ -51,21 +51,26 @@ export function useUpsertUserAccess() {
       access_level: 'none' | 'read' | 'full';
       granted_by?: string;
     }) => {
-      const { error } = await supabase
+      // Check if row exists first (PK is UUID, unique constraint on user_id+module_key)
+      const { data: existing } = await supabase
         .from('user_access')
-        .upsert(
-          {
-            user_id,
-            module_key,
-            granted,
-            access_level,
-            source: 'manual_exception',
-            granted_by: granted_by ?? null,
-            granted_at: new Date().toISOString(),
-          },
-          { onConflict: 'user_id,module_key' }
-        );
-      if (error) throw error;
+        .select('id')
+        .eq('user_id', user_id)
+        .eq('module_key', module_key)
+        .maybeSingle();
+
+      if (existing?.id) {
+        const { error } = await supabase
+          .from('user_access')
+          .update({ granted, access_level, source: 'manual_exception', granted_at: new Date().toISOString() })
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('user_access')
+          .insert({ user_id, module_key, granted, access_level, source: 'manual_exception', granted_by: granted_by ?? null, granted_at: new Date().toISOString() });
+        if (error) throw error;
+      }
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['user_access', vars.user_id] });
