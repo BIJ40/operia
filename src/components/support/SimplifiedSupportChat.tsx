@@ -15,6 +15,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { notifyNewTicket } from '@/utils/notifyNewTicket';
 import { useNavigate } from 'react-router-dom';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { supabase } from '@/integrations/supabase/client';
 import { safeQuery } from '@/lib/safeQuery';
 import { logError, logDebug } from '@/lib/logger';
