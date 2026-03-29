@@ -37,9 +37,7 @@ const PendingRegistrationsList = lazy(() => import('@/components/admin/registrat
 const ApporteurAuditLogView = lazy(() => import('@/components/admin/views/ApporteurAuditLogView'));
 
 const SuiviClientsAdminView = lazy(() => import('@/components/admin/views/SuiviClientsAdminView'));
-const OffresAndOptionsView = lazy(() => import('@/components/admin/views/OffresAndOptionsView'));
 const PlanCatalogViewV2 = lazy(() => import('@/components/admin/views/PlanCatalogViewV2'));
-const AgencyFeaturesAdminView = lazy(() => import('@/components/admin/views/AgencyFeaturesAdminView'));
 const AgencyEntitlementsViewV2 = lazy(() => import('@/components/admin/views/AgencyEntitlementsViewV2'));
 const JobProfilePresetsViewV2 = lazy(() => import('@/components/admin/views/JobProfilePresetsViewV2'));
 const PermissionsAuditLogView = lazy(() => import('@/components/admin/views/PermissionsAuditLogView'));
