@@ -10,7 +10,8 @@ export type PermissionSource =
   | 'pack_grant'
   | 'job_preset'
   | 'manual_exception'
-  | 'auto_section';
+  | 'auto_section'
+  | 'not_granted';  // Module déployé mais non accordé — pour la logique 3 états UI
 
 export interface PermissionEntry {
   module_key: string;
@@ -39,4 +40,5 @@ export const SOURCE_LABELS: Record<PermissionSource, string> = {
   job_preset:          'Profil de poste',
   manual_exception:    'Exception accordée',
   auto_section:        'Navigation',
+  not_granted:         'Non accordé',
 };
