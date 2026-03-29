@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBridge';
 import { useProfile } from '@/contexts/ProfileContext';
 import { GlobalRole, getRoleLevel } from '@/types/globalRoles';
 import { 
@@ -37,7 +37,7 @@ export interface UserProfile {
   email: string | null;
   first_name: string | null;
   last_name: string | null;
-  agence: string | null;
+  agence: string | null; // kept for compat, resolved from agency_id
   agency_id: string | null;
   global_role: GlobalRole | null;
   enabled_modules: EnabledModules | null;
@@ -188,7 +188,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
           email, 
           first_name, 
           last_name, 
-          agence,
+          agency_id,
           agency_id,
           global_role, 
           role_agence, 
@@ -215,8 +215,8 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       
       // ✅ Fetch user_modules pour tous les users (SOURCE DE VÉRITÉ pour les modules)
       const userIds = profilesData?.map(p => p.id) ?? [];
-      const { data: modulesData } = await supabase
-        .from('user_modules')
+      const { data: modulesData } = await (supabase
+        .from('user_modules' as any) as any)
         .select('user_id, module_key, options')
         .in('user_id', userIds);
       
@@ -342,8 +342,8 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       
       // 2. Écriture UNIQUE vers user_modules table (source de vérité P3.2)
       // Supprimer les anciens modules
-      await supabase
-        .from('user_modules')
+      await (supabase
+        .from('user_modules' as any) as any)
         .delete()
         .eq('user_id', userId);
       
@@ -352,7 +352,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
         const moduleRows = enabledModulesToRows(userId, enabledModules, user?.id);
         
         if (moduleRows.length > 0) {
-          const { error: insertError } = await supabase.from('user_modules').insert(moduleRows);
+          const { error: insertError } = await (supabase.from('user_modules' as any) as any).insert(moduleRows);
           if (insertError) throw insertError;
         }
       }

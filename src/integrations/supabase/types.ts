@@ -77,63 +77,6 @@ export type Database = {
           },
         ]
       }
-      agencies: {
-        Row: {
-          allmysms_api_key: string | null
-          allmysms_login: string | null
-          allmysms_sender: string | null
-          api_subdomain: string
-          contact_email: string
-          created_at: string
-          google_reviews_url: string | null
-          id: string
-          is_active: boolean | null
-          is_default: boolean | null
-          logo_url: string | null
-          name: string
-          primary_color: string | null
-          slug: string
-          stripe_enabled: boolean | null
-          updated_at: string
-        }
-        Insert: {
-          allmysms_api_key?: string | null
-          allmysms_login?: string | null
-          allmysms_sender?: string | null
-          api_subdomain: string
-          contact_email: string
-          created_at?: string
-          google_reviews_url?: string | null
-          id?: string
-          is_active?: boolean | null
-          is_default?: boolean | null
-          logo_url?: string | null
-          name: string
-          primary_color?: string | null
-          slug: string
-          stripe_enabled?: boolean | null
-          updated_at?: string
-        }
-        Update: {
-          allmysms_api_key?: string | null
-          allmysms_login?: string | null
-          allmysms_sender?: string | null
-          api_subdomain?: string
-          contact_email?: string
-          created_at?: string
-          google_reviews_url?: string | null
-          id?: string
-          is_active?: boolean | null
-          is_default?: boolean | null
-          logo_url?: string | null
-          name?: string
-          primary_color?: string | null
-          slug?: string
-          stripe_enabled?: boolean | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
       agency_admin_documents: {
         Row: {
           agency_id: string
@@ -521,6 +464,69 @@ export type Database = {
           },
         ]
       }
+      agency_module_entitlements: {
+        Row: {
+          access_level: string
+          activated_at: string
+          activated_by: string | null
+          agency_id: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          metadata: Json
+          module_key: string
+          source: string
+          stripe_price_id: string | null
+          stripe_subscription_item_id: string | null
+          trial_ends_at: string | null
+        }
+        Insert: {
+          access_level?: string
+          activated_at?: string
+          activated_by?: string | null
+          agency_id: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          metadata?: Json
+          module_key: string
+          source?: string
+          stripe_price_id?: string | null
+          stripe_subscription_item_id?: string | null
+          trial_ends_at?: string | null
+        }
+        Update: {
+          access_level?: string
+          activated_at?: string
+          activated_by?: string | null
+          agency_id?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          metadata?: Json
+          module_key?: string
+          source?: string
+          stripe_price_id?: string | null
+          stripe_subscription_item_id?: string | null
+          trial_ends_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_module_entitlements_activated_by_fkey"
+            columns: ["activated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_module_entitlements_module_key_fkey"
+            columns: ["module_key"]
+            isOneToOne: false
+            referencedRelation: "module_catalog"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       agency_overhead_rules: {
         Row: {
           agency_id: string
@@ -644,6 +650,60 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "apogee_sync_status"
             referencedColumns: ["agency_id"]
+          },
+        ]
+      }
+      agency_plan: {
+        Row: {
+          agency_id: string
+          assigned_by: string | null
+          created_at: string
+          metadata: Json
+          plan_id: string
+          status: string
+          stripe_subscription_id: string | null
+          updated_at: string
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          agency_id: string
+          assigned_by?: string | null
+          created_at?: string
+          metadata?: Json
+          plan_id: string
+          status?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          agency_id?: string
+          assigned_by?: string | null
+          created_at?: string
+          metadata?: Json
+          plan_id?: string
+          status?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_plan_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_plan_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plan_catalog"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -905,49 +965,62 @@ export type Database = {
           },
         ]
       }
-      agency_subscription: {
+      agency_suivi_settings: {
         Row: {
-          agency_id: string
-          assigned_by: string | null
-          created_at: string | null
+          allmysms_api_key: string | null
+          allmysms_login: string | null
+          allmysms_sender: string | null
+          api_subdomain: string
+          contact_email: string
+          created_at: string
+          google_reviews_url: string | null
           id: string
-          status: string
-          tier_key: string
-          updated_at: string | null
-          valid_from: string | null
-          valid_until: string | null
+          is_active: boolean | null
+          is_default: boolean | null
+          logo_url: string | null
+          name: string
+          primary_color: string | null
+          slug: string
+          stripe_enabled: boolean | null
+          updated_at: string
         }
         Insert: {
-          agency_id: string
-          assigned_by?: string | null
-          created_at?: string | null
+          allmysms_api_key?: string | null
+          allmysms_login?: string | null
+          allmysms_sender?: string | null
+          api_subdomain: string
+          contact_email: string
+          created_at?: string
+          google_reviews_url?: string | null
           id?: string
-          status?: string
-          tier_key: string
-          updated_at?: string | null
-          valid_from?: string | null
-          valid_until?: string | null
+          is_active?: boolean | null
+          is_default?: boolean | null
+          logo_url?: string | null
+          name: string
+          primary_color?: string | null
+          slug: string
+          stripe_enabled?: boolean | null
+          updated_at?: string
         }
         Update: {
-          agency_id?: string
-          assigned_by?: string | null
-          created_at?: string | null
+          allmysms_api_key?: string | null
+          allmysms_login?: string | null
+          allmysms_sender?: string | null
+          api_subdomain?: string
+          contact_email?: string
+          created_at?: string
+          google_reviews_url?: string | null
           id?: string
-          status?: string
-          tier_key?: string
-          updated_at?: string | null
-          valid_from?: string | null
-          valid_until?: string | null
+          is_active?: boolean | null
+          is_default?: boolean | null
+          logo_url?: string | null
+          name?: string
+          primary_color?: string | null
+          slug?: string
+          stripe_enabled?: boolean | null
+          updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "agency_subscription_tier_key_fkey"
-            columns: ["tier_key"]
-            isOneToOne: false
-            referencedRelation: "plan_tiers"
-            referencedColumns: ["key"]
-          },
-        ]
+        Relationships: []
       }
       ai_search_cache: {
         Row: {
@@ -1942,6 +2015,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      app_feature_flags: {
+        Row: {
+          description: string | null
+          enabled: boolean
+          key: string
+        }
+        Insert: {
+          description?: string | null
+          enabled?: boolean
+          key: string
+        }
+        Update: {
+          description?: string | null
+          enabled?: boolean
+          key?: string
+        }
+        Relationships: []
       }
       app_notification_settings: {
         Row: {
@@ -3347,6 +3438,42 @@ export type Database = {
           },
         ]
       }
+      billing_catalog: {
+        Row: {
+          billing_mode: string
+          id: string
+          is_active: boolean
+          item_key: string
+          item_type: string
+          label: string | null
+          metadata: Json
+          stripe_price_id: string | null
+          stripe_product_id: string | null
+        }
+        Insert: {
+          billing_mode?: string
+          id?: string
+          is_active?: boolean
+          item_key: string
+          item_type: string
+          label?: string | null
+          metadata?: Json
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
+        }
+        Update: {
+          billing_mode?: string
+          id?: string
+          is_active?: boolean
+          item_key?: string
+          item_type?: string
+          label?: string | null
+          metadata?: Json
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
+        }
+        Relationships: []
+      }
       blocks: {
         Row: {
           attachments: Json | null
@@ -3783,6 +3910,8 @@ export type Database = {
           address: string | null
           agency_id: string
           apogee_user_id: number | null
+          archived_at: string | null
+          archived_reason: string | null
           birth_place: string | null
           city: string | null
           cni: string | null
@@ -3790,11 +3919,13 @@ export type Database = {
           created_by: string | null
           email: string | null
           first_name: string
+          fonction: string
           hiring_date: string | null
           id: string
-          is_registered_user: boolean
+          is_registered_user: boolean | null
           last_name: string
           leaving_date: string | null
+          left_at: string | null
           lunch_end: string | null
           lunch_start: string | null
           notes: string | null
@@ -3803,6 +3934,7 @@ export type Database = {
           postal_code: string | null
           poste: string | null
           role: string
+          status: string
           street: string | null
           type: string | null
           updated_at: string
@@ -3815,6 +3947,8 @@ export type Database = {
           address?: string | null
           agency_id: string
           apogee_user_id?: number | null
+          archived_at?: string | null
+          archived_reason?: string | null
           birth_place?: string | null
           city?: string | null
           cni?: string | null
@@ -3822,11 +3956,13 @@ export type Database = {
           created_by?: string | null
           email?: string | null
           first_name: string
+          fonction?: string
           hiring_date?: string | null
           id?: string
-          is_registered_user?: boolean
+          is_registered_user?: boolean | null
           last_name: string
           leaving_date?: string | null
+          left_at?: string | null
           lunch_end?: string | null
           lunch_start?: string | null
           notes?: string | null
@@ -3835,6 +3971,7 @@ export type Database = {
           postal_code?: string | null
           poste?: string | null
           role?: string
+          status?: string
           street?: string | null
           type?: string | null
           updated_at?: string
@@ -3847,6 +3984,8 @@ export type Database = {
           address?: string | null
           agency_id?: string
           apogee_user_id?: number | null
+          archived_at?: string | null
+          archived_reason?: string | null
           birth_place?: string | null
           city?: string | null
           cni?: string | null
@@ -3854,11 +3993,13 @@ export type Database = {
           created_by?: string | null
           email?: string | null
           first_name?: string
+          fonction?: string
           hiring_date?: string | null
           id?: string
-          is_registered_user?: boolean
+          is_registered_user?: boolean | null
           last_name?: string
           leaving_date?: string | null
+          left_at?: string | null
           lunch_end?: string | null
           lunch_start?: string | null
           notes?: string | null
@@ -3867,6 +4008,7 @@ export type Database = {
           postal_code?: string | null
           poste?: string | null
           role?: string
+          status?: string
           street?: string | null
           type?: string | null
           updated_at?: string
@@ -6537,6 +6679,27 @@ export type Database = {
           },
         ]
       }
+      job_profile_presets: {
+        Row: {
+          default_modules: string[]
+          label: string
+          role_agence: string
+          sort_order: number
+        }
+        Insert: {
+          default_modules?: string[]
+          label: string
+          role_agence: string
+          sort_order?: number
+        }
+        Update: {
+          default_modules?: string[]
+          label?: string
+          role_agence?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       knowledge_base: {
         Row: {
           category: string
@@ -7559,43 +7722,102 @@ export type Database = {
         }
         Relationships: []
       }
-      module_registry: {
+      module_catalog: {
         Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          display_type: string | null
+          is_core: boolean
+          is_delegatable: boolean
           is_deployed: boolean
           key: string
           label: string
           min_role: number
           node_type: string
           parent_key: string | null
-          required_plan: string
+          preconditions: Json
           sort_order: number
+          updated_at: string
         }
         Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          display_type?: string | null
+          is_core?: boolean
+          is_delegatable?: boolean
           is_deployed?: boolean
           key: string
           label: string
           min_role?: number
           node_type: string
           parent_key?: string | null
-          required_plan?: string
+          preconditions?: Json
           sort_order?: number
+          updated_at?: string
         }
         Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          display_type?: string | null
+          is_core?: boolean
+          is_delegatable?: boolean
           is_deployed?: boolean
           key?: string
           label?: string
           min_role?: number
           node_type?: string
           parent_key?: string | null
-          required_plan?: string
+          preconditions?: Json
           sort_order?: number
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "module_registry_parent_key_fkey"
+            foreignKeyName: "module_catalog_parent_key_fkey"
             columns: ["parent_key"]
             isOneToOne: false
-            referencedRelation: "module_registry"
+            referencedRelation: "module_catalog"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      module_distribution_rules: {
+        Row: {
+          activation_mode: string
+          assignable_by_scope: string
+          module_key: string
+          stripe_sellable: boolean
+          via_agency_option: boolean
+          via_plan: boolean
+          via_user_assignment: boolean
+        }
+        Insert: {
+          activation_mode?: string
+          assignable_by_scope?: string
+          module_key: string
+          stripe_sellable?: boolean
+          via_agency_option?: boolean
+          via_plan?: boolean
+          via_user_assignment?: boolean
+        }
+        Update: {
+          activation_mode?: string
+          assignable_by_scope?: string
+          module_key?: string
+          stripe_sellable?: boolean
+          via_agency_option?: boolean
+          via_plan?: boolean
+          via_user_assignment?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_distribution_rules_module_key_fkey"
+            columns: ["module_key"]
+            isOneToOne: true
+            referencedRelation: "module_catalog"
             referencedColumns: ["key"]
           },
         ]
@@ -7804,10 +8026,11 @@ export type Database = {
         }
         Relationships: []
       }
-      payments: {
+      payments_clients_suivi: {
         Row: {
           agency_slug: string | null
           amount_cents: number
+          client_name: string | null
           created_at: string
           id: string
           paid_at: string
@@ -7817,6 +8040,7 @@ export type Database = {
         Insert: {
           agency_slug?: string | null
           amount_cents: number
+          client_name?: string | null
           created_at?: string
           id?: string
           paid_at?: string
@@ -7826,6 +8050,7 @@ export type Database = {
         Update: {
           agency_slug?: string | null
           amount_cents?: number
+          client_name?: string | null
           created_at?: string
           id?: string
           paid_at?: string
@@ -7918,67 +8143,125 @@ export type Database = {
         }
         Relationships: []
       }
-      plan_tier_modules: {
+      permissions_audit_log: {
         Row: {
-          created_at: string | null
-          enabled: boolean | null
+          action_type: string
+          actor_role: string | null
+          actor_user_id: string | null
+          created_at: string
           id: string
-          module_key: string
-          options_override: Json | null
-          tier_key: string
+          module_key: string | null
+          new_value: Json | null
+          old_value: Json | null
+          reason: string | null
+          scope_id: string | null
+          scope_type: string
+          target_id: string
+          target_type: string
         }
         Insert: {
-          created_at?: string | null
-          enabled?: boolean | null
+          action_type: string
+          actor_role?: string | null
+          actor_user_id?: string | null
+          created_at?: string
           id?: string
-          module_key: string
-          options_override?: Json | null
-          tier_key: string
+          module_key?: string | null
+          new_value?: Json | null
+          old_value?: Json | null
+          reason?: string | null
+          scope_id?: string | null
+          scope_type: string
+          target_id: string
+          target_type: string
         }
         Update: {
-          created_at?: string | null
-          enabled?: boolean | null
+          action_type?: string
+          actor_role?: string | null
+          actor_user_id?: string | null
+          created_at?: string
           id?: string
+          module_key?: string | null
+          new_value?: Json | null
+          old_value?: Json | null
+          reason?: string | null
+          scope_id?: string | null
+          scope_type?: string
+          target_id?: string
+          target_type?: string
+        }
+        Relationships: []
+      }
+      plan_catalog: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          is_system: boolean
+          key: string
+          label: string
+          sort_order: number
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          key: string
+          label: string
+          sort_order?: number
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          key?: string
+          label?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      plan_module_grants: {
+        Row: {
+          access_level: string
+          module_key: string
+          options_default: Json
+          plan_id: string
+        }
+        Insert: {
+          access_level?: string
+          module_key: string
+          options_default?: Json
+          plan_id: string
+        }
+        Update: {
+          access_level?: string
           module_key?: string
-          options_override?: Json | null
-          tier_key?: string
+          options_default?: Json
+          plan_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "plan_tier_modules_tier_key_fkey"
-            columns: ["tier_key"]
+            foreignKeyName: "plan_module_grants_module_key_fkey"
+            columns: ["module_key"]
             isOneToOne: false
-            referencedRelation: "plan_tiers"
+            referencedRelation: "module_catalog"
             referencedColumns: ["key"]
           },
+          {
+            foreignKeyName: "plan_module_grants_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plan_catalog"
+            referencedColumns: ["id"]
+          },
         ]
-      }
-      plan_tiers: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          display_order: number | null
-          is_system: boolean | null
-          key: string
-          label: string
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          display_order?: number | null
-          is_system?: boolean | null
-          key: string
-          label: string
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          display_order?: number | null
-          is_system?: boolean | null
-          key?: string
-          label?: string
-        }
-        Relationships: []
       }
       planning_moves: {
         Row: {
@@ -8255,7 +8538,6 @@ export type Database = {
       }
       profiles: {
         Row: {
-          agence: string | null
           agency_id: string | null
           apogee_user_id: number | null
           avatar_url: string | null
@@ -8264,7 +8546,6 @@ export type Database = {
           deactivated_by: string | null
           email: string | null
           email_notifications_enabled: boolean | null
-          enabled_modules: Json | null
           first_name: string | null
           global_role: Database["public"]["Enums"]["global_role"] | null
           id: string
@@ -8284,7 +8565,6 @@ export type Database = {
           username: string | null
         }
         Insert: {
-          agence?: string | null
           agency_id?: string | null
           apogee_user_id?: number | null
           avatar_url?: string | null
@@ -8293,7 +8573,6 @@ export type Database = {
           deactivated_by?: string | null
           email?: string | null
           email_notifications_enabled?: boolean | null
-          enabled_modules?: Json | null
           first_name?: string | null
           global_role?: Database["public"]["Enums"]["global_role"] | null
           id: string
@@ -8313,7 +8592,6 @@ export type Database = {
           username?: string | null
         }
         Update: {
-          agence?: string | null
           agency_id?: string | null
           apogee_user_id?: number | null
           avatar_url?: string | null
@@ -8322,7 +8600,6 @@ export type Database = {
           deactivated_by?: string | null
           email?: string | null
           email_notifications_enabled?: boolean | null
-          enabled_modules?: Json | null
           first_name?: string | null
           global_role?: Database["public"]["Enums"]["global_role"] | null
           id?: string
@@ -10603,6 +10880,7 @@ export type Database = {
       sms_sent_log: {
         Row: {
           agency_slug: string | null
+          client_name: string | null
           error_message: string | null
           id: string
           phone_number: string
@@ -10613,6 +10891,7 @@ export type Database = {
         }
         Insert: {
           agency_slug?: string | null
+          client_name?: string | null
           error_message?: string | null
           id?: string
           phone_number: string
@@ -10623,6 +10902,7 @@ export type Database = {
         }
         Update: {
           agency_slug?: string | null
+          client_name?: string | null
           error_message?: string | null
           id?: string
           phone_number?: string
@@ -11905,6 +12185,74 @@ export type Database = {
         }
         Relationships: []
       }
+      user_access: {
+        Row: {
+          access_level: string
+          delegated_by: string | null
+          granted: boolean
+          granted_at: string
+          granted_by: string | null
+          id: string
+          module_key: string
+          options: Json | null
+          source: string
+          user_id: string
+        }
+        Insert: {
+          access_level?: string
+          delegated_by?: string | null
+          granted?: boolean
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          module_key: string
+          options?: Json | null
+          source: string
+          user_id: string
+        }
+        Update: {
+          access_level?: string
+          delegated_by?: string | null
+          granted?: boolean
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          module_key?: string
+          options?: Json | null
+          source?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_access_delegated_by_fkey"
+            columns: ["delegated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_access_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_access_module_key_fkey"
+            columns: ["module_key"]
+            isOneToOne: false
+            referencedRelation: "module_catalog"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "user_access_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_actions_config: {
         Row: {
           created_at: string
@@ -12177,54 +12525,6 @@ export type Database = {
           visited_at?: string | null
         }
         Relationships: []
-      }
-      user_modules: {
-        Row: {
-          created_at: string | null
-          enabled_at: string | null
-          enabled_by: string | null
-          id: string
-          module_key: string
-          options: Json | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          enabled_at?: string | null
-          enabled_by?: string | null
-          id?: string
-          module_key: string
-          options?: Json | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          enabled_at?: string | null
-          enabled_by?: string | null
-          id?: string
-          module_key?: string
-          options?: Json | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_modules_enabled_by_fkey"
-            columns: ["enabled_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_modules_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       user_page_overrides: {
         Row: {
@@ -12744,6 +13044,35 @@ export type Database = {
           },
         ]
       }
+      payments_clients_suivi_with_client: {
+        Row: {
+          agency_slug: string | null
+          amount_cents: number | null
+          client_name: string | null
+          created_at: string | null
+          id: string | null
+          paid_at: string | null
+          ref_dossier: string | null
+          resolved_client_name: string | null
+          stripe_session_id: string | null
+        }
+        Relationships: []
+      }
+      sms_sent_log_with_client: {
+        Row: {
+          agency_slug: string | null
+          client_name: string | null
+          error_message: string | null
+          id: string | null
+          phone_number: string | null
+          ref_dossier: string | null
+          resolved_client_name: string | null
+          sent_at: string | null
+          status: string | null
+          trigger_type: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       auto_generate_monthly_epi_acks: { Args: never; Returns: number }
@@ -12828,14 +13157,6 @@ export type Database = {
         Args: { p_first_name: string; p_last_name: string }
         Returns: string
       }
-      get_agency_enabled_modules: {
-        Args: { p_agency_id: string }
-        Returns: {
-          enabled: boolean
-          module_key: string
-          options: Json
-        }[]
-      }
       get_agency_performance_weekly_hours: {
         Args: { target_agency_id: string }
         Returns: {
@@ -12919,17 +13240,21 @@ export type Database = {
           agency_id: string
         }[]
       }
-      get_user_effective_modules: {
-        Args: { p_user_id: string }
-        Returns: {
-          enabled: boolean
-          module_key: string
-          options: Json
-        }[]
-      }
       get_user_global_role_level: {
         Args: { _user_id: string }
         Returns: number
+      }
+      get_user_permissions: {
+        Args: { p_user_id: string }
+        Returns: {
+          access_level: string
+          granted: boolean
+          module_key: string
+          node_type: string
+          options: Json
+          preconditions_ok: boolean
+          source_summary: string
+        }[]
       }
       get_user_ticket_role: {
         Args: { _user_id: string }

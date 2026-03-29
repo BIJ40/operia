@@ -6,8 +6,8 @@
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
-import { usePermissions } from '@/contexts/PermissionsContext';
-import { hasMinRole } from '@/permissions';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
+import { hasMinRole } from '@/permissions/shared-constants';
 import { GlobalRole } from '@/types/globalRoles';
 import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 import { Loader2, ShieldX } from 'lucide-react';
@@ -43,7 +43,7 @@ export function RoleGuard({
   errorMessage
 }: RoleGuardProps) {
   const { user, isAuthLoading } = useAuthCore();
-  const { globalRole } = usePermissions();
+  const { globalRole } = usePermissionsBridge();
 
   // Afficher un loader pendant le chargement
   if (isAuthLoading) {

@@ -11,7 +11,7 @@ import {
   FileText, Users2, Loader2, Users, CalendarDays, 
   Car, FolderOpen, Settings, Eye, Activity, Target, AlertTriangle, MapPin
 } from 'lucide-react';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { ModuleKey } from '@/types/modules';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -43,7 +43,7 @@ type AdminSubTab = 'reunions' | 'plannings' | 'documents' | 'zones';
 // Configuration des onglets principaux (niveau 1)
 // Configuration des onglets principaux avec module requis
 // Note: MAIN_TABS_CONFIG moved inside DiversTabContent to use useModuleLabels hook
-// A: 'Apporteurs' (organisation.apporteurs), 'Parc' (organisation.parc), 'Commercial' (prospection) → resolver
+// A: 'Apporteurs' (relations.apporteurs), 'Parc' (organisation.parc), 'Commercial' (prospection) → resolver
 // B: 'Actions', 'Administratif', 'Performance', 'Devis acceptés', 'Incohérences' → structural/sub-feature labels
 
 function LoadingFallback() {
@@ -160,7 +160,7 @@ function ApporteursSection() {
 // Note: ADMIN_TABS_CONFIG moved inside AdministratifSection to use useModuleLabels hook
 
 function AdministratifSection() {
-  const { hasModule } = usePermissions();
+  const { hasModule } = usePermissionsBridge();
   const { getShortLabel } = useModuleLabels();
 
   const adminTabsConfig: (FolderTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
@@ -226,12 +226,12 @@ function AdministratifSection() {
 
 export default function DiversTabContent() {
   const [activeMainTab, setActiveMainTab] = useSessionState<OutilsMainTab>('outils_main_tab', 'actions');
-  const { hasModule } = usePermissions();
+  const { hasModule } = usePermissionsBridge();
   const { getShortLabel } = useModuleLabels();
 
   const mainTabsConfig: (PillTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
     { id: 'actions', label: 'Actions', icon: Settings, accent: 'blue' },
-    { id: 'apporteurs', label: getShortLabel('organisation.apporteurs', 'Apporteurs'), icon: Users, accent: 'purple', requiresModule: 'organisation.apporteurs' },
+    { id: 'apporteurs', label: getShortLabel('relations.apporteurs', 'Apporteurs'), icon: Users, accent: 'purple', requiresModule: 'relations.apporteurs' },
     { id: 'administratif', label: 'Administratif', icon: FolderOpen, accent: 'orange', requiresModule: 'pilotage.agence' },
     { id: 'parc', label: getShortLabel('organisation.parc', 'Parc'), icon: Car, accent: 'green', requiresModule: 'organisation.parc' },
     { id: 'performance', label: 'Performance', icon: Activity, accent: 'pink', requiresModule: 'pilotage.agence' },

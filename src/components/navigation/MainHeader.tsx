@@ -6,7 +6,7 @@ import { MobileNavMenu } from './MobileNavMenu';
 import { ProfileMenu } from '@/components/unified/workspace/ProfileMenu';
 import type { UnifiedTab } from '@/components/unified/workspace/types';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 
 interface MainHeaderProps {
   activeTab: UnifiedTab;
@@ -17,7 +17,7 @@ interface MainHeaderProps {
 
 export function MainHeader({ activeTab, setActiveTab, visibleTabs, tabButtonClass }: MainHeaderProps) {
   const { getLabel } = useModuleLabels();
-  const { hasModule, isDeployedModule, isAdmin } = usePermissions();
+  const { hasModule, isDeployedModule, isAdmin } = usePermissionsBridge();
 
   const visibleGroups = useMemo(() => {
     const visibleIds = new Set(visibleTabs.map(t => t.id));

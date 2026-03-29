@@ -7,6 +7,8 @@ import { lazy, Suspense, useEffect } from "react";
 
 import { MinimalLayout } from "./components/layout";
 import { Loader2 } from "lucide-react";
+import { useAppFeatureFlag } from './hooks/useAppFeatureFlag';
+import { PermissionsProviderV2 } from './contexts/PermissionsContextV2';
 import { RoleGuard } from "./components/auth/RoleGuard";
 import { AuthRouter } from "./components/auth/AuthRouter";
 
@@ -241,27 +243,49 @@ function AppContent() {
   );
 }
 
+/**
+ * PermissionsV2Wrapper — Conditionnel sur USE_PERMISSIONS_V2.
+ * Quand le flag est true, ajoute PermissionsProviderV2 au-dessus des enfants.
+ * Le provider V1 (dans AuthProvider) reste toujours actif — pas de suppression.
+ */
+function PermissionsV2Wrapper({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const useV2 = useAppFeatureFlag('USE_PERMISSIONS_V2');
+
+  if (useV2) {
+    return (
+      <PermissionsProviderV2 userId={user?.id ?? null}>
+        {children}
+      </PermissionsProviderV2>
+    );
+  }
+
+  return <>{children}</>;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <BrowserRouter>
           <AuthProvider>
-            <ImpersonationProvider>
-              <DataPreloadProvider>
-                <ThemeProvider>
-                  <EditorProvider>
-                    <ApporteurEditorProvider>
-                      <GlobalErrorBoundary>
-                        {isSuiviDomain ? <SuiviApp /> : <AppContent />}
-                      </GlobalErrorBoundary>
-                      <Toaster />
-                      <Sonner />
-                    </ApporteurEditorProvider>
-                  </EditorProvider>
-                </ThemeProvider>
-              </DataPreloadProvider>
-            </ImpersonationProvider>
+            <PermissionsV2Wrapper>
+              <ImpersonationProvider>
+                <DataPreloadProvider>
+                  <ThemeProvider>
+                    <EditorProvider>
+                      <ApporteurEditorProvider>
+                        <GlobalErrorBoundary>
+                          {isSuiviDomain ? <SuiviApp /> : <AppContent />}
+                        </GlobalErrorBoundary>
+                        <Toaster />
+                        <Sonner />
+                      </ApporteurEditorProvider>
+                    </EditorProvider>
+                  </ThemeProvider>
+                </DataPreloadProvider>
+              </ImpersonationProvider>
+            </PermissionsV2Wrapper>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

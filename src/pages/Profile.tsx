@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBridge';
 import { supabase } from '@/integrations/supabase/client';
 import { logError } from '@/lib/logger';
 import { Button } from '@/components/ui/button';
@@ -48,7 +48,7 @@ interface ProfileData {
   email: string | null;
   first_name: string | null;
   last_name: string | null;
-  agence: string | null;
+  agence?: string | null; // resolved from agency_id
   role_agence: string | null;
   avatar_url: string | null;
   global_role: GlobalRole | null;
@@ -96,7 +96,7 @@ export default function Profile() {
       setIsLoading(true);
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, first_name, last_name, agence, role_agence, avatar_url, global_role, phone')
+        .select('id, email, first_name, last_name, role_agence, avatar_url, global_role, phone, agency_id')
         .eq('id', user.id)
         .maybeSingle();
 

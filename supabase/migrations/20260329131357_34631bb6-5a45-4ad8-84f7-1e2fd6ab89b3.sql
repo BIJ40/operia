@@ -1,0 +1,1 @@
+UPDATE module_catalog SET is_deployed = false WHERE key = 'prospection';

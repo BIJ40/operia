@@ -10,11 +10,8 @@ import { setSentryUser, clearSentryUser } from '@/lib/sentry';
 // ============================================================================
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { EnabledModules, ModuleKey, MODULE_DEFINITIONS, isModuleEnabled as checkModuleEnabled } from '@/types/modules';
-import { 
-  hasAccess, hasMinRole,
-  type PermissionContext,
-} from '@/permissions';
-import { userModulesToEnabledModules } from '@/lib/userModulesUtils';
+import { hasMinRole } from '@/permissions/shared-constants';
+
 
 // Sub-contexts (Phase 1 split)
 import { AuthCoreContext, type AuthCoreContextType } from './AuthCoreContext';
@@ -97,9 +94,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const hasFaqAdminRole = adminOptions.faq_admin === true;
   const canAccessFaqAdmin = hasFaqAdminRole || isAdmin;
 
-  // Permission context
-  const accessContext: PermissionContext = useMemo(() => ({
-    globalRole: globalRole ?? 'base_user',
+  // Permission context (kept for PermissionsContextType compat)
+  const accessContext = useMemo(() => ({
+    globalRole: globalRole ?? 'base_user' as const,
     enabledModules: enabledModules ?? {},
     agencyId,
   }), [globalRole, enabledModules, agencyId]);
@@ -110,12 +107,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [globalRole]);
 
   const hasModuleGuard = useCallback((moduleKey: ModuleKey): boolean => {
-    return hasAccess({ ...accessContext, moduleId: moduleKey });
-  }, [accessContext]);
+    if (!enabledModules) return false;
+    const isBypassed = globalRole === 'platform_admin' || globalRole === 'superadmin';
+    if (isBypassed) return true;
+    return checkModuleEnabled(enabledModules, moduleKey);
+  }, [enabledModules, globalRole]);
 
   const hasModuleOptionGuard = useCallback((moduleKey: ModuleKey, optionKey: string): boolean => {
-    return hasAccess({ ...accessContext, moduleId: moduleKey, optionId: optionKey });
-  }, [accessContext]);
+    if (!enabledModules) return false;
+    const isBypassed = globalRole === 'platform_admin' || globalRole === 'superadmin';
+    if (isBypassed) return true;
+    const moduleConfig = enabledModules[moduleKey];
+    if (!moduleConfig) return false;
+    if (typeof moduleConfig === 'boolean') return moduleConfig;
+    if (!moduleConfig.enabled) return false;
+    return moduleConfig.options?.[optionKey] === true;
+  }, [enabledModules, globalRole]);
 
   const isDeployedModuleGuard = useCallback((moduleKey: ModuleKey): boolean => {
     return deployedModuleKeys.has(moduleKey);
@@ -138,12 +145,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         Promise.all([
           supabase
             .from('profiles')
-            .select('first_name, last_name, agence, agency_id, role_agence, must_change_password, global_role, is_active, is_read_only')
+            .select('first_name, last_name, agency_id, role_agence, must_change_password, global_role, is_active, is_read_only')
             .eq('id', userId)
             .single(),
-          supabase.rpc('get_user_effective_modules', { p_user_id: userId }),
-          supabase
-            .from('module_registry')
+          (supabase.rpc as any)('get_user_effective_modules', { p_user_id: userId }),
+          (supabase
+            .from('module_registry' as any) as any)
             .select('key')
             .eq('is_deployed', true),
         ]),
@@ -176,9 +183,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAgencyId(profile?.agency_id || null);
       setRoleAgence(profile?.role_agence || null);
       
-      // Resolve agence slug: use profile.agence, or fallback to apogee_agencies.slug via agency_id
-      let resolvedAgence = profile?.agence || null;
-      if (!resolvedAgence && profile?.agency_id) {
+      // Resolve agence slug from apogee_agencies via agency_id
+      let resolvedAgence: string | null = null;
+      if (profile?.agency_id) {
         try {
           const { data: agency } = await supabase
             .from('apogee_agencies')
@@ -187,7 +194,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .single();
           if (agency?.slug) {
             resolvedAgence = agency.slug;
-            logAuth.info(`[AUTH] Resolved agence slug from agency_id: ${agency.slug}`);
           }
         } catch (e) {
           logAuth.warn('[AUTH] Failed to resolve agence slug from agency_id', e);
@@ -217,7 +223,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         for (const row of effectiveModules) {
           const moduleKey = row.module_key;
           resolvedModules[moduleKey] = {
-            enabled: row.enabled === true,
+            enabled: row.granted === true,
             options: (typeof row.options === 'object' && row.options !== null) 
               ? row.options as Record<string, boolean>
               : {},
@@ -263,7 +269,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: userId,
           email: userData.user.email,
           globalRole: dbGlobalRole || 'base_user',
-          agencySlug: profile?.agence || null,
+          agencySlug: resolvedAgence || null,
         });
       }
 
@@ -434,11 +440,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       case 'mes_indicateurs':
         return hasModuleGuard('pilotage.agence');
       case 'apporteurs':
-        return hasModuleOptionGuard('support.guides', 'apporteurs');
+        return hasModuleGuard('support.guides.apporteurs');
       case 'helpconfort':
-        return hasModuleOptionGuard('support.guides', 'helpconfort');
+        return hasModuleGuard('support.guides.helpconfort');
       case 'apogee':
-        return hasModuleOptionGuard('support.guides', 'apogee');
+        return hasModuleGuard('support.guides.apogee');
       case 'ticketing':
       case 'apogee_tickets':
         return hasModuleGuard('ticketing');

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBridge';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -97,26 +97,27 @@ function UserRolesTab() {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [selectedRole, setSelectedRole] = useState<TicketRole | ''>('');
   
-  // Get all users with ticketing module (via user_modules) or admins
+  // Get all users with ticketing module (via user_access) or admins
   const { data: eligibleUsers, refetch } = useQuery({
     queryKey: ['eligible-ticket-users'],
     queryFn: async () => {
-      const [profilesResult, userModulesResult] = await Promise.all([
+      const [profilesResult, userAccessResult] = await Promise.all([
         supabase
           .from('profiles')
           .select('id, email, first_name, last_name, global_role')
           .eq('is_active', true)
           .order('email'),
         supabase
-          .from('user_modules')
+          .from('user_access')
           .select('user_id')
           .eq('module_key', 'ticketing')
+          .eq('granted', true)
       ]);
       
       if (profilesResult.error) throw profilesResult.error;
       
       const userModuleSet = new Set(
-        userModulesResult.data?.map(um => um.user_id) || []
+        userAccessResult.data?.map((um: any) => um.user_id) || []
       );
       
       // Filter users with ticketing module via user_modules or admins (N5+)

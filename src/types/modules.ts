@@ -39,9 +39,8 @@ export const MODULES = {
   // (pilotage.dashboard removed — merged into pilotage.statistiques)
   'pilotage.agence': 'pilotage.agence',
   // Commercial
-  'commercial.suivi_client': 'commercial.suivi_client',
-  'commercial.comparateur': 'commercial.comparateur',
   'commercial.veille': 'commercial.veille',
+  'commercial.comparateur': 'commercial.comparateur',
   'commercial.prospects': 'commercial.prospects',
   'commercial.realisations': 'commercial.realisations',
   'commercial.social': 'commercial.social',
@@ -53,7 +52,8 @@ export const MODULES = {
   'commercial.realisations.valider_envoyer': 'commercial.realisations.valider_envoyer',
   // Organisation
   'organisation.salaries': 'organisation.salaries',
-  'organisation.apporteurs': 'organisation.apporteurs',
+  // Relations
+  'relations.apporteurs': 'relations.apporteurs',
   'organisation.plannings': 'organisation.plannings',
   'organisation.reunions': 'organisation.reunions',
   'organisation.parc': 'organisation.parc',
@@ -67,6 +67,9 @@ export const MODULES = {
   // Support
   'support.aide_en_ligne': 'support.aide_en_ligne',
   'support.guides': 'support.guides',
+  'support.guides.apogee': 'support.guides.apogee',
+  'support.guides.apporteurs': 'support.guides.apporteurs',
+  'support.guides.helpconfort': 'support.guides.helpconfort',
   'support.faq': 'support.faq',
   'support.ticketing': 'support.ticketing',
   // Admin
@@ -98,9 +101,9 @@ export const MODULE_OPTIONS = {
     epi: 'organisation.parc.epi',
     equipements: 'organisation.parc.equipements',
   },
-  'organisation.apporteurs': {
-    consulter: 'organisation.apporteurs.consulter',
-    gerer: 'organisation.apporteurs.gerer',
+  'relations.apporteurs': {
+    consulter: 'relations.apporteurs.consulter',
+    gerer: 'relations.apporteurs.gerer',
   },
   'organisation.plannings': {},
   'organisation.reunions': {},
@@ -130,7 +133,6 @@ export const MODULE_OPTIONS = {
   prospection: {
     dashboard: 'prospection.dashboard',
     comparateur: 'prospection.comparateur',
-    veille: 'prospection.veille',
     prospects: 'prospection.prospects',
   },
   planning_augmente: {
@@ -172,8 +174,9 @@ export type ModuleOptionPath = typeof MODULE_OPTIONS[LegacyModuleKey][keyof type
 // Les catégories correspondent EXACTEMENT aux onglets de niveau 1 du workspace
 export type ModuleCategory = 
   | 'pilotage'      // Onglet "Pilotage" (Stats, Performance, Actions)
-  | 'commercial'    // Onglet "Commercial" (Prospection, Devis acceptés, Incohérences)
-  | 'organisation'  // Onglet "Organisation" (Collaborateurs, Apporteurs, Plannings, Réunions, Parc, Conformité)
+  | 'commercial'    // Onglet "Commercial" (Veille, Comparateur, Prospects, Réalisations)
+  | 'organisation'  // Onglet "Organisation" (Collaborateurs, Plannings, Réunions, Parc, Conformité)
+  | 'relations'     // Onglet "Relations" (Apporteurs)
   | 'documents'     // Onglet "Documents" (Médiathèque)
   | 'support'       // Onglet "Support" (Aide en ligne, Guides, FAQ, Ticketing)
   | 'reseau'        // Onglet "Franchiseur" (visible N3+)
@@ -445,18 +448,18 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     ],
   },
   {
-    key: 'organisation.apporteurs',
+    key: 'relations.apporteurs',
     label: 'Apporteurs',
     description: 'Gestion des apporteurs',
     icon: 'Handshake',
-    category: 'organisation',
+    category: 'relations',
     uiSubTab: 'apporteurs',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     delegatable: true,
     minRole: 'franchisee_admin',
     options: [
-      { key: 'consulter', path: 'organisation.apporteurs.consulter', label: 'Consulter', description: 'Voir les apporteurs', defaultEnabled: true, routes: ['/?tab=organisation'] },
-      { key: 'gerer', path: 'organisation.apporteurs.gerer', label: 'Gérer', description: 'Créer/modifier', defaultEnabled: true, routes: ['/?tab=organisation'] },
+      { key: 'consulter', path: 'relations.apporteurs.consulter', label: 'Consulter', description: 'Voir les apporteurs', defaultEnabled: true, routes: ['/?tab=organisation'] },
+      { key: 'gerer', path: 'relations.apporteurs.gerer', label: 'Gérer', description: 'Créer/modifier', defaultEnabled: true, routes: ['/?tab=organisation'] },
     ],
   },
   {
@@ -599,9 +602,8 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     defaultForRoles: [],
     minRole: 'franchisee_user',
     options: [
-      { key: 'dashboard', path: 'prospection.dashboard', label: 'Suivi client', description: 'Fiche apporteur', defaultEnabled: true, routes: ['/?tab=commercial'] },
+      { key: 'dashboard', path: 'prospection.dashboard', label: 'Veille', description: 'Veille et suivi apporteurs', defaultEnabled: true, routes: ['/?tab=commercial'] },
       { key: 'comparateur', path: 'prospection.comparateur', label: 'Comparateur', description: 'Comparer apporteurs', defaultEnabled: true, routes: ['/?tab=commercial'] },
-      { key: 'veille', path: 'prospection.veille', label: 'Veille', description: 'Monitoring apporteurs', defaultEnabled: true, routes: ['/?tab=commercial'] },
       { key: 'prospects', path: 'prospection.prospects', label: 'Prospects', description: 'Gestion prospects', defaultEnabled: true, routes: ['/?tab=commercial'] },
     ],
   },
@@ -623,9 +625,9 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
   },
   // Commercial sub-modules (promoted from prospection options)
   {
-    key: 'commercial.suivi_client',
-    label: 'Suivi client',
-    description: 'Fiche apporteur et suivi',
+    key: 'commercial.veille',
+    label: 'Veille',
+    description: 'Suivi et veille apporteurs',
     icon: 'Users',
     category: 'commercial',
     uiSubTab: 'apporteurs',
@@ -646,18 +648,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     delegatable: true,
     options: [],
   },
-  {
-    key: 'commercial.veille',
-    label: 'Veille',
-    description: 'Monitoring apporteurs',
-    icon: 'Radar',
-    category: 'commercial',
-    uiSubTab: 'veille',
-    defaultForRoles: [],
-    minRole: 'franchisee_user',
-    delegatable: true,
-    options: [],
-  },
+  // commercial.veille legacy entry removed — merged into commercial.veille (canonical)
   {
     key: 'commercial.prospects',
     label: 'Prospects',
@@ -896,14 +887,14 @@ export const MODULE_SHORT_LABELS: Partial<Record<ModuleKey, string>> = {
   'pilotage.rentabilite': 'Rentabilité',
   'pilotage.tresorerie': 'Trésorerie',
   // Commercial
-  'commercial.suivi_client': 'Suivi client',
-  'commercial.comparateur': 'Comparateur',
   'commercial.veille': 'Veille',
+  'commercial.comparateur': 'Comparateur',
+  // commercial.veille — fusionné dans commercial.veille
   'commercial.prospects': 'Prospects',
   'commercial.realisations': 'Réalisations',
   // Organisation
   'organisation.salaries': 'Salariés',
-  'organisation.apporteurs': 'Apporteurs',
+  'relations.apporteurs': 'Apporteurs',
   'organisation.plannings': 'Plannings',
   'organisation.reunions': 'Réunions',
   'organisation.parc': 'Parc',

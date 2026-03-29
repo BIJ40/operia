@@ -13,7 +13,7 @@ import { useSessionState } from '@/hooks/useSessionState';
 import { InternalApogeeLayout } from '@/components/guides/apogee/InternalApogeeLayout';
 import { useNavigationMode } from '@/hooks/useNavigationMode';
 import { DomainAccentProvider } from '@/contexts/DomainAccentContext';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 
 const ApporteurGuide = lazy(() => import('@/pages/ApporteurGuide'));
 const HelpConfort = lazy(() => import('@/pages/HelpConfort'));
@@ -24,18 +24,18 @@ interface GuideTabDef {
   id: GuideTab;
   label: string;
   icon: LucideIcon;
-  /** Permission option key in support.guides — null = always visible */
-  permissionOption: 'apogee' | 'apporteurs' | 'helpconfort' | null;
+  /** Full module key for permission check — null = always visible */
+  moduleKey: string | null;
   /** If true, tab is always disabled (content not yet available) */
   comingSoon?: boolean;
 }
 
 const ALL_GUIDE_TABS: GuideTabDef[] = [
-  { id: 'apogee', label: 'Apogée', icon: BookOpen, permissionOption: 'apogee' },
-  { id: 'helpconfort', label: 'Help Confort', icon: Building2, permissionOption: 'helpconfort' },
-  { id: 'apporteurs', label: 'Apporteurs', icon: Users, permissionOption: 'apporteurs' },
-  { id: 'operia', label: 'Operia', icon: Home, permissionOption: null, comingSoon: true },
-  { id: 'faq', label: 'FAQ', icon: HelpCircle, permissionOption: null },
+  { id: 'apogee', label: 'Apogée', icon: BookOpen, moduleKey: 'support.guides.apogee' },
+  { id: 'helpconfort', label: 'Help Confort', icon: Building2, moduleKey: 'support.guides.helpconfort' },
+  { id: 'apporteurs', label: 'Apporteurs', icon: Users, moduleKey: 'support.guides.apporteurs' },
+  { id: 'operia', label: 'Operia', icon: Home, moduleKey: null, comingSoon: true },
+  { id: 'faq', label: 'FAQ', icon: HelpCircle, moduleKey: null },
 ];
 
 function LoadingFallback() {
@@ -49,24 +49,20 @@ function LoadingFallback() {
 export default function GuidesTabContent() {
   const [activeGuide, setActiveGuide] = useSessionState<GuideTab>('guides_sub_tab', 'apogee');
   const { mode: navMode } = useNavigationMode();
-  const { hasModuleOption, hasGlobalRole } = usePermissions();
+  const { hasModule, hasGlobalRole } = usePermissionsBridge();
   const isAdmin = hasGlobalRole('platform_admin');
 
   const visibleTabs: PillTabConfig[] = useMemo(() => {
     return ALL_GUIDE_TABS
       .filter((tab) => {
-        // Always show tabs with no permission check, or coming soon tabs
-        if (tab.permissionOption === null) return true;
-        // Admins see everything
+        if (tab.moduleKey === null) return true;
         if (isAdmin) return true;
-        // Show if user has the option (even if disabled, we show greyed out)
-        // For now: show all deployed tabs, disable if no access
-        return true;
+        return true; // Show all, disable if no access
       })
       .map((tab) => {
-        const hasAccess = tab.permissionOption === null
+        const hasAccess = tab.moduleKey === null
           || isAdmin
-          || hasModuleOption('support.guides', tab.permissionOption);
+          || hasModule(tab.moduleKey);
 
         return {
           id: tab.id,
@@ -75,7 +71,7 @@ export default function GuidesTabContent() {
           disabled: tab.comingSoon || !hasAccess,
         };
       });
-  }, [isAdmin, hasModuleOption]);
+  }, [isAdmin, hasModule]);
 
   return (
     <DomainAccentProvider accent="purple">

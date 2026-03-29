@@ -9,7 +9,7 @@ import { BarChart3, Activity, Settings, AlertTriangle, TrendingUp, PieChart, Loa
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { ModuleKey } from '@/types/modules';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
 import { useNavigationMode } from '@/hooks/useNavigationMode';
@@ -39,7 +39,7 @@ function LoadingFallback() {
 }
 
 export default function PilotageTabContent() {
-  const { hasModule, isDeployedModule, isAdmin } = usePermissions();
+  const { hasModule, isDeployedModule, isAdmin } = usePermissionsBridge();
   const { getShortLabel } = useModuleLabels();
   const { mode: navMode } = useNavigationMode();
 

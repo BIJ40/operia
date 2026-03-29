@@ -8,7 +8,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBridge';
 import { isRoleRequiringMfa, MFA_ENFORCEMENT_MODE } from '@/lib/mfa';
 import type { Factor } from '@supabase/supabase-js';
 

@@ -104,24 +104,24 @@ serve(async (req) => {
     // Récupérer le profil de l'appelant
     const { data: callerProfile } = await supabaseAdmin
       .from('profiles')
-      .select('global_role, agence')
+      .select('global_role, agency_id')
       .eq('id', userId)
       .single()
 
     const callerLevel = getRoleLevel(callerProfile?.global_role)
-    const callerAgency = callerProfile?.agence || null
+    const callerAgency = callerProfile?.agency_id || null
 
     console.log(`[update-user-email] Appelant: N${callerLevel}`)
 
     // Récupérer le profil de la cible
     const { data: targetProfile } = await supabaseAdmin
       .from('profiles')
-      .select('global_role, agence')
+      .select('global_role, agency_id')
       .eq('id', targetUserId)
       .single()
 
     const targetLevel = getRoleLevel(targetProfile?.global_role)
-    const targetAgency = targetProfile?.agence || null
+    const targetAgency = targetProfile?.agency_id || null
 
     console.log(`[update-user-email] Cible: N${targetLevel}`)
 

@@ -155,7 +155,7 @@ export function CreateProjectTicketDialog({
       // Récupérer le profil utilisateur
       const { data: profile } = await supabase
         .from('profiles')
-        .select('first_name, last_name, agence')
+        .select('first_name, last_name, agency_id')
         .eq('id', user.id)
         .maybeSingle();
 
@@ -179,7 +179,7 @@ export function CreateProjectTicketDialog({
             initiator_profile: profile ? {
               first_name: profile.first_name,
               last_name: profile.last_name,
-              agence: profile.agence,
+              agence: profile.agency_id,
             } : null,
           } as any)
           .select('id, ticket_number')

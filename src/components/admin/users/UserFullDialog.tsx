@@ -13,7 +13,9 @@ import { Eye, Lock, LockOpen, User } from 'lucide-react';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { UserInfoColumn } from './user-full-dialog/UserInfoColumn';
 import { UserPermissionsColumn } from './user-full-dialog/UserPermissionsColumn';
+import { UserPermissionsColumnV2 } from './user-full-dialog/UserPermissionsColumnV2';
 import { UserFullDialogProps, UserFormData } from './user-full-dialog/constants';
+import { useAppFeatureFlag } from '@/hooks/useAppFeatureFlag';
 
 // Re-export props type for external consumers
 export type { UserFullDialogProps } from './user-full-dialog/constants';
@@ -49,6 +51,7 @@ export function UserFullDialog({
   isEmailPending = false,
   isPasswordPending = false,
 }: UserFullDialogProps) {
+  const useV2 = useAppFeatureFlag('USE_PERMISSIONS_V2');
   const [open, setOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
@@ -142,18 +145,22 @@ export function UserFullDialog({
             isPasswordPending={isPasswordPending}
           />
 
-          <UserPermissionsColumn
-            editMode={editMode}
-            globalRole={globalRole}
-            enabledModules={enabledModules}
-            planKey={planKey}
-            planLabel={planLabel}
-            agencyId={agencyId}
-            pageOverrides={pageOverrides}
-            onPlanChange={onPlanChange}
-            onModuleToggle={onModuleToggle}
-            onPageOverrideToggle={onPageOverrideToggle}
-          />
+          {useV2 ? (
+            <UserPermissionsColumnV2 userId={userId} userRole={globalRole ?? 'base_user'} editMode={editMode} />
+          ) : (
+            <UserPermissionsColumn
+              editMode={editMode}
+              globalRole={globalRole}
+              enabledModules={enabledModules}
+              planKey={planKey}
+              planLabel={planLabel}
+              agencyId={agencyId}
+              pageOverrides={pageOverrides}
+              onPlanChange={onPlanChange}
+              onModuleToggle={onModuleToggle}
+              onPageOverrideToggle={onPageOverrideToggle}
+            />
+          )}
         </div>
       </DialogContent>
     </Dialog>

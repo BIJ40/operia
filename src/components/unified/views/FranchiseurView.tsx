@@ -7,7 +7,7 @@
 
 import { lazy, Suspense, useMemo, useState, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import {
   Home, GitCompare, Building2, Coins, BarChart3,
   MoreHorizontal, BookOpen, Ticket, HelpCircle, Loader2
@@ -78,7 +78,7 @@ function LoadingFallback() {
 
 function FranchiseurViewContent({ embedded = false }: { embedded?: boolean }) {
   const { isImpersonating } = useImpersonation();
-  const { hasModule } = usePermissions();
+  const { hasModule } = usePermissionsBridge();
   const [searchParams, setSearchParams] = useSearchParams();
   // Use a different URL param when embedded inside AdminHub to avoid conflict with parent's ?tab=
   const urlParamKey = embedded ? 'fTab' : 'tab';

@@ -87,7 +87,6 @@ Deno.serve(async (req) => {
           .from('profiles')
           .update({
             global_role: testUser.globalRole,
-            agence: testUser.agence
           })
           .eq('id', existingProfile.id)
 
@@ -122,7 +121,6 @@ Deno.serve(async (req) => {
         .update({
           first_name: testUser.firstName,
           last_name: testUser.lastName,
-          agence: testUser.agence,
           global_role: testUser.globalRole
         })
         .eq('id', authUser.user.id)

@@ -3,7 +3,7 @@ import {
   ShoppingCart, Users as UsersIcon, Search, Eye, TrendingUp,
   Users, Car, Handshake, CalendarDays, MessagesSquare,
   FolderOpen, Headphones, HelpCircle, Kanban, Shield, Building2,
-  Share2, Stamp,
+  Share2, Stamp, Settings, CreditCard, ScrollText,
   type LucideIcon,
 } from 'lucide-react';
 import type { UnifiedTab } from '@/components/unified/workspace/types';
@@ -55,9 +55,8 @@ export const HEADER_NAV_GROUPS: HeaderNavGroup[] = [
     tab: 'commercial',
     accent: 'orange',
     children: [
-      { label: 'Suivi client', icon: UsersIcon, tab: 'commercial', description: 'Gestion des apporteurs', scope: 'commercial.suivi_client', subTabKey: 'commercial_sub_tab', subTabValue: 'apporteurs' },
+      { label: 'Veille', icon: UsersIcon, tab: 'commercial', description: 'Veille et suivi apporteurs', scope: 'commercial.veille', subTabKey: 'commercial_sub_tab', subTabValue: 'apporteurs' },
       { label: 'Comparateur', icon: Search, tab: 'commercial', description: 'Benchmark et comparaison', scope: 'commercial.comparateur', subTabKey: 'commercial_sub_tab', subTabValue: 'comparateur' },
-      { label: 'Veille', icon: Eye, tab: 'commercial', description: 'Veille concurrentielle', scope: 'commercial.veille', subTabKey: 'commercial_sub_tab', subTabValue: 'veille' },
       { label: 'Prospects', icon: ShoppingCart, tab: 'commercial', description: 'Suivi des prospects', scope: 'commercial.prospects', subTabKey: 'commercial_sub_tab', subTabValue: 'prospects' },
       { label: 'Réalisations', icon: TrendingUp, tab: 'commercial', description: 'Chiffres et bilans', scope: 'commercial.realisations', subTabKey: 'commercial_sub_tab', subTabValue: 'realisations' },
       { label: 'Social', icon: Share2, tab: 'commercial', description: 'Réseaux sociaux', scope: 'commercial.social', subTabKey: 'commercial_sub_tab', subTabValue: 'social' },
@@ -72,11 +71,22 @@ export const HEADER_NAV_GROUPS: HeaderNavGroup[] = [
     children: [
       { label: 'Salariés', icon: Users, tab: 'organisation', description: 'Gestion des équipes', scope: 'organisation.salaries', subTabKey: 'organisation_sub_tab', subTabValue: 'collaborateurs' },
       { label: 'Véhicules', icon: Car, tab: 'organisation', description: 'Parc automobile', scope: 'organisation.parc', subTabKey: 'organisation_sub_tab', subTabValue: 'parc' },
-      { label: 'Apporteurs', icon: Handshake, tab: 'organisation', description: "Réseau d'apporteurs", scope: 'organisation.apporteurs', subTabKey: 'organisation_sub_tab', subTabValue: 'apporteurs' },
       { label: 'Plannings', icon: CalendarDays, tab: 'organisation', description: 'Calendrier équipe', scope: 'organisation.plannings', subTabKey: 'organisation_sub_tab', subTabValue: 'plannings' },
       { label: 'Réunions', icon: MessagesSquare, tab: 'organisation', description: 'Comptes rendus', scope: 'organisation.reunions', subTabKey: 'organisation_sub_tab', subTabValue: 'reunions' },
       { label: 'Documents légaux', icon: FolderOpen, tab: 'organisation', description: 'Kbis, RC Pro…', subTabKey: 'organisation_sub_tab', subTabValue: 'conformite' },
-      { label: 'Échanges apporteurs', icon: MessagesSquare, tab: 'organisation', description: 'Fil de discussion avec les apporteurs', scope: 'organisation.apporteurs', subTabKey: 'organisation_sub_tab', subTabValue: 'echanges-apporteurs' },
+    ],
+  },
+  {
+    label: 'Relations',
+    icon: Handshake,
+    tab: 'relations',
+    accent: 'purple',
+    children: [
+      { label: 'Espace apporteurs', icon: Handshake, tab: 'relations', description: "Réseau d'apporteurs", scope: 'relations.apporteurs', subTabKey: 'relations_sub_tab', subTabValue: 'apporteurs' },
+      { label: 'Échanges apporteurs', icon: MessagesSquare, tab: 'relations', description: 'Fil de discussion', scope: 'relations.apporteurs', subTabKey: 'relations_sub_tab', subTabValue: 'echanges-apporteurs' },
+      { label: 'Suivi (Réglages)', icon: Settings, tab: 'relations', description: 'Configuration portail client', subTabKey: 'relations_sub_tab', subTabValue: 'parametres' },
+      { label: 'Paiements clients', icon: CreditCard, tab: 'relations', description: 'Journal des paiements', subTabKey: 'relations_sub_tab', subTabValue: 'paiements' },
+      { label: "Journal d'envois", icon: ScrollText, tab: 'relations', description: 'SMS et emails envoyés', subTabKey: 'relations_sub_tab', subTabValue: 'journal' },
     ],
   },
   {

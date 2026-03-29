@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { useProfile } from '@/contexts/ProfileContext';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBridge';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { EnabledModules, ModuleKey } from '@/types/modules';
 import { getUserManagementCapabilities, UserManagementCapabilities } from '@/config/roleMatrix';
@@ -71,7 +71,7 @@ export function useAccessRightsUsers() {
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select(`
-          id, email, first_name, last_name, global_role, agency_id, agence, role_agence,
+          id, email, first_name, last_name, global_role, agency_id, role_agence,
           is_active, created_at, deactivated_at, deactivated_by,
           must_change_password, apogee_user_id,
           agency:apogee_agencies(id, label, slug)
@@ -82,8 +82,8 @@ export function useAccessRightsUsers() {
       
       // Fetch user_modules for all users (source of truth for modules)
       const userIds = profilesData?.map(p => p.id) ?? [];
-      const { data: modulesData } = await supabase
-        .from('user_modules')
+      const { data: modulesData } = await (supabase
+        .from('user_modules' as any) as any)
         .select('user_id, module_key, options')
         .in('user_id', userIds);
       
@@ -109,8 +109,9 @@ export function useAccessRightsUsers() {
         
         let enrichedUser = { ...user, enabled_modules };
         
-        if (!user.agency && user.agence) {
-          const resolvedAgency = agencyBySlug.get(user.agence.toLowerCase());
+        if (!user.agency && user.agency_id) {
+          // agency join should have resolved this, but fallback
+          const resolvedAgency = allAgencies?.find(a => a.id === user.agency_id);
           if (resolvedAgency) {
             enrichedUser = { ...enrichedUser, agency: resolvedAgency };
           }
@@ -209,12 +210,12 @@ export function useAccessRightsUsers() {
       
       // 2. Sauvegarder les modules si fournis
       if (enabledModules !== undefined) {
-        await supabase.from('user_modules').delete().eq('user_id', userId);
+        await (supabase.from('user_modules' as any) as any).delete().eq('user_id', userId);
         
         if (enabledModules) {
           const moduleRows = enabledModulesToRows(userId, enabledModules, user?.id);
           if (moduleRows.length > 0) {
-            const { error: insertError } = await supabase.from('user_modules').insert(moduleRows);
+            const { error: insertError } = await (supabase.from('user_modules' as any) as any).insert(moduleRows);
             if (insertError) throw insertError;
           }
         }
@@ -353,12 +354,12 @@ export function useAccessRightsUsers() {
       userId: string; 
       enabledModules: EnabledModules | null;
     }) => {
-      await supabase.from('user_modules').delete().eq('user_id', userId);
+      await (supabase.from('user_modules' as any) as any).delete().eq('user_id', userId);
       
       if (enabledModules) {
         const moduleRows = enabledModulesToRows(userId, enabledModules, user?.id);
         if (moduleRows.length > 0) {
-          const { error: insertError } = await supabase.from('user_modules').insert(moduleRows);
+          const { error: insertError } = await (supabase.from('user_modules' as any) as any).insert(moduleRows);
           if (insertError) throw insertError;
         }
       }

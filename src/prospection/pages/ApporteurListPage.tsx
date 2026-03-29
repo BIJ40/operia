@@ -2,6 +2,7 @@
  * ApporteurListPage - Liste des apporteurs avec KPIs agrégés
  * Inclut recherche live depuis Apogée (commanditaires)
  * Tri par colonne, filtres inline, indicateurs visuels colorés
+ * Intègre les filtres Veille (Dormants, En baisse, Stables, En hausse)
  */
 
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
@@ -12,9 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, TrendingDown, Loader2, Building2, MapPin, Phone, Mail, ArrowUpDown, ArrowUp, ArrowDown, FilterX, Trophy, Medal } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Search, TrendingDown, Loader2, Building2, MapPin, Phone, Mail, ArrowUpDown, ArrowUp, ArrowDown, FilterX, Trophy, Medal, Moon, AlertTriangle, CheckCircle2, Sparkles, Radar } from 'lucide-react';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useApporteurListMetrics, type ApporteurListItem } from '../hooks/useApporteurListMetrics';
+import { useVeilleAdaptive, type VeilleFilterType, type VeilleApporteurRow } from '../hooks/useVeilleAdaptive';
 import { useApogeeCommanditaires, type ApogeeCommanditaire } from '@/hooks/useApogeeCommanditaires';
 import { format, subDays, subMonths } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -24,7 +27,44 @@ interface Props {
 }
 
 type PeriodKey = '30j' | '90j' | '6m' | '12m';
-type SortColumn = 'name' | 'dossiers' | 'ca_ht' | 'taux_transfo' | 'panier_moyen' | 'factures';
+type SortColumn = 'name' | 'dossiers' | 'ca_ht' | 'taux_transfo' | 'panier_moyen' | 'factures' | 'veille_score';
+
+// ==================== Veille Filter Pills ====================
+
+interface VeilleFilterPill {
+  key: VeilleFilterType;
+  label: string;
+  icon: React.ElementType;
+  colorClass: string;
+  tooltip: string;
+  countKey: 'total' | 'dormants' | 'enBaisse' | 'stables' | 'enHausse';
+}
+
+const VEILLE_FILTER_PILLS: VeilleFilterPill[] = [
+  { key: 'all', label: 'Tous', icon: Radar, colorClass: 'text-foreground', tooltip: 'Tous les apporteurs', countKey: 'total' },
+  { key: 'dormants', label: 'Dormants', icon: Moon, colorClass: 'text-destructive', tooltip: 'Aucun dossier depuis le seuil configuré', countKey: 'dormants' },
+  { key: 'en_baisse', label: 'En baisse', icon: AlertTriangle, colorClass: 'text-amber-600', tooltip: 'Score adaptatif < 42 — tendance baissière', countKey: 'enBaisse' },
+  { key: 'stables', label: 'Stables', icon: CheckCircle2, colorClass: 'text-blue-600', tooltip: 'Score adaptatif entre 42 et 58', countKey: 'stables' },
+  { key: 'en_hausse', label: 'En hausse', icon: Sparkles, colorClass: 'text-green-600', tooltip: 'Score adaptatif > 58 — en progression', countKey: 'enHausse' },
+];
+
+/** Veille score mini gauge */
+function VeilleScoreBadge({ score, level }: { score: number; level: string }) {
+  if (score < 0) return <span className="text-[10px] text-muted-foreground italic">N/A</span>;
+  const colorMap: Record<string, string> = {
+    danger: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    warning: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    stable: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    positive: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    excellent: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  };
+  const cls = colorMap[level] || 'bg-muted text-muted-foreground';
+  return (
+    <span className={cn('inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold tabular-nums', cls)}>
+      {score}
+    </span>
+  );
+}
 type SortDir = 'asc' | 'desc';
 type TransfoFilter = 'all' | 'low' | 'mid' | 'high';
 type PanierFilter = 'all' | 'below' | 'above';
@@ -157,6 +197,17 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
 
+  // Veille state
+  const [veilleFilter, setVeilleFilter] = useState<VeilleFilterType>('all');
+  const { allRows: veilleRows, kpis: veilleKpis, isLoading: veilleLoading } = useVeilleAdaptive();
+
+  // Index veille rows by apporteur id for badge display
+  const veilleByApporteur = useMemo(() => {
+    const map = new Map<string, VeilleApporteurRow>();
+    for (const r of veilleRows) map.set(r.apporteurId, r);
+    return map;
+  }, [veilleRows]);
+
   // Sort state
   const [sortColumn, setSortColumn] = useState<SortColumn>('ca_ht');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
@@ -233,6 +284,21 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
   const processedList = useMemo(() => {
     let list = apporteurs;
 
+    // Veille filter
+    if (veilleFilter !== 'all') {
+      list = list.filter(a => {
+        const vr = veilleByApporteur.get(a.apporteur_id);
+        if (!vr) return false;
+        switch (veilleFilter) {
+          case 'dormants': return vr.isDormant;
+          case 'en_baisse': return !vr.isDormant && vr.score >= 0 && vr.score < 42;
+          case 'stables': return !vr.isDormant && vr.score >= 42 && vr.score <= 58;
+          case 'en_hausse': return !vr.isDormant && vr.score > 58;
+          default: return true;
+        }
+      });
+    }
+
     // Text search
     if (search) {
       const q = search.toLowerCase();
@@ -282,6 +348,10 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
         case 'taux_transfo': return a.kpis.taux_transfo_devis ?? -1;
         case 'panier_moyen': return a.kpis.panier_moyen ?? -1;
         case 'factures': return a.kpis.factures;
+        case 'veille_score': {
+          const vr = veilleByApporteur.get(a.apporteur_id);
+          return vr ? vr.score : -2;
+        }
         default: return 0;
       }
     };
@@ -292,7 +362,7 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
       const cmp = typeof va === 'string' ? va.localeCompare(vb as string) : (va as number) - (vb as number);
       return sortDir === 'asc' ? cmp : -cmp;
     });
-  }, [apporteurs, search, getApporteurName, filterDossiersMin, filterCaMin, filterFacturesMin, filterTransfo, filterPanier, stats.medianPanier, sortColumn, sortDir]);
+  }, [apporteurs, search, getApporteurName, filterDossiersMin, filterCaMin, filterFacturesMin, filterTransfo, filterPanier, stats.medianPanier, sortColumn, sortDir, veilleFilter, veilleByApporteur]);
 
   // Footer totals
   const totals = useMemo(() => {
@@ -318,8 +388,9 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
     a.kpis.taux_transfo_devis != null && a.kpis.taux_transfo_devis < 30 && a.kpis.dossiers_received >= 5;
 
   return (
+    <TooltipProvider delayDuration={200}>
     <div className="space-y-4">
-      {/* Filters bar */}
+      {/* Filters bar + Veille pills on same line */}
       <div className="flex flex-wrap items-center gap-3 relative z-30">
         <div className="relative flex-1 min-w-[200px] max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -407,6 +478,36 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
             Réinitialiser
           </Button>
         )}
+
+        {/* Veille filter pills – right-aligned */}
+        <div className="flex flex-wrap gap-1.5 ml-auto">
+          {VEILLE_FILTER_PILLS.map(pill => {
+            const Icon = pill.icon;
+            const count = veilleKpis[pill.countKey];
+            const isActive = veilleFilter === pill.key;
+            return (
+              <Tooltip key={pill.key}>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={isActive ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setVeilleFilter(pill.key)}
+                    className={cn('gap-1.5 text-xs', !isActive && pill.colorClass)}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    {pill.label}
+                    <Badge variant="secondary" className="ml-0.5 text-[10px] h-4 px-1.5">
+                      {count}
+                    </Badge>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs text-xs">
+                  {pill.tooltip}
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </div>
       </div>
 
       {/* Table */}
@@ -432,6 +533,7 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
                     <SortableHead label="Taux transfo" column="taux_transfo" currentSort={sortColumn} currentDir={sortDir} onSort={handleSort} />
                     <SortableHead label="Panier moy." column="panier_moyen" currentSort={sortColumn} currentDir={sortDir} onSort={handleSort} />
                     <SortableHead label="Factures" column="factures" currentSort={sortColumn} currentDir={sortDir} onSort={handleSort} />
+                    <SortableHead label="Veille" column="veille_score" currentSort={sortColumn} currentDir={sortDir} onSort={handleSort} />
                   </TableRow>
                   {/* Inline filters row */}
                   <TableRow className="bg-muted/30 border-b">
@@ -489,12 +591,13 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
                         className="h-7 text-xs w-20 ml-auto"
                       />
                     </TableHead>
+                    <TableHead />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {processedList.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                         Aucun résultat pour ces filtres.
                       </TableCell>
                     </TableRow>
@@ -540,6 +643,18 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
                           <TableCell className="text-right">
                             <FacturesBadge value={a.kpis.factures} max={stats.maxFactures} />
                           </TableCell>
+                          <TableCell className="text-center">
+                            {(() => {
+                              const vr = veilleByApporteur.get(a.apporteur_id);
+                              if (!vr) return <span className="text-[10px] text-muted-foreground">—</span>;
+                              return (
+                                <div className="flex items-center gap-1 justify-center">
+                                  <VeilleScoreBadge score={vr.score} level={vr.level} />
+                                  {vr.isDormant && <Moon className="w-3 h-3 text-destructive" />}
+                                </div>
+                              );
+                            })()}
+                          </TableCell>
                         </TableRow>
                       );
                     })
@@ -560,6 +675,7 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
                         {totals.panier != null ? `${fmt(totals.panier)}€` : '—'}
                       </TableCell>
                       <TableCell className="text-right">{fmt(totals.factures)}</TableCell>
+                      <TableCell />
                     </TableRow>
                   </TableFooter>
                 )}
@@ -569,5 +685,6 @@ export function ApporteurListPage({ onSelectApporteur }: Props) {
         </CardContent>
       </Card>
     </div>
+    </TooltipProvider>
   );
 }

@@ -2,17 +2,18 @@ import { useState, useMemo } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useUserManagement, UserProfile } from '@/hooks/use-user-management';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { getUserManagementCapabilities } from '@/config/roleMatrix';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { Users, UserPlus } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 import { UserListSkeleton } from '@/components/admin/users/UserListSkeleton';
+import { AdminViewHeader } from '@/components/admin/shared/AdminViewHeader';
+import { AdminPanel } from '@/components/admin/shared/AdminPanel';
 
 import {
   CreateUserDialog,
@@ -25,7 +26,7 @@ import {
 } from '@/components/admin/users';
 
 export default function TDRUsersPage() {
-  const { globalRole } = usePermissions();
+  const { globalRole } = usePermissionsBridge();
   const { user: currentUser } = useAuthCore();
   
   const capabilities = useMemo(() => getUserManagementCapabilities(globalRole), [globalRole]);
@@ -120,100 +121,88 @@ export default function TDRUsersPage() {
 
   if (usersLoading) {
     return (
-      <div className="container max-w-app mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <div className="space-y-6">
         <UserListSkeleton />
       </div>
     );
   }
 
   return (
-    <div className="container max-w-app mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <div className="space-y-6">
       <TooltipProvider>
         <div className="space-y-6">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20">
-                <Users className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-                  Gestion Utilisateurs Réseau
-                </h1>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  Gestion des utilisateurs et permissions du réseau
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <Badge variant="outline" className="text-lg px-4 py-2">
-                {filteredUsers.length} utilisateur{filteredUsers.length > 1 ? 's' : ''}
-              </Badge>
-              {canCreateUsers && (
-                <Button onClick={() => setShowCreateDialog(true)}>
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Nouvel utilisateur
-                </Button>
+          <AdminViewHeader
+            title="Gestion Utilisateurs Réseau"
+            subtitle="Gestion des utilisateurs et permissions du réseau"
+          >
+            <Badge variant="outline" className="text-xs">
+              {filteredUsers.length} utilisateur{filteredUsers.length > 1 ? 's' : ''}
+            </Badge>
+            {canCreateUsers && (
+              <Button size="sm" onClick={() => setShowCreateDialog(true)}>
+                <UserPlus className="w-4 h-4 mr-1.5" />
+                Nouvel utilisateur
+              </Button>
+            )}
+          </AdminViewHeader>
+
+          <AdminPanel>
+            <UserFilters
+              searchQuery={searchQuery}
+              setSearchQuery={(v) => { setSearchQuery(v); setCurrentPage(0); }}
+              agencyFilter={agencyFilter}
+              setAgencyFilter={(v) => { setAgencyFilter(v); setCurrentPage(0); }}
+              roleFilter={roleFilter}
+              setRoleFilter={(v) => { setRoleFilter(v); setCurrentPage(0); }}
+              moduleFilter={moduleFilter}
+              setModuleFilter={(v) => { setModuleFilter(v); setCurrentPage(0); }}
+              showDeactivated={showDeactivated}
+              setShowDeactivated={(v) => { setShowDeactivated(v); setCurrentPage(0); }}
+              agencies={manageableAgencies}
+              canCreateUsers={false}
+              onCreateUser={() => {}}
+              totalUsers={users.length}
+              filteredCount={filteredUsers.length}
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+              totalPages={totalPages}
+            />
+          </AdminPanel>
+
+          <AdminPanel padding="none" className="overflow-hidden">
+            <div className="divide-y">
+              {paginatedUsers.map((userItem) => (
+                <UserRowItem
+                  key={userItem.id}
+                  user={userItem}
+                  effectiveRole={getEffectiveRole(userItem)}
+                  effectiveModules={getEffectiveModules(userItem)}
+                  isModified={!!modifiedUsers[userItem.id]}
+                  canEdit={canEditUser(userItem.global_role, userItem.agence, userItem.id)}
+                  canDeactivate={canDeactivateUserCheck(userItem.global_role)}
+                  canDelete={canDeleteUser(userItem.global_role)}
+                  isSuperAdmin={isSuperAdmin}
+                  assignableRoles={assignableRoles}
+                  isSaving={saveMutation.isPending}
+                  onSaveChanges={() => saveChanges(userItem.id)}
+                  onRoleChange={(role) => handleRoleChange(userItem.id, role)}
+                  onModuleToggle={(moduleKey, enabled) => handleModuleToggle(userItem.id, moduleKey, enabled)}
+                  onModuleOptionToggle={(moduleKey, optionKey, enabled) => handleModuleOptionToggle(userItem.id, moduleKey, optionKey, enabled)}
+                  onEditUser={() => setEditDialog({ open: true, user: userItem })}
+                  onDeactivate={() => setDeactivateDialog({ open: true, user: userItem })}
+                  onReactivate={() => setReactivateDialog({ open: true, user: userItem })}
+                  onDelete={() => setDeleteDialog({ open: true, user: userItem })}
+                />
+              ))}
+
+              {paginatedUsers.length === 0 && (
+                <div className="py-12 text-center text-muted-foreground">
+                  Aucun utilisateur trouvé
+                </div>
               )}
             </div>
-          </div>
-
-        {/* Filters */}
-        <UserFilters
-          searchQuery={searchQuery}
-          setSearchQuery={(v) => { setSearchQuery(v); setCurrentPage(0); }}
-          agencyFilter={agencyFilter}
-          setAgencyFilter={(v) => { setAgencyFilter(v); setCurrentPage(0); }}
-          roleFilter={roleFilter}
-          setRoleFilter={(v) => { setRoleFilter(v); setCurrentPage(0); }}
-          moduleFilter={moduleFilter}
-          setModuleFilter={(v) => { setModuleFilter(v); setCurrentPage(0); }}
-          showDeactivated={showDeactivated}
-          setShowDeactivated={(v) => { setShowDeactivated(v); setCurrentPage(0); }}
-          agencies={manageableAgencies}
-          canCreateUsers={false}
-          onCreateUser={() => {}}
-          totalUsers={users.length}
-          filteredCount={filteredUsers.length}
-          currentPage={currentPage}
-          setCurrentPage={setCurrentPage}
-          totalPages={totalPages}
-        />
-
-        {/* Users List */}
-        <Card>
-          <CardContent className="p-0 divide-y">
-            {paginatedUsers.map((userItem) => (
-              <UserRowItem
-                key={userItem.id}
-                user={userItem}
-                effectiveRole={getEffectiveRole(userItem)}
-                effectiveModules={getEffectiveModules(userItem)}
-                isModified={!!modifiedUsers[userItem.id]}
-                canEdit={canEditUser(userItem.global_role, userItem.agence, userItem.id)}
-                canDeactivate={canDeactivateUserCheck(userItem.global_role)}
-                canDelete={canDeleteUser(userItem.global_role)}
-                isSuperAdmin={isSuperAdmin}
-                assignableRoles={assignableRoles}
-                isSaving={saveMutation.isPending}
-                onSaveChanges={() => saveChanges(userItem.id)}
-                onRoleChange={(role) => handleRoleChange(userItem.id, role)}
-                onModuleToggle={(moduleKey, enabled) => handleModuleToggle(userItem.id, moduleKey, enabled)}
-                onModuleOptionToggle={(moduleKey, optionKey, enabled) => handleModuleOptionToggle(userItem.id, moduleKey, optionKey, enabled)}
-                onEditUser={() => setEditDialog({ open: true, user: userItem })}
-                onDeactivate={() => setDeactivateDialog({ open: true, user: userItem })}
-                onReactivate={() => setReactivateDialog({ open: true, user: userItem })}
-                onDelete={() => setDeleteDialog({ open: true, user: userItem })}
-              />
-            ))}
-
-            {paginatedUsers.length === 0 && (
-              <div className="text-center py-12 text-muted-foreground">
-                Aucun utilisateur trouvé
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          </AdminPanel>
 
         {/* Dialogs */}
         <CreateUserDialog

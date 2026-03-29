@@ -166,7 +166,7 @@ export function SimplifiedSupportChat({
     if (!user) return null;
     const { data } = await supabase
       .from('profiles')
-      .select('first_name, last_name, email, phone, agence')
+      .select('first_name, last_name, email, phone, agency_id')
       .eq('id', user.id)
       .single();
     return data;
@@ -256,7 +256,7 @@ export function SimplifiedSupportChat({
         last_name: profile?.last_name || '',
         email: profile?.email || user.email || '',
         phone: profile?.phone || '',
-        agence: profile?.agence || '',
+        agence: profile?.agency_id || '',
       };
 
       const ticketData = {

@@ -1,5 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBridge';
 
 /**
  * Hook to help preserve edit mode when navigating between pages

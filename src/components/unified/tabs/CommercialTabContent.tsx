@@ -9,7 +9,7 @@ import { Building2, GitCompare, UserSearch, Radar, Camera, Share2, Stamp, Loader
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, type PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { ModuleKey } from '@/types/modules';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
 import { useNavigationMode } from '@/hooks/useNavigationMode';
@@ -20,7 +20,6 @@ import { ApporteurTabsContent } from '@/prospection/browser-tabs/ApporteurTabsCo
 import { ApporteurListPage } from '@/prospection/pages/ApporteurListPage';
 import { ApporteurComparisonPage } from '@/prospection/pages/ApporteurComparisonPage';
 import { ProspectsUnifiedPage } from '@/prospection/pages/ProspectsUnifiedPage';
-import { VeilleApporteursTab } from '@/prospection/pages/VeilleApporteursTab';
 
 const RealisationsPage = lazy(() => import('@/realisations/pages/RealisationsPage'));
 const SocialHubPage = lazy(() => import('@/pages/commercial/SocialHubPage'));
@@ -28,9 +27,8 @@ const SignatureGeneratorPage = lazy(() => import('@/pages/commercial/SignatureGe
 
 /** Mapping tab id → module key */
 const TAB_MODULE_MAP: Record<string, ModuleKey> = {
-  apporteurs: 'commercial.suivi_client',
+  apporteurs: 'commercial.veille',
   comparateur: 'commercial.comparateur',
-  veille: 'commercial.veille',
   prospects: 'commercial.prospects',
   realisations: 'commercial.realisations',
   social: 'commercial.social',
@@ -65,15 +63,14 @@ function ApporteursTabInner() {
 }
 
 function CommercialInner() {
-  const { hasModule, isDeployedModule, isAdmin } = usePermissions();
+  const { hasModule, isDeployedModule, isAdmin } = usePermissionsBridge();
   const { openApporteur } = useApporteurTabs();
   const { getShortLabel } = useModuleLabels();
   const { mode: navMode } = useNavigationMode();
 
   const allTabs: PillTabConfig[] = useMemo(() => [
-    { id: 'apporteurs', label: 'Suivi client', icon: Building2 },
+    { id: 'apporteurs', label: 'Veille', icon: Radar },
     { id: 'comparateur', label: 'Comparateur', icon: GitCompare },
-    { id: 'veille', label: 'Veille', icon: Radar },
     { id: 'prospects', label: 'Prospects', icon: UserSearch },
     { id: 'realisations', label: getShortLabel('commercial.realisations', 'Réalisations'), icon: Camera },
     { id: 'social', label: getShortLabel('commercial.social', 'Social'), icon: Share2 },
@@ -102,8 +99,7 @@ function CommercialInner() {
 
   const handleVeilleSelectApporteur = useCallback((id: string, name: string) => {
     openApporteur(id, name);
-    setActiveTab('apporteurs');
-  }, [openApporteur, setActiveTab]);
+  }, [openApporteur]);
 
   if (visibleTabs.every(t => t.disabled)) {
     return <div className="py-6 px-4 text-muted-foreground text-sm">Aucun onglet accessible.</div>;
@@ -120,10 +116,6 @@ function CommercialInner() {
 
         <TabsContent value="comparateur" className="mt-4">
           <ApporteurComparisonPage />
-        </TabsContent>
-
-        <TabsContent value="veille" className="mt-4">
-          <VeilleApporteursTab onSelectApporteur={handleVeilleSelectApporteur} />
         </TabsContent>
 
         <TabsContent value="prospects" className="mt-4">

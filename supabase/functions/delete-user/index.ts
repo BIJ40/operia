@@ -66,12 +66,12 @@ serve(async (req) => {
     // Récupérer le profil de l'appelant
     const { data: callerProfile } = await supabaseAdmin
       .from('profiles')
-      .select('global_role, agence')
+      .select('global_role, agency_id')
       .eq('id', user.id)
       .single()
 
     const callerLevel = getRoleLevel(callerProfile?.global_role)
-    const callerAgency = callerProfile?.agence || null
+    const callerAgency = callerProfile?.agency_id || null
 
     console.log(`[delete-user] Appelant: ${user.id}, N${callerLevel}`)
 
@@ -90,7 +90,7 @@ serve(async (req) => {
     // Récupérer le profil de la cible
     const { data: targetProfile } = await supabaseAdmin
       .from('profiles')
-      .select('global_role, agence, email')
+      .select('global_role, agency_id, email')
       .eq('id', userId)
       .single()
 
@@ -234,6 +234,22 @@ serve(async (req) => {
     await supabaseAdmin.from('rh_requests').update({ archived_by: null }).eq('archived_by', userId)
     await supabaseAdmin.from('rh_requests').update({ processed_by: null }).eq('processed_by', userId)
     await supabaseAdmin.from('conversation_members').delete().eq('user_id', userId)
+    
+    // 31. FK directes vers auth.users sans CASCADE ni SET NULL
+    await supabaseAdmin.from('pending_registrations').update({ reviewed_by: null }).eq('reviewed_by', userId)
+    await supabaseAdmin.from('realisations').update({ created_by: null }).eq('created_by', userId)
+    await supabaseAdmin.from('employee_cost_profiles').update({ created_by: null }).eq('created_by', userId)
+    await supabaseAdmin.from('employee_salary_documents').update({ validated_by: null }).eq('validated_by', userId)
+    await supabaseAdmin.from('employee_salary_documents').update({ created_by: null }).eq('created_by', userId)
+    await supabaseAdmin.from('project_costs').update({ validated_by: null }).eq('validated_by', userId)
+    await supabaseAdmin.from('project_costs').update({ created_by: null }).eq('created_by', userId)
+    await supabaseAdmin.from('project_cost_documents').update({ created_by: null }).eq('created_by', userId)
+    await supabaseAdmin.from('agency_overhead_rules').update({ created_by: null }).eq('created_by', userId)
+    await supabaseAdmin.from('project_profitability_snapshots').update({ created_by: null }).eq('created_by', userId)
+    await supabaseAdmin.from('project_profitability_snapshots').update({ validated_by: null }).eq('validated_by', userId)
+    await supabaseAdmin.from('agency_financial_months').update({ locked_by: null }).eq('locked_by', userId)
+    await supabaseAdmin.from('agency_performance_config').update({ updated_by: null }).eq('updated_by', userId)
+    await supabaseAdmin.from('data_source_flags').update({ updated_by: null }).eq('updated_by', userId)
     
     // 15. Supprimer le profil
     console.log(`[delete-user] Suppression du profil`)

@@ -10,7 +10,7 @@ import { Users, Handshake, CalendarDays, Users2, Car, FileText, Shield, MapPin, 
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { MfaGuard } from '@/components/auth/MfaGuard';
 import { ModuleKey } from '@/types/modules';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
@@ -38,20 +38,18 @@ function LoadingFallback() {
 }
 
 export default function OrganisationTabContent() {
-  const { hasModule, isDeployedModule, globalRole, isAdmin } = usePermissions();
+  const { hasModule, isDeployedModule, globalRole, isAdmin } = usePermissionsBridge();
   const { getShortLabel } = useModuleLabels();
   const { mode: navMode } = useNavigationMode();
   const agencyHasApporteurs = useAgencyHasApporteurs();
 
   const allTabs: (PillTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
     { id: 'collaborateurs', label: getShortLabel('organisation.salaries', 'Salariés'), icon: Users, accent: 'blue', requiresModule: 'organisation.salaries' },
-    { id: 'apporteurs', label: getShortLabel('organisation.apporteurs', 'Apporteurs'), icon: Handshake, accent: 'purple', requiresModule: 'organisation.apporteurs' },
     { id: 'plannings', label: getShortLabel('organisation.plannings', 'Plannings'), icon: CalendarDays, accent: 'green', requiresModule: 'organisation.plannings' },
     { id: 'zones', label: getShortLabel('organisation.zones', 'Zones'), icon: MapPin, accent: 'orange', requiresModule: 'organisation.zones' },
     { id: 'reunions', label: getShortLabel('organisation.reunions', 'Réunions'), icon: Users2, accent: 'orange', requiresModule: 'organisation.reunions' },
     { id: 'parc', label: getShortLabel('organisation.parc', 'Parc'), icon: Car, accent: 'pink', requiresModule: 'organisation.parc' },
     { id: 'conformite', label: getShortLabel('organisation.documents_legaux', 'Documents légaux'), icon: FileText, accent: 'teal', requiresModule: 'organisation.documents_legaux' },
-    { id: 'echanges-apporteurs', label: 'Échanges apporteurs', icon: MessagesSquare, accent: 'purple', requiresModule: 'organisation.apporteurs' },
     ...(globalRole && ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(globalRole)
       ? [{ id: 'droits-equipe', label: 'Droits équipe', icon: Shield, accent: 'blue' as const, requiresModule: 'organisation.salaries' as ModuleKey }]
       : []),

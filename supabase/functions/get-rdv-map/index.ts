@@ -289,7 +289,7 @@ Deno.serve(async (req) => {
     }
 
     // 2. Profile + access control
-    const { data: profile } = await supabase.from('profiles').select('agence, global_role').eq('id', user.id).single();
+    const { data: profile } = await supabase.from('profiles').select('agency_id, global_role').eq('id', user.id).single();
     const { data: apporteurUser } = await supabase.from('apporteur_users').select('agency_id, apporteur_id, is_active').eq('user_id', user.id).eq('is_active', true).maybeSingle();
 
     const isApporteurUser = !!apporteurUser?.is_active;
@@ -326,14 +326,19 @@ Deno.serve(async (req) => {
     // 4. Determine target agency
     const globalRole = profile?.global_role || '';
     const isFranchiseurRole = ['franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(globalRole);
-    let targetAgency = profile?.agence || null;
+    // Resolve slug from agency_id
+    let targetAgency: string | null = null;
+    if (profile?.agency_id) {
+      const { data: userAgency } = await supabase.from('apogee_agencies').select('slug').eq('id', profile.agency_id).eq('is_active', true).maybeSingle();
+      if (userAgency?.slug) targetAgency = userAgency.slug;
+    }
 
     if (isApporteurUser && apporteurUser?.agency_id) {
       const { data: apAgency } = await supabase.from('apogee_agencies').select('slug').eq('id', apporteurUser.agency_id).eq('is_active', true).maybeSingle();
       if (apAgency?.slug) targetAgency = apAgency.slug;
     }
 
-    const isN0DemoUser = !profile?.agence && profile?.global_role === 'base_user';
+    const isN0DemoUser = !targetAgency && profile?.global_role === 'base_user';
     const DEMO_AGENCY_SLUG = 'dax';
 
     if (requestedAgency && requestedAgency !== targetAgency) {

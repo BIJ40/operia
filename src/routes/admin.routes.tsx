@@ -24,6 +24,7 @@ export function AdminRoutes() {
     <>
       {/* Index - redirect to unified interface */}
       <Route path="/admin" element={<Navigate to="/?tab=admin" replace />} />
+      <Route path="/admin/franchiseur" element={<Navigate to="/?tab=admin&adminTab=relations" replace />} />
       
       {/* ===== REDIRECTIONS VERS LE WORKSPACE UNIFIÉ ===== */}
       
@@ -59,10 +60,15 @@ export function AdminRoutes() {
       <Route path="/admin/apogee-report" element={<Navigate to="/?tab=admin&adminTab=ops&adminView=report" replace />} />
       <Route path="/admin/storage-quota" element={<Navigate to="/?tab=admin&adminTab=ops&adminView=quota" replace />} />
       
+      {/* Offres — redirigé vers Gestion */}
+      <Route path="/admin/offres" element={<Navigate to="/?tab=admin&adminTab=gestion&adminView=plans" replace />} />
+      
       {/* Plateforme */}
       <Route path="/admin/system-health" element={<Navigate to="/?tab=admin&adminTab=plateforme&adminView=health" replace />} />
       <Route path="/admin/feature-flags" element={<Navigate to="/?tab=admin&adminTab=gestion&adminView=modules" replace />} />
       <Route path="/admin/modules" element={<Navigate to="/?tab=admin&adminTab=gestion&adminView=modules" replace />} />
+      {/* Legacy parité — supprimé, redirige vers qualité */}
+      <Route path="/admin/parite" element={<Navigate to="/?tab=admin&adminTab=gestion&adminView=qualite" replace />} />
       <Route path="/admin/sitemap" element={<Navigate to="/?tab=admin&adminTab=plateforme&adminView=sitemap" replace />} />
       <Route path="/admin/hidden-features" element={<Navigate to="/?tab=admin&adminTab=plateforme&adminView=lab" replace />} />
       <Route path="/admin/flow" element={<Navigate to="/?tab=admin&adminTab=plateforme&adminView=flow" replace />} />

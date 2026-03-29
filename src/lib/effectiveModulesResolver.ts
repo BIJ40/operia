@@ -12,7 +12,7 @@ import type { EnabledModules, ModuleKey, ModuleOptionsState } from '@/types/modu
 
 type RpcRow = {
   module_key: string;
-  enabled: boolean;
+  granted: boolean;
   options: unknown;
 };
 
@@ -40,7 +40,7 @@ function upsertModule(
 
 export type EffectiveModulesSource =
   | 'rpc_get_user_effective_modules'
-  | 'fallback_user_modules'
+  | 'fallback_user_access'
   | 'empty';
 
 export async function resolveEffectiveModulesFromBackend(params: {
@@ -53,14 +53,14 @@ export async function resolveEffectiveModulesFromBackend(params: {
 
   // 1) Primary: RPC
   try {
-    const { data, error } = await supabase.rpc('get_user_effective_modules', {
+    const { data, error } = await (supabase.rpc as any)('get_user_effective_modules', {
       p_user_id: userId,
     });
 
     if (!error && Array.isArray(data) && data.length > 0) {
       const modules: EnabledModules = {};
       for (const row of data as RpcRow[]) {
-        upsertModule(modules, row.module_key, row.enabled, row.options);
+        upsertModule(modules, row.module_key, row.granted, row.options);
       }
       return { modules, source: 'rpc_get_user_effective_modules' };
     }
@@ -80,18 +80,19 @@ export async function resolveEffectiveModulesFromBackend(params: {
     );
   }
 
-  // 2) Fallback: user_modules table
+  // 2) Fallback: user_access table
   try {
-    const { data: userRows, error: userModulesError } = await supabase
-      .from('user_modules')
+    const { data: userRows, error: userAccessError } = await supabase
+      .from('user_access')
       .select('module_key, options')
-      .eq('user_id', userId);
+      .eq('user_id', userId)
+      .eq('granted', true);
 
-    if (userModulesError) {
+    if (userAccessError) {
       logWarn(
-        '[effectiveModulesResolver] SELECT user_modules failed',
+        '[effectiveModulesResolver] SELECT user_access failed',
         debugLabel ? { debugLabel } : undefined,
-        userModulesError
+        userAccessError
       );
     }
 
@@ -104,11 +105,11 @@ export async function resolveEffectiveModulesFromBackend(params: {
     }
 
     if (Object.keys(merged).length > 0) {
-      return { modules: merged, source: 'fallback_user_modules' };
+      return { modules: merged, source: 'fallback_user_access' };
     }
   } catch (e) {
     logWarn(
-      '[effectiveModulesResolver] fallback user_modules threw',
+      '[effectiveModulesResolver] fallback user_access threw',
       debugLabel ? { debugLabel } : undefined,
       e
     );

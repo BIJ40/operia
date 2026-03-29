@@ -85,11 +85,18 @@ export const NAVIGATION_STRUCTURE: NavigationDomain[] = [
     icon: Users,
     entries: [
       { label: 'Salariés', guard: { moduleKey: 'organisation.salaries' } },
-      { label: 'Apporteurs', guard: { moduleKey: 'organisation.apporteurs' } },
       { label: 'Plannings', guard: { moduleKey: 'organisation.plannings' } },
       { label: 'Réunions', guard: { moduleKey: 'organisation.reunions' } },
       { label: 'Parc', guard: { moduleKey: 'organisation.parc' } },
       { label: 'Documents légaux', guard: { moduleKey: 'pilotage.agence' } },
+    ],
+  },
+  {
+    id: 'relations',
+    label: 'Relations',
+    icon: Users,
+    entries: [
+      { label: 'Apporteurs', guard: { moduleKey: 'relations.apporteurs' } },
     ],
   },
   {

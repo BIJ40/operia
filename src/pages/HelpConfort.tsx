@@ -1,7 +1,7 @@
 // Page dédiée à la Base de connaissance HelpConfort
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useState, useEffect, useMemo } from 'react';
 import { Link, Navigate } from 'react-router-dom';
@@ -274,7 +274,7 @@ export default function HelpConfort() {
   const { blocks, updateBlock, deleteBlock, addBlock } = useEditor();
   const { isEditMode } = useEditor();
   const { isAuthenticated } = useAuthCore();
-  const { isAdmin, hasAccessToScope } = usePermissions();
+  const { isAdmin, hasAccessToScope } = usePermissionsBridge();
   const { roleAgence } = useProfile();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');

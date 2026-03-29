@@ -15,13 +15,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   User, Mail, Phone, Building2, Shield, Zap, Calendar,
   MapPin, Briefcase, Clock, AlertCircle, UserX, CheckCircle2,
-  Hash, KeyRound, FileText, ChevronRight, Navigation,
+  Hash, KeyRound, FileText,
 } from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { NavigationAccessView } from './user-profile-sheet/NavigationAccessView';
 import { GlobalRole } from '@/types/globalRoles';
 import { EnabledModules, MODULE_DEFINITIONS, ModuleKey } from '@/types/modules';
 import { getVisibleRoleLabel, getVisibleRoleColor, VISIBLE_ROLE_DESCRIPTIONS } from '@/lib/visibleRoleLabels';
+import { UserPermissionsColumnV2 } from './user-full-dialog/UserPermissionsColumnV2';
 import { UserProfile } from '@/hooks/use-user-management';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -81,24 +80,25 @@ export const UserProfileSheet = memo(function UserProfileSheet({
   effectiveModules: _legacyModules,
   agencyLabel,
 }: UserProfileSheetProps) {
+  
   // ═══ TRUTH: Fetch real effective modules via the SAME RPC that controls runtime access ═══
   const { data: rpcModules, isLoading: rpcModulesLoading } = useQuery({
     queryKey: ['user-profile-sheet-effective-modules', user.id],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_user_effective_modules', {
+      const { data, error } = await (supabase.rpc as any)('get_user_effective_modules', {
         p_user_id: user.id,
       });
       if (error) throw error;
       const result: EnabledModules = {};
       if (Array.isArray(data)) {
-        for (const row of data as Array<{ module_key: string; enabled: boolean; options: unknown }>) {
+        for (const row of data as Array<{ module_key: string; granted: boolean; options: unknown }>) {
           const opts: Record<string, boolean> = {};
           if (typeof row.options === 'object' && row.options !== null && !Array.isArray(row.options)) {
             for (const [k, v] of Object.entries(row.options as Record<string, unknown>)) {
               opts[k] = v === true;
             }
           }
-          result[row.module_key] = { enabled: row.enabled === true, options: opts };
+          result[row.module_key] = { enabled: row.granted === true, options: opts };
         }
       }
       return result;
@@ -214,7 +214,7 @@ export const UserProfileSheet = memo(function UserProfileSheet({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg h-[85vh] max-h-[85vh] flex flex-col overflow-hidden p-0">
+      <DialogContent className="max-w-2xl h-[90vh] max-h-[90vh] flex flex-col overflow-hidden p-0">
         {/* Header with avatar */}
         <div className="px-6 pt-6 pb-4 border-b bg-muted/30">
           <div className="flex items-start gap-4">
@@ -351,55 +351,15 @@ export const UserProfileSheet = memo(function UserProfileSheet({
 
             <Separator />
 
-            {/* ═══ VUE A — NAVIGATION / ACCÈS VISIBLES ═══ */}
-            <Section icon={Navigation} title="Navigation utilisateur">
-              {rpcModulesLoading ? (
-                <p className="text-sm text-muted-foreground italic">Chargement des accès…</p>
-              ) : (
-                <NavigationAccessView
-                  effectiveModules={effectiveModules as Record<string, { enabled?: boolean; options?: Record<string, boolean> }>}
-                  globalRole={effectiveRole}
-                />
-              )}
-            </Section>
-
-            {/* ═══ VUE B — DROITS EFFECTIFS TECHNIQUES (repliée) ═══ */}
-            <Collapsible>
-              <CollapsibleTrigger className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full py-1">
-                <ChevronRight className="h-3 w-3 transition-transform [[data-state=open]>&]:rotate-90" />
-                Afficher les droits effectifs techniques ({rpcModulesLoading ? '…' : activeModules.length} modules)
-              </CollapsibleTrigger>
-              <CollapsibleContent className="pt-3">
-                {activeModules.length > 0 ? (
-                  <div className="space-y-2">
-                    {activeModules.map(mod => {
-                      const optLabels = getModuleOptionsLabels(mod.key);
-                      return (
-                        <div key={mod.key} className="rounded-lg border bg-card p-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">{mod.label}</span>
-                            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                          </div>
-                          {optLabels.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1.5">
-                              {optLabels.map(label => (
-                                <Badge key={label} variant="secondary" className="text-[10px] px-1.5 py-0">
-                                  {label}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground italic">
-                    Aucun module accessible pour cet utilisateur
-                  </p>
-                )}
-              </CollapsibleContent>
-            </Collapsible>
+            {/* ═══ PERMISSIONS V2 — édition directe ═══ */}
+            {user.id && (
+              <>
+                <Section icon={Shield} title="Permissions">
+                  <UserPermissionsColumnV2 userId={user.id} userRole={user.global_role ?? 'base_user'} editMode={true} />
+                </Section>
+                <Separator />
+              </>
+            )}
 
             {/* ═══ STATUT COMPTE ═══ */}
             <Separator />

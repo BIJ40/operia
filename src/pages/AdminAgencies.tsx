@@ -2,12 +2,11 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { logError } from '@/lib/logger';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Users, ChevronDown, ChevronUp, Eye, User, Crown, UserPlus } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, ChevronDown, ChevronUp, Eye, User, Crown, UserPlus, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/config/routes';
 import {
@@ -35,8 +34,10 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { usePlanTiers } from '@/hooks/access-rights/usePlanTiers';
-import { useAllAgencySubscriptions, useUpdateAgencySubscription } from '@/hooks/access-rights/useAgencySubscription';
+import { usePlanCatalog } from '@/hooks/access-rights/usePlanCatalog';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { AdminViewHeader } from '@/components/admin/shared/AdminViewHeader';
+import { AdminPanel } from '@/components/admin/shared/AdminPanel';
 
 interface Agency {
   id: string;
@@ -58,7 +59,7 @@ interface UserProfile {
   first_name: string | null;
   last_name: string | null;
   email: string | null;
-  agence: string | null;
+  agence?: string | null; // resolved from agency join
   agency_id: string | null;
   role_agence: string | null;
 }
@@ -94,10 +95,52 @@ export default function AdminAgencies() {
     content_webhook_url: '',
   });
 
-  // Plan management hooks
-  const { data: planTiers } = usePlanTiers();
-  const { data: allSubscriptions } = useAllAgencySubscriptions();
-  const updateSubscription = useUpdateAgencySubscription();
+  // Plan management hooks (V2)
+  const { plans } = usePlanCatalog();
+  const queryClient = useQueryClient();
+
+  const { data: agencyPlans } = useQuery({
+    queryKey: ['agency_plans_all'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('agency_plan')
+        .select('agency_id, plan_id, status')
+        .eq('status', 'active');
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const updatePlanMutation = useMutation({
+    mutationFn: async ({ agencyId, planId }: { agencyId: string; planId: string }) => {
+      const existing = agencyPlans?.find(p => p.agency_id === agencyId);
+      if (existing) {
+        const { error } = await supabase
+          .from('agency_plan')
+          .update({ plan_id: planId, updated_at: new Date().toISOString() })
+          .eq('agency_id', agencyId)
+          .eq('status', 'active');
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('agency_plan')
+          .insert({
+            agency_id: agencyId,
+            plan_id: planId,
+            status: 'active',
+            assigned_by: (await supabase.auth.getUser()).data.user?.id ?? null,
+          });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agency_plans_all'] });
+      toast({ title: 'Plan mis à jour' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+    },
+  });
 
   useEffect(() => {
     loadData();
@@ -108,7 +151,7 @@ export default function AdminAgencies() {
     try {
       const [agenciesResult, usersResult, collabsResult] = await Promise.all([
         supabase.from('apogee_agencies').select('*').order('label').limit(500),
-        supabase.from('profiles').select('id, first_name, last_name, email, agence, agency_id, role_agence').order('first_name').limit(1000),
+        supabase.from('profiles').select('id, first_name, last_name, email, agency_id, role_agence').order('first_name').limit(1000),
         supabase.from('collaborators').select('id, user_id, first_name, last_name, email, role, type, agency_id, leaving_date, is_registered_user').order('last_name').limit(2000),
       ]);
 
@@ -170,21 +213,13 @@ export default function AdminAgencies() {
     return users.filter((user) => !user.agency_id && user.role_agence === 'dirigeant');
   };
 
-  // Get current plan for an agency
-  const getAgencyPlan = (agencyId: string) => {
-    const subscription = allSubscriptions?.find(s => s.agency_id === agencyId);
-    return subscription?.tier_key || null;
+  // Get current plan for an agency (V2)
+  const getAgencyPlanId = (agencyId: string) => {
+    return agencyPlans?.find(p => p.agency_id === agencyId)?.plan_id ?? null;
   };
 
-  const getAgencyPlanLabel = (agencyId: string) => {
-    const tierKey = getAgencyPlan(agencyId);
-    if (!tierKey) return 'Aucun';
-    const tier = planTiers?.find(t => t.key === tierKey);
-    return tier?.label || tierKey;
-  };
-
-  const handlePlanChange = (agencyId: string, tierKey: string) => {
-    updateSubscription.mutate({ agencyId, tierKey });
+  const handlePlanChange = (agencyId: string, planId: string) => {
+    updatePlanMutation.mutate({ agencyId, planId });
   };
 
   const openDialog = (agency?: Agency) => {
@@ -293,38 +328,38 @@ export default function AdminAgencies() {
   };
 
   return (
-    <div className="container mx-auto max-w-app p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Gestion des Agences</h1>
-          <p className="text-muted-foreground mt-1">
-            Configuration des agences et attribution des utilisateurs
-          </p>
-        </div>
-        <Button onClick={() => openDialog()}>
-          <Plus className="h-4 w-4 mr-2" />
+    <div className="space-y-6">
+      <AdminViewHeader
+        title="Gestion des Agences"
+        subtitle="Configuration des agences et attribution des utilisateurs"
+      >
+        <Button size="sm" onClick={() => openDialog()}>
+          <Plus className="h-4 w-4 mr-1.5" />
           Nouvelle agence
         </Button>
-      </div>
+      </AdminViewHeader>
 
       {/* Utilisateurs sans agence */}
       {getUsersWithoutAgency().length > 0 && (
-        <Card className="border-orange-200 bg-orange-50/50">
-          <CardHeader>
-            <CardTitle className="text-orange-900">
-              <Users className="inline h-5 w-5 mr-2" />
-              Utilisateurs sans agence ({getUsersWithoutAgency().length})
-            </CardTitle>
-            <CardDescription className="text-orange-700">
+        <AdminPanel>
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <h3 className="text-sm font-semibold text-foreground">Utilisateurs sans agence</h3>
+                <Badge variant="outline" className="text-xs">
+                  {getUsersWithoutAgency().length}
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground">
               Ces utilisateurs n'ont pas encore d'agence assignée
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+              </p>
+            </div>
             <div className="space-y-2">
               {getUsersWithoutAgency().map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center justify-between p-3 bg-white rounded-lg border"
+                  className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/20 p-3"
                 >
                   <div>
                     <p className="font-medium">
@@ -356,204 +391,165 @@ export default function AdminAgencies() {
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </AdminPanel>
       )}
 
       {/* Liste des agences */}
-      <Card>
-        <CardContent className="pt-4">
-          {isLoading ? (
-            <p className="text-center text-muted-foreground py-4">Chargement...</p>
-          ) : agencies.length === 0 ? (
-            <p className="text-center text-muted-foreground py-4">Aucune agence configurée</p>
-          ) : (
-            <div className="space-y-4">
-              {agencies.map((agency) => {
-                const agencyUsers = getUsersForAgency(agency.id);
-                const unregistered = getUnregisteredCollaborators(agency.id);
-                const totalCount = agencyUsers.length + unregistered.length;
-                const isExpanded = expandedAgencies.has(agency.id);
+      {isLoading ? (
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : agencies.length === 0 ? (
+        <AdminPanel className="py-12 text-center text-muted-foreground">
+          Aucune agence configurée
+        </AdminPanel>
+      ) : (
+        <>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {agencies.map((agency) => {
+            const agencyUsers = getUsersForAgency(agency.id);
+            const unregistered = getUnregisteredCollaborators(agency.id);
+            const totalCount = agencyUsers.length + unregistered.length;
+            const planId = getAgencyPlanId(agency.id);
+            const plan = plans.find(p => p.id === planId);
+            const planKey = plan?.key?.toUpperCase() ?? '';
 
-                return (
-                  <Card key={agency.id} className="overflow-hidden">
-                    <div className="p-4 bg-gradient-to-r from-primary/5 to-primary/10">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 flex-1">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold">{agency.label}</h3>
-                            <Badge
-                              variant={agency.is_active ? 'default' : 'secondary'}
-                              className={agency.is_active ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}
-                            >
-                              {agency.is_active ? 'Active' : 'Inactive'}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground font-mono">
-                              {agency.slug}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {/* Plan selector */}
-                          <Select
-                            value={getAgencyPlan(agency.id) || ''}
-                            onValueChange={(value) => handlePlanChange(agency.id, value)}
-                          >
-                            <SelectTrigger className="w-[120px] h-8">
-                              <Crown className="h-3 w-3 mr-1 text-amber-500" />
-                              <SelectValue placeholder="Plan" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {planTiers?.map((tier) => (
-                                <SelectItem key={tier.key} value={tier.key}>
-                                  {tier.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Badge variant="outline">
-                            <Users className="h-3 w-3 mr-1" />
-                            {totalCount}
-                          </Badge>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => navigate(ROUTES.admin.agencyProfile(agency.id))}
-                            title="Voir le profil complet"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleAgencyExpanded(agency.id)}
-                          >
-                            {isExpanded ? (
-                              <ChevronUp className="h-4 w-4" />
-                            ) : (
-                              <ChevronDown className="h-4 w-4" />
-                            )}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openDialog(agency)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(agency.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
+            // Color mapping by plan
+            const planColors: Record<string, { top: string; badge: string; crown: string }> = {
+              CORE: { top: 'from-sky-500/10 to-sky-500/5 border-sky-200', badge: 'bg-sky-100 text-sky-700 border-sky-200', crown: 'text-sky-500' },
+              PILOT: { top: 'from-violet-500/10 to-violet-500/5 border-violet-200', badge: 'bg-violet-100 text-violet-700 border-violet-200', crown: 'text-violet-500' },
+              INTELLIGENCE: { top: 'from-amber-500/10 to-amber-500/5 border-amber-200', badge: 'bg-amber-100 text-amber-700 border-amber-200', crown: 'text-amber-500' },
+            };
+            const colors = planColors[planKey] ?? { top: 'from-muted/40 to-muted/20 border-border', badge: 'bg-muted text-muted-foreground border-border', crown: 'text-muted-foreground' };
+
+            return (
+              <div key={agency.id} className="border border-border rounded-xl overflow-hidden bg-card shadow-sm hover:shadow-md transition-shadow">
+                {/* Colored top band */}
+                <div className={`bg-gradient-to-r ${colors.top} px-3 py-2.5 space-y-2 border-b`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="font-bold text-sm text-foreground truncate">{agency.label}</span>
                     </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {agency.is_active ? (
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Active" />
+                      ) : (
+                        <Badge variant="secondary" className="text-[10px]">Inactive</Badge>
+                      )}
+                      <Badge variant="outline" className="text-[10px]">
+                        <Users className="h-3 w-3 mr-0.5" />
+                        {totalCount}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="text-[11px] text-muted-foreground font-mono">{agency.slug}</div>
+                </div>
 
-                    <Collapsible open={isExpanded}>
-                      <CollapsibleContent>
-                        {totalCount === 0 ? (
-                          <div className="p-4 text-center text-muted-foreground">
-                            Aucun membre dans cette agence
-                          </div>
-                        ) : (
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Nom</TableHead>
-                                <TableHead>Email</TableHead>
-                                <TableHead>Rôle</TableHead>
-                                <TableHead>Statut</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {/* Registered users */}
-                              {agencyUsers.map((user) => (
-                                <TableRow key={user.id}>
-                                  <TableCell className="font-medium">
-                                    {user.first_name} {user.last_name}
-                                  </TableCell>
-                                  <TableCell className="text-sm text-muted-foreground">
-                                    {user.email}
-                                  </TableCell>
-                                  <TableCell>
-                                    {user.role_agence && (
-                                      <Badge variant="outline">{user.role_agence}</Badge>
-                                    )}
-                                  </TableCell>
-                                  <TableCell>
-                                    <Badge className="bg-emerald-600 hover:bg-emerald-700 text-xs">
-                                      Inscrit
-                                    </Badge>
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    <div className="flex gap-2 justify-end">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => navigate(ROUTES.admin.users)}
-                                        title="Voir dans gestion utilisateurs"
-                                      >
-                                        <User className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleAssignUser(user.id, null)}
-                                      >
-                                        Retirer
-                                      </Button>
-                                    </div>
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                              {/* Non-registered collaborators */}
-                              {unregistered.map((collab) => (
-                                <TableRow key={`collab-${collab.id}`} className="bg-muted/30">
-                                  <TableCell className="font-medium">
-                                    {collab.first_name} {collab.last_name}
-                                  </TableCell>
-                                  <TableCell className="text-sm text-muted-foreground">
-                                    {collab.email || '—'}
-                                  </TableCell>
-                                  <TableCell>
-                                    {(collab.role || collab.type) && (
-                                      <Badge variant="outline">{collab.role || collab.type}</Badge>
-                                    )}
-                                  </TableCell>
-                                  <TableCell>
-                                    <Badge variant="secondary" className="text-xs text-amber-700 bg-amber-100">
-                                      Non inscrit
-                                    </Badge>
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="gap-1 text-primary"
-                                      onClick={() => handleCreateUserFromCollab(collab, agency.slug)}
-                                    >
-                                      <UserPlus className="h-4 w-4" />
-                                      Créer le compte
-                                    </Button>
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        )}
-                      </CollapsibleContent>
-                    </Collapsible>
-                  </Card>
-                );
-              })}
+                {/* Plan selector */}
+                <div className="px-3 py-2.5">
+                  <Select
+                    value={planId || ''}
+                    onValueChange={(value) => handlePlanChange(agency.id, value)}
+                  >
+                    <SelectTrigger className="w-full h-8 text-xs font-medium">
+                      <Crown className={`h-3.5 w-3.5 mr-1.5 shrink-0 ${colors.crown}`} />
+                      <SelectValue placeholder="Plan…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {plans.map((p) => (
+                        <SelectItem key={p.id} value={p.id} className="text-xs">{p.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Card actions */}
+                <div className="flex items-center justify-end gap-0.5 px-2 py-1.5 border-t bg-muted/10">
+                  <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-primary" onClick={() => toggleAgencyExpanded(agency.id)} title="Membres">
+                    {expandedAgencies.has(agency.id) ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-primary" onClick={() => navigate(ROUTES.admin.agencyProfile(agency.id))} title="Profil">
+                    <Eye className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-primary" onClick={() => openDialog(agency)} title="Modifier">
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={() => handleDelete(agency.id)} title="Supprimer">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {agencies.filter(a => expandedAgencies.has(a.id)).map(agency => {
+          const agencyUsers = getUsersForAgency(agency.id);
+          const unregistered = getUnregisteredCollaborators(agency.id);
+          const totalCount = agencyUsers.length + unregistered.length;
+
+          return (
+            <div key={`expanded-${agency.id}`} className="mt-3 border border-border rounded-lg overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-2 bg-muted/30 border-b">
+                <span className="font-medium text-sm text-foreground">{agency.label} — Membres</span>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => toggleAgencyExpanded(agency.id)}>
+                  <ChevronUp className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="p-4">
+                {totalCount === 0 ? (
+                  <div className="text-center text-muted-foreground">Aucun membre dans cette agence</div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nom</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Rôle</TableHead>
+                        <TableHead>Statut</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {agencyUsers.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell className="font-medium">{user.first_name} {user.last_name}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{user.email}</TableCell>
+                          <TableCell>{user.role_agence && <Badge variant="outline">{user.role_agence}</Badge>}</TableCell>
+                          <TableCell><Badge variant="outline" className="text-xs">Inscrit</Badge></TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex gap-2 justify-end">
+                              <Button variant="ghost" size="sm" onClick={() => navigate(ROUTES.admin.users)} title="Voir dans gestion utilisateurs">
+                                <User className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => handleAssignUser(user.id, null)}>Retirer</Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {unregistered.map((collab) => (
+                        <TableRow key={`collab-${collab.id}`} className="bg-muted/30">
+                          <TableCell className="font-medium">{collab.first_name} {collab.last_name}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{collab.email || '—'}</TableCell>
+                          <TableCell>{(collab.role || collab.type) && <Badge variant="outline">{collab.role || collab.type}</Badge>}</TableCell>
+                          <TableCell><Badge variant="secondary" className="text-xs">Non inscrit</Badge></TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="sm" className="gap-1 text-primary" onClick={() => handleCreateUserFromCollab(collab, agency.slug)}>
+                              <UserPlus className="h-4 w-4" /> Créer le compte
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          );
+        })}
+        </>
+      )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">

@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lightbulb } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBridge';
 
 // Astuces par module (clés hiérarchiques alignées MODULE_DEFINITIONS)
 const TIPS_BY_MODULE: Record<string, string[]> = {
@@ -64,7 +64,7 @@ export function PreloadTipsCarousel({
       contextualTips.push(...(TIPS_BY_MODULE['organisation.salaries'] || []));
     }
     
-    if (hasModuleOption('support.guides', 'apogee')) {
+    if (hasModule('support.guides.apogee')) {
       contextualTips.push(...(TIPS_BY_MODULE['support.guides'] || []));
     }
     

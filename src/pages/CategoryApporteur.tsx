@@ -1,7 +1,7 @@
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { useApporteurEditor } from '@/contexts/ApporteurEditorContext';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { Button } from '@/components/ui/button';
 import { Plus, ChevronsDownUp, ChevronsUpDown, Lightbulb, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { DocumentsList } from '@/components/DocumentsList';
@@ -46,7 +46,7 @@ export default function CategoryApporteur() {
   const { slug, subslug } = useParams<{ slug: string; subslug: string }>();
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks } = useApporteurEditor();
   const { isAuthenticated } = useAuthCore();
-  const { hasAccessToScope } = usePermissions();
+  const { hasAccessToScope } = usePermissionsBridge();
   
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
