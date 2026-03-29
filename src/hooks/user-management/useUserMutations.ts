@@ -58,12 +58,12 @@ export function useUserMutations({
         .eq('id', userId);
       if (error) throw error;
       
-      await supabase.from('user_modules').delete().eq('user_id', userId);
+      await (supabase.from('user_modules' as any) as any).delete().eq('user_id', userId);
       
       if (enabledModules) {
         const moduleRows = enabledModulesToRows(userId, enabledModules, currentUserId);
         if (moduleRows.length > 0) {
-          const { error: insertError } = await supabase.from('user_modules').insert(moduleRows);
+          const { error: insertError } = await (supabase.from('user_modules' as any) as any).insert(moduleRows);
           if (insertError) throw insertError;
         }
       }

@@ -66,8 +66,8 @@ export function useUpdateAgencySubscription() {
   
   return useMutation({
     mutationFn: async ({ agencyId, tierKey }: { agencyId: string; tierKey: string }) => {
-      const { data, error } = await supabase
-        .from('agency_subscription')
+      const { data, error } = await (supabase
+        .from('agency_subscription' as any) as any)
         .upsert({
           agency_id: agencyId,
           tier_key: tierKey,

@@ -70,8 +70,8 @@ export function useParityTest() {
 
         try {
           // V1 : lire user_modules
-          const { data: v1Modules } = await supabase
-            .from('user_modules')
+          const { data: v1Modules } = await (supabase
+            .from('user_modules' as any) as any)
             .select('module_key')
             .eq('user_id', user.id);
 

@@ -32,8 +32,8 @@ export function usePlanTiers() {
   return useQuery({
     queryKey: ['plan-tiers'],
     queryFn: async (): Promise<PlanTierWithModules[]> => {
-      const { data, error } = await supabase
-        .from('plan_tiers')
+      const { data, error } = await (supabase
+        .from('plan_tiers' as any) as any)
         .select('*, plan_tier_modules(*)')
         .order('display_order');
       
@@ -58,8 +58,8 @@ export function useUpdatePlanTierModule() {
       enabled: boolean;
       optionsOverride?: Record<string, boolean>;
     }) => {
-      const { data, error } = await supabase
-        .from('plan_tier_modules')
+      const { data, error } = await (supabase
+        .from('plan_tier_modules' as any) as any)
         .upsert({
           tier_key: tierKey,
           module_key: moduleKey,
@@ -89,8 +89,8 @@ export function useDeletePlanTierModule() {
   
   return useMutation({
     mutationFn: async ({ tierKey, moduleKey }: { tierKey: string; moduleKey: string }) => {
-      const { error } = await supabase
-        .from('plan_tier_modules')
+      const { error } = await (supabase
+        .from('plan_tier_modules' as any) as any)
         .delete()
         .eq('tier_key', tierKey)
         .eq('module_key', moduleKey);

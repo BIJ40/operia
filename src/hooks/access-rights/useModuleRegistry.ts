@@ -162,8 +162,8 @@ async function syncPlanTierModules(
 ): Promise<void> {
   if (!isDeployed || requiredPlan === 'NONE') {
     // Remove all tier entries
-    await supabase
-      .from('plan_tier_modules')
+    await (supabase
+      .from('plan_tier_modules' as any) as any)
       .delete()
       .eq('module_key', moduleKey);
     return;
@@ -171,8 +171,8 @@ async function syncPlanTierModules(
 
   if (requiredPlan === 'STARTER') {
     // Upsert both STARTER and PRO
-    await supabase
-      .from('plan_tier_modules')
+    await (supabase
+      .from('plan_tier_modules' as any) as any)
       .upsert(
         [
           { tier_key: 'STARTER', module_key: moduleKey, enabled: true },
@@ -182,14 +182,14 @@ async function syncPlanTierModules(
       );
   } else if (requiredPlan === 'PRO') {
     // Delete STARTER, upsert PRO
-    await supabase
-      .from('plan_tier_modules')
+    await (supabase
+      .from('plan_tier_modules' as any) as any)
       .delete()
       .eq('module_key', moduleKey)
       .eq('tier_key', 'STARTER');
 
-    await supabase
-      .from('plan_tier_modules')
+    await (supabase
+      .from('plan_tier_modules' as any) as any)
       .upsert(
         [{ tier_key: 'PRO', module_key: moduleKey, enabled: true }],
         { onConflict: 'tier_key,module_key' }
