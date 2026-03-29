@@ -136,23 +136,28 @@ Deno.serve(async (req) => {
 
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('agence')
+      .select('agency_id')
       .eq('id', user.id)
       .single();
 
-    if (profileError || !profile?.agence) {
+    if (profileError || !profile?.agency_id) {
       return withCors(req, validationError('Agence utilisateur non configurée'));
     }
 
-    const agencySlug = profile.agence;
-    const { data: agency } = await supabase
+    // Resolve slug from agency_id
+    const { data: agencyData } = await supabase
       .from('apogee_agencies')
-      .select('label')
-      .eq('slug', agencySlug)
+      .select('slug, label')
+      .eq('id', profile.agency_id)
       .eq('is_active', true)
       .maybeSingle();
 
-    const agencyLabel = agency?.label || agencySlug.toUpperCase();
+    if (!agencyData?.slug) {
+      return withCors(req, validationError('Agence utilisateur non configurée'));
+    }
+
+    const agencySlug = agencyData.slug;
+    const agencyLabel = agencyData.label || agencySlug.toUpperCase();
     const apiKey = Deno.env.get('APOGEE_API_KEY');
     const apiBaseUrl = `https://${agencySlug}.hc-apogee.fr/api/`;
 

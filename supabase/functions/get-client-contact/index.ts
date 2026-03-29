@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
     // 3. Récupérer le profil utilisateur
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('agence, agency_id, global_role')
+      .select('agency_id, global_role')
       .eq('id', user.id)
       .single();
 
