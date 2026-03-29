@@ -13,6 +13,7 @@ const DemoAccueilContent = lazy(() => import('@/components/home/DemoAccueilConte
 const PilotageTabContent = lazy(() => import('@/components/unified/tabs/PilotageTabContent'));
 const CommercialTabContent = lazy(() => import('@/components/unified/tabs/CommercialTabContent'));
 const OrganisationTabContent = lazy(() => import('@/components/unified/tabs/OrganisationTabContent'));
+const RelationsTabContent = lazy(() => import('@/components/unified/tabs/RelationsTabContent'));
 const AdminTabContent = lazy(() => import('@/components/unified/tabs/AdminTabContent'));
 const DocumentsTabContent = lazy(() => import('@/components/unified/tabs/DocumentsTabContent'));
 const SupportHubTabContent = lazy(() => import('@/components/unified/tabs/AideTabContent'));
@@ -58,6 +59,11 @@ export function WorkspaceTabContent({ isN0User }: WorkspaceTabContentProps) {
           </LocalErrorBoundary>
         </TabsContent>
 
+        <TabsContent value="relations" className="mt-0">
+          <LocalErrorBoundary componentName="Relations">
+            <RelationsTabContent />
+          </LocalErrorBoundary>
+        </TabsContent>
         <TabsContent value="documents" className="mt-0">
           <LocalErrorBoundary componentName="Documents">
             <DocumentsTabContent />

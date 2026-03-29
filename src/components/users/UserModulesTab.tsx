@@ -76,6 +76,13 @@ const CATEGORY_CONFIG: Record<ModuleCategory, {
     color: 'text-warm-green',
     order: 3,
   },
+  relations: { 
+    label: 'Relations', 
+    icon: <Users className="w-5 h-5 text-purple-500" />,
+    description: 'Gestion des apporteurs',
+    color: 'text-purple-500',
+    order: 3.5,
+  },
   documents: { 
     label: 'Documents', 
     icon: <FolderOpen className="w-5 h-5 text-cyan-500" />,

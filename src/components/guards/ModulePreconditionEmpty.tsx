@@ -6,9 +6,9 @@ interface ModulePreconditionEmptyProps {
 }
 
 const PRECONDITION_MESSAGES: Record<string, string> = {
-  'commercial.suivi_client':
+  'commercial.veille':
     "Ce module nécessite l'activation du Pack Suivi Client pour votre agence.",
-  'organisation.apporteurs':
+  'relations.apporteurs':
     "Ce module nécessite l'activation du Portail Apporteur pour votre agence.",
 };
 

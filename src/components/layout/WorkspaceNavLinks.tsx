@@ -6,7 +6,7 @@
 import { useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  Home, BarChart3, ShoppingCart, Users, Headphones, Shield, FolderOpen, Kanban,
+  Home, BarChart3, ShoppingCart, Users, Headphones, Shield, FolderOpen, Kanban, Handshake,
 } from 'lucide-react';
 import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
@@ -21,6 +21,7 @@ const TAB_ACCENTS: Record<UnifiedTab, AccentThemeKey> = {
   pilotage: 'pink',
   commercial: 'orange',
   organisation: 'green',
+  relations: 'purple',
   documents: 'red',
   support: 'cyan',
   ticketing: 'amber',
@@ -45,7 +46,8 @@ export function WorkspaceNavLinks({ activeTab }: WorkspaceNavLinksProps) {
     { id: 'accueil', label: 'Accueil', icon: Home },
     { id: 'pilotage', label: getShortLabel('pilotage', 'Pilotage'), icon: BarChart3, requiresOption: { module: 'pilotage.statistiques' }, altModules: ['pilotage.agence'] },
     { id: 'commercial', label: getShortLabel('commercial', 'Commercial'), icon: ShoppingCart, requiresOption: { module: 'commercial' }, altModules: ['pilotage.agence', 'commercial.realisations', 'commercial.prospects', 'commercial.social'] },
-    { id: 'organisation', label: getShortLabel('organisation', 'Organisation'), icon: Users, requiresOption: { module: 'organisation.salaries' }, altModules: ['organisation.parc', 'organisation.apporteurs', 'organisation.plannings', 'organisation.reunions', 'pilotage.agence'] },
+    { id: 'organisation', label: getShortLabel('organisation', 'Organisation'), icon: Users, requiresOption: { module: 'organisation.salaries' }, altModules: ['organisation.parc', 'organisation.plannings', 'organisation.reunions', 'pilotage.agence'] },
+    { id: 'relations', label: getShortLabel('relations', 'Relations'), icon: Handshake, requiresOption: { module: 'relations.apporteurs' } },
     { id: 'documents', label: getShortLabel('mediatheque', 'Documents'), icon: FolderOpen, requiresOption: { module: 'mediatheque.documents' } },
     { id: 'support', label: getShortLabel('support', 'Support'), icon: Headphones },
     { id: 'ticketing', label: 'Ticketing', icon: Kanban, requiresOption: { module: 'ticketing' } },

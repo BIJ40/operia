@@ -25,7 +25,7 @@ export const RIGHTS_CATEGORIES: RightsCategory[] = [
     'pilotage.tresorerie', 'pilotage.maps', 'planning_augmente',
   ]},
   { id: 'commercial', label: 'Commercial', moduleKeys: [
-    'commercial', 'prospection', 'commercial.suivi_client', 'commercial.comparateur',
+    'commercial', 'prospection', 'commercial.veille', 'commercial.comparateur',
     'commercial.prospects', 'commercial.realisations',
     'commercial.social', 'commercial.signature',
   ]},
@@ -35,7 +35,7 @@ export const RIGHTS_CATEGORIES: RightsCategory[] = [
     'organisation.docgen', 'organisation.documents_legaux', 'organisation.zones',
   ]},
   { id: 'options', label: 'Options / Pack Relations', moduleKeys: [
-    'organisation.apporteurs',
+    'relations.apporteurs',
   ]},
   { id: 'documents', label: 'Documents', moduleKeys: [
     'mediatheque', 'mediatheque.documents',
@@ -78,7 +78,7 @@ const NAVIGATION_LABEL_FALLBACKS: Record<string, string> = {
   admin_plateforme: 'Admin plateforme',
   planning_augmente: 'Planification Augmentée',
   'mediatheque.documents': 'Documents',
-  'organisation.apporteurs': 'Apporteurs',
+  'relations.apporteurs': 'Apporteurs',
   'organisation.plannings': 'Plannings',
   'organisation.reunions': 'Réunions',
   'support.aide_en_ligne': 'Aide en ligne',

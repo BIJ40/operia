@@ -224,7 +224,7 @@ describe('enabledModulesToRows', () => {
       // pilotage.dashboard removed — merged into pilotage.statistiques
       'organisation.salaries': { enabled: true },
       'organisation.parc': { enabled: true },
-      'organisation.apporteurs': { enabled: true },
+      'relations.apporteurs': { enabled: true },
       'organisation.plannings': { enabled: true },
       'organisation.reunions': { enabled: true },
       'mediatheque.documents': { enabled: true },

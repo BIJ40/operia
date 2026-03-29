@@ -27,7 +27,7 @@ const SignatureGeneratorPage = lazy(() => import('@/pages/commercial/SignatureGe
 
 /** Mapping tab id → module key */
 const TAB_MODULE_MAP: Record<string, ModuleKey> = {
-  apporteurs: 'commercial.suivi_client',
+  apporteurs: 'commercial.veille',
   comparateur: 'commercial.comparateur',
   prospects: 'commercial.prospects',
   realisations: 'commercial.realisations',

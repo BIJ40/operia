@@ -209,12 +209,12 @@ export const CHANGELOG: ChangelogEntry[] = [
       // ═══════════════════════════════════════════════════════════════
       // GRANULARITÉ COMMERCIAL
       // ═══════════════════════════════════════════════════════════════
-      { type: 'feature', description: 'Promotion des 4 sous-onglets Commercial en modules indépendants : commercial.suivi_client, commercial.comparateur, commercial.veille, commercial.prospects' },
+      { type: 'feature', description: 'Promotion des 4 sous-onglets Commercial en modules indépendants : commercial.veille, commercial.comparateur, commercial.veille, commercial.prospects' },
       { type: 'feature', description: 'Chaque sous-onglet Commercial est désormais individuellement déployable, activable par plan et overridable par utilisateur' },
       { type: 'improvement', description: 'Migration automatique des plan_tier_modules : les options prospection existantes converties en entrées commercial.* correspondantes' },
       { type: 'improvement', description: 'Remplacement de hasModuleOption(prospection, ...) par hasModule(commercial.*) dans CommercialTabContent et ProspectionTabContent' },
       { type: 'improvement', description: 'Taxonomie des droits (rightsTaxonomy) enrichie avec les 4 nouvelles clés sous la catégorie Commercial' },
-      { type: 'improvement', description: 'Header navigation : scopes Commercial mis à jour vers les clés granulaires (commercial.suivi_client au lieu de prospection)' },
+      { type: 'improvement', description: 'Header navigation : scopes Commercial mis à jour vers les clés granulaires (commercial.veille au lieu de prospection)' },
     ],
   },
   {
@@ -244,7 +244,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     changes: [
       { type: 'security', description: 'RPC get_user_effective_modules basculée en fail-closed : COALESCE(ptm.enabled, false) — tout accès non configuré est désormais refusé' },
       { type: 'security', description: 'Isolation STARTER / PRO renforcée : commercial.realisations et organisation.reunions désactivés pour STARTER' },
-      { type: 'fix', description: 'Suppression de 4 clés fantômes sans effet runtime (commercial.suivi_client, comparateur, veille, prospects)' },
+      { type: 'fix', description: 'Suppression de 4 clés fantômes sans effet runtime (commercial.veille, comparateur, veille, prospects)' },
       { type: 'feature', description: 'Insertion de 8 clés canoniques dans plan_tier_modules (6 sous-onglets statistiques + 2 clés médiathèque)' },
       { type: 'improvement', description: 'Granularité stats par plan : general accessible STARTER, sous-onglets avancés réservés PRO' },
       { type: 'audit', description: 'Suite anti-régression : 434 tests passants couvrant fail-closed, isolation plans, cohérence clés' },
