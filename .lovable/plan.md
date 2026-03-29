@@ -1,41 +1,54 @@
 
 
-## Probleme
+## Plan : Onglet Relations visible par altModules uniquement
 
-Le panneau dépliable des agences ne fonctionne pas parce que le contenu expansé est rendu **en dehors et après** la grille de cartes (ligne 488 de `AdminAgencies.tsx`). Quand vous cliquez le chevron, l'état change bien en interne, mais le panneau apparait tout en bas de la page, après toutes les cartes — invisible sans scroller.
+### Problème
+Actuellement, `isWorkspaceTabVisible` (ligne 34) retourne `true` immédiatement si `requiresOption` est absent — l'onglet serait toujours visible. Il faut aussi gérer le cas d'un onglet sans `requiresOption` mais avec `altModules`.
 
-```text
-┌─────────────────────────────────┐
-│  Grille 4 colonnes (cartes)     │  ← Visible
-│  [Card1] [Card2] [Card3] [Card4]│
-│  [Card5] [Card6] [Card7] [Card8]│
-│  ...                            │
-└─────────────────────────────────┘
-  ← Panneau expansé ici, hors vue
-  [Expanded Card3 details]
+### Changements
+
+**1. `src/components/layout/WorkspaceNavLinks.tsx` (ligne 50)**
+- Retirer `requiresOption: { module: 'relations' }`, garder uniquement `altModules`
+
+```ts
+{ id: 'relations', label: getShortLabel('relations', 'Relations'), icon: Handshake, altModules: ['relations.suivi_client', 'relations.apporteurs', 'relations.echanges'] },
 ```
 
-## Solution
+**2. `src/lib/filterNavigationByPermissions.ts` (ligne 33-34)**
+- Modifier la condition "no guard" pour aussi vérifier `altModules` : un onglet sans `requiresOption` ET sans `altModules` est toujours visible, mais un onglet avec `altModules` doit passer la vérification
 
-Restructurer le rendu pour que le panneau dépliable apparaisse **directement sous la carte cliquée**, en prenant toute la largeur de la grille. Cela implique de remplacer le pattern actuel (grille + liste séparée) par un rendu en boucle où chaque carte est suivie de son panneau expansé si ouvert, en utilisant CSS `col-span-full` pour que le panneau occupe toute la largeur.
+```ts
+// No guard = always visible (accueil, support)
+if (!tab.requiresOption && !tab.altModules) return true;
 
-## Changements
+// Platform admin bypass
+if (perms.isPlatformAdmin) return true;
 
-**Fichier unique** : `src/pages/AdminAgencies.tsx`
+// Admin tab: role-only guard
+if (tab.id === 'admin') return false;
 
-1. Supprimer le bloc séparé de rendu des panneaux expansés (lignes 488-557) qui est en dehors de la grille
-2. Dans la boucle `.map()` de la grille (ligne 411), après chaque carte, injecter conditionnellement le panneau expansé avec `className="col-span-full"` quand `expandedAgencies.has(agency.id)`
-3. Le panneau contient les membres + `AgencyModuleOptions` comme actuellement
+// Ticketing
+if (tab.id === 'ticketing') return perms.hasModule('ticketing' as ModuleKey);
 
-```text
-┌─────────────────────────────────┐
-│  [Card1] [Card2] [Card3] [Card4]│
-│  ┌─── Panneau Card2 (full) ──┐  │  ← Apparait ici
-│  │ Membres + Options modules │  │
-│  └───────────────────────────┘  │
-│  [Card5] [Card6] [Card7] [Card8]│
-└─────────────────────────────────┘
+// Check primary module (if defined)
+if (tab.requiresOption) {
+  const { module, option } = tab.requiresOption;
+  if (option) {
+    if (perms.hasModuleOption(module as ModuleKey, option)) return true;
+  } else {
+    if (perms.hasModule(module as ModuleKey)) return true;
+  }
+}
+
+// Check alternative modules
+if (tab.altModules) {
+  for (const altModule of tab.altModules) {
+    if (perms.hasModule(altModule as ModuleKey)) return true;
+  }
+}
+
+return false;
 ```
 
-Le code de chaque carte retournera un `Fragment` contenant la carte + le panneau conditionnel, le tout restant dans le flux naturel de la grille CSS.
+**3. Vérifier `UnifiedWorkspace.tsx`** — appliquer le même changement si l'onglet Relations y est aussi défini avec `requiresOption`.
 
