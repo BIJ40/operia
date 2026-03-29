@@ -13500,6 +13500,18 @@ export type Database = {
         Args: { _user_id: string }
         Returns: number
       }
+      get_user_permissions: {
+        Args: { p_user_id: string }
+        Returns: {
+          access_level: string
+          granted: boolean
+          module_key: string
+          node_type: string
+          options: Json
+          preconditions_ok: boolean
+          source_summary: string
+        }[]
+      }
       get_user_ticket_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["apogee_ticket_role"]
