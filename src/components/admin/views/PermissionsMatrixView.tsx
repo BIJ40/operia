@@ -4,8 +4,21 @@ import { useModuleCatalog } from '@/hooks/access-rights/useModuleCatalog';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Shield, ShieldCheck, ShieldX, Sparkles } from 'lucide-react';
 import { SOURCE_LABELS, PermissionSource } from '@/types/permissions-v2';
+
+const CATEGORY_ORDER = ['accueil', 'pilotage', 'commercial', 'organisation', 'mediatheque', 'support', 'ticketing', 'admin'];
+
+const CATEGORY_STYLES: Record<string, { bg: string; border: string; text: string; icon: string }> = {
+  accueil:      { bg: 'bg-violet-50', border: 'border-violet-200', text: 'text-violet-700', icon: '🏠' },
+  pilotage:     { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700', icon: '📊' },
+  commercial:   { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700', icon: '💼' },
+  organisation: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700', icon: '🗂️' },
+  mediatheque:  { bg: 'bg-pink-50', border: 'border-pink-200', text: 'text-pink-700', icon: '📚' },
+  support:      { bg: 'bg-cyan-50', border: 'border-cyan-200', text: 'text-cyan-700', icon: '🛟' },
+  ticketing:    { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-700', icon: '🎫' },
+  admin:        { bg: 'bg-slate-100', border: 'border-slate-300', text: 'text-slate-700', icon: '⚙️' },
+};
 
 interface AgencyUser {
   id: string;
