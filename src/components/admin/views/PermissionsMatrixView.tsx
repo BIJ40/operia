@@ -70,18 +70,18 @@ function useUserPermissionsForMatrix(userId: string | null) {
 
 function CellIcon({ granted, source }: { granted: boolean; source: string }) {
   if (!granted || source === 'not_granted') {
-    return <span className="text-destructive/40">✗</span>;
+    return <ShieldX className="w-5 h-5 text-destructive/30 mx-auto" />;
   }
   if (source === 'plan' || source === 'is_core') {
-    return <span className="text-primary">✓</span>;
+    return <ShieldCheck className="w-5 h-5 text-primary mx-auto" />;
   }
   if (source === 'option_agence') {
-    return <span className="text-amber-500">✓</span>;
+    return <ShieldCheck className="w-5 h-5 text-amber-500 mx-auto" />;
   }
   if (source === 'agency_delegation' || source === 'manual_exception') {
-    return <span className="text-green-500">✓</span>;
+    return <Sparkles className="w-5 h-5 text-emerald-500 mx-auto" />;
   }
-  return <span className="text-muted-foreground">○</span>;
+  return <Shield className="w-5 h-5 text-muted-foreground/40 mx-auto" />;
 }
 
 export function PermissionsMatrixView() {
