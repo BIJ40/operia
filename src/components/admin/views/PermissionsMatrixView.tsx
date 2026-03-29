@@ -124,35 +124,43 @@ export function PermissionsMatrixView() {
 
       {/* Sélecteurs */}
       <div className="flex items-center gap-3">
-        <select
-          className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground"
-          value={selectedAgencyId ?? ''}
-          onChange={e => {
-            setSelectedAgencyId(e.target.value || null);
+        <Select
+          value={selectedAgencyId ?? 'none'}
+          onValueChange={v => {
+            setSelectedAgencyId(v === 'none' ? null : v);
             setSelectedUserId(null);
           }}
         >
-          <option value="">Sélectionner une agence...</option>
-          {agencies.map(a => (
-            <option key={a.id} value={a.id}>{a.label}</option>
-          ))}
-        </select>
+          <SelectTrigger className="w-[250px]">
+            <SelectValue placeholder="Sélectionner une agence..." />
+          </SelectTrigger>
+          <SelectContent className="bg-background z-50">
+            <SelectItem value="none">Sélectionner une agence...</SelectItem>
+            {agencies.map(a => (
+              <SelectItem key={a.id} value={a.id}>{a.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {selectedAgencyId && (
-          <select
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground"
-            value={selectedUserId ?? ''}
-            onChange={e => setSelectedUserId(e.target.value || null)}
+          <Select
+            value={selectedUserId ?? 'none'}
+            onValueChange={v => setSelectedUserId(v === 'none' ? null : v)}
             disabled={usersLoading}
           >
-            <option value="">Sélectionner un utilisateur...</option>
-            {users.map(u => {
-              const displayName = [u.first_name, u.last_name].filter(Boolean).join(' ') || u.email || u.id;
-              return (
-                <option key={u.id} value={u.id}>{displayName}</option>
-              );
-            })}
-          </select>
+            <SelectTrigger className="w-[250px]">
+              <SelectValue placeholder="Sélectionner un utilisateur..." />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="none">Sélectionner un utilisateur...</SelectItem>
+              {users.map(u => {
+                const displayName = [u.first_name, u.last_name].filter(Boolean).join(' ') || u.email || u.id;
+                return (
+                  <SelectItem key={u.id} value={u.id}>{displayName}</SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
         )}
       </div>
 
