@@ -83,6 +83,7 @@ export const UserProfileSheet = memo(function UserProfileSheet({
   effectiveModules: _legacyModules,
   agencyLabel,
 }: UserProfileSheetProps) {
+  const useV2 = useAppFeatureFlag('USE_PERMISSIONS_V2');
   // ═══ TRUTH: Fetch real effective modules via the SAME RPC that controls runtime access ═══
   const { data: rpcModules, isLoading: rpcModulesLoading } = useQuery({
     queryKey: ['user-profile-sheet-effective-modules', user.id],
@@ -352,6 +353,16 @@ export const UserProfileSheet = memo(function UserProfileSheet({
             </Section>
 
             <Separator />
+
+            {/* ═══ PERMISSIONS V2 — édition directe ═══ */}
+            {useV2 && user.id && (
+              <>
+                <Section icon={Shield} title="Permissions V2">
+                  <UserPermissionsColumnV2 userId={user.id} editMode={true} />
+                </Section>
+                <Separator />
+              </>
+            )}
 
             {/* ═══ VUE A — NAVIGATION / ACCÈS VISIBLES ═══ */}
             <Section icon={Navigation} title="Navigation utilisateur">
