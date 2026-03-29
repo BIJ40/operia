@@ -232,12 +232,12 @@ export default function DiversTabContent() {
   const mainTabsConfig: (PillTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
     { id: 'actions', label: 'Actions', icon: Settings, accent: 'blue' },
     { id: 'apporteurs', label: getShortLabel('relations.apporteurs', 'Apporteurs'), icon: Users, accent: 'purple', requiresModule: 'relations.apporteurs' },
-    { id: 'administratif', label: 'Administratif', icon: FolderOpen, accent: 'orange', requiresModule: 'pilotage.agence' },
+    { id: 'administratif', label: 'Administratif', icon: FolderOpen, accent: 'orange', requiresModule: 'organisation.salaries' },
     { id: 'parc', label: getShortLabel('organisation.parc', 'Parc'), icon: Car, accent: 'green', requiresModule: 'organisation.parc' },
-    { id: 'performance', label: 'Performance', icon: Activity, accent: 'pink', requiresModule: 'pilotage.agence' },
-    { id: 'prospection', label: getShortLabel('commercial.prospects', 'Commercial'), icon: Target, accent: 'orange', requiresModule: 'commercial.prospects' },
+    { id: 'performance', label: 'Performance', icon: Activity, accent: 'pink', requiresModule: 'pilotage.statistiques' },
+    { id: 'prospection', label: getShortLabel('commercial.prospects', 'Commercial'), icon: Target, accent: 'orange', requiresModule: 'commercial' },
     
-    { id: 'anomalies', label: 'Incohérences', icon: AlertTriangle, accent: 'pink', requiresModule: 'pilotage.agence' },
+    { id: 'anomalies', label: 'Incohérences', icon: AlertTriangle, accent: 'pink', requiresModule: 'pilotage' },
   ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {
