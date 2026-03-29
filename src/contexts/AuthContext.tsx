@@ -144,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .select('first_name, last_name, agency_id, role_agence, must_change_password, global_role, is_active, is_read_only, phone, poste')
             .eq('id', userId)
             .single(),
-          (supabase.rpc as any)('get_user_effective_modules', { p_user_id: userId }),
+          supabase.rpc('get_user_permissions', { p_user_id: userId }),
           (supabase
             .from('module_registry' as any) as any)
             .select('key')
@@ -171,7 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       if (modulesError) {
-        logAuth.warn('[AUTH] Erreur requête get_user_effective_modules:', modulesError);
+        logAuth.warn('[AUTH] Erreur requête get_user_permissions:', modulesError);
       }
       
       setFirstName(profile?.first_name || null);
