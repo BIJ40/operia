@@ -89,6 +89,8 @@ function ModuleRow({
   plans,
   getPlanGrant,
   onUpdatePlanGrant,
+  isInPreset,
+  onTogglePreset,
 }: {
   module: ModuleCatalogTree;
   isN6: boolean;
