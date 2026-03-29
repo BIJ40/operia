@@ -37,6 +37,7 @@ import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { usePlanTiers } from '@/hooks/access-rights/usePlanTiers';
 import { useAllAgencySubscriptions, useUpdateAgencySubscription } from '@/hooks/access-rights/useAgencySubscription';
+import { AdminViewHeader } from '@/components/admin/shared/AdminViewHeader';
 
 interface Agency {
   id: string;
@@ -294,21 +295,15 @@ export default function AdminAgencies() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div className="min-w-0">
-          <h2 className="text-lg font-semibold text-foreground">Gestion des Agences</h2>
-          <p className="text-sm text-muted-foreground">
-            Configuration des agences et attribution des utilisateurs
-          </p>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <Button size="sm" onClick={() => openDialog()}>
-            <Plus className="h-4 w-4 mr-1.5" />
-            Nouvelle agence
-          </Button>
-          <Badge variant="outline" className="text-xs">V2</Badge>
-        </div>
-      </div>
+      <AdminViewHeader
+        title="Gestion des Agences"
+        subtitle="Configuration des agences et attribution des utilisateurs"
+      >
+        <Button size="sm" onClick={() => openDialog()}>
+          <Plus className="h-4 w-4 mr-1.5" />
+          Nouvelle agence
+        </Button>
+      </AdminViewHeader>
 
       {/* Utilisateurs sans agence */}
       {getUsersWithoutAgency().length > 0 && (

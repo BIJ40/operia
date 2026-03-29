@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Users, UserPlus } from 'lucide-react';
 import { UserListSkeleton } from '@/components/admin/users/UserListSkeleton';
+import { AdminViewHeader } from '@/components/admin/shared/AdminViewHeader';
 
 import {
   CreateUserDialog,
@@ -131,27 +132,20 @@ export default function TDRUsersPage() {
       <TooltipProvider>
         <div className="space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <h2 className="text-lg font-semibold text-foreground">
-                Gestion Utilisateurs Réseau
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Gestion des utilisateurs et permissions du réseau
-              </p>
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <Badge variant="outline" className="text-xs">
-                {filteredUsers.length} utilisateur{filteredUsers.length > 1 ? 's' : ''}
-              </Badge>
-              {canCreateUsers && (
-                <Button size="sm" onClick={() => setShowCreateDialog(true)}>
-                  <UserPlus className="w-4 h-4 mr-1.5" />
-                  Nouvel utilisateur
-                </Button>
-              )}
-            </div>
-          </div>
+          <AdminViewHeader
+            title="Gestion Utilisateurs Réseau"
+            subtitle="Gestion des utilisateurs et permissions du réseau"
+          >
+            <Badge variant="outline" className="text-xs">
+              {filteredUsers.length} utilisateur{filteredUsers.length > 1 ? 's' : ''}
+            </Badge>
+            {canCreateUsers && (
+              <Button size="sm" onClick={() => setShowCreateDialog(true)}>
+                <UserPlus className="w-4 h-4 mr-1.5" />
+                Nouvel utilisateur
+              </Button>
+            )}
+          </AdminViewHeader>
 
         {/* Filters */}
         <UserFilters

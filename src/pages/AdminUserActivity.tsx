@@ -11,6 +11,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, L
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { logError } from '@/lib/logger';
+import { AdminViewHeader } from '@/components/admin/shared/AdminViewHeader';
 
 interface ConnectionEvolution {
   date: string;
@@ -130,13 +131,10 @@ export default function AdminUserActivity() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div className="min-w-0">
-          <h2 className="text-lg font-semibold text-foreground">Activité utilisateurs</h2>
-          <p className="text-sm text-muted-foreground">Connexions, durée et répartition par agence.</p>
-        </div>
-        <Badge variant="outline" className="text-xs">V2</Badge>
-      </div>
+      <AdminViewHeader
+        title="Activité utilisateurs"
+        subtitle="Connexions, durée et répartition par agence."
+      />
 
       {/* Utilisateurs connectés */}
       <OnlineUsers />
