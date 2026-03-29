@@ -98,3 +98,12 @@ export function usePermissionsV2(): PermissionsContextV2Value {
 }
 
 export { PermissionsContextV2 };
+
+/**
+ * Version safe de usePermissionsV2 — retourne null si le contexte est absent.
+ * Utiliser uniquement dans usePermissionsBridge pour éviter la violation des règles des hooks.
+ * Ne jamais utiliser dans les composants — utiliser usePermissionsV2() directement.
+ */
+export function usePermissionsV2Safe() {
+  return useContext(PermissionsContextV2);
+}
