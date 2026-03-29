@@ -72,8 +72,19 @@ export function useParityTest() {
             .select('module_key')
             .eq('user_id', user.id);
 
+          const remappedV1 = (v1Modules ?? []).map(m => LEGACY_REMAP[m.module_key] ?? m.module_key);
+
+          const { data: catalogEntries } = await supabase
+            .from('module_catalog')
+            .select('key, node_type')
+            .in('key', remappedV1);
+
+          const sectionKeys = new Set(
+            (catalogEntries ?? []).filter(e => e.node_type === 'section').map(e => e.key)
+          );
+
           const v1Keys = new Set(
-            (v1Modules ?? []).map(m => LEGACY_REMAP[m.module_key] ?? m.module_key)
+            remappedV1.filter(k => k !== 'unified_search' && !sectionKeys.has(k))
           );
 
           // V2 : appeler le RPC
