@@ -359,96 +359,88 @@ export default function AdminAgencies() {
       )}
 
       {/* Liste des agences */}
-      <Card>
-        <CardContent className="pt-4">
-          {isLoading ? (
-            <p className="text-center text-muted-foreground py-4">Chargement...</p>
-          ) : agencies.length === 0 ? (
-            <p className="text-center text-muted-foreground py-4">Aucune agence configurée</p>
-          ) : (
-            <div className="space-y-4">
-              {agencies.map((agency) => {
-                const agencyUsers = getUsersForAgency(agency.id);
-                const unregistered = getUnregisteredCollaborators(agency.id);
-                const totalCount = agencyUsers.length + unregistered.length;
-                const isExpanded = expandedAgencies.has(agency.id);
+      {isLoading ? (
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : agencies.length === 0 ? (
+        <p className="text-center text-muted-foreground py-12">Aucune agence configurée</p>
+      ) : (
+        <div className="space-y-3">
+          {agencies.map((agency) => {
+            const agencyUsers = getUsersForAgency(agency.id);
+            const unregistered = getUnregisteredCollaborators(agency.id);
+            const totalCount = agencyUsers.length + unregistered.length;
+            const isExpanded = expandedAgencies.has(agency.id);
 
-                return (
-                  <Card key={agency.id} className="overflow-hidden">
-                    <div className="p-4 bg-gradient-to-r from-primary/5 to-primary/10">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 flex-1">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold">{agency.label}</h3>
-                            <Badge
-                              variant={agency.is_active ? 'default' : 'secondary'}
-                              className={agency.is_active ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}
-                            >
-                              {agency.is_active ? 'Active' : 'Inactive'}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground font-mono">
-                              {agency.slug}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {/* Plan selector */}
-                          <Select
-                            value={getAgencyPlan(agency.id) || ''}
-                            onValueChange={(value) => handlePlanChange(agency.id, value)}
-                          >
-                            <SelectTrigger className="w-[120px] h-8">
-                              <Crown className="h-3 w-3 mr-1 text-amber-500" />
-                              <SelectValue placeholder="Plan" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {planTiers?.map((tier) => (
-                                <SelectItem key={tier.key} value={tier.key}>
-                                  {tier.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Badge variant="outline">
-                            <Users className="h-3 w-3 mr-1" />
-                            {totalCount}
-                          </Badge>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => navigate(ROUTES.admin.agencyProfile(agency.id))}
-                            title="Voir le profil complet"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleAgencyExpanded(agency.id)}
-                          >
-                            {isExpanded ? (
-                              <ChevronUp className="h-4 w-4" />
-                            ) : (
-                              <ChevronDown className="h-4 w-4" />
-                            )}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openDialog(agency)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(agency.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
+            return (
+              <div key={agency.id} className="border border-border rounded-lg overflow-hidden">
+                <button
+                  className="w-full flex items-center justify-between px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors"
+                  onClick={() => toggleAgencyExpanded(agency.id)}
+                >
+                  <div className="flex items-center gap-2">
+                    {isExpanded ? (
+                      <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                    )}
+                    <span className="font-medium text-foreground">{agency.label}</span>
+                    <Badge
+                      variant={agency.is_active ? 'default' : 'secondary'}
+                      className={agency.is_active ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}
+                    >
+                      {agency.is_active ? 'Active' : 'Inactive'}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground font-mono">
+                      {agency.slug}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                    <Select
+                      value={getAgencyPlan(agency.id) || ''}
+                      onValueChange={(value) => handlePlanChange(agency.id, value)}
+                    >
+                      <SelectTrigger className="w-[120px] h-8">
+                        <Crown className="h-3 w-3 mr-1 text-amber-500" />
+                        <SelectValue placeholder="Plan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {planTiers?.map((tier) => (
+                          <SelectItem key={tier.key} value={tier.key}>
+                            {tier.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Badge variant="outline" className="text-xs">
+                      <Users className="h-3 w-3 mr-1" />
+                      {totalCount}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate(ROUTES.admin.agencyProfile(agency.id))}
+                      title="Voir le profil complet"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openDialog(agency)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(agency.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </button>
 
                     <Collapsible open={isExpanded}>
                       <CollapsibleContent>
