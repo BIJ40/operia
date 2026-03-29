@@ -44,9 +44,9 @@ export function WorkspaceNavLinks({ activeTab }: WorkspaceNavLinksProps) {
 
   const allTabs: TabConfig[] = useMemo(() => [
     { id: 'accueil', label: 'Accueil', icon: Home },
-    { id: 'pilotage', label: getShortLabel('pilotage', 'Pilotage'), icon: BarChart3, requiresOption: { module: 'pilotage.statistiques' }, altModules: ['pilotage.agence'] },
-    { id: 'commercial', label: getShortLabel('commercial', 'Commercial'), icon: ShoppingCart, requiresOption: { module: 'commercial.prospects' }, altModules: ['prospection', 'pilotage.agence', 'commercial.realisations', 'commercial.social'] },
-    { id: 'organisation', label: getShortLabel('organisation', 'Organisation'), icon: Users, requiresOption: { module: 'organisation.salaries' }, altModules: ['organisation.parc', 'organisation.plannings', 'organisation.reunions', 'pilotage.agence'] },
+    { id: 'pilotage', label: getShortLabel('pilotage', 'Pilotage'), icon: BarChart3, requiresOption: { module: 'pilotage.statistiques' } },
+    { id: 'commercial', label: getShortLabel('commercial', 'Commercial'), icon: ShoppingCart, requiresOption: { module: 'commercial.prospects' }, altModules: ['commercial.realisations', 'commercial.social'] },
+    { id: 'organisation', label: getShortLabel('organisation', 'Organisation'), icon: Users, requiresOption: { module: 'organisation.salaries' }, altModules: ['organisation.parc', 'organisation.plannings', 'organisation.reunions'] },
     { id: 'relations', label: getShortLabel('relations', 'Relations'), icon: Handshake, requiresOption: { module: 'relations' } },
     { id: 'documents', label: getShortLabel('mediatheque', 'Documents'), icon: FolderOpen, requiresOption: { module: 'mediatheque.documents' } },
     { id: 'support', label: getShortLabel('support', 'Support'), icon: Headphones },

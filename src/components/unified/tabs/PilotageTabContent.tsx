@@ -5,7 +5,7 @@
 
 import { lazy, Suspense, useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { BarChart3, Activity, Settings, AlertTriangle, TrendingUp, PieChart, Loader2, Map } from 'lucide-react';
+import { BarChart3, Settings, AlertTriangle, TrendingUp, PieChart, Loader2, Map } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
@@ -17,9 +17,6 @@ import { DomainAccentProvider } from '@/contexts/DomainAccentContext';
 
 // Lazy loaded
 const StatsTabContent = lazy(() => import('@/components/unified/tabs/StatsTabContent'));
-const PerformanceDashboard = lazy(() => 
-  import('@/components/performance/PerformanceDashboard').then(m => ({ default: m.PerformanceDashboard }))
-);
 const ActionsAMenerTab = lazy(() => 
   import('@/components/pilotage/ActionsAMenerTab').then(m => ({ default: m.ActionsAMenerTab }))
 );
@@ -28,7 +25,7 @@ const ResultatTabContent = lazy(() => import('@/components/financial/ResultatTab
 const RentabiliteTabContent = lazy(() => import('@/components/profitability/RentabiliteTabContent'));
 const MapsTabContent = lazy(() => import('@/components/unified/tabs/MapsTabContent'));
 
-type PilotageSubTab = 'stats' | 'performance' | 'actions' | 'anomalies' | 'resultat' | 'rentabilite' | 'maps';
+type PilotageSubTab = 'stats' | 'actions' | 'anomalies' | 'resultat' | 'rentabilite' | 'maps';
 
 function LoadingFallback() {
   return (
@@ -45,7 +42,6 @@ export default function PilotageTabContent() {
 
   const allTabs: (PillTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
     { id: 'stats', label: getShortLabel('pilotage.statistiques', 'Statistiques'), icon: BarChart3, accent: 'blue', requiresModule: 'pilotage.statistiques' },
-    { id: 'performance', label: getShortLabel('pilotage.performance', 'Performance'), icon: Activity, accent: 'pink', requiresModule: 'pilotage.performance' },
     { id: 'actions', label: getShortLabel('pilotage.actions_a_mener', 'Actions à mener'), icon: Settings, accent: 'orange', requiresModule: 'pilotage.actions_a_mener' },
     { id: 'anomalies', label: getShortLabel('pilotage.incoherences', 'Incohérences'), icon: AlertTriangle, accent: 'pink', requiresModule: 'pilotage.incoherences' },
     { id: 'resultat', label: getShortLabel('pilotage.resultat', 'Résultat'), icon: TrendingUp, accent: 'green', requiresModule: 'pilotage.resultat' },
@@ -80,12 +76,6 @@ export default function PilotageTabContent() {
         <TabsContent value="stats" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
             <StatsTabContent />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="performance" className="mt-4">
-          <Suspense fallback={<LoadingFallback />}>
-            <PerformanceDashboard />
           </Suspense>
         </TabsContent>
 

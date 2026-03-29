@@ -11,7 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBridge';
-import { useUserModules } from '@/hooks/useUserModules';
+
 import { useModuleLabels } from '@/hooks/useModuleLabels';
 import { getDelegatableModules } from '@/lib/delegatableModules';
 import { TeamMemberModules } from './TeamMemberModules';
@@ -70,57 +70,9 @@ function MemberModuleChips({
   n2HasModule: (key: ModuleKey) => boolean;
   isDeployedModule: (key: ModuleKey) => boolean;
 }) {
-  const { data: userModules, isLoading } = useUserModules(userId);
-  const { getShortLabel } = useModuleLabels();
-
-  const delegatableModules = useMemo(() => getDelegatableModules(), []);
-
-  const activeModules = useMemo(() => {
-    if (!userModules) return [];
-    return delegatableModules
-      .filter(m => {
-        if (!isDeployedModule(m.key) || !n2HasModule(m.key)) return false;
-        const state = userModules[m.key];
-        if (typeof state === 'boolean') return state;
-        return state?.enabled ?? false;
-      })
-      .map(m => ({
-        key: m.key,
-        label: getShortLabel(m.key, m.fallbackLabel),
-        category: m.category,
-      }));
-  }, [userModules, delegatableModules, n2HasModule, isDeployedModule, getShortLabel]);
-
-  if (isLoading) {
-    return (
-      <div className="flex gap-1 flex-wrap">
-        <Skeleton className="h-5 w-16 rounded-full" />
-        <Skeleton className="h-5 w-20 rounded-full" />
-        <Skeleton className="h-5 w-14 rounded-full" />
-      </div>
-    );
-  }
-
-  if (activeModules.length === 0) {
-    return (
-      <span className="text-xs text-muted-foreground italic">Aucun module attribué</span>
-    );
-  }
-
+  // V2: modules are resolved via permissions system, not user_modules table
   return (
-    <div className="flex gap-1 flex-wrap">
-      {activeModules.map(m => (
-        <span
-          key={m.key}
-          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border ${
-            CATEGORY_CHIP_STYLES[m.category] ?? 'bg-muted text-muted-foreground border-border'
-          }`}
-        >
-          <span className={`w-1.5 h-1.5 rounded-full ${CATEGORY_DOT_COLORS[m.category] ?? 'bg-muted-foreground'}`} />
-          {m.label}
-        </span>
-      ))}
-    </div>
+    <span className="text-xs text-muted-foreground italic">Droits gérés via le système V2</span>
   );
 }
 
