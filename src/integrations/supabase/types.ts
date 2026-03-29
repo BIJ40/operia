@@ -518,6 +518,69 @@ export type Database = {
           },
         ]
       }
+      agency_module_entitlements: {
+        Row: {
+          access_level: string
+          activated_at: string
+          activated_by: string | null
+          agency_id: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          metadata: Json
+          module_key: string
+          source: string
+          stripe_price_id: string | null
+          stripe_subscription_item_id: string | null
+          trial_ends_at: string | null
+        }
+        Insert: {
+          access_level?: string
+          activated_at?: string
+          activated_by?: string | null
+          agency_id: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          metadata?: Json
+          module_key: string
+          source?: string
+          stripe_price_id?: string | null
+          stripe_subscription_item_id?: string | null
+          trial_ends_at?: string | null
+        }
+        Update: {
+          access_level?: string
+          activated_at?: string
+          activated_by?: string | null
+          agency_id?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          metadata?: Json
+          module_key?: string
+          source?: string
+          stripe_price_id?: string | null
+          stripe_subscription_item_id?: string | null
+          trial_ends_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_module_entitlements_activated_by_fkey"
+            columns: ["activated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_module_entitlements_module_key_fkey"
+            columns: ["module_key"]
+            isOneToOne: false
+            referencedRelation: "module_catalog"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       agency_overhead_rules: {
         Row: {
           agency_id: string
