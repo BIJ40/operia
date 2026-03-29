@@ -91,11 +91,9 @@ function CommercialInner() {
       });
   }, [allTabs, hasModule, isAdmin, isDeployedModule]);
 
-  const defaultTab = visibleTabs.find(t => !t.disabled)?.id ?? 'apporteurs';
+  const defaultTab = visibleTabs.find(t => !t.disabled)?.id ?? visibleTabs[0]?.id ?? 'realisations';
   const [activeTab, setActiveTab] = useSessionState<string>('commercial_sub_tab', defaultTab);
-  const effectiveTab = isAdmin && allTabs.some(t => t.id === activeTab)
-    ? activeTab
-    : ((visibleTabs.find(t => t.id === activeTab && !t.disabled)) ? activeTab : defaultTab);
+  const effectiveTab = visibleTabs.find(t => t.id === activeTab && !t.disabled)?.id ?? defaultTab;
 
   const handleVeilleSelectApporteur = useCallback((id: string, name: string) => {
     openApporteur(id, name);
