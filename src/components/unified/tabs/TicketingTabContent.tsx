@@ -46,7 +46,20 @@ function LoadingFallback() {
 
 export default function TicketingTabContent() {
   const { hasModule } = usePermissionsBridge();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Données pour export
+  const { tickets, statuses, modules, priorities, ownerSides } = useApogeeTickets();
+  
+  // Persister le sous-onglet dans l'URL
+  const subtabParam = searchParams.get('subtab') as TicketingSubTab | null;
+  const [activeSubTab, setActiveSubTab] = useState<TicketingSubTab>(
+    subtabParam && ['kanban', 'liste', 'historique', 'revue'].includes(subtabParam) 
+      ? subtabParam 
+      : 'liste'
+  );
 
+  // Guard après tous les hooks
   if (!hasModule('ticketing')) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center">
@@ -61,19 +74,6 @@ export default function TicketingTabContent() {
       </div>
     );
   }
-
-  const [searchParams, setSearchParams] = useSearchParams();
-  
-  // Données pour export
-  const { tickets, statuses, modules, priorities, ownerSides } = useApogeeTickets();
-  
-  // Persister le sous-onglet dans l'URL
-  const subtabParam = searchParams.get('subtab') as TicketingSubTab | null;
-  const [activeSubTab, setActiveSubTab] = useState<TicketingSubTab>(
-    subtabParam && ['kanban', 'liste', 'historique', 'revue'].includes(subtabParam) 
-      ? subtabParam 
-      : 'liste'
-  );
 
   // Synchroniser avec l'URL
   useEffect(() => {
