@@ -93,6 +93,7 @@ export function SimplifiedSupportChat({
   className = '',
 }: SimplifiedSupportChatProps) {
   const { user } = useAuthCore();
+  const { firstName } = useProfile();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -382,14 +383,8 @@ export function SimplifiedSupportChat({
       }
 
       let userName = 'Utilisateur';
-      if (user) {
-        const profileResult = await safeQuery<{ first_name: string | null }>(
-          supabase.from('profiles').select('first_name').eq('id', user.id).maybeSingle(),
-          'SIMPLIFIED_CHAT_PROFILE'
-        );
-        if (profileResult.success && profileResult.data?.first_name) {
-          userName = profileResult.data.first_name;
-        }
+      if (firstName) {
+        userName = firstName;
       }
 
       const domain = DOMAIN_OPTIONS.find(d => d.value === selectedDomain);
