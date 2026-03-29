@@ -14,7 +14,7 @@ import type { ModuleKey } from '@/types/modules';
 
 const MesApporteursTab = lazy(() => import('@/components/pilotage/MesApporteursTab').then(m => ({ default: m.MesApporteursTab })));
 const AgencyApporteurExchanges = lazy(() => import('@/components/agency/AgencyApporteurExchanges'));
-const SuiviClientsAdminView = lazy(() => import('@/components/admin/views/SuiviClientsAdminView'));
+const SuiviClientSettingsCard = lazy(() => import('@/components/relations/SuiviClientSettingsCard'));
 
 type RelationsSubTab = 'apporteurs' | 'echanges-apporteurs' | 'suivi-clients';
 
@@ -61,7 +61,7 @@ export default function RelationsTabContent() {
 
           <TabsContent value="suivi-clients" className="mt-4">
             <Suspense fallback={<LoadingFallback />}>
-              <SuiviClientsAdminView />
+              <SuiviClientSettingsCard />
             </Suspense>
           </TabsContent>
         </Tabs>
