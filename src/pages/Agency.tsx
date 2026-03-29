@@ -2,13 +2,12 @@
  * Agency Page - Informations de l'agence de rattachement
  */
 
-import { useState, useEffect } from 'react';
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from '@/integrations/supabase/client';
-import { logError } from '@/lib/logger';
+import { useEffect } from 'react';
+import { useAuthCore } from "@/contexts/AuthCoreContext";
+import { useProfile } from "@/contexts/ProfileContext";
 import { WarmCard } from "@/components/ui/warm-card";
 import { WarmPageContainer } from "@/components/ui/warm-page-container";
-import { Building2, MapPin, Phone, Mail, Loader2 } from "lucide-react";
+import { Building2, MapPin, Phone, Mail } from "lucide-react";
 import { AgencyInfoCompact } from '@/components/pilotage/AgencyInfoCompact';
 import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
 import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
@@ -16,65 +15,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-
-interface ProfileData {
-  agence: string | null; // resolved from agency_id
-}
-
 export default function Agency() {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuthCore();
+  const { agence } = useProfile();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/');
-      return;
     }
-    loadProfile();
-  }, [isAuthenticated, user]);
-
-  const loadProfile = async () => {
-    if (!user) return;
-
-    try {
-      setIsLoading(true);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('agency_id')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (error) throw error;
-      if (data) {
-        // Resolve slug from agency_id
-        let slug: string | null = null;
-        if (data.agency_id) {
-          const { data: ag } = await supabase.from('apogee_agencies').select('slug').eq('id', data.agency_id).single();
-          slug = ag?.slug || null;
-        }
-        setProfile({ agence: slug });
-      }
-    } catch (error) {
-      logError('Error loading profile:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [isAuthenticated]);
 
   if (!isAuthenticated) {
     return null;
-  }
-
-  if (isLoading) {
-    return (
-      <WarmPageContainer maxWidth="4xl" className="min-h-screen">
-        <div className="flex items-center justify-center py-24">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      </WarmPageContainer>
-    );
   }
 
   return (
@@ -108,7 +61,7 @@ export default function Agency() {
                 Agence
               </Label>
               <Input
-                value={profile?.agence || ''}
+                value={agence || ''}
                 disabled
                 className="bg-muted cursor-not-allowed rounded-xl"
                 placeholder="Non rattaché"
