@@ -4020,7 +4020,7 @@ export type Database = {
           fonction: string
           hiring_date: string | null
           id: string
-          is_registered_user: boolean
+          is_registered_user: boolean | null
           last_name: string
           leaving_date: string | null
           left_at: string | null
@@ -4057,7 +4057,7 @@ export type Database = {
           fonction?: string
           hiring_date?: string | null
           id?: string
-          is_registered_user?: boolean
+          is_registered_user?: boolean | null
           last_name: string
           leaving_date?: string | null
           left_at?: string | null
@@ -4094,7 +4094,7 @@ export type Database = {
           fonction?: string
           hiring_date?: string | null
           id?: string
-          is_registered_user?: boolean
+          is_registered_user?: boolean | null
           last_name?: string
           leaving_date?: string | null
           left_at?: string | null

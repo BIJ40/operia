@@ -22,6 +22,8 @@ import { NavigationAccessView } from './user-profile-sheet/NavigationAccessView'
 import { GlobalRole } from '@/types/globalRoles';
 import { EnabledModules, MODULE_DEFINITIONS, ModuleKey } from '@/types/modules';
 import { getVisibleRoleLabel, getVisibleRoleColor, VISIBLE_ROLE_DESCRIPTIONS } from '@/lib/visibleRoleLabels';
+import { useAppFeatureFlag } from '@/hooks/useAppFeatureFlag';
+import { UserPermissionsColumnV2 } from './user-full-dialog/UserPermissionsColumnV2';
 import { UserProfile } from '@/hooks/use-user-management';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
