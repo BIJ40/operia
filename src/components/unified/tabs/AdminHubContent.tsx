@@ -20,7 +20,9 @@ import {
   OpsView,
   PlateformeView,
   ModulesMasterView,
+  ModulesMasterViewV2,
 } from '@/components/admin/views';
+import { useAppFeatureFlag } from '@/hooks/useAppFeatureFlag';
 import { lazy, Suspense, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';

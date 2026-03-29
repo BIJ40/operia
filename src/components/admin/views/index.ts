@@ -9,6 +9,7 @@ export { ContenuView } from './ContenuView';
 export { OpsView } from './OpsView';
 export { PlateformeView } from './PlateformeView';
 export { ModulesMasterView } from './ModulesMasterView';
+export { ModulesMasterViewV2 } from './ModulesMasterViewV2';
 export { default as SuiviClientsAdminView } from './SuiviClientsAdminView';
 export { default as OffresAndOptionsView } from './OffresAndOptionsView';
 export { default as AgencyFeaturesAdminView } from './AgencyFeaturesAdminView';
