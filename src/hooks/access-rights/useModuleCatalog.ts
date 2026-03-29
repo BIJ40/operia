@@ -43,6 +43,13 @@ function buildTree(
     });
 }
 
+/** Filtre récursif : ne garde que les nœuds déployés, en élagant les enfants non déployés */
+export function filterDeployedOnly(nodes: ModuleCatalogTree[]): ModuleCatalogTree[] {
+  return nodes
+    .filter(n => n.is_deployed)
+    .map(n => ({ ...n, children: filterDeployedOnly(n.children) }));
+}
+
 export function useModuleCatalog() {
   const queryClient = useQueryClient();
 
