@@ -40,6 +40,7 @@ const ApporteurAuditLogView = lazy(() => import('@/components/admin/views/Apport
 const AdminNotesView = lazy(() => import('@/components/admin/views/AdminNotesView'));
 const SuiviClientsAdminView = lazy(() => import('@/components/admin/views/SuiviClientsAdminView'));
 const OffresAndOptionsView = lazy(() => import('@/components/admin/views/OffresAndOptionsView'));
+const PlanCatalogViewV2 = lazy(() => import('@/components/admin/views/PlanCatalogViewV2'));
 const AgencyFeaturesAdminView = lazy(() => import('@/components/admin/views/AgencyFeaturesAdminView'));
 
 function LoadingFallback() {
@@ -246,7 +247,9 @@ export default function AdminHubContent() {
               />
               <DraggableFolderContentContainer accentColor={activeOffresAccent}>
                 <TabsContent value="overview" className="mt-0 focus-visible:outline-none">
-                  <Suspense fallback={<LoadingFallback />}><OffresAndOptionsView /></Suspense>
+                  <Suspense fallback={<LoadingFallback />}>
+                    {useV2 ? <PlanCatalogViewV2 /> : <OffresAndOptionsView />}
+                  </Suspense>
                 </TabsContent>
                 <TabsContent value="agency-features" className="mt-0 focus-visible:outline-none">
                   <Suspense fallback={<LoadingFallback />}><AgencyFeaturesAdminView /></Suspense>
