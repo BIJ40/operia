@@ -19,9 +19,6 @@ import { Button } from '@/components/ui/button';
 import { RotateCcw, Loader2, ChevronDown, ChevronRight } from 'lucide-react';
 import { ModuleKey } from '@/types/modules';
 import { toast } from 'sonner';
-import { deleteAllUserModules, bulkInsertUserModules } from '@/repositories/userModulesRepository';
-import { useQueryClient } from '@tanstack/react-query';
-import { useAuthCore } from '@/contexts/AuthCoreContext';
 
 interface Props {
   userId: string;
