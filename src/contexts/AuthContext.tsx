@@ -11,10 +11,10 @@ import { setSentryUser, clearSentryUser } from '@/lib/sentry';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { EnabledModules, ModuleKey, MODULE_DEFINITIONS, isModuleEnabled as checkModuleEnabled } from '@/types/modules';
 import { 
-  hasAccess, hasMinRole,
+  hasMinRole,
   type PermissionContext,
 } from '@/permissions';
-import { userModulesToEnabledModules } from '@/lib/userModulesUtils';
+
 
 // Sub-contexts (Phase 1 split)
 import { AuthCoreContext, type AuthCoreContextType } from './AuthCoreContext';

@@ -20,7 +20,8 @@ import {
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { EnabledModules, ModuleKey, isModuleEnabled, isModuleOptionEnabled } from '@/types/modules';
 import { SITEMAP_ROUTES, SECTION_LABELS, SitemapSection } from '@/config/sitemapData';
-import { usePlanTiers } from '@/hooks/access-rights';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { SPECIAL_ACCESS_KEYS, VISIBLE_SECTIONS } from './constants';
 
@@ -51,7 +52,19 @@ export function UserPermissionsColumn({
 }: UserPermissionsColumnProps) {
   const [expandedSections, setExpandedSections] = useState<SitemapSection[]>([]);
   const [addAccessOpen, setAddAccessOpen] = useState(false);
-  const { data: planTiers } = usePlanTiers();
+  const { data: planTiers } = useQuery({
+    queryKey: ['plan-catalog-labels'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('plan_catalog')
+        .select('id, name, slug')
+        .eq('is_active', true)
+        .order('display_order');
+      if (error) throw error;
+      return (data || []).map(p => ({ key: p.slug?.toUpperCase() || p.id, label: p.name }));
+    },
+    staleTime: 5 * 60_000,
+  });
 
   const userLevel = globalRole ? GLOBAL_ROLES[globalRole] ?? 0 : 0;
   const isN5Plus = userLevel >= GLOBAL_ROLES.platform_admin;
