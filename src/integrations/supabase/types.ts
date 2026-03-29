@@ -1997,6 +1997,24 @@ export type Database = {
           },
         ]
       }
+      app_feature_flags: {
+        Row: {
+          description: string | null
+          enabled: boolean
+          key: string
+        }
+        Insert: {
+          description?: string | null
+          enabled?: boolean
+          key: string
+        }
+        Update: {
+          description?: string | null
+          enabled?: boolean
+          key?: string
+        }
+        Relationships: []
+      }
       app_notification_settings: {
         Row: {
           email_enabled: boolean
@@ -7612,6 +7630,106 @@ export type Database = {
           verdict_reasons?: string[] | null
         }
         Relationships: []
+      }
+      module_catalog: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          display_type: string | null
+          is_core: boolean
+          is_delegatable: boolean
+          is_deployed: boolean
+          key: string
+          label: string
+          min_role: number
+          node_type: string
+          parent_key: string | null
+          preconditions: Json
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          display_type?: string | null
+          is_core?: boolean
+          is_delegatable?: boolean
+          is_deployed?: boolean
+          key: string
+          label: string
+          min_role?: number
+          node_type: string
+          parent_key?: string | null
+          preconditions?: Json
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          display_type?: string | null
+          is_core?: boolean
+          is_delegatable?: boolean
+          is_deployed?: boolean
+          key?: string
+          label?: string
+          min_role?: number
+          node_type?: string
+          parent_key?: string | null
+          preconditions?: Json
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_catalog_parent_key_fkey"
+            columns: ["parent_key"]
+            isOneToOne: false
+            referencedRelation: "module_catalog"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      module_distribution_rules: {
+        Row: {
+          activation_mode: string
+          assignable_by_scope: string
+          module_key: string
+          stripe_sellable: boolean
+          via_agency_option: boolean
+          via_plan: boolean
+          via_user_assignment: boolean
+        }
+        Insert: {
+          activation_mode?: string
+          assignable_by_scope?: string
+          module_key: string
+          stripe_sellable?: boolean
+          via_agency_option?: boolean
+          via_plan?: boolean
+          via_user_assignment?: boolean
+        }
+        Update: {
+          activation_mode?: string
+          assignable_by_scope?: string
+          module_key?: string
+          stripe_sellable?: boolean
+          via_agency_option?: boolean
+          via_plan?: boolean
+          via_user_assignment?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_distribution_rules_module_key_fkey"
+            columns: ["module_key"]
+            isOneToOne: true
+            referencedRelation: "module_catalog"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       module_registry: {
         Row: {
