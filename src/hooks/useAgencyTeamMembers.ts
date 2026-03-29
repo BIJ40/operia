@@ -39,14 +39,14 @@ export interface TeamMemberStats {
 }
 
 export function useAgencyTeamMembers(agencyId?: string) {
-  const { agencyId: userAgencyId, agence } = useAuth();
+  const { agencyId: userAgencyId } = useAuth();
   const canManage = useHasMinLevel(2); // N2+
   const effectiveAgencyId = agencyId || userAgencyId;
 
   const query = useQuery({
-    queryKey: ["agency-team-members", effectiveAgencyId, agence],
+    queryKey: ["agency-team-members", effectiveAgencyId],
     queryFn: async (): Promise<Collaborator[]> => {
-      if (!effectiveAgencyId && !agence) return [];
+      if (!effectiveAgencyId) return [];
 
       // Fetch profiles (source of truth for accounts)
       let profilesQuery = supabase
@@ -122,7 +122,7 @@ export function useAgencyTeamMembers(agencyId?: string) {
         };
       });
     },
-    enabled: !!(effectiveAgencyId || agence),
+    enabled: !!effectiveAgencyId,
     staleTime: 2 * 60 * 1000,
   });
 
