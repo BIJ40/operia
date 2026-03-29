@@ -71,6 +71,9 @@ export function useUpsertUserAccess() {
       queryClient.invalidateQueries({ queryKey: ['user_access', vars.user_id] });
       queryClient.invalidateQueries({ queryKey: ['user_permissions_v2', vars.user_id] });
     },
+    onError: (error) => {
+      console.error('[useUpsertUserAccess] ERREUR:', error);
+    },
   });
 }
 
