@@ -159,11 +159,11 @@ export function PermissionsMatrixView() {
       </div>
 
       {/* Légende */}
-      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-        <span><span className="text-primary">✓</span> Plan / Socle</span>
-        <span><span className="text-amber-500">✓</span> Option agence</span>
-        <span><span className="text-green-500">✓</span> Individuel / Exception</span>
-        <span><span className="text-destructive/40">✗</span> Non accordé</span>
+      <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground bg-muted/30 rounded-lg px-4 py-2.5">
+        <span className="flex items-center gap-1"><ShieldCheck className="w-4 h-4 text-primary" /> Plan / Socle</span>
+        <span className="flex items-center gap-1"><ShieldCheck className="w-4 h-4 text-amber-500" /> Option agence</span>
+        <span className="flex items-center gap-1"><Sparkles className="w-4 h-4 text-emerald-500" /> Individuel / Exception</span>
+        <span className="flex items-center gap-1"><ShieldX className="w-4 h-4 text-destructive/30" /> Non accordé</span>
       </div>
 
       {!selectedUserId && (
