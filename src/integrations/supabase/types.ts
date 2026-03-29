@@ -8538,6 +8538,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          agence: string | null
           agency_id: string | null
           apogee_user_id: number | null
           avatar_url: string | null
@@ -8562,9 +8563,9 @@ export type Database = {
           poste: string | null
           role_agence: string | null
           updated_at: string
-          username: string | null
         }
         Insert: {
+          agence?: string | null
           agency_id?: string | null
           apogee_user_id?: number | null
           avatar_url?: string | null
@@ -8589,9 +8590,9 @@ export type Database = {
           poste?: string | null
           role_agence?: string | null
           updated_at?: string
-          username?: string | null
         }
         Update: {
+          agence?: string | null
           agency_id?: string | null
           apogee_user_id?: number | null
           avatar_url?: string | null
@@ -8616,7 +8617,6 @@ export type Database = {
           poste?: string | null
           role_agence?: string | null
           updated_at?: string
-          username?: string | null
         }
         Relationships: [
           {

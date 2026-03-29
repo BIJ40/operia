@@ -57,7 +57,7 @@ export default function GuidesTabContent() {
       .filter((tab) => {
         if (tab.moduleKey === null) return true;
         if (isAdmin) return true;
-        return true; // Show all, disable if no access
+        return hasModule(tab.moduleKey);
       })
       .map((tab) => {
         const hasAccess = tab.moduleKey === null

@@ -30,6 +30,7 @@ interface UserResult {
   global_role: GlobalRole | null;
   agency_id: string | null;
   role_agence: string | null;
+  apogee_agencies: { slug: string } | null;
 }
 
 interface RealUserImpersonationDialogProps {
@@ -62,7 +63,7 @@ export function RealUserImpersonationDialog({ open, onOpenChange }: RealUserImpe
       
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, first_name, last_name, global_role, agency_id, role_agence')
+        .select('id, email, first_name, last_name, global_role, agency_id, role_agence, apogee_agencies(slug)')
         .or(`email.ilike.%${searchQuery}%,first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%`)
         .limit(20);
       
@@ -209,7 +210,7 @@ export function RealUserImpersonationDialog({ open, onOpenChange }: RealUserImpe
                 </div>
                 <div className="flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-muted-foreground" />
-                  <span>{selectedUser.agency_id || 'Aucune agence'}</span>
+                  <span>{selectedUser.apogee_agencies?.slug || selectedUser.agency_id || 'Aucune agence'}</span>
                 </div>
               </div>
 
