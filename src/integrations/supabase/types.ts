@@ -8267,6 +8267,54 @@ export type Database = {
         }
         Relationships: []
       }
+      permissions_audit_log: {
+        Row: {
+          action_type: string
+          actor_role: string | null
+          actor_user_id: string | null
+          created_at: string
+          id: string
+          module_key: string | null
+          new_value: Json | null
+          old_value: Json | null
+          reason: string | null
+          scope_id: string | null
+          scope_type: string
+          target_id: string
+          target_type: string
+        }
+        Insert: {
+          action_type: string
+          actor_role?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          module_key?: string | null
+          new_value?: Json | null
+          old_value?: Json | null
+          reason?: string | null
+          scope_id?: string | null
+          scope_type: string
+          target_id: string
+          target_type: string
+        }
+        Update: {
+          action_type?: string
+          actor_role?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          module_key?: string | null
+          new_value?: Json | null
+          old_value?: Json | null
+          reason?: string | null
+          scope_id?: string | null
+          scope_type?: string
+          target_id?: string
+          target_type?: string
+        }
+        Relationships: []
+      }
       plan_catalog: {
         Row: {
           color: string | null
