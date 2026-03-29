@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Users, ChevronDown, ChevronUp, Eye, User, Crown, UserPlus } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, ChevronDown, ChevronUp, Eye, User, Crown, UserPlus, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/config/routes';
 import {
