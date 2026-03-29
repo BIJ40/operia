@@ -9,7 +9,7 @@
  */
 
 import { useMemo, useCallback, useState } from 'react';
-import { useUserModules, useToggleModule } from '@/hooks/useUserModules';
+
 import { getDelegatableModules } from '@/lib/delegatableModules';
 import { useAgencyHasApporteurs } from '@/hooks/useAgencyHasApporteurs';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
@@ -44,11 +44,10 @@ interface HierarchicalModule {
 }
 
 export function TeamMemberModules({ userId, roleAgence, n2HasModule, isDeployedModule }: Props) {
-  const { data: userModules, isLoading } = useUserModules(userId);
-  const toggleModule = useToggleModule();
-  const { getShortLabel } = useModuleLabels();
-  const agencyHasApporteurs = useAgencyHasApporteurs();
-  const [collapsedParents, setCollapsedParents] = useState<Set<string>>(new Set());
+  // V2: modules are managed via the permissions system, not user_modules table
+  const userModules: Record<string, any> | null = null;
+  const isLoading = false;
+  const toggleModule = { mutate: (_args: any) => { toast.info('Gestion des droits via le système V2'); }, isPending: false };
 
   const delegatableModules = useMemo(() => getDelegatableModules(), []);
 

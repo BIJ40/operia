@@ -80,6 +80,11 @@ export function useAccessRightsUsers() {
       
       if (profilesError) throw profilesError;
       
+      // Fetch all agencies to resolve by slug when agency_id is null
+      const { data: allAgencies } = await supabase
+        .from('apogee_agencies')
+        .select('id, label, slug');
+
       const enrichedUsers = profilesData?.map(user => {
         let enrichedUser = { ...user, enabled_modules: null as EnabledModules | null };
         
