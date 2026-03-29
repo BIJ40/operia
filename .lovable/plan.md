@@ -1,36 +1,41 @@
 
 
-## Problème
+## Probleme
 
-L'interface "Options par agence" existe mais est vide car les modules n'ont pas `via_agency_option = true` dans `module_distribution_rules`. Pour activer un module sur une agence, il faut actuellement passer par SQL — ce qui n'est pas viable.
+Le panneau dépliable des agences ne fonctionne pas parce que le contenu expansé est rendu **en dehors et après** la grille de cartes (ligne 488 de `AdminAgencies.tsx`). Quand vous cliquez le chevron, l'état change bien en interne, mais le panneau apparait tout en bas de la page, après toutes les cartes — invisible sans scroller.
+
+```text
+┌─────────────────────────────────┐
+│  Grille 4 colonnes (cartes)     │  ← Visible
+│  [Card1] [Card2] [Card3] [Card4]│
+│  [Card5] [Card6] [Card7] [Card8]│
+│  ...                            │
+└─────────────────────────────────┘
+  ← Panneau expansé ici, hors vue
+  [Expanded Card3 details]
+```
 
 ## Solution
 
-Une seule migration SQL pour marquer les bons modules comme activables en option agence. Apres ca, l'UI existante (`AgencyEntitlementsViewV2`) fonctionnera automatiquement : vous pourrez sélectionner St-Omer, voir les modules disponibles, et les activer/désactiver en un clic.
+Restructurer le rendu pour que le panneau dépliable apparaisse **directement sous la carte cliquée**, en prenant toute la largeur de la grille. Cela implique de remplacer le pattern actuel (grille + liste séparée) par un rendu en boucle où chaque carte est suivie de son panneau expansé si ouvert, en utilisant CSS `col-span-full` pour que le panneau occupe toute la largeur.
 
-## Migration
+## Changements
 
-Mettre `via_agency_option = true` sur tous les modules de type `screen` ou `feature` qui ne sont pas déjà inclus dans le socle (`is_core = false`). Cela rend tous les modules commerciaux disponibles comme options activables par agence dans l'interface admin.
+**Fichier unique** : `src/pages/AdminAgencies.tsx`
 
-```sql
-UPDATE module_distribution_rules
-SET via_agency_option = true
-WHERE module_key IN (
-  SELECT key FROM module_catalog
-  WHERE is_deployed = true
-    AND is_core = false
-    AND node_type IN ('screen', 'feature')
-);
+1. Supprimer le bloc séparé de rendu des panneaux expansés (lignes 488-557) qui est en dehors de la grille
+2. Dans la boucle `.map()` de la grille (ligne 411), après chaque carte, injecter conditionnellement le panneau expansé avec `className="col-span-full"` quand `expandedAgencies.has(agency.id)`
+3. Le panneau contient les membres + `AgencyModuleOptions` comme actuellement
+
+```text
+┌─────────────────────────────────┐
+│  [Card1] [Card2] [Card3] [Card4]│
+│  ┌─── Panneau Card2 (full) ──┐  │  ← Apparait ici
+│  │ Membres + Options modules │  │
+│  └───────────────────────────┘  │
+│  [Card5] [Card6] [Card7] [Card8]│
+└─────────────────────────────────┘
 ```
 
-## Résultat
-
-- L'interface "Options par agence" dans Réseau affichera tous les modules non-socle
-- Vous pourrez activer/désactiver `relations.suivi_client`, `pilotage.maps`, etc. pour n'importe quelle agence
-- Plus besoin de SQL pour gérer les options agence
-- Les migrations précédentes (St-Omer hardcodé) deviennent inutiles car vous aurez le controle depuis l'UI
-
-## Verification
-
-Aucun changement de code — uniquement des données. L'UI `AgencyEntitlementsViewV2` et le hook `useAgencyEntitlements` fonctionnent déjà correctement.
+Le code de chaque carte retournera un `Fragment` contenant la carte + le panneau conditionnel, le tout restant dans le flux naturel de la grille CSS.
 
