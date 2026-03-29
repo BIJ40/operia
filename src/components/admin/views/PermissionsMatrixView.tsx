@@ -4,8 +4,21 @@ import { useModuleCatalog } from '@/hooks/access-rights/useModuleCatalog';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Shield, ShieldCheck, ShieldX, Sparkles } from 'lucide-react';
 import { SOURCE_LABELS, PermissionSource } from '@/types/permissions-v2';
+
+const CATEGORY_ORDER = ['accueil', 'pilotage', 'commercial', 'organisation', 'mediatheque', 'support', 'ticketing', 'admin'];
+
+const CATEGORY_STYLES: Record<string, { bg: string; border: string; text: string; icon: string }> = {
+  accueil:      { bg: 'bg-violet-50', border: 'border-violet-200', text: 'text-violet-700', icon: '🏠' },
+  pilotage:     { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700', icon: '📊' },
+  commercial:   { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700', icon: '💼' },
+  organisation: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700', icon: '🗂️' },
+  mediatheque:  { bg: 'bg-pink-50', border: 'border-pink-200', text: 'text-pink-700', icon: '📚' },
+  support:      { bg: 'bg-cyan-50', border: 'border-cyan-200', text: 'text-cyan-700', icon: '🛟' },
+  ticketing:    { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-700', icon: '🎫' },
+  admin:        { bg: 'bg-slate-100', border: 'border-slate-300', text: 'text-slate-700', icon: '⚙️' },
+};
 
 interface AgencyUser {
   id: string;
@@ -57,18 +70,18 @@ function useUserPermissionsForMatrix(userId: string | null) {
 
 function CellIcon({ granted, source }: { granted: boolean; source: string }) {
   if (!granted || source === 'not_granted') {
-    return <span className="text-destructive/40">✗</span>;
+    return <ShieldX className="w-5 h-5 text-destructive/30 mx-auto" />;
   }
   if (source === 'plan' || source === 'is_core') {
-    return <span className="text-primary">✓</span>;
+    return <ShieldCheck className="w-5 h-5 text-primary mx-auto" />;
   }
   if (source === 'option_agence') {
-    return <span className="text-amber-500">✓</span>;
+    return <ShieldCheck className="w-5 h-5 text-amber-500 mx-auto" />;
   }
   if (source === 'agency_delegation' || source === 'manual_exception') {
-    return <span className="text-green-500">✓</span>;
+    return <Sparkles className="w-5 h-5 text-emerald-500 mx-auto" />;
   }
-  return <span className="text-muted-foreground">○</span>;
+  return <Shield className="w-5 h-5 text-muted-foreground/40 mx-auto" />;
 }
 
 export function PermissionsMatrixView() {
@@ -146,11 +159,11 @@ export function PermissionsMatrixView() {
       </div>
 
       {/* Légende */}
-      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-        <span><span className="text-primary">✓</span> Plan / Socle</span>
-        <span><span className="text-amber-500">✓</span> Option agence</span>
-        <span><span className="text-green-500">✓</span> Individuel / Exception</span>
-        <span><span className="text-destructive/40">✗</span> Non accordé</span>
+      <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground bg-muted/30 rounded-lg px-4 py-2.5">
+        <span className="flex items-center gap-1"><ShieldCheck className="w-4 h-4 text-primary" /> Plan / Socle</span>
+        <span className="flex items-center gap-1"><ShieldCheck className="w-4 h-4 text-amber-500" /> Option agence</span>
+        <span className="flex items-center gap-1"><Sparkles className="w-4 h-4 text-emerald-500" /> Individuel / Exception</span>
+        <span className="flex items-center gap-1"><ShieldX className="w-4 h-4 text-destructive/30" /> Non accordé</span>
       </div>
 
       {!selectedUserId && (
@@ -176,9 +189,9 @@ export function PermissionsMatrixView() {
                 <th className="text-left px-3 py-2 text-xs font-medium text-muted-foreground">Niveau</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
-              {Object.entries(
-                deployedModules.reduce<Record<string, typeof deployedModules>>(
+            <tbody>
+              {(() => {
+                const byCategory = deployedModules.reduce<Record<string, typeof deployedModules>>(
                   (acc, m) => {
                     const cat = m.category ?? 'Autre';
                     if (!acc[cat]) acc[cat] = [];
@@ -186,48 +199,79 @@ export function PermissionsMatrixView() {
                     return acc;
                   },
                   {}
-                )
-              ).map(([category, mods]) => (
-                <React.Fragment key={category}>
-                  <tr className="bg-muted/30 border-b border-t">
-                    <td colSpan={4} className="py-1 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                      {category}
-                    </td>
-                  </tr>
-                  {mods.map(mod => {
-                    const perm = permMap.get(mod.key);
-                    const granted = perm?.granted ?? false;
-                    const source = perm?.source_summary ?? 'not_granted';
-                    const level = perm?.access_level ?? 'none';
-
-                    return (
-                      <tr key={mod.key} className="hover:bg-muted/20">
-                        <td className="px-3 py-2">
-                          <div>
-                            <span className="text-foreground text-xs font-medium">{mod.label}</span>
-                            <span className="text-muted-foreground text-xs ml-1.5 font-mono">{mod.key}</span>
-                          </div>
-                        </td>
-                        <td className="px-3 py-2 text-center">
-                          <CellIcon granted={granted} source={source} />
-                        </td>
-                        <td className="px-3 py-2 text-xs text-muted-foreground">
-                          {granted && source !== 'not_granted'
-                            ? SOURCE_LABELS[source as PermissionSource] ?? source
-                            : '—'}
-                        </td>
-                        <td className="px-3 py-2">
-                          {granted && level !== 'none' ? (
-                            <Badge variant="outline" className="text-xs">
-                              {level === 'full' ? 'Complet' : level === 'read' ? 'Lecture' : '—'}
-                            </Badge>
-                          ) : '—'}
+                );
+                const sortedCategories = Object.entries(byCategory).sort(([a], [b]) => {
+                  const ia = CATEGORY_ORDER.indexOf(a);
+                  const ib = CATEGORY_ORDER.indexOf(b);
+                  if (ia === -1 && ib === -1) return a.localeCompare(b);
+                  if (ia === -1) return 1;
+                  if (ib === -1) return -1;
+                  return ia - ib;
+                });
+                return sortedCategories.map(([category, mods]) => {
+                  const style = CATEGORY_STYLES[category] ?? { bg: 'bg-muted/30', border: 'border-border', text: 'text-muted-foreground', icon: '📦' };
+                  return (
+                    <React.Fragment key={category}>
+                      <tr className={`${style.bg} ${style.border} border-b border-t`}>
+                        <td colSpan={4} className={`py-2.5 px-4 text-xs font-bold ${style.text} uppercase tracking-widest`}>
+                          <span className="mr-2 text-sm">{style.icon}</span>
+                          {category}
                         </td>
                       </tr>
-                    );
-                  })}
-                </React.Fragment>
-              ))}
+                      {mods.map(mod => {
+                        const perm = permMap.get(mod.key);
+                        const granted = perm?.granted ?? false;
+                        const source = perm?.source_summary ?? 'not_granted';
+                        const level = perm?.access_level ?? 'none';
+
+                        return (
+                          <tr
+                            key={mod.key}
+                            className={`border-b border-border/50 transition-all hover:bg-muted/30 ${
+                              granted ? '' : 'opacity-45'
+                            }`}
+                          >
+                            <td className="py-2.5 px-4">
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-sm font-semibold text-foreground">{mod.label}</span>
+                                <span className="text-[10px] text-muted-foreground/60 font-mono">{mod.key}</span>
+                              </div>
+                            </td>
+                            <td className="py-2.5 px-3 text-center">
+                              <CellIcon granted={granted} source={source} />
+                            </td>
+                            <td className="py-2.5 px-3">
+                              {granted && source !== 'not_granted' ? (
+                                <span className="text-xs font-medium text-foreground/70">
+                                  {SOURCE_LABELS[source as PermissionSource] ?? source}
+                                </span>
+                              ) : (
+                                <span className="text-xs text-muted-foreground/40">—</span>
+                              )}
+                            </td>
+                            <td className="py-2.5 px-3">
+                              {granted && level !== 'none' ? (
+                                <Badge
+                                  variant="outline"
+                                  className={`text-[10px] font-semibold ${
+                                    level === 'full'
+                                      ? 'border-emerald-300 text-emerald-700 bg-emerald-50'
+                                      : 'border-sky-300 text-sky-700 bg-sky-50'
+                                  }`}
+                                >
+                                  {level === 'full' ? '● Complet' : '◐ Lecture'}
+                                </Badge>
+                              ) : (
+                                <span className="text-xs text-muted-foreground/40">—</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </React.Fragment>
+                  );
+                });
+              })()}
             </tbody>
           </table>
         </div>
