@@ -12272,6 +12272,74 @@ export type Database = {
         }
         Relationships: []
       }
+      user_access: {
+        Row: {
+          access_level: string
+          delegated_by: string | null
+          granted: boolean
+          granted_at: string
+          granted_by: string | null
+          id: string
+          module_key: string
+          options: Json | null
+          source: string
+          user_id: string
+        }
+        Insert: {
+          access_level?: string
+          delegated_by?: string | null
+          granted?: boolean
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          module_key: string
+          options?: Json | null
+          source: string
+          user_id: string
+        }
+        Update: {
+          access_level?: string
+          delegated_by?: string | null
+          granted?: boolean
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          module_key?: string
+          options?: Json | null
+          source?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_access_delegated_by_fkey"
+            columns: ["delegated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_access_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_access_module_key_fkey"
+            columns: ["module_key"]
+            isOneToOne: false
+            referencedRelation: "module_catalog"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "user_access_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_actions_config: {
         Row: {
           created_at: string
