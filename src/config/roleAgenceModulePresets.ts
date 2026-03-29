@@ -57,7 +57,7 @@ export const N2_ASSIGNABLE_MODULES = getDelegatableModules();
  */
 export const ROLE_AGENCE_MODULE_PRESETS: Record<string, ModuleKey[]> = {
   commercial: [
-    'commercial.suivi_client',
+    'commercial.veille',
     'commercial.comparateur',
     'commercial.prospects',
     'commercial.realisations',

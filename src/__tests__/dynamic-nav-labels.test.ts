@@ -18,7 +18,7 @@ describe('Dynamic nav labels follow admin renames', () => {
     'pilotage.statistiques': 'Mes Statistiques',
     'pilotage.statistiques.general': 'Vue Globale',
     'commercial.realisations': 'Nos Réalisations',
-    'organisation.apporteurs': 'Partenaires',
+    'relations.apporteurs': 'Partenaires',
     'organisation.parc': 'Véhicules',
     'prospection': 'Développement',
   };
@@ -59,7 +59,7 @@ describe('Dynamic nav labels follow admin renames', () => {
       
       'pilotage.incoherences',
       'commercial.realisations',
-      'organisation.apporteurs',
+      'relations.apporteurs',
       'organisation.parc',
       'organisation.reunions',
       'organisation.plannings',

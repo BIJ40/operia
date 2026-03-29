@@ -45,13 +45,13 @@ export default function OrganisationTabContent() {
 
   const allTabs: (PillTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
     { id: 'collaborateurs', label: getShortLabel('organisation.salaries', 'Salariés'), icon: Users, accent: 'blue', requiresModule: 'organisation.salaries' },
-    { id: 'apporteurs', label: getShortLabel('organisation.apporteurs', 'Apporteurs'), icon: Handshake, accent: 'purple', requiresModule: 'organisation.apporteurs' },
+    { id: 'apporteurs', label: getShortLabel('relations.apporteurs', 'Apporteurs'), icon: Handshake, accent: 'purple', requiresModule: 'relations.apporteurs' },
     { id: 'plannings', label: getShortLabel('organisation.plannings', 'Plannings'), icon: CalendarDays, accent: 'green', requiresModule: 'organisation.plannings' },
     { id: 'zones', label: getShortLabel('organisation.zones', 'Zones'), icon: MapPin, accent: 'orange', requiresModule: 'organisation.zones' },
     { id: 'reunions', label: getShortLabel('organisation.reunions', 'Réunions'), icon: Users2, accent: 'orange', requiresModule: 'organisation.reunions' },
     { id: 'parc', label: getShortLabel('organisation.parc', 'Parc'), icon: Car, accent: 'pink', requiresModule: 'organisation.parc' },
     { id: 'conformite', label: getShortLabel('organisation.documents_legaux', 'Documents légaux'), icon: FileText, accent: 'teal', requiresModule: 'organisation.documents_legaux' },
-    { id: 'echanges-apporteurs', label: 'Échanges apporteurs', icon: MessagesSquare, accent: 'purple', requiresModule: 'organisation.apporteurs' },
+    { id: 'echanges-apporteurs', label: 'Échanges apporteurs', icon: MessagesSquare, accent: 'purple', requiresModule: 'relations.apporteurs' },
     ...(globalRole && ['franchisee_admin', 'franchisor_user', 'franchisor_admin', 'platform_admin', 'superadmin'].includes(globalRole)
       ? [{ id: 'droits-equipe', label: 'Droits équipe', icon: Shield, accent: 'blue' as const, requiresModule: 'organisation.salaries' as ModuleKey }]
       : []),

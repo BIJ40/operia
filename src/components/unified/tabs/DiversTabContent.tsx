@@ -43,7 +43,7 @@ type AdminSubTab = 'reunions' | 'plannings' | 'documents' | 'zones';
 // Configuration des onglets principaux (niveau 1)
 // Configuration des onglets principaux avec module requis
 // Note: MAIN_TABS_CONFIG moved inside DiversTabContent to use useModuleLabels hook
-// A: 'Apporteurs' (organisation.apporteurs), 'Parc' (organisation.parc), 'Commercial' (prospection) → resolver
+// A: 'Apporteurs' (relations.apporteurs), 'Parc' (organisation.parc), 'Commercial' (prospection) → resolver
 // B: 'Actions', 'Administratif', 'Performance', 'Devis acceptés', 'Incohérences' → structural/sub-feature labels
 
 function LoadingFallback() {
@@ -231,7 +231,7 @@ export default function DiversTabContent() {
 
   const mainTabsConfig: (PillTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
     { id: 'actions', label: 'Actions', icon: Settings, accent: 'blue' },
-    { id: 'apporteurs', label: getShortLabel('organisation.apporteurs', 'Apporteurs'), icon: Users, accent: 'purple', requiresModule: 'organisation.apporteurs' },
+    { id: 'apporteurs', label: getShortLabel('relations.apporteurs', 'Apporteurs'), icon: Users, accent: 'purple', requiresModule: 'relations.apporteurs' },
     { id: 'administratif', label: 'Administratif', icon: FolderOpen, accent: 'orange', requiresModule: 'pilotage.agence' },
     { id: 'parc', label: getShortLabel('organisation.parc', 'Parc'), icon: Car, accent: 'green', requiresModule: 'organisation.parc' },
     { id: 'performance', label: 'Performance', icon: Activity, accent: 'pink', requiresModule: 'pilotage.agence' },

@@ -22,7 +22,7 @@ import { DEFAULT_MODULES_BY_ROLE } from '@/config/modulesByRole';
 import { getValidModuleKeys, getValidOptionKeys } from '../moduleRegistry';
 
 const KNOWN_GHOST_KEYS = [
-  'commercial.suivi_client',
+  'commercial.veille',
   'commercial.comparateur',
   'commercial.veille',
   'commercial.prospects',

@@ -221,7 +221,7 @@ describe('User overrides', () => {
 
 describe('Ghost key prevention', () => {
   const ghostKeys = [
-    'commercial.suivi_client',
+    'commercial.veille',
     'commercial.comparateur',
     'commercial.veille',
     'commercial.prospects',

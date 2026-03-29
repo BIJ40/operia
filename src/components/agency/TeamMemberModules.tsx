@@ -59,7 +59,7 @@ export function TeamMemberModules({ userId, roleAgence, n2HasModule, isDeployedM
 
   const assignableModules = useMemo(() => {
     return delegatableModules.filter(m => {
-      if (m.key === 'organisation.apporteurs' && !agencyHasApporteurs) return false;
+      if (m.key === 'relations.apporteurs' && !agencyHasApporteurs) return false;
       return isDeployedModule(m.key) && n2HasModule(m.key);
     });
   }, [delegatableModules, n2HasModule, isDeployedModule, agencyHasApporteurs]);

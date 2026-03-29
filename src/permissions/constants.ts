@@ -116,8 +116,8 @@ export const MODULE_OPTION_MIN_ROLES: Record<string, GlobalRole> = {
   'mediatheque.documents.corbeille_vider': 'franchisee_admin',
   
   // Organisation — Apporteurs (ex-divers_apporteurs)
-  'organisation.apporteurs.consulter': 'franchisee_admin',
-  'organisation.apporteurs.gerer': 'franchisee_admin',
+  'relations.apporteurs.consulter': 'franchisee_admin',
+  'relations.apporteurs.gerer': 'franchisee_admin',
   
   // Support — Guides (ex-guides)
   'support.guides.apogee': 'base_user',

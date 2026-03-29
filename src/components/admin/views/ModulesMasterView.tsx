@@ -418,7 +418,7 @@ const MODULE_ROUTES: Record<string, ModuleRouteEntry> = {
   // Commercial
   commercial: { route: '/?tab=commercial' },
   prospection: { route: '/?tab=commercial' },
-  'commercial.suivi_client': { route: '/?tab=commercial', subTabKey: 'commercial_sub_tab', subTabValue: 'apporteurs' },
+  'commercial.veille': { route: '/?tab=commercial', subTabKey: 'commercial_sub_tab', subTabValue: 'apporteurs' },
   'commercial.comparateur': { route: '/?tab=commercial', subTabKey: 'commercial_sub_tab', subTabValue: 'comparateur' },
   'commercial.prospects': { route: '/?tab=commercial', subTabKey: 'commercial_sub_tab', subTabValue: 'prospects' },
   'commercial.realisations': { route: '/?tab=commercial', subTabKey: 'commercial_sub_tab', subTabValue: 'realisations' },
@@ -426,7 +426,7 @@ const MODULE_ROUTES: Record<string, ModuleRouteEntry> = {
   // Organisation
   organisation: { route: '/?tab=organisation' },
   'organisation.salaries': { route: '/?tab=organisation', subTabKey: 'organisation_sub_tab', subTabValue: 'collaborateurs' },
-  'organisation.apporteurs': { route: '/?tab=organisation', subTabKey: 'organisation_sub_tab', subTabValue: 'apporteurs' },
+  'relations.apporteurs': { route: '/?tab=organisation', subTabKey: 'organisation_sub_tab', subTabValue: 'apporteurs' },
   'organisation.plannings': { route: '/?tab=organisation', subTabKey: 'organisation_sub_tab', subTabValue: 'plannings' },
   'organisation.zones': { route: '/?tab=organisation', subTabKey: 'organisation_sub_tab', subTabValue: 'zones' },
   'organisation.reunions': { route: '/?tab=organisation', subTabKey: 'organisation_sub_tab', subTabValue: 'reunions' },

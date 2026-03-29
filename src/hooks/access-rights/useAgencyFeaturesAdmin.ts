@@ -12,7 +12,7 @@ import type { AgencyFeatureRow } from './useAgencyFeature';
 import type { AgencyFeatureStatus, AgencyFeatureBillingMode } from '@/config/agencyFeatures';
 
 /**
- * Bridge: sync organisation.apporteurs in user_modules for all agency users
+ * Bridge: sync relations.apporteurs in user_modules for all agency users
  * when Relations pack is activated or deactivated.
  */
 async function syncApporteursModuleForAgency(
@@ -31,10 +31,10 @@ async function syncApporteursModuleForAgency(
   const now = new Date().toISOString();
 
   if (activate) {
-    // Upsert organisation.apporteurs for each user
+    // Upsert relations.apporteurs for each user
     const rows = profiles.map((p) => ({
       user_id: p.id,
-      module_key: 'organisation.apporteurs',
+      module_key: 'relations.apporteurs',
       options: null,
       enabled_at: now,
       enabled_by: enabledBy,
@@ -44,12 +44,12 @@ async function syncApporteursModuleForAgency(
       .from('user_modules' as any) as any)
       .upsert(rows, { onConflict: 'user_id,module_key' });
   } else {
-    // Remove organisation.apporteurs for each user
+    // Remove relations.apporteurs for each user
     await (supabase
       .from('user_modules' as any) as any)
       .delete()
       .in('user_id', profiles.map((p) => p.id))
-      .eq('module_key', 'organisation.apporteurs');
+      .eq('module_key', 'relations.apporteurs');
   }
 }
 
@@ -202,7 +202,7 @@ export function useActivateRelationsPack() {
 
       if (error) throw error;
 
-      // Bridge: activate organisation.apporteurs for all agency users
+      // Bridge: activate relations.apporteurs for all agency users
       await syncApporteursModuleForAgency(agencyId, true, user?.id ?? null);
     },
     onSuccess: (_, agencyId) => {
@@ -234,7 +234,7 @@ export function useDeactivateRelationsPack() {
 
       if (error) throw error;
 
-      // Bridge: remove organisation.apporteurs for all agency users
+      // Bridge: remove relations.apporteurs for all agency users
       await syncApporteursModuleForAgency(agencyId, false, null);
     },
     onSuccess: (_, agencyId) => {

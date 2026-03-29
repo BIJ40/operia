@@ -45,7 +45,7 @@ const LEGACY_TO_HIERARCHICAL: Record<string, string> = {
   stats: 'pilotage.statistiques',
   rh: 'organisation.salaries',
   parc: 'organisation.parc',
-  divers_apporteurs: 'organisation.apporteurs',
+  divers_apporteurs: 'relations.apporteurs',
   divers_plannings: 'organisation.plannings',
   divers_reunions: 'organisation.reunions',
   divers_documents: 'mediatheque.documents',

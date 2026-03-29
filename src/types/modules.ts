@@ -39,9 +39,9 @@ export const MODULES = {
   // (pilotage.dashboard removed — merged into pilotage.statistiques)
   'pilotage.agence': 'pilotage.agence',
   // Commercial
-  'commercial.suivi_client': 'commercial.suivi_client',
+  'commercial.veille': 'commercial.veille',
   'commercial.comparateur': 'commercial.comparateur',
-  /** @deprecated Merged into commercial.suivi_client */
+  /** @deprecated Merged into commercial.veille */
   'commercial.veille': 'commercial.veille',
   'commercial.prospects': 'commercial.prospects',
   'commercial.realisations': 'commercial.realisations',
@@ -54,7 +54,7 @@ export const MODULES = {
   'commercial.realisations.valider_envoyer': 'commercial.realisations.valider_envoyer',
   // Organisation
   'organisation.salaries': 'organisation.salaries',
-  'organisation.apporteurs': 'organisation.apporteurs',
+  'relations.apporteurs': 'relations.apporteurs',
   'organisation.plannings': 'organisation.plannings',
   'organisation.reunions': 'organisation.reunions',
   'organisation.parc': 'organisation.parc',
@@ -99,9 +99,9 @@ export const MODULE_OPTIONS = {
     epi: 'organisation.parc.epi',
     equipements: 'organisation.parc.equipements',
   },
-  'organisation.apporteurs': {
-    consulter: 'organisation.apporteurs.consulter',
-    gerer: 'organisation.apporteurs.gerer',
+  'relations.apporteurs': {
+    consulter: 'relations.apporteurs.consulter',
+    gerer: 'relations.apporteurs.gerer',
   },
   'organisation.plannings': {},
   'organisation.reunions': {},
@@ -445,7 +445,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     ],
   },
   {
-    key: 'organisation.apporteurs',
+    key: 'relations.apporteurs',
     label: 'Apporteurs',
     description: 'Gestion des apporteurs',
     icon: 'Handshake',
@@ -455,8 +455,8 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     delegatable: true,
     minRole: 'franchisee_admin',
     options: [
-      { key: 'consulter', path: 'organisation.apporteurs.consulter', label: 'Consulter', description: 'Voir les apporteurs', defaultEnabled: true, routes: ['/?tab=organisation'] },
-      { key: 'gerer', path: 'organisation.apporteurs.gerer', label: 'Gérer', description: 'Créer/modifier', defaultEnabled: true, routes: ['/?tab=organisation'] },
+      { key: 'consulter', path: 'relations.apporteurs.consulter', label: 'Consulter', description: 'Voir les apporteurs', defaultEnabled: true, routes: ['/?tab=organisation'] },
+      { key: 'gerer', path: 'relations.apporteurs.gerer', label: 'Gérer', description: 'Créer/modifier', defaultEnabled: true, routes: ['/?tab=organisation'] },
     ],
   },
   {
@@ -622,7 +622,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
   },
   // Commercial sub-modules (promoted from prospection options)
   {
-    key: 'commercial.suivi_client',
+    key: 'commercial.veille',
     label: 'Veille',
     description: 'Suivi et veille apporteurs',
     icon: 'Users',
@@ -648,7 +648,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
   {
     key: 'commercial.veille',
     label: 'Veille (legacy)',
-    description: 'Monitoring apporteurs — fusionné dans commercial.suivi_client',
+    description: 'Monitoring apporteurs — fusionné dans commercial.veille',
     icon: 'Radar',
     category: 'commercial',
     uiSubTab: 'apporteurs',
@@ -896,14 +896,14 @@ export const MODULE_SHORT_LABELS: Partial<Record<ModuleKey, string>> = {
   'pilotage.rentabilite': 'Rentabilité',
   'pilotage.tresorerie': 'Trésorerie',
   // Commercial
-  'commercial.suivi_client': 'Veille',
+  'commercial.veille': 'Veille',
   'commercial.comparateur': 'Comparateur',
-  // commercial.veille — fusionné dans commercial.suivi_client
+  // commercial.veille — fusionné dans commercial.veille
   'commercial.prospects': 'Prospects',
   'commercial.realisations': 'Réalisations',
   // Organisation
   'organisation.salaries': 'Salariés',
-  'organisation.apporteurs': 'Apporteurs',
+  'relations.apporteurs': 'Apporteurs',
   'organisation.plannings': 'Plannings',
   'organisation.reunions': 'Réunions',
   'organisation.parc': 'Parc',
