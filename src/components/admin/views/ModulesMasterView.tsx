@@ -32,7 +32,7 @@ import {
   useSearchProfiles,
   type UserOverride,
 } from '@/hooks/access-rights/useModuleOverrides';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBridge';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';

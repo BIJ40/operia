@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { useGeneratedVisuals } from '../hooks/useGeneratedVisuals';
 import { useDeleteMedia } from '../hooks/useRealisationMedia';
 import { useDispatchVisualWebhook } from '../hooks/useDispatchVisualWebhook';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBridge';
 import {
   AlertDialog,
   AlertDialogAction,

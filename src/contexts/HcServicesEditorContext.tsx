@@ -3,7 +3,7 @@ import { logError } from '@/lib/logger';
 import { useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBridge';
 import { supabase } from '@/integrations/supabase/client';
 import { CacheManager } from '@/lib/cache-manager';
 

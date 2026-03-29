@@ -24,7 +24,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useBrowserTabs, AVAILABLE_MODULES } from './BrowserTabsContext';
 import { BrowserTab } from './BrowserTab';
 import { cn } from '@/lib/utils';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBridge';
 import { hasMinimumRole } from '@/types/globalRoles';
 
 export function BrowserTabsBar() {

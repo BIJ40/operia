@@ -20,7 +20,7 @@ import {
   type NavigationEntry,
 } from '@/lib/navigationStructure';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBridge';
 
 interface NavigationAccessViewProps {
   effectiveModules: Record<string, { enabled?: boolean; options?: Record<string, boolean> }>;

@@ -12,7 +12,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo, ReactNode } from 'react';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { useProfile } from '@/contexts/ProfileContext';
-import { usePermissions as usePermissionsCtx } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge as usePermissionsCtx } from '@/hooks/usePermissionsBridge';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 
 import { apogeeProxy } from '@/services/apogeeProxy';

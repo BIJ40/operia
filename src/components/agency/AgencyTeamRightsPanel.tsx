@@ -10,7 +10,7 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBridge';
 import { useUserModules } from '@/hooks/useUserModules';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
 import { getDelegatableModules } from '@/config/roleAgenceModulePresets';
