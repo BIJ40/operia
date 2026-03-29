@@ -39,7 +39,8 @@ export const MODULES = {
   'pilotage.maps': 'pilotage.maps',
   // (pilotage.dashboard removed — merged into pilotage.statistiques)
   'pilotage.agence': 'pilotage.agence',
-  // Commercial
+  // Commercial (racine + feuilles)
+  'commercial': 'commercial',
   'commercial.veille': 'commercial.veille',
   'commercial.comparateur': 'commercial.comparateur',
   'commercial.prospects': 'commercial.prospects',
@@ -53,7 +54,8 @@ export const MODULES = {
   'commercial.realisations.valider_envoyer': 'commercial.realisations.valider_envoyer',
   // Organisation
   'organisation.salaries': 'organisation.salaries',
-  // Relations
+  // Relations (racine + feuilles)
+  'relations': 'relations',
   'relations.apporteurs': 'relations.apporteurs',
   'organisation.plannings': 'organisation.plannings',
   'organisation.reunions': 'organisation.reunions',
