@@ -27,7 +27,7 @@ import { HeatPriorityBadge } from './HeatPriorityBadge';
 import { OwnerSideSlider, ownerSideToSliderValue, sliderValueToOwnerSide } from './OwnerSideSlider';
 import { Slider } from '@/components/ui/slider';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBridge';
 import { useMyTicketRole, useAllowedTransitions } from '../hooks/useTicketPermissions';
 import { TicketTimelineTab } from './TicketTimelineTab';
 import { TicketAttachmentsManager } from './TicketAttachmentsManager';
