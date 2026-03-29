@@ -13,7 +13,9 @@ import { Eye, Lock, LockOpen, User } from 'lucide-react';
 import { GlobalRole, GLOBAL_ROLES } from '@/types/globalRoles';
 import { UserInfoColumn } from './user-full-dialog/UserInfoColumn';
 import { UserPermissionsColumn } from './user-full-dialog/UserPermissionsColumn';
+import { UserPermissionsColumnV2 } from './user-full-dialog/UserPermissionsColumnV2';
 import { UserFullDialogProps, UserFormData } from './user-full-dialog/constants';
+import { useAppFeatureFlag } from '@/hooks/useAppFeatureFlag';
 
 // Re-export props type for external consumers
 export type { UserFullDialogProps } from './user-full-dialog/constants';
