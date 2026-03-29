@@ -254,7 +254,7 @@ export type Database = {
           },
         ]
       }
-      agency_features: {
+      agency_features_legacy: {
         Row: {
           activated_at: string | null
           agency_id: string
@@ -1019,7 +1019,7 @@ export type Database = {
           },
         ]
       }
-      agency_subscription: {
+      agency_subscription_legacy: {
         Row: {
           agency_id: string
           assigned_by: string | null
@@ -1058,7 +1058,7 @@ export type Database = {
             foreignKeyName: "agency_subscription_tier_key_fkey"
             columns: ["tier_key"]
             isOneToOne: false
-            referencedRelation: "plan_tiers"
+            referencedRelation: "plan_tiers_legacy"
             referencedColumns: ["key"]
           },
         ]
@@ -7905,7 +7905,7 @@ export type Database = {
           },
         ]
       }
-      module_registry: {
+      module_registry_legacy: {
         Row: {
           is_deployed: boolean
           key: string
@@ -7941,7 +7941,7 @@ export type Database = {
             foreignKeyName: "module_registry_parent_key_fkey"
             columns: ["parent_key"]
             isOneToOne: false
-            referencedRelation: "module_registry"
+            referencedRelation: "module_registry_legacy"
             referencedColumns: ["key"]
           },
         ]
@@ -8387,7 +8387,7 @@ export type Database = {
           },
         ]
       }
-      plan_tier_modules: {
+      plan_tier_modules_legacy: {
         Row: {
           created_at: string | null
           enabled: boolean | null
@@ -8417,12 +8417,12 @@ export type Database = {
             foreignKeyName: "plan_tier_modules_tier_key_fkey"
             columns: ["tier_key"]
             isOneToOne: false
-            referencedRelation: "plan_tiers"
+            referencedRelation: "plan_tiers_legacy"
             referencedColumns: ["key"]
           },
         ]
       }
-      plan_tiers: {
+      plan_tiers_legacy: {
         Row: {
           created_at: string | null
           description: string | null
@@ -12718,7 +12718,7 @@ export type Database = {
         }
         Relationships: []
       }
-      user_modules: {
+      user_modules_legacy: {
         Row: {
           created_at: string | null
           enabled_at: string | null
