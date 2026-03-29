@@ -3536,6 +3536,42 @@ export type Database = {
           },
         ]
       }
+      billing_catalog: {
+        Row: {
+          billing_mode: string
+          id: string
+          is_active: boolean
+          item_key: string
+          item_type: string
+          label: string | null
+          metadata: Json
+          stripe_price_id: string | null
+          stripe_product_id: string | null
+        }
+        Insert: {
+          billing_mode?: string
+          id?: string
+          is_active?: boolean
+          item_key: string
+          item_type: string
+          label?: string | null
+          metadata?: Json
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
+        }
+        Update: {
+          billing_mode?: string
+          id?: string
+          is_active?: boolean
+          item_key?: string
+          item_type?: string
+          label?: string | null
+          metadata?: Json
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
+        }
+        Relationships: []
+      }
       blocks: {
         Row: {
           attachments: Json | null
