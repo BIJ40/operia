@@ -142,8 +142,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .eq('id', userId)
             .single(),
           supabase.rpc('get_user_effective_modules', { p_user_id: userId }),
-          supabase
-            .from('module_registry')
+          (supabase
+            .from('module_registry' as any) as any)
             .select('key')
             .eq('is_deployed', true),
         ]),

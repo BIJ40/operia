@@ -111,8 +111,8 @@ export function useMyTicketRole() {
             .select('global_role')
             .eq('id', user.id)
             .maybeSingle(),
-          supabase
-            .from('user_modules')
+          (supabase
+            .from('user_modules' as any) as any)
             .select('module_key, options')
             .eq('user_id', user.id)
             .eq('module_key', 'ticketing')

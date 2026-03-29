@@ -30,8 +30,8 @@ export function useAgencySubscription(agencyId: string | null) {
     queryFn: async (): Promise<AgencySubscription | null> => {
       if (!agencyId) return null;
       
-      const { data, error } = await supabase
-        .from('agency_subscription')
+      const { data, error } = await (supabase
+        .from('agency_subscription' as any) as any)
         .select('*, plan_tiers(*)')
         .eq('agency_id', agencyId)
         .single();
@@ -50,8 +50,8 @@ export function useAllAgencySubscriptions() {
   return useQuery({
     queryKey: ['agency-subscriptions-all'],
     queryFn: async (): Promise<AgencySubscription[]> => {
-      const { data, error } = await supabase
-        .from('agency_subscription')
+      const { data, error } = await (supabase
+        .from('agency_subscription' as any) as any)
         .select('*, plan_tiers(*)')
         .order('created_at', { ascending: false });
       
