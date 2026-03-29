@@ -3,7 +3,7 @@ import {
   ShoppingCart, Users as UsersIcon, Search, Eye, TrendingUp,
   Users, Car, Handshake, CalendarDays, MessagesSquare,
   FolderOpen, Headphones, HelpCircle, Kanban, Shield, Building2,
-  Share2, Stamp,
+  Share2, Stamp, Settings, CreditCard, ScrollText,
   type LucideIcon,
 } from 'lucide-react';
 import type { UnifiedTab } from '@/components/unified/workspace/types';
