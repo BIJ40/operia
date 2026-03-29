@@ -239,25 +239,8 @@ export function TeamMemberModules({ userId, roleAgence, n2HasModule, isDeployedM
 
   const handleResetToPreset = async () => {
     if (!roleAgence) return;
-    const preset = getPresetForRole(roleAgence);
-    try {
-      await deleteAllUserModules(userId);
-      if (preset.length > 0) {
-        await bulkInsertUserModules(
-          preset.map(key => ({
-            user_id: userId,
-            module_key: key,
-            options: null,
-            enabled_at: new Date().toISOString(),
-            enabled_by: user?.id || null,
-          }))
-        );
-      }
-      queryClient.invalidateQueries({ queryKey: ['user-modules', userId] });
-      toast.success('Droits réinitialisés au profil par défaut');
-    } catch {
-      toast.error('Erreur lors de la réinitialisation');
-    }
+    // V2: job_profile_presets are now in DB — reset via bulk-reset-job-preset edge function
+    toast.info('Réinitialisation via les profils métier V2 — contactez un administrateur');
   };
 
   if (isLoading) {
