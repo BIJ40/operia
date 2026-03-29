@@ -5,7 +5,7 @@
 
 import { lazy, Suspense, useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { BarChart3, Settings, AlertTriangle, TrendingUp, PieChart, Loader2 } from 'lucide-react';
+import { BarChart3, Settings, AlertTriangle, TrendingUp, PieChart, Loader2, Map } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
@@ -23,8 +23,9 @@ const ActionsAMenerTab = lazy(() =>
 const AnomaliesDevisDossierView = lazy(() => import('@/apogee-connect/components/AnomaliesDevisDossierView'));
 const ResultatTabContent = lazy(() => import('@/components/financial/ResultatTabContent'));
 const RentabiliteTabContent = lazy(() => import('@/components/profitability/RentabiliteTabContent'));
+const MapsTabContent = lazy(() => import('@/components/unified/tabs/MapsTabContent'));
 
-type PilotageSubTab = 'stats' | 'actions' | 'anomalies' | 'resultat' | 'rentabilite';
+type PilotageSubTab = 'stats' | 'actions' | 'anomalies' | 'resultat' | 'rentabilite' | 'maps';
 
 function LoadingFallback() {
   return (
@@ -45,6 +46,7 @@ export default function PilotageTabContent() {
     { id: 'anomalies', label: getShortLabel('pilotage.incoherences', 'Incohérences'), icon: AlertTriangle, accent: 'pink', requiresModule: 'pilotage.incoherences' },
     { id: 'resultat', label: getShortLabel('pilotage.resultat', 'Résultat'), icon: TrendingUp, accent: 'green', requiresModule: 'pilotage.resultat' },
     { id: 'rentabilite', label: getShortLabel('pilotage.rentabilite', 'Rentabilité'), icon: PieChart, accent: 'green', requiresModule: 'pilotage.rentabilite' },
+    { id: 'maps', label: getShortLabel('pilotage.maps', 'Maps'), icon: Map, accent: 'teal', requiresModule: 'pilotage.maps' },
   ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {
@@ -98,6 +100,12 @@ export default function PilotageTabContent() {
         <TabsContent value="rentabilite" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
             <RentabiliteTabContent />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="maps" className="mt-4">
+          <Suspense fallback={<LoadingFallback />}>
+            <MapsTabContent />
           </Suspense>
         </TabsContent>
       </Tabs>
