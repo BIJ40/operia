@@ -3,7 +3,7 @@ import {
   ShoppingCart, Users as UsersIcon, Search, Eye, TrendingUp,
   Users, Car, Handshake, CalendarDays, MessagesSquare,
   FolderOpen, Headphones, HelpCircle, Kanban, Shield, Building2,
-  Share2, Stamp,
+  Share2, Stamp, Settings, CreditCard, ScrollText,
   type LucideIcon,
 } from 'lucide-react';
 import type { UnifiedTab } from '@/components/unified/workspace/types';
@@ -82,8 +82,11 @@ export const HEADER_NAV_GROUPS: HeaderNavGroup[] = [
     tab: 'relations',
     accent: 'purple',
     children: [
-      { label: 'Apporteurs', icon: Handshake, tab: 'relations', description: "Réseau d'apporteurs", scope: 'relations.apporteurs', subTabKey: 'relations_sub_tab', subTabValue: 'apporteurs' },
-      { label: 'Échanges apporteurs', icon: MessagesSquare, tab: 'relations', description: 'Fil de discussion avec les apporteurs', scope: 'relations.apporteurs', subTabKey: 'relations_sub_tab', subTabValue: 'echanges-apporteurs' },
+      { label: 'Espace apporteurs', icon: Handshake, tab: 'relations', description: "Réseau d'apporteurs", scope: 'relations.apporteurs', subTabKey: 'relations_sub_tab', subTabValue: 'apporteurs' },
+      { label: 'Échanges apporteurs', icon: MessagesSquare, tab: 'relations', description: 'Fil de discussion', scope: 'relations.apporteurs', subTabKey: 'relations_sub_tab', subTabValue: 'echanges-apporteurs' },
+      { label: 'Suivi (Réglages)', icon: Settings, tab: 'relations', description: 'Configuration portail client', subTabKey: 'relations_sub_tab', subTabValue: 'parametres' },
+      { label: 'Paiements clients', icon: CreditCard, tab: 'relations', description: 'Journal des paiements', subTabKey: 'relations_sub_tab', subTabValue: 'paiements' },
+      { label: "Journal d'envois", icon: ScrollText, tab: 'relations', description: 'SMS et emails envoyés', subTabKey: 'relations_sub_tab', subTabValue: 'journal' },
     ],
   },
   {
