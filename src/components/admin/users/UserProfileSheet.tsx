@@ -85,20 +85,20 @@ export const UserProfileSheet = memo(function UserProfileSheet({
   const { data: rpcModules, isLoading: rpcModulesLoading } = useQuery({
     queryKey: ['user-profile-sheet-effective-modules', user.id],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_user_effective_modules', {
+      const { data, error } = await (supabase.rpc as any)('get_user_effective_modules', {
         p_user_id: user.id,
       });
       if (error) throw error;
       const result: EnabledModules = {};
       if (Array.isArray(data)) {
-        for (const row of data as Array<{ module_key: string; enabled: boolean; options: unknown }>) {
+        for (const row of data as Array<{ module_key: string; granted: boolean; options: unknown }>) {
           const opts: Record<string, boolean> = {};
           if (typeof row.options === 'object' && row.options !== null && !Array.isArray(row.options)) {
             for (const [k, v] of Object.entries(row.options as Record<string, unknown>)) {
               opts[k] = v === true;
             }
           }
-          result[row.module_key] = { enabled: row.enabled === true, options: opts };
+          result[row.module_key] = { enabled: row.granted === true, options: opts };
         }
       }
       return result;

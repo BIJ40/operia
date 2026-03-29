@@ -12,7 +12,7 @@ import type { EnabledModules, ModuleKey, ModuleOptionsState } from '@/types/modu
 
 type RpcRow = {
   module_key: string;
-  enabled: boolean;
+  granted: boolean;
   options: unknown;
 };
 
@@ -53,14 +53,14 @@ export async function resolveEffectiveModulesFromBackend(params: {
 
   // 1) Primary: RPC
   try {
-    const { data, error } = await supabase.rpc('get_user_effective_modules', {
+    const { data, error } = await (supabase.rpc as any)('get_user_effective_modules', {
       p_user_id: userId,
     });
 
     if (!error && Array.isArray(data) && data.length > 0) {
       const modules: EnabledModules = {};
       for (const row of data as RpcRow[]) {
-        upsertModule(modules, row.module_key, row.enabled, row.options);
+        upsertModule(modules, row.module_key, row.granted, row.options);
       }
       return { modules, source: 'rpc_get_user_effective_modules' };
     }
