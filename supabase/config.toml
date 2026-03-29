@@ -208,6 +208,12 @@ verify_jwt = false
 [functions.dispatch-realisation-webhook]
 verify_jwt = false
 
+[functions.bulk-apply-user-access]
+verify_jwt = true
+
+[functions.bulk-reset-job-preset]
+verify_jwt = true
+
 [functions.get-zones-deplacement]
 verify_jwt = true
 
