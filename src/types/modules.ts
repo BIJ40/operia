@@ -67,6 +67,9 @@ export const MODULES = {
   // Support
   'support.aide_en_ligne': 'support.aide_en_ligne',
   'support.guides': 'support.guides',
+  'support.guides.apogee': 'support.guides.apogee',
+  'support.guides.apporteurs': 'support.guides.apporteurs',
+  'support.guides.helpconfort': 'support.guides.helpconfort',
   'support.faq': 'support.faq',
   'support.ticketing': 'support.ticketing',
   // Admin
