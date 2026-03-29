@@ -39,7 +39,7 @@ const ApporteurAuditLogView = lazy(() => import('@/components/admin/views/Apport
 const SuiviClientsAdminView = lazy(() => import('@/components/admin/views/SuiviClientsAdminView'));
 
 const AgencyEntitlementsViewV2 = lazy(() => import('@/components/admin/views/AgencyEntitlementsViewV2'));
-const JobProfilePresetsViewV2 = lazy(() => import('@/components/admin/views/JobProfilePresetsViewV2'));
+
 const PermissionsAuditLogView = lazy(() => import('@/components/admin/views/PermissionsAuditLogView'));
 const PermissionsMatrixView = lazy(() => import('@/components/admin/views/PermissionsMatrixView'));
 const PermissionsQualityView = lazy(() => import('@/components/admin/views/PermissionsQualityView'));
@@ -69,7 +69,7 @@ const GESTION_SUB_TABS: FolderTabConfig[] = [
   { id: 'agences', label: 'Agences', icon: Building2, accent: 'purple' },
   { id: 'modules', label: 'Modules', icon: Layers, accent: 'orange' },
   
-  { id: 'presets', label: 'Droits', icon: FileKey, accent: 'blue' },
+  
   { id: 'matrice', label: 'Matrice', icon: Grid3X3, accent: 'purple' },
   { id: 'qualite', label: 'Qualité', icon: ShieldCheck, accent: 'orange' },
   { id: 'journal', label: 'Journal', icon: ScrollText, accent: 'green' },
@@ -84,7 +84,7 @@ const RELATIONS_SUB_TABS: FolderTabConfig[] = [
 ];
 
 const ADMIN_MAIN_TAB_IDS = ADMIN_MAIN_TABS.map(tab => tab.id);
-const DEFAULT_GESTION_ORDER = ['users', 'inscriptions', 'agences', 'modules', 'presets', 'matrice', 'qualite', 'journal', 'activity'];
+const DEFAULT_GESTION_ORDER = ['users', 'inscriptions', 'agences', 'modules', 'matrice', 'qualite', 'journal', 'activity'];
 const DEFAULT_RELATIONS_ORDER = ['apporteurs', 'audit-apporteurs', 'suivi-clients'];
 
 export default function AdminHubContent() {
@@ -203,9 +203,6 @@ export default function AdminHubContent() {
                 </TabsContent>
                 <TabsContent value="modules" className="mt-0 focus-visible:outline-none">
                   <ModulesMasterViewV2 />
-                </TabsContent>
-                <TabsContent value="presets" className="mt-0 focus-visible:outline-none">
-                  <Suspense fallback={<LoadingFallback />}><JobProfilePresetsViewV2 /></Suspense>
                 </TabsContent>
                 <TabsContent value="matrice" className="mt-0 focus-visible:outline-none">
                   <Suspense fallback={<LoadingFallback />}><PermissionsMatrixView /></Suspense>
