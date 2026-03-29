@@ -9,7 +9,7 @@ import { Building2, GitCompare, UserSearch, Radar, Camera, Share2, Stamp, Loader
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, type PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { ModuleKey } from '@/types/modules';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
 import { useNavigationMode } from '@/hooks/useNavigationMode';
@@ -63,7 +63,7 @@ function ApporteursTabInner() {
 }
 
 function CommercialInner() {
-  const { hasModule, isDeployedModule, isAdmin } = usePermissions();
+  const { hasModule, isDeployedModule, isAdmin } = usePermissionsBridge();
   const { openApporteur } = useApporteurTabs();
   const { getShortLabel } = useModuleLabels();
   const { mode: navMode } = useNavigationMode();

@@ -11,7 +11,7 @@ import {
   FileText, Users2, Loader2, Users, CalendarDays, 
   Car, FolderOpen, Settings, Eye, Activity, Target, AlertTriangle, MapPin
 } from 'lucide-react';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { ModuleKey } from '@/types/modules';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
@@ -160,7 +160,7 @@ function ApporteursSection() {
 // Note: ADMIN_TABS_CONFIG moved inside AdministratifSection to use useModuleLabels hook
 
 function AdministratifSection() {
-  const { hasModule } = usePermissions();
+  const { hasModule } = usePermissionsBridge();
   const { getShortLabel } = useModuleLabels();
 
   const adminTabsConfig: (FolderTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
@@ -226,7 +226,7 @@ function AdministratifSection() {
 
 export default function DiversTabContent() {
   const [activeMainTab, setActiveMainTab] = useSessionState<OutilsMainTab>('outils_main_tab', 'actions');
-  const { hasModule } = usePermissions();
+  const { hasModule } = usePermissionsBridge();
   const { getShortLabel } = useModuleLabels();
 
   const mainTabsConfig: (PillTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
