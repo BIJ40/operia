@@ -11,7 +11,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { resolveModuleLabel, resolveModuleShortLabel } from '@/hooks/useModuleLabels';
-import { hasAccess } from '@/permissions/permissionsEngine';
+// hasAccess removed (V1 engine deleted) — guard tests moved to integration tests
 import { MODULE_DEFINITIONS, MODULE_SHORT_LABELS } from '@/types/modules';
 
 // ============================================================================
