@@ -62,14 +62,13 @@ const ADMIN_MAIN_TABS: PillTabConfig[] = [
   { id: 'plateforme', label: 'Plateforme', icon: Cpu, accent: 'teal' },
 ];
 
-// Sous-onglets Gestion — restructurés : Parité supprimé, Droits scindé en 3, Agences enrichi
+// Sous-onglets Gestion — Agences + Réseau/Options séparés pour rendre l'accès explicite
 const GESTION_SUB_TABS: FolderTabConfig[] = [
   { id: 'users', label: 'Utilisateurs', icon: Users, accent: 'blue' },
   { id: 'inscriptions', label: 'Inscriptions', icon: UserPlus, accent: 'orange' },
   { id: 'agences', label: 'Agences', icon: Building2, accent: 'purple' },
+  { id: 'reseau', label: 'Réseau', icon: FileKey, accent: 'purple' },
   { id: 'modules', label: 'Modules', icon: Layers, accent: 'orange' },
-  
-  
   { id: 'matrice', label: 'Matrice', icon: Grid3X3, accent: 'purple' },
   { id: 'qualite', label: 'Qualité', icon: ShieldCheck, accent: 'orange' },
   { id: 'journal', label: 'Journal', icon: ScrollText, accent: 'green' },
@@ -84,7 +83,7 @@ const RELATIONS_SUB_TABS: FolderTabConfig[] = [
 ];
 
 const ADMIN_MAIN_TAB_IDS = ADMIN_MAIN_TABS.map(tab => tab.id);
-const DEFAULT_GESTION_ORDER = ['users', 'inscriptions', 'agences', 'modules', 'matrice', 'qualite', 'journal', 'activity'];
+const DEFAULT_GESTION_ORDER = ['users', 'inscriptions', 'agences', 'reseau', 'modules', 'matrice', 'qualite', 'journal', 'activity'];
 const DEFAULT_RELATIONS_ORDER = ['apporteurs', 'audit-apporteurs', 'suivi-clients'];
 
 export default function AdminHubContent() {
@@ -115,7 +114,7 @@ export default function AdminHubContent() {
         // Map offres sub-views to gestion sub-views
         const view = next.get('adminView');
         if (view === 'overview') next.set('adminView', 'plans');
-        if (view === 'agency-features') next.set('adminView', 'agences');
+        if (view === 'agency-features') next.set('adminView', 'reseau');
         setSearchParams(next, { replace: true });
       }
       return;
@@ -197,9 +196,9 @@ export default function AdminHubContent() {
                 </TabsContent>
                 <TabsContent value="agences" className="mt-0 focus-visible:outline-none">
                   <ReseauView />
-                  <div className="mt-6">
-                    <Suspense fallback={<LoadingFallback />}><AgencyEntitlementsViewV2 /></Suspense>
-                  </div>
+                </TabsContent>
+                <TabsContent value="reseau" className="mt-0 focus-visible:outline-none">
+                  <Suspense fallback={<LoadingFallback />}><AgencyEntitlementsViewV2 /></Suspense>
                 </TabsContent>
                 <TabsContent value="modules" className="mt-0 focus-visible:outline-none">
                   <ModulesMasterViewV2 />
