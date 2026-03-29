@@ -1,5 +1,5 @@
 import {
-  BarChart3, Activity, ListChecks, AlertTriangle,
+  BarChart3, ListChecks, AlertTriangle,
   ShoppingCart, Users as UsersIcon, Search, Eye, TrendingUp,
   Users, Car, Handshake, CalendarDays, MessagesSquare,
   FolderOpen, Headphones, HelpCircle, Kanban, Shield, Building2,
