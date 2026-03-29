@@ -7,6 +7,8 @@ import { lazy, Suspense, useEffect } from "react";
 
 import { MinimalLayout } from "./components/layout";
 import { Loader2 } from "lucide-react";
+import { useAppFeatureFlag } from './hooks/useAppFeatureFlag';
+import { PermissionsProviderV2 } from './contexts/PermissionsContextV2';
 import { RoleGuard } from "./components/auth/RoleGuard";
 import { AuthRouter } from "./components/auth/AuthRouter";
 
