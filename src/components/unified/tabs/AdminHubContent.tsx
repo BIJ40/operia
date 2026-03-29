@@ -6,7 +6,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Shield, UserPlus, StickyNote, Handshake, UserCheck, ScrollText, Eye, Crown, LayoutGrid, UserCog, Grid3X3, ShieldCheck, GitCompare } from 'lucide-react';
+import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Shield, UserPlus, Handshake, UserCheck, ScrollText, Eye, Crown, LayoutGrid, UserCog, Grid3X3, ShieldCheck, GitCompare } from 'lucide-react';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { 
   DraggableFolderTabsList, 
@@ -37,7 +37,7 @@ const AdminUserActivity = lazy(() => import('@/pages/AdminUserActivity'));
 const ApporteurManagersAdminView = lazy(() => import('@/components/admin/views/ApporteurManagersAdminView'));
 const PendingRegistrationsList = lazy(() => import('@/components/admin/registrations/PendingRegistrationsList'));
 const ApporteurAuditLogView = lazy(() => import('@/components/admin/views/ApporteurAuditLogView'));
-const AdminNotesView = lazy(() => import('@/components/admin/views/AdminNotesView'));
+
 const SuiviClientsAdminView = lazy(() => import('@/components/admin/views/SuiviClientsAdminView'));
 const OffresAndOptionsView = lazy(() => import('@/components/admin/views/OffresAndOptionsView'));
 const PlanCatalogViewV2 = lazy(() => import('@/components/admin/views/PlanCatalogViewV2'));
@@ -79,7 +79,7 @@ const GESTION_SUB_TABS: FolderTabConfig[] = [
   { id: 'matrice', label: 'Matrice', icon: Grid3X3, accent: 'purple' },
   { id: 'qualite', label: 'Qualité', icon: ShieldCheck, accent: 'orange' },
   { id: 'parite', label: 'Parité V1/V2', icon: GitCompare, accent: 'green' },
-  { id: 'notes', label: 'Notes', icon: StickyNote, accent: 'orange' },
+  
   { id: 'activity', label: 'Activité', icon: Activity, accent: 'green' },
 ];
 
@@ -97,7 +97,7 @@ const OFFRES_SUB_TABS: FolderTabConfig[] = [
 ];
 
 const ADMIN_MAIN_TAB_IDS = ADMIN_MAIN_TABS.map(tab => tab.id);
-const DEFAULT_GESTION_ORDER = ['users', 'inscriptions', 'agences', 'modules', 'presets', 'journal', 'matrice', 'qualite', 'parite', 'notes', 'activity'];
+const DEFAULT_GESTION_ORDER = ['users', 'inscriptions', 'agences', 'modules', 'presets', 'journal', 'matrice', 'qualite', 'parite', 'activity'];
 const DEFAULT_RELATIONS_ORDER = ['apporteurs', 'audit-apporteurs', 'suivi-clients'];
 const DEFAULT_OFFRES_ORDER = ['overview', 'agency-features'];
 
@@ -225,9 +225,6 @@ export default function AdminHubContent() {
                 </TabsContent>
                 <TabsContent value="parite" className="mt-0 focus-visible:outline-none">
                   <Suspense fallback={<LoadingFallback />}><PermissionsParityTestView /></Suspense>
-                </TabsContent>
-                <TabsContent value="notes" className="mt-0 focus-visible:outline-none">
-                  <Suspense fallback={<LoadingFallback />}><AdminNotesView /></Suspense>
                 </TabsContent>
                 <TabsContent value="activity" className="mt-0 focus-visible:outline-none">
                   <Suspense fallback={<LoadingFallback />}><AdminUserActivity /></Suspense>
