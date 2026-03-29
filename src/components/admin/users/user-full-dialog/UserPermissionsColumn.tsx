@@ -57,11 +57,11 @@ export function UserPermissionsColumn({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('plan_catalog')
-        .select('id, name, slug')
+        .select('id, key, label')
         .eq('is_active', true)
-        .order('display_order');
+        .order('sort_order');
       if (error) throw error;
-      return (data || []).map(p => ({ key: p.slug?.toUpperCase() || p.id, label: p.name }));
+      return (data || []).map(p => ({ key: p.key, label: p.label }));
     },
     staleTime: 5 * 60_000,
   });

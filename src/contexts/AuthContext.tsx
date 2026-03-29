@@ -110,12 +110,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [globalRole]);
 
   const hasModuleGuard = useCallback((moduleKey: ModuleKey): boolean => {
-    return hasAccess({ ...accessContext, moduleId: moduleKey });
-  }, [accessContext]);
+    if (!enabledModules) return false;
+    const isBypassed = globalRole === 'platform_admin' || globalRole === 'superadmin';
+    if (isBypassed) return true;
+    return checkModuleEnabled(enabledModules, moduleKey);
+  }, [enabledModules, globalRole]);
 
   const hasModuleOptionGuard = useCallback((moduleKey: ModuleKey, optionKey: string): boolean => {
-    return hasAccess({ ...accessContext, moduleId: moduleKey, optionId: optionKey });
-  }, [accessContext]);
+    if (!enabledModules) return false;
+    const isBypassed = globalRole === 'platform_admin' || globalRole === 'superadmin';
+    if (isBypassed) return true;
+    const moduleConfig = enabledModules[moduleKey];
+    if (!moduleConfig) return false;
+    if (typeof moduleConfig === 'boolean') return moduleConfig;
+    if (!moduleConfig.enabled) return false;
+    return moduleConfig.options?.[optionKey] === true;
+  }, [enabledModules, globalRole]);
 
   const isDeployedModuleGuard = useCallback((moduleKey: ModuleKey): boolean => {
     return deployedModuleKeys.has(moduleKey);
