@@ -209,7 +209,7 @@ export function RealUserImpersonationDialog({ open, onOpenChange }: RealUserImpe
                 </div>
                 <div className="flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-muted-foreground" />
-                  <span>{selectedUser.agence || 'Aucune agence'}</span>
+                  <span>{selectedUser.agency_id || 'Aucune agence'}</span>
                 </div>
               </div>
 

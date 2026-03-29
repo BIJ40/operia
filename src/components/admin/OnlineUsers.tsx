@@ -154,11 +154,6 @@ export function OnlineUsers() {
                     )} />
                     <div>
                       <p className="font-medium">{getDisplayName(presence)}</p>
-                      {presence.profile?.agence && (
-                        <p className="text-xs text-muted-foreground">
-                          {presence.profile.agence}
-                        </p>
-                      )}
                     </div>
                   </div>
                   <Badge 

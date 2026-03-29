@@ -269,7 +269,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: userId,
           email: userData.user.email,
           globalRole: dbGlobalRole || 'base_user',
-          agencySlug: profile?.agence || null,
+          agencySlug: resolvedAgence || null,
         });
       }
 
