@@ -448,7 +448,7 @@ export const MODULE_DEFINITIONS: ModuleDefinition[] = [
     label: 'Apporteurs',
     description: 'Gestion des apporteurs',
     icon: 'Handshake',
-    category: 'organisation',
+    category: 'relations',
     uiSubTab: 'apporteurs',
     defaultForRoles: ['franchisee_admin', 'platform_admin', 'superadmin'],
     delegatable: true,
