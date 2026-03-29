@@ -214,7 +214,7 @@ export const UserProfileSheet = memo(function UserProfileSheet({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg h-[85vh] max-h-[85vh] flex flex-col overflow-hidden p-0">
+      <DialogContent className="max-w-2xl h-[90vh] max-h-[90vh] flex flex-col overflow-hidden p-0">
         {/* Header with avatar */}
         <div className="px-6 pt-6 pb-4 border-b bg-muted/30">
           <div className="flex items-start gap-4">
