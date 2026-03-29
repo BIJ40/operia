@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useUserPermissionsV2 } from '@/hooks/useUserPermissionsV2';
 import { useUpsertUserAccess, useRemoveUserAccess } from '@/hooks/access-rights/useUserAccess';
 import { useModuleCatalog, ModuleCatalogTree, filterDeployedOnly } from '@/hooks/access-rights/useModuleCatalog';
