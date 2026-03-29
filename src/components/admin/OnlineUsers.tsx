@@ -22,7 +22,6 @@ interface UserPresence {
     email: string | null;
     first_name: string | null;
     last_name: string | null;
-    agence: string | null;
   };
 }
 
@@ -72,7 +71,7 @@ export function OnlineUsers() {
         const userIds = presences.map(p => p.user_id);
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('id, email, first_name, last_name, agence')
+          .select('id, email, first_name, last_name')
           .in('id', userIds);
 
         const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);

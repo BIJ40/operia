@@ -109,7 +109,7 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
       // Charger le profil utilisateur depuis la DB
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('id, email, first_name, last_name, global_role, agence, agency_id, role_agence')
+        .select('id, email, first_name, last_name, global_role, agency_id, role_agence')
         .eq('id', userId)
         .single();
       
@@ -151,7 +151,7 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
         lastName: profile.last_name,
         globalRole: (profile.global_role as GlobalRole) || 'base_user',
         enabledModules: Object.keys(resolvedModules).length > 0 ? resolvedModules : null,
-        agence: profile.agence,
+        agence: null, // Resolved separately if needed
         agencyId: profile.agency_id,
         roleAgence: profile.role_agence,
       };

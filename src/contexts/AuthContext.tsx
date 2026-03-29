@@ -145,7 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         Promise.all([
           supabase
             .from('profiles')
-            .select('first_name, last_name, agence, agency_id, role_agence, must_change_password, global_role, is_active, is_read_only')
+            .select('first_name, last_name, agency_id, role_agence, must_change_password, global_role, is_active, is_read_only')
             .eq('id', userId)
             .single(),
           (supabase.rpc as any)('get_user_effective_modules', { p_user_id: userId }),
@@ -183,9 +183,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAgencyId(profile?.agency_id || null);
       setRoleAgence(profile?.role_agence || null);
       
-      // Resolve agence slug: use profile.agence, or fallback to apogee_agencies.slug via agency_id
-      let resolvedAgence = profile?.agence || null;
-      if (!resolvedAgence && profile?.agency_id) {
+      // Resolve agence slug from apogee_agencies via agency_id
+      let resolvedAgence: string | null = null;
+      if (profile?.agency_id) {
         try {
           const { data: agency } = await supabase
             .from('apogee_agencies')
@@ -194,7 +194,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .single();
           if (agency?.slug) {
             resolvedAgence = agency.slug;
-            logAuth.info(`[AUTH] Resolved agence slug from agency_id: ${agency.slug}`);
           }
         } catch (e) {
           logAuth.warn('[AUTH] Failed to resolve agence slug from agency_id', e);
