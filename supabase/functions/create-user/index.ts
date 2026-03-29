@@ -162,11 +162,10 @@ serve(withSentry({ functionName: 'create-user' }, async (req) => {
 
     // N2 ne peut créer que dans sa propre agence
     if (callerLevel === GLOBAL_ROLES.franchisee_admin) {
-      const sameAgencyBySlug = targetAgency && callerAgency && targetAgency === callerAgency
       const sameAgencyById = targetAgencyId && callerAgencyId && targetAgencyId === callerAgencyId
       
-      if (!sameAgencyBySlug && !sameAgencyById) {
-        console.log(`[create-user] N2 tente de créer hors agence: ${targetAgency} != ${callerAgency}`)
+      if (!sameAgencyById) {
+        console.log(`[create-user] N2 tente de créer hors agence: ${targetAgencyId} != ${callerAgencyId}`)
         throw new Error('Vous ne pouvez créer des utilisateurs que dans votre propre agence')
       }
     }
