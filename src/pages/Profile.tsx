@@ -48,7 +48,7 @@ interface ProfileData {
   email: string | null;
   first_name: string | null;
   last_name: string | null;
-  agence: string | null; // resolved from agency_id
+  agence?: string | null; // resolved from agency_id
   role_agence: string | null;
   avatar_url: string | null;
   global_role: GlobalRole | null;
