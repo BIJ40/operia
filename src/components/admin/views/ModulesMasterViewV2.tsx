@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useModuleCatalog, ModuleCatalogTree } from '@/hooks/access-rights/useModuleCatalog';
+import { useModuleCatalog, ModuleCatalogTree, filterDeployedOnly } from '@/hooks/access-rights/useModuleCatalog';
 import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -196,12 +196,6 @@ function ModuleRow({
   );
 }
 
-// Filtre récursif : ne garde que les nœuds déployés, en élagant les enfants non déployés
-function filterDeployedOnly(nodes: ModuleCatalogTree[]): ModuleCatalogTree[] {
-  return nodes
-    .filter(n => n.is_deployed)
-    .map(n => ({ ...n, children: filterDeployedOnly(n.children) }));
-}
 
 // Extrait tous les modules non déployés, y compris les enfants de parents déployés
 function extractNonDeployed(nodes: ModuleCatalogTree[]): ModuleCatalogTree[] {

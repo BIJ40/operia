@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useUserPermissionsV2 } from '@/hooks/useUserPermissionsV2';
 import { useUpsertUserAccess, useRemoveUserAccess } from '@/hooks/access-rights/useUserAccess';
-import { useModuleCatalog, ModuleCatalogTree } from '@/hooks/access-rights/useModuleCatalog';
+import { useModuleCatalog, ModuleCatalogTree, filterDeployedOnly } from '@/hooks/access-rights/useModuleCatalog';
 import { SOURCE_LABELS, PermissionSource } from '@/types/permissions-v2';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -178,7 +178,7 @@ export function UserPermissionsColumnV2({ userId, userRole, editMode }: Props) {
     );
   };
 
-  const deployedTree = tree.filter(m => m.is_deployed);
+  const deployedTree = filterDeployedOnly(tree);
 
   // Compteurs
   const totalGranted = permissions.filter(p => p.granted && p.node_type !== 'section').length;
