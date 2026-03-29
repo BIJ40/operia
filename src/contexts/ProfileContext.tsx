@@ -10,6 +10,8 @@ import { createContext, useContext } from 'react';
 export interface ProfileContextType {
   firstName: string | null;
   lastName: string | null;
+  phone: string | null;
+  poste: string | null;
   agence: string | null;
   agencyId: string | null;
   roleAgence: string | null;

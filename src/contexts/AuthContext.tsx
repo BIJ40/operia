@@ -50,6 +50,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Profil utilisateur
   const [firstName, setFirstName] = useState<string | null>(null);
   const [lastName, setLastName] = useState<string | null>(null);
+  const [phone, setPhone] = useState<string | null>(null);
+  const [poste, setPoste] = useState<string | null>(null);
   const [agence, setAgence] = useState<string | null>(null);
   const [agencyId, setAgencyId] = useState<string | null>(null);
   const [roleAgence, setRoleAgence] = useState<string | null>(null);
@@ -93,13 +95,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   const hasFaqAdminRole = adminOptions.faq_admin === true;
   const canAccessFaqAdmin = hasFaqAdminRole || isAdmin;
-
-  // Permission context (kept for PermissionsContextType compat)
-  const accessContext = useMemo(() => ({
-    globalRole: globalRole ?? 'base_user' as const,
-    enabledModules: enabledModules ?? {},
-    agencyId,
-  }), [globalRole, enabledModules, agencyId]);
 
   // Guards
   const hasGlobalRoleGuard = useCallback((requiredRole: GlobalRole): boolean => {
@@ -146,6 +141,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           supabase
             .from('profiles')
             .select('first_name, last_name, agency_id, role_agence, must_change_password, global_role, is_active, is_read_only')
+            // @ts-ignore — phone & poste may not be in generated types yet
+            .select('first_name, last_name, agency_id, role_agence, must_change_password, global_role, is_active, is_read_only, phone, poste')
             .eq('id', userId)
             .single(),
           (supabase.rpc as any)('get_user_effective_modules', { p_user_id: userId }),
@@ -180,6 +177,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       setFirstName(profile?.first_name || null);
       setLastName(profile?.last_name || null);
+      setPhone(profile?.phone || null);
+      setPoste(profile?.poste || null);
       setAgencyId(profile?.agency_id || null);
       setRoleAgence(profile?.role_agence || null);
       
@@ -376,6 +375,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const resetState = useCallback(() => {
     setFirstName(null);
     setLastName(null);
+    setPhone(null);
+    setPoste(null);
     setAgence(null);
     setAgencyId(null);
     setRoleAgence(null);
@@ -469,18 +470,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const profileValue: ProfileContextType = useMemo(() => ({
     firstName,
     lastName,
+    phone,
+    poste,
     agence,
     agencyId,
     roleAgence,
     mustChangePassword,
     isActive,
     isReadOnly,
-  }), [firstName, lastName, agence, agencyId, roleAgence, mustChangePassword, isActive, isReadOnly]);
+  }), [firstName, lastName, phone, poste, agence, agencyId, roleAgence, mustChangePassword, isActive, isReadOnly]);
 
   const permissionsValue: PermissionsContextType = useMemo(() => ({
     globalRole,
     enabledModules,
-    accessContext,
     hasGlobalRole: hasGlobalRoleGuard,
     hasModule: hasModuleGuard,
     hasModuleOption: hasModuleOptionGuard,
@@ -497,7 +499,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     hasAccessToScope,
     suggestedGlobalRole: globalRole ?? 'base_user',
   }), [
-    globalRole, enabledModules, accessContext,
+    globalRole, enabledModules,
     hasGlobalRoleGuard, hasModuleGuard, hasModuleOptionGuard, isDeployedModuleGuard,
     isAdmin, isSupport, isFranchiseur,
     canAccessSupportUser, hasSupportAgentRole, isSupportAdmin,
