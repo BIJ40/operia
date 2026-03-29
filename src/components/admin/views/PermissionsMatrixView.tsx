@@ -4,6 +4,7 @@ import { useModuleCatalog } from '@/hooks/access-rights/useModuleCatalog';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Shield, ShieldCheck, ShieldX, Sparkles } from 'lucide-react';
 import { AdminViewHeader } from '@/components/admin/shared/AdminViewHeader';
 import { SOURCE_LABELS, PermissionSource } from '@/types/permissions-v2';
