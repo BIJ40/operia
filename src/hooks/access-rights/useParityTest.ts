@@ -52,6 +52,9 @@ export function useParityTest() {
 
       if (agencyId) {
         usersQuery = usersQuery.eq('agency_id', agencyId);
+      } else {
+        // En mode "toutes les agences", exclure les users sans agence
+        usersQuery = usersQuery.not('agency_id', 'is', null);
       }
 
       const { data: users, error: usersError } = await usersQuery;
