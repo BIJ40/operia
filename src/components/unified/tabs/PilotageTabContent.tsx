@@ -5,7 +5,7 @@
 
 import { lazy, Suspense, useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { BarChart3, Activity, Settings, AlertTriangle, TrendingUp, PieChart, Loader2, Map } from 'lucide-react';
+import { BarChart3, Settings, AlertTriangle, TrendingUp, PieChart, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { useSessionState } from '@/hooks/useSessionState';
@@ -17,18 +17,14 @@ import { DomainAccentProvider } from '@/contexts/DomainAccentContext';
 
 // Lazy loaded
 const StatsTabContent = lazy(() => import('@/components/unified/tabs/StatsTabContent'));
-const PerformanceDashboard = lazy(() => 
-  import('@/components/performance/PerformanceDashboard').then(m => ({ default: m.PerformanceDashboard }))
-);
 const ActionsAMenerTab = lazy(() => 
   import('@/components/pilotage/ActionsAMenerTab').then(m => ({ default: m.ActionsAMenerTab }))
 );
 const AnomaliesDevisDossierView = lazy(() => import('@/apogee-connect/components/AnomaliesDevisDossierView'));
 const ResultatTabContent = lazy(() => import('@/components/financial/ResultatTabContent'));
 const RentabiliteTabContent = lazy(() => import('@/components/profitability/RentabiliteTabContent'));
-const MapsTabContent = lazy(() => import('@/components/unified/tabs/MapsTabContent'));
 
-type PilotageSubTab = 'stats' | 'performance' | 'actions' | 'anomalies' | 'resultat' | 'rentabilite' | 'maps';
+type PilotageSubTab = 'stats' | 'actions' | 'anomalies' | 'resultat' | 'rentabilite';
 
 function LoadingFallback() {
   return (
@@ -45,12 +41,10 @@ export default function PilotageTabContent() {
 
   const allTabs: (PillTabConfig & { requiresModule?: ModuleKey })[] = useMemo(() => [
     { id: 'stats', label: getShortLabel('pilotage.statistiques', 'Statistiques'), icon: BarChart3, accent: 'blue', requiresModule: 'pilotage.statistiques' },
-    { id: 'performance', label: getShortLabel('pilotage.performance', 'Performance'), icon: Activity, accent: 'pink', requiresModule: 'pilotage.performance' },
     { id: 'actions', label: getShortLabel('pilotage.actions_a_mener', 'Actions à mener'), icon: Settings, accent: 'orange', requiresModule: 'pilotage.actions_a_mener' },
     { id: 'anomalies', label: getShortLabel('pilotage.incoherences', 'Incohérences'), icon: AlertTriangle, accent: 'pink', requiresModule: 'pilotage.incoherences' },
     { id: 'resultat', label: getShortLabel('pilotage.resultat', 'Résultat'), icon: TrendingUp, accent: 'green', requiresModule: 'pilotage.resultat' },
     { id: 'rentabilite', label: getShortLabel('pilotage.rentabilite', 'Rentabilité'), icon: PieChart, accent: 'green', requiresModule: 'pilotage.rentabilite' },
-    { id: 'maps', label: getShortLabel('pilotage.maps', 'Maps'), icon: Map, accent: 'teal', requiresModule: 'pilotage.maps' },
   ], [getShortLabel]);
 
   const visibleTabs = useMemo(() => {
@@ -83,12 +77,6 @@ export default function PilotageTabContent() {
           </Suspense>
         </TabsContent>
 
-        <TabsContent value="performance" className="mt-4">
-          <Suspense fallback={<LoadingFallback />}>
-            <PerformanceDashboard />
-          </Suspense>
-        </TabsContent>
-
         <TabsContent value="actions" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
             <ActionsAMenerTab />
@@ -110,12 +98,6 @@ export default function PilotageTabContent() {
         <TabsContent value="rentabilite" className="mt-4">
           <Suspense fallback={<LoadingFallback />}>
             <RentabiliteTabContent />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="maps" className="mt-4">
-          <Suspense fallback={<LoadingFallback />}>
-            <MapsTabContent />
           </Suspense>
         </TabsContent>
       </Tabs>
