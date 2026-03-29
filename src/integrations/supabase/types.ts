@@ -254,60 +254,6 @@ export type Database = {
           },
         ]
       }
-      agency_features_legacy: {
-        Row: {
-          activated_at: string | null
-          agency_id: string
-          billing_mode: string
-          created_at: string
-          feature_key: string
-          id: string
-          metadata: Json
-          status: string
-          suspended_at: string | null
-          updated_at: string
-        }
-        Insert: {
-          activated_at?: string | null
-          agency_id: string
-          billing_mode?: string
-          created_at?: string
-          feature_key: string
-          id?: string
-          metadata?: Json
-          status?: string
-          suspended_at?: string | null
-          updated_at?: string
-        }
-        Update: {
-          activated_at?: string | null
-          agency_id?: string
-          billing_mode?: string
-          created_at?: string
-          feature_key?: string
-          id?: string
-          metadata?: Json
-          status?: string
-          suspended_at?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "agency_features_agency_id_fkey"
-            columns: ["agency_id"]
-            isOneToOne: false
-            referencedRelation: "apogee_agencies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "agency_features_agency_id_fkey"
-            columns: ["agency_id"]
-            isOneToOne: false
-            referencedRelation: "apogee_sync_status"
-            referencedColumns: ["agency_id"]
-          },
-        ]
-      }
       agency_financial_charges: {
         Row: {
           agency_id: string
@@ -1016,50 +962,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
-        ]
-      }
-      agency_subscription_legacy: {
-        Row: {
-          agency_id: string
-          assigned_by: string | null
-          created_at: string | null
-          id: string
-          status: string
-          tier_key: string
-          updated_at: string | null
-          valid_from: string | null
-          valid_until: string | null
-        }
-        Insert: {
-          agency_id: string
-          assigned_by?: string | null
-          created_at?: string | null
-          id?: string
-          status?: string
-          tier_key: string
-          updated_at?: string | null
-          valid_from?: string | null
-          valid_until?: string | null
-        }
-        Update: {
-          agency_id?: string
-          assigned_by?: string | null
-          created_at?: string | null
-          id?: string
-          status?: string
-          tier_key?: string
-          updated_at?: string | null
-          valid_from?: string | null
-          valid_until?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "agency_subscription_tier_key_fkey"
-            columns: ["tier_key"]
-            isOneToOne: false
-            referencedRelation: "plan_tiers_legacy"
-            referencedColumns: ["key"]
           },
         ]
       }
@@ -7920,47 +7822,6 @@ export type Database = {
           },
         ]
       }
-      module_registry_legacy: {
-        Row: {
-          is_deployed: boolean
-          key: string
-          label: string
-          min_role: number
-          node_type: string
-          parent_key: string | null
-          required_plan: string
-          sort_order: number
-        }
-        Insert: {
-          is_deployed?: boolean
-          key: string
-          label: string
-          min_role?: number
-          node_type: string
-          parent_key?: string | null
-          required_plan?: string
-          sort_order?: number
-        }
-        Update: {
-          is_deployed?: boolean
-          key?: string
-          label?: string
-          min_role?: number
-          node_type?: string
-          parent_key?: string | null
-          required_plan?: string
-          sort_order?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "module_registry_parent_key_fkey"
-            columns: ["parent_key"]
-            isOneToOne: false
-            referencedRelation: "module_registry_legacy"
-            referencedColumns: ["key"]
-          },
-        ]
-      }
       monthly_reports: {
         Row: {
           agency_id: string
@@ -8401,68 +8262,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      plan_tier_modules_legacy: {
-        Row: {
-          created_at: string | null
-          enabled: boolean | null
-          id: string
-          module_key: string
-          options_override: Json | null
-          tier_key: string
-        }
-        Insert: {
-          created_at?: string | null
-          enabled?: boolean | null
-          id?: string
-          module_key: string
-          options_override?: Json | null
-          tier_key: string
-        }
-        Update: {
-          created_at?: string | null
-          enabled?: boolean | null
-          id?: string
-          module_key?: string
-          options_override?: Json | null
-          tier_key?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "plan_tier_modules_tier_key_fkey"
-            columns: ["tier_key"]
-            isOneToOne: false
-            referencedRelation: "plan_tiers_legacy"
-            referencedColumns: ["key"]
-          },
-        ]
-      }
-      plan_tiers_legacy: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          display_order: number | null
-          is_system: boolean | null
-          key: string
-          label: string
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          display_order?: number | null
-          is_system?: boolean | null
-          key: string
-          label: string
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          display_order?: number | null
-          is_system?: boolean | null
-          key?: string
-          label?: string
-        }
-        Relationships: []
       }
       planning_moves: {
         Row: {
@@ -12733,54 +12532,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_modules_legacy: {
-        Row: {
-          created_at: string | null
-          enabled_at: string | null
-          enabled_by: string | null
-          id: string
-          module_key: string
-          options: Json | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          enabled_at?: string | null
-          enabled_by?: string | null
-          id?: string
-          module_key: string
-          options?: Json | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          enabled_at?: string | null
-          enabled_by?: string | null
-          id?: string
-          module_key?: string
-          options?: Json | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_modules_enabled_by_fkey"
-            columns: ["enabled_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_modules_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_page_overrides: {
         Row: {
           granted_at: string
@@ -13412,14 +13163,6 @@ export type Database = {
         Args: { p_first_name: string; p_last_name: string }
         Returns: string
       }
-      get_agency_enabled_modules: {
-        Args: { p_agency_id: string }
-        Returns: {
-          enabled: boolean
-          module_key: string
-          options: Json
-        }[]
-      }
       get_agency_performance_weekly_hours: {
         Args: { target_agency_id: string }
         Returns: {
@@ -13501,14 +13244,6 @@ export type Database = {
         Args: { _user_id: string }
         Returns: {
           agency_id: string
-        }[]
-      }
-      get_user_effective_modules: {
-        Args: { p_user_id: string }
-        Returns: {
-          enabled: boolean
-          module_key: string
-          options: Json
         }[]
       }
       get_user_global_role_level: {
