@@ -358,7 +358,7 @@ export const UserProfileSheet = memo(function UserProfileSheet({
             {useV2 && user.id && (
               <>
                 <Section icon={Shield} title="Permissions V2">
-                  <UserPermissionsColumnV2 userId={user.id} editMode={true} />
+                  <UserPermissionsColumnV2 userId={user.id} userRole={user.global_role ?? 'base_user'} editMode={true} />
                 </Section>
                 <Separator />
               </>

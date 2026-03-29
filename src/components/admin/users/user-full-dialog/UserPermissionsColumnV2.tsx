@@ -1,233 +1,154 @@
 import React, { useState } from 'react';
 import { useUserPermissionsV2 } from '@/hooks/useUserPermissionsV2';
-import { useUserAccessEntries, useUpsertUserAccess, useRemoveUserAccess } from '@/hooks/access-rights/useUserAccess';
-import { useModuleCatalog } from '@/hooks/access-rights/useModuleCatalog';
-import { SOURCE_LABELS, PermissionSource } from '@/types/permissions-v2';
+import { useUpsertUserAccess, useRemoveUserAccess } from '@/hooks/access-rights/useUserAccess';
+import { useModuleCatalog, ModuleCatalogTree } from '@/hooks/access-rights/useModuleCatalog';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from '@/components/ui/command';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { Loader2, Plus, X } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Loader2, ChevronRight, ChevronDown } from 'lucide-react';
 
-const SOURCE_COLORS: Record<PermissionSource, string> = {
-  bypass:              'bg-purple-100 text-purple-700',
-  is_core:             'bg-blue-100 text-blue-700',
-  plan:                'bg-blue-100 text-blue-700',
-  option_agence:       'bg-amber-100 text-amber-700',
-  agency_delegation:   'bg-green-100 text-green-700',
-  platform_assignment: 'bg-purple-100 text-purple-700',
-  manual_exception:    'bg-orange-100 text-orange-700',
-  auto_section:        'bg-gray-100 text-gray-500',
-  not_granted:         'bg-gray-100 text-gray-400',
-  pack_grant:          'bg-teal-100 text-teal-700',
-  job_preset:          'bg-indigo-100 text-indigo-700',
+const ROLE_LEVELS: Record<string, number> = {
+  base_user: 0, franchisee_user: 1, franchisee_admin: 2,
+  franchisor_user: 3, franchisor_admin: 4, platform_admin: 5, superadmin: 6,
 };
-
-const EDITABLE_SOURCES = new Set<string>([
-  'manual_exception',
-  'agency_delegation',
-  'platform_assignment',
-  'pack_grant',
-  'job_preset',
-]);
 
 interface Props {
   userId: string;
+  userRole: string;
   editMode: boolean;
 }
 
-export function UserPermissionsColumnV2({ userId, editMode }: Props) {
+export function UserPermissionsColumnV2({ userId, userRole, editMode }: Props) {
+  const userLevel = ROLE_LEVELS[userRole] ?? 0;
   const { data: permissions = [], isLoading: permLoad } = useUserPermissionsV2(userId);
-  const { data: userAccessEntries = [], isLoading: accessLoad } = useUserAccessEntries(userId);
-  const { modules } = useModuleCatalog();
+  const { tree, isLoading: modLoad } = useModuleCatalog();
   const upsert = useUpsertUserAccess();
   const remove = useRemoveUserAccess();
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  const [addOpen, setAddOpen] = useState(false);
+  const isLoading = permLoad || modLoad;
 
-  const isLoading = permLoad || accessLoad;
+  const permMap = new Map(permissions.map(p => [p.module_key, p]));
 
-  // Permissions accordées uniquement (granted = true), hors sections décoratives
-  const granted = permissions.filter(
-    p => p.granted && p.node_type !== 'section' && p.source_summary !== 'auto_section'
+  const hasIndividualOverwrite = (key: string) => {
+    const p = permMap.get(key);
+    return p && ['manual_exception', 'platform_assignment', 'agency_delegation'].includes(p.source_summary);
+  };
+
+  const isGranted = (key: string) => permMap.get(key)?.granted ?? false;
+  const isDenied = (key: string) => {
+    const p = permMap.get(key);
+    return p && !p.granted && p.source_summary === 'manual_exception';
+  };
+
+  const toggleModule = (key: string, currentlyGranted: boolean) => {
+    if (currentlyGranted) {
+      if (hasIndividualOverwrite(key)) {
+        remove.mutate({ user_id: userId, module_key: key });
+      } else {
+        upsert.mutate({ user_id: userId, module_key: key, granted: false, access_level: 'none' });
+      }
+    } else {
+      upsert.mutate({ user_id: userId, module_key: key, granted: true, access_level: 'full' });
+    }
+  };
+
+  const toggleExpanded = (key: string) => {
+    const next = new Set(expanded);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    setExpanded(next);
+  };
+
+  if (isLoading) return (
+    <div className="flex items-center justify-center py-8">
+      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+    </div>
   );
 
-  // Modules déjà dans user_access (éditable)
-  const accessMap = new Map(userAccessEntries.map(e => [e.module_key, e]));
+  const renderNode = (node: ModuleCatalogTree): React.ReactNode => {
+    const granted = isGranted(node.key);
+    const denied = isDenied(node.key);
+    const belowMinRole = node.min_role > userLevel;
+    const isExpanded = expanded.has(node.key);
+    const hasChildren = node.children.length > 0;
+    const hasOverwrite = hasIndividualOverwrite(node.key);
 
-  // Modules disponibles à ajouter (déployés, non déjà accordés)
-  const available = modules.filter(
-    m => m.is_deployed &&
-      m.via_user_assignment === true &&
-      m.min_role < 5 &&
-      !granted.find(g => g.module_key === m.key)
-  );
-
-  if (isLoading) {
     return (
-      <div className="flex-1 p-6 flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div key={node.key} className={belowMinRole ? 'opacity-40' : ''}>
+        <div
+          className="flex items-center justify-between py-1.5 px-1 hover:bg-muted/30 rounded"
+          style={{ paddingLeft: `${node.depth * 16 + 4}px` }}
+        >
+          <div className="flex items-center gap-1.5 min-w-0">
+            {hasChildren ? (
+              <button
+                onClick={() => toggleExpanded(node.key)}
+                className="text-muted-foreground hover:text-foreground shrink-0"
+              >
+                {isExpanded
+                  ? <ChevronDown className="h-3.5 w-3.5" />
+                  : <ChevronRight className="h-3.5 w-3.5" />}
+              </button>
+            ) : (
+              <span className="w-3.5 shrink-0" />
+            )}
+            <div className="min-w-0">
+              <span className="text-xs font-medium text-foreground truncate block">
+                {node.label}
+              </span>
+              <span className="text-[10px] text-muted-foreground">{node.key}</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            {hasOverwrite && (
+              <Badge variant="outline" className="text-[9px] px-1 py-0 border-amber-300 text-amber-600">
+                individuel
+              </Badge>
+            )}
+            {denied && (
+              <Badge variant="outline" className="text-[9px] px-1 py-0 border-destructive text-destructive">
+                bloqué
+              </Badge>
+            )}
+            {editMode && !belowMinRole ? (
+              <Switch
+                checked={granted && !denied}
+                onCheckedChange={() => toggleModule(node.key, granted && !denied)}
+                disabled={upsert.isPending || remove.isPending}
+                className="scale-75"
+              />
+            ) : (
+              <span className={`text-xs font-mono ${granted && !denied ? 'text-green-600' : 'text-muted-foreground'}`}>
+                {granted && !denied ? '✓' : '—'}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {isExpanded && node.children.map(child => renderNode(child))}
       </div>
     );
-  }
+  };
+
+  const deployedTree = tree.filter(m => m.is_deployed);
 
   return (
-    <div className="flex-1 p-6 overflow-y-auto">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-foreground">Permissions résolues</h3>
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h4 className="text-sm font-semibold text-foreground">Permissions</h4>
         <Badge variant="outline" className="text-[10px]">V2</Badge>
       </div>
 
-      {/* Liste des permissions accordées */}
-      <div className="border rounded-lg overflow-hidden">
-        <table className="w-full text-xs">
-          <thead>
-            <tr className="bg-muted/50 border-b">
-              <th className="text-left p-2 font-medium text-muted-foreground">Module</th>
-              <th className="text-left p-2 font-medium text-muted-foreground w-20">Accès</th>
-              <th className="text-left p-2 font-medium text-muted-foreground w-28">Source</th>
-              {editMode && (
-                <th className="w-8 p-2"></th>
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {granted.length === 0 && (
-              <tr>
-                <td colSpan={editMode ? 4 : 3} className="p-4 text-center text-muted-foreground">
-                  Aucun module accordé
-                </td>
-              </tr>
-            )}
-            {granted.map(perm => {
-              const isEditable = EDITABLE_SOURCES.has(perm.source_summary);
-
-              return (
-                <tr key={perm.module_key} className="border-b last:border-b-0 hover:bg-muted/30">
-                  <td className="p-2">
-                    <div>
-                      <span className="font-medium text-foreground">
-                        {modules.find(m => m.key === perm.module_key)?.label ?? perm.module_key}
-                      </span>
-                      <span className="block text-[10px] text-muted-foreground">{perm.module_key}</span>
-                    </div>
-                  </td>
-                  <td className="p-2">
-                    {editMode && isEditable ? (
-                      <Select
-                        value={perm.access_level}
-                        onValueChange={(v) =>
-                          upsert.mutate({
-                            user_id: userId,
-                            module_key: perm.module_key,
-                            granted: true,
-                            access_level: v as 'none' | 'read' | 'full',
-                          })
-                        }
-                      >
-                        <SelectTrigger className="h-6 text-[10px] w-20">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="read">Lecture</SelectItem>
-                          <SelectItem value="full">Complet</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <span className="text-muted-foreground">
-                        {perm.access_level === 'full' ? 'Complet' :
-                         perm.access_level === 'read' ? 'Lecture' : 'Aucun'}
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-2">
-                    <Badge
-                      variant="secondary"
-                      className={`text-[10px] ${SOURCE_COLORS[perm.source_summary as PermissionSource] ?? ''}`}
-                    >
-                      {SOURCE_LABELS[perm.source_summary as PermissionSource] ?? perm.source_summary}
-                    </Badge>
-                  </td>
-                  {editMode && (
-                    <td className="p-2">
-                      {isEditable && (
-                        <button
-                          onClick={() =>
-                            remove.mutate({ user_id: userId, module_key: perm.module_key })
-                          }
-                          className="text-muted-foreground/30 hover:text-destructive transition-colors"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                    </td>
-                  )}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className="flex gap-2 flex-wrap text-[10px] text-muted-foreground">
+        <span>🔶 overwrite individuel</span>
+        <span>🔴 bloqué explicitement</span>
+        <span>grisé = min_role non atteint</span>
       </div>
 
-      {/* Bouton ajouter un module */}
-      {editMode && (
-        <Popover open={addOpen} onOpenChange={setAddOpen}>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="mt-3 w-full gap-1.5 text-xs">
-              <Plus className="h-3.5 w-3.5" />
-              Ajouter un module
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-64 p-0" align="start">
-            <Command>
-              <CommandInput placeholder="Rechercher..." className="text-xs" />
-              <CommandEmpty className="text-xs p-2">
-                Aucun module disponible.
-              </CommandEmpty>
-              <CommandGroup className="max-h-48 overflow-y-auto">
-                {available.map(mod => (
-                  <CommandItem
-                    key={mod.key}
-                    value={mod.label}
-                    onSelect={() => {
-                      upsert.mutate({
-                        user_id: userId,
-                        module_key: mod.key,
-                        granted: true,
-                        access_level: 'full',
-                      });
-                      setAddOpen(false);
-                    }}
-                    className="text-xs"
-                  >
-                    <div>
-                      <span className="font-medium">{mod.label}</span>
-                      <span className="block text-[10px] text-muted-foreground">{mod.key}</span>
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </Command>
-          </PopoverContent>
-        </Popover>
-      )}
+      <div className="border rounded-lg p-2 max-h-[500px] overflow-y-auto">
+        {deployedTree.map(node => renderNode(node))}
+      </div>
     </div>
   );
 }
