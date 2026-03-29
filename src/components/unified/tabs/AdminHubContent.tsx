@@ -6,7 +6,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Shield, UserPlus, Handshake, UserCheck, ScrollText, Eye, Crown, LayoutGrid, UserCog, Grid3X3, ShieldCheck, Layers, FileKey } from 'lucide-react';
+import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Shield, UserPlus, Handshake, UserCheck, ScrollText, Eye, LayoutGrid, UserCog, Grid3X3, ShieldCheck, Layers, FileKey } from 'lucide-react';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { 
   DraggableFolderTabsList, 
@@ -37,7 +37,7 @@ const PendingRegistrationsList = lazy(() => import('@/components/admin/registrat
 const ApporteurAuditLogView = lazy(() => import('@/components/admin/views/ApporteurAuditLogView'));
 
 const SuiviClientsAdminView = lazy(() => import('@/components/admin/views/SuiviClientsAdminView'));
-const PlanCatalogViewV2 = lazy(() => import('@/components/admin/views/PlanCatalogViewV2'));
+
 const AgencyEntitlementsViewV2 = lazy(() => import('@/components/admin/views/AgencyEntitlementsViewV2'));
 const JobProfilePresetsViewV2 = lazy(() => import('@/components/admin/views/JobProfilePresetsViewV2'));
 const PermissionsAuditLogView = lazy(() => import('@/components/admin/views/PermissionsAuditLogView'));
@@ -68,7 +68,7 @@ const GESTION_SUB_TABS: FolderTabConfig[] = [
   { id: 'inscriptions', label: 'Inscriptions', icon: UserPlus, accent: 'orange' },
   { id: 'agences', label: 'Agences', icon: Building2, accent: 'purple' },
   { id: 'modules', label: 'Modules', icon: Layers, accent: 'orange' },
-  { id: 'plans', label: 'Plans', icon: Crown, accent: 'green' },
+  
   { id: 'presets', label: 'Droits', icon: FileKey, accent: 'blue' },
   { id: 'matrice', label: 'Matrice', icon: Grid3X3, accent: 'purple' },
   { id: 'qualite', label: 'Qualité', icon: ShieldCheck, accent: 'orange' },
@@ -84,7 +84,7 @@ const RELATIONS_SUB_TABS: FolderTabConfig[] = [
 ];
 
 const ADMIN_MAIN_TAB_IDS = ADMIN_MAIN_TABS.map(tab => tab.id);
-const DEFAULT_GESTION_ORDER = ['users', 'inscriptions', 'agences', 'modules', 'plans', 'presets', 'matrice', 'qualite', 'journal', 'activity'];
+const DEFAULT_GESTION_ORDER = ['users', 'inscriptions', 'agences', 'modules', 'presets', 'matrice', 'qualite', 'journal', 'activity'];
 const DEFAULT_RELATIONS_ORDER = ['apporteurs', 'audit-apporteurs', 'suivi-clients'];
 
 export default function AdminHubContent() {
@@ -203,9 +203,6 @@ export default function AdminHubContent() {
                 </TabsContent>
                 <TabsContent value="modules" className="mt-0 focus-visible:outline-none">
                   <ModulesMasterViewV2 />
-                </TabsContent>
-                <TabsContent value="plans" className="mt-0 focus-visible:outline-none">
-                  <Suspense fallback={<LoadingFallback />}><PlanCatalogViewV2 /></Suspense>
                 </TabsContent>
                 <TabsContent value="presets" className="mt-0 focus-visible:outline-none">
                   <Suspense fallback={<LoadingFallback />}><JobProfilePresetsViewV2 /></Suspense>
