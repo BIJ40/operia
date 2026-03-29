@@ -48,6 +48,9 @@ export function TeamMemberModules({ userId, roleAgence, n2HasModule, isDeployedM
   const userModules: Record<string, any> | null = null;
   const isLoading = false;
   const toggleModule = { mutate: (_args: any) => { toast.info('Gestion des droits via le système V2'); }, isPending: false };
+  const { getShortLabel } = useModuleLabels();
+  const agencyHasApporteurs = useAgencyHasApporteurs();
+  const [collapsedParents, setCollapsedParents] = useState<Set<string>>(new Set());
 
   const delegatableModules = useMemo(() => getDelegatableModules(), []);
 
