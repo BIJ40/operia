@@ -2,6 +2,7 @@
  * Agency Page - Informations de l'agence de rattachement
  */
 
+import { useEffect } from 'react';
 import { useAuthCore } from "@/contexts/AuthCoreContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { WarmCard } from "@/components/ui/warm-card";
