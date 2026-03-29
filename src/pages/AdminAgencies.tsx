@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { logError } from '@/lib/logger';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -38,6 +37,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { usePlanTiers } from '@/hooks/access-rights/usePlanTiers';
 import { useAllAgencySubscriptions, useUpdateAgencySubscription } from '@/hooks/access-rights/useAgencySubscription';
 import { AdminViewHeader } from '@/components/admin/shared/AdminViewHeader';
+import { AdminPanel } from '@/components/admin/shared/AdminPanel';
 
 interface Agency {
   id: string;
@@ -307,22 +307,25 @@ export default function AdminAgencies() {
 
       {/* Utilisateurs sans agence */}
       {getUsersWithoutAgency().length > 0 && (
-        <Card className="border-orange-200 bg-orange-50/50">
-          <CardHeader>
-            <CardTitle className="text-orange-900">
-              <Users className="inline h-5 w-5 mr-2" />
-              Utilisateurs sans agence ({getUsersWithoutAgency().length})
-            </CardTitle>
-            <CardDescription className="text-orange-700">
+        <AdminPanel>
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <h3 className="text-sm font-semibold text-foreground">Utilisateurs sans agence</h3>
+                <Badge variant="outline" className="text-xs">
+                  {getUsersWithoutAgency().length}
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground">
               Ces utilisateurs n'ont pas encore d'agence assignée
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+              </p>
+            </div>
             <div className="space-y-2">
               {getUsersWithoutAgency().map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center justify-between p-3 bg-white rounded-lg border"
+                  className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/20 p-3"
                 >
                   <div>
                     <p className="font-medium">
@@ -354,8 +357,8 @@ export default function AdminAgencies() {
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </AdminPanel>
       )}
 
       {/* Liste des agences */}
@@ -364,7 +367,9 @@ export default function AdminAgencies() {
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
       ) : agencies.length === 0 ? (
-        <p className="text-center text-muted-foreground py-12">Aucune agence configurée</p>
+        <AdminPanel className="py-12 text-center text-muted-foreground">
+          Aucune agence configurée
+        </AdminPanel>
       ) : (
         <div className="space-y-3">
           {agencies.map((agency) => {
@@ -387,8 +392,8 @@ export default function AdminAgencies() {
                     )}
                     <span className="font-medium text-foreground">{agency.label}</span>
                     <Badge
-                      variant={agency.is_active ? 'default' : 'secondary'}
-                      className={agency.is_active ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}
+                        variant={agency.is_active ? 'outline' : 'secondary'}
+                        className="text-xs"
                     >
                       {agency.is_active ? 'Active' : 'Inactive'}
                     </Badge>
@@ -402,7 +407,7 @@ export default function AdminAgencies() {
                       onValueChange={(value) => handlePlanChange(agency.id, value)}
                     >
                       <SelectTrigger className="w-[120px] h-8">
-                        <Crown className="h-3 w-3 mr-1 text-amber-500" />
+                        <Crown className="h-3 w-3 mr-1 text-muted-foreground" />
                         <SelectValue placeholder="Plan" />
                       </SelectTrigger>
                       <SelectContent>
@@ -474,7 +479,7 @@ export default function AdminAgencies() {
                                 )}
                               </TableCell>
                               <TableCell>
-                                <Badge className="bg-emerald-600 hover:bg-emerald-700 text-xs">
+                                <Badge variant="outline" className="text-xs">
                                   Inscrit
                                 </Badge>
                               </TableCell>
@@ -513,7 +518,7 @@ export default function AdminAgencies() {
                                 )}
                               </TableCell>
                               <TableCell>
-                                <Badge variant="secondary" className="text-xs text-amber-700 bg-amber-100">
+                                <Badge variant="secondary" className="text-xs">
                                   Non inscrit
                                 </Badge>
                               </TableCell>

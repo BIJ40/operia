@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Search, UserPlus, ChevronLeft, ChevronRight, Users } from 'lucide-react';
+import { Search, UserPlus, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Agency {
   id: string;
@@ -55,24 +55,16 @@ export function UserFilters({
   onCreateUser,
   onCreateRequest,
   showRequestButton,
-  totalUsers,
-  filteredCount,
   currentPage,
   setCurrentPage,
   totalPages,
 }: UserFiltersProps) {
+  const showActions = Boolean(showRequestButton && onCreateRequest) || canCreateUsers;
+
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <Users className="w-5 h-5 text-primary" />
-          <span className="text-sm text-muted-foreground">
-            {filteredCount} utilisateur{filteredCount !== 1 ? 's' : ''} / {totalUsers} total
-          </span>
-        </div>
-        
-        <div className="flex gap-2">
+      {showActions && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2">
           {showRequestButton && onCreateRequest && (
             <Button variant="outline" onClick={onCreateRequest}>
               <UserPlus className="w-4 h-4 mr-2" />
@@ -86,7 +78,7 @@ export function UserFilters({
             </Button>
           )}
         </div>
-      </div>
+      )}
 
       {/* Filters */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
