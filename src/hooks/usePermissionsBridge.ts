@@ -17,6 +17,7 @@ import { usePermissionsV2Safe } from '@/contexts/PermissionsContextV2';
 import { useAppFeatureFlag } from '@/hooks/useAppFeatureFlag';
 import { PermissionEntry } from '@/types/permissions-v2';
 import type { GlobalRole } from '@/types/globalRoles';
+import type { EnabledModules } from '@/types/modules';
 
 interface PermissionsBridgeResult {
   hasGlobalRole: (requiredRole: string) => boolean;
@@ -25,6 +26,8 @@ interface PermissionsBridgeResult {
   hasAccessToScope: (scope: string) => boolean;
   isDeployedModule: (moduleKey: string) => boolean;
   globalRole: GlobalRole | null;
+  suggestedGlobalRole: GlobalRole | null;
+  enabledModules: EnabledModules | null;
   isAdmin: boolean;
   isSupport: boolean;
   isFranchiseur: boolean;
@@ -37,12 +40,10 @@ interface PermissionsBridgeResult {
 }
 
 export function usePermissionsBridge(): PermissionsBridgeResult {
-  // Appels inconditionnels — règles des hooks respectées
   const useV2Flag = useAppFeatureFlag('USE_PERMISSIONS_V2');
   const v1 = usePermissions();
-  const v2 = usePermissionsV2Safe(); // null si PermissionsProviderV2 absent
+  const v2 = usePermissionsV2Safe();
 
-  // V2 actif uniquement si flag=true ET contexte V2 disponible
   const useV2 = useV2Flag && v2 !== null;
 
   if (!useV2 || !v2) {
@@ -53,6 +54,8 @@ export function usePermissionsBridge(): PermissionsBridgeResult {
       hasAccessToScope:     v1.hasAccessToScope,
       isDeployedModule:     v1.isDeployedModule,
       globalRole:           v1.globalRole,
+      suggestedGlobalRole:  v1.suggestedGlobalRole,
+      enabledModules:       v1.enabledModules,
       isAdmin:              v1.isAdmin,
       isSupport:            v1.isSupport,
       isFranchiseur:        v1.isFranchiseur,
@@ -65,7 +68,6 @@ export function usePermissionsBridge(): PermissionsBridgeResult {
     };
   }
 
-  // V2 actif — construire l'interface V1 depuis les données V2
   const entries: PermissionEntry[] = v2.entries;
 
   const entryMap = new Map<string, PermissionEntry>();
@@ -88,6 +90,14 @@ export function usePermissionsBridge(): PermissionsBridgeResult {
   const supportEntry = entryMap.get('support.aide_en_ligne');
   const isSupport = supportEntry?.granted === true;
 
+  // enabledModules en V2 : construire un objet compatible depuis les entries
+  const enabledModulesV2 = entries
+    .filter(e => e.granted && e.access_level !== 'none')
+    .reduce<Record<string, boolean>>((acc, e) => {
+      acc[e.module_key] = true;
+      return acc;
+    }, {}) as unknown as EnabledModules;
+
   return {
     hasModule: (moduleKey: string) => {
       const entry = entryMap.get(moduleKey);
@@ -101,17 +111,17 @@ export function usePermissionsBridge(): PermissionsBridgeResult {
       return entry.options?.[optionKey] === true;
     },
 
-    // not_granted = déployé mais non accordé → isDeployedModule = true
     isDeployedModule: (moduleKey: string) => {
       return entryMap.has(moduleKey);
     },
 
-    // Déléguer à V1 — hors scope V2
     hasGlobalRole:    v1.hasGlobalRole,
     hasAccessToScope: v1.hasAccessToScope,
 
-    globalRole:           v1.globalRole,
-    isAdmin:              hasBypass,
+    globalRole:          v1.globalRole,
+    suggestedGlobalRole: v1.suggestedGlobalRole,
+    enabledModules:      enabledModulesV2,
+    isAdmin:             hasBypass,
     isSupport,
     isFranchiseur,
     canAccessSupportUser: v1.canAccessSupportUser,

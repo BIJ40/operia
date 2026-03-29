@@ -5,7 +5,7 @@
  * Les références legacy (isAdmin) sont supprimées pour éviter les bypasses.
  */
 
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBridge';
 import { GlobalRole, GLOBAL_ROLES, hasMinimumRole } from '@/types/globalRoles';
 
 /**
