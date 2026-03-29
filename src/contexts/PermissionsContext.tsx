@@ -9,6 +9,12 @@ import { createContext, useContext } from 'react';
 import { GlobalRole } from '@/types/globalRoles';
 import { EnabledModules, ModuleKey } from '@/types/modules';
 
+export interface PermissionContext {
+  globalRole: GlobalRole | null;
+  enabledModules: EnabledModules;
+  agencyId: string | null;
+}
+
 export interface PermissionsContextType {
   globalRole: GlobalRole | null;
   enabledModules: EnabledModules | null;
