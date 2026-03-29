@@ -107,8 +107,8 @@ function UserRolesTab() {
           .select('id, email, first_name, last_name, global_role')
           .eq('is_active', true)
           .order('email'),
-        supabase
-          .from('user_modules')
+        (supabase
+          .from('user_modules' as any) as any)
           .select('user_id')
           .eq('module_key', 'ticketing')
       ]);

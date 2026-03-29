@@ -82,8 +82,8 @@ export async function resolveEffectiveModulesFromBackend(params: {
 
   // 2) Fallback: user_modules table
   try {
-    const { data: userRows, error: userModulesError } = await supabase
-      .from('user_modules')
+    const { data: userRows, error: userModulesError } = await (supabase
+      .from('user_modules' as any) as any)
       .select('module_key, options')
       .eq('user_id', userId);
 

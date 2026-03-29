@@ -26,8 +26,8 @@ export function useModuleOverrides() {
     queryKey: QUERY_KEY,
     queryFn: async (): Promise<OverridesMap> => {
       // Fetch overrides with profile info
-      const { data, error } = await supabase
-        .from('user_modules')
+      const { data, error } = await (supabase
+        .from('user_modules' as any) as any)
         .select('module_key, user_id, profiles!user_modules_user_id_fkey(first_name, last_name, email, global_role, agency_id)')
         ;
 
@@ -43,8 +43,8 @@ export function useModuleOverrides() {
       // Fetch active subscriptions for all agencies
       const tierMap = new Map<string, string>();
       if (agencyIds.size > 0) {
-        const { data: subs } = await supabase
-          .from('agency_subscription')
+        const { data: subs } = await (supabase
+          .from('agency_subscription' as any) as any)
           .select('agency_id, tier_key')
           .in('agency_id', [...agencyIds])
           .eq('status', 'active');
@@ -90,8 +90,8 @@ export function useAddOverride() {
       const parts = moduleKey.split('.');
       const allKeys = parts.map((_, i) => parts.slice(0, i + 1).join('.'));
       const now = new Date().toISOString();
-      const { error } = await supabase
-        .from('user_modules')
+      const { error } = await (supabase
+        .from('user_modules' as any) as any)
         .upsert(
           allKeys.map(key => ({
             user_id: userId,
@@ -117,8 +117,8 @@ export function useRemoveOverride() {
 
   return useMutation({
     mutationFn: async ({ userId, moduleKey }: { userId: string; moduleKey: string }) => {
-      const { error } = await supabase
-        .from('user_modules')
+      const { error } = await (supabase
+        .from('user_modules' as any) as any)
         .delete()
         .eq('user_id', userId)
         .eq('module_key', moduleKey);

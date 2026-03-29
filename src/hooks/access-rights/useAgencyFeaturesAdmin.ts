@@ -40,13 +40,13 @@ async function syncApporteursModuleForAgency(
       enabled_by: enabledBy,
     }));
 
-    await supabase
-      .from('user_modules')
+    await (supabase
+      .from('user_modules' as any) as any)
       .upsert(rows, { onConflict: 'user_id,module_key' });
   } else {
     // Remove organisation.apporteurs for each user
-    await supabase
-      .from('user_modules')
+    await (supabase
+      .from('user_modules' as any) as any)
       .delete()
       .in('user_id', profiles.map((p) => p.id))
       .eq('module_key', 'organisation.apporteurs');
@@ -61,8 +61,8 @@ export function useAgencyFeaturesForAgency(agencyId: string | null) {
     queryKey: ['agency-features', agencyId],
     queryFn: async (): Promise<AgencyFeatureRow[]> => {
       if (!agencyId) return [];
-      const { data, error } = await supabase
-        .from('agency_features')
+      const { data, error } = await (supabase
+        .from('agency_features' as any) as any)
         .select('*')
         .eq('agency_id', agencyId);
       if (error) throw error;
@@ -103,8 +103,8 @@ export function useUpsertAgencyFeature() {
         row.suspended_at = new Date().toISOString();
       }
 
-      const { data, error } = await supabase
-        .from('agency_features')
+      const { data, error } = await (supabase
+        .from('agency_features' as any) as any)
         .upsert(row as any, { onConflict: 'agency_id,feature_key' })
         .select()
         .single();
@@ -136,8 +136,8 @@ export function useUpdateFeatureMetadata() {
     }) => {
       const { agencyId, featureKey, metadata } = params;
 
-      const { data, error } = await supabase
-        .from('agency_features')
+      const { data, error } = await (supabase
+        .from('agency_features' as any) as any)
         .update({ metadata: metadata as any })
         .eq('agency_id', agencyId)
         .eq('feature_key', featureKey)
@@ -196,8 +196,8 @@ export function useActivateRelationsPack() {
         },
       ];
 
-      const { error } = await supabase
-        .from('agency_features')
+      const { error } = await (supabase
+        .from('agency_features' as any) as any)
         .upsert(features as any[], { onConflict: 'agency_id,feature_key' });
 
       if (error) throw error;
@@ -226,8 +226,8 @@ export function useDeactivateRelationsPack() {
     mutationFn: async (agencyId: string) => {
       const keys = ['suivi_client', 'apporteur_portal', 'apporteur_exchange'];
 
-      const { error } = await supabase
-        .from('agency_features')
+      const { error } = await (supabase
+        .from('agency_features' as any) as any)
         .update({ status: 'inactive', suspended_at: new Date().toISOString() } as any)
         .eq('agency_id', agencyId)
         .in('feature_key', keys);

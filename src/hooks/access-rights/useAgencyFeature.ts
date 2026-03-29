@@ -33,8 +33,8 @@ export function useAgencyFeatures() {
     queryFn: async (): Promise<AgencyFeatureRow[]> => {
       if (!agencyId) return [];
       
-      const { data, error } = await supabase
-        .from('agency_features')
+      const { data, error } = await (supabase
+        .from('agency_features' as any) as any)
         .select('*')
         .eq('agency_id', agencyId);
 

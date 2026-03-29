@@ -215,8 +215,8 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       
       // ✅ Fetch user_modules pour tous les users (SOURCE DE VÉRITÉ pour les modules)
       const userIds = profilesData?.map(p => p.id) ?? [];
-      const { data: modulesData } = await supabase
-        .from('user_modules')
+      const { data: modulesData } = await (supabase
+        .from('user_modules' as any) as any)
         .select('user_id, module_key, options')
         .in('user_id', userIds);
       
@@ -342,8 +342,8 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
       
       // 2. Écriture UNIQUE vers user_modules table (source de vérité P3.2)
       // Supprimer les anciens modules
-      await supabase
-        .from('user_modules')
+      await (supabase
+        .from('user_modules' as any) as any)
         .delete()
         .eq('user_id', userId);
       
@@ -352,7 +352,7 @@ export function useUserManagement(options: UseUserManagementOptions = {}) {
         const moduleRows = enabledModulesToRows(userId, enabledModules, user?.id);
         
         if (moduleRows.length > 0) {
-          const { error: insertError } = await supabase.from('user_modules').insert(moduleRows);
+          const { error: insertError } = await (supabase.from('user_modules' as any) as any).insert(moduleRows);
           if (insertError) throw insertError;
         }
       }

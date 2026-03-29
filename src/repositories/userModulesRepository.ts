@@ -16,8 +16,8 @@ export interface UserModuleRow {
 }
 
 export async function listUserModules(userId: string): Promise<UserModuleRow[]> {
-  const { data, error } = await supabase
-    .from('user_modules')
+  const { data, error } = await (supabase
+    .from('user_modules' as any) as any)
     .select('*')
     .eq('user_id', userId);
 
@@ -34,8 +34,8 @@ export async function upsertUserModule(params: {
   options?: Record<string, boolean> | null;
   enabledBy?: string | null;
 }): Promise<void> {
-  const { error } = await supabase
-    .from('user_modules')
+  const { error } = await (supabase
+    .from('user_modules' as any) as any)
     .upsert({
       user_id: params.userId,
       module_key: params.moduleKey,
@@ -51,8 +51,8 @@ export async function upsertUserModule(params: {
 }
 
 export async function deleteUserModule(userId: string, moduleKey: string): Promise<void> {
-  const { error } = await supabase
-    .from('user_modules')
+  const { error } = await (supabase
+    .from('user_modules' as any) as any)
     .delete()
     .eq('user_id', userId)
     .eq('module_key', moduleKey);
@@ -64,8 +64,8 @@ export async function deleteUserModule(userId: string, moduleKey: string): Promi
 }
 
 export async function deleteAllUserModules(userId: string): Promise<void> {
-  const { error } = await supabase
-    .from('user_modules')
+  const { error } = await (supabase
+    .from('user_modules' as any) as any)
     .delete()
     .eq('user_id', userId);
 
@@ -86,8 +86,8 @@ export async function bulkInsertUserModules(
 ): Promise<void> {
   if (rows.length === 0) return;
 
-  const { error } = await supabase
-    .from('user_modules')
+  const { error } = await (supabase
+    .from('user_modules' as any) as any)
     .insert(rows);
 
   if (error) {

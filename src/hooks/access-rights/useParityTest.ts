@@ -70,12 +70,12 @@ export function useParityTest() {
 
         try {
           // V1 : lire user_modules
-          const { data: v1Modules } = await supabase
-            .from('user_modules')
+          const { data: v1Modules } = await (supabase
+            .from('user_modules' as any) as any)
             .select('module_key')
             .eq('user_id', user.id);
 
-          const remappedV1 = (v1Modules ?? []).map(m => LEGACY_REMAP[m.module_key] ?? m.module_key);
+          const remappedV1 = ((v1Modules ?? []) as any[]).map((m: any) => LEGACY_REMAP[m.module_key] ?? m.module_key) as string[];
 
           const { data: catalogEntries } = await supabase
             .from('module_catalog')
@@ -103,9 +103,9 @@ export function useParityTest() {
           );
 
           // Écarts
-          const v1Only = [...v1Keys].filter(k => !v2Keys.has(k));
-          const v2Only = [...v2Keys].filter(k => !v1Keys.has(k));
-          const matches = [...v1Keys].filter(k => v2Keys.has(k)).length;
+          const v1Only = ([...v1Keys] as string[]).filter(k => !v2Keys.has(k));
+          const v2Only = ([...v2Keys] as string[]).filter(k => !v1Keys.has(k));
+          const matches = ([...v1Keys] as string[]).filter(k => v2Keys.has(k)).length;
 
           results.push({
             userId: user.id,
@@ -115,8 +115,8 @@ export function useParityTest() {
             totalV1: v1Keys.size,
             totalV2: v2Keys.size,
             matches,
-            v1Only,
-            v2Only,
+            v1Only: v1Only as string[],
+            v2Only: v2Only as string[],
             // pass = aucune régression (v1Only vide)
             pass: v1Only.length === 0,
           });
