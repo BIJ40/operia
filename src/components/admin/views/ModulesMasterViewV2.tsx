@@ -195,6 +195,26 @@ function ModuleRow({
   );
 }
 
+// Filtre récursif : ne garde que les nœuds déployés, en élagant les enfants non déployés
+function filterDeployedOnly(nodes: ModuleCatalogTree[]): ModuleCatalogTree[] {
+  return nodes
+    .filter(n => n.is_deployed)
+    .map(n => ({ ...n, children: filterDeployedOnly(n.children) }));
+}
+
+// Extrait tous les modules non déployés, y compris les enfants de parents déployés
+function extractNonDeployed(nodes: ModuleCatalogTree[]): ModuleCatalogTree[] {
+  const result: ModuleCatalogTree[] = [];
+  for (const node of nodes) {
+    if (!node.is_deployed) {
+      result.push(node);
+    } else {
+      result.push(...extractNonDeployed(node.children));
+    }
+  }
+  return result;
+}
+
 export function ModulesMasterViewV2() {
   const { globalRole, isAdmin } = usePermissionsBridge();
   const isN6 = globalRole === 'superadmin';
@@ -205,8 +225,8 @@ export function ModulesMasterViewV2() {
 
   const [showDev, setShowDev] = useState(false);
 
-  const deployed = tree.filter(m => m.is_deployed);
-  const dev = tree.filter(m => !m.is_deployed);
+  const deployed = filterDeployedOnly(tree);
+  const dev = extractNonDeployed(tree);
 
   if (isLoading) {
     return (
