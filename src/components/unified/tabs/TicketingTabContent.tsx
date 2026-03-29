@@ -59,6 +59,17 @@ export default function TicketingTabContent() {
       : 'liste'
   );
 
+  // Synchroniser avec l'URL
+  useEffect(() => {
+    const current = new URLSearchParams(searchParams);
+    if (activeSubTab !== 'liste') {
+      current.set('subtab', activeSubTab);
+    } else {
+      current.delete('subtab');
+    }
+    setSearchParams(current, { replace: true });
+  }, [activeSubTab, setSearchParams, searchParams]);
+
   // Guard après tous les hooks
   if (!hasModule('ticketing')) {
     return (
@@ -74,17 +85,6 @@ export default function TicketingTabContent() {
       </div>
     );
   }
-
-  // Synchroniser avec l'URL
-  useEffect(() => {
-    const current = new URLSearchParams(searchParams);
-    if (activeSubTab !== 'liste') {
-      current.set('subtab', activeSubTab);
-    } else {
-      current.delete('subtab');
-    }
-    setSearchParams(current, { replace: true });
-  }, [activeSubTab, setSearchParams, searchParams]);
 
   const handleTabChange = (value: string) => {
     setActiveSubTab(value as TicketingSubTab);
