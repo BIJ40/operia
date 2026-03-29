@@ -58,9 +58,21 @@ export async function getUserContext(req: Request): Promise<AuthResult | AuthErr
   // Charger le profil avec les champs critiques
   const { data: profile, error: profileErr } = await supabase
     .from('profiles')
-    .select('agence, agency_id, global_role')
+    .select('agency_id, global_role')
     .eq('id', user.id)
     .single();
+
+  // Resolve agency slug from agency_id
+  let resolvedSlug: string | null = null;
+  if (profile?.agency_id) {
+    const { data: agencyRow } = await supabase
+      .from('apogee_agencies')
+      .select('slug')
+      .eq('id', profile.agency_id)
+      .eq('is_active', true)
+      .maybeSingle();
+    resolvedSlug = agencyRow?.slug ?? null;
+  }
 
   if (profileErr || !profile) {
     return { success: false, error: 'Profil utilisateur non trouvé', status: 400 };
@@ -76,7 +88,7 @@ export async function getUserContext(req: Request): Promise<AuthResult | AuthErr
       globalRole: profile.global_role,
       globalRoleLevel,
       agencyId: profile.agency_id,
-      agencySlug: profile.agence,
+      agencySlug: resolvedSlug,
     },
     supabase,
   };
