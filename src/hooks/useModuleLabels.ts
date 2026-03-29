@@ -69,11 +69,11 @@ export function resolveModuleShortLabel(
 // Query key & fetcher
 // ============================================================================
 
-const QUERY_KEY = ['module-registry-labels'];
+const QUERY_KEY = ['module-catalog-labels'];
 
 async function fetchRegistryLabels(): Promise<Record<string, string>> {
   const { data, error } = await supabase
-    .from('module_registry' as any)
+    .from('module_catalog')
     .select('key, label');
 
   if (error) {

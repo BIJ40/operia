@@ -411,7 +411,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     switch (scope) {
       case 'mes_indicateurs':
-        return hasModuleGuard('pilotage.agence');
+        return hasModuleGuard('pilotage.statistiques');
       case 'apporteurs':
         return hasModuleGuard('support.guides.apporteurs');
       case 'helpconfort':
