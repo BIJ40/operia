@@ -25,7 +25,7 @@ import {
 } from '@/components/admin/users';
 
 export default function TDRUsersPage() {
-  const { globalRole } = usePermissions();
+  const { globalRole } = usePermissionsBridge();
   const { user: currentUser } = useAuthCore();
   
   const capabilities = useMemo(() => getUserManagementCapabilities(globalRole), [globalRole]);

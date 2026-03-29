@@ -1,7 +1,7 @@
 // Page dédiée au Guide Apogée (anciennement Home)
 import { useEditor } from '@/contexts/EditorContext';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { useState, useMemo } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { ROUTES } from '@/config/routes';
@@ -43,7 +43,7 @@ import { SortableCategory } from '@/components/guides/apogee/SortableCategory';
 export default function ApogeeGuide() {
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, loading } = useEditor();
   const { isAuthenticated } = useAuthCore();
-  const { hasGlobalRole, hasModuleOption } = usePermissions();
+  const { hasGlobalRole, hasModuleOption } = usePermissionsBridge();
   
   const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('support.guides', 'edition');
   const canDelete = hasGlobalRole('platform_admin');

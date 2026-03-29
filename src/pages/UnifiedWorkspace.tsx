@@ -25,7 +25,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { Tabs } from '@/components/ui/tabs';
 import { useSessionState } from '@/hooks/useSessionState';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import { filterWorkspaceTabs, isWorkspaceTabVisible } from '@/lib/filterNavigationByPermissions';
@@ -66,7 +66,7 @@ function LoadingFallback() {
 
 function UnifiedWorkspaceContent() {
   const { isLoggingOut } = useAuthCore();
-  const { globalRole, isFranchiseur, hasModule, hasModuleOption } = usePermissions();
+  const { globalRole, isFranchiseur, hasModule, hasModuleOption } = usePermissionsBridge();
   const { isImpersonating, isRealUserImpersonation } = useImpersonation();
   const effectiveAuth = useEffectiveAuth();
   const [searchParams, setSearchParams] = useSearchParams();

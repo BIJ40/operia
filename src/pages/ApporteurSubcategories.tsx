@@ -214,7 +214,7 @@ function SortableSubcategory({
 export default function ApporteurSubcategories() {
   const { slug } = useParams<{ slug: string }>();
   const { blocks, isEditMode, updateBlock, deleteBlock, addBlock, reorderBlocks } = useApporteurEditor();
-  const { isAdmin } = usePermissions();
+  const { isAdmin } = usePermissionsBridge();
 
   const category = useMemo(
     () => blocks.find(b => b.type === 'category' && b.slug === slug),

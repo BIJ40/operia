@@ -322,7 +322,7 @@ const SortableCategory = ({
 export default function ApporteurGuide() {
   const { blocks, isEditMode, addBlock, updateBlock, deleteBlock, reorderBlocks } = useApporteurEditor();
   const { isAuthenticated } = useAuthCore();
-  const { hasAccessToScope, hasGlobalRole, hasModuleOption } = usePermissions();
+  const { hasAccessToScope, hasGlobalRole, hasModuleOption } = usePermissionsBridge();
   
   // P0: Utiliser V2 - hasModuleOption au lieu de isAdmin
   const canEdit = hasGlobalRole('platform_admin') || hasModuleOption('support.guides', 'edition');
