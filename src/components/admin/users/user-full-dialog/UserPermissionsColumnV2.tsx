@@ -111,7 +111,7 @@ export function UserPermissionsColumnV2({ userId, userRole, editMode }: Props) {
   );
 
   const renderNode = (node: ModuleCatalogTree): React.ReactNode => {
-    const granted = permMap.get(node.key)?.granted === true;
+    const granted = isGranted(node.key);
     const denied = isDenied(node.key);
     const belowMinRole = node.min_role > userLevel;
     const isExp = expanded.has(node.key);
