@@ -14,7 +14,7 @@ import { PeriodDisplay } from '../components/filters/PeriodDisplay';
 import { Button } from '@/components/ui/button';
 import { openInNewTabPreservingPreviewToken } from '@/lib/openInNewTab';
 import { ROUTES } from '@/config/routes';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBridge';
 import { ModuleKey } from '@/types/modules';
 
 const TAB_ICONS: Record<TabId, React.ReactNode> = {

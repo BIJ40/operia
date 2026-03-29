@@ -27,7 +27,7 @@ import { cn } from '@/lib/utils';
 import { CreateUserDialog } from '@/components/admin/users/UserDialogs';
 import { useUserManagement } from '@/hooks/use-user-management';
 import { useHasMinLevel } from '@/hooks/useHasGlobalRole';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBridge';
 import { getRoleLevel } from '@/types/globalRoles';
 
 export function RHSuiviContent() {

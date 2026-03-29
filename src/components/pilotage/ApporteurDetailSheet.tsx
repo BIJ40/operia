@@ -15,7 +15,7 @@ import { ApogeeCommanditaireSelector } from '@/components/shared/apporteurs/Apog
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBridge';
 
 interface ApporteurDetailSheetProps {
   apporteur: Apporteur | null;

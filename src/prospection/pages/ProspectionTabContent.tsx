@@ -15,7 +15,7 @@ import { ApporteurTabsContent } from '../browser-tabs/ApporteurTabsContent';
 import { ApporteurListPage } from '../pages/ApporteurListPage';
 import { ApporteurComparisonPage } from '../pages/ApporteurComparisonPage';
 import { ProspectsUnifiedPage } from '../pages/ProspectsUnifiedPage';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBridge';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
 
 const RealisationsPage = lazy(() => import('@/realisations/pages/RealisationsPage'));

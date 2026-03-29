@@ -5,7 +5,7 @@
  * À terme, utiliser directement usePermissions() du contexte.
  */
 
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge as usePermissions } from '@/hooks/usePermissionsBridge';
 import { useMemo } from 'react';
 
 // ============================================================================
