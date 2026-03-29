@@ -5,6 +5,7 @@
 import { useState, useMemo } from 'react';
 import { notifyNewTicket } from '@/utils/notifyNewTicket';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { safeMutation } from '@/lib/safeQuery';
@@ -152,13 +153,6 @@ export function CreateProjectTicketDialog({
 
     setIsCreating(true);
     try {
-      // Récupérer le profil utilisateur
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('first_name, last_name, agency_id')
-        .eq('id', user.id)
-        .maybeSingle();
-
       // Créer le ticket dans apogee_tickets
       const result = await safeMutation<{ id: string; ticket_number: number }>(
         supabase
@@ -174,13 +168,13 @@ export function CreateProjectTicketDialog({
             heat_priority: formData.heatPriority || 6,
             ticket_type: formData.ticketType || 'bug',
             needs_completion: true,
-            reported_by: profile?.first_name?.toUpperCase() || user.email || 'INCONNU',
+            reported_by: firstName?.toUpperCase() || user.email || 'INCONNU',
             is_urgent_support: true,
-            initiator_profile: profile ? {
-              first_name: profile.first_name,
-              last_name: profile.last_name,
-              agence: profile.agency_id,
-            } : null,
+            initiator_profile: {
+              first_name: firstName,
+              last_name: lastName,
+              agence: agencyId,
+            },
           } as any)
           .select('id, ticket_number')
           .single(),
@@ -203,7 +197,7 @@ export function CreateProjectTicketDialog({
         heat_priority: formData.heatPriority || 6,
         module: formData.module || undefined,
         created_from: 'support',
-        initiator_name: profile ? `${profile.first_name} ${profile.last_name}` : undefined,
+        initiator_name: firstName || lastName ? `${firstName || ''} ${lastName || ''}`.trim() : undefined,
         initiator_email: user.email,
       });
 
