@@ -1,139 +1,87 @@
-# Manuel CRM Apogée - Guide d'utilisation éditable    
+# OPERIA — Plateforme SaaS de gestion pour réseaux de franchises
 
-[![Operia CI](https://github.com/<OWNER>/<REPO>/actions/workflows/operia-ci.yml/badge.svg)](https://github.com/<OWNER>/<REPO>/actions/workflows/operia-ci.yml)
- 
-Application React permettant de gérer et éditer le guide d'utilisation du CRM Apogée avec un système de blocs modulaires, navigation conditionnelle et édition visuelle.
+> **Version** : Production — 29 mars 2026
+> **Stack** : React 18 + Vite + TypeScript + Supabase + 100+ Edge Functions
 
-## 🚀 Fonctionnalités
+---
 
-- **Grille de blocs modulaires** : Page d'accueil avec cartes éditables
-- **Navigation conditionnelle** : Épinglez des blocs pour créer des pages secondaires avec sidebar
-- **Éditeur visuel** : Drag & drop, réorganisation, édition en temps réel
-- **Couleurs préréglées** : Vert (bonnes pratiques), Jaune (astuces), Rouge (à éviter)
-- **Authentification admin** : Login simple pour activer le mode édition
-- **Persistance locale** : Sauvegarde automatique dans IndexedDB
-- **Export/Import** : Format JSON pour sauvegarde et transfert
+## 🚀 Qu'est-ce qu'OPERIA ?
+
+OPERIA est une plateforme SaaS complète pour la gestion de réseaux de franchises dans le secteur des services à domicile. Elle centralise :
+
+- **Pilotage** : Dashboard agence, statistiques (StatIA), performance terrain, KPI, cartes, trésorerie, rentabilité
+- **Commercial** : Suivi clients, comparateur, prospection CRM, réalisations, signature commerciale, social media
+- **Organisation** : RH/salariés, plannings, réunions, parc véhicules/EPI, médiathèque, documents
+- **Support** : Guides (Help! Academy), aide en ligne (Helpi), ticketing
+- **Réseau** : Dashboard franchiseur, gestion agences, redevances, KPI réseau
+- **Admin** : Gestion utilisateurs, permissions, offres SaaS
+
+---
 
 ## 📦 Installation
 
 ```bash
-# Cloner le dépôt
-git clone <YOUR_GIT_URL>
-cd <YOUR_PROJECT_NAME>
-
-# Installer les dépendances
 npm install
-
-# Lancer en développement
-npm run dev
-
-# Build pour production
-npm run build
+npm run dev        # Développement
+npm run build      # Production
 ```
 
-## 🔐 Authentification
+### Variables d'environnement requises
 
-**Identifiants par défaut :**
-- Utilisateur : `admin`
-- Mot de passe : `apogee2024`
+```env
+VITE_SUPABASE_URL=https://xxx.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=eyJ...
+VITE_SUPABASE_PROJECT_ID=xxx
+```
 
-> ⚠️ Pour la production, modifiez ces valeurs dans `src/contexts/AuthContext.tsx`
+---
 
-## 📚 Import des données initiales
+## 📚 Documentation
 
-1. Connectez-vous en tant qu'administrateur
-2. Cliquez sur "Import" dans la barre d'outils
-3. Sélectionnez le fichier `src/data/seed.json`
+Toute la documentation est dans [`docs/042026/`](./docs/042026/INDEX.md) :
 
-Le contenu initial contient 8 sections principales du manuel Apogée.
+| Dossier | Contenu |
+|---------|---------|
+| `01-architecture/` | Stack, flux données, frontend, DB |
+| `02-permissions/` | Moteur permissions V1 + V2, rôles N0-N6 |
+| `03-modules/` | Catalogue 74+ modules, plans, presets |
+| `04-securite/` | RLS, auth, chiffrement |
+| `05-api-integrations/` | Apogée API, services externes |
+| `06-engines-metier/` | StatIA, Performance, Prospection, DocGen |
+| `07-saas-commercial/` | Plans SaaS, migration V2 |
+| `08-deploiement/` | Build, Docker, conventions, tests |
+| `09-notifications/` | Notifications unifiées |
+| `10-manuel-utilisateur/` | Manuel complet |
 
-## 🎨 Utilisation
-
-### Mode Lecture (par défaut)
-- Visualisez les blocs en grille responsive
-- Cliquez sur les blocs épinglés pour accéder aux pages détaillées
-- Navigation via sidebar sur les pages secondaires
-
-### Mode Édition (après connexion)
-- **Ajouter un bloc** : Bouton "+" en haut à droite
-- **Réorganiser** : Glissez-déposez les blocs
-- **Épingler** : Activez le toggle "Épingler au menu" pour créer une page `/b/:slug`
-- **Supprimer** : Icône corbeille sur chaque bloc
-- **Exporter** : Sauvegardez toutes vos données en JSON
-- **Importer** : Restaurez ou transférez des données
-
-### Couleurs préréglées
-- **Vert pastel** : Bonnes pratiques
-- **Jaune pastel** : Astuces et conseils
-- **Rouge pastel** : Erreurs à éviter
-- **Neutre** : Contenu standard
+---
 
 ## 🏗️ Architecture
 
 ```
-src/
-├── components/          # Composants réutilisables
-│   ├── BlockCard.tsx   # Carte de bloc avec drag & drop
-│   ├── EditorToolbar.tsx
-│   ├── LoginDialog.tsx
-│   └── Sidebar.tsx
-├── contexts/           # Contexts React
-│   ├── AuthContext.tsx
-│   └── EditorContext.tsx
-├── lib/
-│   └── db.ts          # Gestion IndexedDB
-├── pages/
-│   ├── Home.tsx       # Page d'accueil (grille)
-│   └── BlockDetail.tsx # Page bloc épinglé
-├── types/
-│   └── block.ts       # Types TypeScript
-└── data/
-    └── seed.json      # Données initiales
+Frontend SPA (React/Vite) → Supabase (PostgreSQL + Edge Functions) → APIs externes (Apogée, Stripe, Resend...)
 ```
 
-## 🔧 Stack technique
+Voir [`docs/042026/01-architecture/ARCHITECTURE.md`](./docs/042026/01-architecture/ARCHITECTURE.md) pour le détail complet.
 
-- **React 18** + TypeScript
-- **TailwindCSS** : Design system
-- **React Router** : Navigation
-- **@dnd-kit** : Drag & drop
-- **@tiptap** : Éditeur riche (futur)
-- **idb** : IndexedDB wrapper
-- **Lucide React** : Icônes
+---
 
-## 📝 Format de données
+## 🔐 Sécurité
 
-```json
-{
-  "blocks": [
-    {
-      "id": "unique-id",
-      "type": "content",
-      "title": "Titre du bloc",
-      "content": "<p>Contenu HTML...</p>",
-      "icon": "BookOpen",
-      "colorPreset": "good",
-      "order": 0,
-      "size": "lg",
-      "pinned": true,
-      "slug": "titre-du-bloc",
-      "attachments": []
-    }
-  ],
-  "version": "1.0",
-  "lastModified": 1234567890
-}
-```
+- RLS sur toutes les tables
+- Hiérarchie N0-N6 avec plafonnement N-1
+- Fail-closed (module absent = refusé)
+- Chiffrement AES-256-GCM données sensibles
+
+---
 
 ## 🚀 Déploiement
 
-Simply open [Lovable](https://lovable.dev/projects/fec9c289-c9ae-48ee-83c7-69ea7150d5b5) and click on Share -> Publish.
+- **Lovable Cloud** : build et deploy automatiques
+- **Self-hosted** : Docker + Nginx (`docker build && docker run -p 80:80`)
+- **URL Production** : `operiav2.lovable.app`
 
-You can also build manually:
-1. Build de production : `npm run build`
-2. Le dossier `dist/` contient l'application statique
-3. Déployez sur n'importe quel hébergement statique
+---
 
 ## 📄 Licence
 
-Usage interne - Apogée / HELPCONFORT
+Usage interne — Apogée / HELPCONFORT
