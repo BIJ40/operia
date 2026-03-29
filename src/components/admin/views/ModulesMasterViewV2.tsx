@@ -196,12 +196,6 @@ function ModuleRow({
   );
 }
 
-// Filtre récursif : ne garde que les nœuds déployés, en élagant les enfants non déployés
-function filterDeployedOnly(nodes: ModuleCatalogTree[]): ModuleCatalogTree[] {
-  return nodes
-    .filter(n => n.is_deployed)
-    .map(n => ({ ...n, children: filterDeployedOnly(n.children) }));
-}
 
 // Extrait tous les modules non déployés, y compris les enfants de parents déployés
 function extractNonDeployed(nodes: ModuleCatalogTree[]): ModuleCatalogTree[] {
