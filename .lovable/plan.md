@@ -1,36 +1,54 @@
 
 
-## Problème
+## Plan : Onglet Relations visible par altModules uniquement
 
-L'interface "Options par agence" existe mais est vide car les modules n'ont pas `via_agency_option = true` dans `module_distribution_rules`. Pour activer un module sur une agence, il faut actuellement passer par SQL — ce qui n'est pas viable.
+### Problème
+Actuellement, `isWorkspaceTabVisible` (ligne 34) retourne `true` immédiatement si `requiresOption` est absent — l'onglet serait toujours visible. Il faut aussi gérer le cas d'un onglet sans `requiresOption` mais avec `altModules`.
 
-## Solution
+### Changements
 
-Une seule migration SQL pour marquer les bons modules comme activables en option agence. Apres ca, l'UI existante (`AgencyEntitlementsViewV2`) fonctionnera automatiquement : vous pourrez sélectionner St-Omer, voir les modules disponibles, et les activer/désactiver en un clic.
+**1. `src/components/layout/WorkspaceNavLinks.tsx` (ligne 50)**
+- Retirer `requiresOption: { module: 'relations' }`, garder uniquement `altModules`
 
-## Migration
-
-Mettre `via_agency_option = true` sur tous les modules de type `screen` ou `feature` qui ne sont pas déjà inclus dans le socle (`is_core = false`). Cela rend tous les modules commerciaux disponibles comme options activables par agence dans l'interface admin.
-
-```sql
-UPDATE module_distribution_rules
-SET via_agency_option = true
-WHERE module_key IN (
-  SELECT key FROM module_catalog
-  WHERE is_deployed = true
-    AND is_core = false
-    AND node_type IN ('screen', 'feature')
-);
+```ts
+{ id: 'relations', label: getShortLabel('relations', 'Relations'), icon: Handshake, altModules: ['relations.suivi_client', 'relations.apporteurs', 'relations.echanges'] },
 ```
 
-## Résultat
+**2. `src/lib/filterNavigationByPermissions.ts` (ligne 33-34)**
+- Modifier la condition "no guard" pour aussi vérifier `altModules` : un onglet sans `requiresOption` ET sans `altModules` est toujours visible, mais un onglet avec `altModules` doit passer la vérification
 
-- L'interface "Options par agence" dans Réseau affichera tous les modules non-socle
-- Vous pourrez activer/désactiver `relations.suivi_client`, `pilotage.maps`, etc. pour n'importe quelle agence
-- Plus besoin de SQL pour gérer les options agence
-- Les migrations précédentes (St-Omer hardcodé) deviennent inutiles car vous aurez le controle depuis l'UI
+```ts
+// No guard = always visible (accueil, support)
+if (!tab.requiresOption && !tab.altModules) return true;
 
-## Verification
+// Platform admin bypass
+if (perms.isPlatformAdmin) return true;
 
-Aucun changement de code — uniquement des données. L'UI `AgencyEntitlementsViewV2` et le hook `useAgencyEntitlements` fonctionnent déjà correctement.
+// Admin tab: role-only guard
+if (tab.id === 'admin') return false;
+
+// Ticketing
+if (tab.id === 'ticketing') return perms.hasModule('ticketing' as ModuleKey);
+
+// Check primary module (if defined)
+if (tab.requiresOption) {
+  const { module, option } = tab.requiresOption;
+  if (option) {
+    if (perms.hasModuleOption(module as ModuleKey, option)) return true;
+  } else {
+    if (perms.hasModule(module as ModuleKey)) return true;
+  }
+}
+
+// Check alternative modules
+if (tab.altModules) {
+  for (const altModule of tab.altModules) {
+    if (perms.hasModule(altModule as ModuleKey)) return true;
+  }
+}
+
+return false;
+```
+
+**3. Vérifier `UnifiedWorkspace.tsx`** — appliquer le même changement si l'onglet Relations y est aussi défini avec `requiresOption`.
 

@@ -6,7 +6,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Shield, UserPlus, Handshake, UserCheck, ScrollText, Eye, LayoutGrid, UserCog, Grid3X3, ShieldCheck, Layers, FileKey } from 'lucide-react';
+import { Settings, Building2, Brain, FileText, Database, Cpu, Users, Activity, Shield, UserPlus, Handshake, UserCheck, ScrollText, Eye, LayoutGrid, UserCog, Grid3X3, ShieldCheck, Layers } from 'lucide-react';
 import { PillTabsList, PillTabConfig } from '@/components/ui/pill-tabs';
 import { 
   DraggableFolderTabsList, 
@@ -38,7 +38,7 @@ const ApporteurAuditLogView = lazy(() => import('@/components/admin/views/Apport
 
 const SuiviClientsAdminView = lazy(() => import('@/components/admin/views/SuiviClientsAdminView'));
 
-const AgencyEntitlementsViewV2 = lazy(() => import('@/components/admin/views/AgencyEntitlementsViewV2'));
+
 
 const PermissionsAuditLogView = lazy(() => import('@/components/admin/views/PermissionsAuditLogView'));
 const PermissionsMatrixView = lazy(() => import('@/components/admin/views/PermissionsMatrixView'));
@@ -62,12 +62,11 @@ const ADMIN_MAIN_TABS: PillTabConfig[] = [
   { id: 'plateforme', label: 'Plateforme', icon: Cpu, accent: 'teal' },
 ];
 
-// Sous-onglets Gestion — Agences + Réseau/Options séparés pour rendre l'accès explicite
+// Sous-onglets Gestion
 const GESTION_SUB_TABS: FolderTabConfig[] = [
   { id: 'users', label: 'Utilisateurs', icon: Users, accent: 'blue' },
   { id: 'inscriptions', label: 'Inscriptions', icon: UserPlus, accent: 'orange' },
   { id: 'agences', label: 'Agences', icon: Building2, accent: 'purple' },
-  { id: 'reseau', label: 'Réseau', icon: FileKey, accent: 'purple' },
   { id: 'modules', label: 'Modules', icon: Layers, accent: 'orange' },
   { id: 'matrice', label: 'Matrice', icon: Grid3X3, accent: 'purple' },
   { id: 'qualite', label: 'Qualité', icon: ShieldCheck, accent: 'orange' },
@@ -83,7 +82,7 @@ const RELATIONS_SUB_TABS: FolderTabConfig[] = [
 ];
 
 const ADMIN_MAIN_TAB_IDS = ADMIN_MAIN_TABS.map(tab => tab.id);
-const DEFAULT_GESTION_ORDER = ['users', 'inscriptions', 'agences', 'reseau', 'modules', 'matrice', 'qualite', 'journal', 'activity'];
+const DEFAULT_GESTION_ORDER = ['users', 'inscriptions', 'agences', 'modules', 'matrice', 'qualite', 'journal', 'activity'];
 const DEFAULT_RELATIONS_ORDER = ['apporteurs', 'audit-apporteurs', 'suivi-clients'];
 
 export default function AdminHubContent() {
@@ -196,9 +195,6 @@ export default function AdminHubContent() {
                 </TabsContent>
                 <TabsContent value="agences" className="mt-0 focus-visible:outline-none">
                   <ReseauView />
-                </TabsContent>
-                <TabsContent value="reseau" className="mt-0 focus-visible:outline-none">
-                  <Suspense fallback={<LoadingFallback />}><AgencyEntitlementsViewV2 /></Suspense>
                 </TabsContent>
                 <TabsContent value="modules" className="mt-0 focus-visible:outline-none">
                   <ModulesMasterViewV2 />
