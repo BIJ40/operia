@@ -75,7 +75,7 @@ export function UserPermissionsColumnV2({ userId, editMode }: Props) {
   // Modules disponibles à ajouter (déployés, non déjà accordés)
   const available = modules.filter(
     m => m.is_deployed &&
-      m.node_type !== 'section' &&
+      m.via_user_assignment === true &&
       m.min_role < 5 &&
       !granted.find(g => g.module_key === m.key)
   );
