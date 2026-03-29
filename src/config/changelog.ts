@@ -15,6 +15,33 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "V0.10.6",
+    title: "Stabilisation Permissions V2 & Navigation Modules",
+    date: "2026-03-29",
+    changes: [
+      // ═══════════════════════════════════════════════════════════════
+      // AUDIT SYSTÈME DE DROITS V2
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'audit', description: 'Audit complet du système de permissions V2 : identification de 11 problèmes structurels (split-brain, races, RLS/RPC divergents, données non normalisées)' },
+      { type: 'audit', description: 'Diagnostic du bridge hybride V1/V2 : le mélange de deux moteurs provoque des incohérences de droits sous impersonation et au démarrage' },
+      { type: 'audit', description: 'Identification de la divergence has_module_v2 vs get_user_permissions : la RLS ne couvre que user_access, ignorant plan et entitlements' },
+      { type: 'audit', description: 'Détection de sections stockées dans plan_module_grants (commercial, pilotage, organisation, support, relations) en violation de l\'invariant feuilles-only' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // CORRECTIONS NAVIGATION
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'fix', description: 'Onglet Relations : remplacement du guard requiresOption par altModules (relations.suivi_client, relations.apporteurs, relations.echanges) — visible dès qu\'un sous-module est accordé' },
+      { type: 'fix', description: 'filterNavigationByPermissions : support des onglets avec altModules sans requiresOption (condition ligne 34 étendue)' },
+      { type: 'fix', description: 'useModuleLabels : correction de la référence table module_registry → module_catalog (table renommée en V2)' },
+
+      // ═══════════════════════════════════════════════════════════════
+      // STABILISATION RPC & DONNÉES
+      // ═══════════════════════════════════════════════════════════════
+      { type: 'fix', description: 'Patch V1 RPC get_user_effective_modules : 5 corrections (modules NONE invisibles, N0/N1 bloqués, ghost keys, billing bypass, commercial.suivi_client STARTER)' },
+      { type: 'improvement', description: 'Plan de stabilisation P0/P1/P2 documenté : unification moteur, impersonation-aware, RLS réalignée, purge sections, tests de non-régression' },
+    ],
+  },
+  {
     version: "V0.10.5",
     title: "Refonte Module Performance Terrain — Moteur Analytique V2",
     date: "2026-03-25",
