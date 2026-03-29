@@ -8547,7 +8547,6 @@ export type Database = {
           deactivated_by: string | null
           email: string | null
           email_notifications_enabled: boolean | null
-          enabled_modules: Json | null
           first_name: string | null
           global_role: Database["public"]["Enums"]["global_role"] | null
           id: string
@@ -8576,7 +8575,6 @@ export type Database = {
           deactivated_by?: string | null
           email?: string | null
           email_notifications_enabled?: boolean | null
-          enabled_modules?: Json | null
           first_name?: string | null
           global_role?: Database["public"]["Enums"]["global_role"] | null
           id: string
@@ -8605,7 +8603,6 @@ export type Database = {
           deactivated_by?: string | null
           email?: string | null
           email_notifications_enabled?: boolean | null
-          enabled_modules?: Json | null
           first_name?: string | null
           global_role?: Database["public"]["Enums"]["global_role"] | null
           id?: string
