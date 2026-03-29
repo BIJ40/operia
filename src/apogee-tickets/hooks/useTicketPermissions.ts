@@ -78,10 +78,13 @@ export const TICKET_ROLE_LABELS: Record<TicketRole, string> = {
 // Hook to get current user's ticket role - NEVER returns undefined
 export function useMyTicketRole() {
   const { user } = useAuthCore();
-  const { globalRole } = usePermissions();
+  const { globalRole, hasModule, isAdmin } = usePermissions();
+
+  // Go/no-go via le bridge (V1 ou V2 selon le flag)
+  const hasTicketingAccess = hasModule('ticketing') || isAdmin;
   
   return useQuery<TicketRoleInfo>({
-    queryKey: ['my-ticket-role', user?.id, globalRole],
+    queryKey: ['my-ticket-role', user?.id, globalRole, hasTicketingAccess],
     queryFn: async (): Promise<TicketRoleInfo> => {
       // Cas 1: Pas d'utilisateur connecté
       if (!user?.id) {
@@ -90,11 +93,18 @@ export function useMyTicketRole() {
       }
       
       console.log('[MY-TICKET-ROLE] 🔍 Checking access for user:', user.id, 'email:', user.email);
+
+      // Cas 2: Module non accessible via le bridge
+      if (!hasTicketingAccess) {
+        console.warn('[MY-TICKET-ROLE] ❌ ACCESS DENIED — module_disabled (bridge)', {
+          userId: user.id,
+          email: user.email,
+        });
+        return { ...DEFAULT_TICKET_ROLE_INFO, reason: 'module_disabled' };
+      }
       
       try {
-        // Vérification stricte d'accès Ticketing:
-        // - overwrite user_modules (source de vérité)
-        // - bypass N5+ uniquement
+        // Récupérer le profil (pour N5+ bypass) et les options granulaires
         const [profileResult, userModulesResult] = await Promise.all([
           supabase
             .from('profiles')
@@ -113,7 +123,7 @@ export function useMyTicketRole() {
         }
 
         if (userModulesResult.error) {
-          logError('[MY-TICKET-ROLE] Error fetching user_modules for ticketing', userModulesResult.error);
+          logError('[MY-TICKET-ROLE] Error fetching user_modules for ticketing options', userModulesResult.error);
         }
 
         const profile = profileResult.data;
@@ -122,10 +132,8 @@ export function useMyTicketRole() {
         const effectiveGlobalRole = profile?.global_role || globalRole || null;
         const isN5Plus = ['platform_admin', 'superadmin'].includes(effectiveGlobalRole || '');
 
-        // Overwrite utilisateur strict (présence de la ligne user_modules)
+        // Options granulaires depuis user_modules (kanban, create, import, manage)
         const userModuleRows = (userModulesResult.data || []) as Array<{ module_key: string; options: Record<string, boolean> | null }>;
-        const hasUserOverwriteTicketing = userModuleRows.length > 0;
-
         const userModuleOptions = userModuleRows.reduce<Record<string, boolean>>((acc, row) => {
           if (row?.options && typeof row.options === 'object') {
             Object.assign(acc, row.options);
@@ -138,17 +146,6 @@ export function useMyTicketRole() {
         const canCreate = moduleOptions.create !== false;
         const canImport = moduleOptions.import === true;
         const canManage = moduleOptions.manage !== false;
-
-        // Cas 2: Module non activé et pas admin
-        if (!hasUserOverwriteTicketing && !isN5Plus) {
-          console.warn('[MY-TICKET-ROLE] ❌ ACCESS DENIED — module_disabled', {
-            userId: user.id,
-            email: user.email,
-            hasUserOverwriteTicketing,
-            isN5Plus,
-          });
-          return { ...DEFAULT_TICKET_ROLE_INFO, reason: 'module_disabled' };
-        }
         
         // Récupérer le rôle ticket spécifique de l'utilisateur
         const { data: roleData, error: roleError } = await supabase
