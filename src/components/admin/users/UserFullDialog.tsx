@@ -51,6 +51,7 @@ export function UserFullDialog({
   isEmailPending = false,
   isPasswordPending = false,
 }: UserFullDialogProps) {
+  const useV2 = useAppFeatureFlag('USE_PERMISSIONS_V2');
   const [open, setOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
