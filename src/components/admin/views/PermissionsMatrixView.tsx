@@ -9,9 +9,10 @@ import { SOURCE_LABELS, PermissionSource } from '@/types/permissions-v2';
 
 interface AgencyUser {
   id: string;
-  full_name: string | null;
-  email: string;
-  global_role: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+  global_role: string | null;
 }
 
 interface UserPermRow {
@@ -29,9 +30,9 @@ function useAgencyUsers(agencyId: string | null) {
       if (!agencyId) return [];
       const { data, error } = await supabase
         .from('profiles')
-        .select('id,full_name,email,global_role')
+        .select('id,first_name,last_name,email,global_role')
         .eq('agency_id', agencyId)
-        .order('full_name');
+        .order('last_name');
       if (error) throw error;
       return data ?? [];
     },
@@ -134,11 +135,12 @@ export function PermissionsMatrixView() {
             disabled={usersLoading}
           >
             <option value="">Sélectionner un utilisateur...</option>
-            {users.map(u => (
-              <option key={u.id} value={u.id}>
-                {u.full_name ?? u.email}
-              </option>
-            ))}
+            {users.map(u => {
+              const displayName = [u.first_name, u.last_name].filter(Boolean).join(' ') || u.email || u.id;
+              return (
+                <option key={u.id} value={u.id}>{displayName}</option>
+              );
+            })}
           </select>
         )}
       </div>
