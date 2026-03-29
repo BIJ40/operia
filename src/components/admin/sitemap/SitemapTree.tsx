@@ -33,7 +33,7 @@ import {
 import { type GlobalRole } from "@/types/globalRoles";
 import { VISIBLE_ROLE_LABELS } from '@/lib/visibleRoleLabels';
 import { useModuleLabels } from "@/hooks/useModuleLabels";
-import { getPlanLabel } from "@/config/planTiers";
+import { getPlanLabel } from "@/permissions/shared-constants";
 import { toast } from "sonner";
 
 export interface SitemapTreeProps {

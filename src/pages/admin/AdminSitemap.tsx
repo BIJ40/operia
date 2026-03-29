@@ -17,7 +17,7 @@ import {
 } from "@/config/sitemapData";
 import type { GlobalRole } from "@/types/globalRoles";
 import type { ModuleKey } from "@/types/modules";
-import { ROLE_HIERARCHY } from "@/permissions";
+import { SHARED_ROLE_HIERARCHY as ROLE_HIERARCHY } from "@/permissions/shared-constants";
 
 export default function AdminSitemap() {
   const [activeTab, setActiveTab] = useState<'tree' | 'table' | 'diagram'>('tree');
