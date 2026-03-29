@@ -19,6 +19,7 @@ import {
 import { useApogeeTickets } from '@/apogee-tickets/hooks/useApogeeTickets';
 import { exportToCSV, exportToExcel, exportToPDF } from '@/apogee-tickets/utils/exportKanban';
 import { cn } from '@/lib/utils';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 
 // Lazy load des contenus
 const TicketingKanbanView = lazy(() => import('@/apogee-tickets/pages/ApogeeTicketsKanban'));
@@ -44,6 +45,7 @@ function LoadingFallback() {
 }
 
 export default function TicketingTabContent() {
+  const { hasModule } = usePermissionsBridge();
   const [searchParams, setSearchParams] = useSearchParams();
   
   // Données pour export
@@ -67,6 +69,22 @@ export default function TicketingTabContent() {
     }
     setSearchParams(current, { replace: true });
   }, [activeSubTab, setSearchParams, searchParams]);
+
+  // Guard après tous les hooks
+  if (!hasModule('ticketing')) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center">
+        <div className="mb-4 rounded-full bg-muted p-4">
+          <svg className="h-8 w-8 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+              d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+          </svg>
+        </div>
+        <p className="text-sm font-medium text-foreground mb-1">Module Ticketing non disponible</p>
+        <p className="text-sm text-muted-foreground">Votre profil n&apos;a pas accès au module Ticketing.</p>
+      </div>
+    );
+  }
 
   const handleTabChange = (value: string) => {
     setActiveSubTab(value as TicketingSubTab);
