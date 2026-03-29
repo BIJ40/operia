@@ -8,12 +8,10 @@
 import { createContext, useContext } from 'react';
 import { GlobalRole } from '@/types/globalRoles';
 import { EnabledModules, ModuleKey } from '@/types/modules';
-import type { PermissionContext } from '@/permissions/types';
 
 export interface PermissionsContextType {
   globalRole: GlobalRole | null;
   enabledModules: EnabledModules | null;
-  accessContext: PermissionContext;
 
   // Guards
   hasGlobalRole: (requiredRole: GlobalRole) => boolean;
