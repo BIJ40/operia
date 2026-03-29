@@ -8,7 +8,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Home, BarChart3, ShoppingCart, Users, Headphones, Shield, FolderOpen, Kanban,
 } from 'lucide-react';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
 import { filterWorkspaceTabs } from '@/lib/filterNavigationByPermissions';
@@ -34,7 +34,7 @@ interface WorkspaceNavLinksProps {
 
 export function WorkspaceNavLinks({ activeTab }: WorkspaceNavLinksProps) {
   const navigate = useNavigate();
-  const { globalRole, hasModule, hasModuleOption } = usePermissions();
+  const { globalRole, hasModule, hasModuleOption } = usePermissionsBridge();
   const effectiveAuth = useEffectiveAuth();
   const { getShortLabel } = useModuleLabels();
   

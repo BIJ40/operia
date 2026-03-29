@@ -13,7 +13,7 @@ import { useSessionState } from '@/hooks/useSessionState';
 import { InternalApogeeLayout } from '@/components/guides/apogee/InternalApogeeLayout';
 import { useNavigationMode } from '@/hooks/useNavigationMode';
 import { DomainAccentProvider } from '@/contexts/DomainAccentContext';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 
 const ApporteurGuide = lazy(() => import('@/pages/ApporteurGuide'));
 const HelpConfort = lazy(() => import('@/pages/HelpConfort'));
@@ -49,7 +49,7 @@ function LoadingFallback() {
 export default function GuidesTabContent() {
   const [activeGuide, setActiveGuide] = useSessionState<GuideTab>('guides_sub_tab', 'apogee');
   const { mode: navMode } = useNavigationMode();
-  const { hasModuleOption, hasGlobalRole } = usePermissions();
+  const { hasModuleOption, hasGlobalRole } = usePermissionsBridge();
   const isAdmin = hasGlobalRole('platform_admin');
 
   const visibleTabs: PillTabConfig[] = useMemo(() => {

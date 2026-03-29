@@ -16,7 +16,7 @@ import { PeriodSelector } from '@/apogee-connect/components/filters/PeriodSelect
 import { PeriodDisplay } from '@/apogee-connect/components/filters/PeriodDisplay';
 import { openInNewTabPreservingPreviewToken } from '@/lib/openInNewTab';
 import { ROUTES } from '@/config/routes';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { ModuleKey } from '@/types/modules';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
 import { 
@@ -47,7 +47,7 @@ const TAB_ACCENT_COLORS: Record<string, string> = {
 
 export default function StatsTabContent() {
   const { activeTab, setActiveTab } = useStatsHub();
-  const { hasModule } = usePermissions();
+  const { hasModule, isDeployedModule } = usePermissionsBridge();
   const { getShortLabel } = useModuleLabels();
   const { mode: navMode } = useNavigationMode();
 
@@ -62,7 +62,7 @@ export default function StatsTabContent() {
     { id: 'tresorerie', label: 'Trésorerie', icon: Landmark, accent: 'teal' as const, requiresModule: 'pilotage.tresorerie' as ModuleKey },
   ], [getShortLabel]);
 
-  const { isDeployedModule } = usePermissions();
+  
 
   const visibleTabs = useMemo(() => {
     return statsTabs

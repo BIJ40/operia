@@ -40,7 +40,7 @@ import { useCombinedUserTickets } from '@/hooks/use-user-project-tickets';
 import { useUserProjectUnreadCount } from '@/hooks/use-project-ticket-notifications';
 import { getFaqItems, type FaqItem } from '@/lib/rag-improvement';
 import { useQueryClient } from '@tanstack/react-query';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { Lock } from 'lucide-react';
 import { DomainAccentProvider } from '@/contexts/DomainAccentContext';
 
@@ -168,7 +168,7 @@ const GuidesTabContent = lazy(() => import('@/components/unified/tabs/GuidesTabC
 // ─── Main component ─────────────────────────────────────────────
 export default function SupportHubTabContent() {
   const queryClient = useQueryClient();
-  const { hasModule, hasModuleOption } = usePermissions();
+  const { hasModule, hasModuleOption } = usePermissionsBridge();
   const { tickets: combinedTickets, isLoading: combinedLoading } = useCombinedUserTickets();
   const { unreadCount: totalUnreadCount } = useUserProjectUnreadCount();
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
