@@ -586,12 +586,12 @@ export default function MapsTabContent() {
   // ── Helper: add choropleth layers (fill + line + labels) ──
   const addChoroplethLayers = useCallback((
     m: mapboxgl.Map, sourceId: string, fillId: string, lineId: string, labelId: string,
-    geojson: GeoJSON.FeatureCollection, colorExpr: any[], opacityVal = 0.7,
+    geojson: GeoJSON.FeatureCollection, colorExpr: mapboxgl.Expression, opacityVal = 0.7,
   ) => {
     m.addSource(sourceId, { type: 'geojson', data: geojson });
     m.addLayer({
       id: fillId, type: 'fill', source: sourceId,
-      paint: { 'fill-color': colorExpr, 'fill-opacity': opacityVal },
+      paint: { 'fill-color': colorExpr as any, 'fill-opacity': opacityVal },
     });
     m.addLayer({
       id: lineId, type: 'line', source: sourceId,
@@ -620,7 +620,7 @@ export default function MapsTabContent() {
     cleanLayers(m, [DENSITY_FILL, DENSITY_LINE, DENSITY_LABELS], DENSITY_SOURCE);
     if (mapMode !== 'heatmap' || !densityGeoJson?.features?.length) return;
 
-    const colorExpr: any[] = [
+    const colorExpr = [
       'interpolate', ['linear'], ['get', 'level'],
       0, '#fff5f5',   // Niveau 0 — presque blanc
       1, '#fee2e2',   // Niveau 1 — rose très pâle
@@ -630,7 +630,7 @@ export default function MapsTabContent() {
       5, '#dc2626',   // Niveau 5 — rouge vif
       6, '#991b1b',   // Niveau 6 — rouge foncé
       7, '#450a0a',   // Niveau 7 — quasi noir
-    ];
+    ] as unknown as mapboxgl.Expression;
 
     addChoroplethLayers(m, DENSITY_SOURCE, DENSITY_FILL, DENSITY_LINE, DENSITY_LABELS, densityGeoJson, colorExpr, 0.8);
     fitBoundsToGeoJson(m, densityGeoJson);
