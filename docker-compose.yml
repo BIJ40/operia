@@ -14,7 +14,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.apogeedemo.entrypoints=https"
-      - "traefik.http.routers.apogeedemo.rule=Host(`apogee.demo.hb-digitals.fr`) || Host(`suivi.helpconfort.services`) || Host(`helpconfort.services`)"
+      - "traefik.http.routers.apogeedemo.rule=Host(`apogee.demo.hb-digitals.fr`) || Host(`suivi.helpconfort.services`) || Host(`helpconfort.services`) || Host(`www.helpconfort.services`) || Host(`operia.vision`) || Host(`www.operia.vision`)"
       - "traefik.http.routers.apogeedemo.tls=true"
       - "traefik.http.routers.apogeedemo.tls.certresolver=letsencrypt"
       - "traefik.http.services.apogeedemo.loadbalancer.server.port=80"
