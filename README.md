@@ -1,4 +1,4 @@
-# OPERIA — Plateforme SaaS de gestion pour réseaux de franchises
+# OPERIA — Plateforme SaaS de gestion pour réseaux de franchises 
 
 > **Version** : Production — 29 mars 2026
 > **Stack** : React 18 + Vite + TypeScript + Supabase + 100+ Edge Functions
