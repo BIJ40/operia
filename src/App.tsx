@@ -274,8 +274,8 @@ function App() {
       <TooltipProvider>
         <BrowserRouter>
           <AuthProvider>
-            <PermissionsV2Wrapper>
-              <ImpersonationProvider>
+            <ImpersonationProvider>
+              <PermissionsV2Wrapper>
                 <DataPreloadProvider>
                   <ThemeProvider>
                     <EditorProvider>
@@ -289,8 +289,8 @@ function App() {
                     </EditorProvider>
                   </ThemeProvider>
                 </DataPreloadProvider>
-              </ImpersonationProvider>
-            </PermissionsV2Wrapper>
+              </PermissionsV2Wrapper>
+            </ImpersonationProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
