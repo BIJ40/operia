@@ -62,7 +62,7 @@ export default function Changelog() {
     <WarmPageContainer 
       maxWidth="4xl" 
       title="Journal des mises à jour"
-      description="Découvrez les dernières améliorations et corrections"
+      description="Pour test"
       headerRight={
         <Link 
           to="/roadmap"
