@@ -69,8 +69,16 @@ export function usePermissionsBridge(): PermissionsBridgeResult {
     return {
       hasModule: (moduleKey: string) => {
         const entry = entryMap.get(moduleKey);
-        if (!entry) return false;
-        return entry.granted && entry.access_level !== 'none';
+        if (entry) return entry.granted && entry.access_level !== 'none';
+        // Convergence: if parent module not explicitly granted,
+        // check if any child module (moduleKey.*) is granted
+        const prefix = moduleKey + '.';
+        for (const e of entries) {
+          if (e.module_key.startsWith(prefix) && e.granted && e.access_level !== 'none') {
+            return true;
+          }
+        }
+        return false;
       },
 
       hasModuleOption: (moduleKey: string, optionKey: string) => {
