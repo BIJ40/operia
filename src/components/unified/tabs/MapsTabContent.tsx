@@ -586,12 +586,12 @@ export default function MapsTabContent() {
   // ── Helper: add choropleth layers (fill + line + labels) ──
   const addChoroplethLayers = useCallback((
     m: mapboxgl.Map, sourceId: string, fillId: string, lineId: string, labelId: string,
-    geojson: GeoJSON.FeatureCollection, colorExpr: any[], opacityVal = 0.7,
+    geojson: GeoJSON.FeatureCollection, colorExpr: mapboxgl.Expression, opacityVal = 0.7,
   ) => {
     m.addSource(sourceId, { type: 'geojson', data: geojson });
     m.addLayer({
       id: fillId, type: 'fill', source: sourceId,
-      paint: { 'fill-color': colorExpr, 'fill-opacity': opacityVal },
+      paint: { 'fill-color': colorExpr as any, 'fill-opacity': opacityVal },
     });
     m.addLayer({
       id: lineId, type: 'line', source: sourceId,
