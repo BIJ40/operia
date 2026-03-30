@@ -41,7 +41,22 @@ export function WorkspaceNavLinks({ activeTab }: WorkspaceNavLinksProps) {
   const { globalRole, hasModule, hasModuleOption } = usePermissionsBridge();
   const effectiveAuth = useEffectiveAuth();
   const { getShortLabel } = useModuleLabels();
-  
+
+  // Attendre que les permissions V2 soient chargées avant d'afficher les onglets
+  if (permV2 && !permV2.isLoaded) {
+    return (
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm print:hidden">
+        <div className="container mx-auto max-w-app px-4 pt-3 pb-0">
+          <div className="flex items-end gap-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-24 rounded-t-xl" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const effectiveIsPlatformAdmin = effectiveAuth.globalRole === 'superadmin' || effectiveAuth.globalRole === 'platform_admin';
   const realIsPlatformAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
 
