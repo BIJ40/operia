@@ -251,9 +251,16 @@ function PermissionsV2Wrapper({ children }: { children: React.ReactNode }) {
 
   return (
     <PermissionsProviderV2 userId={user?.id ?? null}>
-      {children}
+      <PermissionsGate>{children}</PermissionsGate>
     </PermissionsProviderV2>
   );
+}
+
+/** Bloque le rendu tant que les permissions V2 ne sont pas chargées */
+function PermissionsGate({ children }: { children: React.ReactNode }) {
+  const { isLoaded } = usePermissionsV2();
+  if (!isLoaded) return null;
+  return <>{children}</>;
 }
 
 function App() {
