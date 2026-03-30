@@ -27,6 +27,7 @@ interface Props {
 
 export function PermissionsProviderV2({ userId, children }: Props) {
   const { data: entries = [], isSuccess } = useUserPermissionsV2(userId);
+  const isLoaded = !userId || isSuccess;
 
   const value = useMemo<PermissionsContextV2Value>(() => {
     const map = new Map<string, PermissionEntry>();
@@ -74,10 +75,10 @@ export function PermissionsProviderV2({ userId, children }: Props) {
       },
 
       entries,
-      isLoaded: isSuccess,
+      isLoaded,
       userId,
     };
-  }, [entries, isSuccess, userId]);
+  }, [entries, isLoaded, userId]);
 
   return (
     <PermissionsContextV2.Provider value={value}>
