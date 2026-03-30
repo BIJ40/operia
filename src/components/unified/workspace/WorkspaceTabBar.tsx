@@ -5,6 +5,8 @@ import { Home } from 'lucide-react';
 import { TabsList } from '@/components/ui/tabs';
 import { ACCENT_THEMES, type AccentThemeKey } from '@/lib/accentThemes';
 import { ProfileMenu } from './ProfileMenu';
+import { Skeleton } from '@/components/ui/skeleton';
+import { usePermissionsV2Safe } from '@/contexts/PermissionsContextV2';
 import type { TabConfig, UnifiedTab } from './types';
 import { cn } from '@/lib/utils';
 
