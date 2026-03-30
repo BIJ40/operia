@@ -30,6 +30,15 @@ function getPriorityLabel(heat: number | undefined): string {
   return "⚪ Faible";
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function truncate(text: string | undefined, max: number): string {
   if (!text) return "(aucune description)";
   const clean = text.replace(/<[^>]*>/g, "").trim();
@@ -122,15 +131,15 @@ Deno.serve(async (req) => {
       <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
         <tr>
           <td style="padding: 8px 0; color: #71717a; width: 120px;">Sujet</td>
-          <td style="padding: 8px 0; font-weight: 600;">${body.subject}</td>
+          <td style="padding: 8px 0; font-weight: 600;">${escapeHtml(body.subject)}</td>
         </tr>
         <tr>
           <td style="padding: 8px 0; color: #71717a;">Priorité</td>
           <td style="padding: 8px 0;">${priorityLabel}</td>
         </tr>
-        ${body.module ? `<tr><td style="padding: 8px 0; color: #71717a;">Module</td><td style="padding: 8px 0;">${body.module}</td></tr>` : ""}
-        ${body.initiator_name ? `<tr><td style="padding: 8px 0; color: #71717a;">Créé par</td><td style="padding: 8px 0;">${body.initiator_name}${body.initiator_email ? ` (${body.initiator_email})` : ""}</td></tr>` : ""}
-        ${body.created_from ? `<tr><td style="padding: 8px 0; color: #71717a;">Source</td><td style="padding: 8px 0;">${body.created_from}</td></tr>` : ""}
+        ${body.module ? `<tr><td style="padding: 8px 0; color: #71717a;">Module</td><td style="padding: 8px 0;">${escapeHtml(body.module)}</td></tr>` : ""}
+        ${body.initiator_name ? `<tr><td style="padding: 8px 0; color: #71717a;">Créé par</td><td style="padding: 8px 0;">${escapeHtml(body.initiator_name)}${body.initiator_email ? ` (${escapeHtml(body.initiator_email)})` : ""}</td></tr>` : ""}
+        ${body.created_from ? `<tr><td style="padding: 8px 0; color: #71717a;">Source</td><td style="padding: 8px 0;">${escapeHtml(body.created_from)}</td></tr>` : ""}
       </table>
       <div style="background: #f4f4f5; border-radius: 6px; padding: 16px; margin-bottom: 20px;">
         <p style="margin: 0; color: #3f3f46; font-size: 14px; line-height: 1.5;">${descriptionPreview}</p>

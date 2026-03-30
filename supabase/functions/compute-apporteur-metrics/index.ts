@@ -329,6 +329,24 @@ Deno.serve(async (req) => {
         { status: 401, headers: { 'Content-Type': 'application/json' } }
       ));
     }
+    // Agency scope check: only allow access to own agency or N4+ admins
+    const serviceClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+    const { data: profile } = await serviceClient
+      .from('profiles')
+      .select('agency_id, global_role')
+      .eq('id', user.id)
+      .single();
+    const reqBody = await req.clone().json();
+    const isAdmin = ['platform_admin', 'superadmin', 'franchisor_admin', 'franchisor_user'].includes(profile?.global_role ?? '');
+    if (!isAdmin && profile?.agency_id !== reqBody.agency_id) {
+      return withCors(req, new Response(
+        JSON.stringify({ success: false, error: 'Accès non autorisé à cette agence' }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      ));
+    }
   } else {
     return withCors(req, new Response(
       JSON.stringify({ success: false, error: 'Non authentifié' }),
