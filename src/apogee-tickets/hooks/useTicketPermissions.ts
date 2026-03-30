@@ -80,8 +80,15 @@ export function useMyTicketRole() {
   const { user } = useAuthCore();
   const { globalRole, hasModule, isAdmin } = usePermissions();
 
-  // Go/no-go via le bridge (V1 ou V2 selon le flag)
-  const hasTicketingAccess = hasModule('ticketing') || isAdmin;
+  // Go/no-go robuste : parent Ticketing OU sous-droits explicites
+  const hasTicketingAccess =
+    hasModule('ticketing') ||
+    hasModule('ticketing.kanban') ||
+    hasModule('ticketing.liste') ||
+    hasModule('ticketing.create') ||
+    hasModule('ticketing.manage') ||
+    hasModule('ticketing.import') ||
+    isAdmin;
   
   return useQuery<TicketRoleInfo>({
     queryKey: ['my-ticket-role', user?.id, globalRole, hasTicketingAccess],
