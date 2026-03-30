@@ -42,7 +42,7 @@ import { AgencyProvider } from "./suivi/contexts/AgencyContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { EditorProvider } from "./contexts/EditorContext";
 import { ApporteurEditorProvider } from "./contexts/ApporteurEditorContext";
-import { ImpersonationProvider } from "./contexts/ImpersonationContext";
+import { ImpersonationProvider, useImpersonation } from "./contexts/ImpersonationContext";
 import { DataPreloadProvider } from "./contexts/DataPreloadContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 // REMOVED: RoleSimulatorProvider - fonctionnalité supprimée (simulation non fonctionnelle)
@@ -248,9 +248,14 @@ function AppContent() {
  */
 function PermissionsV2Wrapper({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
+  const { isRealUserImpersonation, impersonatedUser } = useImpersonation();
+
+  const effectiveUserId = isRealUserImpersonation && impersonatedUser
+    ? impersonatedUser.id
+    : user?.id ?? null;
 
   return (
-    <PermissionsProviderV2 userId={user?.id ?? null}>
+    <PermissionsProviderV2 userId={effectiveUserId}>
       <PermissionsGate>{children}</PermissionsGate>
     </PermissionsProviderV2>
   );
