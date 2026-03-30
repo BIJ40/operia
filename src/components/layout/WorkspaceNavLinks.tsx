@@ -11,9 +11,11 @@ import {
 import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
 import { useModuleLabels } from '@/hooks/useModuleLabels';
+import { usePermissionsV2Safe } from '@/contexts/PermissionsContextV2';
 import { filterWorkspaceTabs } from '@/lib/filterNavigationByPermissions';
 import { ACCENT_THEMES, type AccentThemeKey } from '@/lib/accentThemes';
 import { ProfileMenu } from '@/components/unified/workspace/ProfileMenu';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { TabConfig, UnifiedTab } from '@/components/unified/workspace/types';
 
 const TAB_ACCENTS: Record<UnifiedTab, AccentThemeKey> = {
@@ -35,6 +37,7 @@ interface WorkspaceNavLinksProps {
 
 export function WorkspaceNavLinks({ activeTab }: WorkspaceNavLinksProps) {
   const navigate = useNavigate();
+  const permV2 = usePermissionsV2Safe();
   const { globalRole, hasModule, hasModuleOption } = usePermissionsBridge();
   const effectiveAuth = useEffectiveAuth();
   const { getShortLabel } = useModuleLabels();
