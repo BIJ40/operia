@@ -1,0 +1,1 @@
+UPDATE module_catalog SET node_type = 'screen' WHERE key IN ('ticketing', 'commercial.realisations') AND node_type = 'section';
