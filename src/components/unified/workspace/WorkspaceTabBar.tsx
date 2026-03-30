@@ -5,6 +5,8 @@ import { Home } from 'lucide-react';
 import { TabsList } from '@/components/ui/tabs';
 import { ACCENT_THEMES, type AccentThemeKey } from '@/lib/accentThemes';
 import { ProfileMenu } from './ProfileMenu';
+import { Skeleton } from '@/components/ui/skeleton';
+import { usePermissionsV2Safe } from '@/contexts/PermissionsContextV2';
 import type { TabConfig, UnifiedTab } from './types';
 import { cn } from '@/lib/utils';
 
@@ -38,6 +40,22 @@ export function WorkspaceTabBar({
   isTabVisuallyDisabled,
   setActiveTab,
 }: WorkspaceTabBarProps) {
+  const permV2 = usePermissionsV2Safe();
+
+  if (permV2 && !permV2.isLoaded) {
+    return (
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm print:hidden">
+        <div className="container mx-auto max-w-app px-4 pt-3 pb-0">
+          <div className="flex items-end gap-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-24 rounded-t-xl" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm print:hidden">
       <div className="container mx-auto max-w-app px-4 pt-3 pb-0">
