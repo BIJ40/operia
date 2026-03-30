@@ -7,7 +7,7 @@ import { lazy, Suspense, useEffect } from "react";
 
 import { MinimalLayout } from "./components/layout";
 import { Loader2 } from "lucide-react";
-import { PermissionsProviderV2 } from './contexts/PermissionsContextV2';
+import { PermissionsProviderV2, usePermissionsV2 as usePermissionsV2Ctx } from './contexts/PermissionsContextV2';
 import { RoleGuard } from "./components/auth/RoleGuard";
 import { AuthRouter } from "./components/auth/AuthRouter";
 
@@ -258,7 +258,7 @@ function PermissionsV2Wrapper({ children }: { children: React.ReactNode }) {
 
 /** Bloque le rendu tant que les permissions V2 ne sont pas chargées */
 function PermissionsGate({ children }: { children: React.ReactNode }) {
-  const { isLoaded } = usePermissionsV2();
+  const { isLoaded } = usePermissionsV2Ctx();
   if (!isLoaded) return null;
   return <>{children}</>;
 }
