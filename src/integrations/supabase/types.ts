@@ -13313,7 +13313,7 @@ export type Database = {
         Returns: boolean
       }
       has_module_option_v2: {
-        Args: { p_module_key: string; p_option_key: string; p_user_id: string }
+        Args: { _module_key: string; _option_key: string; _user_id: string }
         Returns: boolean
       }
       has_module_v2: {
