@@ -264,7 +264,13 @@ function PermissionsV2Wrapper({ children }: { children: React.ReactNode }) {
 /** Bloque le rendu tant que les permissions V2 ne sont pas chargées */
 function PermissionsGate({ children }: { children: React.ReactNode }) {
   const { isLoaded } = usePermissionsV2Ctx();
-  if (!isLoaded) return null;
+  if (!isLoaded) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
   return <>{children}</>;
 }
 
