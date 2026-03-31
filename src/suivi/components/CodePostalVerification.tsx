@@ -26,11 +26,14 @@ export function CodePostalVerification({ refDossier, agencySlug, hash, onVerifie
   const [attempts, setAttempts] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   
+  const normalizePostalCode = (v: string) => v.trim().toUpperCase().replace(/\s+/g, '');
+  
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!codePostal.trim() || codePostal.length !== 5) {
-      toast.error("Veuillez entrer un code postal valide (5 chiffres)");
+    const normalized = normalizePostalCode(codePostal);
+    if (!normalized || normalized.length < 4 || normalized.length > 10) {
+      toast.error("Veuillez entrer un code postal valide");
       return;
     }
 
@@ -96,8 +99,8 @@ export function CodePostalVerification({ refDossier, agencySlug, hash, onVerifie
               id="codePostal"
               placeholder="Code postal (ex: 75001)"
               value={codePostal}
-              onChange={(e) => setCodePostal(e.target.value.replace(/\D/g, '').slice(0, 5))}
-              maxLength={5}
+              onChange={(e) => setCodePostal(e.target.value.replace(/[^a-zA-Z0-9\s-]/g, '').slice(0, 10))}
+              maxLength={10}
               className="text-center text-lg"
               ref={inputRef}
               disabled={isVerifying}
@@ -105,7 +108,7 @@ export function CodePostalVerification({ refDossier, agencySlug, hash, onVerifie
             />
           </div>
           
-          <Button type="submit" className="w-full" disabled={isVerifying || codePostal.length !== 5}>
+          <Button type="submit" className="w-full" disabled={isVerifying || normalizePostalCode(codePostal).length < 4}>
             {isVerifying ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

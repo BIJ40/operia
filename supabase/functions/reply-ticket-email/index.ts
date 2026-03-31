@@ -19,6 +19,16 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // HTML escape helper to prevent injection
+  function escapeHtml(str: string): string {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   try {
     // Verify auth
     const authHeader = req.headers.get("Authorization");
@@ -119,7 +129,7 @@ Deno.serve(async (req) => {
         subject: emailSubject,
         text: message,
         html: `<div style="font-family: Arial, sans-serif; max-width: 600px;">
-          <p>${message.replace(/\n/g, "<br>")}</p>
+          <p>${escapeHtml(message).replace(/\n/g, "<br>")}</p>
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
           <p style="color: #6b7280; font-size: 12px;">
             Référence ticket: ${ticketRef}<br>

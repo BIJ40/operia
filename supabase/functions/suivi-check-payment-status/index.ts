@@ -44,6 +44,8 @@ async function getAgencySubdomain(agencySlug: string | undefined): Promise<strin
   }
 }
 
+const normalizePostalCode = (v: string) => v.trim().toUpperCase().replace(/\s+/g, '');
+
 async function verifyPostalCode(apiSubdomain: string, refDossier: string, codePostal: string): Promise<boolean> {
   try {
     const projectResponse = await fetch(`https://${apiSubdomain}.hc-apogee.fr/api/apiGetProjectByRef`, {
@@ -78,7 +80,9 @@ async function verifyPostalCode(apiSubdomain: string, refDossier: string, codePo
       if (match) clientPostalCode = match[0];
     }
 
-    return clientPostalCode === codePostal.trim();
+    if (!clientPostalCode) return false;
+
+    return normalizePostalCode(clientPostalCode) === normalizePostalCode(codePostal);
   } catch (err) {
     return false;
   }

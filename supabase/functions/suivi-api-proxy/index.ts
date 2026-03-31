@@ -335,10 +335,12 @@ serve(async (req) => {
 
     console.log(`API Proxy: Using secure endpoint with hash`);
     
+    const normalizedPostalCode = codePostal.trim().toUpperCase().replace(/\s+/g, '');
+    
     const response = await fetchFromApogeeWithData(apiSubdomain, 'apiGetProjectByHashZipCode', {
       ref: refDossier,
       hash: hash,
-      zipCode: codePostal.trim()
+      zipCode: normalizedPostalCode
     });
 
     if (!response || (Array.isArray(response) && response.length === 0) || response.error) {

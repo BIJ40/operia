@@ -8,7 +8,7 @@
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useApporteurSession } from '@/apporteur/contexts/ApporteurSessionContext';
-import { Loader2, ShieldX, Bug } from 'lucide-react';
+import { Loader2, ShieldX } from 'lucide-react';
 
 interface ApporteurGuardProps {
   /** Requiert le rôle manager */
@@ -19,38 +19,12 @@ interface ApporteurGuardProps {
   redirectTo?: string;
 }
 
-// Check if we're in dev/preview mode
-const isDevMode = () => {
-  const hostname = window.location.hostname;
-  return hostname === 'localhost' || 
-         hostname === '127.0.0.1' ||
-         hostname.includes('preview') || 
-         hostname.includes('lovable');
-};
-
 export function ApporteurGuard({ 
   requireManager = false,
   children, 
   redirectTo = '/apporteur'
 }: ApporteurGuardProps) {
   const { isAuthenticated, isLoading, isManager } = useApporteurSession();
-
-  // DEV MODE BYPASS - Permet d'accéder à l'espace apporteur sans auth en dev
-  if (isDevMode() && !isAuthenticated && !isLoading) {
-    console.log('🔧 DEV MODE: Bypass ApporteurGuard - accès direct autorisé');
-    return (
-      <div className="relative">
-        {/* Banner DEV */}
-        <div className="fixed top-0 left-0 right-0 z-50 bg-amber-500 text-amber-950 px-4 py-1 text-center text-sm font-medium flex items-center justify-center gap-2">
-          <Bug className="w-4 h-4" />
-          MODE DEV - Accès apporteur sans authentification
-        </div>
-        <div className="pt-8">
-          {children}
-        </div>
-      </div>
-    );
-  }
 
   // Afficher un loader pendant le chargement
   if (isLoading) {

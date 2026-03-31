@@ -23,12 +23,9 @@ function generateSessionToken(): string {
   return crypto.randomUUID();
 }
 
-// Check if request is from dev/preview environment
-function isDevEnvironment(origin: string | null): boolean {
-  if (!origin) return false;
-  return origin.includes("localhost") || 
-         origin.includes("preview") || 
-         origin.includes("lovable");
+// Check if running in dev environment via explicit env var
+function isDevEnvironment(): boolean {
+  return Deno.env.get("DENO_ENV") === "development";
 }
 
 // Rate limit configuration
@@ -141,8 +138,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // DEV TEST BYPASS: accept code "000000" for test account in dev/preview
-    const isTestBypass = isDevEnvironment(origin) && code === "000000" && normalizedEmail === "apporteur@test.com";
+    // DEV TEST BYPASS: accept code "000000" for test account only when DENO_ENV=development
+    const isTestBypass = isDevEnvironment() && code === "000000" && normalizedEmail === "apporteur@test.com";
 
     if (!isTestBypass) {
       // Hash the submitted code and verify against stored codes
