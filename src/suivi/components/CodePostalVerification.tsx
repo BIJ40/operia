@@ -99,8 +99,8 @@ export function CodePostalVerification({ refDossier, agencySlug, hash, onVerifie
               id="codePostal"
               placeholder="Code postal (ex: 75001)"
               value={codePostal}
-              onChange={(e) => setCodePostal(e.target.value.replace(/\D/g, '').slice(0, 5))}
-              maxLength={5}
+              onChange={(e) => setCodePostal(e.target.value.replace(/[^a-zA-Z0-9\s-]/g, '').slice(0, 10))}
+              maxLength={10}
               className="text-center text-lg"
               ref={inputRef}
               disabled={isVerifying}
