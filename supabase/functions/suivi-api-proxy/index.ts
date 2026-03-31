@@ -150,8 +150,6 @@ function buildHashZipPayloads(refDossier: string, hash: string, postalCandidate:
     ref: refDossier,
     hash,
     codePostal: value,
-    zipCode: value,
-    zipcode: value,
   }));
 }
 
