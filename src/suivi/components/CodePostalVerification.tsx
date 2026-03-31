@@ -26,11 +26,14 @@ export function CodePostalVerification({ refDossier, agencySlug, hash, onVerifie
   const [attempts, setAttempts] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   
+  const normalizePostalCode = (v: string) => v.trim().toUpperCase().replace(/\s+/g, '');
+  
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!codePostal.trim() || codePostal.length !== 5) {
-      toast.error("Veuillez entrer un code postal valide (5 chiffres)");
+    const normalized = normalizePostalCode(codePostal);
+    if (!normalized || normalized.length < 4 || normalized.length > 10) {
+      toast.error("Veuillez entrer un code postal valide");
       return;
     }
 
