@@ -70,7 +70,7 @@ function extractPostalCodeFromAddress(value?: string | null) {
   return match?.[0] ?? '';
 }
 
-function resolveProjectPostalCode(project: any, client?: any) {
+function getProjectPostalCandidates(project: any, client?: any) {
   const directCandidates = [
     client?.codePostal,
     client?.CodePostal,
@@ -98,11 +98,6 @@ function resolveProjectPostalCode(project: any, client?: any) {
     project?.data?.CP,
   ];
 
-  for (const candidate of directCandidates) {
-    const normalized = normalizePostalCode(candidate);
-    if (normalized) return normalized;
-  }
-
   const addressCandidates = [
     client?.address,
     client?.adresse,
@@ -114,12 +109,63 @@ function resolveProjectPostalCode(project: any, client?: any) {
     project?.data?.adresse,
   ];
 
-  for (const candidate of addressCandidates) {
-    const normalized = normalizePostalCode(extractPostalCodeFromAddress(candidate));
-    if (normalized) return normalized;
+  const candidates: string[] = [];
+
+  for (const candidate of directCandidates) {
+    if (typeof candidate !== 'string') continue;
+    const trimmed = candidate.trim();
+    if (!trimmed) continue;
+    candidates.push(trimmed);
+    const normalized = normalizePostalCode(trimmed);
+    if (normalized && normalized !== trimmed) {
+      candidates.push(normalized);
+    }
   }
 
+  for (const candidate of addressCandidates) {
+    if (typeof candidate !== 'string') continue;
+    const extracted = extractPostalCodeFromAddress(candidate);
+    if (!extracted) continue;
+    candidates.push(extracted);
+  }
+
+  return Array.from(new Set(candidates.map((value) => value.trim()).filter(Boolean)));
+}
+
+function resolveProjectPostalCode(project: any, client?: any) {
+  const candidates = getProjectPostalCandidates(project, client);
+  for (const candidate of candidates) {
+    const normalized = normalizePostalCode(candidate);
+    if (normalized) return normalized;
+  }
   return '';
+}
+
+function buildHashZipPayloads(refDossier: string, hash: string, postalCandidate: string) {
+  const trimmed = postalCandidate.trim();
+  const normalized = normalizePostalCode(trimmed);
+  const values = Array.from(new Set([trimmed, normalized].filter(Boolean)));
+
+  return values.map((value) => ({
+    ref: refDossier,
+    hash,
+    zipCode: value,
+    zipcode: value,
+  }));
+}
+
+async function tryFetchProjectByHashZipCode(apiSubdomain: string, refDossier: string, hash: string, postalCandidate: string) {
+  for (const payload of buildHashZipPayloads(refDossier, hash, postalCandidate)) {
+    console.log(`API Proxy: Trying hash+zip verification with "${payload.zipCode}"`);
+    const response = await fetchFromApogeeWithData(apiSubdomain, 'apiGetProjectByHashZipCode', payload);
+    const project = toSingleRecord(response);
+
+    if (project && !project.error) {
+      return project;
+    }
+  }
+
+  return null;
 }
 
 // Rate limiting functions
@@ -403,14 +449,41 @@ serve(async (req) => {
     console.log(`API Proxy: Using secure endpoint with hash`);
 
     const normalizedInputPostalCode = normalizePostalCode(codePostal);
-    const projectByHashResponse = await fetchFromApogeeWithData(apiSubdomain, 'apiGetProjectByHash', {
-      hash,
-    });
-    const verifiedProject = toSingleRecord(projectByHashResponse);
+    let verifiedProject = await tryFetchProjectByHashZipCode(apiSubdomain, refDossier, hash, normalizedInputPostalCode);
+    let detailedProject: any = null;
+
+    if (!verifiedProject) {
+      console.log(`API Proxy: Direct hash+zip verification failed, trying secure fallback by ref`);
+
+      const projectByRefResponse = await fetchFromApogeeWithData(apiSubdomain, 'apiGetProjectByRef', {
+        ref: refDossier,
+      });
+      detailedProject = toSingleRecord(projectByRefResponse);
+
+      const detailedProjectRef = String(detailedProject?.ref || detailedProject?.reference || '').trim();
+      if (detailedProject && !detailedProject?.error && detailedProjectRef === refDossier.trim()) {
+        const detailedClient = detailedProject?.client ?? null;
+        const normalizedProjectPostalCode = resolveProjectPostalCode(detailedProject, detailedClient);
+
+        console.log(`API Proxy: Fallback postal comparison input=${normalizedInputPostalCode} project=${normalizedProjectPostalCode}`);
+
+        if (normalizedInputPostalCode && normalizedProjectPostalCode && normalizedInputPostalCode === normalizedProjectPostalCode) {
+          const postalCandidates = getProjectPostalCandidates(detailedProject, detailedClient);
+
+          for (const postalCandidate of postalCandidates) {
+            verifiedProject = await tryFetchProjectByHashZipCode(apiSubdomain, refDossier, hash, postalCandidate);
+            if (verifiedProject) {
+              console.log(`API Proxy: Hash verification recovered with postal candidate "${postalCandidate}"`);
+              break;
+            }
+          }
+        }
+      }
+    }
 
     if (!verifiedProject || verifiedProject.error) {
       await recordAttempt(supabase, ipAddress, refDossier, false);
-      console.log(`API Proxy: Hash verification failed - Apogée returned no data for hash`);
+      console.log(`API Proxy: Hash verification failed - no valid response after fallback`);
       return new Response(
         JSON.stringify(genericAccessError),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -418,7 +491,7 @@ serve(async (req) => {
     }
 
     const verifiedProjectRef = String(verifiedProject.ref || verifiedProject.reference || '').trim();
-    if (!verifiedProjectRef || verifiedProjectRef !== refDossier.trim()) {
+    if (verifiedProjectRef && verifiedProjectRef !== refDossier.trim()) {
       await recordAttempt(supabase, ipAddress, refDossier, false);
       console.log(`API Proxy: Hash verification failed - ref mismatch (${verifiedProjectRef} !== ${refDossier})`);
       return new Response(
@@ -427,27 +500,15 @@ serve(async (req) => {
       );
     }
 
-    const verifiedClient = verifiedProject?.client ?? null;
-    const normalizedProjectPostalCode = resolveProjectPostalCode(verifiedProject, verifiedClient);
-
-    console.log(`API Proxy: Postal code comparison input=${normalizedInputPostalCode} project=${normalizedProjectPostalCode}`);
-
-    if (!normalizedInputPostalCode || !normalizedProjectPostalCode || normalizedInputPostalCode !== normalizedProjectPostalCode) {
-      await recordAttempt(supabase, ipAddress, refDossier, false);
-      console.log(`API Proxy: Postal code verification failed after hash lookup`);
-      return new Response(
-        JSON.stringify(genericAccessError),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (!detailedProject) {
+      const projectByRefResponse = await fetchFromApogeeWithData(apiSubdomain, 'apiGetProjectByRef', {
+        ref: refDossier,
+      });
+      detailedProject = toSingleRecord(projectByRefResponse);
     }
 
-    const projectByRefResponse = await fetchFromApogeeWithData(apiSubdomain, 'apiGetProjectByRef', {
-      ref: refDossier,
-    });
-    const detailedProject = toSingleRecord(projectByRefResponse);
-
     projectData = detailedProject && !detailedProject?.error ? detailedProject : verifiedProject;
-    projectClient = projectData?.client ?? verifiedClient;
+    projectClient = projectData?.client ?? verifiedProject?.client ?? null;
     
     // Fetch clients list for apporteur name resolution if needed
     const apporteurId = projectData?.apporteurId || projectData?.data?.apporteurId || projectData?.data?.commanditaireId;
