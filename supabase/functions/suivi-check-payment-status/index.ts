@@ -44,7 +44,7 @@ async function getAgencySubdomain(agencySlug: string | undefined): Promise<strin
   }
 }
 
-const normalizePostalCode = (v: string) => v.trim().toUpperCase().replace(/\s+/g, '');
+const normalizePostalCode = (v: string) => (v ?? '').replace(/\D/g, '').slice(0, 5);
 
 async function verifyPostalCode(apiSubdomain: string, refDossier: string, codePostal: string): Promise<boolean> {
   try {
