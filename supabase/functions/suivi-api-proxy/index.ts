@@ -533,7 +533,17 @@ serve(async (req) => {
     }
 
     projectData = detailedProject && !detailedProject?.error ? detailedProject : verifiedProject;
-    projectClient = projectData?.client ?? verifiedProject?.client ?? null;
+    projectClient = projectData?.client ?? verifiedProject?.client ?? detailedClient ?? null;
+    
+    // If projectClient is still null, try resolving from the project data
+    if (!projectClient && projectData) {
+      try {
+        projectClient = await resolveProjectClient(projectData, apiSubdomain);
+        console.log(`API Proxy: Client resolved via fallback resolveProjectClient: ${!!projectClient}`);
+      } catch (e) {
+        console.log(`API Proxy: Failed to resolve client via fallback: ${e}`);
+      }
+    }
     
     // Fetch clients list for apporteur name resolution if needed
     const apporteurId = projectData?.apporteurId || projectData?.data?.apporteurId || projectData?.data?.commanditaireId;
