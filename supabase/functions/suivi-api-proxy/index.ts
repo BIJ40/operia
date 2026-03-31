@@ -55,6 +55,120 @@ async function fetchFromApogeeWithData(apiSubdomain: string, endpoint: string, a
   }
 }
 
+function toSingleRecord(response: any) {
+  if (Array.isArray(response)) return response[0] ?? null;
+  if (response?.project) return response.project;
+  return response ?? null;
+}
+
+function normalizePostalCode(value?: string | null) {
+  return (value ?? '').replace(/\D/g, '').slice(0, 5);
+}
+
+function extractPostalCodeFromAddress(value?: string | null) {
+  const match = (value ?? '').match(/\b\d{5}\b/);
+  return match?.[0] ?? '';
+}
+
+function getProjectPostalCandidates(project: any, client?: any) {
+  const directCandidates = [
+    client?.codePostal,
+    client?.CodePostal,
+    client?.postalCode,
+    client?.postal_code,
+    client?.cp,
+    client?.CP,
+    project?.client?.codePostal,
+    project?.client?.CodePostal,
+    project?.client?.postalCode,
+    project?.client?.postal_code,
+    project?.client?.cp,
+    project?.client?.CP,
+    project?.codePostal,
+    project?.CodePostal,
+    project?.postalCode,
+    project?.postal_code,
+    project?.cp,
+    project?.CP,
+    project?.data?.codePostal,
+    project?.data?.CodePostal,
+    project?.data?.postalCode,
+    project?.data?.postal_code,
+    project?.data?.cp,
+    project?.data?.CP,
+  ];
+
+  const addressCandidates = [
+    client?.address,
+    client?.adresse,
+    project?.client?.address,
+    project?.client?.adresse,
+    project?.address,
+    project?.adresse,
+    project?.data?.address,
+    project?.data?.adresse,
+  ];
+
+  const candidates: string[] = [];
+
+  for (const candidate of directCandidates) {
+    if (typeof candidate !== 'string') continue;
+    const trimmed = candidate.trim();
+    if (!trimmed) continue;
+    candidates.push(trimmed);
+    const normalized = normalizePostalCode(trimmed);
+    if (normalized && normalized !== trimmed) {
+      candidates.push(normalized);
+    }
+  }
+
+  for (const candidate of addressCandidates) {
+    if (typeof candidate !== 'string') continue;
+    const extracted = extractPostalCodeFromAddress(candidate);
+    if (!extracted) continue;
+    candidates.push(extracted);
+  }
+
+  return Array.from(new Set(candidates.map((value) => value.trim()).filter(Boolean)));
+}
+
+function resolveProjectPostalCode(project: any, client?: any) {
+  const candidates = getProjectPostalCandidates(project, client);
+  for (const candidate of candidates) {
+    const normalized = normalizePostalCode(candidate);
+    if (normalized) return normalized;
+  }
+  return '';
+}
+
+function buildHashZipPayloads(refDossier: string, hash: string, postalCandidate: string) {
+  const trimmed = postalCandidate.trim();
+  const normalized = normalizePostalCode(trimmed);
+  const values = Array.from(new Set([trimmed, normalized].filter(Boolean)));
+
+  return values.map((value) => ({
+    ref: refDossier,
+    hash,
+    codePostal: value,
+    zipCode: value,
+    zipcode: value,
+  }));
+}
+
+async function tryFetchProjectByHashZipCode(apiSubdomain: string, refDossier: string, hash: string, postalCandidate: string) {
+  for (const payload of buildHashZipPayloads(refDossier, hash, postalCandidate)) {
+    console.log(`API Proxy: Trying hash+zip verification with "${payload.zipCode}"`);
+    const response = await fetchFromApogeeWithData(apiSubdomain, 'apiGetProjectByHashZipCode', payload);
+    const project = toSingleRecord(response);
+
+    if (project && !project.error) {
+      return project;
+    }
+  }
+
+  return null;
+}
+
 // Rate limiting functions
 async function checkRateLimit(supabase: any, ipAddress: string, refDossier: string): Promise<{ allowed: boolean; remainingAttempts: number }> {
   const cutoffTime = new Date(Date.now() - LOCKOUT_MINUTES * 60 * 1000).toISOString();
@@ -285,7 +399,7 @@ serve(async (req) => {
                       'unknown';
 
     // Check rate limit
-    const { allowed, remainingAttempts } = await checkRateLimit(supabase, ipAddress, refDossier);
+    const { allowed } = await checkRateLimit(supabase, ipAddress, refDossier);
     
     if (!allowed) {
       console.log(`Rate limit exceeded for IP ${ipAddress} on dossier ${refDossier}`);
@@ -334,29 +448,68 @@ serve(async (req) => {
     }
 
     console.log(`API Proxy: Using secure endpoint with hash`);
-    
-    // Extract only digits, take first 5 — handles "40320 SAMADET", "40 320", etc.
-    const normalizedPostalCode = codePostal.replace(/\D/g, '').slice(0, 5);
-    
-    console.log(`API Proxy: Normalized postal code: "${codePostal}" -> "${normalizedPostalCode}"`);
-    
-    const response = await fetchFromApogeeWithData(apiSubdomain, 'apiGetProjectByHashZipCode', {
-      ref: refDossier,
-      hash: hash,
-      zipCode: normalizedPostalCode
-    });
 
-    if (!response || (Array.isArray(response) && response.length === 0) || response.error) {
+    const normalizedInputPostalCode = normalizePostalCode(codePostal);
+    let verifiedProject = await tryFetchProjectByHashZipCode(apiSubdomain, refDossier, hash, normalizedInputPostalCode);
+    let detailedProject: any = null;
+
+    if (!verifiedProject) {
+      console.log(`API Proxy: Direct hash+zip verification failed, trying secure fallback by ref`);
+
+      const projectByRefResponse = await fetchFromApogeeWithData(apiSubdomain, 'apiGetProjectByRef', {
+        ref: refDossier,
+      });
+      detailedProject = toSingleRecord(projectByRefResponse);
+
+      const detailedProjectRef = String(detailedProject?.ref || detailedProject?.reference || '').trim();
+      if (detailedProject && !detailedProject?.error && detailedProjectRef === refDossier.trim()) {
+        const detailedClient = detailedProject?.client ?? null;
+        const normalizedProjectPostalCode = resolveProjectPostalCode(detailedProject, detailedClient);
+
+        console.log(`API Proxy: Fallback postal comparison input=${normalizedInputPostalCode} project=${normalizedProjectPostalCode}`);
+
+        if (normalizedInputPostalCode && normalizedProjectPostalCode && normalizedInputPostalCode === normalizedProjectPostalCode) {
+          const postalCandidates = getProjectPostalCandidates(detailedProject, detailedClient);
+
+          for (const postalCandidate of postalCandidates) {
+            verifiedProject = await tryFetchProjectByHashZipCode(apiSubdomain, refDossier, hash, postalCandidate);
+            if (verifiedProject) {
+              console.log(`API Proxy: Hash verification recovered with postal candidate "${postalCandidate}"`);
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    if (!verifiedProject || verifiedProject.error) {
       await recordAttempt(supabase, ipAddress, refDossier, false);
-      console.log(`API Proxy: Hash verification failed - Apogée returned no data`);
+      console.log(`API Proxy: Hash verification failed - no valid response after fallback`);
       return new Response(
         JSON.stringify(genericAccessError),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    projectData = Array.isArray(response) ? response[0] : response;
-    projectClient = projectData?.client;
+    const verifiedProjectRef = String(verifiedProject.ref || verifiedProject.reference || '').trim();
+    if (verifiedProjectRef && verifiedProjectRef !== refDossier.trim()) {
+      await recordAttempt(supabase, ipAddress, refDossier, false);
+      console.log(`API Proxy: Hash verification failed - ref mismatch (${verifiedProjectRef} !== ${refDossier})`);
+      return new Response(
+        JSON.stringify(genericAccessError),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!detailedProject) {
+      const projectByRefResponse = await fetchFromApogeeWithData(apiSubdomain, 'apiGetProjectByRef', {
+        ref: refDossier,
+      });
+      detailedProject = toSingleRecord(projectByRefResponse);
+    }
+
+    projectData = detailedProject && !detailedProject?.error ? detailedProject : verifiedProject;
+    projectClient = projectData?.client ?? verifiedProject?.client ?? null;
     
     // Fetch clients list for apporteur name resolution if needed
     const apporteurId = projectData?.apporteurId || projectData?.data?.apporteurId || projectData?.data?.commanditaireId;
