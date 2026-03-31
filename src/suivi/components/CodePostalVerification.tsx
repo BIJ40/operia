@@ -26,7 +26,7 @@ export function CodePostalVerification({ refDossier, agencySlug, hash, onVerifie
   const [attempts, setAttempts] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   
-  const normalizePostalCode = (v: string) => v.trim().toUpperCase().replace(/\s+/g, '');
+  const normalizePostalCode = (v: string) => (v ?? '').replace(/\D/g, '').slice(0, 5);
   
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
