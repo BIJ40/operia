@@ -535,7 +535,7 @@ serve(async (req) => {
     }
 
     projectData = detailedProject && !detailedProject?.error ? detailedProject : verifiedProject;
-    projectClient = projectData?.client ?? verifiedProject?.client ?? detailedClient ?? null;
+    projectClient = projectData?.client ?? verifiedProject?.client ?? fallbackClient ?? null;
     
     // If projectClient is still null, try resolving from the project data
     if (!projectClient && projectData) {
