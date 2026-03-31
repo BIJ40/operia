@@ -335,7 +335,10 @@ serve(async (req) => {
 
     console.log(`API Proxy: Using secure endpoint with hash`);
     
-    const normalizedPostalCode = codePostal.trim().toUpperCase().replace(/\s+/g, '');
+    // Extract only digits, take first 5 — handles "40320 SAMADET", "40 320", etc.
+    const normalizedPostalCode = codePostal.replace(/\D/g, '').slice(0, 5);
+    
+    console.log(`API Proxy: Normalized postal code: "${codePostal}" -> "${normalizedPostalCode}"`);
     
     const response = await fetchFromApogeeWithData(apiSubdomain, 'apiGetProjectByHashZipCode', {
       ref: refDossier,
