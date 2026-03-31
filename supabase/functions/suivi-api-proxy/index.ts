@@ -149,6 +149,7 @@ function buildHashZipPayloads(refDossier: string, hash: string, postalCandidate:
   return values.map((value) => ({
     ref: refDossier,
     hash,
+    codePostal: value,
     zipCode: value,
     zipcode: value,
   }));
