@@ -463,6 +463,7 @@ serve(async (req) => {
     const normalizedInputPostalCode = normalizePostalCode(codePostal);
     let verifiedProject = await tryFetchProjectByHashZipCode(apiSubdomain, refDossier, hash, normalizedInputPostalCode);
     let detailedProject: any = null;
+    let fallbackClient: any = null;
 
     if (!verifiedProject) {
       console.log(`API Proxy: Direct hash+zip verification failed, trying secure fallback by ref`);
