@@ -155,7 +155,7 @@ function buildHashZipPayloads(refDossier: string, hash: string, postalCandidate:
 
 async function tryFetchProjectByHashZipCode(apiSubdomain: string, refDossier: string, hash: string, postalCandidate: string) {
   for (const payload of buildHashZipPayloads(refDossier, hash, postalCandidate)) {
-    console.log(`API Proxy: Trying hash+zip verification with "${payload.zipCode}"`);
+    console.log(`API Proxy: Trying hash+zip verification with codePostal="${payload.codePostal}"`);
     const response = await fetchFromApogeeWithData(apiSubdomain, 'apiGetProjectByHashZipCode', payload);
     const project = toSingleRecord(response);
 
@@ -165,6 +165,19 @@ async function tryFetchProjectByHashZipCode(apiSubdomain: string, refDossier: st
   }
 
   return null;
+}
+
+async function resolveProjectClient(project: any, apiSubdomain: string): Promise<any> {
+  if (project?.client && typeof project.client === 'object') {
+    return project.client;
+  }
+  const clientId = project?.clientId ?? project?.data?.clientId;
+  if (!clientId) return null;
+  
+  console.log(`API Proxy: Resolving client via apiGetClients for clientId=${clientId}`);
+  const clients = await fetchFromApogee(apiSubdomain, 'apiGetClients');
+  if (!Array.isArray(clients)) return null;
+  return clients.find((c: any) => String(c.id) === String(clientId)) ?? null;
 }
 
 // Rate limiting functions
