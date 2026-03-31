@@ -480,6 +480,7 @@ serve(async (req) => {
         if (!detailedClient) {
           detailedClient = await resolveProjectClient(detailedProject, apiSubdomain);
         }
+        fallbackClient = detailedClient;
         const normalizedProjectPostalCode = resolveProjectPostalCode(detailedProject, detailedClient);
 
         console.log(`API Proxy: Fallback postal comparison input=${normalizedInputPostalCode} project=${normalizedProjectPostalCode} clientResolved=${!!detailedClient}`);
