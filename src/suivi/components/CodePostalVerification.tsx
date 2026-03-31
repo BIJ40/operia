@@ -108,7 +108,7 @@ export function CodePostalVerification({ refDossier, agencySlug, hash, onVerifie
             />
           </div>
           
-          <Button type="submit" className="w-full" disabled={isVerifying || codePostal.length !== 5}>
+          <Button type="submit" className="w-full" disabled={isVerifying || normalizePostalCode(codePostal).length < 4}>
             {isVerifying ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
