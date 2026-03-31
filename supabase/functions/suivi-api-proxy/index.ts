@@ -463,6 +463,7 @@ serve(async (req) => {
     const normalizedInputPostalCode = normalizePostalCode(codePostal);
     let verifiedProject = await tryFetchProjectByHashZipCode(apiSubdomain, refDossier, hash, normalizedInputPostalCode);
     let detailedProject: any = null;
+    let fallbackClient: any = null;
 
     if (!verifiedProject) {
       console.log(`API Proxy: Direct hash+zip verification failed, trying secure fallback by ref`);
@@ -479,6 +480,7 @@ serve(async (req) => {
         if (!detailedClient) {
           detailedClient = await resolveProjectClient(detailedProject, apiSubdomain);
         }
+        fallbackClient = detailedClient;
         const normalizedProjectPostalCode = resolveProjectPostalCode(detailedProject, detailedClient);
 
         console.log(`API Proxy: Fallback postal comparison input=${normalizedInputPostalCode} project=${normalizedProjectPostalCode} clientResolved=${!!detailedClient}`);
@@ -533,7 +535,7 @@ serve(async (req) => {
     }
 
     projectData = detailedProject && !detailedProject?.error ? detailedProject : verifiedProject;
-    projectClient = projectData?.client ?? verifiedProject?.client ?? detailedClient ?? null;
+    projectClient = projectData?.client ?? verifiedProject?.client ?? fallbackClient ?? null;
     
     // If projectClient is still null, try resolving from the project data
     if (!projectClient && projectData) {
