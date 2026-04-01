@@ -421,10 +421,8 @@ export default function DashboardStatic() {
               animate={false}
               className="h-full cursor-pointer"
               onClick={() => {
-                window.dispatchEvent(new CustomEvent('session-state-change', { detail: { key: 'workspace_tab', value: 'pilotage' } }));
-                setTimeout(() => {
-                  window.dispatchEvent(new CustomEvent('session-state-change', { detail: { key: 'pilotage_sub_tab', value: 'actions' } }));
-                }, 100);
+                sessionStorage.setItem('pilotage_sub_tab', JSON.stringify('actions'));
+                window.dispatchEvent(new CustomEvent('session-state-change', { detail: { key: 'unified_workspace_tab', value: 'pilotage' } }));
               }}
             >
               <HumanTitle titleKey="actions_a_mener" icon={AlertTriangle} iconColor="text-warm-red" size="sm" />
