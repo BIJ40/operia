@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { AlertCircle, FileText, Euro, Clock } from 'lucide-react';
 import { DataService } from '@/apogee-connect/services/dataService';
 import { useAgency } from '@/apogee-connect/contexts/AgencyContext';
