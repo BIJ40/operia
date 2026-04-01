@@ -93,7 +93,7 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
         <thead>
           <tr className="border-b border-border/50">
             <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Réf.</th>
-            <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Type</th>
+            <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">État actuel</th>
             <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Étape</th>
             <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Date entrée</th>
             <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Expiration</th>
