@@ -15,7 +15,6 @@ export function ActionsAMenerCard() {
   const { agence } = useProfile();
   const { isAgencyReady, currentAgency } = useAgency();
   const { config, isLoading: isLoadingConfig } = useActionsConfig();
-  const navigate = useNavigate();
   const [, setSearchParams] = useSearchParams();
   const { hasModule, isAdmin } = usePermissionsBridge();
 
