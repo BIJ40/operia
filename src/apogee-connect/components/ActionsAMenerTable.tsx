@@ -93,7 +93,7 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
         <thead>
           <tr className="border-b border-border/50">
             <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Réf.</th>
-            <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Type</th>
+            <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">État actuel</th>
             <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Étape</th>
             <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Date entrée</th>
             <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Expiration</th>
@@ -143,14 +143,14 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
                   </span>
                 </td>
 
-                {/* Type badge */}
+                {/* État actuel */}
                 <td className="py-2.5 px-3">
                   <span className={cn(
                     "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
                     badge.bg, badge.text
                   )}>
                     <ActionIcon className="w-3 h-3" />
-                    {badge.label}
+                    {action.statut}
                   </span>
                 </td>
 
