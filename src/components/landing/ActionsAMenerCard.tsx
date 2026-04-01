@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertCircle, FileText, Euro, Clock } from 'lucide-react';
 import { DataService } from '@/apogee-connect/services/dataService';
 import { useAgency } from '@/apogee-connect/contexts/AgencyContext';
@@ -8,17 +8,27 @@ import { useActionsConfig } from '@/apogee-connect/hooks/useActionsConfig';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProfile } from '@/contexts/ProfileContext';
 import { logError } from '@/lib/logger';
+import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
+import { toast } from 'sonner';
 
 export function ActionsAMenerCard() {
   const { agence } = useProfile();
   const { isAgencyReady, currentAgency } = useAgency();
   const { config, isLoading: isLoadingConfig } = useActionsConfig();
   const navigate = useNavigate();
+  const [, setSearchParams] = useSearchParams();
+  const { hasModule, isAdmin } = usePermissionsBridge();
+
+  const canAccess = isAdmin || hasModule('pilotage.actions_a_mener');
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
+    if (!canAccess) {
+      toast.error("Vous n'avez pas accès au module Actions à mener");
+      return;
+    }
     sessionStorage.setItem('pilotage_sub_tab', JSON.stringify('actions'));
-    navigate('/?tab=pilotage');
+    setSearchParams({ tab: 'pilotage' }, { replace: false });
   };
 
   const { data: stats, isLoading, error } = useQuery({
