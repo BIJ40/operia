@@ -1,4 +1,4 @@
-import { addDays, parseISO, isValid, differenceInDays } from 'date-fns';
+import { addDays, parseISO, isValid, differenceInDays, startOfDay, endOfDay } from 'date-fns';
 import { ActionRow, ActionsConfig, DEFAULT_CONFIG, ACTION_LABELS } from '../types/actions';
 
 /**
@@ -352,13 +352,16 @@ export function buildActionsAMener(
   actions.push(...aPlanifierCandidates);
   actions.push(...aCommanderCandidates);
   
-  // Marquer les actions qui vont passer en retard dans J+1 et filtrer
+  // Marquer les actions qui expirent aujourd'hui ou bientôt, et filtrer
   const tomorrow = addDays(today, 1);
   const threeDaysFromNow = addDays(today, 3);
+  const todayStart = startOfDay(today);
+  const todayEnd = endOfDay(today);
   const filteredActions = actions
     .map(action => ({
       ...action,
-      isDueSoon: !action.isLate && action.deadline <= threeDaysFromNow,
+      isToday: !action.isLate && action.deadline >= todayStart && action.deadline <= todayEnd,
+      isDueSoon: !action.isLate && action.deadline > todayEnd && action.deadline <= threeDaysFromNow,
     }))
     .filter(action => {
       if (action.isLate) return true;
