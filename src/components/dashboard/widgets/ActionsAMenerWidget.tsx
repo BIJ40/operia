@@ -90,14 +90,23 @@ export function ActionsAMenerWidget({ onNavigate }: ActionsAMenerWidgetProps) {
             className="flex items-center gap-2 py-1 text-xs"
           >
             <Icon className={cn("w-3 h-3 flex-shrink-0", color)} />
-            <span className="font-mono text-destructive font-bold truncate w-20 flex-shrink-0">
+            <span className={cn(
+              "font-mono truncate w-20 flex-shrink-0 font-bold",
+              action.isLate ? "text-destructive" : action.isToday ? "text-orange-600 dark:text-orange-400" : "text-emerald-600 dark:text-emerald-400"
+            )}>
               {action.ref}
             </span>
-            <span className="text-destructive font-bold truncate flex-1">
+            <span className={cn(
+              "truncate flex-1 font-bold",
+              action.isLate ? "text-destructive" : action.isToday ? "text-orange-600 dark:text-orange-400" : "text-emerald-600 dark:text-emerald-400"
+            )}>
               {action.clientName}
             </span>
-            <span className="text-destructive font-bold flex-shrink-0">
-              +{action.daysLate}j
+            <span className={cn(
+              "flex-shrink-0 font-bold",
+              action.isLate ? "text-destructive" : action.isToday ? "text-orange-600 dark:text-orange-400" : "text-emerald-600 dark:text-emerald-400"
+            )}>
+              {action.isLate ? `+${action.daysLate}j` : action.isToday ? "Auj." : `J-${Math.abs(action.daysLate ?? 0)}`}
             </span>
           </div>
         );
