@@ -143,14 +143,14 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
                   </span>
                 </td>
 
-                {/* Type badge */}
+                {/* État actuel */}
                 <td className="py-2.5 px-3">
                   <span className={cn(
                     "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
                     badge.bg, badge.text
                   )}>
                     <ActionIcon className="w-3 h-3" />
-                    {badge.label}
+                    {action.statut}
                   </span>
                 </td>
 
