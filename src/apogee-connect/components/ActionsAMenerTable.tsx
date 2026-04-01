@@ -107,6 +107,25 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
             const badge = ACTION_BADGE_COLORS[action.actionType];
             const ActionIcon = ACTION_ICONS[action.actionType];
             const isLate = action.isLate;
+            const isToday = action.isToday;
+            const isDueSoon = action.isDueSoon;
+
+            // Color logic: late=red, today=orange, dueSoon=green, default=normal
+            const statusColor = isLate
+              ? "text-destructive font-bold"
+              : isToday
+                ? "text-orange-600 dark:text-orange-400 font-bold"
+                : isDueSoon
+                  ? "text-emerald-600 dark:text-emerald-400 font-semibold"
+                  : "text-muted-foreground";
+
+            const refColor = isLate
+              ? "text-destructive font-bold"
+              : isToday
+                ? "text-orange-600 dark:text-orange-400 font-bold"
+                : isDueSoon
+                  ? "text-emerald-600 dark:text-emerald-400 font-semibold"
+                  : "text-primary";
             
             return (
               <tr
@@ -119,10 +138,7 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
               >
                 {/* Réf */}
                 <td className="py-2.5 px-3">
-                  <span className={cn(
-                    "font-mono text-xs",
-                    isLate ? "text-destructive font-bold" : "text-primary"
-                  )}>
+                  <span className={cn("font-mono text-xs", refColor)}>
                     {action.ref}
                   </span>
                 </td>
@@ -140,53 +156,39 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
 
                 {/* Statut / action */}
                 <td className="py-2.5 px-3">
-                  <span className={cn(
-                    "text-xs",
-                    isLate ? "text-destructive font-bold" : "text-foreground"
-                  )}>
+                  <span className={cn("text-xs", isLate ? "text-destructive font-bold" : isToday ? "text-orange-600 dark:text-orange-400 font-bold" : isDueSoon ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-foreground")}>
                     {action.actionLabel}
                   </span>
                 </td>
 
                 {/* Date entrée */}
                 <td className="py-2.5 px-3 hidden sm:table-cell">
-                  <span className={cn(
-                    "text-xs",
-                    isLate ? "text-destructive font-bold" : "text-muted-foreground"
-                  )}>
+                  <span className={cn("text-xs", statusColor)}>
                     {format(action.dateDepart, 'dd/MM/yyyy', { locale: fr })}
                   </span>
                 </td>
 
                 {/* Expiration */}
                 <td className="py-2.5 px-3 hidden sm:table-cell">
-                  <span className={cn(
-                    "text-xs",
-                    isLate ? "text-destructive font-bold" : "text-muted-foreground"
-                  )}>
+                  <span className={cn("text-xs", statusColor)}>
                     {format(action.deadline, 'dd/MM/yyyy', { locale: fr })}
                     {isLate && action.daysLate != null && action.daysLate > 0 && (
                       <span className="ml-1 text-destructive font-bold">+{action.daysLate}j</span>
                     )}
+                    {isToday && <span className="ml-1 text-orange-600 dark:text-orange-400 font-bold">Aujourd'hui</span>}
                   </span>
                 </td>
 
                 {/* Client */}
                 <td className="py-2.5 px-3 hidden md:table-cell">
-                  <span className={cn(
-                    "text-xs truncate max-w-[180px] block",
-                    isLate ? "text-destructive font-bold" : "text-muted-foreground"
-                  )}>
+                  <span className={cn("text-xs truncate max-w-[180px] block", statusColor)}>
                     {action.clientName}
                   </span>
                 </td>
 
                 {/* Détail (technicien ou label) */}
                 <td className="py-2.5 px-3 hidden lg:table-cell">
-                  <span className={cn(
-                    "text-xs truncate max-w-[150px] block",
-                    isLate ? "text-destructive font-bold" : "text-muted-foreground"
-                  )}>
+                  <span className={cn("text-xs truncate max-w-[150px] block", statusColor)}>
                     {getTechnicienName(action) !== '-' ? getTechnicienName(action) : action.label}
                   </span>
                 </td>
