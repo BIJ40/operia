@@ -48,6 +48,8 @@ export function buildActionsAMener(
   config: ActionsConfig = DEFAULT_CONFIG,
   today: Date = new Date()
 ): ActionRow[] {
+  // Normalize today to start-of-day so deadline === today is NOT late
+  today = startOfDay(today);
   const actions: ActionRow[] = [];
   
   // Map des clients pour recherche rapide
