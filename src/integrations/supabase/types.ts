@@ -3441,36 +3441,60 @@ export type Database = {
       billing_catalog: {
         Row: {
           billing_mode: string
+          billing_period: string
+          currency: string
+          display_order: number
+          features: string[]
           id: string
           is_active: boolean
+          is_free: boolean
           item_key: string
           item_type: string
           label: string | null
           metadata: Json
+          price_ht: number | null
+          stripe_payment_link: string | null
           stripe_price_id: string | null
           stripe_product_id: string | null
+          updated_at: string
         }
         Insert: {
           billing_mode?: string
+          billing_period?: string
+          currency?: string
+          display_order?: number
+          features?: string[]
           id?: string
           is_active?: boolean
+          is_free?: boolean
           item_key: string
           item_type: string
           label?: string | null
           metadata?: Json
+          price_ht?: number | null
+          stripe_payment_link?: string | null
           stripe_price_id?: string | null
           stripe_product_id?: string | null
+          updated_at?: string
         }
         Update: {
           billing_mode?: string
+          billing_period?: string
+          currency?: string
+          display_order?: number
+          features?: string[]
           id?: string
           is_active?: boolean
+          is_free?: boolean
           item_key?: string
           item_type?: string
           label?: string | null
           metadata?: Json
+          price_ht?: number | null
+          stripe_payment_link?: string | null
           stripe_price_id?: string | null
           stripe_product_id?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
