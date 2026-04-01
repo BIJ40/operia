@@ -58,7 +58,8 @@ export function ActionsAMenerWidget({ onNavigate }: ActionsAMenerWidgetProps) {
 
   const top10 = useMemo(() => {
     if (!actions) return [];
-    return actions.filter(a => a.isLate).slice(0, 10);
+    // Show late, today, and due-soon actions
+    return actions.filter(a => a.isLate || a.isToday || a.isDueSoon).slice(0, 10);
   }, [actions]);
 
   const lateCount = actions?.filter(a => a.isLate).length ?? 0;
