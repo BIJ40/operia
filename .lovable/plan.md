@@ -1,61 +1,30 @@
 
 
-## Diagnostic : le problème n'est PAS lié aux droits
+# Plan: Generer le Helper complet OPERIA (Markdown)
 
-### Cause racine identifiée
+## Objectif
+Produire un fichier `/mnt/documents/OPERIA_HELPER_COMPLET.md` contenant:
+1. **Tous les endpoints Apogee** avec description et champs cles
+2. **Toutes les Edge Functions** (~100+) avec leur role
+3. **Toutes les metriques StatIA** (~130+) avec id, categorie, source, unite
 
-Les logs Edge Function montrent clairement :
+## Contenu du document
 
-```text
-ERROR Apogee API error for apiGetProjectByHashZipCode: 402 Payment Required
-INFO  Fallback postal comparison input=40320 project=40320 clientResolved=true
-INFO  Hash verification failed - no valid response after fallback
-```
+### Section 1 - Endpoints API Apogee (8 endpoints)
+Liste complete avec les champs de donnees importants et ou trouver chaque information.
 
-**L'API Apogée renvoie 402 (Payment Required)** sur l'endpoint `apiGetProjectByHashZipCode`. Ce n'est pas un problème de permissions Supabase, de RLS, ni de JWT.
+### Section 2 - Edge Functions Supabase (~100 fonctions)
+Classees par domaine (sync, auth, documents, KPIs, ticketing, suivi, social, planning, etc.)
 
-### Pourquoi le fallback échoue aussi
+### Section 3 - Metriques StatIA (inventaire exhaustif)
+Toutes les metriques extraites des 20+ fichiers de definitions, organisees par famille:
+- CA (6), Univers (11), Apporteurs (15), Techniciens (7), SAV (10), Devis (10), Recouvrement (6)
+- Dossiers (7), Qualite (6), Productivite (6), Complexite (2), Reseau (11)
+- Advanced (15), Advanced2 (25), Franchiseur (15), Clients (4), Agences (12), Operations (15)
+- Devis Advanced (4), Veille Apporteurs (3)
 
-Le fallback actuel :
-1. ✅ Récupère le projet via `apiGetProjectByRef` → OK
-2. ✅ Résout le client → `clientResolved=true`
-3. ✅ Compare le code postal → `input=40320 project=40320` → MATCH
-4. ❌ Re-appelle `apiGetProjectByHashZipCode` pour valider le hash → **402 encore** → Échec
-
-Le fallback dépend encore de l'endpoint en panne pour la validation finale du hash.
-
-### Correctif proposé
-
-Modifier la logique de fallback dans `supabase/functions/suivi-api-proxy/index.ts` :
-
-Quand le code postal matche via le fallback ET que `apiGetProjectByRef` a retourné un projet valide avec la bonne référence, **ne pas re-appeler `apiGetProjectByHashZipCode`**. Utiliser directement le projet du fallback comme projet vérifié.
-
-Concrètement (lignes ~486-497) :
-
-```text
-AVANT:
-  if (CP match) → re-appeler apiGetProjectByHashZipCode avec chaque candidat
-  si aucun ne marche → échec
-
-APRÈS:
-  if (CP match) → tenter apiGetProjectByHashZipCode (best effort)
-  si ça échoue (402/500) → utiliser directement detailedProject comme vérifié
-  (la sécurité est assurée : hash validé via l'URL, CP validé localement, ref validée)
-```
-
-### Sécurité préservée
-
-La triple vérification reste en place :
-- **Hash** : présent dans l'URL, vérifié par le client
-- **Code postal** : comparé côté serveur avec les données Apogée
-- **Référence** : vérifiée par correspondance exacte
-
-### Action annexe recommandée
-
-Vérifier côté Apogée pourquoi `apiGetProjectByHashZipCode` renvoie 402 (quota API, abonnement expiré, clé révoquée).
-
-### Fichier à modifier
-
-- `supabase/functions/suivi-api-proxy/index.ts` — logique de fallback (lignes 486-497)
-- Redéployer l'edge function
+## Etapes
+1. Ecrire un script Python qui genere le Markdown complet
+2. Executer et deposer dans `/mnt/documents/`
+3. QA du fichier
 
