@@ -1,30 +1,84 @@
 
 
-# Plan: Generer le Helper complet OPERIA (Markdown)
+# Plan: Manuel complet des metriques OPERIA/StatIA
 
 ## Objectif
-Produire un fichier `/mnt/documents/OPERIA_HELPER_COMPLET.md` contenant:
-1. **Tous les endpoints Apogee** avec description et champs cles
-2. **Toutes les Edge Functions** (~100+) avec leur role
-3. **Toutes les metriques StatIA** (~130+) avec id, categorie, source, unite
+Generer un document Markdown exhaustif et soigne (`/mnt/documents/OPERIA_MANUEL_METRIQUES.md`) documentant **chaque metrique effectivement utilisee** dans l'application, avec :
+- Explication claire en francais
+- Endpoints API Apogee necessaires
+- Croisements de donnees a effectuer
+- Formule de calcul
+- Ou elle est affichee dans l'interface
 
-## Contenu du document
+## Structure du document
 
-### Section 1 - Endpoints API Apogee (8 endpoints)
-Liste complete avec les champs de donnees importants et ou trouver chaque information.
+### 1. Introduction & Architecture
+- Comment StatIA fonctionne (definitions → engine → hooks → composants)
+- Les 6 endpoints API sources (apiGetFactures, apiGetProjects, apiGetInterventions, apiGetDevis, apiGetClients, apiGetUsers)
+- Schema des relations entre entites (projectId comme pivot central)
 
-### Section 2 - Edge Functions Supabase (~100 fonctions)
-Classees par domaine (sync, auth, documents, KPIs, ticketing, suivi, social, planning, etc.)
+### 2. Metriques par famille (toutes documentees)
 
-### Section 3 - Metriques StatIA (inventaire exhaustif)
-Toutes les metriques extraites des 20+ fichiers de definitions, organisees par famille:
-- CA (6), Univers (11), Apporteurs (15), Techniciens (7), SAV (10), Devis (10), Recouvrement (6)
-- Dossiers (7), Qualite (6), Productivite (6), Complexite (2), Reseau (11)
-- Advanced (15), Advanced2 (25), Franchiseur (15), Clients (4), Agences (12), Operations (15)
-- Devis Advanced (4), Veille Apporteurs (3)
+Pour chaque metrique, une fiche standardisee :
+```
+### [ID] — [Label]
+**Description** : ...
+**Unite** : € / % / nombre / jours
+**Endpoints API** : apiGetFactures + apiGetProjects
+**Champs utilises** : data.totalHT, data.commanditaireId, ...
+**Formule** : CA = Σ factures.totalHT (hors avoirs, hors annulees)
+**Croisements** : Facture → Project (via projectId) → Univers (via data.universes)
+**Affichage** : Dashboard, Pilotage > Statistiques > Onglet General
+```
 
-## Etapes
-1. Ecrire un script Python qui genere le Markdown complet
-2. Executer et deposer dans `/mnt/documents/`
-3. QA du fichier
+**Familles couvertes** (inventaire complet extrait du code) :
+
+| Famille | Nb metriques | Fichier source |
+|---------|-------------|----------------|
+| CA | 6 | ca.ts |
+| Univers | 11 | univers.ts |
+| Apporteurs | 14 | apporteurs.ts |
+| Techniciens | 7 | techniciens.ts |
+| SAV | 10 | sav.ts |
+| Devis | 10 | devis.ts |
+| Recouvrement | 6 | recouvrement.ts |
+| Dossiers | 7 | dossiers.ts |
+| Qualite | 6 | qualite.ts |
+| Productivite | 6 | productivite.ts |
+| Complexite | 2 | complexite.ts |
+| Reseau | 11 | reseau.ts |
+| Advanced | 17 | advanced.ts |
+| Advanced2 Clients | 7 | advanced2-clients.ts |
+| Advanced2 Devis | 8 | advanced2-devis.ts |
+| Advanced2 Factures | 4 | advanced2-factures.ts |
+| Advanced2 Interventions | 6 | advanced2-interventions.ts |
+| Advanced2 SAV | 4 | advanced2-sav.ts |
+| Advanced2 Univers | 4 | advanced2-univers.ts |
+| Advanced2 Reseau | 4 | advanced2-reseau.ts |
+| Franchiseur | 17 | franchiseur.ts |
+| Clients | 4 | clients.ts |
+| Agences | 12 | agences.ts |
+| Operations | 15 | operations.ts |
+| Devis Advanced | 4 | devisAdvanced.ts |
+| Veille Apporteurs | 3 | veilleApporteurs.ts |
+
+**Total : ~188 metriques uniques** (certaines sont partagees entre fichiers)
+
+### 3. Index des metriques par page/ecran
+- Quelles metriques sont utilisees sur le Dashboard
+- Quelles metriques sont utilisees en Pilotage > Statistiques
+- Quelles metriques sont utilisees en Diffusion TV
+- Quelles metriques sont utilisees dans le Financial Bridge (Resultat)
+
+### 4. Annexe : Metriques appelees mais non definies
+Signalement des IDs appeles dans le code mais absents du registre (`panier_moyen_ht`, `flop_apporteurs_ca`, `part_apporteurs`, `nombre_dossiers`, `delai_moyen_facturation`, `encours_global_ttc`)
+
+## Etapes techniques
+
+1. Ecrire un script Python qui :
+   - Parse chaque fichier de definition pour extraire id, label, description, category, source, unit, aggregation
+   - Scanne les hooks/composants pour identifier ou chaque metrique est utilisee
+   - Genere le Markdown structure avec les fiches completes
+2. Executer et deposer dans `/mnt/documents/OPERIA_MANUEL_METRIQUES.md`
+3. QA : verifier la completude et la lisibilite
 
