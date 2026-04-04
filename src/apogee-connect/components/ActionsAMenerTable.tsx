@@ -201,16 +201,19 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
                 {/* Lien Apogée */}
                 <td className="py-2.5 px-3 text-right">
                   {agencySlug && (
-                    <a
-                      href={buildApogeeDeepLink(agencySlug, 'project', action.projectId)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        const url = buildApogeeDeepLink(agencySlug, 'project', action.projectId);
+                        window.open(url, '_blank', 'noopener,noreferrer');
+                      }}
                       title="Ouvrir dans Apogée"
-                      className="inline-flex items-center justify-center hover:text-primary transition-colors"
+                      className="inline-flex items-center justify-center p-1 rounded hover:bg-primary/10 transition-colors cursor-pointer"
                     >
-                      <ExternalLink className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-primary" />
-                    </a>
+                      <ExternalLink className="w-4 h-4 text-primary" />
+                    </button>
                   )}
                 </td>
               </tr>
