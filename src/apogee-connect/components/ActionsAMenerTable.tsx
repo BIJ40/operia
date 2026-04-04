@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { ExternalLink, AlertTriangle, Clock, BellRing, FileText, Receipt, UserCheck, CalendarClock, ShoppingCart } from 'lucide-react';
 import { ActionRow, ActionType } from '../types/actions';
 import { DataService } from '../services/dataService';
+import { buildApogeeDeepLink } from '../types/endpoints';
+import { useAgency } from '../contexts/AgencyContext';
 import { cn } from '@/lib/utils';
 
 interface ActionsAMenerTableProps {
