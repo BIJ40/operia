@@ -36,6 +36,14 @@ CRON (3x/jour) ──→ apogee-full-sync ──→ API Apogée
 | `apiGetDevis` | Devis | Taux transformation, pipeline |
 | `apiGetCreneaux` | Créneaux planning | Planning, cartes RDV |
 | `apiGetCommanditaires` | Prescripteurs/apporteurs | Prospection, scoring |
+| `apiCreateTache` | Création de tâche planning | Actions à mener, automatisation |
+
+### Liens profonds (Deep Links)
+
+| Pattern URL | Usage |
+|-------------|-------|
+| `https://{slug}.hc-apogee.fr/go/project/{projectId}` | Ouvre un dossier dans Apogée |
+| `https://{slug}.hc-apogee.fr/go/intervention/{interventionId}` | Ouvre une intervention dans Apogée |
 
 ---
 
