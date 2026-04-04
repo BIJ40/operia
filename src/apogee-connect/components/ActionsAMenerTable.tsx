@@ -33,6 +33,9 @@ const ACTION_ICONS: Record<ActionType, typeof FileText> = {
 };
 
 export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTableProps) {
+  const { currentAgency } = useAgency();
+  const agencySlug = currentAgency?.slug ?? '';
+
   // Récupérer les IDs des techniciens à lookup
   const technicienIds = useMemo(() => {
     const ids = new Set<number>();
