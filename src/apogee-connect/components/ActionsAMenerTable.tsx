@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { ExternalLink, AlertTriangle, Clock, BellRing, FileText, Receipt, UserCheck, CalendarClock, ShoppingCart } from 'lucide-react';
 import { ActionRow, ActionType } from '../types/actions';
 import { DataService } from '../services/dataService';
+import { buildApogeeDeepLink } from '../types/endpoints';
+import { useAgency } from '../contexts/AgencyContext';
 import { cn } from '@/lib/utils';
 
 interface ActionsAMenerTableProps {
@@ -31,6 +33,9 @@ const ACTION_ICONS: Record<ActionType, typeof FileText> = {
 };
 
 export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTableProps) {
+  const { currentAgency } = useAgency();
+  const agencySlug = currentAgency?.slug ?? '';
+
   // Récupérer les IDs des techniciens à lookup
   const technicienIds = useMemo(() => {
     const ids = new Set<number>();
@@ -193,9 +198,20 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
                   </span>
                 </td>
 
-                {/* Chevron */}
+                {/* Lien Apogée */}
                 <td className="py-2.5 px-3 text-right">
-                  <ExternalLink className="w-3.5 h-3.5 text-muted-foreground/50 inline-block" />
+                  {agencySlug && (
+                    <a
+                      href={buildApogeeDeepLink(agencySlug, 'project', action.projectId)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      title="Ouvrir dans Apogée"
+                      className="inline-flex items-center justify-center hover:text-primary transition-colors"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-primary" />
+                    </a>
+                  )}
                 </td>
               </tr>
             );

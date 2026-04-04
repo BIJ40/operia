@@ -36,6 +36,14 @@ CRON (3x/jour) ──→ apogee-full-sync ──→ API Apogée
 | `apiGetDevis` | Devis | Taux transformation, pipeline |
 | `apiGetCreneaux` | Créneaux planning | Planning, cartes RDV |
 | `apiGetCommanditaires` | Prescripteurs/apporteurs | Prospection, scoring |
+| `apiCreateTache` | Création de tâche planning | Actions à mener, automatisation |
+
+### Liens profonds (Deep Links)
+
+| Pattern URL | Usage |
+|-------------|-------|
+| `https://{slug}.hc-apogee.fr/go/project/{projectId}` | Ouvre un dossier dans Apogée |
+| `https://{slug}.hc-apogee.fr/go/intervention/{interventionId}` | Ouvre une intervention dans Apogée |
 
 ---
 
@@ -121,3 +129,63 @@ Toutes les données Apogée passent par des normalizers :
 - Montants → `number` (centimes → euros)
 - Noms → trim + normalisation casse
 - Documents → tableau garanti (jamais null)
+
+---
+
+## 7. Endpoint d'écriture : `apiCreateTache`
+
+### Description
+
+Crée une tâche dans le planning Apogée, assignée à un ou plusieurs utilisateurs.
+
+### Payload
+
+```json
+{
+  "API_KEY": "XXXXXXXXXXXXX",
+  "dateTime": "2026-04-05T12:30",
+  "duree": 60,
+  "priority": 2,
+  "label": "Exemple de tache",
+  "content": "Description de la tâche",
+  "usersIds": [4, 5, 6],
+  "clientId": null,
+  "projectId": null
+}
+```
+
+### Champs
+
+| Champ | Type | Obligatoire | Description |
+|-------|------|:-:|-------------|
+| `API_KEY` | string | ✅ | Clé API de l'agence |
+| `dateTime` | string | ✅ | Date/heure au format `YYYY-MM-DDTHH:mm` ou `YYYY-MM-DD HH:mm` |
+| `duree` | number | ✅ | Durée en minutes |
+| `priority` | number | ✅ | Priorité : `0` (basse), `1` (normale), `2` (haute) |
+| `label` | string | ✅ | Titre court de la tâche |
+| `content` | string | ⬜ | Description détaillée |
+| `usersIds` | number[] | ✅ | Tableau des IDs utilisateurs Apogée assignés |
+| `clientId` | number \| null | ⬜ | ID client associé (optionnel) |
+| `projectId` | number \| null | ⬜ | ID projet/dossier associé (optionnel) |
+
+### Notes
+
+- Le format `dateTime` accepte soit un `T` séparateur (`2026-04-05T12:30`) soit un espace (`2026-04-05 12:30`)
+- Les `usersIds` correspondent aux IDs retournés par `apiGetUsers`
+- `clientId` et `projectId` sont optionnels mais permettent de rattacher la tâche à un dossier existant
+
+---
+
+## 8. Liens profonds (Deep Links)
+
+Apogée expose des URLs de navigation directe :
+
+| Pattern | Exemple | Usage |
+|---------|---------|-------|
+| `https://{slug}.hc-apogee.fr/go/project/{id}` | `https://dax.hc-apogee.fr/go/project/4440` | Ouvre un dossier |
+| `https://{slug}.hc-apogee.fr/go/intervention/{id}` | `https://dax.hc-apogee.fr/go/intervention/5654` | Ouvre une intervention |
+
+### Utilisation dans OPERIA
+
+- **Actions à mener** : le bouton 🔗 en fin de ligne ouvre le dossier directement dans Apogée (nouvel onglet)
+- **Helper** : `buildApogeeDeepLink(slug, entity, id)` dans `src/apogee-connect/types/endpoints.ts`
