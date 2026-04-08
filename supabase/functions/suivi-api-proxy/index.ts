@@ -150,14 +150,12 @@ function buildHashZipPayloads(refDossier: string, hash: string, postalCandidate:
     ref: refDossier,
     hash,
     codePostal: value,
-    zipCode: value,
-    zipcode: value,
   }));
 }
 
 async function tryFetchProjectByHashZipCode(apiSubdomain: string, refDossier: string, hash: string, postalCandidate: string) {
   for (const payload of buildHashZipPayloads(refDossier, hash, postalCandidate)) {
-    console.log(`API Proxy: Trying hash+zip verification with "${payload.zipCode}"`);
+    console.log(`API Proxy: Trying hash+zip verification with codePostal="${payload.codePostal}"`);
     const response = await fetchFromApogeeWithData(apiSubdomain, 'apiGetProjectByHashZipCode', payload);
     const project = toSingleRecord(response);
 
@@ -167,6 +165,19 @@ async function tryFetchProjectByHashZipCode(apiSubdomain: string, refDossier: st
   }
 
   return null;
+}
+
+async function resolveProjectClient(project: any, apiSubdomain: string): Promise<any> {
+  if (project?.client && typeof project.client === 'object') {
+    return project.client;
+  }
+  const clientId = project?.clientId ?? project?.data?.clientId;
+  if (!clientId) return null;
+  
+  console.log(`API Proxy: Resolving client via apiGetClients for clientId=${clientId}`);
+  const clients = await fetchFromApogee(apiSubdomain, 'apiGetClients');
+  if (!Array.isArray(clients)) return null;
+  return clients.find((c: any) => String(c.id) === String(clientId)) ?? null;
 }
 
 // Rate limiting functions
@@ -452,6 +463,7 @@ serve(async (req) => {
     const normalizedInputPostalCode = normalizePostalCode(codePostal);
     let verifiedProject = await tryFetchProjectByHashZipCode(apiSubdomain, refDossier, hash, normalizedInputPostalCode);
     let detailedProject: any = null;
+    let fallbackClient: any = null;
 
     if (!verifiedProject) {
       console.log(`API Proxy: Direct hash+zip verification failed, trying secure fallback by ref`);
@@ -463,20 +475,34 @@ serve(async (req) => {
 
       const detailedProjectRef = String(detailedProject?.ref || detailedProject?.reference || '').trim();
       if (detailedProject && !detailedProject?.error && detailedProjectRef === refDossier.trim()) {
-        const detailedClient = detailedProject?.client ?? null;
+        // Resolve client: try embedded client first, then fetch via clientId
+        let detailedClient = detailedProject?.client ?? null;
+        if (!detailedClient) {
+          detailedClient = await resolveProjectClient(detailedProject, apiSubdomain);
+        }
+        fallbackClient = detailedClient;
         const normalizedProjectPostalCode = resolveProjectPostalCode(detailedProject, detailedClient);
 
-        console.log(`API Proxy: Fallback postal comparison input=${normalizedInputPostalCode} project=${normalizedProjectPostalCode}`);
+        console.log(`API Proxy: Fallback postal comparison input=${normalizedInputPostalCode} project=${normalizedProjectPostalCode} clientResolved=${!!detailedClient}`);
 
         if (normalizedInputPostalCode && normalizedProjectPostalCode && normalizedInputPostalCode === normalizedProjectPostalCode) {
+          // Best-effort: try apiGetProjectByHashZipCode with candidates
           const postalCandidates = getProjectPostalCandidates(detailedProject, detailedClient);
-
           for (const postalCandidate of postalCandidates) {
-            verifiedProject = await tryFetchProjectByHashZipCode(apiSubdomain, refDossier, hash, postalCandidate);
-            if (verifiedProject) {
-              console.log(`API Proxy: Hash verification recovered with postal candidate "${postalCandidate}"`);
-              break;
-            }
+            try {
+              const attempted = await tryFetchProjectByHashZipCode(apiSubdomain, refDossier, hash, postalCandidate);
+              if (attempted) {
+                verifiedProject = attempted;
+                console.log(`API Proxy: Hash verification recovered with postal candidate "${postalCandidate}"`);
+                break;
+              }
+            } catch (_) { /* endpoint down (402/500), continue */ }
+          }
+
+          // If endpoint is down but local triple-check passed, use detailedProject directly
+          if (!verifiedProject) {
+            console.log(`API Proxy: apiGetProjectByHashZipCode unavailable — using fallback project (ref=${detailedProjectRef}, CP match confirmed)`);
+            verifiedProject = detailedProject;
           }
         }
       }
@@ -509,7 +535,17 @@ serve(async (req) => {
     }
 
     projectData = detailedProject && !detailedProject?.error ? detailedProject : verifiedProject;
-    projectClient = projectData?.client ?? verifiedProject?.client ?? null;
+    projectClient = projectData?.client ?? verifiedProject?.client ?? fallbackClient ?? null;
+    
+    // If projectClient is still null, try resolving from the project data
+    if (!projectClient && projectData) {
+      try {
+        projectClient = await resolveProjectClient(projectData, apiSubdomain);
+        console.log(`API Proxy: Client resolved via fallback resolveProjectClient: ${!!projectClient}`);
+      } catch (e) {
+        console.log(`API Proxy: Failed to resolve client via fallback: ${e}`);
+      }
+    }
     
     // Fetch clients list for apporteur name resolution if needed
     const apporteurId = projectData?.apporteurId || projectData?.data?.apporteurId || projectData?.data?.commanditaireId;

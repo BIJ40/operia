@@ -1,4 +1,3 @@
-import Stripe from 'https://esm.sh/stripe@14.21.0?target=deno';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -24,7 +23,17 @@ async function fetchFromApogeeWithData(apiSubdomain: string, endpoint: string, a
     return null;
   }
 
-  return response.json();
+  const text = await response.text();
+  if (!text || text.trim().length === 0) {
+    console.warn(`Apogee API returned empty body for ${endpoint}`);
+    return null;
+  }
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    console.error(`Apogee API returned invalid JSON for ${endpoint}:`, text.substring(0, 200));
+    return null;
+  }
 }
 
 async function fetchFromApogee(apiSubdomain: string, endpoint: string): Promise<any> {
@@ -52,6 +61,42 @@ function toAmount(value: unknown): number {
 
 function roundCurrency(value: number): number {
   return Math.round(value * 100) / 100;
+}
+
+function getBaseUrl(req: Request): string {
+  const origin = req.headers.get('origin');
+  if (origin) return origin;
+
+  const referer = req.headers.get('referer');
+  if (referer) {
+    try {
+      return new URL(referer).origin;
+    } catch {
+      console.warn('Unable to parse referer origin');
+    }
+  }
+
+  return 'https://suivi.helpconfort.services';
+}
+
+function normalizeReturnPath(returnUrl: string | null): string {
+  if (!returnUrl) return '/';
+
+  try {
+    const decoded = decodeURIComponent(returnUrl).trim();
+    return decoded.startsWith('/') ? decoded : '/';
+  } catch {
+    return returnUrl.startsWith('/') ? returnUrl : '/';
+  }
+}
+
+function buildPaymentPath(returnPath: string, agencySlug: string, status: 'success' | 'cancel'): string {
+  const segments = returnPath.split('/').filter(Boolean);
+  const agencyIndex = segments.indexOf(agencySlug);
+  const prefixSegments = agencyIndex > 0 ? segments.slice(0, agencyIndex) : [];
+  const prefix = prefixSegments.length > 0 ? `/${prefixSegments.join('/')}` : '';
+
+  return `${prefix}/${agencySlug}/paiement/${status}`;
 }
 
 function extractAmountToPay(project: any): number | null {
@@ -96,9 +141,10 @@ Deno.serve(async (req) => {
     const agencySlug = url.searchParams.get('agencySlug');
     const refDossier = url.searchParams.get('refDossier');
     const codePostal = url.searchParams.get('codePostal'); // Required for verification
+    const returnUrl = url.searchParams.get('returnUrl');
     // NOTE: amount param is IGNORED for security - we calculate server-side from Apogée data
 
-    console.log('Stripe Checkout request:', { agencySlug, refDossier });
+    console.log('Stripe Checkout request:', { agencySlug, refDossier, returnUrl });
 
     // Validate required parameters (amount is NOT required - calculated server-side)
     if (!agencySlug || !refDossier || !codePostal) {
@@ -182,55 +228,72 @@ Deno.serve(async (req) => {
     console.log(`Stripe Checkout: Server-calculated amount: ${serverCalculatedAmount}€`);
 
     // Get Stripe secret key from environment
-    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
-    if (!stripeSecretKey) {
+    const rawStripeKey = Deno.env.get('STRIPE_SECRET_KEY');
+    if (!rawStripeKey) {
       console.error('STRIPE_SECRET_KEY not configured');
       return new Response(
         JSON.stringify({ error: 'STRIPE_NOT_CONFIGURED', message: 'Stripe n\'est pas configuré' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    // Initialize Stripe
-    const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: '2023-10-16',
-    });
+    // Strip any non-ASCII / invisible chars that break Deno's fetch headers
+    const stripeSecretKey = rawStripeKey.replace(/[^\x20-\x7E]/g, '').trim();
+    console.log(`Stripe key prefix: ${stripeSecretKey.substring(0, 8)}..., len=${stripeSecretKey.length}`);
 
     // Build success and cancel URLs
-    const baseUrl = 'https://suivi.helpconfort.services';
-    const returnPath = agencySlug === 'dax' ? `/${refDossier}` : `/${agencySlug}/${refDossier}`;
-    // Include {CHECKOUT_SESSION_ID} placeholder - Stripe will replace it with actual session ID
-    const successUrl = `${baseUrl}${returnPath}?payment=success&session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl = `${baseUrl}${returnPath}?payment=cancelled`;
-
-    console.log('Creating Stripe Checkout session:', { amount: serverCalculatedAmount, successUrl, cancelUrl });
-
-    // Create Stripe Checkout Session with SERVER-CALCULATED amount
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: 'eur',
-            product_data: {
-              name: `Paiement dossier`,
-              description: `Règlement Help! Confort`,
-            },
-            unit_amount: Math.round(serverCalculatedAmount * 100), // Stripe uses cents
-          },
-          quantity: 1,
-        },
-      ],
-      mode: 'payment',
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-      metadata: {
-        refDossier,
-        agencySlug,
-        serverAmount: serverCalculatedAmount.toString(), // For audit trail
-      },
-      locale: 'fr',
+    const baseUrl = getBaseUrl(req);
+    const normalizedReturnPath = normalizeReturnPath(returnUrl);
+    const successPath = buildPaymentPath(normalizedReturnPath, agencySlug, 'success');
+    const cancelPath = buildPaymentPath(normalizedReturnPath, agencySlug, 'cancel');
+    const successQuery = new URLSearchParams({
+      payment: 'success',
+      ref: refDossier,
+      returnUrl: normalizedReturnPath,
     });
+    const cancelQuery = new URLSearchParams({
+      payment: 'cancelled',
+      ref: refDossier,
+      returnUrl: normalizedReturnPath,
+    });
+    const successUrl = `${baseUrl}${successPath}?${successQuery.toString()}&session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = `${baseUrl}${cancelPath}?${cancelQuery.toString()}`;
+
+    console.log('Creating Stripe Checkout session:', { amount: serverCalculatedAmount, successUrl, cancelUrl, baseUrl, normalizedReturnPath });
+
+    // Use raw fetch to Stripe API to avoid SDK ByteString bug on Deno
+    const params = new URLSearchParams();
+    params.append('payment_method_types[]', 'card');
+    params.append('line_items[0][price_data][currency]', 'eur');
+    params.append('line_items[0][price_data][product_data][name]', 'Paiement dossier');
+    params.append('line_items[0][price_data][product_data][description]', 'Règlement Help! Confort');
+    params.append('line_items[0][price_data][unit_amount]', String(Math.round(serverCalculatedAmount * 100)));
+    params.append('line_items[0][quantity]', '1');
+    params.append('mode', 'payment');
+    params.append('success_url', successUrl);
+    params.append('cancel_url', cancelUrl);
+    params.append('metadata[refDossier]', refDossier);
+    params.append('metadata[agencySlug]', agencySlug);
+    params.append('metadata[serverAmount]', serverCalculatedAmount.toString());
+    params.append('locale', 'fr');
+
+    const stripeResp = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${stripeSecretKey}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params.toString(),
+    });
+
+    const session = await stripeResp.json();
+
+    if (!stripeResp.ok) {
+      console.error('Stripe API error:', session);
+      return new Response(
+        JSON.stringify({ error: 'STRIPE_ERROR', message: session.error?.message || 'Erreur Stripe' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     console.log('Stripe Checkout session created:', session.id);
 

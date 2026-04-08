@@ -1,4 +1,4 @@
-import { addDays, parseISO, isValid, differenceInDays } from 'date-fns';
+import { addDays, parseISO, isValid, differenceInDays, startOfDay, endOfDay } from 'date-fns';
 import { ActionRow, ActionsConfig, DEFAULT_CONFIG, ACTION_LABELS } from '../types/actions';
 
 /**
@@ -48,6 +48,8 @@ export function buildActionsAMener(
   config: ActionsConfig = DEFAULT_CONFIG,
   today: Date = new Date()
 ): ActionRow[] {
+  // Normalize today to start-of-day so deadline === today is NOT late
+  today = startOfDay(today);
   const actions: ActionRow[] = [];
   
   // Map des clients pour recherche rapide
@@ -204,7 +206,7 @@ export function buildActionsAMener(
     }
     
     const statusTime = lastStatusChange.dateModif ? parseDateModif(lastStatusChange.dateModif) : 0;
-    const statutLabel = isAttTech ? 'En attente technicien' : 'Retour technicien en cours';
+    const statutLabel = isAttTech ? 'En attente technicien' : 'Attente technicien';
     
     // 3) Essayer d'abord le userStr/userId du changement de statut lui-même
     let technicienName = lastStatusChange.userStr || 'Technicien inconnu';
@@ -352,13 +354,16 @@ export function buildActionsAMener(
   actions.push(...aPlanifierCandidates);
   actions.push(...aCommanderCandidates);
   
-  // Marquer les actions qui vont passer en retard dans J+1 et filtrer
+  // Marquer les actions qui expirent aujourd'hui ou bientôt, et filtrer
   const tomorrow = addDays(today, 1);
   const threeDaysFromNow = addDays(today, 3);
+  const todayStart = startOfDay(today);
+  const todayEnd = endOfDay(today);
   const filteredActions = actions
     .map(action => ({
       ...action,
-      isDueSoon: !action.isLate && action.deadline <= threeDaysFromNow,
+      isToday: !action.isLate && action.deadline >= todayStart && action.deadline <= todayEnd,
+      isDueSoon: !action.isLate && action.deadline > todayEnd && action.deadline <= threeDaysFromNow,
     }))
     .filter(action => {
       if (action.isLate) return true;

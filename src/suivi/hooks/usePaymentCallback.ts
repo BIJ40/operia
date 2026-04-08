@@ -16,6 +16,7 @@ export function usePaymentCallback(refDossier: string | undefined, agencySlug?: 
   useEffect(() => {
     const paymentStatus = searchParams.get('payment');
     const sessionId = searchParams.get('session_id');
+    const effectiveRefDossier = searchParams.get('ref')?.trim() || refDossier?.trim();
 
     // Gérer le cas d'annulation
     if (paymentStatus === 'cancelled') {
@@ -23,19 +24,20 @@ export function usePaymentCallback(refDossier: string | undefined, agencySlug?: 
         description: 'Le paiement a été annulé. Vous pouvez réessayer à tout moment.',
       });
       // Nettoyer l'URL
-      searchParams.delete('payment');
-      setSearchParams(searchParams, { replace: true });
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('payment');
+      setSearchParams(nextParams, { replace: true });
       return;
     }
 
     // Gérer le cas de succès
-    if (paymentStatus === 'success' && sessionId && refDossier && !isProcessing) {
+    if (paymentStatus === 'success' && sessionId && effectiveRefDossier && !isProcessing) {
       setIsProcessing(true);
 
       const recordPayment = async () => {
         try {
           const response = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/record-payment`,
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/suivi-record-payment`,
             {
               method: 'POST',
               headers: {
@@ -43,7 +45,7 @@ export function usePaymentCallback(refDossier: string | undefined, agencySlug?: 
               },
               body: JSON.stringify({
                 sessionId,
-                refDossier,
+                refDossier: effectiveRefDossier,
                 agencySlug: agencySlug || 'dax',
               }),
             }
@@ -57,7 +59,7 @@ export function usePaymentCallback(refDossier: string | undefined, agencySlug?: 
               duration: 5000,
             });
             // Invalider le cache pour rafraîchir le statut de paiement
-            queryClient.invalidateQueries({ queryKey: ['payment-status', refDossier] });
+            queryClient.invalidateQueries({ queryKey: ['payment-status', effectiveRefDossier] });
           } else if (result.alreadyRecorded) {
             // Déjà enregistré, pas besoin de toast
           } else {
@@ -73,9 +75,10 @@ export function usePaymentCallback(refDossier: string | undefined, agencySlug?: 
           });
         } finally {
           // Nettoyer l'URL
-          searchParams.delete('payment');
-          searchParams.delete('session_id');
-          setSearchParams(searchParams, { replace: true });
+          const nextParams = new URLSearchParams(searchParams);
+          nextParams.delete('payment');
+          nextParams.delete('session_id');
+          setSearchParams(nextParams, { replace: true });
           setIsProcessing(false);
         }
       };

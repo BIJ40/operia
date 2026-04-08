@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { ExternalLink, AlertTriangle, Clock, BellRing, FileText, Receipt, UserCheck, CalendarClock, ShoppingCart } from 'lucide-react';
 import { ActionRow, ActionType } from '../types/actions';
 import { DataService } from '../services/dataService';
+import { buildApogeeDeepLink } from '../types/endpoints';
+import { useAgency } from '../contexts/AgencyContext';
 import { cn } from '@/lib/utils';
 
 interface ActionsAMenerTableProps {
@@ -31,6 +33,9 @@ const ACTION_ICONS: Record<ActionType, typeof FileText> = {
 };
 
 export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTableProps) {
+  const { currentAgency } = useAgency();
+  const agencySlug = currentAgency?.slug ?? '';
+
   // Récupérer les IDs des techniciens à lookup
   const technicienIds = useMemo(() => {
     const ids = new Set<number>();
@@ -93,7 +98,7 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
         <thead>
           <tr className="border-b border-border/50">
             <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Réf.</th>
-            <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Type</th>
+            <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">État actuel</th>
             <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Étape</th>
             <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Date entrée</th>
             <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Expiration</th>
@@ -107,6 +112,25 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
             const badge = ACTION_BADGE_COLORS[action.actionType];
             const ActionIcon = ACTION_ICONS[action.actionType];
             const isLate = action.isLate;
+            const isToday = action.isToday;
+            const isDueSoon = action.isDueSoon;
+
+            // Color logic: late=red, today=orange, dueSoon=green, default=normal
+            const statusColor = isLate
+              ? "text-destructive font-bold"
+              : isToday
+                ? "text-orange-600 dark:text-orange-400 font-bold"
+                : isDueSoon
+                  ? "text-emerald-600 dark:text-emerald-400 font-semibold"
+                  : "text-muted-foreground";
+
+            const refColor = isLate
+              ? "text-destructive font-bold"
+              : isToday
+                ? "text-orange-600 dark:text-orange-400 font-bold"
+                : isDueSoon
+                  ? "text-emerald-600 dark:text-emerald-400 font-semibold"
+                  : "text-primary";
             
             return (
               <tr
@@ -119,81 +143,75 @@ export function ActionsAMenerTable({ actions, onOpenDossier }: ActionsAMenerTabl
               >
                 {/* Réf */}
                 <td className="py-2.5 px-3">
-                  <span className={cn(
-                    "font-mono text-xs",
-                    isLate ? "text-destructive font-bold" : "text-primary"
-                  )}>
+                  <span className={cn("font-mono text-xs", refColor)}>
                     {action.ref}
                   </span>
                 </td>
 
-                {/* Type badge */}
+                {/* État actuel */}
                 <td className="py-2.5 px-3">
                   <span className={cn(
                     "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
                     badge.bg, badge.text
                   )}>
                     <ActionIcon className="w-3 h-3" />
-                    {badge.label}
+                    {action.statut}
                   </span>
                 </td>
 
                 {/* Statut / action */}
                 <td className="py-2.5 px-3">
-                  <span className={cn(
-                    "text-xs",
-                    isLate ? "text-destructive font-bold" : "text-foreground"
-                  )}>
+                  <span className={cn("text-xs", isLate ? "text-destructive font-bold" : isToday ? "text-orange-600 dark:text-orange-400 font-bold" : isDueSoon ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-foreground")}>
                     {action.actionLabel}
                   </span>
                 </td>
 
                 {/* Date entrée */}
                 <td className="py-2.5 px-3 hidden sm:table-cell">
-                  <span className={cn(
-                    "text-xs",
-                    isLate ? "text-destructive font-bold" : "text-muted-foreground"
-                  )}>
+                  <span className={cn("text-xs", statusColor)}>
                     {format(action.dateDepart, 'dd/MM/yyyy', { locale: fr })}
                   </span>
                 </td>
 
                 {/* Expiration */}
                 <td className="py-2.5 px-3 hidden sm:table-cell">
-                  <span className={cn(
-                    "text-xs",
-                    isLate ? "text-destructive font-bold" : "text-muted-foreground"
-                  )}>
+                  <span className={cn("text-xs", statusColor)}>
                     {format(action.deadline, 'dd/MM/yyyy', { locale: fr })}
                     {isLate && action.daysLate != null && action.daysLate > 0 && (
                       <span className="ml-1 text-destructive font-bold">+{action.daysLate}j</span>
                     )}
+                    {isToday && <span className="ml-1 text-orange-600 dark:text-orange-400 font-bold">Aujourd'hui</span>}
                   </span>
                 </td>
 
                 {/* Client */}
                 <td className="py-2.5 px-3 hidden md:table-cell">
-                  <span className={cn(
-                    "text-xs truncate max-w-[180px] block",
-                    isLate ? "text-destructive font-bold" : "text-muted-foreground"
-                  )}>
+                  <span className={cn("text-xs truncate max-w-[180px] block", statusColor)}>
                     {action.clientName}
                   </span>
                 </td>
 
                 {/* Détail (technicien ou label) */}
                 <td className="py-2.5 px-3 hidden lg:table-cell">
-                  <span className={cn(
-                    "text-xs truncate max-w-[150px] block",
-                    isLate ? "text-destructive font-bold" : "text-muted-foreground"
-                  )}>
+                  <span className={cn("text-xs truncate max-w-[150px] block", statusColor)}>
                     {getTechnicienName(action) !== '-' ? getTechnicienName(action) : action.label}
                   </span>
                 </td>
 
-                {/* Chevron */}
+                {/* Lien Apogée */}
                 <td className="py-2.5 px-3 text-right">
-                  <ExternalLink className="w-3.5 h-3.5 text-muted-foreground/50 inline-block" />
+                  {agencySlug && (
+                    <a
+                      href={buildApogeeDeepLink(agencySlug, 'project', action.projectId)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      title="Ouvrir dans Apogée"
+                      className="inline-flex items-center justify-center hover:text-primary transition-colors"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-primary" />
+                    </a>
+                  )}
                 </td>
               </tr>
             );
