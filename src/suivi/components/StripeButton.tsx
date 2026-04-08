@@ -53,22 +53,24 @@ export const StripeButton: React.FC<StripeButtonProps> = ({
     setIsLoading(true);
 
     try {
+      const returnUrl = typeof window !== 'undefined'
+        ? `${window.location.pathname}${window.location.search}`
+        : '';
+
       // SECURITY: Amount is NOT sent - calculated server-side from Apogée
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/suivi-stripe-checkout?agencySlug=${encodeURIComponent(agencySlug)}&refDossier=${encodeURIComponent(refDossier)}&codePostal=${encodeURIComponent(verifiedPostalCode)}`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/suivi-stripe-checkout?agencySlug=${encodeURIComponent(agencySlug)}&refDossier=${encodeURIComponent(refDossier)}&codePostal=${encodeURIComponent(verifiedPostalCode)}&returnUrl=${encodeURIComponent(returnUrl)}`,
         {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
         }
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         
         switch (errorData.error) {
           case 'STRIPE_NOT_CONFIGURED':
+          case 'STRIPE_NOT_ENABLED':
             toast.error('Le paiement en ligne n\'est pas encore disponible.');
             break;
           case 'ACCESS_DENIED':

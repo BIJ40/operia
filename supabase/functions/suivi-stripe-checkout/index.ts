@@ -53,6 +53,42 @@ function roundCurrency(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
+function getBaseUrl(req: Request): string {
+  const origin = req.headers.get('origin');
+  if (origin) return origin;
+
+  const referer = req.headers.get('referer');
+  if (referer) {
+    try {
+      return new URL(referer).origin;
+    } catch {
+      console.warn('Unable to parse referer origin');
+    }
+  }
+
+  return 'https://suivi.helpconfort.services';
+}
+
+function normalizeReturnPath(returnUrl: string | null): string {
+  if (!returnUrl) return '/';
+
+  try {
+    const decoded = decodeURIComponent(returnUrl).trim();
+    return decoded.startsWith('/') ? decoded : '/';
+  } catch {
+    return returnUrl.startsWith('/') ? returnUrl : '/';
+  }
+}
+
+function buildPaymentPath(returnPath: string, agencySlug: string, status: 'success' | 'cancel'): string {
+  const segments = returnPath.split('/').filter(Boolean);
+  const agencyIndex = segments.indexOf(agencySlug);
+  const prefixSegments = agencyIndex > 0 ? segments.slice(0, agencyIndex) : [];
+  const prefix = prefixSegments.length > 0 ? `/${prefixSegments.join('/')}` : '';
+
+  return `${prefix}/${agencySlug}/paiement/${status}`;
+}
+
 function extractAmountToPay(project: any): number | null {
   if (!project?.data?.financier) return null;
 
@@ -95,9 +131,10 @@ Deno.serve(async (req) => {
     const agencySlug = url.searchParams.get('agencySlug');
     const refDossier = url.searchParams.get('refDossier');
     const codePostal = url.searchParams.get('codePostal'); // Required for verification
+    const returnUrl = url.searchParams.get('returnUrl');
     // NOTE: amount param is IGNORED for security - we calculate server-side from Apogée data
 
-    console.log('Stripe Checkout request:', { agencySlug, refDossier });
+    console.log('Stripe Checkout request:', { agencySlug, refDossier, returnUrl });
 
     // Validate required parameters (amount is NOT required - calculated server-side)
     if (!agencySlug || !refDossier || !codePostal) {
@@ -194,12 +231,24 @@ Deno.serve(async (req) => {
     console.log(`Stripe key prefix: ${stripeSecretKey.substring(0, 8)}..., len=${stripeSecretKey.length}`);
 
     // Build success and cancel URLs
-    const baseUrl = 'https://suivi.helpconfort.services';
-    const returnPath = agencySlug === 'dax' ? `/${refDossier}` : `/${agencySlug}/${refDossier}`;
-    const successUrl = `${baseUrl}${returnPath}?payment=success&session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl = `${baseUrl}${returnPath}?payment=cancelled`;
+    const baseUrl = getBaseUrl(req);
+    const normalizedReturnPath = normalizeReturnPath(returnUrl);
+    const successPath = buildPaymentPath(normalizedReturnPath, agencySlug, 'success');
+    const cancelPath = buildPaymentPath(normalizedReturnPath, agencySlug, 'cancel');
+    const successQuery = new URLSearchParams({
+      payment: 'success',
+      ref: refDossier,
+      returnUrl: normalizedReturnPath,
+    });
+    const cancelQuery = new URLSearchParams({
+      payment: 'cancelled',
+      ref: refDossier,
+      returnUrl: normalizedReturnPath,
+    });
+    const successUrl = `${baseUrl}${successPath}?${successQuery.toString()}&session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = `${baseUrl}${cancelPath}?${cancelQuery.toString()}`;
 
-    console.log('Creating Stripe Checkout session:', { amount: serverCalculatedAmount, successUrl, cancelUrl });
+    console.log('Creating Stripe Checkout session:', { amount: serverCalculatedAmount, successUrl, cancelUrl, baseUrl, normalizedReturnPath });
 
     // Use raw fetch to Stripe API to avoid SDK ByteString bug on Deno
     const params = new URLSearchParams();

@@ -3,6 +3,7 @@ import { useSearchParams, useParams, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, ArrowLeft, Mail } from 'lucide-react';
+import { usePaymentCallback } from '@/suivi/hooks/usePaymentCallback';
 
 /**
  * Page de retour après paiement Stripe réussi
@@ -14,10 +15,12 @@ const PaymentSuccessPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { agencySlug } = useParams<{ agencySlug: string }>();
   const refDossier = searchParams.get('ref') || 'N/A';
+  const returnUrl = searchParams.get('returnUrl');
+  const safeReturnUrl = returnUrl?.startsWith('/') ? returnUrl : '/';
+
+  usePaymentCallback(refDossier !== 'N/A' ? refDossier : undefined, agencySlug);
 
   // URL de retour vers le dossier
-  const returnUrl = agencySlug ? `/${agencySlug}/${refDossier}` : `/${refDossier}`;
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-white dark:from-green-950/20 dark:to-background flex items-center justify-center p-4">
       <Card className="max-w-md w-full shadow-lg border-green-200 dark:border-green-800">
@@ -44,7 +47,7 @@ const PaymentSuccessPage: React.FC = () => {
           </div>
 
           <div className="pt-4">
-            <Link to={returnUrl}>
+            <Link to={safeReturnUrl}>
               <Button variant="outline" className="w-full gap-2">
                 <ArrowLeft className="h-4 w-4" />
                 Retour au dossier
