@@ -1,4 +1,3 @@
-import Stripe from 'npm:stripe@17';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -191,47 +190,48 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Initialize Stripe with custom httpClient to fix Deno ByteString issue
-    const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: '2023-10-16',
-      httpClient: Stripe.createFetchHttpClient(),
-    });
-
     // Build success and cancel URLs
     const baseUrl = 'https://suivi.helpconfort.services';
     const returnPath = agencySlug === 'dax' ? `/${refDossier}` : `/${agencySlug}/${refDossier}`;
-    // Include {CHECKOUT_SESSION_ID} placeholder - Stripe will replace it with actual session ID
     const successUrl = `${baseUrl}${returnPath}?payment=success&session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl = `${baseUrl}${returnPath}?payment=cancelled`;
 
     console.log('Creating Stripe Checkout session:', { amount: serverCalculatedAmount, successUrl, cancelUrl });
 
-    // Create Stripe Checkout Session with SERVER-CALCULATED amount
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: 'eur',
-            product_data: {
-              name: `Paiement dossier`,
-              description: `Règlement Help! Confort`,
-            },
-            unit_amount: Math.round(serverCalculatedAmount * 100), // Stripe uses cents
-          },
-          quantity: 1,
-        },
-      ],
-      mode: 'payment',
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-      metadata: {
-        refDossier,
-        agencySlug,
-        serverAmount: serverCalculatedAmount.toString(), // For audit trail
+    // Use raw fetch to Stripe API to avoid SDK ByteString bug on Deno
+    const params = new URLSearchParams();
+    params.append('payment_method_types[]', 'card');
+    params.append('line_items[0][price_data][currency]', 'eur');
+    params.append('line_items[0][price_data][product_data][name]', 'Paiement dossier');
+    params.append('line_items[0][price_data][product_data][description]', 'Règlement Help! Confort');
+    params.append('line_items[0][price_data][unit_amount]', String(Math.round(serverCalculatedAmount * 100)));
+    params.append('line_items[0][quantity]', '1');
+    params.append('mode', 'payment');
+    params.append('success_url', successUrl);
+    params.append('cancel_url', cancelUrl);
+    params.append('metadata[refDossier]', refDossier);
+    params.append('metadata[agencySlug]', agencySlug);
+    params.append('metadata[serverAmount]', serverCalculatedAmount.toString());
+    params.append('locale', 'fr');
+
+    const stripeResp = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${btoa(stripeSecretKey + ':')}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      locale: 'fr',
+      body: params.toString(),
     });
+
+    const session = await stripeResp.json();
+
+    if (!stripeResp.ok) {
+      console.error('Stripe API error:', session);
+      return new Response(
+        JSON.stringify({ error: 'STRIPE_ERROR', message: session.error?.message || 'Erreur Stripe' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     console.log('Stripe Checkout session created:', session.id);
 
