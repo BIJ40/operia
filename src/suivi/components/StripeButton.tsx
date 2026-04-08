@@ -55,7 +55,7 @@ export const StripeButton: React.FC<StripeButtonProps> = ({
     try {
       // SECURITY: Amount is NOT sent - calculated server-side from Apogée
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout?agencySlug=${encodeURIComponent(agencySlug)}&refDossier=${encodeURIComponent(refDossier)}&codePostal=${encodeURIComponent(verifiedPostalCode)}`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/suivi-stripe-checkout?agencySlug=${encodeURIComponent(agencySlug)}&refDossier=${encodeURIComponent(refDossier)}&codePostal=${encodeURIComponent(verifiedPostalCode)}`,
         {
           method: 'GET',
           headers: {
