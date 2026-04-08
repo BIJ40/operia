@@ -1,5 +1,4 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Stripe from 'npm:stripe@17';
 
 const APOGEE_API_KEY = Deno.env.get('APOGEE_API_KEY');
 
