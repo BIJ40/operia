@@ -240,3 +240,13 @@ verify_jwt = false
 
 [functions.treasury-bridge-webhook]
 verify_jwt = false
+
+# Suivi client portal - Stripe payment (public, no JWT - access verified by postal code + hash)
+[functions.suivi-stripe-checkout]
+verify_jwt = false
+
+[functions.suivi-check-payment-status]
+verify_jwt = false
+
+[functions.suivi-record-payment]
+verify_jwt = false
