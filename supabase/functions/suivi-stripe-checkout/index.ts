@@ -23,7 +23,17 @@ async function fetchFromApogeeWithData(apiSubdomain: string, endpoint: string, a
     return null;
   }
 
-  return response.json();
+  const text = await response.text();
+  if (!text || text.trim().length === 0) {
+    console.warn(`Apogee API returned empty body for ${endpoint}`);
+    return null;
+  }
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    console.error(`Apogee API returned invalid JSON for ${endpoint}:`, text.substring(0, 200));
+    return null;
+  }
 }
 
 async function fetchFromApogee(apiSubdomain: string, endpoint: string): Promise<any> {
