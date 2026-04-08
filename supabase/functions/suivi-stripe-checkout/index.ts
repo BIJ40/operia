@@ -191,9 +191,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Initialize Stripe
+    // Initialize Stripe with custom httpClient to fix Deno ByteString issue
     const stripe = new Stripe(stripeSecretKey, {
       apiVersion: '2023-10-16',
+      httpClient: Stripe.createFetchHttpClient(),
     });
 
     // Build success and cancel URLs
