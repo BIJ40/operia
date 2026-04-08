@@ -217,7 +217,7 @@ Deno.serve(async (req) => {
     const stripeResp = await fetch('https://api.stripe.com/v1/checkout/sessions', {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${btoa(stripeSecretKey + ':')}`,
+        'Authorization': `Bearer ${stripeSecretKey}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: params.toString(),
