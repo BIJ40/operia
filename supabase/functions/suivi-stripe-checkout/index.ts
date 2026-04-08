@@ -181,14 +181,17 @@ Deno.serve(async (req) => {
     console.log(`Stripe Checkout: Server-calculated amount: ${serverCalculatedAmount}€`);
 
     // Get Stripe secret key from environment
-    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
-    if (!stripeSecretKey) {
+    const rawStripeKey = Deno.env.get('STRIPE_SECRET_KEY');
+    if (!rawStripeKey) {
       console.error('STRIPE_SECRET_KEY not configured');
       return new Response(
         JSON.stringify({ error: 'STRIPE_NOT_CONFIGURED', message: 'Stripe n\'est pas configuré' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    // Strip any non-ASCII / invisible chars that break Deno's fetch headers
+    const stripeSecretKey = rawStripeKey.replace(/[^\x20-\x7E]/g, '').trim();
+    console.log(`Stripe key prefix: ${stripeSecretKey.substring(0, 8)}..., len=${stripeSecretKey.length}`);
 
     // Build success and cancel URLs
     const baseUrl = 'https://suivi.helpconfort.services';
