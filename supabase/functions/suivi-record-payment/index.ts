@@ -29,21 +29,28 @@ Deno.serve(async (req) => {
     }
 
     // Verify the session with Stripe
-    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
-    if (!stripeSecretKey) {
+    const rawStripeKey = Deno.env.get('STRIPE_SECRET_KEY');
+    if (!rawStripeKey) {
       console.error('STRIPE_SECRET_KEY not configured');
       return new Response(
         JSON.stringify({ error: 'STRIPE_NOT_CONFIGURED', success: false }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    const stripeSecretKey = rawStripeKey.replace(/[^\x20-\x7E]/g, '').trim();
 
-    const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: '2023-10-16',
+    // Retrieve the session to verify payment status via raw fetch
+    const stripeResp = await fetch(`https://api.stripe.com/v1/checkout/sessions/${sessionId}`, {
+      headers: { 'Authorization': `Bearer ${stripeSecretKey}` },
     });
-
-    // Retrieve the session to verify payment status
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    const session = await stripeResp.json();
+    if (!stripeResp.ok) {
+      console.error('Stripe session retrieval failed:', session);
+      return new Response(
+        JSON.stringify({ error: 'STRIPE_ERROR', success: false }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     console.log('Stripe session status:', session.payment_status, 'metadata:', session.metadata);
 
