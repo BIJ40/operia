@@ -102,7 +102,7 @@ serve(async (req) => {
     let agencyConfig = DAX_DEFAULTS;
 
     const { data: agencyData } = await supabase
-      .from("agencies")
+      .from("agency_suivi_settings")
       .select("*")
       .eq("slug", slug)
       .eq("is_active", true)
