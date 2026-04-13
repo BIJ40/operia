@@ -60,7 +60,7 @@ async function getAgencyInfo(agencySlug: string | undefined): Promise<{ email: s
     const supabase = createClient(supabaseUrl, supabaseKey);
     
     const { data, error } = await supabase
-      .from("agencies")
+      .from("agency_suivi_settings")
       .select("contact_email, name, api_subdomain")
       .eq("slug", agencySlug)
       .eq("is_active", true)
