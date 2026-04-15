@@ -25,7 +25,6 @@ const TAB_ACCENTS: Record<UnifiedTab, AccentThemeKey> = {
   organisation: 'green',
   relations: 'purple',
   documents: 'red',
-  support: 'cyan',
   ticketing: 'amber',
   admin: 'purple',
 };
@@ -52,7 +51,7 @@ export function WorkspaceNavLinks({ activeTab }: WorkspaceNavLinksProps) {
     { id: 'organisation', label: getShortLabel('organisation', 'Organisation'), icon: Users, requiresOption: { module: 'organisation.salaries' }, altModules: ['organisation.parc', 'organisation.plannings', 'organisation.reunions'] },
     { id: 'relations', label: getShortLabel('relations', 'Relations'), icon: Handshake, altModules: ['relations.suivi_client', 'relations.apporteurs', 'relations.echanges'] },
     { id: 'documents', label: getShortLabel('mediatheque', 'Documents'), icon: FolderOpen, requiresOption: { module: 'mediatheque.documents' } },
-    { id: 'support', label: getShortLabel('support', 'Support'), icon: Headphones },
+    
     { id: 'ticketing', label: 'Ticketing', icon: Kanban, requiresOption: { module: 'ticketing' } },
     { id: 'admin', label: getShortLabel('admin', 'Admin'), icon: Shield, requiresOption: { module: 'admin_plateforme' } },
   ], [getShortLabel]);
