@@ -16,8 +16,8 @@ import { lazy, Suspense, useMemo, useState, useCallback, useEffect } from 'react
 import { useSearchParams } from 'react-router-dom';
 import { 
   Home, BarChart3, ShoppingCart, 
-  Users, Headphones, Handshake,
-  Loader2, Shield, FolderOpen, Kanban,
+  Headphones, Handshake,
+  Loader2, Shield,
 } from 'lucide-react';
 import { useNavigationMode } from '@/hooks/useNavigationMode';
 import { MainHeader } from '@/components/navigation/MainHeader';
