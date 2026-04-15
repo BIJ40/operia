@@ -12721,6 +12721,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_subscriptions: {
+        Row: {
+          agency_id: string
+          created_at: string | null
+          current_period_end: string | null
+          id: string
+          plan_key: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string | null
+          current_period_end?: string | null
+          id?: string
+          plan_key: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string | null
+          current_period_end?: string | null
+          id?: string
+          plan_key?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       user_widget_preferences: {
         Row: {
           created_at: string | null
