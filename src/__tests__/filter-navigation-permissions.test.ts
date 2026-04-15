@@ -11,7 +11,7 @@ import {
   filterWorkspaceTabs,
   filterSubTabs,
 } from '@/lib/filterNavigationByPermissions';
-import type { TabConfig } from '@/components/unified/workspace/types';
+import type { TabConfig } from '@/lib/filterNavigationByPermissions';
 import { Home, BarChart3, ShoppingCart, Users, Headphones, Shield, FolderOpen } from 'lucide-react';
 
 // ─── Fixtures ───────────────────────────────────────────

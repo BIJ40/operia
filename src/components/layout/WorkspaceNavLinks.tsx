@@ -16,7 +16,7 @@ import { filterWorkspaceTabs } from '@/lib/filterNavigationByPermissions';
 import { ACCENT_THEMES, type AccentThemeKey } from '@/lib/accentThemes';
 import { ProfileMenu } from '@/components/unified/workspace/ProfileMenu';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { TabConfig, UnifiedTab } from '@/components/unified/workspace/types';
+import type { TabConfig, UnifiedTab } from '@/lib/filterNavigationByPermissions';
 
 const TAB_ACCENTS: Record<UnifiedTab, AccentThemeKey> = {
   accueil: 'blue',
