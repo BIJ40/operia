@@ -6,7 +6,7 @@
 import { useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  Home, BarChart3, ShoppingCart, Users, Headphones, Shield, FolderOpen, Kanban, Handshake,
+  Home, BarChart3, ShoppingCart, Users, Shield, FolderOpen, Kanban, Handshake,
 } from 'lucide-react';
 import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
