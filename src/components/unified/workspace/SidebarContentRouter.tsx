@@ -1,25 +1,42 @@
 /**
- * SidebarContentRouter - Renders the correct content based on sidebar view
+ * SidebarContentRouter - Each sidebar item = one dedicated page component
+ * No more tab systems — direct rendering
  */
 import { lazy, Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
-import { StatsHubProvider } from '@/apogee-connect/components/stats-hub/StatsHubContext';
 import { LocalErrorBoundary } from '@/components/system/LocalErrorBoundary';
 import { PricingPlans } from '@/components/pricing/PricingPlans';
+import { PeriodSelector } from '@/apogee-connect/components/filters/PeriodSelector';
+import { PeriodDisplay } from '@/apogee-connect/components/filters/PeriodDisplay';
 import type { SidebarView } from './WorkspaceSidebar';
 
-// Lazy loaded content
+// Lazy: Accueil
 const DashboardContent = lazy(() => import('@/pages/DashboardStatic'));
-const StatsTabContent = lazy(() => import('@/components/unified/tabs/StatsTabContent'));
+
+// Lazy: Stats — each tab is now a standalone page
+const GeneralTab = lazy(() => import('@/apogee-connect/components/stats-hub/tabs/GeneralTab').then(m => ({ default: m.GeneralTab })));
+const ApporteursStatsTab = lazy(() => import('@/apogee-connect/components/stats-hub/tabs/ApporteursTab').then(m => ({ default: m.ApporteursTab })));
+const TechniciensTab = lazy(() => import('@/apogee-connect/components/stats-hub/tabs/TechniciensTab').then(m => ({ default: m.TechniciensTab })));
+const UniversTab = lazy(() => import('@/apogee-connect/components/stats-hub/tabs/UniversTab').then(m => ({ default: m.UniversTab })));
+const SAVTab = lazy(() => import('@/apogee-connect/components/stats-hub/tabs/SAVTab').then(m => ({ default: m.SAVTab })));
+const PrevisionnelTab = lazy(() => import('@/apogee-connect/components/stats-hub/tabs/PrevisionnelTab').then(m => ({ default: m.PrevisionnelTab })));
+const FinancierTab = lazy(() => import('@/apogee-connect/components/stats-hub/tabs/FinancierTab').then(m => ({ default: m.FinancierTab })));
+const TresorerieTab = lazy(() => import('@/apogee-connect/components/stats-hub/tabs/TresorerieTab').then(m => ({ default: m.TresorerieTab })));
+
+// Lazy: Maps (garde ses onglets internes pour l'instant)
+const MapsTabContent = lazy(() => import('@/components/unified/tabs/MapsTabContent'));
+
+// Lazy: Analytique
+const ResultatTabContent = lazy(() => import('@/components/financial/ResultatTabContent'));
+const RentabiliteTabContent = lazy(() => import('@/components/profitability/RentabiliteTabContent'));
+
+// Lazy: Opérationnel
 const ActionsAMenerTab = lazy(() =>
   import('@/components/pilotage/ActionsAMenerTab').then((m) => ({ default: m.ActionsAMenerTab })),
 );
 const AnomaliesDevisDossierView = lazy(() => import('@/apogee-connect/components/AnomaliesDevisDossierView'));
-const ResultatTabContent = lazy(() => import('@/components/financial/ResultatTabContent'));
-const RentabiliteTabContent = lazy(() => import('@/components/profitability/RentabiliteTabContent'));
-const MapsTabContent = lazy(() => import('@/components/unified/tabs/MapsTabContent'));
 
-// Relations / Suivi
+// Lazy: Suivi client
 const MesApporteursTab = lazy(() =>
   import('@/components/pilotage/MesApporteursTab').then((m) => ({ default: m.MesApporteursTab })),
 );
@@ -32,14 +49,28 @@ const SuiviJournal = lazy(() =>
   import('@/components/admin/views/SuiviClientsAdminView').then((m) => ({ default: m.JournalSection })),
 );
 
-// Support & Admin
-const SupportHubTabContent = lazy(() => import('@/components/unified/tabs/AideTabContent'));
+// Lazy: Admin
 const AdminTabContent = lazy(() => import('@/components/unified/tabs/AdminTabContent'));
 
 function Loading() {
   return (
     <div className="flex items-center justify-center h-64">
       <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+    </div>
+  );
+}
+
+/** Header with period selector for stats pages */
+function StatsPageHeader({ title, showPeriod = true }: { title: string; showPeriod?: boolean }) {
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+      <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+      {showPeriod && (
+        <div className="flex items-center gap-3">
+          <PeriodDisplay />
+          <PeriodSelector />
+        </div>
+      )}
     </div>
   );
 }
@@ -62,7 +93,7 @@ export function SidebarContentRouter({ view, agencySlug, isN0User }: Props) {
   );
 }
 
-function renderView(view: SidebarView, agencySlug?: string, isN0User?: boolean) {
+function renderView(view: SidebarView, agencySlug?: string, _isN0User?: boolean) {
   switch (view) {
     case 'accueil':
       return (
@@ -72,41 +103,37 @@ function renderView(view: SidebarView, agencySlug?: string, isN0User?: boolean) 
         </>
       );
 
-    // Pilotage > Statistiques
+    // ── Pilotage > Statistiques ──
     case 'stats-general':
+      return (<><StatsPageHeader title="Statistiques — Général" /><GeneralTab /></>);
     case 'stats-apporteurs':
+      return (<><StatsPageHeader title="Statistiques — Apporteurs" /><ApporteursStatsTab /></>);
     case 'stats-techniciens':
+      return (<><StatsPageHeader title="Statistiques — Techniciens" /><TechniciensTab /></>);
     case 'stats-univers':
-      return (
-        <StatsHubProvider>
-          <StatsTabContent />
-        </StatsHubProvider>
-      );
+      return (<><StatsPageHeader title="Statistiques — Univers" /><UniversTab /></>);
     case 'stats-mapping':
-      return <MapsTabContent />;
+      return (<><StatsPageHeader title="Mapping" showPeriod={false} /><MapsTabContent /></>);
 
-    // Pilotage > Analytique
+    // ── Pilotage > Analytique ──
     case 'analytique-previsionnel':
+      return (<><StatsPageHeader title="Prévisionnel" showPeriod={false} /><PrevisionnelTab /></>);
     case 'analytique-recouvrement':
-      return (
-        <StatsHubProvider>
-          <StatsTabContent />
-        </StatsHubProvider>
-      );
+      return (<><StatsPageHeader title="Recouvrement" /><FinancierTab /></>);
     case 'analytique-veille':
-      return <ResultatTabContent />;
+      return (<><StatsPageHeader title="Veille Clientèle" /><ResultatTabContent /></>);
     case 'analytique-rentabilite':
-      return <RentabiliteTabContent />;
+      return (<><StatsPageHeader title="Rentabilité dossier" /><RentabiliteTabContent /></>);
 
-    // Pilotage > Opérationnel
+    // ── Pilotage > Opérationnel ──
     case 'operationnel-actions':
-      return <ActionsAMenerTab />;
+      return (<><StatsPageHeader title="Actions à mener" showPeriod={false} /><ActionsAMenerTab /></>);
     case 'operationnel-alertes':
-      return <ActionsAMenerTab />;
+      return (<><StatsPageHeader title="Alertes" showPeriod={false} /><ActionsAMenerTab /></>);
     case 'operationnel-incoherences':
-      return <AnomaliesDevisDossierView />;
+      return (<><StatsPageHeader title="Incohérences" showPeriod={false} /><AnomaliesDevisDossierView /></>);
 
-    // Suivi > Lien de suivi
+    // ── Suivi > Lien de suivi ──
     case 'suivi-parametres':
       return <SuiviClientSettingsCard />;
     case 'suivi-paiements':
@@ -114,16 +141,14 @@ function renderView(view: SidebarView, agencySlug?: string, isN0User?: boolean) 
     case 'suivi-journal':
       return <SuiviJournal agencySlug={agencySlug} />;
 
-    // Suivi > Espace apporteurs
+    // ── Suivi > Espace apporteurs ──
     case 'apporteurs-creation':
     case 'apporteurs-gestion':
       return <MesApporteursTab />;
     case 'apporteurs-echanges':
       return <AgencyApporteurExchanges />;
 
-    // Support & Admin
-    case 'support':
-      return <SupportHubTabContent />;
+    // ── Admin ──
     case 'admin':
       return <AdminTabContent />;
 
