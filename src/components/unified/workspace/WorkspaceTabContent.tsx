@@ -6,6 +6,9 @@ import { Loader2 } from 'lucide-react';
 import { TabsContent } from '@/components/ui/tabs';
 import { LocalErrorBoundary } from '@/components/system/LocalErrorBoundary';
 import { StatsHubProvider } from '@/apogee-connect/components/stats-hub/StatsHubContext';
+import { SubscriptionGuard } from '@/components/guards/SubscriptionGuard';
+import { UpgradePrompt } from '@/components/pricing/UpgradePrompt';
+import { PricingPlans } from '@/components/pricing/PricingPlans';
 
 // Lazy loaded tab contents
 const DashboardContent = lazy(() => import('@/pages/DashboardStatic'));
@@ -37,48 +40,38 @@ export function WorkspaceTabContent({ isN0User }: WorkspaceTabContentProps) {
       <Suspense fallback={<LoadingFallback />}>
         <TabsContent value="accueil" className="mt-0 h-full">
           {isN0User ? <DemoAccueilContent /> : <DashboardContent />}
+          <PricingPlans />
         </TabsContent>
 
         <TabsContent value="pilotage" className="mt-0">
-          <LocalErrorBoundary componentName="Pilotage">
-            <StatsHubProvider>
-              <PilotageTabContent />
-            </StatsHubProvider>
-          </LocalErrorBoundary>
+          <SubscriptionGuard plan="pilotage" fallback={<UpgradePrompt planLabel="Pilotage" />}>
+            <LocalErrorBoundary componentName="Pilotage">
+              <StatsHubProvider>
+                <PilotageTabContent />
+              </StatsHubProvider>
+            </LocalErrorBoundary>
+          </SubscriptionGuard>
         </TabsContent>
 
         <TabsContent value="commercial" className="mt-0">
-          <LocalErrorBoundary componentName="Commercial">
-            <CommercialTabContent />
-          </LocalErrorBoundary>
-        </TabsContent>
-
-        <TabsContent value="organisation" className="mt-0">
-          <LocalErrorBoundary componentName="Organisation">
-            <OrganisationTabContent />
-          </LocalErrorBoundary>
+          <SubscriptionGuard plan="pilotage" fallback={<UpgradePrompt planLabel="Pilotage" />}>
+            <LocalErrorBoundary componentName="Commercial">
+              <CommercialTabContent />
+            </LocalErrorBoundary>
+          </SubscriptionGuard>
         </TabsContent>
 
         <TabsContent value="relations" className="mt-0">
-          <LocalErrorBoundary componentName="Relations">
-            <RelationsTabContent />
-          </LocalErrorBoundary>
-        </TabsContent>
-        <TabsContent value="documents" className="mt-0">
-          <LocalErrorBoundary componentName="Documents">
-            <DocumentsTabContent />
-          </LocalErrorBoundary>
+          <SubscriptionGuard plan="suivi" fallback={<UpgradePrompt planLabel="Suivi & Espace Apporteurs" />}>
+            <LocalErrorBoundary componentName="Relations">
+              <RelationsTabContent />
+            </LocalErrorBoundary>
+          </SubscriptionGuard>
         </TabsContent>
 
         <TabsContent value="support" className="mt-0">
           <LocalErrorBoundary componentName="Support">
             <SupportHubTabContent />
-          </LocalErrorBoundary>
-        </TabsContent>
-
-        <TabsContent value="ticketing" className="mt-0">
-          <LocalErrorBoundary componentName="Ticketing">
-            <TicketingTabContent />
           </LocalErrorBoundary>
         </TabsContent>
 

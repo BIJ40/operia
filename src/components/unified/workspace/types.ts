@@ -21,4 +21,5 @@ export interface TabConfig {
   altModules?: string[];
 }
 
-export const DEFAULT_TAB_ORDER: UnifiedTab[] = ['pilotage', 'commercial', 'organisation', 'relations', 'documents', 'support', 'ticketing', 'admin'];
+// Freemium: Organisation, Documents, Ticketing retirés de la navigation
+export const DEFAULT_TAB_ORDER: UnifiedTab[] = ['pilotage', 'commercial', 'relations', 'support', 'admin'];
