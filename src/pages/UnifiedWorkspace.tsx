@@ -1,36 +1,18 @@
 /**
- * UnifiedWorkspace - Interface unifiée sans header
- * Tous les modules accessibles via onglets sur une seule page
- * Onglets réorganisables via drag-and-drop (sauf Accueil)
- * 
- * Support URL: ?tab=XXX pour navigation directe vers un onglet
- * 
- * REFACTORED: Split into sub-components (Phase 2)
- * - WorkspaceTabBar: DnD tab bar
- * - WorkspaceTabContent: All tab content panels
- * - ProfileMenu: User profile dropdown
- * - LogoutOverlay: Logout animation
+ * UnifiedWorkspace - Interface unifiée avec sidebar latérale
+ * Plus de header/onglets — navigation 100% sidebar
  */
 
 import { lazy, Suspense, useMemo, useState, useCallback, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { 
-  Home, BarChart3, ShoppingCart, 
-  Headphones, Handshake,
-  Loader2, Shield,
-} from 'lucide-react';
-import { useNavigationMode } from '@/hooks/useNavigationMode';
-import { MainHeader } from '@/components/navigation/MainHeader';
+import { Loader2 } from 'lucide-react';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { Tabs } from '@/components/ui/tabs';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { useSessionState } from '@/hooks/useSessionState';
 import { useAuthCore } from '@/contexts/AuthCoreContext';
 import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
-import { filterWorkspaceTabs, isWorkspaceTabVisible } from '@/lib/filterNavigationByPermissions';
-import { useModuleLabels } from '@/hooks/useModuleLabels';
-
+import { useProfile } from '@/contexts/ProfileContext';
 import { useStorageQuota } from '@/hooks/use-storage-quota';
 import { useUserPresence } from '@/hooks/use-user-presence';
 import { useConnectionLogger } from '@/hooks/use-connection-logger';
@@ -38,16 +20,13 @@ import { LoginFormCard } from '@/components/LoginFormCard';
 import { LoginDialog } from '@/components/LoginDialog';
 import { ImageModal } from '@/components/ImageModal';
 import { AiUnifiedProvider } from '@/components/ai';
-
-
-// Sub-components (Phase 2 split)
 import { LogoutOverlay } from '@/components/unified/workspace/LogoutOverlay';
-import { WorkspaceTabBar } from '@/components/unified/workspace/WorkspaceTabBar';
-import { WorkspaceTabContent } from '@/components/unified/workspace/WorkspaceTabContent';
-import type { TabConfig, UnifiedTab } from '@/components/unified/workspace/types';
-import { DEFAULT_TAB_ORDER } from '@/components/unified/workspace/types';
+import { WorkspaceSidebar, type SidebarView, getRequiredPlan } from '@/components/unified/workspace/WorkspaceSidebar';
+import { SidebarContentRouter } from '@/components/unified/workspace/SidebarContentRouter';
+import { SubscriptionGuard } from '@/components/guards/SubscriptionGuard';
+import { UpgradePrompt } from '@/components/pricing/UpgradePrompt';
 
-// Providers nécessaires
+// Providers
 import { ApiToggleProvider } from '@/apogee-connect/contexts/ApiToggleContext';
 import { AgencyProvider } from '@/apogee-connect/contexts/AgencyContext';
 import { FiltersProvider } from '@/apogee-connect/contexts/FiltersContext';
@@ -66,137 +45,38 @@ function LoadingFallback() {
 
 function UnifiedWorkspaceContent() {
   const { isLoggingOut } = useAuthCore();
-  const { globalRole, isFranchiseur, hasModule, hasModuleOption } = usePermissionsBridge();
+  const { globalRole, isFranchiseur } = usePermissionsBridge();
   const { isImpersonating, isRealUserImpersonation } = useImpersonation();
   const effectiveAuth = useEffectiveAuth();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { agence } = useProfile();
   const [loginOpen, setLoginOpen] = useState(false);
-  
-  
-  // Support URL ?tab=XXX pour navigation directe
-  const urlTab = searchParams.get('tab') as UnifiedTab | null;
-  const [activeTab, setActiveTabState] = useSessionState<UnifiedTab>('unified_workspace_tab', urlTab || 'accueil');
-  
-  // Synchroniser l'URL quand l'onglet change en préservant les autres params (adminTab, adminView, etc.)
-  const setActiveTab = useCallback((tab: UnifiedTab) => {
-    setActiveTabState(tab);
-    const next = new URLSearchParams(searchParams);
 
-    if (tab === 'accueil') {
-      next.delete('tab');
-      next.delete('adminTab');
-      next.delete('adminView');
-    } else {
-      next.set('tab', tab);
-    }
+  const [activeView, setActiveView] = useSessionState<SidebarView>('workspace_sidebar_view', 'accueil');
 
-    setSearchParams(next, { replace: true });
-  }, [searchParams, setActiveTabState, setSearchParams]);
-  
-  // Sync depuis URL (only when urlTab changes, not activeTab — avoids race condition)
-  useEffect(() => {
-    if (urlTab) {
-      setActiveTabState(urlTab);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlTab]);
-  
   // Hooks for tracking
   useStorageQuota();
   useUserPresence();
   useConnectionLogger();
-  
-  // IMPERSONATION: Utiliser le rôle réel pour certaines permissions
+
   const realIsPlatformAdmin = globalRole === 'superadmin' || globalRole === 'platform_admin';
-  
-  // Pour l'affichage des onglets, utiliser le rôle EFFECTIF (impersonné)
   const effectiveGlobalRole = effectiveAuth.globalRole;
   const effectiveIsPlatformAdmin = effectiveGlobalRole === 'superadmin' || effectiveGlobalRole === 'platform_admin';
-  
-  const { getShortLabel } = useModuleLabels();
+  const isN0User = !effectiveGlobalRole || effectiveGlobalRole === 'base_user';
+  const showAdmin = realIsPlatformAdmin || effectiveIsPlatformAdmin;
 
-  // Configuration des onglets — Modèle Freemium simplifié
-  // Organisation, Documents, Ticketing désactivés (code conservé)
-  const allTabs: TabConfig[] = useMemo(() => [
-    { id: 'accueil', label: 'Accueil', icon: Home },
-    { id: 'pilotage', label: getShortLabel('pilotage', 'Pilotage'), icon: BarChart3 },
-    { id: 'commercial', label: getShortLabel('commercial', 'Commercial'), icon: ShoppingCart },
-    { id: 'relations', label: getShortLabel('relations', 'Relations'), icon: Handshake },
-    { id: 'support', label: getShortLabel('support', 'Support'), icon: Headphones },
-    { id: 'admin', label: getShortLabel('admin', 'Admin'), icon: Shield, requiresOption: { module: 'admin_plateforme' } },
-  ], [getShortLabel]);
-  
-  // Tab accessibility checks — centralized via filterNavigationByPermissions
-  const permCheckers = useMemo(() => ({
-    hasModule: hasModule as (key: any) => boolean,
-    hasModuleOption: hasModuleOption as (key: any, opt: string) => boolean,
-    isPlatformAdmin: effectiveIsPlatformAdmin,
-  }), [hasModule, hasModuleOption, effectiveIsPlatformAdmin]);
+  const topPadding = (isImpersonating || isRealUserImpersonation) ? 'pt-10' : '';
 
-  const isTabAccessible = useCallback((tab: TabConfig): boolean => {
-    if (!tab.requiresOption) return true;
-    if (realIsPlatformAdmin) return true;
-    return isWorkspaceTabVisible(tab, permCheckers);
-  }, [realIsPlatformAdmin, permCheckers]);
-  
-  const isTabVisuallyDisabled = useCallback((tab: TabConfig): boolean => {
-    if (isRealUserImpersonation) return !isWorkspaceTabVisible(tab, permCheckers);
-    return !isTabAccessible(tab);
-  }, [isRealUserImpersonation, permCheckers, isTabAccessible]);
-  
-  // Filter tabs: hide inaccessible tabs entirely (not greyed out)
-  const visibleTabs = useMemo(() => 
-    filterWorkspaceTabs(allTabs, permCheckers, realIsPlatformAdmin),
-    [allTabs, permCheckers, realIsPlatformAdmin]
-  );
-
-  // Onglets dans l'ordre fixe DEFAULT_TAB_ORDER
-  const sortedTabs = useMemo(() => {
-    const accueilTab = visibleTabs.find(t => t.id === 'accueil')!;
-    const otherTabs = visibleTabs.filter(t => t.id !== 'accueil');
-    const sorted = [...otherTabs].sort((a, b) => {
-      const indexA = DEFAULT_TAB_ORDER.indexOf(a.id);
-      const indexB = DEFAULT_TAB_ORDER.indexOf(b.id);
-      return indexA - indexB;
-    });
-    return [accueilTab, ...sorted];
-  }, [visibleTabs]);
-  
-  // Effective N0 user check
-  const effectiveIsN0User = !effectiveGlobalRole || effectiveGlobalRole === 'base_user';
-  const isN0User = effectiveIsN0User;
-  
-  // Valid active tab (redirect if inaccessible)
-  const activeTabConfig = sortedTabs.find(t => t.id === activeTab);
-  const isActiveTabAccessible = activeTabConfig && isTabAccessible(activeTabConfig);
-  const validActiveTab = useMemo(() => {
-    if (!isActiveTabAccessible) return 'accueil';
-    return activeTab;
-  }, [activeTab, isActiveTabAccessible]);
-  
-  useEffect(() => {
-    if (validActiveTab !== activeTab) setActiveTab(validActiveTab);
-  }, [validActiveTab, activeTab, setActiveTab]);
-  
   // Page title
   useEffect(() => {
-    const config = sortedTabs.find(t => t.id === validActiveTab);
-    document.title = `${config?.label || 'Accueil'} - HelpConfort`;
-  }, [validActiveTab, sortedTabs]);
-  
-  const tabButtonClass = `
-    relative px-4 py-3 rounded-t-xl border-2 border-b-0 transition-all duration-300 whitespace-nowrap shrink-0 min-w-0
-    data-[state=inactive]:bg-muted/40 data-[state=inactive]:border-border/50 data-[state=inactive]:text-muted-foreground 
-    data-[state=inactive]:hover:bg-primary/10 data-[state=inactive]:hover:border-primary/40
-    data-[state=inactive]:hover:scale-105 data-[state=inactive]:hover:-translate-y-0.5 data-[state=inactive]:hover:shadow-md
-    data-[state=active]:bg-background data-[state=active]:border-primary/50
-    data-[state=active]:z-20 data-[state=active]:-mb-[2px] data-[state=active]:pb-[calc(0.75rem+2px)] data-[state=active]:scale-[1.02]
-  `;
-  
-  const { mode: navMode } = useNavigationMode();
-  
-  const topPadding = (isImpersonating || isRealUserImpersonation) ? 'pt-10' : '';
-  
+    const titles: Record<string, string> = {
+      accueil: 'Accueil',
+      support: 'Support',
+      admin: 'Administration',
+    };
+    const title = titles[activeView] || activeView.replace(/-/g, ' ').replace(/^\w/, c => c.toUpperCase());
+    document.title = `${title} - HelpConfort`;
+  }, [activeView]);
+
   // Vue Franchiseur
   if (isFranchiseur && !realIsPlatformAdmin) {
     return (
@@ -206,39 +86,48 @@ function UnifiedWorkspaceContent() {
     );
   }
 
+  // Determine if current view needs a subscription guard
+  const requiredPlan = getRequiredPlan(activeView);
+  const planLabels: Record<string, string> = {
+    pilotage: 'Pilotage',
+    suivi: 'Suivi & Espace Apporteurs',
+  };
+
+  const content = requiredPlan ? (
+    <SubscriptionGuard plan={requiredPlan} fallback={<UpgradePrompt planLabel={planLabels[requiredPlan]} />}>
+      <SidebarContentRouter view={activeView} agencySlug={agence || undefined} isN0User={isN0User} />
+    </SubscriptionGuard>
+  ) : (
+    <SidebarContentRouter view={activeView} agencySlug={agence || undefined} isN0User={isN0User} />
+  );
+
   return (
     <AiUnifiedProvider>
       <TooltipProvider delayDuration={0}>
         {isLoggingOut && <LogoutOverlay />}
-        
-        <div className={`min-h-screen bg-background ${topPadding}`}>
-          <Tabs value={validActiveTab} onValueChange={(v) => setActiveTab(v as UnifiedTab)} className="flex flex-col h-screen">
-            {navMode === 'header' ? (
-              <MainHeader
-                activeTab={validActiveTab}
-                setActiveTab={setActiveTab}
-                visibleTabs={visibleTabs}
-                tabButtonClass={tabButtonClass}
-              />
-            ) : (
-              <WorkspaceTabBar
-                tabs={sortedTabs}
-                activeTab={validActiveTab}
-                tabButtonClass={tabButtonClass}
-                isTabAccessible={isTabAccessible}
-                isTabVisuallyDisabled={isTabVisuallyDisabled}
-                setActiveTab={setActiveTab}
-              />
-            )}
-            
-            <WorkspaceTabContent isN0User={isN0User} />
-          </Tabs>
-        </div>
-        
+
+        <SidebarProvider defaultOpen={true}>
+          <div className={`min-h-screen flex w-full ${topPadding}`}>
+            <WorkspaceSidebar
+              activeView={activeView}
+              onViewChange={setActiveView}
+              showAdmin={showAdmin}
+            />
+
+            <div className="flex-1 flex flex-col overflow-auto bg-background">
+              <header className="h-12 flex items-center border-b px-4 shrink-0">
+                <SidebarTrigger />
+              </header>
+
+              <main className="flex-1" role="main" id="main-content">
+                {content}
+              </main>
+            </div>
+          </div>
+        </SidebarProvider>
+
         <ImageModal />
         <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
-        
-        
       </TooltipProvider>
     </AiUnifiedProvider>
   );
@@ -246,7 +135,7 @@ function UnifiedWorkspaceContent() {
 
 function UnifiedWorkspaceAuth() {
   const { isAuthenticated, isAuthLoading } = useAuthCore();
-  
+
   if (isAuthLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -262,7 +151,7 @@ function UnifiedWorkspaceAuth() {
       </div>
     );
   }
-  
+
   return <UnifiedWorkspaceContent />;
 }
 

@@ -4,9 +4,12 @@
 import { lazy, Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 import { StatsHubProvider } from '@/apogee-connect/components/stats-hub/StatsHubContext';
+import { LocalErrorBoundary } from '@/components/system/LocalErrorBoundary';
+import { PricingPlans } from '@/components/pricing/PricingPlans';
 import type { SidebarView } from './WorkspaceSidebar';
 
 // Lazy loaded content
+const DashboardContent = lazy(() => import('@/pages/DashboardStatic'));
 const StatsTabContent = lazy(() => import('@/components/unified/tabs/StatsTabContent'));
 const ActionsAMenerTab = lazy(() =>
   import('@/components/pilotage/ActionsAMenerTab').then((m) => ({ default: m.ActionsAMenerTab })),
@@ -29,6 +32,10 @@ const SuiviJournal = lazy(() =>
   import('@/components/admin/views/SuiviClientsAdminView').then((m) => ({ default: m.JournalSection })),
 );
 
+// Support & Admin
+const SupportHubTabContent = lazy(() => import('@/components/unified/tabs/AideTabContent'));
+const AdminTabContent = lazy(() => import('@/components/unified/tabs/AdminTabContent'));
+
 function Loading() {
   return (
     <div className="flex items-center justify-center h-64">
@@ -40,21 +47,32 @@ function Loading() {
 interface Props {
   view: SidebarView;
   agencySlug?: string;
+  isN0User?: boolean;
 }
 
-export function SidebarContentRouter({ view, agencySlug }: Props) {
+export function SidebarContentRouter({ view, agencySlug, isN0User }: Props) {
   return (
     <Suspense fallback={<Loading />}>
       <div className="container mx-auto max-w-app px-4 py-6">
-        {renderView(view, agencySlug)}
+        <LocalErrorBoundary componentName={view}>
+          {renderView(view, agencySlug, isN0User)}
+        </LocalErrorBoundary>
       </div>
     </Suspense>
   );
 }
 
-function renderView(view: SidebarView, agencySlug?: string) {
+function renderView(view: SidebarView, agencySlug?: string, isN0User?: boolean) {
   switch (view) {
-    // Pilotage > Statistiques — all use StatsHub with different initial tabs
+    case 'accueil':
+      return (
+        <>
+          <DashboardContent />
+          <PricingPlans />
+        </>
+      );
+
+    // Pilotage > Statistiques
     case 'stats-general':
     case 'stats-apporteurs':
     case 'stats-techniciens':
@@ -69,11 +87,6 @@ function renderView(view: SidebarView, agencySlug?: string) {
 
     // Pilotage > Analytique
     case 'analytique-previsionnel':
-      return (
-        <StatsHubProvider>
-          <StatsTabContent />
-        </StatsHubProvider>
-      );
     case 'analytique-recouvrement':
       return (
         <StatsHubProvider>
@@ -89,7 +102,7 @@ function renderView(view: SidebarView, agencySlug?: string) {
     case 'operationnel-actions':
       return <ActionsAMenerTab />;
     case 'operationnel-alertes':
-      return <ActionsAMenerTab />; // placeholder — will refine
+      return <ActionsAMenerTab />;
     case 'operationnel-incoherences':
       return <AnomaliesDevisDossierView />;
 
@@ -108,7 +121,13 @@ function renderView(view: SidebarView, agencySlug?: string) {
     case 'apporteurs-echanges':
       return <AgencyApporteurExchanges />;
 
+    // Support & Admin
+    case 'support':
+      return <SupportHubTabContent />;
+    case 'admin':
+      return <AdminTabContent />;
+
     default:
-      return <StatsHubProvider><StatsTabContent /></StatsHubProvider>;
+      return <DashboardContent />;
   }
 }
