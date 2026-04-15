@@ -92,7 +92,6 @@ export type SidebarView =
   | 'apporteurs-gestion'
   | 'apporteurs-echanges'
   // Others
-  | 'support'
   | 'admin';
 
 interface SubItem {

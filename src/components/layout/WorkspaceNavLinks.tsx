@@ -6,7 +6,7 @@
 import { useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  Home, BarChart3, ShoppingCart, Users, Headphones, Shield, FolderOpen, Kanban, Handshake,
+  Home, BarChart3, ShoppingCart, Users, Shield, FolderOpen, Kanban, Handshake,
 } from 'lucide-react';
 import { usePermissionsBridge } from '@/hooks/usePermissionsBridge';
 import { useEffectiveAuth } from '@/hooks/useEffectiveAuth';
@@ -16,7 +16,7 @@ import { filterWorkspaceTabs } from '@/lib/filterNavigationByPermissions';
 import { ACCENT_THEMES, type AccentThemeKey } from '@/lib/accentThemes';
 import { ProfileMenu } from '@/components/unified/workspace/ProfileMenu';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { TabConfig, UnifiedTab } from '@/components/unified/workspace/types';
+import type { TabConfig, UnifiedTab } from '@/lib/filterNavigationByPermissions';
 
 const TAB_ACCENTS: Record<UnifiedTab, AccentThemeKey> = {
   accueil: 'blue',
@@ -25,7 +25,6 @@ const TAB_ACCENTS: Record<UnifiedTab, AccentThemeKey> = {
   organisation: 'green',
   relations: 'purple',
   documents: 'red',
-  support: 'cyan',
   ticketing: 'amber',
   admin: 'purple',
 };
@@ -52,7 +51,7 @@ export function WorkspaceNavLinks({ activeTab }: WorkspaceNavLinksProps) {
     { id: 'organisation', label: getShortLabel('organisation', 'Organisation'), icon: Users, requiresOption: { module: 'organisation.salaries' }, altModules: ['organisation.parc', 'organisation.plannings', 'organisation.reunions'] },
     { id: 'relations', label: getShortLabel('relations', 'Relations'), icon: Handshake, altModules: ['relations.suivi_client', 'relations.apporteurs', 'relations.echanges'] },
     { id: 'documents', label: getShortLabel('mediatheque', 'Documents'), icon: FolderOpen, requiresOption: { module: 'mediatheque.documents' } },
-    { id: 'support', label: getShortLabel('support', 'Support'), icon: Headphones },
+    
     { id: 'ticketing', label: 'Ticketing', icon: Kanban, requiresOption: { module: 'ticketing' } },
     { id: 'admin', label: getShortLabel('admin', 'Admin'), icon: Shield, requiresOption: { module: 'admin_plateforme' } },
   ], [getShortLabel]);
