@@ -22,7 +22,7 @@ const ALL_TABS: TabConfig[] = [
   { id: 'commercial', label: 'Commercial', icon: ShoppingCart, requiresOption: { module: 'commercial' }, altModules: ['commercial.realisations'] },
   { id: 'organisation', label: 'Organisation', icon: Users, requiresOption: { module: 'organisation.salaries' }, altModules: ['organisation.parc'] },
   { id: 'documents', label: 'Documents', icon: FolderOpen, requiresOption: { module: 'mediatheque.documents' } },
-  { id: 'support', label: 'Support', icon: Headphones },
+  
   { id: 'admin', label: 'Admin', icon: Shield, requiresOption: { module: 'admin_plateforme' } },
 ];
 
