@@ -1,8 +1,10 @@
 /**
- * WorkspaceSidebar - Navigation latérale bleu/blanc
- * Sections : PILOTAGE et SUIVI CLIENT avec sous-catégories
+ * WorkspaceSidebar - Navigation latérale principale (remplace le header)
+ * Fond bleu, texte blanc
+ * Sections : Accueil, PILOTAGE, SUIVI CLIENT, Support, Admin, Profil
  */
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Sidebar,
   SidebarContent,
@@ -15,7 +17,9 @@ import {
   SidebarMenuSub,
   SidebarMenuSubItem,
   SidebarMenuSubButton,
-  SidebarTrigger,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarSeparator,
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
@@ -24,6 +28,14 @@ import {
   CollapsibleContent,
 } from '@/components/ui/collapsible';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Home,
   BarChart3,
   Building2,
   Users,
@@ -44,11 +56,18 @@ import {
   ListChecks,
   MessagesSquare,
   ChevronRight,
+  Headphones,
+  Shield,
+  User,
+  LogOut,
+  ChevronsUpDown,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuthCore } from '@/contexts/AuthCoreContext';
 
 export type SidebarView =
+  | 'accueil'
   // Pilotage > Statistiques
   | 'stats-general'
   | 'stats-apporteurs'
@@ -71,7 +90,10 @@ export type SidebarView =
   // Suivi > Espace apporteurs
   | 'apporteurs-creation'
   | 'apporteurs-gestion'
-  | 'apporteurs-echanges';
+  | 'apporteurs-echanges'
+  // Others
+  | 'support'
+  | 'admin';
 
 interface SubItem {
   id: SidebarView;
@@ -151,20 +173,23 @@ const SIDEBAR_SECTIONS: Section[] = [
   },
 ];
 
-/** Which section a view belongs to */
-export function getSidebarSection(view: SidebarView): 'pilotage' | 'suivi' {
+/** Which subscription plan a view requires */
+export function getRequiredPlan(view: SidebarView): 'pilotage' | 'suivi' | null {
   if (view.startsWith('stats-') || view.startsWith('analytique-') || view.startsWith('operationnel-')) return 'pilotage';
-  return 'suivi';
+  if (view.startsWith('suivi-') || view.startsWith('apporteurs-')) return 'suivi';
+  return null;
 }
 
 interface WorkspaceSidebarProps {
   activeView: SidebarView;
   onViewChange: (view: SidebarView) => void;
+  showAdmin?: boolean;
 }
 
-export function WorkspaceSidebar({ activeView, onViewChange }: WorkspaceSidebarProps) {
+export function WorkspaceSidebar({ activeView, onViewChange, showAdmin }: WorkspaceSidebarProps) {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
+  const { user, logout } = useAuthCore();
 
   const isInCategory = useCallback(
     (cat: Category) => cat.items.some((i) => i.id === activeView),
@@ -186,7 +211,41 @@ export function WorkspaceSidebar({ activeView, onViewChange }: WorkspaceSidebarP
         '--sidebar-ring': '220 65% 50%',
       } as React.CSSProperties}
     >
-      <SidebarContent className="pt-4 gap-2">
+      {/* Header / Logo */}
+      <SidebarHeader className="px-4 py-4">
+        {!collapsed && (
+          <span className="text-lg font-bold tracking-tight text-white">
+            Operia
+          </span>
+        )}
+      </SidebarHeader>
+
+      <SidebarContent className="gap-1">
+        {/* Accueil */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  tooltip="Accueil"
+                  onClick={() => onViewChange('accueil')}
+                  isActive={activeView === 'accueil'}
+                  className={cn(
+                    'font-semibold text-white/90 hover:bg-white/10 hover:text-white',
+                    activeView === 'accueil' && 'bg-white/20 text-white',
+                  )}
+                >
+                  <Home className="h-4 w-4" />
+                  <span>Accueil</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator className="bg-white/10" />
+
+        {/* Main sections: Pilotage & Suivi */}
         {SIDEBAR_SECTIONS.map((section) => (
           <SidebarGroup key={section.title}>
             <SidebarGroupLabel className="text-[11px] font-bold tracking-widest text-white/50 uppercase px-4 mb-1">
@@ -244,7 +303,99 @@ export function WorkspaceSidebar({ activeView, onViewChange }: WorkspaceSidebarP
             </SidebarGroupContent>
           </SidebarGroup>
         ))}
+
+        <SidebarSeparator className="bg-white/10" />
+
+        {/* Support & Admin */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  tooltip="Support"
+                  onClick={() => onViewChange('support')}
+                  isActive={activeView === 'support'}
+                  className={cn(
+                    'font-semibold text-white/90 hover:bg-white/10 hover:text-white',
+                    activeView === 'support' && 'bg-white/20 text-white',
+                  )}
+                >
+                  <Headphones className="h-4 w-4" />
+                  <span>Support</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {showAdmin && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    tooltip="Administration"
+                    onClick={() => onViewChange('admin')}
+                    isActive={activeView === 'admin'}
+                    className={cn(
+                      'font-semibold text-white/90 hover:bg-white/10 hover:text-white',
+                      activeView === 'admin' && 'bg-white/20 text-white',
+                    )}
+                  >
+                    <Shield className="h-4 w-4" />
+                    <span>Admin</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
+
+      {/* Footer: Profil */}
+      <SidebarFooter className="border-t border-white/10">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton
+                  className="text-white/90 hover:bg-white/10 hover:text-white"
+                  tooltip="Profil"
+                >
+                  <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                    <User className="h-3.5 w-3.5 text-white" />
+                  </div>
+                  <div className="flex flex-col text-left text-xs leading-tight">
+                    <span className="font-semibold text-white truncate">
+                      {user?.email?.split('@')[0] || 'Utilisateur'}
+                    </span>
+                    <span className="text-white/50 truncate text-[10px]">
+                      {user?.email}
+                    </span>
+                  </div>
+                  <ChevronsUpDown className="ml-auto h-4 w-4 text-white/50" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="top" align="start" className="w-56">
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
+                    <User className="w-4 h-4" />
+                    Mon profil
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/agence" className="flex items-center gap-2 cursor-pointer">
+                    <Building2 className="w-4 h-4" />
+                    Mon agence
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={logout}
+                  className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Déconnexion
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }
