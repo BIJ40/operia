@@ -1,108 +1,105 @@
 
 
-# Plan : Rapport Complet StatIA — Métriques Pilotage & Commercial
+# Plan : Simplification Operia — Modele Freemium (sans suppression BDD)
 
-## Objectif
+## Principe fondamental
 
-Générer un document exhaustif (PDF ou Markdown) documentant **chaque statistique et métrique** des modules Pilotage et Commercial, incluant :
-- L'algorithme de calcul exact
-- Les endpoints API Apogée utilisés
-- Les clés de jointure entre entités
-- Les filtres et règles métier appliqués
-- Les tableaux croisés et dimensions de ventilation
+**Zero suppression en base de données.** Les tables, RPC, politiques RLS et fonctions existantes restent intactes. Le nouveau modele se superpose a l'existant.
 
-## Scope couvert
+## Ajouts en base de données
 
-### Pilotage (9 sous-onglets)
+### Nouvelle table `user_subscriptions`
+```sql
+create table public.user_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  agency_id uuid not null,
+  plan_key text not null check (plan_key in ('pilotage', 'suivi')),
+  stripe_subscription_id text,
+  stripe_customer_id text,
+  status text not null default 'inactive'
+    check (status in ('active', 'inactive', 'past_due', 'canceled')),
+  current_period_end timestamptz,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique(agency_id, plan_key)
+);
+```
+- RLS : lecture par membres de l'agence, ecriture par service_role uniquement (webhooks)
+- Pas de FK sur `agencies` pour eviter les conflits — la coherence est geree applicativement
 
-**1. Général / KPIs**
-- `ca_global_ht` — CA total HT (factures - avoirs)
-- `ca_par_mois` — CA ventilé par mois
-- `ca_moyen_par_jour` — CA HT moyen par jour
-- `du_client` — Dû client TTC (reste à encaisser)
-- `panier_moyen` — Montant moyen par facture
-- `nombre_devis`, `montant_devis` — Volume et montant devis
-- `taux_transformation_devis_nombre/montant` — Taux transfo en nombre et en €
-- `devis_signes_non_factures` — Stock de travaux à lancer
-- `taux_recouvrement_global` — % CA encaissé vs facturé
-- `montant_restant`, `factures_impayees` — Encours à recouvrer
+## Changements frontend (code uniquement)
 
-**2. Apporteurs**
-- `ca_par_apporteur` — CA HT par commanditaire
-- `dossiers_par_apporteur` — Nb dossiers par apporteur
-- `top_apporteurs_ca` — Classement Top N
-- `taux_transformation_apporteur` — Taux transfo devis par apporteur
-- `apporteurs_inactifs` — Apporteurs sans activité > X jours
-- `ca_par_type_apporteur` — CA par catégorie (Assureurs, Bailleurs, Syndics...)
-- `dossiers_par_type_apporteur`, `panier_moyen_par_type_apporteur`
-- `taux_transfo_par_type_apporteur`, `taux_sav_par_type_apporteur`
-- `ca_mensuel_segmente` — Apporteurs vs Particuliers par mois
-- `apporteurs_du_global_ttc` — Encours TTC apporteurs
-- `apporteurs_delai_paiement_moyen`, `apporteurs_delai_dossier_facture`
+### 1. Navigation — UnifiedWorkspace
+Retirer les onglets suivants du tableau `allTabs` :
+- **Organisation** (salaries, reunions, planning, zones, conformite)
+- **Documents** (mediatheque)
+- **Ticketing**
 
-**3. Univers**
-- `ca_par_univers` — CA HT ventilé par univers métier (prorata si multi-univers)
-- `dossiers_par_univers` — Comptage par univers
-- `panier_moyen_par_univers` — CA/facture par univers
-- `interventions_par_univers` — Nb interventions par univers
-- `taux_sav_par_univers` — % SAV par univers
-- `ca_mensuel_par_univers` — Évolution mensuelle empilée
+Onglets conserves :
+- **Accueil** — acces libre
+- **Pilotage** — conditionne a `subscription.pilotage = active`
+- **Commercial** — conditionne a `subscription.pilotage = active` (veille apporteurs)
+- **Relations** — conditionne a `subscription.suivi = active`
+- **Support** — acces libre
+- **Admin** — admin plateforme uniquement
 
-**4. Techniciens**
-- `ca_par_technicien` — CA au prorata du temps (moteur unifié)
-- `ca_par_technicien_univers` — Matrice Technicien × Univers
-- `top_techniciens_ca` — Classement Top N
-- `ca_moyen_par_tech` — CA total / nb techs actifs
+### 2. Nouveau hook `useAgencySubscriptions(agencyId)`
+Interroge `user_subscriptions` pour retourner les plans actifs de l'agence courante. Remplace les verifications de permissions V2 dans la navigation.
 
-**5. Prévisionnel** — Devis signés non facturés, pipeline maturité
+### 3. Composant `SubscriptionGuard`
+```tsx
+<SubscriptionGuard plan="pilotage" fallback={<UpgradePrompt />}>
+  <PilotageTabContent />
+</SubscriptionGuard>
+```
+Court-circuite `ModuleGuardV2` pour les onglets proteges. Les guards V2 existants ne sont pas supprimes — ils restent dans le code mais ne sont plus le point de decision principal pour la navigation.
 
-**6. Recouvrement**
-- `taux_recouvrement_global`, `montant_encaisse`, `montant_restant`
-- `factures_impayees`, `encours_par_apporteur`
-- `delai_paiement_dossier`
+### 4. Simplification des roles (code frontend uniquement)
+Le systeme N0-N6 reste en BDD. Cote frontend, la logique se reduit a :
+- `isAdmin` : detecte via `source_summary = 'bypass'` (comme aujourd'hui dans `RoleGuardV2`)
+- Tout le reste = `user`
 
-**7. Maps** — Analyses géographiques (modes choroplèthe)
+### 5. Page pricing dans Accueil
+Composant affichant les 2 plans avec prix et bouton "S'abonner" redirigeant vers Stripe Checkout.
 
-**8. Résultat** — P&L / Compte de résultats (60 lignes, 9 sections)
+## Integration Stripe
 
-**9. Rentabilité Dossier** — Snapshots de rentabilité projet
+### Edge Functions (nouvelles)
+1. **`create-checkout-session`** — Cree une session Stripe Checkout pour le plan choisi (pilotage ou suivi), lie a l'agence
+2. **`stripe-subscription-webhook`** — Recoit les evenements Stripe (`checkout.session.completed`, `customer.subscription.updated/deleted`) et met a jour `user_subscriptions`
 
-### Commercial — Veille Apporteurs
+### Configuration
+- Utilisation de l'integration Stripe built-in de Lovable (`enable_stripe_payments`)
+- Produits Stripe a creer : Pilotage (72E TTC/mois), Suivi (84E TTC/mois)
 
-- `apporteurs_dormants` — Sans projet depuis X jours
-- `apporteurs_en_declassement` — CA en baisse période A vs B
-- `apporteurs_sous_seuil` — Sous seuil CA HT configurable
-- Score de risque consolidé (0-100)
-- Fiche détaillée par apporteur (CA, variation, inactivité, criticité)
+## Fichiers principaux impactes
 
-### Portail Apporteur (Edge Function `get-apporteur-stats`)
+| Fichier | Action |
+|---------|--------|
+| `src/components/unified/workspace/UnifiedWorkspace.tsx` | Retirer onglets Organisation, Documents, Ticketing |
+| `src/components/unified/workspace/types.ts` | Simplifier `allTabs` |
+| `src/hooks/useAgencySubscriptions.ts` | **Nouveau** — query `user_subscriptions` |
+| `src/components/guards/SubscriptionGuard.tsx` | **Nouveau** — garde basee sur abonnement |
+| `src/components/pricing/PricingPlans.tsx` | **Nouveau** — UI des plans |
+| `supabase/functions/create-checkout-session/index.ts` | **Nouveau** |
+| `supabase/functions/stripe-subscription-webhook/index.ts` | **Nouveau** |
+| Migration SQL | **Nouveau** — table `user_subscriptions` + RLS |
 
-- KPIs V2 : dossiers en cours, devis envoyés/validés/refusés, factures, CA, panier moyen, taux transfo, délais RDV/devis
-- Score de collaboration (volume, régularité, transfo, délai)
-- Alertes (factures retard 30j, devis non validé 15j, etc.)
-- Séries 12 mois (CA, dossiers, taux transfo, délais)
+## Ce qui ne change PAS
 
-## Structure du document
+- Toutes les tables existantes (module_catalog, plan_module_grants, user_access, etc.)
+- Tous les RPC existants (get_user_permissions, etc.)
+- Les Edge Functions existantes (suivi-*, proxy-apogee, etc.)
+- Les composants des modules desactives (le code reste, les imports lazy restent)
+- Le PermissionsProviderV2 reste monte dans App.tsx
 
-Le rapport contiendra pour CHAQUE métrique :
-1. **ID technique** et label
-2. **Description fonctionnelle**
-3. **Formule / Algorithme** (pseudo-code)
-4. **Endpoints API Apogée** : `apiGetFactures`, `apiGetProjects`, `apiGetInterventions`, `apiGetUsers`, `apiGetClients`, `apiGetDevis`
-5. **Clés de jointure** : `facture.projectId → project.id`, `project.commanditaireId → client.id`, etc.
-6. **Champs extraits** : `data.totalHT`, `data.calcReglementsReste`, `data.type2`, `data.visites[].usersIds`, etc.
-7. **Filtres appliqués** : états inclus/exclus, dateRange, avoirs
-8. **Règles métier STATIA_RULES** applicables
+## Ordre d'implementation
 
-## Implémentation technique
-
-- Script Python générant un PDF de ~50-80 pages via `reportlab` ou Markdown
-- Source : lecture directe des fichiers de définition TypeScript du projet
-- Output : `/mnt/documents/OPERIA_STATIA_RAPPORT_COMPLET.pdf`
-
-## Estimation
-
-- ~200+ métriques à documenter
-- ~50-80 pages de rapport
-- Temps de génération : ~5 minutes
+1. Activer l'integration Stripe built-in
+2. Creer la migration `user_subscriptions`
+3. Creer les Edge Functions Stripe
+4. Creer `useAgencySubscriptions` + `SubscriptionGuard`
+5. Simplifier la navigation dans UnifiedWorkspace
+6. Creer la page pricing
+7. Tester le flux complet en mode test
 
