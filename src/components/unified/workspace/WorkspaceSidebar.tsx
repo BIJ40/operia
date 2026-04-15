@@ -310,21 +310,6 @@ export function WorkspaceSidebar({ activeView, onViewChange, showAdmin }: Worksp
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  tooltip="Support"
-                  onClick={() => onViewChange('support')}
-                  isActive={activeView === 'support'}
-                  className={cn(
-                    'font-semibold text-white/90 hover:bg-white/10 hover:text-white',
-                    activeView === 'support' && 'bg-white/20 text-white',
-                  )}
-                >
-                  <Headphones className="h-4 w-4" />
-                  <span>Support</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
               {showAdmin && (
                 <SidebarMenuItem>
                   <SidebarMenuButton
