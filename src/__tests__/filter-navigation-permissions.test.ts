@@ -11,8 +11,8 @@ import {
   filterWorkspaceTabs,
   filterSubTabs,
 } from '@/lib/filterNavigationByPermissions';
-import type { TabConfig } from '@/lib/filterNavigationByPermissions';
-import { Home, BarChart3, ShoppingCart, Users, Shield, FolderOpen } from 'lucide-react';
+import type { TabConfig } from '@/components/unified/workspace/types';
+import { Home, BarChart3, ShoppingCart, Users, Headphones, Shield, FolderOpen } from 'lucide-react';
 
 // ─── Fixtures ───────────────────────────────────────────
 
@@ -22,7 +22,7 @@ const ALL_TABS: TabConfig[] = [
   { id: 'commercial', label: 'Commercial', icon: ShoppingCart, requiresOption: { module: 'commercial' }, altModules: ['commercial.realisations'] },
   { id: 'organisation', label: 'Organisation', icon: Users, requiresOption: { module: 'organisation.salaries' }, altModules: ['organisation.parc'] },
   { id: 'documents', label: 'Documents', icon: FolderOpen, requiresOption: { module: 'mediatheque.documents' } },
-  
+  { id: 'support', label: 'Support', icon: Headphones },
   { id: 'admin', label: 'Admin', icon: Shield, requiresOption: { module: 'admin_plateforme' } },
 ];
 
@@ -88,7 +88,7 @@ describe('filterWorkspaceTabs', () => {
     expect(ids).toContain('accueil');
     expect(ids).toContain('pilotage');
     expect(ids).toContain('documents');
-    
+    expect(ids).toContain('support');
     expect(ids).not.toContain('commercial');
     expect(ids).not.toContain('organisation');
     expect(ids).not.toContain('admin');
@@ -99,7 +99,7 @@ describe('filterWorkspaceTabs', () => {
     const result = filterWorkspaceTabs(ALL_TABS, perms, false);
     const ids = result.map(t => t.id);
     
-    expect(ids).toEqual(['accueil']);
+    expect(ids).toEqual(['accueil', 'support']);
   });
 
   it('admin flag shows admin tab', () => {

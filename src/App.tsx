@@ -62,7 +62,7 @@ import {
   PilotageRoutes,
   RHRoutes,
   AdminRoutes,
-  
+  FranchiseurRoutes,
   SupportRoutes,
   ProjectsRoutes,
   ApporteurRoutes,
@@ -189,7 +189,7 @@ function AppContent() {
             {PilotageRoutes()}
             {RHRoutes()}
             {AdminRoutes()}
-            
+            {FranchiseurRoutes()}
             {SupportRoutes()}
             {ProjectsRoutes()}
             {ApporteurRoutes()}

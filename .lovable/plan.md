@@ -1,45 +1,54 @@
 
 
-# Audit de nettoyage — Code mort identifié
+## Plan : Onglet Relations visible par altModules uniquement
 
-## Fichiers à supprimer
+### Problème
+Actuellement, `isWorkspaceTabVisible` (ligne 34) retourne `true` immédiatement si `requiresOption` est absent — l'onglet serait toujours visible. Il faut aussi gérer le cas d'un onglet sans `requiresOption` mais avec `altModules`.
 
-### 1. Franchiseur browser-tabs (6 fichiers) — **jamais importés en dehors de leur propre dossier**
-Le `FranchiseurView` utilise son propre système d'onglets inline (Tabs shadcn), pas ce système browser-tabs.
+### Changements
 
-- `src/franchiseur/components/browser-tabs/BrowserTab.tsx`
-- `src/franchiseur/components/browser-tabs/BrowserTabsBar.tsx`
-- `src/franchiseur/components/browser-tabs/BrowserTabsContent.tsx`
-- `src/franchiseur/components/browser-tabs/BrowserTabsContext.tsx`
-- `src/franchiseur/components/browser-tabs/index.ts`
-- `src/franchiseur/components/browser-tabs/types.ts`
+**1. `src/components/layout/WorkspaceNavLinks.tsx` (ligne 50)**
+- Retirer `requiresOption: { module: 'relations' }`, garder uniquement `altModules`
 
-### 2. PublicLanding (1 fichier) — **exporté mais jamais importé**
-- `src/components/layout/PublicLanding.tsx`
+```ts
+{ id: 'relations', label: getShortLabel('relations', 'Relations'), icon: Handshake, altModules: ['relations.suivi_client', 'relations.apporteurs', 'relations.echanges'] },
+```
 
-### 3. Mise à jour de `src/components/layout/index.ts`
-Retirer l'export de `PublicLanding`.
+**2. `src/lib/filterNavigationByPermissions.ts` (ligne 33-34)**
+- Modifier la condition "no guard" pour aussi vérifier `altModules` : un onglet sans `requiresOption` ET sans `altModules` est toujours visible, mais un onglet avec `altModules` doit passer la vérification
 
----
+```ts
+// No guard = always visible (accueil, support)
+if (!tab.requiresOption && !tab.altModules) return true;
 
-## Fichiers conservés (justification)
+// Platform admin bypass
+if (perms.isPlatformAdmin) return true;
 
-| Fichier | Raison |
-|---------|--------|
-| `unified/tabs/AdminTabContent.tsx` | Utilisé par `SidebarContentRouter` |
-| `unified/tabs/AdminHubContent.tsx` | Utilisé par `AdminTabContent` |
-| `unified/tabs/MapsTabContent.tsx` | Utilisé par `SidebarContentRouter` |
-| `unified/tabs/DiversTabContent.tsx` | Utilisé par `FranchiseurView` |
-| `unified/tabs/GuidesTabContent.tsx` | Utilisé par `FranchiseurView` |
-| `unified/tabs/AideTabContent.tsx` | Utilisé par `FranchiseurView` |
-| `unified/tabs/TicketingTabContent.tsx` | Utilisé par `FranchiseurView` |
-| `unified/tabs/VehiculesTabContent.tsx` | **Potentiellement mort** — à vérifier lors de l'implémentation |
-| `WorkspaceNavLinks.tsx` | Utilisé par `MinimalLayout` (routes sub-pages) |
-| `filterNavigationByPermissions.ts` | Utilisé par `WorkspaceNavLinks` |
-| `ProfileMenu.tsx` | Utilisé par `FranchiseurView` + `WorkspaceNavLinks` |
-| Apporteur browser-tabs (tout le dossier) | Activement utilisé par `ApporteurLayout` |
+// Admin tab: role-only guard
+if (tab.id === 'admin') return false;
 
-## Résumé
+// Ticketing
+if (tab.id === 'ticketing') return perms.hasModule('ticketing' as ModuleKey);
 
-**7 fichiers à supprimer**, 1 fichier à modifier. Impact : suppression du système browser-tabs franchiseur inutilisé et d'un composant landing orphelin.
+// Check primary module (if defined)
+if (tab.requiresOption) {
+  const { module, option } = tab.requiresOption;
+  if (option) {
+    if (perms.hasModuleOption(module as ModuleKey, option)) return true;
+  } else {
+    if (perms.hasModule(module as ModuleKey)) return true;
+  }
+}
+
+// Check alternative modules
+if (tab.altModules) {
+  for (const altModule of tab.altModules) {
+    if (perms.hasModule(altModule as ModuleKey)) return true;
+  }
+}
+
+return false;
+```
+
+**3. Vérifier `UnifiedWorkspace.tsx`** — appliquer le même changement si l'onglet Relations y est aussi défini avec `requiresOption`.
 

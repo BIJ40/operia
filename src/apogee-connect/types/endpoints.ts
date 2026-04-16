@@ -31,23 +31,6 @@ export const APOGEE_ENDPOINTS = {
 
   /** Récupère un projet par hash+zipCode (documents générés PDF) */
   PROJECT_BY_HASH: "apiGetProjectByHashZipCode",
-
-  /** Crée une tâche dans le planning Apogée */
-  CREATE_TACHE: "apiCreateTache",
 } as const;
-
-/**
- * Construit un lien profond vers une page Apogée.
- * Exemples :
- *   - buildApogeeDeepLink('dax', 'project', 4440)  → https://dax.hc-apogee.fr/go/project/4440
- *   - buildApogeeDeepLink('dax', 'intervention', 5654) → https://dax.hc-apogee.fr/go/intervention/5654
- */
-export function buildApogeeDeepLink(
-  agencySlug: string,
-  entity: 'project' | 'intervention',
-  entityId: number
-): string {
-  return `https://${agencySlug}.hc-apogee.fr/go/${entity}/${entityId}`;
-}
 
 export type ApogeeEndpoint = typeof APOGEE_ENDPOINTS[keyof typeof APOGEE_ENDPOINTS];

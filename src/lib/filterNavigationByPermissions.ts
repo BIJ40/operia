@@ -13,25 +13,8 @@
  *   - Platform admins bypass all module checks
  */
 
+import type { TabConfig, UnifiedTab } from '@/components/unified/workspace/types';
 import type { ModuleKey } from '@/types/modules';
-
-export type UnifiedTab = 
-  | 'accueil' 
-  | 'pilotage' 
-  | 'commercial' 
-  | 'organisation' 
-  | 'relations'
-  | 'documents'
-  | 'ticketing'
-  | 'admin';
-
-export interface TabConfig {
-  id: UnifiedTab;
-  label: string;
-  icon: React.ElementType;
-  requiresOption?: { module: string; option?: string };
-  altModules?: string[];
-}
 
 interface PermissionCheckers {
   hasModule: (key: ModuleKey) => boolean;

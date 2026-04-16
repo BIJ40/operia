@@ -394,12 +394,9 @@ export const apogeeProxy: ApogeeProxy = {
   getInterventionsCreneaux: (options = {}) => proxyRequest('getInterventionsCreneaux', options),
   getPlanningCreneaux: (options = {}) => proxyRequest('apiGetPlanningCreneaux', { ...options, filters: { refType: 'all' } }),
   getProjectByHash: (options) => {
-    const raw = String(options.filters.zipCode ?? options.filters.codePostal ?? '');
-    const codePostal = raw.match(/\d{5}/)?.[0] ?? raw.trim();
     const filters = {
-      ref: options.filters.ref,
-      hash: options.filters.hash,
-      codePostal,
+      ...options.filters,
+      zipcode: options.filters.zipCode, // doublon lowercase pour compatibilité API
     };
     return proxyRequest('apiGetProjectByHashZipCode', { ...options, filters, skipCache: true });
   },

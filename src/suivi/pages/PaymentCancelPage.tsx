@@ -13,10 +13,10 @@ const PaymentCancelPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { agencySlug } = useParams<{ agencySlug: string }>();
   const refDossier = searchParams.get('ref') || 'N/A';
-  const returnUrl = searchParams.get('returnUrl');
-  const safeReturnUrl = returnUrl?.startsWith('/') ? returnUrl : '/';
 
   // URL de retour vers le dossier
+  const returnUrl = agencySlug ? `/${agencySlug}/${refDossier}` : `/${refDossier}`;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-amber-950/20 dark:to-background flex items-center justify-center p-4">
       <Card className="max-w-md w-full shadow-lg border-amber-200 dark:border-amber-800">
@@ -47,7 +47,7 @@ const PaymentCancelPage: React.FC = () => {
           </div>
 
           <div className="pt-4">
-            <Link to={safeReturnUrl}>
+            <Link to={returnUrl}>
               <Button variant="outline" className="w-full gap-2">
                 <ArrowLeft className="h-4 w-4" />
                 Retour au dossier

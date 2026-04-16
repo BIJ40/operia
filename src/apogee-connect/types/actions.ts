@@ -15,8 +15,7 @@ export type ActionRow = {
   deadline: Date;
   dateDepart: Date;
   isLate: boolean;
-  isToday?: boolean; // Expire aujourd'hui
-  isDueSoon?: boolean; // Va expirer dans les 3 prochains jours
+  isDueSoon?: boolean; // Va passer en retard dans les 24h
   clientName: string;
   daysLate?: number;
   technicienName?: string; // Nom du technicien (pour relance_technicien)

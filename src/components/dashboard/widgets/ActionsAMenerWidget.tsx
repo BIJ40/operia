@@ -58,8 +58,7 @@ export function ActionsAMenerWidget({ onNavigate }: ActionsAMenerWidgetProps) {
 
   const top10 = useMemo(() => {
     if (!actions) return [];
-    // Show late, today, and due-soon actions
-    return actions.filter(a => a.isLate || a.isToday || a.isDueSoon).slice(0, 10);
+    return actions.filter(a => a.isLate).slice(0, 10);
   }, [actions]);
 
   const lateCount = actions?.filter(a => a.isLate).length ?? 0;
@@ -91,23 +90,14 @@ export function ActionsAMenerWidget({ onNavigate }: ActionsAMenerWidgetProps) {
             className="flex items-center gap-2 py-1 text-xs"
           >
             <Icon className={cn("w-3 h-3 flex-shrink-0", color)} />
-            <span className={cn(
-              "font-mono truncate w-20 flex-shrink-0 font-bold",
-              action.isLate ? "text-destructive" : action.isToday ? "text-orange-600 dark:text-orange-400" : "text-emerald-600 dark:text-emerald-400"
-            )}>
+            <span className="font-mono text-destructive font-bold truncate w-20 flex-shrink-0">
               {action.ref}
             </span>
-            <span className={cn(
-              "truncate flex-1 font-bold",
-              action.isLate ? "text-destructive" : action.isToday ? "text-orange-600 dark:text-orange-400" : "text-emerald-600 dark:text-emerald-400"
-            )}>
+            <span className="text-destructive font-bold truncate flex-1">
               {action.clientName}
             </span>
-            <span className={cn(
-              "flex-shrink-0 font-bold",
-              action.isLate ? "text-destructive" : action.isToday ? "text-orange-600 dark:text-orange-400" : "text-emerald-600 dark:text-emerald-400"
-            )}>
-              {action.isLate ? `+${action.daysLate}j` : action.isToday ? "Auj." : `J-${Math.abs(action.daysLate ?? 0)}`}
+            <span className="text-destructive font-bold flex-shrink-0">
+              +{action.daysLate}j
             </span>
           </div>
         );
