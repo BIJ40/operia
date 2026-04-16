@@ -3441,36 +3441,60 @@ export type Database = {
       billing_catalog: {
         Row: {
           billing_mode: string
+          billing_period: string
+          currency: string
+          display_order: number
+          features: string[]
           id: string
           is_active: boolean
+          is_free: boolean
           item_key: string
           item_type: string
           label: string | null
           metadata: Json
+          price_ht: number | null
+          stripe_payment_link: string | null
           stripe_price_id: string | null
           stripe_product_id: string | null
+          updated_at: string
         }
         Insert: {
           billing_mode?: string
+          billing_period?: string
+          currency?: string
+          display_order?: number
+          features?: string[]
           id?: string
           is_active?: boolean
+          is_free?: boolean
           item_key: string
           item_type: string
           label?: string | null
           metadata?: Json
+          price_ht?: number | null
+          stripe_payment_link?: string | null
           stripe_price_id?: string | null
           stripe_product_id?: string | null
+          updated_at?: string
         }
         Update: {
           billing_mode?: string
+          billing_period?: string
+          currency?: string
+          display_order?: number
+          features?: string[]
           id?: string
           is_active?: boolean
+          is_free?: boolean
           item_key?: string
           item_type?: string
           label?: string | null
           metadata?: Json
+          price_ht?: number | null
+          stripe_payment_link?: string | null
           stripe_price_id?: string | null
           stripe_product_id?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -12694,6 +12718,42 @@ export type Database = {
           signature_svg?: string
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_subscriptions: {
+        Row: {
+          agency_id: string
+          created_at: string | null
+          current_period_end: string | null
+          id: string
+          plan_key: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string | null
+          current_period_end?: string | null
+          id?: string
+          plan_key: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string | null
+          current_period_end?: string | null
+          id?: string
+          plan_key?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
